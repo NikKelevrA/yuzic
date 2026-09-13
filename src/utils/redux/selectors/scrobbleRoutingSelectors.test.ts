@@ -2,12 +2,22 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import settingsScrobblingReducer, { setScrobbleRoute } from '@/features/settings/scrobbling/state'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
 import listenbrainzReducer, { setScrobbleEnabled } from '@/utils/redux/slices/listenbrainzSlice'
+import type { Server } from '@/types'
 import {
   deriveScrobbleRoute,
   selectLastfmScrobbleRoute,
   selectListenBrainzScrobbleRoute,
 } from './scrobbleRoutingSelectors'
-import type { Server } from '@/types'
+
+// This module now pulls in the 'direct' destination's own API module (to
+// submit outside the settings screen's Redux store) — its transitive
+// expo-constants import doesn't transform in this jest environment. Not
+// under test here; see the same note in hooks/scrobbleRouting.test.tsx. Jest
+// hoists this above the imports above regardless of its position here.
+jest.mock('@/api/listenbrainz', () => ({
+  submitScrobble: jest.fn(async () => {}),
+  submitNowPlaying: jest.fn(async () => {}),
+}))
 
 function makeStore() {
   return configureStore({

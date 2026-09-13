@@ -7,15 +7,12 @@ import {
   type ScrobbleDestination,
 } from '@/utils/offline/offlineMutations';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
-import * as listenbrainz from '@/api/listenbrainz';
 import { canScrobble } from '@/utils/playback/contentKind';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import {
-  useListenBrainzConfig,
-} from '@/utils/redux/selectors/listenbrainzSelectors';
-import {
-  selectLastfmScrobbleRoute,
-  selectListenBrainzScrobbleRoute,
+  useScrobbleDestinationPlan,
+  submitDirectListen,
+  submitDirectNowPlaying,
 } from '@/utils/redux/selectors/scrobbleRoutingSelectors';
 import { useApi } from '@/api';
 
@@ -25,25 +22,23 @@ function passesScrobbleThreshold(listenedSeconds: number, durationSeconds: numbe
   return listenedSeconds >= threshold;
 }
 
+/**
+ * Session policy for scrobbling: decides WHEN a listen has happened (the
+ * threshold rule below) and WHERE it goes — at most one of the two branches
+ * a `ScrobbleDestinationPlan` can carry, so a listen is never double-
+ * reported. It knows nothing about how any particular server or destination
+ * is actually told: the active server's own semantics live behind
+ * `SongsApi` (`scrobble`, `reportNowPlaying`, `reportPlaybackStart/
+ * Progress/Stop` — each adapter implements only what its protocol needs),
+ * and the plan's 'direct' branch is submitted through
+ * `submitDirectListen`/`submitDirectNowPlaying`, both owned by
+ * `scrobbleRoutingSelectors` alongside the routing rules themselves.
+ */
 export function useScrobbling() {
   const api = useApi();
   const dispatch = useDispatch();
   const activeServer = useSelector(selectActiveServer);
-  const listenBrainzConfig = useListenBrainzConfig();
-  // One route per destination, not two independent booleans — see
-  // scrobbleRoutingSelectors. 'through-server' on either destination is what
-  // used to be `serverScrobbleEnabled`; ListenBrainz's own 'direct' route is
-  // what used to be its per-server scrobble toggle. Now-playing follows
-  // scrobble the same way it always did: whichever route is active for a
-  // destination also drives that destination's now-playing broadcast.
-  const lastfmRoute = useSelector(selectLastfmScrobbleRoute);
-  const listenBrainzRoute = useSelector(selectListenBrainzScrobbleRoute);
-  // The server adapter call covers both "forward to Last.fm" and "forward to
-  // ListenBrainz" server-side — it is one call regardless of which
-  // destination the server is configured to relay to. So it fires whenever
-  // *either* destination is routed 'through-server'.
-  const serverScrobbleEnabled = lastfmRoute === 'through-server' || listenBrainzRoute === 'through-server';
-  const lbScrobbleEnabled = listenBrainzRoute === 'direct';
+  const plan = useScrobbleDestinationPlan();
 
   const lastScrobbledIdRef = useRef<string | null>(null);
 
@@ -53,11 +48,8 @@ export function useScrobbling() {
 
   /**
    * Parks a failed scrobble in the offline queue instead of dropping it. Each
-   * destination is queued on its own, so a ListenBrainz outage never
-   * re-submits to the server, which already accepted the play. Last.fm is
-   * not a destination yuzic owns — the media server (Navidrome/Jellyfin/Emby)
-   * forwards scrobbles to Last.fm when a user has configured that on the
-   * server side.
+   * destination is queued on its own, so one destination's outage never
+   * re-submits to a destination that already accepted the play.
    */
   const queueScrobble = useCallback((
     destination: ScrobbleDestination,
@@ -116,23 +108,24 @@ export function useScrobbling() {
       }));
     }
 
-    if (serverScrobbleEnabled) {
+    if (plan.server) {
       try {
         await api.songs.scrobble(song.nativeId, opts.startTime);
-        // Jellyfin/Emby's Last.fm plugin scrobbles on PlaybackStopped; markPlayed
-        // alone doesn't reach it. Send the session-stop event with the actual
-        // listened position so the plugin picks it up. Navidrome's scrobble is
-        // the whole story on its own and implements no session events, so the
-        // `?.` skips this there.
+        // Some adapters need an explicit session-stop call to fully register
+        // the listen beyond `scrobble()` itself; it's optional on `SongsApi`
+        // and each adapter implements it only where its protocol needs it,
+        // so this is a no-op wherever it isn't. Fire-and-forget: a failed
+        // report here is not user-visible and the scrobble itself already
+        // succeeded.
         api.songs.reportPlaybackStop?.(song.nativeId, opts.listenedSeconds * 1000).catch(() => {});
       } catch {
         queueScrobble('server', song, opts.startTime, songDuration, opts.listenedSeconds);
       }
     }
 
-    if (listenBrainzConfig?.token && lbScrobbleEnabled) {
+    if (plan.direct) {
       try {
-        await listenbrainz.submitScrobble(listenBrainzConfig, {
+        await submitDirectListen(plan.direct.config, {
           artist: song.artist.name,
           track: song.title,
           listenedAt: Math.floor(opts.startTime / 1000),
@@ -141,10 +134,10 @@ export function useScrobbling() {
           album: song.album.title,
         });
       } catch {
-        queueScrobble('listenbrainz', song, opts.startTime, songDuration, opts.listenedSeconds);
+        queueScrobble(plan.direct.kind, song, opts.startTime, songDuration, opts.listenedSeconds);
       }
     }
-  }, [activeServer, serverScrobbleEnabled, listenBrainzConfig, lbScrobbleEnabled, dispatch, api, queueScrobble]);
+  }, [activeServer, plan, dispatch, api, queueScrobble]);
 
   const submitNowPlaying = useCallback((song: Song) => {
     // Live streams don't have a "now playing this track" identity — the
@@ -153,37 +146,31 @@ export function useScrobbling() {
     if (!canScrobble(song)) return;
     const songDuration = song.durationSeconds || undefined;
 
-    // Whatever the provider calls it — scrobble.view with submission=false on
-    // Subsonic, a session-start event on Jellyfin/Emby. Fire-and-forget: the
-    // scrobble plugin reads these events, but a report outage should never
-    // block the player.
-    if (serverScrobbleEnabled) {
+    // Fire-and-forget: a report outage should never block the player. Each
+    // adapter decides what "now playing" means for its own protocol.
+    if (plan.server) {
       api.songs.reportNowPlaying?.(song.nativeId).catch(() => {});
     }
 
-    if (listenBrainzConfig?.token && lbScrobbleEnabled) {
-      listenbrainz.submitNowPlaying(listenBrainzConfig, {
+    if (plan.direct) {
+      submitDirectNowPlaying(plan.direct.config, {
         artist: song.artist.name,
         track: song.title,
         durationSeconds: songDuration,
         album: song.album.title,
       }).catch(() => {});
     }
-  }, [serverScrobbleEnabled, listenBrainzConfig, lbScrobbleEnabled, api]);
+  }, [plan, api]);
 
   /**
-   * Keeps a server-side playback session alive on the providers that keep one
-   * (Jellyfin/Emby's /Sessions/Playing/Progress). Without this heartbeat the
-   * server can drop the session before the track finishes, and PlaybackStopped
-   * never reaches the Last.fm plugin. Providers with no session — Subsonic —
-   * don't implement it, so the `?.` skips them. Fire-and-forget; a failed ping
-   * is not user-visible.
+   * Keeps a server-side playback session alive on adapters that implement
+   * one — an optional `SongsApi` capability, skipped wherever it isn't
+   * implemented. Fire-and-forget; a failed ping is not user-visible.
    */
   const reportPlaybackProgress = useCallback((song: Song, positionMs: number, isPaused: boolean) => {
-    if (!serverScrobbleEnabled) return;
+    if (!plan.server) return;
     api.songs.reportPlaybackProgress?.(song.nativeId, positionMs, isPaused).catch(() => {});
-  }, [serverScrobbleEnabled, api]);
+  }, [plan, api]);
 
   return { scrobbleIfNeeded, submitNowPlaying, reportPlaybackProgress, resetLastScrobbled };
 }
-

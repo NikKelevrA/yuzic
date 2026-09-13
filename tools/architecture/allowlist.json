@@ -63,8 +63,6 @@
     "src/hooks/artists/useSimilarArtists.ts lastfm",
     "src/hooks/useExternalAlbumStatus.ts lidarr",
     "src/hooks/useExternalAlbumStatus.ts slskd",
-    "src/hooks/useScrobbling.ts lastfm",
-    "src/hooks/useScrobbling.ts listenbrainz",
     "src/offline/OfflineMutationReplayer.tsx listenbrainz",
     "src/screens/album/components/AlbumRecommendedSection.tsx deezer",
     "src/screens/artist/components/Content/PopularOnDeezerSection.tsx deezer",

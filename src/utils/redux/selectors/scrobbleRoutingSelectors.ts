@@ -1,7 +1,12 @@
 import { createSelector } from '@reduxjs/toolkit';
+import { useSelector } from 'react-redux';
 import { RootState } from '@/utils/redux/store';
 import type { ScrobbleDestinationKind, ScrobbleRoute } from '@/features/settings/scrobbling/state';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
+import { useListenBrainzConfig } from '@/utils/redux/selectors/listenbrainzSelectors';
+import type { ScrobbleDestination } from '@/utils/offline/offlineMutations';
+import type { ListenBrainzConfig } from '@/types';
+import * as listenbrainz from '@/api/listenbrainz';
 
 /**
  * Per-destination route for the active server, derived with NO migration.
@@ -67,3 +72,71 @@ export const selectScrobbleRoute = (destination: ScrobbleDestinationKind) =>
 
 export const selectLastfmScrobbleRoute = selectScrobbleRoute('lastfm');
 export const selectListenBrainzScrobbleRoute = selectScrobbleRoute('listenbrainz');
+
+/**
+ * What the playback-side scrobble coordinator (`useScrobbling`) actually
+ * needs to act on a listen, with every destination's identity folded away.
+ * It sees only two branches:
+ *  - `server`: at least one destination is routed 'through-server', so the
+ *    active server's own `SongsApi` adapter should be told about the listen
+ *    (it owns how that turns into a forward, a session event, or nothing).
+ *  - `direct`: the one destination this cut can reach without going through
+ *    a server, present only when its route is 'direct' *and* its credential
+ *    is actually available — carries everything `submitDirectListen` /
+ *    `submitDirectNowPlaying` need, so the coordinator never has to import
+ *    or name the destination itself.
+ *
+ * Collapsing both into a single hook here, in the module that already owns
+ * the routing rules, keeps `useScrobbling` a policy layer with zero
+ * knowledge of which service 'direct' resolves to today.
+ */
+type ScrobbleDestinationPlan = {
+  server: boolean;
+  direct: { kind: ScrobbleDestination; config: ListenBrainzConfig } | null;
+};
+
+export function useScrobbleDestinationPlan(): ScrobbleDestinationPlan {
+  const lastfmRoute = useSelector(selectLastfmScrobbleRoute);
+  const listenBrainzRoute = useSelector(selectListenBrainzScrobbleRoute);
+  const directConfig = useListenBrainzConfig();
+
+  const server = lastfmRoute === 'through-server' || listenBrainzRoute === 'through-server';
+  const direct = listenBrainzRoute === 'direct' && directConfig
+    ? { kind: 'listenbrainz' as ScrobbleDestination, config: directConfig }
+    : null;
+
+  return { server, direct };
+}
+
+type DirectScrobbleDetails = {
+  artist: string;
+  track: string;
+  album?: string;
+  durationSeconds?: number;
+  /** Unix seconds when playback started. */
+  listenedAt: number;
+  durationPlayedSeconds?: number;
+};
+
+type DirectNowPlayingDetails = {
+  artist: string;
+  track: string;
+  album?: string;
+  durationSeconds?: number;
+};
+
+/** Submits a completed listen straight to the 'direct' destination's own API. */
+export async function submitDirectListen(
+  config: ListenBrainzConfig,
+  details: DirectScrobbleDetails
+): Promise<void> {
+  await listenbrainz.submitScrobble(config, details);
+}
+
+/** Announces "now playing" straight to the 'direct' destination's own API. */
+export async function submitDirectNowPlaying(
+  config: ListenBrainzConfig,
+  details: DirectNowPlayingDetails
+): Promise<void> {
+  await listenbrainz.submitNowPlaying(config, details);
+}
