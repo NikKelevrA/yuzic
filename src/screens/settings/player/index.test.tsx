@@ -1,130 +1,174 @@
-import React from 'react';
-import { render } from '@testing-library/react-native';
+import React, { type ReactNode } from 'react';
+import { Alert } from 'react-native';
+import { render, fireEvent } from '@testing-library/react-native';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 
 import PlayerSettings from './index';
+import settingsPlaybackReducer from '@/features/settings/playback/state';
+import serversReducer from '@/state/redux/slices/serversSlice';
+import audiomuseReducer from '@/state/redux/slices/audiomuseSlice';
+import settingsAppearanceReducer from '@/features/settings/appearance/state';
 
-const mockDispatch = jest.fn();
-
+// Boundaries only. Everything below the screen — the settings components, the
+// real slices, the real selectors — renders for real, so this test fails when
+// a control stops writing what it claims to write.
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, back: jest.fn() }),
 }));
 
 jest.mock('@/components/toast', () => ({
   notify: { success: jest.fn(), error: jest.fn() },
 }));
 
+// The native player.
 jest.mock('@/features/player/activeBackend', () => ({
-  getBackend: () => ({ clearCache: jest.fn() }),
+  getBackend: () => ({ clearCache: mockClearCache }),
 }));
 
+// The server adapter — HTTP.
 jest.mock('@/api', () => ({
-  useApi: () => ({ songs: { streamableCodecs: ['mp3'] } }),
+  useApi: () => ({ songs: { streamableCodecs: mockStreamableCodecs } }),
 }));
 
-// Run the real selectors against a fixture state rather than stubbing the
-// selector modules, so this test still fails if a selector's shape or default
-// changes underneath the screen.
-jest.mock('react-redux', () => ({
-  useDispatch: () => mockDispatch,
-  useSelector: (selector: (state: any) => unknown) => selector({
-    settingsPlayback: {
-      preferredCodec: 'mp3',
-      autoplayEnabled: true,
-      resumeLongTracksEnabled: false,
+/* eslint-disable no-var -- hoisted for the jest.mock factories above */
+var mockPush = jest.fn();
+var mockClearCache = jest.fn();
+var mockStreamableCodecs: string[] = ['mp3'];
+/* eslint-enable no-var */
+
+import { notify } from '@/components/toast';
+
+function makeStore() {
+  return configureStore({
+    reducer: {
+      settingsPlayback: settingsPlaybackReducer,
+      servers: serversReducer,
+      audiomuse: audiomuseReducer,
+      // The real components read the theme rather than being stubbed away.
+      settingsAppearance: settingsAppearanceReducer,
     },
-    // AudioMuse config is per-server, so the fixture needs both halves: an
-    // active server id and that server's connection entry.
-    servers: { activeServerId: 'server-1' },
-    audiomuse: {
-      byServer: {
-        'server-1': { serverUrl: '', apiToken: '', isEnabled: false, isAuthenticated: false },
-      },
-    },
-  }),
-}));
+  });
+}
 
-// Real selectors, stubbed actions — same intent as the react-redux mock
-// above: the screen should still fail this test if a selector's shape
-// changes, while dispatch assertions stay on a plain, stable action shape.
-jest.mock('@/features/settings/playback/state', () => ({
-  ...jest.requireActual('@/features/settings/playback/state'),
-  setPreferredCodec: (payload: unknown) => ({ type: 'settings/setPreferredCodec', payload }),
-  setAutoplayEnabled: (payload: unknown) => ({ type: 'settings/setAutoplayEnabled', payload }),
-  setResumeLongTracksEnabled: (payload: unknown) => ({ type: 'settings/setResumeLongTracksEnabled', payload }),
-}));
+async function renderScreen(store: ReturnType<typeof makeStore>) {
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <Provider store={store}>{children}</Provider>
+  );
+  Wrapper.displayName = 'TestStoreWrapper';
+  return render(<PlayerSettings />, { wrapper: Wrapper });
+}
 
-jest.mock('../components/SettingsScreen', () => {
-  const { View } = require('react-native');
-  function MockSettingsScreen({ children }: any) {
-    return <View>{children}</View>;
-  }
-  return MockSettingsScreen;
-});
-jest.mock('../components/SettingsCard', () => {
-  const { View } = require('react-native');
-  function MockSettingsCard({ children }: any) {
-    return <View>{children}</View>;
-  }
-  return MockSettingsCard;
-});
-jest.mock('../components/SettingsCardHeader', () => {
-  const { Text } = require('react-native');
-  function MockSettingsCardHeader({ title }: any) {
-    return <Text testID={`header-${title}`}>{title}</Text>;
-  }
-  return MockSettingsCardHeader;
-});
-jest.mock('../components/SettingsRow', () => {
-  const { Text } = require('react-native');
-  function MockSettingsRow({ label }: any) {
-    return <Text>{label}</Text>;
-  }
-  return MockSettingsRow;
-});
-jest.mock('../components/SettingsToggleGroup', () => {
-  const { Text, View } = require('react-native');
-  function MockSettingsToggleGroup({ items }: any) {
-    return (
-      <View testID="toggle-group">
-        {items.map((item: any) => <Text key={item.label}>{item.label}</Text>)}
-      </View>
-    );
-  }
-  return MockSettingsToggleGroup;
-});
-jest.mock('./components/StreamingQuality', () => {
-  const { Text } = require('react-native');
-  function MockStreamingQuality() {
-    return <Text testID="streaming-quality">streaming-quality</Text>;
-  }
-  return MockStreamingQuality;
-});
-jest.mock('./components/Crossfade', () => {
-  const { Text } = require('react-native');
-  function MockCrossfade() {
-    return <Text testID="crossfade">crossfade</Text>;
-  }
-  return MockCrossfade;
-});
+type View = Awaited<ReturnType<typeof renderScreen>>;
+
+/**
+ * The switch beside a toggle row. Autoplay and long-track resume are one
+ * group rendered in declaration order, and the Opus switch, when the adapter
+ * offers it, precedes them — so the pair is the last two on the screen.
+ */
+function switchFor(view: View, label: 'settings.player.autoplay' | 'settings.player.resumeLongTracks') {
+  const switches = view.getAllByRole('switch');
+  const index = ['settings.player.autoplay', 'settings.player.resumeLongTracks'].indexOf(label);
+  expect(view.getByText(label)).toBeTruthy();
+  return switches[switches.length - 2 + index];
+}
 
 describe('PlayerSettings', () => {
-  beforeEach(() => mockDispatch.mockClear());
+  beforeEach(() => {
+    mockStreamableCodecs = ['mp3'];
+    mockPush.mockClear();
+    mockClearCache.mockClear();
+    (notify.success as jest.Mock).mockClear();
+    (notify.error as jest.Mock).mockClear();
+    jest.restoreAllMocks();
+  });
 
-  it('shows the real player controls and no dev-only engine smoke-test panel', async () => {
-    const view = await render(<PlayerSettings />);
+  it('writes autoplay to the store when the switch is turned off', async () => {
+    const store = makeStore();
+    expect(store.getState().settingsPlayback.autoplayEnabled).toBe(true);
 
-    // Real controls are present.
-    expect(view.getByTestId('streaming-quality')).toBeTruthy();
-    expect(view.getByTestId('crossfade')).toBeTruthy();
-    expect(view.getByText('settings.player.equalizer.title')).toBeTruthy();
-    expect(view.getByText('settings.player.clearCache')).toBeTruthy();
+    const view = await renderScreen(store);
+    fireEvent(switchFor(view, 'settings.player.autoplay'), 'valueChange', false);
 
-    // The dev-only diagnostic panel (EngineSmokeTest) must not render.
+    expect(store.getState().settingsPlayback.autoplayEnabled).toBe(false);
+  });
+
+  it('writes long-track resume to the store when the switch is turned off', async () => {
+    const store = makeStore();
+    expect(store.getState().settingsPlayback.resumeLongTracksEnabled).toBe(true);
+
+    const view = await renderScreen(store);
+    fireEvent(switchFor(view, 'settings.player.resumeLongTracks'), 'valueChange', false);
+
+    expect(store.getState().settingsPlayback.resumeLongTracksEnabled).toBe(false);
+  });
+
+  it('hides the Opus switch when the active adapter does not stream Opus', async () => {
+    mockStreamableCodecs = ['mp3'];
+    const view = await renderScreen(makeStore());
+
+    expect(view.queryByText('settings.player.opusCodec')).toBeNull();
+  });
+
+  it('offers Opus, and selects it, when the adapter declares it', async () => {
+    mockStreamableCodecs = ['mp3', 'opus'];
+    const store = makeStore();
+    const view = await renderScreen(store);
+
+    expect(view.getByText('settings.player.opusCodec')).toBeTruthy();
+    const opusSwitch = view.getAllByRole('switch')[0];
+    fireEvent(opusSwitch, 'valueChange', true);
+
+    expect(store.getState().settingsPlayback.preferredCodec).toBe('opus');
+  });
+
+  it('opens the equalizer on its own screen rather than inline', async () => {
+    const view = await renderScreen(makeStore());
+    fireEvent.press(view.getByText('settings.player.equalizer.title'));
+
+    expect(mockPush).toHaveBeenCalledWith('/settings/equalizerView');
+  });
+
+  it('empties the stream cache through the backend once the user confirms', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const view = await renderScreen(makeStore());
+
+    fireEvent.press(view.getByText('settings.player.clearCache'));
+
+    // Destructive, so it asks first and does nothing until the user agrees.
+    expect(alert).toHaveBeenCalled();
+    expect(mockClearCache).not.toHaveBeenCalled();
+
+    const buttons = alert.mock.calls[0][2] as { style?: string; onPress?: () => void }[];
+    const confirm = buttons.find(b => b.style === 'destructive');
+    expect(confirm).toBeDefined();
+    confirm!.onPress!();
+
+    expect(mockClearCache).toHaveBeenCalledTimes(1);
+    expect(notify.success).toHaveBeenCalledWith('settings.player.clearCacheDone');
+    expect(notify.error).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed cache clear instead of claiming success', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockClearCache.mockImplementation(() => { throw new Error('backend gone'); });
+    const view = await renderScreen(makeStore());
+
+    fireEvent.press(view.getByText('settings.player.clearCache'));
+    const buttons = alert.mock.calls[0][2] as { style?: string; onPress?: () => void }[];
+    buttons.find(b => b.style === 'destructive')!.onPress!();
+
+    expect(notify.error).toHaveBeenCalledWith('common.error.unexpected');
+    expect(notify.success).not.toHaveBeenCalled();
+  });
+
+  it('does not render the dev-only engine smoke-test panel', async () => {
+    const view = await renderScreen(makeStore());
+
     expect(view.queryByText('yuzic-engine (dev)')).toBeNull();
-    expect(view.queryByTestId('header-yuzic-engine (dev)')).toBeNull();
   });
 });

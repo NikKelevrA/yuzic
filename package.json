@@ -31,7 +31,8 @@
       "^expo-modules-core$": "<rootDir>/node_modules/expo-modules-core",
       "^expo-modules-core/(.*)$": "<rootDir>/node_modules/expo-modules-core/$1",
       "^@missingcore/audio-metadata$": "<rootDir>/__mocks__/audio-metadata.js",
-      "^expo-secure-store$": "<rootDir>/__mocks__/expo-secure-store.js"
+      "^expo-secure-store$": "<rootDir>/__mocks__/expo-secure-store.js",
+      "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js"
     },
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|expo-modules-core|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|immer|react-redux)/)"
