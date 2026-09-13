@@ -5,17 +5,7 @@ import { QueryKeys } from '@/enums/queryKeys'
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors'
 import { selectLastSyncedAt } from '@/utils/redux/selectors/settingsSelectors'
 import { setLastSyncedAt } from '@/utils/redux/slices/settingsSlice'
-import {
-  setLibraryAlbums,
-  setLibraryArtists,
-  setLibraryPlaylists,
-  setLibraryTracks,
-  setLibraryGenres,
-} from '@/utils/redux/slices/librarySlice'
-import {
-  setLibraryStarred,
-  setLibraryStarredAlbums,
-} from '@/utils/redux/slices/libraryStarredSlice'
+import { setLibraryGenres } from '@/utils/redux/slices/librarySlice'
 import { setServerAlbumStats, setServerSongStats } from '@/utils/redux/slices/statsSlice'
 import { useApi } from '@/api'
 import { staleTime } from '@/constants/staleTime'
@@ -63,19 +53,19 @@ export function useSync() {
     lastSyncedAtRef.current = lastSyncedAt
   }, [lastSyncedAt])
 
+  // `fetchQuery` populates the persisted TanStack Query cache at
+  // `[Playlists, serverId]` directly — the same cache `usePlaylists` reads —
+  // so there is nothing further to dispatch; that *was* the sync.
   const syncPlaylists = useCallback(async () => {
     if (!isConnected) return
     const serverId = activeServer!.id
     if (activeSyncServerId === serverId) return
-    const playlists = await queryClient.fetchQuery({
+    await queryClient.fetchQuery({
       queryKey: [QueryKeys.Playlists, serverId],
       queryFn: api.playlists.list,
       staleTime: 0,
     })
-    if (playlists) {
-      dispatch(setLibraryPlaylists(playlists))
-    }
-  }, [api, isConnected, activeServer, queryClient, dispatch])
+  }, [api, isConnected, activeServer, queryClient])
 
   const sync = useCallback(async (force = false) => {
     if (!isConnected) return
@@ -156,9 +146,13 @@ export function useSync() {
         starred?.songs?.length
       )
 
+      // The catalog itself needs no dispatch any more: each `fetchQuery`
+      // above already wrote its result into the persisted TanStack Query
+      // cache under the exact key `useAlbums`/`useArtists`/`usePlaylists`/
+      // `useTracks`/`useStarredSongs` read — that *is* the sync now. Redux
+      // still gets genres (not catalog, see `librarySlice`) and the
+      // server-reported play stats derived from the fetched rows below.
       if (albums) {
-        dispatch(setLibraryAlbums(albums))
-
         // Server-reported play count/last-played, where the origin reports
         // them (Album.serverPlayCount/serverLastPlayedAt). Only dispatched
         // when at least one album actually carries a count: an empty stats
@@ -179,8 +173,6 @@ export function useSync() {
         }
       }
       if (tracks) {
-        dispatch(setLibraryTracks(tracks))
-
         // Same reasoning as the album stats above, for songs.
         const songStats = tracks
           .filter((s): s is DomainSong & { serverPlayCount: number } => s.serverPlayCount !== undefined)
@@ -193,11 +185,7 @@ export function useSync() {
           dispatch(setServerSongStats({ serverId, stats: songStats }))
         }
       }
-      if (artists) dispatch(setLibraryArtists(artists))
-      if (playlists) dispatch(setLibraryPlaylists(playlists))
       if (genres) dispatch(setLibraryGenres({ serverId, genres }))
-      if (starred?.songs) dispatch(setLibraryStarred(starred.songs))
-      if (starred?.albums) dispatch(setLibraryStarredAlbums(starred.albums))
 
       if (hasAnyLibraryData) {
         const syncedAt = Date.now()

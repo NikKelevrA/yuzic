@@ -20,7 +20,7 @@
  *   node tools/architecture/measure.mjs --no-coverage
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { isTest, sourceFiles } from './allowlist.mjs';
 import {
@@ -92,23 +92,26 @@ function measureAdapterSurface() {
   return members.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** The CapabilitySlot union members, read from the contract. */
-function measureCapabilitySlots() {
-  const lines = readFileSync(join(SRC, 'features/integrations/types.ts'), 'utf8').split('\n');
-  const start = lines.findIndex(l => l.startsWith('export type CapabilitySlot ='));
-  if (start === -1) return [];
-  const slots = [];
-  // One member per line with a JSDoc line above each and no trailing semicolon,
-  // so read forward and stop at the first line that is neither a member, a
-  // comment, nor blank.
-  for (let i = start + 1; i < lines.length; i += 1) {
-    const line = lines[i].trim();
-    const member = line.match(/^\|\s*'([^']+)'/);
-    if (member) { slots.push(member[1]); continue; }
-    if (line === '' || line.startsWith('/*') || line.startsWith('*')) continue;
-    break;
+/**
+ * The capability names the contract declares.
+ *
+ * Read from `CapabilityMap`'s own keys rather than a separate union, because
+ * the map is the contract: a capability exists exactly when something can be
+ * called for it.
+ */
+function measureCapabilities() {
+  const contract = join(SRC, 'providers/contracts/Capabilities.ts');
+  if (!existsSync(contract)) return [];
+  const src = readFileSync(contract, 'utf8');
+  const block = src.match(/export interface CapabilityMap \{([\s\S]*?)\n\}/);
+  if (!block) return [];
+  const names = [];
+  for (const line of block[1].split('\n')) {
+    // Quoted keys ('artist.enrich') and bare ones (lyrics) alike.
+    const match = line.match(/^\s*'([^']+)'\s*:/) ?? line.match(/^\s*(\w+)\s*:/);
+    if (match) names.push(match[1]);
   }
-  return slots.sort();
+  return names.sort();
 }
 
 /** Protocol implementations present under src/api. */
@@ -171,7 +174,7 @@ const baseline = {
   routes: measureRoutes(files),
   adapter: {
     apiAdapterMembers: measureAdapterSurface(),
-    capabilitySlots: measureCapabilitySlots(),
+    capabilities: measureCapabilities(),
     providerImplementations: measureProviderImplementations(),
   },
 };

@@ -23,13 +23,18 @@ jest.mock('@/components/toast', () => ({
 }));
 
 // Library membership is driven directly through this mock so tests can move
-// an album "into" the library between renders without a real sync/redux path.
-// jest.mock calls are hoisted above all imports by Babel, so this takes
-// effect for `useWantArrivalWatcher`'s own import of LibraryContext above.
+// an album "into" the library between renders without a real synced-query
+// cache. jest.mock calls are hoisted above all imports by Babel, so this
+// takes effect for `useWantArrivalWatcher`'s own imports of these hooks
+// above — the persisted TanStack Query cache is the real source now (see
+// `useAlbums`/`useTracks`), but this unit test only needs their shape.
 let mockAlbums: Album[] = [];
 let mockTracks: Song[] = [];
-jest.mock('@/contexts/LibraryContext', () => ({
-  useLibrary: () => ({ albums: mockAlbums, tracks: mockTracks }),
+jest.mock('@/hooks/albums', () => ({
+  useAlbums: () => ({ albums: mockAlbums }),
+}));
+jest.mock('@/hooks/tracks', () => ({
+  useTracks: () => ({ tracks: mockTracks }),
 }));
 
 const SERVER_ID = 'server-1';

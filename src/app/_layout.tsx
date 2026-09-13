@@ -13,7 +13,6 @@ import { enableFreeze } from 'react-native-screens';
 import { PlayingProvider } from '@/contexts/PlayingContext';
 import { DlnaProvider } from '@/contexts/DlnaContext';
 import { PlaybackSinkProvider } from '@/contexts/PlaybackSinkContext';
-import { LibraryProvider } from '@/contexts/LibraryContext';
 import { SongActionSheetProvider } from '@/contexts/SongActionSheetContext';
 import { DownloadProvider } from '@/contexts/DownloadContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -32,7 +31,7 @@ import { selectLanguage } from '@/utils/redux/selectors/settingsSelectors';
 import i18n from '@/i18n';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { queryStorage } from '@/utils/mmkvStorage';
+import { queryCacheStorage } from '@/utils/mmkvStorage';
 import NetInfo from '@react-native-community/netinfo';
 import OfflineMutationReplayer from '@/offline/OfflineMutationReplayer';
 import { isLikelyNetworkError, setServerUnreachable } from '@/features/connectivity/serverReachability';
@@ -155,8 +154,10 @@ const queryClient = new QueryClient({
 
 const QUERY_CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 30;
 
-const asyncStoragePersister = createAsyncStoragePersister({
-  storage: queryStorage,
+// Named for what it persists, not for AsyncStorage — the storage behind it
+// is MMKV, in the query cache's own namespace.
+const queryPersister = createAsyncStoragePersister({
+  storage: queryCacheStorage,
 })
 
 const OFFLINE_TOAST_ID = 'offline-banner';
@@ -284,16 +285,14 @@ export default function RootLayout() {
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        persister: asyncStoragePersister,
+        persister: queryPersister,
         maxAge: QUERY_CACHE_MAX_AGE,
       }}
     >
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <LibraryProvider>
-            <OfflineMutationReplayer />
-            <AppShell />
-          </LibraryProvider>
+          <OfflineMutationReplayer />
+          <AppShell />
         </PersistGate>
       </Provider>
     </PersistQueryClientProvider>

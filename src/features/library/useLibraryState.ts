@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useAlbums } from '@/hooks/albums';
 import { matchAlbumToLibrary } from './matchToLibrary';
 import type { Album } from '@/domain/entities/Album';
 import { resolveLibraryState, type LibraryState } from '@/domain/library/LibraryState';
@@ -18,7 +18,7 @@ import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
  * precedence logic stays in the domain function.
  */
 export function useLibraryState(album: Album | null): LibraryState {
-  const { albums: libraryAlbums } = useLibrary();
+  const { albums: libraryAlbums } = useAlbums();
   const isLidarrConnected = useSelector(selectLidarrAuthenticated);
   const isSlskdConnected = useSelector(selectSlskdAuthenticated);
   const isWanted = useSelector(

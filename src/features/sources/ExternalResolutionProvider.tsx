@@ -4,7 +4,7 @@ import { notify } from '@/components/toast';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import ExternalSourcePickerSheet, { type PickerItem } from '@/components/ExternalSourcePickerSheet';
 import { useEnabledExternalSources, type SourceResolvedAlbum, type SourceResolvedArtist } from './registry';
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useAlbums } from '@/hooks/albums';
 import { useArtists } from '@/hooks/artists';
 import { matchAlbumToLibrary, matchArtistToLibrary } from '@/features/library/matchToLibrary';
 import type { Album } from '@/domain/entities/Album';
@@ -33,7 +33,7 @@ export function useExternalResolution(): ResolutionContextType {
 export function ExternalResolutionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const enabledSources = useEnabledExternalSources();
-  const { albums } = useLibrary();
+  const { albums } = useAlbums();
   const { artists } = useArtists();
 
   const albumPickerRef = useRef<BottomSheetModal>(null);

@@ -34,7 +34,7 @@ import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { useSelector } from 'react-redux'
 import { selectShowSourceHeaders } from '@/utils/redux/selectors/settingsSelectors'
-import { selectLibraryAlbums } from '@/utils/redux/selectors/librarySelectors'
+import { useAlbums } from '@/hooks/albums'
 import Touchable from '@/components/Touchable'
 import { useScrollClearance } from '@/hooks/useScrollClearance'
 
@@ -121,7 +121,7 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
 
   const { navigateToArtist } = useMatchedNavigation()
   const deezerEnabled = useDeezerDiscoveryEnabled()
-  const libraryAlbums = useSelector(selectLibraryAlbums)
+  const { albums: libraryAlbums } = useAlbums()
   const artistMbid = artist.externalIds.mbid
 
   const { similarArtists: deezerSimilar } = useArtistTopTracks({

@@ -43,11 +43,11 @@ function deriveRows(baseline) {
     }
   }
 
-  for (const slot of baseline.adapter.capabilitySlots) {
+  for (const slot of baseline.adapter.capabilities) {
     rows.push({
       id: `capability.${slot}`,
       owner: 'providers/registry',
-      legacyEvidence: `src/features/integrations/types.ts CapabilitySlot '${slot}'`,
+      legacyEvidence: `src/providers/contracts/Capabilities.ts CapabilityMap '${slot}'`,
       replacementEvidence: '',
       platforms: 'na',
       optional: false,

@@ -870,18 +870,7 @@
     {
       "id": "capability.acquisition.album",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'acquisition.album'",
-      "replacementEvidence": "",
-      "unit": "pending",
-      "integration": "pending",
-      "ios": "na",
-      "android": "na",
-      "negativeControl": "pending"
-    },
-    {
-      "id": "capability.acquisition.monitor",
-      "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'acquisition.monitor'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'acquisition.album'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -892,7 +881,40 @@
     {
       "id": "capability.acquisition.track",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'acquisition.track'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'acquisition.track'",
+      "replacementEvidence": "",
+      "unit": "pending",
+      "integration": "pending",
+      "ios": "na",
+      "android": "na",
+      "negativeControl": "pending"
+    },
+    {
+      "id": "capability.album.enrich",
+      "owner": "providers/registry",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'album.enrich'",
+      "replacementEvidence": "",
+      "unit": "pending",
+      "integration": "pending",
+      "ios": "na",
+      "android": "na",
+      "negativeControl": "pending"
+    },
+    {
+      "id": "capability.artist.enrich",
+      "owner": "providers/registry",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'artist.enrich'",
+      "replacementEvidence": "",
+      "unit": "pending",
+      "integration": "pending",
+      "ios": "na",
+      "android": "na",
+      "negativeControl": "pending"
+    },
+    {
+      "id": "capability.catalogue.album",
+      "owner": "providers/registry",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'catalogue.album'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -903,7 +925,7 @@
     {
       "id": "capability.discovery.shelf",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'discovery.shelf'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'discovery.shelf'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -914,18 +936,7 @@
     {
       "id": "capability.lyrics",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'lyrics'",
-      "replacementEvidence": "",
-      "unit": "pending",
-      "integration": "pending",
-      "ios": "na",
-      "android": "na",
-      "negativeControl": "pending"
-    },
-    {
-      "id": "capability.metadata.enrich",
-      "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'metadata.enrich'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'lyrics'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -936,29 +947,7 @@
     {
       "id": "capability.playlist.generate",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'playlist.generate'",
-      "replacementEvidence": "",
-      "unit": "pending",
-      "integration": "pending",
-      "ios": "na",
-      "android": "na",
-      "negativeControl": "pending"
-    },
-    {
-      "id": "capability.preview",
-      "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'preview'",
-      "replacementEvidence": "",
-      "unit": "pending",
-      "integration": "pending",
-      "ios": "na",
-      "android": "na",
-      "negativeControl": "pending"
-    },
-    {
-      "id": "capability.resolution",
-      "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'resolution'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'playlist.generate'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -969,7 +958,7 @@
     {
       "id": "capability.scrobble",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'scrobble'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'scrobble'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -980,7 +969,7 @@
     {
       "id": "capability.similarity.artists",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'similarity.artists'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'similarity.artists'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -991,7 +980,7 @@
     {
       "id": "capability.similarity.songs",
       "owner": "providers/registry",
-      "legacyEvidence": "src/features/integrations/types.ts CapabilitySlot 'similarity.songs'",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'similarity.songs'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",

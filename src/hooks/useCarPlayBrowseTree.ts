@@ -3,7 +3,10 @@ import { getBackend } from '@/features/player/activeBackend';
 import type { BrowseCategory, BrowseItem } from '@/features/player/browse';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useAlbums } from '@/hooks/albums';
+import { usePlaylists } from '@/hooks/playlists';
+import { useStarredSongs } from '@/hooks/starred';
+import { useTracks } from '@/hooks/tracks';
 import { Server } from '@/types';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 import type { Song as DomainSong } from '@/domain/entities/Song';
@@ -96,7 +99,10 @@ export function useCarPlayBrowseTree() {
   const activeServer = useSelector(selectActiveServer);
   const streamQuality = useStreamQuality();
   const preferredCodec = useSelector(selectPreferredCodec);
-  const { albums, playlists, starred, tracks } = useLibrary();
+  const { albums } = useAlbums();
+  const { playlists } = usePlaylists();
+  const { songs: starred } = useStarredSongs();
+  const { tracks } = useTracks();
   const [hydratedPlaylists, setHydratedPlaylists] = useState<CarPlayPlaylist[]>([]);
 
   useEffect(() => {

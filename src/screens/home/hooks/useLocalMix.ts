@@ -7,7 +7,7 @@ import { QueryKeys } from '@/enums/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import { selectSongPlayCounts } from '@/utils/redux/selectors/statsSelectors';
-import { selectSongsById } from '@/utils/redux/selectors/librarySelectors';
+import { useSongsById } from '@/hooks/tracks/useSongsById';
 import type { Song } from '@/domain/entities/Song';
 
 const SEED_POOL_SIZE = 20;
@@ -24,7 +24,7 @@ export const LOCAL_MIX_MAX_TRACKS = 10;
  */
 export function useLocalMix(refreshKey = 0) {
   const api = useApi();
-  const songsById = useSelector(selectSongsById);
+  const songsById = useSongsById();
   const playCounts = useSelector(selectSongPlayCounts);
   const serverReachable = useServerReachable();
   const dayKey = getDayKey();

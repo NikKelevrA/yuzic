@@ -10,8 +10,7 @@ import { GripVertical, ChevronLeft, Pause, Play, SkipForward } from 'lucide-reac
 import { usePlayingState, usePlayingActions, usePlayingQueueVersion } from '@/contexts/PlayingContext';
 import { MediaImage } from '@/components/MediaImage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { selectAlbumsById } from '@/utils/redux/selectors/librarySelectors';
+import { useAlbumsById } from '@/hooks/albums/useAlbumsById';
 import type { Song } from '@/domain/entities/Song';
 import Touchable from '@/components/Touchable';
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
@@ -86,7 +85,7 @@ const Queue: React.FC<{ onBack: () => void; width: number }> = ({
   const { getQueue, skipTo, moveTrack, pauseSong, resumeSong, skipToNext } = usePlayingActions();
   const queueVersion = usePlayingQueueVersion();
 
-  const albumsById = useSelector(selectAlbumsById);
+  const albumsById = useAlbumsById();
   const insets = useSafeAreaInsets();
 
   const [queue, setQueue] = useState<Song[]>([]);

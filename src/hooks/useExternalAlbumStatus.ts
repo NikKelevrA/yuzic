@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useAlbums } from '@/hooks/albums';
 import { QueryKeys } from '@/enums/queryKeys';
 import type { Album } from '@/domain/entities/Album';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
@@ -23,7 +23,7 @@ export type ExternalAlbumStatus =
   | { kind: 'none' };
 
 export function useExternalAlbumStatus(album: Album | null): ExternalAlbumStatus {
-  const { albums: libraryAlbums } = useLibrary();
+  const { albums: libraryAlbums } = useAlbums();
 
   const lidarrConfig = useSelector(selectLidarrConfig);
   const isLidarrConnected = useSelector(selectLidarrAuthenticated);

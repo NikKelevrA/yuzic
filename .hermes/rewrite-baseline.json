@@ -1,220 +1,31 @@
 {
   "schema": "yuzic-architecture-baseline/2",
   "size": {
-    "productionFiles": 700,
-    "productionLines": 65170,
-    "testFiles": 197,
-    "testLines": 21324
+    "productionFiles": 695,
+    "productionLines": 64587,
+    "testFiles": 194,
+    "testLines": 21191
   },
   "tests": {
-    "suites": 199,
-    "tests": 1516,
-    "passed": 1516,
+    "suites": 196,
+    "tests": 1499,
+    "passed": 1499,
     "failed": 0,
     "coverage": {
-      "lines": 65.28,
-      "statements": 63.09,
-      "functions": 52.22,
-      "branches": 57.42
+      "lines": 65.92,
+      "statements": 63.71,
+      "functions": 53.08,
+      "branches": 57.78
     }
   },
   "cycles": [
-    [
-      "api/index.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx"
-    ],
-    [
-      "api/index.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "contexts/DownloadContext.tsx"
-    ],
-    [
-      "api/index.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "contexts/PlaybackSinkContext.tsx"
-    ],
-    [
-      "api/index.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "hooks/useBookmarkManager.ts"
-    ],
-    [
-      "api/index.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "hooks/useCarPlayBrowseTree.ts"
-    ],
-    [
-      "api/index.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "hooks/useQueueSync.ts"
-    ],
-    [
-      "api/index.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "hooks/useScrobbling.ts"
-    ],
-    [
-      "components/Touchable.tsx",
-      "hooks/useTheme.ts",
-      "utils/redux/selectors/settingsSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "components/toast/index.ts",
-      "components/toast/ToastHost.tsx",
-      "components/toast/Toast.tsx"
-    ],
-    [
-      "contexts/DlnaContext.tsx",
-      "contexts/playableMedia.ts",
-      "utils/builders/buildCover.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "contexts/PlaybackSinkContext.tsx"
-    ],
-    [
-      "contexts/DlnaContext.tsx",
-      "contexts/playableMedia.ts",
-      "utils/builders/buildCover.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "contexts/PlaybackSinkContext.tsx"
-    ],
-    [
-      "contexts/DownloadContext.tsx",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx"
-    ],
-    [
-      "contexts/LibraryContext.tsx",
-      "utils/redux/selectors/librarySelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts",
-      "contexts/PlayingContext.tsx",
-      "hooks/useCarPlayBrowseTree.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useBookmarkManager.ts",
-      "utils/playback/bookmarkSnapshot.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useBookmarkManager.ts",
-      "utils/redux/selectors/playbackSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useBookmarkManager.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useBookmarkManager.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useCarPlayBrowseTree.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/usePlaybackPersistence.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/usePlaybackPersistence.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/usePlaybackPersistence.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useScrobbling.ts",
-      "utils/redux/selectors/listenbrainzSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useScrobbling.ts",
-      "utils/redux/selectors/scrobbleRoutingSelectors.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useScrobbling.ts",
-      "utils/redux/selectors/scrobbleRoutingSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "hooks/useScrobbling.ts",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "utils/redux/selectors/audiomuseSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
-    [
-      "contexts/PlayingContext.tsx",
-      "utils/redux/selectors/serversSelectors.ts",
-      "utils/redux/store.ts",
-      "utils/redux/slices/playbackSlice.ts"
-    ],
     [
       "features/home/homeLayout.ts",
       "features/home/hooks/useDailyLayout.ts"
     ]
   ],
   "unusedExports": {
-    "count": 610,
+    "count": 594,
     "entries": [
       "src/api/audiomuse/index.ts - AudiomuseClient",
       "src/api/audiomuse/index.ts - AudiomuseConfig",
@@ -579,7 +390,9 @@
       "src/domain/index.ts - PlaylistRef",
       "src/domain/index.ts - Provenance",
       "src/domain/index.ts - ReleaseType",
+      "src/domain/index.ts - RepeatModeState",
       "src/domain/index.ts - ServerProvenance",
+      "src/domain/index.ts - ShuffleMode",
       "src/domain/index.ts - Song",
       "src/domain/index.ts - contentKindBehaviour",
       "src/domain/index.ts - findMatch",
@@ -611,16 +424,6 @@
       "src/features/home/hooks/useDailyLayout.ts - HomeLayout (used in module)",
       "src/features/home/hooks/useDailyLayout.ts - SectionType (used in module)",
       "src/features/home/hooks/useDeezerEnabled.ts - useDeezerSearchEnabled",
-      "src/features/integrations/capabilityRegistry.ts - SlotProvider (used in module)",
-      "src/features/integrations/capabilityRegistry.ts - audiomuseSlots (used in module)",
-      "src/features/integrations/capabilityRegistry.ts - useSlotFilled",
-      "src/features/integrations/capabilityRegistry.ts - useSlotProviders (used in module)",
-      "src/features/integrations/types.ts - AuthDescriptor (used in module)",
-      "src/features/integrations/types.ts - AuthTier (used in module)",
-      "src/features/integrations/types.ts - ModuleDescription (used in module)",
-      "src/features/integrations/types.ts - OptionsDescriptor (used in module)",
-      "src/features/integrations/types.ts - OptionsField (used in module)",
-      "src/features/integrations/types.ts - SlotImpl (used in module)",
       "src/features/lyrics/resolveLyrics.ts - ExternalLyricsFetcher (used in module)",
       "src/features/lyrics/resolveLyrics.ts - ResolveLyricsInput (used in module)",
       "src/features/metadata/resolveArtistInfo.ts - ALL_ARTIST_INFO_SOURCES",
@@ -688,9 +491,7 @@
       "src/providers/contracts/Capabilities.ts - Listen (used in module)",
       "src/providers/contracts/Capabilities.ts - LyricLine (used in module)",
       "src/providers/contracts/Capabilities.ts - Lyrics (used in module)",
-      "src/providers/contracts/Provider.ts - AuthDescriptor (used in module)",
       "src/providers/contracts/Provider.ts - AuthTier (used in module)",
-      "src/providers/contracts/Provider.ts - Health (used in module)",
       "src/providers/contracts/Provider.ts - Presentation (used in module)",
       "src/providers/registry/capabilityBroker.ts - CapabilityOffer (used in module)",
       "src/screens/album/components/Content/index.tsx - default",
@@ -795,11 +596,6 @@
       "src/utils/redux/slices/audiomuseSlice.ts - AudiomuseState (used in module)",
       "src/utils/redux/slices/downloadersSlice.ts - DownloaderDefaults (used in module)",
       "src/utils/redux/slices/downloadersSlice.ts - DownloadersState (used in module)",
-      "src/utils/redux/slices/librarySlice.ts - clearLibraryAlbums (used in module)",
-      "src/utils/redux/slices/librarySlice.ts - clearLibraryArtists (used in module)",
-      "src/utils/redux/slices/librarySlice.ts - clearLibraryGenres (used in module)",
-      "src/utils/redux/slices/librarySlice.ts - clearLibraryPlaylists (used in module)",
-      "src/utils/redux/slices/librarySlice.ts - clearLibraryTracks (used in module)",
       "src/utils/redux/slices/listenbrainzSlice.ts - ListenBrainzState (used in module)",
       "src/utils/redux/slices/playbackSlice.ts - PlaybackState (used in module)",
       "src/utils/redux/slices/searchHistorySlice.ts - SearchEntityType (used in module)",
@@ -818,7 +614,6 @@
       "src/utils/redux/slices/wantsSlice.ts - WantUnit (used in module)",
       "src/utils/redux/slices/wantsSlice.ts - WantsState (used in module)",
       "src/utils/redux/store.ts - AppDispatch",
-      "src/utils/redux/store.ts - rootReducer",
       "src/utils/servers/registry.ts - ConnectResult (used in module)",
       "src/utils/servers/registry.ts - DemoResult (used in module)",
       "src/utils/servers/registry.ts - LibraryScope (used in module)",
@@ -874,11 +669,11 @@
         },
         {
           "file": "src/features/downloaders/registry.ts",
-          "line": 175
+          "line": 174
         },
         {
           "file": "src/features/downloaders/registry.ts",
-          "line": 212
+          "line": 208
         },
         {
           "file": "src/screens/onboarding/libraries/index.tsx",
@@ -890,11 +685,11 @@
         },
         {
           "file": "src/utils/redux/store.ts",
-          "line": 25
+          "line": 20
         },
         {
           "file": "src/utils/redux/store.ts",
-          "line": 89
+          "line": 84
         }
       ]
     },
@@ -903,7 +698,7 @@
       "entries": [
         {
           "file": "src/contexts/PlayingContext.tsx",
-          "line": 444
+          "line": 450
         }
       ]
     },
@@ -1102,32 +897,32 @@
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 62,
+        "line": 63,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 68,
+        "line": 69,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 344,
+        "line": 348,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 345,
+        "line": 349,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 587,
+        "line": 593,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 590,
+        "line": 596,
         "provider": "audiomuse"
       },
       {
@@ -2502,17 +2297,17 @@
       },
       {
         "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 14,
+        "line": 13,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 52,
+        "line": 51,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 78,
+        "line": 77,
         "provider": "listenbrainz"
       },
       {
@@ -4667,72 +4462,72 @@
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 44,
+        "line": 39,
         "provider": "deezer"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 45,
+        "line": 40,
         "provider": "deezer"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 46,
+        "line": 41,
         "provider": "deezer"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 47,
+        "line": 42,
         "provider": "deezer"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 48,
+        "line": 43,
         "provider": "deezer"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 74,
+        "line": 69,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 83,
+        "line": 78,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 95,
+        "line": 90,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 96,
+        "line": 91,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 99,
+        "line": 94,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 165,
+        "line": 147,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 167,
+        "line": 149,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 184,
+        "line": 161,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 186,
+        "line": 163,
         "provider": "listenbrainz"
       }
     ]
@@ -4743,7 +4538,7 @@
     "entries": [
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "lines": 1585,
+        "lines": 1591,
         "limit": 250
       },
       {
@@ -5101,16 +4896,15 @@
         ]
       }
     ],
-    "capabilitySlots": [
+    "capabilities": [
       "acquisition.album",
-      "acquisition.monitor",
       "acquisition.track",
+      "album.enrich",
+      "artist.enrich",
+      "catalogue.album",
       "discovery.shelf",
       "lyrics",
-      "metadata.enrich",
       "playlist.generate",
-      "preview",
-      "resolution",
       "scrobble",
       "similarity.artists",
       "similarity.songs"

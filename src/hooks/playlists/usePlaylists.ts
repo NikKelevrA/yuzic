@@ -5,35 +5,33 @@ import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { hasArrayData, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
-import { useLibrary } from '@/contexts/LibraryContext';
 
 type UsePlaylistsResult = {
   playlists: Playlist[];
   isLoading: boolean;
   error: Error | null;
+  /** True when showing persisted-cache data because the server couldn't be asked. */
+  degraded: boolean;
 };
 
-/**
- * `PlaylistsApi.list` returns domain `Playlist[]`. See `usePlaylist` for why
- * the synced-library fallback needs no conversion now.
- */
+/** See `useAlbums` for why the persisted query cache is the whole offline story now. */
 export function usePlaylists(): UsePlaylistsResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
-  const { playlists: libraryPlaylists } = useLibrary();
 
   const query = useOfflineFirstQuery<Playlist[]>({
     queryKey: [QueryKeys.Playlists, activeServer?.id],
     queryFn: api.playlists.list,
     enabled: !!activeServer?.id,
     staleTime: staleTime.playlists,
-    fallbackData: libraryPlaylists,
-    hasFallbackData: hasArrayData,
+    emptyValue: [],
+    hasData: hasArrayData,
   });
 
   return {
     playlists: query.data,
     isLoading: query.isLoading,
     error: query.error,
+    degraded: query.degraded,
   };
 }

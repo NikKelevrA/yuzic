@@ -21,7 +21,7 @@ import {
   selectSongPlayCounts,
   selectSongLastPlayedAt,
 } from '@/utils/redux/selectors/statsSelectors';
-import { selectSongsById } from '@/utils/redux/selectors/librarySelectors';
+import { useSongsById } from '@/hooks/tracks/useSongsById';
 import { seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import type { Song } from '@/domain/entities/Song';
 import {
@@ -35,7 +35,7 @@ import { SECTION_H_PADDING } from '@/features/home/constants';
 import { iconSize, spacing, typography } from '@/constants/design';
 
 function useQuickPicks(refreshKey: number, itemCount: number): Song[] {
-  const songsById = useSelector(selectSongsById);
+  const songsById = useSongsById();
   const playCounts = useSelector(selectSongPlayCounts);
   const lastPlayedAt = useSelector(selectSongLastPlayedAt);
 

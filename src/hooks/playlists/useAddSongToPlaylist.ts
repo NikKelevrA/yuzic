@@ -8,7 +8,6 @@ import type { PlaylistDetail } from '@/domain/entities/Detail';
 import type { Song } from '@/domain/entities/Song';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { usePlayableSongResolver } from '@/hooks/songs';
-import { addLibraryPlaylistSong } from '@/utils/redux/slices/librarySlice';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 
@@ -37,7 +36,6 @@ export function useAddSongToPlaylist() {
 
       if (isOffline) {
         if (!activeServer?.id || !song) throw new Error('Song is not available offline.');
-        dispatch(addLibraryPlaylistSong({ playlistId, song }));
         dispatch(enqueueOfflineMutationAction({
           id: createOfflineMutationId('addSongToPlaylist', [activeServer.id, playlistId, song.localId]),
           serverId: activeServer.id,
@@ -78,7 +76,6 @@ export function useAddSongToPlaylist() {
             playlist.nativeId === playlistId ? { ...playlist, updatedAt: Date.now() } : playlist
           )
         );
-        dispatch(addLibraryPlaylistSong({ playlistId, song }));
       } else {
         // No song object available — fall back to invalidation so UI stays correct
         queryClient.invalidateQueries({

@@ -4,10 +4,10 @@ import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { FAVORITES_ID } from '@/constants/favorites';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { usePlayableSongResolver } from '@/hooks/songs';
-import { addLibraryStarredSong } from '@/utils/redux/slices/libraryStarredSlice';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 
@@ -20,23 +20,29 @@ export function useStarSong() {
   const activeServer = useSelector(selectActiveServer);
   const isOffline = useIsOffline();
   const { resolvePlayableSong } = usePlayableSongResolver();
-  // `libraryStarred` now stores domain `Song` entities; `resolvePlayableSong`
-  // still returns the legacy playable shape the offline-mutation queue and
-  // player expect (see `usePlayableSongResolver`). Look the domain entity up
-  // by nativeId to dispatch the right shape into Redux; the legacy `song` is
-  // still what's enqueued for eventual replay to the server.
 
   return useMutation({
     mutationFn: async (input: StarSongInput) => {
       const songId = typeof input === 'string' ? input : input.nativeId;
-      // The resolver hands back a playable resource; what the library and the
-      // offline queue want is the song inside it, not the session URL.
+      // The resolver hands back a playable resource; what the offline queue
+      // wants is the song inside it, not the session URL.
       const resolved = await resolvePlayableSong(input, { allowNetwork: !isOffline });
 
       if (isOffline) {
         if (!activeServer?.id || !resolved) throw new Error('Song is not available offline.');
         const song = resolved.song;
-        dispatch(addLibraryStarredSong(song));
+        // Optimistically add to the persisted `[Starred, serverId]` query
+        // cache — the same cache the live path reads, so there's no second
+        // store to keep in sync. `useStarredSongs`/`useStarredAlbums` (and
+        // the favorites playlist screen) pick this up on their next render.
+        queryClient.setQueryData<{ songs: Song[]; albums: Album[] }>(
+          [QueryKeys.Starred, activeServer.id],
+          current => {
+            const base = current ?? { songs: [], albums: [] };
+            if (base.songs.some(s => s.nativeId === song.nativeId)) return base;
+            return { ...base, songs: [...base.songs, song] };
+          }
+        );
         dispatch(enqueueOfflineMutationAction({
           id: createOfflineMutationId('starSong', [activeServer.id, song.localId]),
           serverId: activeServer.id,

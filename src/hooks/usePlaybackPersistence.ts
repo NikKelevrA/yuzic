@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RepeatModeState, ShuffleMode } from '@/contexts/PlayingContext';
+import type { RepeatModeState, ShuffleMode } from '@/domain/playback/PlaybackModes';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import {

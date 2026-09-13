@@ -6,8 +6,9 @@ import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { FAVORITES_ID } from '@/constants/favorites';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { removeLibraryStarredSong } from '@/utils/redux/slices/libraryStarredSlice';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 
@@ -22,7 +23,15 @@ export function useUnstarSong() {
     mutationFn: async (songId: string) => {
       if (isOffline) {
         if (!activeServer?.id) throw new Error('No active server.');
-        dispatch(removeLibraryStarredSong(songId));
+        // See `useStarSong` — optimistically mutate the persisted
+        // `[Starred, serverId]` query cache directly; no second store.
+        queryClient.setQueryData<{ songs: Song[]; albums: Album[] }>(
+          [QueryKeys.Starred, activeServer.id],
+          current => {
+            if (!current) return current;
+            return { ...current, songs: current.songs.filter(s => s.nativeId !== songId) };
+          }
+        );
         // The queue is keyed by identity so a queued add and a later remove of
         // the same track collapse. These operations only ever address the
         // active server, so its provenance is the right scope to build it in.

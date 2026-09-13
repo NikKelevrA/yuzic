@@ -5,7 +5,6 @@ import { QueryKeys } from '@/enums/queryKeys';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { removeLibraryPlaylist } from '@/utils/redux/slices/librarySlice';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 
@@ -20,7 +19,6 @@ export function useDeletePlaylist() {
     mutationFn: async (playlistId: string) => {
       if (isOffline) {
         if (!activeServer?.id) throw new Error('No active server.');
-        dispatch(removeLibraryPlaylist(playlistId));
         dispatch(enqueueOfflineMutationAction({
           id: createOfflineMutationId('deletePlaylist', [activeServer.id, playlistId]),
           serverId: activeServer.id,

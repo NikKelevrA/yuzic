@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import type { ServerPlayQueue } from '@/api/types';
 import type { Song } from '@/domain/entities/Song';
-import { selectLibraryTracks } from '@/utils/redux/selectors/librarySelectors';
+import { useTracks } from '@/hooks/tracks';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import { selectQueueSyncEnabled } from '@/utils/redux/selectors/settingsSelectors';
 import { selectPersistedPlaybackQueue } from '@/utils/redux/selectors/playbackSelectors';
@@ -43,7 +43,7 @@ function isStale(queue: ServerPlayQueue | null): boolean {
 export function useResumableServerQueue() {
   const api = useApi();
   const serverId = useSelector(selectActiveServerId);
-  const tracks = useSelector(selectLibraryTracks);
+  const { tracks } = useTracks();
   const persistedQueue = useSelector(selectPersistedPlaybackQueue);
   const queueSyncEnabled = useSelector(selectQueueSyncEnabled);
   const { currentSong, isPlaying } = usePlayingState();

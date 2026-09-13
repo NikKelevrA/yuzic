@@ -9,6 +9,7 @@ import React, {
   ReactNode,
 } from 'react';
 import type { MediaItem } from '../features/player/mediaItem';
+import type { RepeatModeState, ShuffleMode } from '@/domain/playback/PlaybackModes';
 import { getBackend } from '@/features/player/activeBackend';
 import { presetToBands } from '@/features/player/audioSettings';
 import {
@@ -86,7 +87,7 @@ import {
   selectPersistedPlaybackShuffleMode,
 } from '@/utils/redux/selectors/playbackSelectors';
 import { selectActiveServerId as selectActiveServerIdSel, selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { selectLibraryTracks } from '@/utils/redux/selectors/librarySelectors';
+import { useTracks } from '@/hooks/tracks';
 import { clampStartIndex, trimQueueAroundIndex } from './adhocQueue';
 import {
   backendRepeatMode,
@@ -102,13 +103,16 @@ export interface PlaybackProgress {
   buffered: number;
 }
 
-export type RepeatModeState = 'off' | 'all' | 'one';
-
+// `RepeatModeState`/`ShuffleMode` now live in `@/domain/playback/PlaybackModes` (see
+// the import above) so `playbackSlice.ts` can import just the types without
+// pulling in this whole context module — see that file's own comment for
+// the cycle this avoids. Only used locally in this file now; nothing else
+// imports them from here.
+//
 // off -> shuffle -> smart -> off, matching the shuffle button's tap cycle.
 // 'smart' reorders and blends in tracks from outside the original selection
 // (via the tiered AudioMuse/native provider); Autoplay is the separate,
 // shuffle-mode-independent feature that extends the queue once it runs out.
-export type ShuffleMode = 'off' | 'shuffle' | 'smart';
 
 /** An album or playlist together with the tracks to queue from it. */
 export type PlayableCollection = AlbumDetail | PlaylistDetail;
@@ -420,8 +424,10 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // to hand it to `buildRestoredQueue`. It used to require `libraryTracks as
   // unknown as Song[]` here, laundering a domain `Song` into the legacy shape
   // the queue held at the time; the type migration removes the need for it
-  // rather than fixing it in place.
-  const libraryTracks = useSelector(selectLibraryTracks);
+  // rather than fixing it in place. Sourced from the persisted TanStack
+  // Query cache via `useTracks` now — see `useAlbums` for why there's no
+  // separate Redux mirror to read instead.
+  const { tracks: libraryTracks } = useTracks();
   const hasAutoRestoredRef = useRef(false);
   useEffect(() => {
     if (hasAutoRestoredRef.current) return;

@@ -44,6 +44,9 @@ jest.mock('@/features/home/hooks/useDeezerEnabled', () => ({
 }));
 
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');
+jest.mock('@/hooks/tracks/useSongsById', () => ({
+  useSongsById: () => mockSongsById,
+}));
 jest.mock('@/components/SkeletonListRow', () => 'SkeletonListRow');
 
 jest.mock('@/utils/useSheetRef', () => ({
@@ -82,6 +85,13 @@ jest.mock('@/features/connectivity/useServerReachable', () => ({
   useServerReachable: jest.fn(() => true),
 }));
 
+// `useSongsById` now reads the catalog through `useTracks`, which goes
+// through `useOfflineFirstQuery` and so calls the real `useNetInfo` — this
+// suite doesn't exercise offline behavior, so it's always "online" here.
+jest.mock('@react-native-community/netinfo', () => ({
+  useNetInfo: () => ({ isConnected: true, isInternetReachable: true }),
+}));
+
 // The shelf's own gating (seeds present, similarity capability present,
 // server reachable) is what's worth asserting here — the actual
 // fetch/merge is the same pattern already covered elsewhere (queueProviders,
@@ -90,6 +100,9 @@ const mockUseQuery = jest.fn();
 jest.mock('@tanstack/react-query', () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
+
+/** The library the local mix seeds from, keyed the way `useSongsById` keys it. */
+let mockSongsById = new Map<string, Song>();
 
 const mockGetSimilarSongs = jest.fn();
 import type { Song } from '@/domain/entities/Song';
@@ -134,6 +147,9 @@ function domainSong(nativeId: string, title: string, artistName: string): Song {
 
 const sampleSimilarSong = domainSong('s1', 'Similar Song', 'Some Artist');
 
+/** What the local-mix query itself resolves to; set per test. */
+let similarQueryResult: { data: Song[] | undefined; isLoading: boolean } = { data: [], isLoading: false };
+
 function renderWithStore(
   ui: React.ReactElement,
   {
@@ -141,6 +157,11 @@ function renderWithStore(
     tracks = [domainSong('seed1', 'Seed Song', 'Seed Artist')],
   }: { songPlays?: Record<string, number>; tracks?: Song[] } = {}
 ) {
+  // There is no Redux catalog slice to seed any more; the seeds come from the
+  // lookup hook, which reads the query-backed catalog.
+  mockSongsById = new Map(tracks.map(song => [song.nativeId, song]));
+  mockUseQuery.mockReturnValue(similarQueryResult);
+
   const store = configureStore({
     reducer: {
       stats: (state = {
@@ -150,7 +171,6 @@ function renderWithStore(
         serverSongLastPlayedAt: {},
       }) => state,
       servers: (state = { activeServerId: 's1' }) => state,
-      libraryTracks: (state = { tracks }) => state,
     },
   });
 
@@ -168,7 +188,7 @@ describe('LocalMixSection', () => {
   });
 
   it('seeds from play-stats and calls api.similar.getSimilarSongs (never an external service)', async () => {
-    mockUseQuery.mockReturnValue({ data: [sampleSimilarSong], isLoading: false });
+    similarQueryResult = { data: [sampleSimilarSong], isLoading: false };
 
     const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
 
@@ -181,7 +201,7 @@ describe('LocalMixSection', () => {
   });
 
   it('hides when there is no play history to seed from', async () => {
-    mockUseQuery.mockReturnValue({ data: [], isLoading: false });
+    similarQueryResult = { data: [], isLoading: false };
 
     const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />, {
       songPlays: {},
@@ -195,7 +215,7 @@ describe('LocalMixSection', () => {
 
   it('hides when the server adapter has no similarity capability', async () => {
     (useApi as jest.Mock).mockReturnValue({ similar: {} });
-    mockUseQuery.mockReturnValue({ data: [], isLoading: false });
+    similarQueryResult = { data: [], isLoading: false };
 
     const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
 
@@ -205,7 +225,7 @@ describe('LocalMixSection', () => {
   });
 
   it('stays hidden when the similarity expansion has no results', async () => {
-    mockUseQuery.mockReturnValue({ data: [], isLoading: false });
+    similarQueryResult = { data: [], isLoading: false };
 
     const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
 
@@ -213,7 +233,7 @@ describe('LocalMixSection', () => {
   });
 
   it('shows a loading skeleton while the query is in flight', async () => {
-    mockUseQuery.mockReturnValue({ data: undefined, isLoading: true });
+    similarQueryResult = { data: [], isLoading: true };
 
     const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
 
@@ -224,7 +244,7 @@ describe('LocalMixSection', () => {
     // No Deezer/ListenBrainz mock reads any setting here — presence depends
     // only on play-stats + server similarity + reachability, asserted above.
     // This test documents that guarantee explicitly for reviewers.
-    mockUseQuery.mockReturnValue({ data: [sampleSimilarSong], isLoading: false });
+    similarQueryResult = { data: [sampleSimilarSong], isLoading: false };
 
     const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
 

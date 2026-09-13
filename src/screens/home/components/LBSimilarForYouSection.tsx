@@ -9,8 +9,7 @@ import { getLBSimilarArtists } from '@/api/listenbrainz';
 import { QueryKeys } from '@/enums/queryKeys';
 import { useTheme } from '@/hooks/useTheme';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
-import { useArtistMbid } from '@/hooks/artists';
-import { selectLibraryArtists } from '@/utils/redux/selectors/librarySelectors';
+import { useArtistMbid, useArtists } from '@/hooks/artists';
 import { selectListenbrainzDiscoveryEnabled } from '@/utils/redux/selectors/settingsSelectors';
 import {
   SECTION_H_PADDING as H_PADDING,
@@ -48,7 +47,7 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
   const { colors } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const { navigateToArtist } = useMatchedNavigation();
-  const libraryArtists = useSelector(selectLibraryArtists);
+  const { artists: libraryArtists } = useArtists();
   const discoveryEnabled = useSelector(selectListenbrainzDiscoveryEnabled);
 
   const seed = useMemo(

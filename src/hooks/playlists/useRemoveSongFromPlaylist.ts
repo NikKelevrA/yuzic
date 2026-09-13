@@ -8,7 +8,6 @@ import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { removeLibraryPlaylistSong } from '@/utils/redux/slices/librarySlice';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 
@@ -28,7 +27,6 @@ export function useRemoveSongFromPlaylist() {
     mutationFn: async ({ playlistId, songId }: RemoveSongArgs) => {
       if (isOffline) {
         if (!activeServer?.id) throw new Error('No active server.');
-        dispatch(removeLibraryPlaylistSong({ playlistId, songId }));
         // The queue is keyed by identity so a queued add and a later remove of
         // the same track collapse. These operations only ever address the
         // active server, so its provenance is the right scope to build it in.

@@ -5,8 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CloudOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useAlbum, useExternalAlbum } from '@/hooks/albums';
-import { useLibrary } from '@/contexts/LibraryContext';
+import { useAlbum, useAlbums, useExternalAlbum } from '@/hooks/albums';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { useTheme } from '@/hooks/useTheme';
 import NotFoundView from '@/components/NotFoundView';
@@ -32,7 +31,7 @@ const AlbumScreen: React.FC = () => {
 
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { albums } = useLibrary();
+  const { albums } = useAlbums();
   const insets = useSafeAreaInsets();
 
   // Identity is re-resolved only when the route's own identity params change

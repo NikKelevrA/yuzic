@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import type { ContentKind } from '@/domain/playback/ContentKind';
 import type { CoverSource } from '@/types/Cover';
-import type { RepeatModeState, ShuffleMode } from '@/contexts/PlayingContext';
+import type { RepeatModeState, ShuffleMode } from '@/domain/playback/PlaybackModes';
 
 /**
  * Enough of a track to draw it in a "pick back up" row without looking it up.

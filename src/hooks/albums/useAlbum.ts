@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { QueryKeys } from '@/enums/queryKeys';
 import type { Album } from '@/domain/entities/Album';
@@ -8,7 +7,6 @@ import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { hasValue, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
-import { useLibrary } from '@/contexts/LibraryContext';
 import { buildFallbackAlbumSongs } from './fallbackSongs';
 
 type UseAlbumResult = {
@@ -18,37 +16,45 @@ type UseAlbumResult = {
   isLoading: boolean;
   songsLoading: boolean;
   error: Error | null;
-  /** True when showing library-synced data because the server couldn't be asked. */
+  /** True when showing persisted-cache data because the server couldn't be asked. */
   degraded: boolean;
 };
 
 /**
  * `AlbumsApi.get` returns the album and its tracks as a pair rather than an
- * album with an embedded `songs` array — see `AlbumDetail`. The offline
- * fallback reconstructs the same shape from `LibraryContext`, now that it
- * holds domain entities too: the album is looked up by `nativeId` in the
- * synced album list, and its tracks are rebuilt from the synced track list
- * via `buildFallbackAlbumSongs` (matching on `song.album.nativeId`, see that
- * function's comment for why `nativeId` rather than `localId` is safe here).
+ * album with an embedded `songs` array — see `AlbumDetail`. This album may
+ * never have been individually fetched (and so has no entry of its own in
+ * the persisted query cache at `[Album, serverId, id]`), so the offline
+ * fallback reads two *other* persisted cache entries directly — the albums
+ * list (`[Albums, serverId]`, to find this album by `nativeId`) and the
+ * tracks list (`[Tracks, serverId]`, to rebuild its songs via
+ * `buildFallbackAlbumSongs`) — rather than a second store.
  */
 export function useAlbum(id: string): UseAlbumResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
-  const { albums: libraryAlbums, tracks: libraryTracks } = useLibrary();
-
-  const fallbackData = useMemo<AlbumDetail | null>(() => {
-    const album = libraryAlbums.find(a => a.nativeId === id) ?? null;
-    if (!album) return null;
-    return { album, songs: buildFallbackAlbumSongs(libraryTracks, id) };
-  }, [libraryAlbums, libraryTracks, id]);
+  const serverId = activeServer?.id;
 
   const query = useOfflineFirstQuery<AlbumDetail | null>({
-    queryKey: [QueryKeys.Album, activeServer?.id, id],
+    queryKey: [QueryKeys.Album, serverId, id],
     queryFn: async () => api.albums.get(id),
-    enabled: !!activeServer?.id && !!id,
+    enabled: !!serverId && !!id,
     staleTime: staleTime.albums,
-    fallbackData,
-    hasFallbackData: hasValue,
+    emptyValue: null,
+    hasData: hasValue,
+    fallback: {
+      sources: [
+        { queryKey: [QueryKeys.Albums, serverId], queryFn: api.albums.list },
+        { queryKey: [QueryKeys.Tracks, serverId], queryFn: api.tracks.list },
+      ],
+      select: ([cachedAlbums, cachedTracks]) => {
+        const albums = Array.isArray(cachedAlbums) ? (cachedAlbums as Album[]) : [];
+        const tracks = Array.isArray(cachedTracks) ? (cachedTracks as Song[]) : [];
+        const album = albums.find(a => a.nativeId === id);
+        if (!album) return undefined;
+        return { album, songs: buildFallbackAlbumSongs(tracks, id) };
+      },
+    },
   });
 
   return {

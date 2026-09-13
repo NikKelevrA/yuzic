@@ -10,7 +10,7 @@ import { resourceFromBookmarkSnapshot } from '@/utils/playback/bookmarkSnapshot'
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useRadius } from '@/hooks/useRadius';
-import { selectLibraryTracks } from '@/utils/redux/selectors/librarySelectors';
+import { useTracks } from '@/hooks/tracks';
 import { selectPersistedPlaybackBookmarks } from '@/utils/redux/selectors/playbackSelectors';
 import {
   SECTION_H_PADDING as H_PADDING,
@@ -40,7 +40,7 @@ export default function ContinuePlayingSection() {
   const rad = useRadius();
   const { width: screenWidth } = useWindowDimensions();
   const { playSong } = usePlayingActions();
-  const tracks = useSelector(selectLibraryTracks);
+  const { tracks } = useTracks();
   const bookmarks = useSelector(selectPersistedPlaybackBookmarks);
 
   const itemSize = useMemo(

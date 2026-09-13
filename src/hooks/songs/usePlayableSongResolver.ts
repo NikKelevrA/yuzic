@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { useDownloadActions } from '@/contexts/DownloadContext';
-import { selectSongsById } from '@/utils/redux/selectors/librarySelectors';
+import { useSongsById } from '@/hooks/tracks/useSongsById';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { selectPreferredCodec } from '@/utils/redux/selectors/settingsSelectors';
 import type { Song } from '@/domain/entities/Song';
@@ -48,8 +48,8 @@ export function usePlayableSongResolver() {
   const api = useApi();
   const queryClient = useQueryClient();
   const activeServer = useSelector(selectActiveServer);
-  // Keyed by nativeId — see librarySelectors' selectSongsById.
-  const songsById = useSelector(selectSongsById);
+  // Keyed by nativeId — see useSongsById.
+  const songsById = useSongsById();
   const { getLocalPath } = useDownloadActions();
   const streamQuality = useStreamQuality();
   const preferredCodec = useSelector(selectPreferredCodec);

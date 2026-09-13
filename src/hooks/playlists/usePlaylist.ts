@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { QueryKeys } from '@/enums/queryKeys';
 import type { Playlist } from '@/domain/entities/Playlist';
@@ -8,7 +7,6 @@ import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { hasValue, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
-import { useLibrary } from '@/contexts/LibraryContext';
 
 type UsePlaylistResult = {
   playlist: Playlist | null;
@@ -17,40 +15,46 @@ type UsePlaylistResult = {
   isLoading: boolean;
   songsLoading: boolean;
   error: Error | null;
-  /** True when showing library-synced data because the server couldn't be asked.
-   * Unlike the album fallback, playlist membership isn't synced to Redux, so a
-   * degraded playlist that was never opened online shows no songs — the flag
-   * lets the screen say why. Previously-opened playlists restore their songs
-   * from the persisted query cache and aren't degraded. */
+  /** True when showing persisted-cache data because the server couldn't be asked.
+   * Unlike the album fallback, playlist membership was never synced list-wide
+   * (only a playlist's own metadata was), so a degraded playlist that was
+   * never opened online shows no songs — the flag lets the screen say why.
+   * A previously-opened playlist has its own `[Playlist, serverId, id]`
+   * persisted cache entry with its songs already in it and isn't degraded. */
   degraded: boolean;
 };
 
 /**
  * `PlaylistsApi.get` returns the playlist and its tracks as a pair rather
- * than a playlist with an embedded `songs` array — see `PlaylistDetail`. The
- * fallback looks the playlist up by `nativeId` in the synced (domain)
- * playlist list; its songs stay empty, same as before the rewrite — a
- * playlist's track membership was never synced into Redux, only the
- * playlist's own metadata.
+ * than a playlist with an embedded `songs` array — see `PlaylistDetail`.
+ * This playlist may never have been individually fetched, so the offline
+ * fallback reads the playlists *list*'s persisted cache entry directly
+ * (`[Playlists, serverId]`) and looks it up by `nativeId`; its songs stay
+ * empty, same as before the rewrite — a playlist's track membership was
+ * never synced into the list-level cache entry, only the playlist's own
+ * metadata.
  */
 export function usePlaylist(id: string): UsePlaylistResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
-  const { playlists: libraryPlaylists } = useLibrary();
-
-  const fallbackData = useMemo<PlaylistDetail | null>(() => {
-    const playlist = libraryPlaylists.find(p => p.nativeId === id) ?? null;
-    if (!playlist) return null;
-    return { playlist, songs: [] };
-  }, [libraryPlaylists, id]);
+  const serverId = activeServer?.id;
 
   const query = useOfflineFirstQuery<PlaylistDetail | null>({
-    queryKey: [QueryKeys.Playlist, activeServer?.id, id],
+    queryKey: [QueryKeys.Playlist, serverId, id],
     queryFn: async () => api.playlists.get(id),
-    enabled: !!activeServer?.id && !!id,
+    enabled: !!serverId && !!id,
     staleTime: staleTime.playlists,
-    fallbackData,
-    hasFallbackData: hasValue,
+    emptyValue: null,
+    hasData: hasValue,
+    fallback: {
+      sources: [{ queryKey: [QueryKeys.Playlists, serverId], queryFn: api.playlists.list }],
+      select: ([cachedPlaylists]) => {
+        const playlists = Array.isArray(cachedPlaylists) ? (cachedPlaylists as Playlist[]) : [];
+        const playlist = playlists.find(p => p.nativeId === id);
+        if (!playlist) return undefined;
+        return { playlist, songs: [] };
+      },
+    },
   });
 
   return {

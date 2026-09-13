@@ -12,8 +12,8 @@ import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices
 import downloadersReducer from '@/utils/redux/slices/downloadersSlice';
 import type { Server } from '@/types/Server';
 
-jest.mock('@/contexts/LibraryContext', () => ({
-  useLibrary: () => ({ albums: [] }),
+jest.mock('@/hooks/albums', () => ({
+  useAlbums: () => ({ albums: [] }),
 }));
 
 function makeStore() {

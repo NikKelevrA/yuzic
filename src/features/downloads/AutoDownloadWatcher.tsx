@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useDownloadActions, useDownloadState } from '@/contexts/DownloadContext';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { selectAutoDownloadNewSongs } from '@/utils/redux/selectors/settingsSelectors';
-import { selectLibraryTracks } from '@/utils/redux/selectors/librarySelectors';
+import { useTracks } from '@/hooks/tracks';
 
 /**
  * Watches the synced library track list and auto-downloads additions when the
@@ -18,7 +18,7 @@ export function AutoDownloadWatcher() {
   const { t } = useTranslation();
   const enabled = useSelector(selectAutoDownloadNewSongs);
   const activeServer = useSelector(selectActiveServer);
-  const tracks = useSelector(selectLibraryTracks);
+  const { tracks } = useTracks();
   const { downloadTracks } = useDownloadActions();
   const { isTrackDownloaded } = useDownloadState();
   const knownRef = useRef<{ serverId: string | null; ids: Set<string> | null }>({
