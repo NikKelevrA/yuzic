@@ -15,7 +15,10 @@
     "test:e2e:onboarding": "maestro test .maestro/onboarding-demo.yaml",
     "test:e2e:details": "maestro test .maestro/detail-flows.yaml",
     "lint": "expo lint",
-    "postinstall": "if [ -e node_modules/.bin/patch-package ]; then patch-package --error-on-fail; fi"
+    "postinstall": "if [ -e node_modules/.bin/patch-package ]; then patch-package --error-on-fail; fi",
+    "architecture:check": "node tools/architecture/check-cycles.mjs && node tools/architecture/check-unused.mjs && node tools/architecture/check-provider-branches.mjs && node tools/architecture/check-file-shape.mjs && node tools/architecture/check-unsafe.mjs",
+    "architecture:prune": "node tools/architecture/check-cycles.mjs --prune && node tools/architecture/check-unused.mjs --prune && node tools/architecture/check-provider-branches.mjs --prune && node tools/architecture/check-file-shape.mjs --prune && node tools/architecture/check-unsafe.mjs --prune",
+    "architecture:measure": "node tools/architecture/measure.mjs"
   },
   "overrides": {
     "lucide-react-native": {
@@ -31,7 +34,15 @@
     },
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|expo-modules-core|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|immer|react-redux)/)"
-    ]
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 63.9,
+        "statements": 61.52,
+        "functions": 49.69,
+        "branches": 51.04
+      }
+    }
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.8",

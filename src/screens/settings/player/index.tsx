@@ -13,7 +13,6 @@ import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsRow from '../components/SettingsRow';
 import StreamingQuality from './components/StreamingQuality';
 import Crossfade from './components/Crossfade';
-import EngineSmokeTest from './EngineSmokeTest';
 import {
   selectPreferredCodec,
   selectAutoplayEnabled,
@@ -132,8 +131,6 @@ const PlayerSettings: React.FC = () => {
           onPress={clearStreamCache}
         />
       </SettingsCard>
-
-      <EngineSmokeTest />
     </SettingsScreen>
   );
 };

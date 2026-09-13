@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import UdpSockets from 'react-native-udp'; // @ts-ignore — no types
+import UdpSockets from "react-native-udp";
 
 export interface DiscoveredDevice {
   name: string;
@@ -98,11 +98,9 @@ export function useDlnaDiscovery() {
     setIsScanning(true);
     setDevices([]);
 
-    console.log('[DLNA] Starting scan');
     const seen = new Set<string>();
     const pending: Promise<void>[] = [];
 
-    // @ts-ignore — react-native-udp types are incomplete
     const socket = UdpSockets.createSocket({ type: 'udp4', reusePort: true });
 
     socket.on('error', (err: Error) => {
@@ -125,7 +123,6 @@ export function useDlnaDiscovery() {
         respondedIps.add(ip);
         const probe = probeIp(ip).then(device => {
           if (!device) return;
-          console.log('[DLNA] Found renderer via IP probe:', device.name, 'at', ip);
           setDevices(prev => {
             if (prev.some(d => d.udn === device.udn)) return prev;
             return [...prev, device];
@@ -139,7 +136,6 @@ export function useDlnaDiscovery() {
 
       const p = resolveDevice(location).then(device => {
         if (!device) return;
-        console.log('[DLNA] Found renderer via SSDP:', device.name);
         setDevices(prev => {
           if (prev.some(d => d.udn === device.udn)) return prev;
           return [...prev, device];
@@ -149,24 +145,20 @@ export function useDlnaDiscovery() {
     });
 
     socket.on('listening', () => {
-      const addr = socket.address();
-      console.log('[DLNA] Socket listening on', addr?.port);
       try {
         socket.addMembership(SSDP_MULTICAST);
-        console.log('[DLNA] Joined multicast group');
-      } catch (e) {
-        console.log('[DLNA] addMembership skipped:', (e as Error)?.message);
+      } catch {
+        // Some platforms reject addMembership when a route is already
+        // joined; SSDP unicast responses still arrive without it.
       }
       socket.send(M_SEARCH, 0, M_SEARCH.length, SSDP_PORT, SSDP_MULTICAST, (err?: Error) => {
         if (err) console.warn('[DLNA] M-SEARCH send failed', err?.message ?? err);
-        else console.log('[DLNA] M-SEARCH sent to', SSDP_MULTICAST);
       });
     });
 
     socket.bind(0);
 
     setTimeout(async () => {
-      console.log('[DLNA] Scan complete, found', seen.size, 'locations');
       try { socket.close(); } catch {}
       await Promise.allSettled(pending);
       isScanningRef.current = false;

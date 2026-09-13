@@ -1,4 +1,3 @@
-export const HOME_TARGET_ALBUMS = 10;
 export const HOME_RELATED_ARTIST_LIMIT = 40;
 export const HOME_SEED_ARTISTS = 4;
 export const HOME_RELATED_PER_SEED = 12;

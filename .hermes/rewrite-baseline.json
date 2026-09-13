@@ -1,24 +1,209 @@
 {
-  "schema": "yuzic-architecture-baseline/1",
+  "schema": "yuzic-architecture-baseline/2",
   "size": {
-    "productionFiles": 651,
-    "productionLines": 62228,
-    "testFiles": 165,
-    "testLines": 17155
+    "productionFiles": 649,
+    "productionLines": 61587,
+    "testFiles": 166,
+    "testLines": 17282
   },
   "tests": {
-    "suites": 167,
-    "tests": 1289,
-    "passed": 1289,
+    "suites": 168,
+    "tests": 1290,
+    "passed": 1290,
     "failed": 0,
     "coverage": {
-      "lines": 63.75,
-      "statements": 61.37,
-      "functions": 49.29,
-      "branches": 50.97
+      "lines": 63.9,
+      "statements": 61.52,
+      "functions": 49.69,
+      "branches": 51.04
     }
   },
   "cycles": [
+    [
+      "api/index.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx"
+    ],
+    [
+      "api/index.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "contexts/DownloadContext.tsx"
+    ],
+    [
+      "api/index.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "contexts/PlaybackSinkContext.tsx"
+    ],
+    [
+      "api/index.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "hooks/useBookmarkManager.ts"
+    ],
+    [
+      "api/index.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "hooks/useCarPlayBrowseTree.ts"
+    ],
+    [
+      "api/index.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "hooks/useQueueSync.ts"
+    ],
+    [
+      "api/index.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "hooks/useScrobbling.ts"
+    ],
+    [
+      "components/Touchable.tsx",
+      "hooks/useTheme.ts",
+      "utils/redux/selectors/settingsSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "components/toast/index.ts",
+      "components/toast/ToastHost.tsx",
+      "components/toast/Toast.tsx"
+    ],
+    [
+      "contexts/DownloadContext.tsx",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx"
+    ],
+    [
+      "contexts/LibraryContext.tsx",
+      "utils/redux/selectors/librarySelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts",
+      "contexts/PlayingContext.tsx",
+      "hooks/useCarPlayBrowseTree.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useBookmarkManager.ts",
+      "utils/playback/bookmarkSnapshot.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useBookmarkManager.ts",
+      "utils/redux/selectors/playbackSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useBookmarkManager.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useBookmarkManager.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useCarPlayBrowseTree.ts",
+      "utils/builders/buildCover.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useCarPlayBrowseTree.ts",
+      "utils/builders/buildCover.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useCarPlayBrowseTree.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/usePlaybackPersistence.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/usePlaybackPersistence.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/usePlaybackPersistence.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useScrobbling.ts",
+      "utils/redux/selectors/listenbrainzSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useScrobbling.ts",
+      "utils/redux/selectors/scrobbleRoutingSelectors.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useScrobbling.ts",
+      "utils/redux/selectors/scrobbleRoutingSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "hooks/useScrobbling.ts",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "utils/redux/selectors/audiomuseSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
+    [
+      "contexts/PlayingContext.tsx",
+      "utils/redux/selectors/serversSelectors.ts",
+      "utils/redux/store.ts",
+      "utils/redux/slices/playbackSlice.ts"
+    ],
     [
       "features/home/homeLayout.ts",
       "features/home/hooks/useDailyLayout.ts"
@@ -29,7 +214,7 @@
     ]
   ],
   "unusedExports": {
-    "count": 559,
+    "count": 554,
     "entries": [
       "src/api/audiomuse/index.ts:1 - createAudiomuseClient",
       "src/api/audiomuse/index.ts:10 - AudiomuseSimilarityResult",
@@ -59,13 +244,11 @@
       "src/api/deezer/index.ts:7 - getDeezerArtist",
       "src/api/deezer/index.ts:8 - getDeezerArtistsByGenreId",
       "src/api/deezer/index.ts:9 - getDeezerChartAlbums",
-      "src/api/emby/auth/getMusicLibraries.ts:1 - getMusicLibraries",
       "src/api/emby/client.ts:4 - EmbyClientConfig (used in module)",
       "src/api/emby/client.ts:6 - EmbyClient",
       "src/api/emby/index.ts:9 - createEmbyAdapter",
       "src/api/fetchWithTimeout.ts:17 - FetchWithTimeoutOptions (used in module)",
       "src/api/index.ts:66 - useApi",
-      "src/api/jellyfin/auth/getMusicLibraries.ts:1 - getMusicLibraries",
       "src/api/jellyfin/client.ts:4 - JellyfinClientConfig (used in module)",
       "src/api/jellyfin/client.ts:6 - JellyfinClient",
       "src/api/jellyfin/index.ts:9 - createJellyfinAdapter",
@@ -327,9 +510,7 @@
       "src/components/toast/index.ts:2 - ToastVariant",
       "src/components/toast/index.ts:3 - ToastHost",
       "src/constants/design.ts:175 - RADIUS_MULTIPLIER (used in module)",
-      "src/constants/features.ts:10 - SLEEP_TIMER_INCREMENTS",
-      "src/constants/home.ts:1 - HOME_TARGET_ALBUMS",
-      "src/constants/home.ts:8 - QUICK_PICKS_TOTAL_PAGES (used in module)",
+      "src/constants/home.ts:7 - QUICK_PICKS_TOTAL_PAGES (used in module)",
       "src/constants/languages.ts:2 - LanguageCode (used in module)",
       "src/constants/languages.ts:4 - LanguageOption (used in module)",
       "src/constants/settings.ts:1 - THEME_DEFAULT_COLOR (used in module)",
@@ -500,7 +681,6 @@
       "src/screens/settings/metadata/index.tsx:97 - default",
       "src/screens/settings/player/components/Crossfade.tsx:26 - Crossfade (used in module)",
       "src/screens/settings/player/components/Equalizer.tsx:27 - Equalizer (used in module)",
-      "src/screens/settings/player/index.tsx:141 - default",
       "src/screens/settings/server/index.tsx:174 - default",
       "src/types/EntityId.ts:14 - EntityKind (used in module)",
       "src/types/EntityId.ts:17 - ServerLocalIdInput (used in module)",
@@ -593,7 +773,7 @@
     ]
   },
   "unsafe": {
-    "asAny": {
+    "as-any": {
       "count": 16,
       "entries": [
         {
@@ -662,7 +842,16 @@
         }
       ]
     },
-    "asUnknownAs": {
+    "console-log": {
+      "count": 1,
+      "entries": [
+        {
+          "file": "src/contexts/PlayingContext.tsx",
+          "line": 403
+        }
+      ]
+    },
+    "double-cast": {
       "count": 4,
       "entries": [
         {
@@ -682,65 +871,16 @@
           "line": 5
         }
       ]
-    },
-    "tsIgnore": {
-      "count": 2,
-      "entries": [
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 2
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 105
-        }
-      ]
-    },
-    "consoleLog": {
-      "count": 9,
-      "entries": [
-        {
-          "file": "src/contexts/PlayingContext.tsx",
-          "line": 403
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 101
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 128
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 142
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 153
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 156
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 158
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 162
-        },
-        {
-          "file": "src/hooks/useDlnaDiscovery.ts",
-          "line": 169
-        }
-      ]
     }
   },
   "providerLeakage": {
-    "count": 613,
+    "count": 985,
     "entries": [
+      {
+        "file": "src/components/options/AlbumOptions.tsx",
+        "line": 12,
+        "provider": "audiomuse"
+      },
       {
         "file": "src/components/options/AlbumOptions.tsx",
         "line": 13,
@@ -752,8 +892,33 @@
         "provider": "deezer"
       },
       {
+        "file": "src/components/options/AlbumOptions.tsx",
+        "line": 124,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/AlbumOptions.tsx",
+        "line": 260,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/ArtistOptions.tsx",
+        "line": 15,
+        "provider": "audiomuse"
+      },
+      {
         "file": "src/components/options/ArtistOptions.tsx",
         "line": 16,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/ArtistOptions.tsx",
+        "line": 64,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/ArtistOptions.tsx",
+        "line": 184,
         "provider": "audiomuse"
       },
       {
@@ -768,13 +933,23 @@
       },
       {
         "file": "src/components/options/GetReviewSheet.tsx",
-        "line": 73,
+        "line": 24,
         "provider": "lidarr"
       },
       {
         "file": "src/components/options/GetReviewSheet.tsx",
-        "line": 74,
-        "provider": "soulsync"
+        "line": 27,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/components/options/GetReviewSheet.tsx",
+        "line": 70,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/components/options/GetReviewSheet.tsx",
+        "line": 73,
+        "provider": "lidarr"
       },
       {
         "file": "src/components/options/GetReviewSheet.tsx",
@@ -803,12 +978,22 @@
       },
       {
         "file": "src/components/options/GetReviewSheet.tsx",
+        "line": 107,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/components/options/GetReviewSheet.tsx",
         "line": 120,
         "provider": "lidarr"
       },
       {
         "file": "src/components/options/GetReviewSheet.tsx",
         "line": 159,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/components/options/GetReviewSheet.tsx",
+        "line": 164,
         "provider": "lidarr"
       },
       {
@@ -833,6 +1018,11 @@
       },
       {
         "file": "src/components/options/SongOptions.tsx",
+        "line": 9,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/SongOptions.tsx",
         "line": 10,
         "provider": "audiomuse"
       },
@@ -842,13 +1032,48 @@
         "provider": "deezer"
       },
       {
+        "file": "src/components/options/SongOptions.tsx",
+        "line": 139,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/SongOptions.tsx",
+        "line": 140,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/SongOptions.tsx",
+        "line": 295,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/SongOptions.tsx",
+        "line": 299,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/components/options/SongOptions.tsx",
+        "line": 396,
+        "provider": "audiomuse"
+      },
+      {
         "file": "src/components/rows/AlbumRow/index.tsx",
         "line": 22,
         "provider": "deezer"
       },
       {
         "file": "src/components/rows/SongRow/index.tsx",
+        "line": 28,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/components/rows/SongRow/index.tsx",
         "line": 33,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/components/rows/SongRow/index.tsx",
+        "line": 67,
         "provider": "deezer"
       },
       {
@@ -917,6 +1142,11 @@
         "provider": "audiomuse"
       },
       {
+        "file": "src/constants/keys.ts",
+        "line": 11,
+        "provider": "lastfm"
+      },
+      {
         "file": "src/constants/staleTime.ts",
         "line": 8,
         "provider": "musicbrainz"
@@ -943,13 +1173,28 @@
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 100,
+        "line": 44,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/contexts/PlayingContext.tsx",
+        "line": 50,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
         "line": 269,
         "provider": "plex"
+      },
+      {
+        "file": "src/contexts/PlayingContext.tsx",
+        "line": 308,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/contexts/PlayingContext.tsx",
+        "line": 309,
+        "provider": "audiomuse"
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
@@ -963,7 +1208,12 @@
       },
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "line": 541,
+        "line": 545,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/contexts/PlayingContext.tsx",
+        "line": 548,
         "provider": "audiomuse"
       },
       {
@@ -987,11 +1237,6 @@
         "provider": "plex"
       },
       {
-        "file": "src/contexts/PlayingContext.tsx",
-        "line": 1238,
-        "provider": "audiomuse"
-      },
-      {
         "file": "src/contexts/queueProviders.ts",
         "line": 4,
         "provider": "audiomuse"
@@ -999,11 +1244,6 @@
       {
         "file": "src/contexts/queueProviders.ts",
         "line": 5,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/contexts/queueProviders.ts",
-        "line": 8,
         "provider": "audiomuse"
       },
       {
@@ -1028,22 +1268,22 @@
       },
       {
         "file": "src/contexts/queueProviders.ts",
+        "line": 22,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/contexts/queueProviders.ts",
         "line": 24,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/queueProviders.ts",
-        "line": 28,
+        "line": 27,
         "provider": "audiomuse"
       },
       {
         "file": "src/contexts/queueProviders.ts",
-        "line": 39,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/contexts/queueProviders.ts",
-        "line": 65,
+        "line": 34,
         "provider": "audiomuse"
       },
       {
@@ -1060,11 +1300,6 @@
         "file": "src/contexts/SearchContext.tsx",
         "line": 46,
         "provider": "deezer"
-      },
-      {
-        "file": "src/contexts/SearchContext.tsx",
-        "line": 46,
-        "provider": "musicbrainz"
       },
       {
         "file": "src/contexts/SearchContext.tsx",
@@ -1098,11 +1333,6 @@
       },
       {
         "file": "src/contexts/SearchContext.tsx",
-        "line": 374,
-        "provider": "musicbrainz"
-      },
-      {
-        "file": "src/contexts/SearchContext.tsx",
         "line": 375,
         "provider": "deezer"
       },
@@ -1115,11 +1345,6 @@
         "file": "src/contexts/searchLegs.ts",
         "line": 23,
         "provider": "deezer"
-      },
-      {
-        "file": "src/contexts/searchLegs.ts",
-        "line": 23,
-        "provider": "musicbrainz"
       },
       {
         "file": "src/contexts/searchRanking.ts",
@@ -1140,6 +1365,16 @@
         "file": "src/contexts/searchRanking.ts",
         "line": 20,
         "provider": "musicbrainz"
+      },
+      {
+        "file": "src/contexts/searchRanking.ts",
+        "line": 22,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/contexts/searchRanking.ts",
+        "line": 23,
+        "provider": "deezer"
       },
       {
         "file": "src/contexts/searchRanking.ts",
@@ -1173,7 +1408,7 @@
       },
       {
         "file": "src/features/audiomuse/generateFromEntity.ts",
-        "line": 15,
+        "line": 6,
         "provider": "audiomuse"
       },
       {
@@ -1198,12 +1433,7 @@
       },
       {
         "file": "src/features/audiomuse/generateFromEntity.ts",
-        "line": 65,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/features/audiomuse/generateFromEntity.ts",
-        "line": 68,
+        "line": 76,
         "provider": "audiomuse"
       },
       {
@@ -1218,16 +1448,6 @@
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 9,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 16,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/features/audiomuse/generatePlaylist.ts",
         "line": 21,
         "provider": "audiomuse"
       },
@@ -1238,7 +1458,7 @@
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 45,
+        "line": 28,
         "provider": "audiomuse"
       },
       {
@@ -1278,11 +1498,6 @@
       },
       {
         "file": "src/features/home/hooks/useDailyLayout.ts",
-        "line": 78,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/features/home/hooks/useDailyLayout.ts",
         "line": 80,
         "provider": "listenbrainz"
       },
@@ -1305,16 +1520,6 @@
         "file": "src/features/home/hooks/useDailyLayout.ts",
         "line": 159,
         "provider": "deezer"
-      },
-      {
-        "file": "src/features/home/hooks/useDailyLayout.ts",
-        "line": 164,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/features/home/hooks/useDailyLayout.ts",
-        "line": 165,
-        "provider": "musicbrainz"
       },
       {
         "file": "src/features/home/hooks/useDailyLayout.ts",
@@ -1342,6 +1547,41 @@
         "provider": "listenbrainz"
       },
       {
+        "file": "src/features/home/hooks/useDeezerEnabled.ts",
+        "line": 4,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/home/hooks/useDeezerEnabled.ts",
+        "line": 5,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/home/hooks/useDeezerEnabled.ts",
+        "line": 9,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/home/hooks/useDeezerEnabled.ts",
+        "line": 15,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/home/hooks/useDeezerEnabled.ts",
+        "line": 16,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/home/hooks/useDeezerEnabled.ts",
+        "line": 19,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/home/hooks/useDeezerEnabled.ts",
+        "line": 20,
+        "provider": "deezer"
+      },
+      {
         "file": "src/features/home/utils/albumDiscovery.ts",
         "line": 1,
         "provider": "deezer"
@@ -1352,6 +1592,36 @@
         "provider": "deezer"
       },
       {
+        "file": "src/features/library/useLibraryState.ts",
+        "line": 9,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/features/library/useLibraryState.ts",
+        "line": 10,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/features/library/useLibraryState.ts",
+        "line": 23,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/features/library/useLibraryState.ts",
+        "line": 24,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/features/library/useLibraryState.ts",
+        "line": 34,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/features/library/useLibraryState.ts",
+        "line": 34,
+        "provider": "slskd"
+      },
+      {
         "file": "src/features/lyrics/externalLyricsFetchers.ts",
         "line": 1,
         "provider": "lrclib"
@@ -1359,6 +1629,11 @@
       {
         "file": "src/features/lyrics/externalLyricsFetchers.ts",
         "line": 8,
+        "provider": "lrclib"
+      },
+      {
+        "file": "src/features/lyrics/externalLyricsFetchers.ts",
+        "line": 9,
         "provider": "lrclib"
       },
       {
@@ -1398,12 +1673,27 @@
       },
       {
         "file": "src/features/metadata/enrichmentFetchers.ts",
+        "line": 15,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/features/metadata/enrichmentFetchers.ts",
         "line": 41,
         "provider": "lastfm"
       },
       {
         "file": "src/features/metadata/enrichmentFetchers.ts",
         "line": 42,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/features/metadata/enrichmentFetchers.ts",
+        "line": 46,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/features/metadata/enrichmentFetchers.ts",
+        "line": 51,
         "provider": "lastfm"
       },
       {
@@ -1429,6 +1719,16 @@
       {
         "file": "src/features/metadata/enrichmentFetchers.ts",
         "line": 73,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/metadata/enrichmentFetchers.ts",
+        "line": 74,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/metadata/enrichmentFetchers.ts",
+        "line": 79,
         "provider": "deezer"
       },
       {
@@ -1532,6 +1832,11 @@
         "provider": "plex"
       },
       {
+        "file": "src/features/player/mediaHeaders.ts",
+        "line": 40,
+        "provider": "plex"
+      },
+      {
         "file": "src/features/player/mediaItem.ts",
         "line": 47,
         "provider": "plex"
@@ -1547,9 +1852,24 @@
         "provider": "navidrome"
       },
       {
-        "file": "src/features/player/PlayerHost.tsx",
-        "line": 115,
+        "file": "src/features/sources/ExternalResolutionProvider.tsx",
+        "line": 89,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/sources/useSearchSourcesEnabled.ts",
+        "line": 9,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/features/sources/useSearchSourcesEnabled.ts",
+        "line": 9,
         "provider": "musicbrainz"
+      },
+      {
+        "file": "src/features/sources/useSearchSourcesEnabled.ts",
+        "line": 13,
+        "provider": "deezer"
       },
       {
         "file": "src/features/sources/useSearchSourcesEnabled.ts",
@@ -1567,6 +1887,11 @@
         "provider": "deezer"
       },
       {
+        "file": "src/features/sources/useSearchSourcesEnabled.ts",
+        "line": 26,
+        "provider": "musicbrainz"
+      },
+      {
         "file": "src/hooks/albums/previewUtils.ts",
         "line": 1,
         "provider": "deezer"
@@ -1577,24 +1902,39 @@
         "provider": "deezer"
       },
       {
-        "file": "src/hooks/artists/useArtistExternalDiscography.ts",
-        "line": 13,
+        "file": "src/hooks/albums/previewUtils.ts",
+        "line": 20,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/hooks/albums/previewUtils.ts",
+        "line": 21,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/hooks/albums/previewUtils.ts",
+        "line": 25,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/hooks/albums/useExternalAlbumPreviews.ts",
+        "line": 5,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/hooks/albums/useExternalAlbumPreviews.ts",
+        "line": 8,
         "provider": "deezer"
       },
       {
         "file": "src/hooks/artists/useArtistExternalDiscography.ts",
         "line": 13,
-        "provider": "musicbrainz"
+        "provider": "deezer"
       },
       {
         "file": "src/hooks/artists/useArtistExternalDiscography.ts",
         "line": 15,
         "provider": "deezer"
-      },
-      {
-        "file": "src/hooks/artists/useArtistExternalDiscography.ts",
-        "line": 16,
-        "provider": "musicbrainz"
       },
       {
         "file": "src/hooks/artists/useArtistMbid.ts",
@@ -1603,12 +1943,7 @@
       },
       {
         "file": "src/hooks/artists/useArtistMbid.ts",
-        "line": 9,
-        "provider": "musicbrainz"
-      },
-      {
-        "file": "src/hooks/artists/useArtistMbid.ts",
-        "line": 10,
+        "line": 6,
         "provider": "musicbrainz"
       },
       {
@@ -1623,38 +1958,33 @@
       },
       {
         "file": "src/hooks/artists/useArtistMbid.ts",
-        "line": 12,
-        "provider": "musicbrainz"
-      },
-      {
-        "file": "src/hooks/artists/useArtistMbid.ts",
         "line": 13,
         "provider": "navidrome"
       },
       {
         "file": "src/hooks/artists/useArtistMbid.ts",
-        "line": 15,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/hooks/artists/useArtistMbid.ts",
-        "line": 19,
-        "provider": "musicbrainz"
-      },
-      {
-        "file": "src/hooks/artists/useArtistMbid.ts",
-        "line": 22,
-        "provider": "musicbrainz"
-      },
-      {
-        "file": "src/hooks/artists/useArtistMbid.ts",
-        "line": 25,
+        "line": 33,
         "provider": "musicbrainz"
       },
       {
         "file": "src/hooks/artists/useExternalArtist.ts",
-        "line": 35,
+        "line": 6,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/hooks/artists/useExternalArtist.ts",
+        "line": 6,
         "provider": "musicbrainz"
+      },
+      {
+        "file": "src/hooks/artists/useExternalArtist.ts",
+        "line": 22,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/hooks/artists/useExternalArtist.ts",
+        "line": 23,
+        "provider": "deezer"
       },
       {
         "file": "src/hooks/artists/useExternalArtist.ts",
@@ -1664,6 +1994,11 @@
       {
         "file": "src/hooks/artists/useExternalArtist.ts",
         "line": 41,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/hooks/artists/useExternalArtist.ts",
+        "line": 42,
         "provider": "deezer"
       },
       {
@@ -1693,12 +2028,12 @@
       },
       {
         "file": "src/hooks/artists/useLBSimilarArtists.ts",
-        "line": 11,
+        "line": 7,
         "provider": "listenbrainz"
       },
       {
         "file": "src/hooks/artists/useLBSimilarArtists.ts",
-        "line": 13,
+        "line": 20,
         "provider": "listenbrainz"
       },
       {
@@ -1732,6 +2067,36 @@
         "provider": "lastfm"
       },
       {
+        "file": "src/hooks/artists/useSimilarArtists.ts",
+        "line": 6,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/hooks/artists/useSimilarArtists.ts",
+        "line": 8,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/hooks/artists/useSimilarArtists.ts",
+        "line": 24,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/hooks/artists/useSimilarArtists.ts",
+        "line": 49,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/hooks/artists/useSimilarArtists.ts",
+        "line": 62,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/hooks/artists/useSimilarArtists.ts",
+        "line": 65,
+        "provider": "lastfm"
+      },
+      {
         "file": "src/hooks/externalAlbumMatch.ts",
         "line": 8,
         "provider": "lidarr"
@@ -1740,11 +2105,6 @@
         "file": "src/hooks/libraryMatch.ts",
         "line": 8,
         "provider": "deezer"
-      },
-      {
-        "file": "src/hooks/libraryMatch.ts",
-        "line": 9,
-        "provider": "musicbrainz"
       },
       {
         "file": "src/hooks/useBookmarkManager.ts",
@@ -1773,6 +2133,26 @@
       },
       {
         "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 11,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 12,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 13,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 14,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
         "line": 22,
         "provider": "lidarr"
       },
@@ -1780,6 +2160,36 @@
         "file": "src/hooks/useExternalAlbumStatus.ts",
         "line": 22,
         "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 28,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 29,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 31,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 32,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 39,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 40,
+        "provider": "lidarr"
       },
       {
         "file": "src/hooks/useExternalAlbumStatus.ts",
@@ -1788,8 +2198,38 @@
       },
       {
         "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 42,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 47,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 48,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
         "line": 49,
         "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 50,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 62,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 63,
+        "provider": "lidarr"
       },
       {
         "file": "src/hooks/useExternalAlbumStatus.ts",
@@ -1798,7 +2238,27 @@
       },
       {
         "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 69,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 70,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
         "line": 74,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 78,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/hooks/useExternalAlbumStatus.ts",
+        "line": 78,
         "provider": "slskd"
       },
       {
@@ -1823,18 +2283,23 @@
       },
       {
         "file": "src/hooks/useScrobbling.ts",
-        "line": 35,
+        "line": 15,
         "provider": "listenbrainz"
       },
       {
         "file": "src/hooks/useScrobbling.ts",
-        "line": 42,
-        "provider": "listenbrainz"
+        "line": 17,
+        "provider": "lastfm"
       },
       {
         "file": "src/hooks/useScrobbling.ts",
-        "line": 56,
-        "provider": "listenbrainz"
+        "line": 39,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/hooks/useScrobbling.ts",
+        "line": 45,
+        "provider": "lastfm"
       },
       {
         "file": "src/hooks/useScrobbling.ts",
@@ -1908,12 +2373,12 @@
       },
       {
         "file": "src/offline/OfflineMutationReplayer.tsx",
-        "line": 47,
+        "line": 19,
         "provider": "listenbrainz"
       },
       {
         "file": "src/offline/OfflineMutationReplayer.tsx",
-        "line": 50,
+        "line": 47,
         "provider": "listenbrainz"
       },
       {
@@ -1923,13 +2388,13 @@
       },
       {
         "file": "src/offline/OfflineMutationReplayer.tsx",
-        "line": 97,
+        "line": 102,
         "provider": "listenbrainz"
       },
       {
-        "file": "src/offline/OfflineMutationReplayer.tsx",
-        "line": 102,
-        "provider": "listenbrainz"
+        "file": "src/screens/album/components/AlbumRecommendedSection.tsx",
+        "line": 9,
+        "provider": "deezer"
       },
       {
         "file": "src/screens/album/components/AlbumRecommendedSection.tsx",
@@ -1948,7 +2413,22 @@
       },
       {
         "file": "src/screens/album/components/AlbumRecommendedSection.tsx",
+        "line": 50,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/album/components/AlbumRecommendedSection.tsx",
         "line": 80,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/album/components/Header/index.tsx",
+        "line": 166,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/album/components/Header/index.tsx",
+        "line": 171,
         "provider": "deezer"
       },
       {
@@ -2002,14 +2482,39 @@
         "provider": "deezer"
       },
       {
-        "file": "src/screens/artist/components/Content/discography.ts",
-        "line": 4,
-        "provider": "musicbrainz"
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 27,
+        "provider": "deezer"
       },
       {
         "file": "src/screens/artist/components/Content/index.tsx",
-        "line": 137,
-        "provider": "listenbrainz"
+        "line": 32,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 47,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 118,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 121,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 124,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 130,
+        "provider": "lastfm"
       },
       {
         "file": "src/screens/artist/components/Content/index.tsx",
@@ -2028,6 +2533,16 @@
       },
       {
         "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 181,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 183,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
         "line": 185,
         "provider": "deezer"
       },
@@ -2035,6 +2550,16 @@
         "file": "src/screens/artist/components/Content/index.tsx",
         "line": 186,
         "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 190,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 192,
+        "provider": "lastfm"
       },
       {
         "file": "src/screens/artist/components/Content/index.tsx",
@@ -2073,6 +2598,51 @@
       },
       {
         "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 358,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 360,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 463,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 467,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 471,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 475,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 479,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 483,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 493,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
         "line": 494,
         "provider": "deezer"
       },
@@ -2087,6 +2657,16 @@
         "provider": "deezer"
       },
       {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 507,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/index.tsx",
+        "line": 511,
+        "provider": "deezer"
+      },
+      {
         "file": "src/screens/artist/components/Content/localSimilarArtists.ts",
         "line": 12,
         "provider": "deezer"
@@ -2097,13 +2677,28 @@
         "provider": "deezer"
       },
       {
+        "file": "src/screens/artist/components/Content/MostPlayedSection.tsx",
+        "line": 21,
+        "provider": "deezer"
+      },
+      {
         "file": "src/screens/artist/components/Content/PopularOnDeezerSection.tsx",
         "line": 21,
         "provider": "deezer"
       },
       {
         "file": "src/screens/artist/components/Content/PopularOnDeezerSection.tsx",
+        "line": 24,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/PopularOnDeezerSection.tsx",
         "line": 45,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/artist/components/Content/PopularOnDeezerSection.tsx",
+        "line": 50,
         "provider": "deezer"
       },
       {
@@ -2135,6 +2730,16 @@
         "file": "src/screens/artist/components/Header/index.tsx",
         "line": 72,
         "provider": "deezer"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 8,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 9,
+        "provider": "slskd"
       },
       {
         "file": "src/screens/downloads/DownloadsScreen.tsx",
@@ -2178,12 +2783,27 @@
       },
       {
         "file": "src/screens/downloads/DownloadsScreen.tsx",
-        "line": 24,
+        "line": 48,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 49,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 50,
         "provider": "soulsync"
       },
       {
         "file": "src/screens/downloads/DownloadsScreen.tsx",
         "line": 64,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 66,
         "provider": "lidarr"
       },
       {
@@ -2203,7 +2823,17 @@
       },
       {
         "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 74,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
         "line": 78,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 80,
         "provider": "slskd"
       },
       {
@@ -2219,6 +2849,11 @@
       {
         "file": "src/screens/downloads/DownloadsScreen.tsx",
         "line": 87,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 88,
         "provider": "slskd"
       },
       {
@@ -2239,6 +2874,11 @@
       {
         "file": "src/screens/downloads/DownloadsScreen.tsx",
         "line": 101,
+        "provider": "soulsync"
+      },
+      {
+        "file": "src/screens/downloads/DownloadsScreen.tsx",
+        "line": 102,
         "provider": "soulsync"
       },
       {
@@ -2273,6 +2913,11 @@
       },
       {
         "file": "src/screens/home/components/BecauseYouListenedSection.tsx",
+        "line": 13,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/BecauseYouListenedSection.tsx",
         "line": 21,
         "provider": "deezer"
       },
@@ -2284,6 +2929,11 @@
       {
         "file": "src/screens/home/components/BecauseYouListenedSection.tsx",
         "line": 42,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/BecauseYouListenedSection.tsx",
+        "line": 63,
         "provider": "deezer"
       },
       {
@@ -2307,6 +2957,31 @@
         "provider": "deezer"
       },
       {
+        "file": "src/screens/home/components/DeezerChartsSection.tsx",
+        "line": 12,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/DeezerChartsSection.tsx",
+        "line": 28,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/DeezerChartsSection.tsx",
+        "line": 34,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/DeezerChartsSection.tsx",
+        "line": 43,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/DeezerChartsSection.tsx",
+        "line": 44,
+        "provider": "deezer"
+      },
+      {
         "file": "src/screens/home/components/DownloadsInProgressBanner.tsx",
         "line": 14,
         "provider": "lidarr"
@@ -2318,7 +2993,37 @@
       },
       {
         "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 14,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
         "line": 23,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 55,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 57,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 61,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 63,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 68,
         "provider": "deezer"
       },
       {
@@ -2338,7 +3043,17 @@
       },
       {
         "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 109,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
         "line": 112,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/GenreSection.tsx",
+        "line": 139,
         "provider": "deezer"
       },
       {
@@ -2353,7 +3068,22 @@
       },
       {
         "file": "src/screens/home/components/LBCreatedForSection.tsx",
-        "line": 37,
+        "line": 10,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/home/components/LBCreatedForSection.tsx",
+        "line": 11,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/home/components/LBCreatedForSection.tsx",
+        "line": 43,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/home/components/LBCreatedForSection.tsx",
+        "line": 54,
         "provider": "listenbrainz"
       },
       {
@@ -2363,23 +3093,13 @@
       },
       {
         "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 35,
+        "line": 14,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 36,
+        "line": 50,
         "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 40,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 56,
-        "provider": "musicbrainz"
       },
       {
         "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
@@ -2392,24 +3112,14 @@
         "provider": "jellyfin"
       },
       {
-        "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 59,
-        "provider": "musicbrainz"
-      },
-      {
-        "file": "src/screens/home/components/LBSimilarForYouSection.tsx",
-        "line": 60,
-        "provider": "musicbrainz"
-      },
-      {
         "file": "src/screens/home/components/ServerNowPlayingSection.tsx",
         "line": 33,
         "provider": "navidrome"
       },
       {
-        "file": "src/screens/home/components/SourceGroup.tsx",
-        "line": 17,
-        "provider": "listenbrainz"
+        "file": "src/screens/home/components/ServerNowPlayingSection.tsx",
+        "line": 47,
+        "provider": "navidrome"
       },
       {
         "file": "src/screens/home/components/SourceGroup.tsx",
@@ -2422,6 +3132,41 @@
         "provider": "deezer"
       },
       {
+        "file": "src/screens/home/components/TopArtistsSection.tsx",
+        "line": 12,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/TopArtistsSection.tsx",
+        "line": 32,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/components/TopArtistsSection.tsx",
+        "line": 42,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 11,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 15,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 26,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 56,
+        "provider": "deezer"
+      },
+      {
         "file": "src/screens/home/Explore.tsx",
         "line": 91,
         "provider": "deezer"
@@ -2429,6 +3174,16 @@
       {
         "file": "src/screens/home/Explore.tsx",
         "line": 91,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 92,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 95,
         "provider": "listenbrainz"
       },
       {
@@ -2458,27 +3213,22 @@
       },
       {
         "file": "src/screens/home/Explore.tsx",
-        "line": 149,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/home/Explore.tsx",
-        "line": 157,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/home/Explore.tsx",
         "line": 165,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/home/Explore.tsx",
-        "line": 166,
+        "line": 167,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/home/Explore.tsx",
-        "line": 167,
+        "line": 169,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 170,
         "provider": "listenbrainz"
       },
       {
@@ -2497,9 +3247,69 @@
         "provider": "deezer"
       },
       {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 177,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/home/Explore.tsx",
+        "line": 178,
+        "provider": "deezer"
+      },
+      {
         "file": "src/screens/library/LibraryEntryRows.tsx",
         "line": 79,
         "provider": "jellyfin"
+      },
+      {
+        "file": "src/screens/onboarding/discovery/index.tsx",
+        "line": 13,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/onboarding/discovery/index.tsx",
+        "line": 14,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/onboarding/discovery/index.tsx",
+        "line": 39,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/onboarding/discovery/index.tsx",
+        "line": 40,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 19,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 24,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 25,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 28,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 29,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 30,
+        "provider": "audiomuse"
       },
       {
         "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
@@ -2509,6 +3319,21 @@
       {
         "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
         "line": 37,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 38,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 55,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 59,
         "provider": "lastfm"
       },
       {
@@ -2523,7 +3348,22 @@
       },
       {
         "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
-        "line": 266,
+        "line": 248,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 249,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 278,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 283,
         "provider": "audiomuse"
       },
       {
@@ -2533,8 +3373,58 @@
       },
       {
         "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 288,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 290,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 291,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 295,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 300,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 301,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
         "line": 327,
         "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 329,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 334,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 343,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 344,
+        "provider": "lastfm"
       },
       {
         "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
@@ -2543,7 +3433,52 @@
       },
       {
         "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 372,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 373,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 376,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
         "line": 389,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 404,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 404,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 409,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 412,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 501,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
+        "line": 524,
         "provider": "deezer"
       },
       {
@@ -2563,8 +3498,33 @@
       },
       {
         "file": "src/screens/settings/connections/index.tsx",
-        "line": 36,
+        "line": 11,
         "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 13,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 14,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 15,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 26,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 27,
+        "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/connections/index.tsx",
@@ -2573,12 +3533,27 @@
       },
       {
         "file": "src/screens/settings/connections/index.tsx",
-        "line": 47,
-        "provider": "audiomuse"
+        "line": 40,
+        "provider": "listenbrainz"
       },
       {
         "file": "src/screens/settings/connections/index.tsx",
         "line": 48,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 49,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 50,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/connections/index.tsx",
+        "line": 51,
         "provider": "audiomuse"
       },
       {
@@ -2633,6 +3608,21 @@
       },
       {
         "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 12,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 13,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 15,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
         "line": 19,
         "provider": "lidarr"
       },
@@ -2644,6 +3634,21 @@
       {
         "file": "src/screens/settings/downloaders/Lidarr.tsx",
         "line": 29,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 30,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 31,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 34,
         "provider": "lidarr"
       },
       {
@@ -2663,12 +3668,27 @@
       },
       {
         "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 74,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 81,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
         "line": 84,
         "provider": "lidarr"
       },
       {
         "file": "src/screens/settings/downloaders/Lidarr.tsx",
         "line": 85,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Lidarr.tsx",
+        "line": 91,
         "provider": "lidarr"
       },
       {
@@ -2679,6 +3699,31 @@
       {
         "file": "src/screens/settings/downloaders/Slskd.tsx",
         "line": 6,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 11,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 12,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 21,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 25,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 27,
         "provider": "slskd"
       },
       {
@@ -2723,7 +3768,17 @@
       },
       {
         "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 75,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
         "line": 79,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 89,
         "provider": "slskd"
       },
       {
@@ -2734,6 +3789,11 @@
       {
         "file": "src/screens/settings/downloaders/Slskd.tsx",
         "line": 93,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/Slskd.tsx",
+        "line": 99,
         "provider": "slskd"
       },
       {
@@ -2767,8 +3827,28 @@
         "provider": "lidarr"
       },
       {
+        "file": "src/screens/settings/downloaders/useLidarrRenderItem.tsx",
+        "line": 7,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/screens/settings/downloaders/useLidarrRenderItem.tsx",
+        "line": 10,
+        "provider": "lidarr"
+      },
+      {
         "file": "src/screens/settings/downloaders/useSlskdRenderItem.tsx",
         "line": 3,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/useSlskdRenderItem.tsx",
+        "line": 8,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/screens/settings/downloaders/useSlskdRenderItem.tsx",
+        "line": 10,
         "provider": "slskd"
       },
       {
@@ -2813,7 +3893,117 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 13,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 14,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 15,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 16,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 17,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 18,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 20,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 21,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 22,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 23,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 24,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 25,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 29,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 35,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 36,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 37,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 38,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 39,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 45,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 49,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
         "line": 58,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 59,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 63,
         "provider": "audiomuse"
       },
       {
@@ -2828,7 +4018,22 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 79,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 81,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
         "line": 82,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 89,
         "provider": "audiomuse"
       },
       {
@@ -2867,6 +4072,41 @@
         "provider": "audiomuse"
       },
       {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 119,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 7,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 8,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 9,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 12,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 13,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 14,
+        "provider": "deezer"
+      },
+      {
         "file": "src/screens/settings/integrations/deezer/index.tsx",
         "line": 18,
         "provider": "deezer"
@@ -2893,6 +4133,41 @@
       },
       {
         "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 29,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 32,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 33,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 34,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 36,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 37,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
+        "line": 38,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/integrations/deezer/index.tsx",
         "line": 41,
         "provider": "deezer"
       },
@@ -2913,6 +4188,31 @@
       },
       {
         "file": "src/screens/settings/integrations/lastfm/index.tsx",
+        "line": 7,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/integrations/lastfm/index.tsx",
+        "line": 8,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/integrations/lastfm/index.tsx",
+        "line": 16,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/integrations/lastfm/index.tsx",
+        "line": 19,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/integrations/lastfm/index.tsx",
+        "line": 21,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/integrations/lastfm/index.tsx",
         "line": 25,
         "provider": "lastfm"
       },
@@ -2920,6 +4220,16 @@
         "file": "src/screens/settings/integrations/lastfm/index.tsx",
         "line": 26,
         "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
+        "line": 14,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
+        "line": 20,
+        "provider": "listenbrainz"
       },
       {
         "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
@@ -2933,72 +4243,22 @@
       },
       {
         "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 52,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 58,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 70,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
         "line": 76,
         "provider": "listenbrainz"
       },
       {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 79,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 81,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 85,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 93,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 99,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 102,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 103,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 107,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 113,
-        "provider": "listenbrainz"
+        "file": "src/screens/settings/integrations/musicbrainz/index.tsx",
+        "line": 7,
+        "provider": "musicbrainz"
       },
       {
         "file": "src/screens/settings/integrations/musicbrainz/index.tsx",
-        "line": 17,
+        "line": 9,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/screens/settings/integrations/musicbrainz/index.tsx",
+        "line": 14,
         "provider": "musicbrainz"
       },
       {
@@ -3009,6 +4269,11 @@
       {
         "file": "src/screens/settings/integrations/musicbrainz/index.tsx",
         "line": 22,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/screens/settings/integrations/musicbrainz/index.tsx",
+        "line": 24,
         "provider": "musicbrainz"
       },
       {
@@ -3038,6 +4303,11 @@
       },
       {
         "file": "src/screens/settings/lyrics/index.tsx",
+        "line": 29,
+        "provider": "lrclib"
+      },
+      {
+        "file": "src/screens/settings/lyrics/index.tsx",
         "line": 30,
         "provider": "lrclib"
       },
@@ -3052,6 +4322,26 @@
         "provider": "lrclib"
       },
       {
+        "file": "src/screens/settings/lyrics/index.tsx",
+        "line": 41,
+        "provider": "lrclib"
+      },
+      {
+        "file": "src/screens/settings/lyrics/index.tsx",
+        "line": 42,
+        "provider": "lrclib"
+      },
+      {
+        "file": "src/screens/settings/lyrics/index.tsx",
+        "line": 43,
+        "provider": "lrclib"
+      },
+      {
+        "file": "src/screens/settings/lyrics/index.tsx",
+        "line": 44,
+        "provider": "lrclib"
+      },
+      {
         "file": "src/screens/settings/metadata/index.tsx",
         "line": 29,
         "provider": "lastfm"
@@ -3063,8 +4353,18 @@
       },
       {
         "file": "src/screens/settings/metadata/index.tsx",
+        "line": 35,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
         "line": 36,
         "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 39,
+        "provider": "deezer"
       },
       {
         "file": "src/screens/settings/metadata/index.tsx",
@@ -3083,18 +4383,93 @@
       },
       {
         "file": "src/screens/settings/metadata/index.tsx",
+        "line": 51,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 52,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 53,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 54,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
         "line": 57,
         "provider": "deezer"
       },
       {
-        "file": "src/screens/settings/player/EngineSmokeTest.tsx",
-        "line": 473,
-        "provider": "jellyfin"
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 58,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 59,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 60,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 61,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/metadata/index.tsx",
+        "line": 70,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/player/index.tsx",
+        "line": 21,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/player/index.tsx",
+        "line": 36,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/player/index.tsx",
+        "line": 52,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/player/index.tsx",
+        "line": 53,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/player/index.tsx",
+        "line": 67,
+        "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/scrobbling/index.tsx",
-        "line": 22,
-        "provider": "listenbrainz"
+        "line": 13,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/scrobbling/index.tsx",
+        "line": 39,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/scrobbling/index.tsx",
+        "line": 42,
+        "provider": "lastfm"
       },
       {
         "file": "src/screens/settings/scrobbling/index.tsx",
@@ -3118,8 +4493,28 @@
       },
       {
         "file": "src/screens/settings/scrobbling/index.tsx",
-        "line": 84,
-        "provider": "listenbrainz"
+        "line": 60,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/scrobbling/index.tsx",
+        "line": 73,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/scrobbling/index.tsx",
+        "line": 79,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/scrobbling/index.tsx",
+        "line": 80,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/screens/settings/scrobbling/index.tsx",
+        "line": 81,
+        "provider": "lastfm"
       },
       {
         "file": "src/screens/settings/scrobbling/index.tsx",
@@ -3138,12 +4533,12 @@
       },
       {
         "file": "src/screens/settings/search/index.tsx",
-        "line": 16,
-        "provider": "musicbrainz"
+        "line": 20,
+        "provider": "deezer"
       },
       {
         "file": "src/screens/settings/search/index.tsx",
-        "line": 20,
+        "line": 21,
         "provider": "deezer"
       },
       {
@@ -3158,8 +4553,18 @@
       },
       {
         "file": "src/screens/settings/search/index.tsx",
+        "line": 34,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/search/index.tsx",
         "line": 35,
         "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/search/index.tsx",
+        "line": 38,
+        "provider": "musicbrainz"
       },
       {
         "file": "src/screens/settings/search/index.tsx",
@@ -3174,6 +4579,16 @@
       {
         "file": "src/screens/settings/search/index.tsx",
         "line": 45,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/screens/settings/search/index.tsx",
+        "line": 46,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/screens/settings/search/index.tsx",
+        "line": 46,
         "provider": "musicbrainz"
       },
       {
@@ -3198,8 +4613,18 @@
       },
       {
         "file": "src/types/Album.ts",
-        "line": 43,
-        "provider": "musicbrainz"
+        "line": 9,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/types/Album.ts",
+        "line": 10,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/types/Album.ts",
+        "line": 51,
+        "provider": "deezer"
       },
       {
         "file": "src/types/Artist.ts",
@@ -3209,12 +4634,17 @@
       {
         "file": "src/types/Artist.ts",
         "line": 12,
-        "provider": "musicbrainz"
+        "provider": "navidrome"
       },
       {
         "file": "src/types/Artist.ts",
-        "line": 12,
-        "provider": "navidrome"
+        "line": 17,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/types/Configs.ts",
+        "line": 1,
+        "provider": "lidarr"
       },
       {
         "file": "src/types/Cover.ts",
@@ -3257,11 +4687,6 @@
         "provider": "deezer"
       },
       {
-        "file": "src/types/LibraryState.ts",
-        "line": 11,
-        "provider": "musicbrainz"
-      },
-      {
         "file": "src/types/Server.ts",
         "line": 1,
         "provider": "emby"
@@ -3280,6 +4705,11 @@
         "file": "src/types/Server.ts",
         "line": 1,
         "provider": "plex"
+      },
+      {
+        "file": "src/types/Song.ts",
+        "line": 29,
+        "provider": "deezer"
       },
       {
         "file": "src/types/Song.ts",
@@ -3382,14 +4812,24 @@
         "provider": "listenbrainz"
       },
       {
-        "file": "src/utils/offline/offlineMutations.ts",
-        "line": 58,
-        "provider": "listenbrainz"
-      },
-      {
         "file": "src/utils/playback/buildPodcastSong.ts",
         "line": 26,
         "provider": "navidrome"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 3,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 5,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 12,
+        "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
@@ -3398,7 +4838,67 @@
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 40,
+        "line": 14,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 18,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 19,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 22,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 23,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 26,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 27,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 30,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 31,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 35,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 36,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 41,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 42,
         "provider": "audiomuse"
       },
       {
@@ -3443,12 +4943,37 @@
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 53,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
         "line": 55,
         "provider": "slskd"
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
         "line": 59,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 63,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 64,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 65,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 66,
         "provider": "slskd"
       },
       {
@@ -3460,6 +4985,21 @@
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
         "line": 90,
         "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 93,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 95,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/selectors/listenbrainzSelectors.ts",
+        "line": 3,
+        "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/selectors/listenbrainzSelectors.ts",
@@ -3513,7 +5053,52 @@
       },
       {
         "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 148,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 149,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 151,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 152,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 154,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 155,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 157,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 158,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
         "line": 162,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 163,
         "provider": "deezer"
       },
       {
@@ -3537,8 +5122,143 @@
         "provider": "musicbrainz"
       },
       {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 182,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 183,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 185,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 186,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 189,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 190,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 191,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/selectors/settingsSelectors.ts",
+        "line": 192,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 3,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 10,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 11,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 14,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 21,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 25,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 34,
+        "provider": "audiomuse"
+      },
+      {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
         "line": 35,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 38,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 42,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 46,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 51,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 56,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 67,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 68,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 69,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 70,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 71,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 72,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 74,
         "provider": "audiomuse"
       },
       {
@@ -3588,12 +5308,22 @@
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 14,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
         "line": 32,
         "provider": "lidarr"
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
         "line": 33,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 38,
         "provider": "lidarr"
       },
       {
@@ -3613,7 +5343,22 @@
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 104,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 106,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
         "line": 108,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 109,
         "provider": "slskd"
       },
       {
@@ -3632,8 +5377,43 @@
         "provider": "lidarr"
       },
       {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 135,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 143,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 155,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 157,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/slices/listenbrainzSlice.ts",
+        "line": 34,
+        "provider": "listenbrainz"
+      },
+      {
         "file": "src/utils/redux/slices/listenbrainzSlice.ts",
         "line": 35,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/listenbrainzSlice.ts",
+        "line": 70,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/listenbrainzSlice.ts",
+        "line": 72,
         "provider": "listenbrainz"
       },
       {
@@ -3673,6 +5453,16 @@
       },
       {
         "file": "src/utils/redux/slices/searchHistorySlice.ts",
+        "line": 7,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/searchHistorySlice.ts",
+        "line": 8,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/searchHistorySlice.ts",
         "line": 33,
         "provider": "deezer"
       },
@@ -3694,11 +5484,6 @@
       {
         "file": "src/utils/redux/slices/settingsSlice.ts",
         "line": 43,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/utils/redux/slices/settingsSlice.ts",
-        "line": 55,
         "provider": "listenbrainz"
       },
       {
@@ -3718,17 +5503,12 @@
       },
       {
         "file": "src/utils/redux/slices/settingsSlice.ts",
-        "line": 69,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/utils/redux/slices/settingsSlice.ts",
-        "line": 159,
-        "provider": "listenbrainz"
-      },
-      {
-        "file": "src/utils/redux/slices/settingsSlice.ts",
         "line": 164,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 167,
         "provider": "deezer"
       },
       {
@@ -3738,7 +5518,32 @@
       },
       {
         "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 169,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 170,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 171,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 172,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
         "line": 176,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 177,
         "provider": "deezer"
       },
       {
@@ -3758,7 +5563,22 @@
       },
       {
         "file": "src/utils/redux/slices/settingsSlice.ts",
-        "line": 185,
+        "line": 190,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 192,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 202,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 202,
         "provider": "listenbrainz"
       },
       {
@@ -3767,13 +5587,173 @@
         "provider": "lrclib"
       },
       {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 313,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 314,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 315,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 316,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 318,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 319,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 470,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 471,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 473,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 474,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 476,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 477,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 479,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 480,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 490,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 491,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 493,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 494,
+        "provider": "lastfm"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 656,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 657,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 658,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 659,
+        "provider": "musicbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 661,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/slices/settingsSlice.ts",
+        "line": 662,
+        "provider": "lastfm"
+      },
+      {
         "file": "src/utils/redux/slices/statsSlice.ts",
         "line": 46,
         "provider": "jellyfin"
       },
       {
         "file": "src/utils/redux/store.ts",
+        "line": 7,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 9,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
         "line": 38,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 40,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 44,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 45,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 46,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 47,
+        "provider": "deezer"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 48,
         "provider": "deezer"
       },
       {
@@ -3783,7 +5763,22 @@
       },
       {
         "file": "src/utils/redux/store.ts",
+        "line": 83,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 95,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
         "line": 96,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/store.ts",
+        "line": 99,
         "provider": "listenbrainz"
       },
       {
@@ -3809,83 +5804,98 @@
     ]
   },
   "largeFiles": {
-    "threshold": 400,
+    "generalLimit": 400,
+    "orchestrationLimit": 250,
     "entries": [
       {
         "file": "src/contexts/PlayingContext.tsx",
-        "lines": 1455
+        "lines": 1455,
+        "limit": 250
       },
       {
         "file": "src/contexts/DownloadContext.tsx",
-        "lines": 976
+        "lines": 976,
+        "limit": 250
       },
       {
         "file": "src/utils/redux/slices/settingsSlice.ts",
-        "lines": 695
+        "lines": 695,
+        "limit": 250
       },
       {
         "file": "src/screens/search/index.tsx",
-        "lines": 691
-      },
-      {
-        "file": "src/screens/settings/player/EngineSmokeTest.tsx",
-        "lines": 669
+        "lines": 691,
+        "limit": 400
       },
       {
         "file": "src/components/options/SongOptions.tsx",
-        "lines": 660
+        "lines": 660,
+        "limit": 400
       },
       {
         "file": "src/screens/artist/components/Content/index.tsx",
-        "lines": 590
+        "lines": 590,
+        "limit": 400
       },
       {
         "file": "src/components/DetailHeader.tsx",
-        "lines": 569
+        "lines": 569,
+        "limit": 400
       },
       {
         "file": "src/components/options/AlbumOptions.tsx",
-        "lines": 561
+        "lines": 561,
+        "limit": 400
       },
       {
         "file": "src/screens/playlist/components/RecommendedSection/index.tsx",
-        "lines": 541
+        "lines": 541,
+        "limit": 400
       },
       {
         "file": "src/api/lidarr/albums/index.ts",
-        "lines": 540
+        "lines": 540,
+        "limit": 400
       },
       {
         "file": "src/screens/playing/index.tsx",
-        "lines": 511
+        "lines": 511,
+        "limit": 400
       },
       {
         "file": "src/screens/playing/playingBar/PlayingBarBase.tsx",
-        "lines": 493
+        "lines": 493,
+        "limit": 400
       },
       {
         "file": "src/contexts/SearchContext.tsx",
-        "lines": 490
+        "lines": 490,
+        "limit": 250
       },
       {
         "file": "src/constants/design.ts",
-        "lines": 485
+        "lines": 485,
+        "limit": 400
       },
       {
         "file": "src/screens/artist/components/Header/index.tsx",
-        "lines": 485
+        "lines": 485,
+        "limit": 400
       },
       {
         "file": "src/utils/servers/registry.ts",
-        "lines": 465
+        "lines": 465,
+        "limit": 400
       },
       {
         "file": "src/components/PlaylistList.tsx",
-        "lines": 434
+        "lines": 434,
+        "limit": 400
       },
       {
         "file": "src/components/options/GetReviewSheet.tsx",
-        "lines": 409
+        "lines": 409,
+        "limit": 400
       }
     ]
   },
