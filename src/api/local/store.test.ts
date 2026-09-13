@@ -65,6 +65,42 @@ describe('local-library import', () => {
     );
   });
 
+  describe('importing the same file again', () => {
+    it('adds a second copy rather than recognising the first', async () => {
+      // Pinning current behaviour, not endorsing it. `importLocalFiles` mints a
+      // fresh id per asset and never looks at what is already indexed, so a
+      // listener who picks the same track twice gets two library entries and
+      // two copies on disk.
+      //
+      // Whether that is right is a product question — the same song can
+      // legitimately be imported twice from different masterings, and the
+      // picker's URIs are temporary, so there is no cheap identity to dedupe
+      // on. What is not acceptable is for it to be undefined, which it was:
+      // nothing said what happens, so nothing would notice it changing.
+      await importLocalFiles([{ uri: 'file:///cache/Track.flac', name: 'Track.flac' }]);
+      await importLocalFiles([{ uri: 'file:///cache/Track.flac', name: 'Track.flac' }]);
+
+      const { tracks } = readLocalLibrary();
+      expect(tracks).toHaveLength(2);
+      expect(tracks[0].id).not.toBe(tracks[1].id);
+      expect(tracks[0].localPath).not.toBe(tracks[1].localPath);
+    });
+
+    it('keeps every import addressable on its own', async () => {
+      // Two entries for one song is tolerable; two entries sharing one file is
+      // not — deleting either would break the other, and the id is what a
+      // deletion addresses.
+      await importLocalFiles([
+        { uri: 'file:///cache/A.flac', name: 'A.flac' },
+        { uri: 'file:///cache/A.flac', name: 'A.flac' },
+      ]);
+
+      const { tracks } = readLocalLibrary();
+      const paths = new Set(tracks.map(track => track.localPath));
+      expect(paths.size).toBe(tracks.length);
+    });
+  });
+
   it('persists local favourites with the index', async () => {
     await importLocalFiles([{ uri: 'file:///cache/Track.mp3', name: 'Track.mp3' }]);
     const [track] = readLocalLibrary().tracks;
