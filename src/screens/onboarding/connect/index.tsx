@@ -14,7 +14,7 @@ import { nanoid } from '@reduxjs/toolkit';
 import { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { ServerType } from '@/types';
-import { SERVER_PROVIDERS } from '@/utils/servers/registry';
+import { SERVER_PROVIDERS, saveServerCredentials } from '@/utils/servers/registry';
 import { useTranslation } from 'react-i18next';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
@@ -75,12 +75,13 @@ export default function Connect() {
         try {
             const demo = await provider.demo();
             const id = nanoid();
+            const sanitized = await saveServerCredentials(id, demo.auth, undefined);
             dispatch(addServer({
                 id,
                 type: selectedType,
                 serverUrl: demo.serverUrl,
                 username: demo.username,
-                auth: demo.auth,
+                auth: sanitized.auth,
                 isAuthenticated: true,
             }));
             dispatch(setActiveServer(id));

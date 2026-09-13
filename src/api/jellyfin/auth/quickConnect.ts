@@ -3,13 +3,13 @@ import { mediaBrowserClientHeader } from '@/api/mediaBrowser/clientHeader';
 
 export async function initiateQuickConnect(
   serverUrl: string,
-  basicAuth?: { username: string; password: string }
+  basicAuth?: { username: string; password?: string }
 ): Promise<{ secret: string; code: string }> {
   const res = await serverFetch(`${serverUrl}/QuickConnect/Initiate`, {
     method: 'POST',
     headers: {
       'X-Emby-Authorization': mediaBrowserClientHeader(),
-      ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password}`) } : {}),
+      ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) } : {}),
     },
   });
   if (!res.ok) throw new Error(`Quick Connect not available on this server (${res.status})`);
@@ -21,13 +21,13 @@ export async function initiateQuickConnect(
 export async function pollQuickConnect(
   serverUrl: string,
   secret: string,
-  basicAuth?: { username: string; password: string }
+  basicAuth?: { username: string; password?: string }
 ): Promise<boolean> {
   try {
     const res = await serverFetch(`${serverUrl}/QuickConnect/Connect?Secret=${encodeURIComponent(secret)}`, {
       headers: {
         'X-Emby-Authorization': mediaBrowserClientHeader(),
-        ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password}`) } : {}),
+        ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) } : {}),
       },
     });
     if (!res.ok) return false;
@@ -41,14 +41,14 @@ export async function pollQuickConnect(
 export async function authenticateWithQuickConnect(
   serverUrl: string,
   secret: string,
-  basicAuth?: { username: string; password: string }
+  basicAuth?: { username: string; password?: string }
 ): Promise<{ token: string; userId: string; username: string }> {
   const res = await serverFetch(`${serverUrl}/Users/AuthenticateWithQuickConnect`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Emby-Authorization': mediaBrowserClientHeader(),
-      ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password}`) } : {}),
+      ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) } : {}),
     },
     body: JSON.stringify({ Secret: secret }),
   });

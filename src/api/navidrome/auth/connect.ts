@@ -14,7 +14,7 @@ export async function connect(
   serverUrl: string,
   username: string,
   password: string,
-  basicAuth?: { username: string; password: string }
+  basicAuth?: { username: string; password?: string }
 ): Promise<ConnectResult> {
   if (!serverUrl || !username || !password) {
     return { success: false, message: i18n.t('onboarding.connect.missingCredentials') };
@@ -32,7 +32,7 @@ export async function connect(
   });
   const url = `${cleanUrl}/rest/getMusicFolders.view?${params}`;
   const headers: Record<string, string> = basicAuth
-    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password}`) }
+    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) }
     : {};
 
   try {

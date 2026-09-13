@@ -60,7 +60,7 @@ import {
   selectEqualizerGains,
   selectPlaybackSpeeds,
 } from '@/utils/redux/selectors/settingsSelectors';
-import { selectIsAudiomuseConfigured, selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useIsAudiomuseConfigured, useAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
 import { useStreamQuality } from '@/hooks/useStreamQuality';
 import { playableQuality } from '@/utils/audio/playableFormat';
 import {
@@ -345,8 +345,8 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     [crossfadeSeconds, crossfadeAlways],
   );
   const equalizerBands = useMemo(() => presetToBands(equalizerGains), [equalizerGains]);
-  const isAudiomuseConfigured = useSelector(selectIsAudiomuseConfigured);
-  const audiomuseConfig = useSelector(selectAudiomuseConfig);
+  const isAudiomuseConfigured = useIsAudiomuseConfigured();
+  const audiomuseConfig = useAudiomuseConfig();
 
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);

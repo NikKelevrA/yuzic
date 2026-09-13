@@ -35,8 +35,116 @@ import { JELLYFIN_BRAND, EMBY_BRAND } from '@/api/mediaBrowser/brand';
 import { ServerType, Server, CoverSource, BasicAuth } from '@/types';
 import type { Library, ApiAdapter } from '@/api/types';
 import i18n from '@/i18n';
+import { getCredentials, setCredential, forgetCredentials, type CredentialBundle } from '@/state/credentialCache';
+import type { CredentialScope } from '@/state/credentials';
+import { listenBrainzCredentialScope } from '@/utils/redux/selectors/listenbrainzSelectors';
+import { audiomuseCredentialScope } from '@/utils/redux/selectors/audiomuseSelectors';
+import { downloaderCredentialScope } from '@/utils/redux/selectors/downloadersSelectors';
+import { DOWNLOADER_IDS } from '@/utils/redux/slices/downloadersSlice';
 
 export type { Library };
+
+/** Where one server's secrets live in the keystore. */
+export const serverCredentialScope = (serverId: string): CredentialScope => ({
+  kind: 'server',
+  serverId,
+});
+
+/**
+ * Splits a freshly-connected provider's `auth` bag into what Redux may keep
+ * (library scope ids, `userId`, ...) and the two keys that are secrets —
+ * `password` (Navidrome's Subsonic password) and `token` (Jellyfin/Emby/Plex's
+ * session token). Everything else passes through untouched.
+ */
+function splitSecretAuth(auth: ProviderAuth | undefined): {
+  publicAuth: ProviderAuth;
+  secrets: Partial<Record<'password' | 'token', string>>;
+} {
+  const publicAuth: ProviderAuth = {};
+  const secrets: Partial<Record<'password' | 'token', string>> = {};
+  for (const [key, value] of Object.entries(auth ?? {})) {
+    if ((key === 'password' || key === 'token') && typeof value === 'string') {
+      secrets[key] = value;
+    } else {
+      publicAuth[key] = value;
+    }
+  }
+  return { publicAuth, secrets };
+}
+
+/**
+ * Writes a newly-connected server's secrets to the keystore, each under its
+ * own name: `auth.password`, `auth.token`, and a reverse proxy's own password
+ * under `proxyPassword`. The proxy secret has a field of its own rather than
+ * borrowing one that happens to be free, because a provider that needed both
+ * would overwrite one with the other and fail to authenticate with no wrong
+ * value anywhere in sight. Returns the sanitized `auth`/`basicAuth` that Redux
+ * is allowed to store.
+ */
+export async function saveServerCredentials(
+  serverId: string,
+  auth: ProviderAuth | undefined,
+  basicAuth: BasicAuth | undefined
+): Promise<{ auth: ProviderAuth; basicAuth: BasicAuth | undefined }> {
+  const { publicAuth, secrets } = splitSecretAuth(auth);
+  const scope = serverCredentialScope(serverId);
+  await Promise.all([
+    secrets.password !== undefined ? setCredential(scope, 'password', secrets.password) : Promise.resolve(),
+    secrets.token !== undefined ? setCredential(scope, 'token', secrets.token) : Promise.resolve(),
+    basicAuth?.password ? setCredential(scope, 'proxyPassword', basicAuth.password) : Promise.resolve(),
+  ]);
+  return {
+    auth: publicAuth,
+    basicAuth: basicAuth ? { username: basicAuth.username } : undefined,
+  };
+}
+
+/**
+ * Re-composes a live `Server` for one call: merges the non-secret Redux
+ * record with the secrets `hydrateAll`/`setCredential` have put in
+ * `credentialCache` (see `src/state/credentialCache.ts`). Never stored back —
+ * this is built fresh for `createAdapter`, `listLibraries` and
+ * `buildCoverUrl`, the three places a provider actually needs to
+ * authenticate, and thrown away after.
+ *
+ * Before the startup keystore read lands, `getCredentials` returns `{}` and
+ * this returns `server` with no secrets filled in — the adapter it feeds
+ * fails its ping exactly as it would for a server with no credentials at all,
+ * which is the correct "not signed in yet" rendering for that window.
+ */
+export function withServerCredentials(server: Server): Server {
+  const creds: CredentialBundle = getCredentials(serverCredentialScope(server.id));
+  return {
+    ...server,
+    auth: {
+      ...server.auth,
+      ...(creds.password !== undefined ? { password: creds.password } : {}),
+      ...(creds.token !== undefined ? { token: creds.token } : {}),
+    },
+    basicAuth: server.basicAuth
+      ? { ...server.basicAuth, password: creds.proxyPassword ?? '' }
+      : undefined,
+  };
+}
+
+/**
+ * Forgets every secret a server owns: its own, plus every per-server
+ * integration keyed off it (ListenBrainz, AudioMuse, each downloader) — so
+ * removing a server doesn't leave the keystore holding orphaned integration
+ * credentials under an id nothing references any more. Named without any one
+ * provider in it deliberately: the caller (the onboarding server list, when
+ * a server is deleted) doesn't need to know the integrations exist, only
+ * that removing a server means forgetting all of it. New per-server
+ * integrations join the list here, not at that call site.
+ */
+export async function forgetAllServerCredentials(serverId: string): Promise<void> {
+  await Promise.all([
+    forgetCredentials(serverCredentialScope(serverId)),
+    forgetCredentials(listenBrainzCredentialScope(serverId)),
+    forgetCredentials(audiomuseCredentialScope(serverId)),
+    ...DOWNLOADER_IDS.map(id => forgetCredentials(downloaderCredentialScope(id, serverId))),
+  ]);
+}
 
 export type ProviderAuth = {
   [key: string]: string | number | boolean | null;
@@ -440,7 +548,7 @@ export const supportsDemo = (type: ServerType) =>
 
 /** The libraries this server offers, asked of it without knowing its type. */
 export const listServerLibraries = (server: Server): Promise<Library[]> =>
-  getServerProvider(server.type).listLibraries(server);
+  getServerProvider(server.type).listLibraries(withServerCredentials(server));
 
 /**
  * The library ids currently selected, empty meaning "all". Reads the provider's

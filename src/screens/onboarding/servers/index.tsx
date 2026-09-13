@@ -20,7 +20,7 @@ import {
 import { clearOfflineMutationsForServer } from '@/utils/redux/slices/offlineMutationsSlice';
 import { Ellipsis } from 'lucide-react-native';
 
-import { SERVER_PROVIDERS } from '@/utils/servers/registry';
+import { SERVER_PROVIDERS, forgetAllServerCredentials } from '@/utils/servers/registry';
 import { Server } from '@/types';
 import { useTranslation } from 'react-i18next';
 import Touchable from '@/components/Touchable';
@@ -68,6 +68,7 @@ export default function Servers() {
                         // which this server can never be again.
                         dispatch(clearOfflineMutationsForServer(id));
                         dispatch(removeServer(id));
+                        void forgetAllServerCredentials(id);
                     },
                 },
             ]

@@ -1,8 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+/**
+ * The API token is NOT here — it goes to the keystore via `setCredential`
+ * (scope `{ kind: 'integration', providerId: 'audiomuse:<serverId>' }`, field
+ * `apiKey` — see `audiomuseCredentialScope` in `audiomuseSelectors.ts`)
+ * because this slice is persisted to MMKV as plain JSON. `useAudiomuseConfig`
+ * in the selectors file combines `serverUrl` from here with the token from
+ * `credentialCache`.
+ */
 export interface AudiomuseConnection {
   serverUrl: string;
-  apiToken: string;
   isEnabled: boolean;
   isAuthenticated: boolean;
 }
@@ -13,7 +20,6 @@ export interface AudiomuseState {
 
 const emptyConnection: AudiomuseConnection = {
   serverUrl: '',
-  apiToken: '',
   isEnabled: false,
   isAuthenticated: false,
 };
@@ -39,10 +45,6 @@ const audiomuseSlice = createSlice({
       const entry = getOrCreate(state, action.payload.serverId);
       entry.serverUrl = action.payload.value;
     },
-    setAudiomuseApiToken(state, action: PayloadAction<ServerRef & { value: string }>) {
-      const entry = getOrCreate(state, action.payload.serverId);
-      entry.apiToken = action.payload.value;
-    },
     setAudiomuseAuthenticated(state, action: PayloadAction<ServerRef & { value: boolean }>) {
       const entry = getOrCreate(state, action.payload.serverId);
       entry.isAuthenticated = action.payload.value;
@@ -56,7 +58,6 @@ const audiomuseSlice = createSlice({
     disconnectAudiomuse(state, action: PayloadAction<ServerRef>) {
       const entry = getOrCreate(state, action.payload.serverId);
       entry.serverUrl = '';
-      entry.apiToken = '';
       entry.isEnabled = false;
       entry.isAuthenticated = false;
     },
@@ -65,7 +66,6 @@ const audiomuseSlice = createSlice({
 
 export const {
   setAudiomuseServerUrl,
-  setAudiomuseApiToken,
   setAudiomuseAuthenticated,
   connectAudiomuse,
   disconnectAudiomuse,

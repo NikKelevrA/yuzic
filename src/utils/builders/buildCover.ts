@@ -1,7 +1,7 @@
 import { COVER_PX, CoverSource } from '@/types';
 import store from '@/utils/redux/store';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { SERVER_PROVIDERS } from '@/utils/servers/registry';
+import { SERVER_PROVIDERS, withServerCredentials } from '@/utils/servers/registry';
 import { normalizeImageUrlForSize } from '@/utils/images/normalizeImageUrl';
 
 export function buildCoverArtArchiveUrl(
@@ -77,5 +77,5 @@ export function buildCover(
 
   const provider = SERVER_PROVIDERS[active.type];
   if (!provider) return null;
-  return provider.buildCoverUrl(active, cover, px);
+  return provider.buildCoverUrl(withServerCredentials(active), cover, px);
 }

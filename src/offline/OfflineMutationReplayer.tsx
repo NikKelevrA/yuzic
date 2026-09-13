@@ -17,7 +17,7 @@ import {
   type OfflineMutation,
   type ScrobbleDestination,
 } from '@/utils/offline/offlineMutations';
-import { selectListenBrainzConfig } from '@/utils/redux/selectors/listenbrainzSelectors';
+import { useListenBrainzConfig } from '@/utils/redux/selectors/listenbrainzSelectors';
 import { selectOfflineMutationQueue } from '@/utils/redux/selectors/offlineMutationsSelectors';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import {
@@ -32,7 +32,7 @@ const RETRY_POLL_MS = 30_000;
 
 type ReplayContext = {
   api: ReturnType<typeof useApi>;
-  listenBrainzConfig: ReturnType<typeof selectListenBrainzConfig> | null;
+  listenBrainzConfig: ReturnType<typeof useListenBrainzConfig>;
 };
 
 async function replayScrobble(
@@ -95,7 +95,7 @@ export default function OfflineMutationReplayer() {
   const dispatch = useDispatch();
   const activeServer = useSelector(selectActiveServer);
   const queue = useSelector(selectOfflineMutationQueue);
-  const listenBrainzConfig = useSelector(selectListenBrainzConfig);
+  const listenBrainzConfig = useListenBrainzConfig();
   const isOffline = useIsOffline();
   const isReplayingRef = useRef(false);
 

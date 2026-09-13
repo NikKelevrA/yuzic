@@ -1,8 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+/**
+ * The user's token is NOT here. It goes to the keystore via `setCredential`
+ * (scope `{ kind: 'integration', providerId: 'listenbrainz:<serverId>' }`,
+ * field `token` — see `listenBrainzCredentialScope` in
+ * `listenbrainzSelectors.ts`) because this slice is persisted to MMKV as
+ * plain JSON. `useListenBrainzConfig` in the selectors file is what a caller
+ * actually wants: it reads `username` from here and `token` from
+ * `credentialCache` and hands back one config object, same as before.
+ */
 export interface PerServerListenBrainzState {
   username: string;
-  token: string;
   isAuthenticated: boolean;
   /** Now-playing follows scrobble — a user who opts out of the finished
    * listen never wanted the in-progress broadcast either. */
@@ -15,7 +23,6 @@ export interface ListenBrainzState {
 
 const defaultPerServer: PerServerListenBrainzState = {
   username: '',
-  token: '',
   isAuthenticated: false,
   scrobbleEnabled: false,
 };
@@ -40,11 +47,6 @@ const listenbrainzSlice = createSlice({
       entry.username = action.payload.value;
       entry.isAuthenticated = false;
     },
-    setToken(state, action: PayloadAction<{ serverId: string; value: string }>) {
-      const entry = getOrCreate(state, action.payload.serverId);
-      entry.token = action.payload.value;
-      entry.isAuthenticated = false;
-    },
     setAuthenticated(state, action: PayloadAction<{ serverId: string; value: boolean }>) {
       const entry = getOrCreate(state, action.payload.serverId);
       entry.isAuthenticated = action.payload.value;
@@ -55,7 +57,6 @@ const listenbrainzSlice = createSlice({
     disconnect(state, action: PayloadAction<{ serverId: string }>) {
       const entry = getOrCreate(state, action.payload.serverId);
       entry.username = '';
-      entry.token = '';
       entry.isAuthenticated = false;
     },
   },
@@ -63,7 +64,6 @@ const listenbrainzSlice = createSlice({
 
 export const {
   setUsername,
-  setToken,
   setAuthenticated,
   setScrobbleEnabled,
   disconnect,

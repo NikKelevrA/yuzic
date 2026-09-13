@@ -9,7 +9,7 @@ import SettingsSelectCard from '../components/SettingsSelectCard';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import {
   downloaderSelectors,
-  selectLidarrConfig,
+  useLidarrConfig,
   selectLidarrDefaultQualityProfileId,
 } from '@/utils/redux/selectors/downloadersSelectors';
 import { setLidarrDefaultQualityProfileId } from '@/utils/redux/slices/downloadersSlice';
@@ -27,7 +27,7 @@ const QualityProfileCard: React.FC = () => {
   const dispatch = useDispatch();
   const activeServer = useSelector(selectActiveServer);
   const isAuthenticated = useSelector(downloaderSelectors.lidarr.isAuthenticated);
-  const config = useSelector(selectLidarrConfig);
+  const config = useLidarrConfig();
   const defaultQualityProfileId = useSelector(selectLidarrDefaultQualityProfileId);
   const serverId = activeServer?.id ?? '';
 

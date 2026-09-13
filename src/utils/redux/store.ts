@@ -64,7 +64,12 @@ const searchHistoryMigrate = (state: any, currentVersion: number): Promise<any> 
   return Promise.resolve({ ...state, byServer: migrated });
 };
 
-const serversPersistConfig = { key: 'servers', storage };
+// `credentialsHydrated` is a per-session clock tick (see serversSlice), not a
+// fact about the user's servers — persisting it would let a stale `true` from
+// the last session survive into a cold start, before this session's keystore
+// read has actually happened, and nothing would ever flip it back on once
+// hydration really does land.
+const serversPersistConfig = { key: 'servers', storage, blacklist: ['credentialsHydrated'] };
 const downloadersPersistConfig = { key: 'downloaders', storage };
 const audiomusePersistConfig = { key: 'audiomuse', storage };
 const settingsPersistConfig = {

@@ -63,8 +63,8 @@ jest.mock('@/utils/redux/slices/wantsSlice', () => ({
 }));
 
 jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
-  selectIsAudiomuseConfigured: () => false,
-  selectAudiomuseConfig: () => ({}),
+  useIsAudiomuseConfigured: () => false,
+  useAudiomuseConfig: () => ({}),
 }));
 
 const mockGenerateSimilarPlaylist = jest.fn();

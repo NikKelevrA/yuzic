@@ -17,7 +17,7 @@ export interface MediaBrowserClientConfig {
   token: string;
   userId: string;
   parentId?: string;
-  basicAuth?: { username: string; password: string };
+  basicAuth?: { username: string; password?: string };
 }
 
 export type MediaBrowserClient = ReturnType<typeof createMediaBrowserClient>;
@@ -50,7 +50,7 @@ export function createMediaBrowserClient(config: MediaBrowserClientConfig, brand
     ? { id: serverId, serverUrl: baseUrl, fallbackUrls }
     : null;
   const proxyHeader: Record<string, string> = basicAuth
-    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password}`) }
+    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) }
     : {};
 
   const defaultHeaders: Record<string, string> = {

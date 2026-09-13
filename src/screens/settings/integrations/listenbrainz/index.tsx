@@ -8,18 +8,18 @@ import SettingsAuthCard from '../../components/SettingsAuthCard';
 import SettingsDisconnectButton from '../../components/SettingsDisconnectButton';
 import {
   selectListenBrainzUsername,
-  selectListenBrainzToken,
   selectListenBrainzAuthenticated,
-  selectListenBrainzConfig,
+  useListenBrainzToken,
+  listenBrainzCredentialScope,
 } from '@/utils/redux/selectors/listenbrainzSelectors';
 import {
   setUsername,
-  setToken,
   setAuthenticated,
   disconnect,
 } from '@/utils/redux/slices/listenbrainzSlice';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import * as listenbrainz from '@/api/listenbrainz';
+import { setCredential, forgetCredentials } from '@/state/credentialCache';
 
 const ListenBrainzView: React.FC = () => {
   const { t } = useTranslation();
@@ -28,11 +28,24 @@ const ListenBrainzView: React.FC = () => {
   const serverId = activeServer?.id ?? '';
 
   const username = useSelector(selectListenBrainzUsername);
-  const token = useSelector(selectListenBrainzToken);
+  // The token, unlike every other field on this screen, never touches Redux —
+  // it comes straight from the keystore-backed cache. Local state gives the
+  // input its immediate keystroke feedback; `setCredential` is the actual
+  // write, fired on every change same as the Redux fields below.
+  const cachedToken = useListenBrainzToken();
+  const [token, setLocalToken] = useState(cachedToken);
+  useEffect(() => { setLocalToken(cachedToken); }, [cachedToken]);
   const isAuthenticated = useSelector(selectListenBrainzAuthenticated);
-  const config = useSelector(selectListenBrainzConfig);
+  const config = username && token ? { username, token } : null;
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleTokenChange = (value: string) => {
+    const trimmed = value.trim();
+    setLocalToken(trimmed);
+    dispatch(setAuthenticated({ serverId, value: false }));
+    void setCredential(listenBrainzCredentialScope(serverId), 'token', trimmed);
+  };
 
   useEffect(() => {
     if (!username || !token) {
@@ -90,6 +103,8 @@ const ListenBrainzView: React.FC = () => {
 
   const handleDisconnect = () => {
     dispatch(disconnect({ serverId }));
+    setLocalToken('');
+    void forgetCredentials(listenBrainzCredentialScope(serverId));
     notify.info(t('settings.listenBrainz.disconnected'));
   };
 
@@ -100,7 +115,7 @@ const ListenBrainzView: React.FC = () => {
       <SettingsAuthCard
         fields={[
           { label: t('settings.listenBrainz.username'), value: username, onChangeText: v => dispatch(setUsername({ serverId, value: v.trim() })), placeholder: t('settings.listenBrainz.usernamePlaceholder') },
-          { label: t('settings.listenBrainz.userToken'), value: token, onChangeText: v => dispatch(setToken({ serverId, value: v.trim() })), placeholder: t('settings.listenBrainz.tokenPlaceholder'), secureTextEntry: true },
+          { label: t('settings.listenBrainz.userToken'), value: token, onChangeText: handleTokenChange, placeholder: t('settings.listenBrainz.tokenPlaceholder'), secureTextEntry: true },
         ]}
         isAuthenticated={isAuthenticated}
         isLoading={isLoading}

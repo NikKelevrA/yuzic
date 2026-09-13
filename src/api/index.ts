@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { ApiAdapter } from "./types";
-import { SERVER_PROVIDERS } from "@/utils/servers/registry";
-import { selectActiveServer } from "@/utils/redux/selectors/serversSelectors";
+import { SERVER_PROVIDERS, withServerCredentials } from "@/utils/servers/registry";
+import { selectActiveServer, selectCredentialsHydrated } from "@/utils/redux/selectors/serversSelectors";
 
 const empty = async () => {
   throw new Error("No server connected.");
@@ -65,9 +65,15 @@ const EMPTY_ADAPTER: ApiAdapter = {
 
 export const useApi = (): ApiAdapter => {
   const activeServer = useSelector(selectActiveServer);
+  // Not read directly — its only job is to be a dependency that changes once
+  // the startup keystore read lands, so the adapter is rebuilt with real
+  // secrets instead of staying on the empty bundle `withServerCredentials`
+  // sees beforehand. See `ServersState.credentialsHydrated`.
+  const credentialsHydrated = useSelector(selectCredentialsHydrated);
 
   return useMemo(() => {
     if (!activeServer || !activeServer.isAuthenticated) return EMPTY_ADAPTER;
-    return SERVER_PROVIDERS[activeServer.type]?.createAdapter(activeServer) ?? EMPTY_ADAPTER;
-  }, [activeServer]);
+    const server = withServerCredentials(activeServer);
+    return SERVER_PROVIDERS[activeServer.type]?.createAdapter(server) ?? EMPTY_ADAPTER;
+  }, [activeServer, credentialsHydrated]);
 };

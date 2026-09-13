@@ -11,7 +11,7 @@ export async function connect(
   serverUrl: string,
   username: string,
   password: string,
-  basicAuth?: { username: string; password: string }
+  basicAuth?: { username: string; password?: string }
 ): Promise<ConnectResult> {
   try {
     const res = await serverFetch(`${serverUrl}/Users/AuthenticateByName`, {
@@ -19,7 +19,7 @@ export async function connect(
       headers: {
         "Content-Type": "application/json",
         "X-Emby-Authorization": mediaBrowserClientHeader(),
-        ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password}`) } : {}),
+        ...(basicAuth ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) } : {}),
       },
       // Jellyfin 12 rejects a password login whose body omits the application
       // identity, even when the conventional client header names it.

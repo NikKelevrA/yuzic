@@ -5,9 +5,16 @@ export type DownloaderId = 'lidarr' | 'slskd' | 'soulsync';
 
 export const DOWNLOADER_IDS: DownloaderId[] = ['lidarr', 'slskd', 'soulsync'];
 
+/**
+ * `apiKey` is NOT here — it goes to the keystore via `setCredential` (scope
+ * `{ kind: 'integration', providerId: 'downloader:<id>:<serverId>' }`, field
+ * `apiKey` — see `downloaderCredentialScope` in `downloadersSelectors.ts`)
+ * because this slice is persisted to MMKV as plain JSON. The
+ * `useDownloaderConfig` hook combines `serverUrl` from here with the key from
+ * `credentialCache`.
+ */
 export interface DownloaderConnection {
   serverUrl: string;
-  apiKey: string;
   isAuthenticated: boolean;
   /**
    * Downloader-specific preferences, shaped per implementation. slskd stores
@@ -45,7 +52,6 @@ export interface DownloadersState {
 
 const emptyConnection: DownloaderConnection = {
   serverUrl: '',
-  apiKey: '',
   isAuthenticated: false,
 };
 
@@ -81,10 +87,6 @@ const downloadersSlice = createSlice({
       const entry = getOrCreate(state, action.payload.serverId, action.payload.downloader);
       entry.serverUrl = action.payload.value;
     },
-    setDownloaderApiKey(state, action: PayloadAction<DownloaderRef & { value: string }>) {
-      const entry = getOrCreate(state, action.payload.serverId, action.payload.downloader);
-      entry.apiKey = action.payload.value;
-    },
     setDownloaderAuthenticated(state, action: PayloadAction<DownloaderRef & { value: boolean }>) {
       const entry = getOrCreate(state, action.payload.serverId, action.payload.downloader);
       entry.isAuthenticated = action.payload.value;
@@ -96,7 +98,6 @@ const downloadersSlice = createSlice({
     disconnectDownloader(state, action: PayloadAction<DownloaderRef>) {
       const entry = getOrCreate(state, action.payload.serverId, action.payload.downloader);
       entry.serverUrl = '';
-      entry.apiKey = '';
       entry.isAuthenticated = false;
       // The user's preferences are theirs — a disconnect is a re-plug, not a
       // reset of their format/quality choices.
@@ -148,7 +149,6 @@ const downloadersSlice = createSlice({
 
 export const {
   setDownloaderServerUrl,
-  setDownloaderApiKey,
   setDownloaderAuthenticated,
   connectDownloader,
   disconnectDownloader,

@@ -9,7 +9,7 @@ import { Heart, ListEnd, ListStart, Play, Shuffle, Disc, CheckCircle, ArrowDownC
 import { notify } from '@/components/toast';
 import { useApi } from '@/api';
 import { shareItem } from '@/utils/share';
-import { selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
 import { useCanGeneratePlaylist } from '@/features/audiomuse/generatePlaylist';
 import { generateSimilarPlaylistForAlbum } from '@/features/audiomuse/generatePlaylist';
 
@@ -118,7 +118,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
   const [isGeneratingPlaylist, setIsGeneratingPlaylist] = useState(false);
   const generatePlaylistInFlightRef = useRef(false);
   const api = useApi();
-  const audiomuseConfig = useSelector(selectAudiomuseConfig);
+  const audiomuseConfig = useAudiomuseConfig();
   const canGeneratePlaylist = useCanGeneratePlaylist();
   const { albumWithSongs, songs, songsLoading } = useLazyAlbumDetail(album, isSheetOpen);
 

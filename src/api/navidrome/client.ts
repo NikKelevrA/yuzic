@@ -17,7 +17,7 @@ export interface NavidromeClientConfig {
   username: string;
   password: string;
   defaultParams?: Record<string, string | number>;
-  basicAuth?: { username: string; password: string };
+  basicAuth?: { username: string; password?: string };
 }
 
 const API_VERSION = "1.16.0";
@@ -64,7 +64,7 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
     ? { id: serverId, serverUrl: baseUrl, fallbackUrls }
     : null;
   const proxyHeader: Record<string, string> = basicAuth
-    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password}`) }
+    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) }
     : {};
 
   async function request<T>(

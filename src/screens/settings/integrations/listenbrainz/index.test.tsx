@@ -7,22 +7,23 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) =>
 jest.mock('@/components/toast', () => ({ notify: { error: jest.fn(), success: jest.fn(), info: jest.fn(), loading: jest.fn(), dismiss: jest.fn() } }));
 jest.mock('react-redux', () => ({ useSelector: (selector: string) => ({
   username: selector === 'username' ? '' : undefined,
-  token: selector === 'token' ? '' : undefined,
   authenticated: selector === 'authenticated' ? false : undefined,
-  config: selector === 'config' ? null : undefined,
   activeServer: selector === 'activeServer' ? { id: 'server-1' } : undefined,
 }[selector]), useDispatch: () => jest.fn() }));
 jest.mock('@/utils/redux/selectors/listenbrainzSelectors', () => ({
   selectListenBrainzUsername: 'username',
-  selectListenBrainzToken: 'token',
   selectListenBrainzAuthenticated: 'authenticated',
-  selectListenBrainzConfig: 'config',
+  // A real hook (not a plain selector string like the others above) since the
+  // token now comes from credentialCache, not a `RootState` selector.
+  useListenBrainzToken: () => '',
+  listenBrainzCredentialScope: (serverId: string) => ({ kind: 'integration', providerId: `listenbrainz:${serverId}` }),
 }));
 jest.mock('@/utils/redux/selectors/serversSelectors', () => ({ selectActiveServer: 'activeServer' }));
 jest.mock('@/utils/redux/slices/listenbrainzSlice', () => ({
-  setUsername: jest.fn(), setToken: jest.fn(), setAuthenticated: jest.fn(), disconnect: jest.fn(),
+  setUsername: jest.fn(), setAuthenticated: jest.fn(), disconnect: jest.fn(),
 }));
 jest.mock('@/api/listenbrainz', () => ({ testConnection: jest.fn() }));
+jest.mock('@/state/credentialCache', () => ({ setCredential: jest.fn(), forgetCredentials: jest.fn() }));
 jest.mock('../../components/SettingsScreen', () => {
   const SettingsScreen = ({ children }: any) => <>{children}</>;
   return SettingsScreen;

@@ -11,7 +11,7 @@ import * as listenbrainz from '@/api/listenbrainz';
 import { canScrobble } from '@/utils/playback/contentKind';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import {
-  selectListenBrainzConfig,
+  useListenBrainzConfig,
 } from '@/utils/redux/selectors/listenbrainzSelectors';
 import {
   selectLastfmScrobbleRoute,
@@ -29,7 +29,7 @@ export function useScrobbling() {
   const api = useApi();
   const dispatch = useDispatch();
   const activeServer = useSelector(selectActiveServer);
-  const listenBrainzConfig = useSelector(selectListenBrainzConfig);
+  const listenBrainzConfig = useListenBrainzConfig();
   // One route per destination, not two independent booleans — see
   // scrobbleRoutingSelectors. 'through-server' on either destination is what
   // used to be `serverScrobbleEnabled`; ListenBrainz's own 'direct' route is

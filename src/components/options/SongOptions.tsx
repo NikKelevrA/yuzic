@@ -6,7 +6,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import { Heart, CirclePlus, Disc, Radio, Mic2, ListEnd, ListStart, CheckCircle, ArrowDownCircle, Sparkles, CloudDownload, Download, Play, ChevronRight } from 'lucide-react-native';
 import { useApi } from '@/api';
-import { selectIsAudiomuseConfigured, selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useIsAudiomuseConfigured, useAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
 import { generateSimilarPlaylistForSong } from '@/features/audiomuse/generatePlaylist';
 
 import type { Song } from '@/domain/entities/Song';
@@ -135,8 +135,8 @@ const LibrarySongOptionsSheet = forwardRef<
     const generatePlaylistInFlightRef = useRef(false);
     const [isGeneratingPlaylist, setIsGeneratingPlaylist] = React.useState(false);
     const api = useApi();
-    const audiomuseConfigured = useSelector(selectIsAudiomuseConfigured);
-    const audiomuseConfig = useSelector(selectAudiomuseConfig);
+    const audiomuseConfigured = useIsAudiomuseConfigured();
+    const audiomuseConfig = useAudiomuseConfig();
     const playCount = useSelector(selectSongPlayCount(selectedSong.nativeId));
 
     const { songs: starredSongs } = useStarredSongs();

@@ -4,6 +4,9 @@ import { RootState } from '@/utils/redux/store';
 
 export const selectActiveServerId = (state: RootState) => state.servers.activeServerId;
 
+/** See `ServersState.credentialsHydrated` — subscribe to this to re-render once the startup keystore read lands. */
+export const selectCredentialsHydrated = (state: RootState) => state.servers.credentialsHydrated;
+
 export const selectActiveServer = createSelector(
   (state: RootState) => state.servers.servers,
   selectActiveServerId,

@@ -32,7 +32,7 @@ jest.mock('@/utils/redux/selectors/statsSelectors', () => ({
 }));
 
 jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
-  selectAudiomuseConfig: () => ({}),
+  useAudiomuseConfig: () => ({}),
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);

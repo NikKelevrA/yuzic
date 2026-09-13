@@ -9,10 +9,12 @@ import { serverProvenance } from '@/domain/identity/Provenance'
 import type { Song } from '@/domain/entities/Song'
 import settingsReducer, { setScrobbleRoute } from '@/utils/redux/slices/settingsSlice'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
-import listenbrainzReducer, { setUsername, setToken } from '@/utils/redux/slices/listenbrainzSlice'
+import listenbrainzReducer, { setUsername } from '@/utils/redux/slices/listenbrainzSlice'
 import statsReducer from '@/utils/redux/slices/statsSlice'
 import offlineMutationsReducer from '@/utils/redux/slices/offlineMutationsSlice'
 import * as listenbrainz from '@/api/listenbrainz'
+import { listenBrainzCredentialScope } from '@/utils/redux/selectors/listenbrainzSelectors'
+import { setCredential, clearCredentialCache } from '@/state/credentialCache'
 
 const mockSongsApi = {
   get: jest.fn(),
@@ -36,6 +38,12 @@ jest.mock('@/api/listenbrainz', () => ({
 }))
 
 import { useScrobbling } from './useScrobbling'
+
+// The ListenBrainz token now lives in credentialCache, not Redux — a
+// module-level singleton that would otherwise leak a token set by one test
+// (the 'direct' route case below) into every other test reusing the same
+// server id ('navidrome-1', etc).
+afterEach(() => { clearCredentialCache() })
 
 function serverOf(type: Server['type']): Server {
   return {
@@ -210,7 +218,7 @@ describe('scrobble route dispatch', () => {
     const server = serverOf('navidrome')
     const store = makeStore(server)
     store.dispatch(setUsername({ serverId: server.id, value: 'ari' }))
-    store.dispatch(setToken({ serverId: server.id, value: 'tok' }))
+    await setCredential(listenBrainzCredentialScope(server.id), 'token', 'tok')
     store.dispatch(setScrobbleRoute({ serverId: server.id, destination: 'listenbrainz', route: 'direct' }))
     store.dispatch(setScrobbleRoute({ serverId: server.id, destination: 'lastfm', route: 'disabled' }))
 

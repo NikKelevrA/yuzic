@@ -20,13 +20,15 @@ describe('audiomuseSlice', () => {
     });
   });
 
-  it('clears credentials and disables AudioMuse when disconnected', () => {
+  it('clears the server URL and disables AudioMuse when disconnected', () => {
+    // The API token isn't part of this slice's state any more — it lives in
+    // the keystore (see credentialCache) and is cleared separately, by the
+    // settings screen calling `forgetCredentials` alongside this action.
     const connected = reducer(undefined, connectAudiomuse({ serverId: 'server-1' }));
     const state = reducer(connected, disconnectAudiomuse({ serverId: 'server-1' }));
 
     expect(state.byServer['server-1']).toMatchObject({
       serverUrl: '',
-      apiToken: '',
       isAuthenticated: false,
       isEnabled: false,
     });

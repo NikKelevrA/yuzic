@@ -11,20 +11,20 @@ import * as audiomuse from '@/api/audiomuse';
 
 import {
   selectAudiomuseServerUrl,
-  selectAudiomuseApiToken,
   selectAudiomuseEnabled,
   selectAudiomuseAuthenticated,
-  selectAudiomuseConfig,
+  useAudiomuseApiToken,
+  audiomuseCredentialScope,
 } from '@/utils/redux/selectors/audiomuseSelectors';
 import {
   setAudiomuseServerUrl,
-  setAudiomuseApiToken,
   setAudiomuseAuthenticated,
   connectAudiomuse,
   disconnectAudiomuse,
 } from '@/utils/redux/slices/audiomuseSlice';
 
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { setCredential, forgetCredentials } from '@/state/credentialCache';
 
 const AudiomuseView: React.FC = () => {
   const { t } = useTranslation();
@@ -33,12 +33,22 @@ const AudiomuseView: React.FC = () => {
   const serverId = activeServer?.id ?? '';
 
   const serverUrl = useSelector(selectAudiomuseServerUrl);
-  const apiToken = useSelector(selectAudiomuseApiToken);
+  // The API token skips Redux entirely — see the same note in the
+  // ListenBrainz settings screen.
+  const cachedApiToken = useAudiomuseApiToken();
+  const [apiToken, setLocalApiToken] = useState(cachedApiToken);
+  useEffect(() => { setLocalApiToken(cachedApiToken); }, [cachedApiToken]);
   const isEnabled = useSelector(selectAudiomuseEnabled);
   const isAuthenticated = useSelector(selectAudiomuseAuthenticated);
-  const config = useSelector(selectAudiomuseConfig);
+  const config = { serverUrl, apiToken };
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleApiTokenChange = (value: string) => {
+    setLocalApiToken(value);
+    dispatch(setAudiomuseAuthenticated({ serverId, value: false }));
+    void setCredential(audiomuseCredentialScope(serverId), 'apiKey', value);
+  };
 
   useEffect(() => {
     if (!serverUrl || !apiToken) {
@@ -87,6 +97,8 @@ const AudiomuseView: React.FC = () => {
 
   const handleDisconnect = () => {
     dispatch(disconnectAudiomuse({ serverId }));
+    setLocalApiToken('');
+    void forgetCredentials(audiomuseCredentialScope(serverId));
     notify.info(t('settings.audiomuse.disconnected'));
   };
 
@@ -98,7 +110,7 @@ const AudiomuseView: React.FC = () => {
       <SettingsAuthCard
         fields={[
           { label: t('settings.audiomuse.serverUrl'), value: serverUrl, onChangeText: v => dispatch(setAudiomuseServerUrl({ serverId, value: v })), placeholder: t('settings.audiomuse.serverUrlPlaceholder') },
-          { label: t('settings.audiomuse.apiToken'), value: apiToken, onChangeText: v => dispatch(setAudiomuseApiToken({ serverId, value: v })), placeholder: t('settings.audiomuse.apiTokenPlaceholder'), secureTextEntry: true },
+          { label: t('settings.audiomuse.apiToken'), value: apiToken, onChangeText: handleApiTokenChange, placeholder: t('settings.audiomuse.apiTokenPlaceholder'), secureTextEntry: true },
         ]}
         isAuthenticated={isAuthenticated}
         isLoading={isLoading}

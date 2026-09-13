@@ -1,5 +1,6 @@
 import { RootState } from '@/utils/redux/store';
 import { createSelector } from '@reduxjs/toolkit';
+import { useSelector } from 'react-redux';
 import {
   DOWNLOADER_IDS,
   DownloaderConnection,
@@ -7,8 +8,11 @@ import {
   PerServerDownloadersState,
 } from '@/utils/redux/slices/downloadersSlice';
 import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/api/slskd';
+import { getCredentials } from '@/state/credentialCache';
+import type { CredentialScope } from '@/state/credentials';
+import { selectCredentialsHydrated } from './serversSelectors';
 
-const emptyConnection: DownloaderConnection = { serverUrl: '', apiKey: '', isAuthenticated: false };
+const emptyConnection: DownloaderConnection = { serverUrl: '', isAuthenticated: false };
 
 const defaultEntry: PerServerDownloadersState = {
   lidarr: emptyConnection,
@@ -22,11 +26,17 @@ export const selectDownloadersForActiveServer = createSelector(
     (activeServerId ? byServer[activeServerId] ?? defaultEntry : defaultEntry)
 );
 
+/** Where one server's downloader API key lives in the keystore. */
+export const downloaderCredentialScope = (id: DownloaderId, serverId: string): CredentialScope => ({
+  kind: 'integration',
+  providerId: `downloader:${id}:${serverId}`,
+});
+
 export interface DownloaderSelectors {
   serverUrl: (s: RootState) => string;
-  apiKey: (s: RootState) => string;
   isAuthenticated: (s: RootState) => boolean;
-  config: (s: RootState) => { serverUrl: string; apiKey: string };
+  useApiKey: () => string;
+  useConfig: () => { serverUrl: string; apiKey: string };
 }
 
 function buildSelectors(id: DownloaderId): DownloaderSelectors {
@@ -35,10 +45,18 @@ function buildSelectors(id: DownloaderId): DownloaderSelectors {
     (entry) => entry[id] ?? emptyConnection
   );
   const serverUrl = createSelector([connection], (c) => c.serverUrl);
-  const apiKey = createSelector([connection], (c) => c.apiKey);
   const isAuthenticated = createSelector([connection], (c) => c.isAuthenticated);
-  const config = createSelector([serverUrl, apiKey], (serverUrl, apiKey) => ({ serverUrl, apiKey }));
-  return { serverUrl, apiKey, isAuthenticated, config };
+  function useApiKey(): string {
+    const serverId = useSelector((s: RootState) => s.servers.activeServerId);
+    useSelector(selectCredentialsHydrated);
+    return serverId ? getCredentials(downloaderCredentialScope(id, serverId)).apiKey ?? '' : '';
+  }
+  function useConfig(): { serverUrl: string; apiKey: string } {
+    const url = useSelector(serverUrl);
+    const apiKey = useApiKey();
+    return { serverUrl: url, apiKey };
+  }
+  return { serverUrl, isAuthenticated, useApiKey, useConfig };
 }
 
 export const downloaderSelectors = Object.fromEntries(
@@ -47,8 +65,8 @@ export const downloaderSelectors = Object.fromEntries(
 
 export const selectLidarrAuthenticated = downloaderSelectors.lidarr.isAuthenticated;
 export const selectSlskdAuthenticated = downloaderSelectors.slskd.isAuthenticated;
-export const selectLidarrConfig = downloaderSelectors.lidarr.config;
-export const selectSlskdConfig = downloaderSelectors.slskd.config;
+export const useLidarrConfig = downloaderSelectors.lidarr.useConfig;
+export const useSlskdConfig = downloaderSelectors.slskd.useConfig;
 
 const selectSlskdConnection = createSelector(
   [selectDownloadersForActiveServer],

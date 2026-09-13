@@ -3,16 +3,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
 
-import { downloaderSelectors } from '@/utils/redux/selectors/downloadersSelectors';
+import { downloaderSelectors, downloaderCredentialScope } from '@/utils/redux/selectors/downloadersSelectors';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import {
   connectDownloader,
   disconnectDownloader,
-  setDownloaderApiKey,
   setDownloaderAuthenticated,
   setDownloaderServerUrl,
   type DownloaderId,
 } from '@/utils/redux/slices/downloadersSlice';
+import { setCredential, forgetCredentials } from '@/state/credentialCache';
 
 /** Debounce before auto-testing typed credentials, so each keystroke isn't a request. */
 const AUTO_CONNECT_DELAY_MS = 500;
@@ -35,9 +35,14 @@ export function useDownloaderConnection(
 
   const selectors = downloaderSelectors[id];
   const serverUrl = useSelector(selectors.serverUrl);
-  const apiKey = useSelector(selectors.apiKey);
+  // The API key skips Redux entirely — see the same note in the ListenBrainz
+  // settings screen. Local state gives the input immediate keystroke
+  // feedback; `setCredential` is the actual write.
+  const cachedApiKey = selectors.useApiKey();
+  const [apiKey, setLocalApiKey] = useState(cachedApiKey);
+  useEffect(() => { setLocalApiKey(cachedApiKey); }, [cachedApiKey]);
   const isAuthenticated = useSelector(selectors.isAuthenticated);
-  const config = useSelector(selectors.config);
+  const config: DownloaderConfig = { serverUrl, apiKey };
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +56,11 @@ export function useDownloaderConnection(
     [dispatch, id, serverId]
   );
   const setApiKey = useCallback(
-    (value: string) => dispatch(setDownloaderApiKey({ serverId, downloader: id, value })),
+    (value: string) => {
+      setLocalApiKey(value);
+      dispatch(setDownloaderAuthenticated({ serverId, downloader: id, value: false }));
+      void setCredential(downloaderCredentialScope(id, serverId), 'apiKey', value);
+    },
     [dispatch, id, serverId]
   );
 
@@ -102,6 +111,8 @@ export function useDownloaderConnection(
 
   const disconnect = useCallback(() => {
     dispatch(disconnectDownloader({ serverId, downloader: id }));
+    setLocalApiKey('');
+    void forgetCredentials(downloaderCredentialScope(id, serverId));
     notify.info(t(`settings.downloaders.${id}.disconnected`));
   }, [dispatch, id, serverId, t]);
 

@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useEnabledExternalSources } from '@/features/sources/registry';
 import { selectArtistPlayCount } from '@/utils/redux/selectors/statsSelectors';
-import { selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
 import { useCanGeneratePlaylist } from '@/features/audiomuse/generatePlaylist';
 import { generateSimilarPlaylistForArtist } from '@/features/audiomuse/generatePlaylist';
 import { useApi } from '@/api';
@@ -65,7 +65,7 @@ const ArtistOptions = forwardRef<
   const [isGeneratingPlaylist, setIsGeneratingPlaylist] = useState(false);
   const generatePlaylistInFlightRef = useRef(false);
   const api = useApi();
-  const audiomuseConfig = useSelector(selectAudiomuseConfig);
+  const audiomuseConfig = useAudiomuseConfig();
   const canGeneratePlaylist = useCanGeneratePlaylist();
 
   const snapPoints = useMemo(() => ['55%', '90%'], []);

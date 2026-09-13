@@ -8,7 +8,9 @@ import type { SlskdSearchPreferences } from '@/api/slskd'
 import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice'
 import type { LidarrConfig } from '@/types'
 import type { Album } from '@/domain/entities/Album'
-import { selectDownloadersForActiveServer } from '@/utils/redux/selectors/downloadersSelectors'
+import { selectDownloadersForActiveServer, downloaderCredentialScope } from '@/utils/redux/selectors/downloadersSelectors'
+import { selectActiveServerId, selectCredentialsHydrated } from '@/utils/redux/selectors/serversSelectors'
+import { getCredentials } from '@/state/credentialCache'
 import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
 
 export { downloadErrorKey } from './errorKeys'
@@ -226,16 +228,22 @@ export type DownloaderState = {
 
 export function useDownloaderStates(): DownloaderState[] {
   const entry = useSelector(selectDownloadersForActiveServer)
+  const serverId = useSelector(selectActiveServerId)
+  // Not read directly — see `ServersState.credentialsHydrated`. Its only job
+  // is to be a dependency that changes once the startup keystore read lands,
+  // so `config.apiKey` (below) is recomputed from real values.
+  const credentialsHydrated = useSelector(selectCredentialsHydrated)
   // Memoized on `entry`: callers use the returned array as an effect
   // dependency, and a fresh array every render turns those effects into
   // render loops.
   return useMemo(() => ALL_DOWNLOADERS.map((def) => {
     const connection = entry[def.id]
+    const apiKey = serverId ? getCredentials(downloaderCredentialScope(def.id, serverId)).apiKey ?? '' : ''
     return {
       def,
       config: {
         serverUrl: connection?.serverUrl ?? '',
-        apiKey: connection?.apiKey ?? '',
+        apiKey,
         // Bundling preferences into the config here means every download-time
         // call site — the sheet, the auto-downloader, batch flows — carries
         // them without having to know they exist.
@@ -243,7 +251,7 @@ export function useDownloaderStates(): DownloaderState[] {
       },
       isConnected: connection?.isAuthenticated === true,
     }
-  }), [entry])
+  }), [entry, serverId, credentialsHydrated])
 }
 
 export function useAnyDownloaderConnected(): boolean {

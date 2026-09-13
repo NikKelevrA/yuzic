@@ -5,9 +5,18 @@ export type ProviderAuth = {
 };
 
 
+/**
+ * `password` is optional because this same shape does double duty: the
+ * persisted `Server.basicAuth` (Redux/MMKV) never carries it — a reverse-proxy
+ * password is a secret and lives in the keystore, keyed by server id (see
+ * `src/state/credentials.ts`) — while a *composed* server, built for one live
+ * call by `withServerCredentials` in `src/utils/servers/registry.ts`, fills it
+ * in from there. A provider client that needs to send the header receives the
+ * composed form and can rely on the field being present at that point.
+ */
 export interface BasicAuth {
   username: string;
-  password: string;
+  password?: string;
 }
 
 export interface Server {
@@ -22,6 +31,15 @@ export interface Server {
    */
   fallbackUrls?: string[];
   username: string;
+  /**
+   * Non-secret provider fields only — library scope ids, `userId`, and the
+   * like. `password` and `token` are never written here: they live in the
+   * keystore (`src/state/credentials.ts`), keyed by this server's id, and are
+   * merged back in only for the duration of one live call by
+   * `withServerCredentials` (`src/utils/servers/registry.ts`). Redux is
+   * persisted to MMKV as plain JSON, so a secret placed here would be a secret
+   * disclosed.
+   */
   auth?: ProviderAuth;
   basicAuth?: BasicAuth;
   isAuthenticated: boolean;

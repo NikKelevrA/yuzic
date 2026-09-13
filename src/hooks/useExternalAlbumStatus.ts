@@ -9,9 +9,9 @@ import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import * as lidarr from '@/api/lidarr';
 import * as slskd from '@/api/slskd';
 import {
-  selectLidarrConfig,
+  useLidarrConfig,
   selectLidarrAuthenticated,
-  selectSlskdConfig,
+  useSlskdConfig,
   selectSlskdAuthenticated,
 } from '@/utils/redux/selectors/downloadersSelectors';
 import { normalize } from '@/utils/normalize';
@@ -25,10 +25,10 @@ export type ExternalAlbumStatus =
 export function useExternalAlbumStatus(album: Album | null): ExternalAlbumStatus {
   const { albums: libraryAlbums } = useAlbums();
 
-  const lidarrConfig = useSelector(selectLidarrConfig);
+  const lidarrConfig = useLidarrConfig();
   const isLidarrConnected = useSelector(selectLidarrAuthenticated);
 
-  const slskdConfig = useSelector(selectSlskdConfig);
+  const slskdConfig = useSlskdConfig();
   const isSlskdConnected = useSelector(selectSlskdAuthenticated);
 
   const isInLibrary = useMemo(() => {

@@ -18,7 +18,7 @@ import {
   selectAutoplayEnabled,
   selectResumeLongTracksEnabled,
 } from '@/utils/redux/selectors/settingsSelectors';
-import { selectIsAudiomuseConfigured } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useIsAudiomuseConfigured } from '@/utils/redux/selectors/audiomuseSelectors';
 import {
   setPreferredCodec,
   setAutoplayEnabled,
@@ -33,7 +33,7 @@ const PlayerSettings: React.FC = () => {
   const preferredCodec = useSelector(selectPreferredCodec);
   const autoplayEnabled = useSelector(selectAutoplayEnabled);
   const resumeLongTracks = useSelector(selectResumeLongTracksEnabled);
-  const isAudiomuseConfigured = useSelector(selectIsAudiomuseConfigured);
+  const isAudiomuseConfigured = useIsAudiomuseConfigured();
   // Presence, not provider: a server whose adapter declares Opus gets the
   // switch, whichever server it is.
   const supportsOpus = api.songs.streamableCodecs.includes('opus');

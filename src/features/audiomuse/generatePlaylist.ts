@@ -1,5 +1,4 @@
-import { useSelector } from 'react-redux';
-import { selectIsAudiomuseConfigured } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useIsAudiomuseConfigured } from '@/utils/redux/selectors/audiomuseSelectors';
 import type { ApiAdapter } from '@/api/types';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
@@ -103,5 +102,5 @@ export async function generateSimilarPlaylistForArtist(
  * lookup so both count — that is Phase 3's job.
  */
 export function useCanGeneratePlaylist(): boolean {
-  return useSelector(selectIsAudiomuseConfigured);
+  return useIsAudiomuseConfigured();
 }

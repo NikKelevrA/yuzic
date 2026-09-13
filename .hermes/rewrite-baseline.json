@@ -1,21 +1,21 @@
 {
   "schema": "yuzic-architecture-baseline/2",
   "size": {
-    "productionFiles": 698,
-    "productionLines": 64687,
-    "testFiles": 195,
-    "testLines": 21325
+    "productionFiles": 700,
+    "productionLines": 65197,
+    "testFiles": 198,
+    "testLines": 21688
   },
   "tests": {
-    "suites": 197,
-    "tests": 1505,
-    "passed": 1505,
+    "suites": 200,
+    "tests": 1521,
+    "passed": 1521,
     "failed": 0,
     "coverage": {
-      "lines": 66.1,
-      "statements": 63.87,
-      "functions": 53.53,
-      "branches": 57.83
+      "lines": 66.47,
+      "statements": 64.27,
+      "functions": 54.19,
+      "branches": 57.72
     }
   },
   "cycles": [
@@ -672,11 +672,11 @@
         },
         {
           "file": "src/features/downloaders/registry.ts",
-          "line": 174
+          "line": 176
         },
         {
           "file": "src/features/downloaders/registry.ts",
-          "line": 208
+          "line": 210
         },
         {
           "file": "src/screens/onboarding/libraries/index.tsx",
@@ -692,7 +692,7 @@
         },
         {
           "file": "src/utils/redux/store.ts",
-          "line": 84
+          "line": 89
         }
       ]
     },
@@ -716,7 +716,7 @@
     }
   },
   "providerLeakage": {
-    "count": 763,
+    "count": 768,
     "entries": [
       {
         "file": "src/components/options/AlbumOptions.tsx",
@@ -1090,7 +1090,12 @@
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 2,
+        "line": 1,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/audiomuse/generatePlaylist.ts",
+        "line": 6,
         "provider": "audiomuse"
       },
       {
@@ -1100,47 +1105,42 @@
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 8,
+        "line": 22,
         "provider": "audiomuse"
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 23,
+        "line": 27,
         "provider": "audiomuse"
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 28,
+        "line": 29,
         "provider": "audiomuse"
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 30,
+        "line": 58,
         "provider": "audiomuse"
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 59,
+        "line": 66,
         "provider": "audiomuse"
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 67,
+        "line": 79,
         "provider": "audiomuse"
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 80,
+        "line": 88,
         "provider": "audiomuse"
       },
       {
         "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 89,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/features/audiomuse/generatePlaylist.ts",
-        "line": 106,
+        "line": 105,
         "provider": "audiomuse"
       },
       {
@@ -3050,11 +3050,6 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 25,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
         "line": 29,
         "provider": "audiomuse"
       },
@@ -3065,27 +3060,17 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 36,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 37,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
         "line": 38,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 39,
+        "line": 41,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 45,
+        "line": 42,
         "provider": "audiomuse"
       },
       {
@@ -3095,7 +3080,12 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 58,
+        "line": 50,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 55,
         "provider": "audiomuse"
       },
       {
@@ -3105,32 +3095,27 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 63,
+        "line": 68,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 64,
+        "line": 69,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 78,
+        "line": 73,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 79,
+        "line": 74,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 81,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 82,
+        "line": 88,
         "provider": "audiomuse"
       },
       {
@@ -3140,22 +3125,17 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 90,
+        "line": 91,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 96,
+        "line": 92,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 97,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 100,
+        "line": 99,
         "provider": "audiomuse"
       },
       {
@@ -3165,17 +3145,42 @@
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 105,
+        "line": 102,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 111,
+        "line": 108,
         "provider": "audiomuse"
       },
       {
         "file": "src/screens/settings/integrations/audiomuse/index.tsx",
-        "line": 119,
+        "line": 109,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 112,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 113,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 117,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 123,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/screens/settings/integrations/audiomuse/index.tsx",
+        "line": 131,
         "provider": "audiomuse"
       },
       {
@@ -3305,22 +3310,22 @@
       },
       {
         "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 20,
+        "line": 19,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 22,
+        "line": 21,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 49,
+        "line": 62,
         "provider": "listenbrainz"
       },
       {
         "file": "src/screens/settings/integrations/listenbrainz/index.tsx",
-        "line": 76,
+        "line": 89,
         "provider": "listenbrainz"
       },
       {
@@ -3755,37 +3760,32 @@
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 3,
+        "line": 4,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 5,
+        "line": 9,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 12,
+        "line": 15,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 13,
+        "line": 16,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 14,
+        "line": 17,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 18,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 19,
+        "line": 21,
         "provider": "audiomuse"
       },
       {
@@ -3795,7 +3795,7 @@
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 23,
+        "line": 25,
         "provider": "audiomuse"
       },
       {
@@ -3805,7 +3805,7 @@
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 27,
+        "line": 29,
         "provider": "audiomuse"
       },
       {
@@ -3815,17 +3815,12 @@
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 31,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
         "line": 35,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 36,
+        "line": 37,
         "provider": "audiomuse"
       },
       {
@@ -3835,97 +3830,137 @@
       },
       {
         "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
-        "line": 42,
+        "line": 44,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 47,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 48,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 49,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 54,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 55,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 56,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/selectors/audiomuseSelectors.ts",
+        "line": 57,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 9,
+        "line": 10,
         "provider": "slskd"
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 14,
+        "line": 18,
         "provider": "lidarr"
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 15,
+        "line": 19,
         "provider": "slskd"
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 16,
+        "line": 20,
         "provider": "soulsync"
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 48,
-        "provider": "lidarr"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 49,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 50,
-        "provider": "lidarr"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 51,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 53,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 55,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 63,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 64,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 65,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
         "line": 66,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 93,
         "provider": "lidarr"
       },
       {
         "file": "src/utils/redux/selectors/downloadersSelectors.ts",
-        "line": 95,
+        "line": 67,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 68,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 69,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 71,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 73,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 81,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 82,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 83,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 84,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 111,
+        "provider": "lidarr"
+      },
+      {
+        "file": "src/utils/redux/selectors/downloadersSelectors.ts",
+        "line": 113,
         "provider": "lidarr"
       },
       {
         "file": "src/utils/redux/selectors/listenbrainzSelectors.ts",
-        "line": 3,
+        "line": 4,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/selectors/listenbrainzSelectors.ts",
-        "line": 13,
+        "line": 16,
+        "provider": "listenbrainz"
+      },
+      {
+        "file": "src/utils/redux/selectors/listenbrainzSelectors.ts",
+        "line": 39,
         "provider": "listenbrainz"
       },
       {
@@ -4045,22 +4080,17 @@
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 3,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 10,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/utils/redux/slices/audiomuseSlice.ts",
         "line": 11,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 14,
+        "line": 17,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/utils/redux/slices/audiomuseSlice.ts",
+        "line": 18,
         "provider": "audiomuse"
       },
       {
@@ -4070,47 +4100,42 @@
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 25,
+        "line": 27,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 34,
+        "line": 31,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 35,
+        "line": 40,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 38,
+        "line": 41,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 42,
+        "line": 44,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 46,
+        "line": 48,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 51,
+        "line": 53,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 56,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/utils/redux/slices/audiomuseSlice.ts",
-        "line": 67,
+        "line": 58,
         "provider": "audiomuse"
       },
       {
@@ -4180,37 +4205,32 @@
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 38,
+        "line": 45,
         "provider": "lidarr"
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 53,
+        "line": 59,
         "provider": "lidarr"
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 54,
+        "line": 60,
         "provider": "slskd"
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 55,
+        "line": 61,
         "provider": "soulsync"
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 104,
+        "line": 105,
         "provider": "slskd"
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 106,
-        "provider": "slskd"
-      },
-      {
-        "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 108,
+        "line": 107,
         "provider": "slskd"
       },
       {
@@ -4220,12 +4240,17 @@
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 135,
+        "line": 110,
+        "provider": "slskd"
+      },
+      {
+        "file": "src/utils/redux/slices/downloadersSlice.ts",
+        "line": 136,
         "provider": "lidarr"
       },
       {
         "file": "src/utils/redux/slices/downloadersSlice.ts",
-        "line": 143,
+        "line": 144,
         "provider": "lidarr"
       },
       {
@@ -4240,12 +4265,12 @@
       },
       {
         "file": "src/utils/redux/slices/listenbrainzSlice.ts",
-        "line": 34,
+        "line": 41,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/slices/listenbrainzSlice.ts",
-        "line": 35,
+        "line": 42,
         "provider": "listenbrainz"
       },
       {
@@ -4490,47 +4515,47 @@
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 69,
+        "line": 74,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 78,
+        "line": 83,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 90,
+        "line": 95,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 91,
+        "line": 96,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 94,
+        "line": 99,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 147,
+        "line": 152,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 149,
+        "line": 154,
         "provider": "listenbrainz"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 161,
+        "line": 166,
         "provider": "audiomuse"
       },
       {
         "file": "src/utils/redux/store.ts",
-        "line": 163,
+        "line": 168,
         "provider": "listenbrainz"
       }
     ]
@@ -4567,6 +4592,11 @@
       {
         "file": "src/screens/artist/components/Content/index.tsx",
         "lines": 615,
+        "limit": 400
+      },
+      {
+        "file": "src/utils/servers/registry.ts",
+        "lines": 573,
         "limit": 400
       },
       {
@@ -4612,11 +4642,6 @@
       {
         "file": "src/screens/artist/components/Header/index.tsx",
         "lines": 479,
-        "limit": 400
-      },
-      {
-        "file": "src/utils/servers/registry.ts",
-        "lines": 465,
         "limit": 400
       },
       {

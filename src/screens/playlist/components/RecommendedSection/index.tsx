@@ -25,8 +25,8 @@ import {
   selectLastfmEnabled,
 } from '@/utils/redux/selectors/settingsSelectors';
 import {
-  selectIsAudiomuseConfigured,
-  selectAudiomuseConfig,
+  useIsAudiomuseConfigured,
+  useAudiomuseConfig,
 } from '@/utils/redux/selectors/audiomuseSelectors';
 import { useAddSongToPlaylist } from '@/hooks/playlists';
 import { useTracks } from '@/hooks/tracks';
@@ -251,8 +251,8 @@ export const LocalRecommendedSection: React.FC<LocalRecommendedSectionProps> = (
   const { tracks } = useTracks();
   const api = useApi();
   const isOffline = useIsOffline();
-  const isAudiomuseConfigured = useSelector(selectIsAudiomuseConfigured);
-  const audiomuseConfig = useSelector(selectAudiomuseConfig);
+  const isAudiomuseConfigured = useIsAudiomuseConfigured();
+  const audiomuseConfig = useAudiomuseConfig();
 
   const playlistSongIds = useMemo(
     () => new Set(songs.map(s => s.localId)),
