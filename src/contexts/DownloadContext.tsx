@@ -54,7 +54,6 @@ import {
 } from '@/utils/downloads/removal';
 import {
   DOWNLOAD_SCHEMA_VERSION,
-  STAGING_SUFFIX,
   extensionFromContentType,
   headerValue,
   normalizeLocalUri,
@@ -68,6 +67,15 @@ import { selectDownloadOnWifiOnly } from '@/features/settings/downloads/state';
 import { selectDownloadQuality } from '@/features/settings/playback/state';
 import { useNetworkType } from '@/hooks/useNetworkType';
 import { streamSourceId } from '@/utils/playback/streamId';
+import {
+  BACKGROUND_FILE_OPTIONS,
+  DOWNLOAD_DIR,
+  FOREGROUND_FILE_OPTIONS,
+  buildStagingPath,
+  cleanupStagingFiles,
+  deleteDownloadedFiles,
+  ensureDownloadDir,
+} from '@/features/offline/filesystem';
 import { getBackend } from '@/features/player/activeBackend';
 import { downloadProgressFraction, nextDownloadingIds, collectionDownloadState } from './downloadPolicies';
 import { mayDownloadNow } from '@/features/offline/networkPolicy';
@@ -151,66 +159,13 @@ const DownloadActionsContext = createContext<DownloadActionsType | undefined>(un
 const DownloadStateContext = createContext<DownloadStateType | undefined>(undefined);
 const DownloadProgressContext = createContext<DownloadProgressType | undefined>(undefined);
 
-const DOWNLOAD_DIR = `${FileSystem.documentDirectory ?? ''}downloads/audio/`;
 const MAX_JOB_ATTEMPTS = 5;
-const BACKGROUND_FILE_OPTIONS = {
-  sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
-};
-// A background session needs `com.apple.nsurlsessiond`, which is reached over
-// XPC. When that connection cannot be set up the session fails every task it
-// is given — the app sees `NSURLErrorDomain Code=-1 "unknown error"` on each
-// one, with the real cause (`NSCocoaErrorDomain Code=4097 "connection to
-// service named com.apple.nsurlsessiond"`) only in the system log. The iOS
-// Simulator has no nsurlsessiond at all, so every download there fails this
-// way; on device the daemon can also be briefly unreachable. A foreground
-// session has no such dependency, so it is what we retry on.
-const FOREGROUND_FILE_OPTIONS = {
-  sessionType: FileSystem.FileSystemSessionType.FOREGROUND,
-};
 
 type DownloadState = {
   tracks: LocalDownloadedTrackEntry[];
   collections: DownloadedCollectionEntry[];
   jobs: PersistedDownloadJob[];
 };
-
-function buildStagingPath(track: Song): string {
-  // Named by identity, not by the origin's id: two servers can both call a
-  // track `42`, and a staging file named after that would have one download
-  // overwrite the other mid-flight.
-  return `${DOWNLOAD_DIR}${sanitizeFileName(track.localId)}${STAGING_SUFFIX}`;
-}
-
-async function ensureDownloadDir() {
-  if (!FileSystem.documentDirectory) throw new Error('Document directory unavailable');
-  const downloadInfo = await FileSystem.getInfoAsync(DOWNLOAD_DIR);
-  if (!downloadInfo.exists) {
-    await FileSystem.makeDirectoryAsync(DOWNLOAD_DIR, { intermediates: true });
-  }
-}
-
-
-// Downloads land in a .part staging file and only move to their final path on
-// success, so a stray .part is safe to delete — unless we are deliberately
-// holding its bytes to resume from, which is what `keep` carries.
-//
-// `keep` has no default, deliberately. It used to default to the empty set,
-// which made "sweep everything" the thing you got by not thinking about it —
-// and one of the two call sites did exactly that, on every launch, deleting
-// the partials the resumables pointed at. Every caller states what it is
-// keeping now, or it does not compile.
-async function cleanupStagingFiles(keep: Set<string>) {
-  const info = await FileSystem.getInfoAsync(DOWNLOAD_DIR);
-  if (!info.exists) return;
-  const names = await FileSystem.readDirectoryAsync(DOWNLOAD_DIR).catch(() => [] as string[]);
-  await Promise.all(
-    names
-      .filter(name => name.endsWith(STAGING_SUFFIX))
-      .map(name => `${DOWNLOAD_DIR}${name}`)
-      .filter(path => !keep.has(path))
-      .map(path => FileSystem.deleteAsync(path, { idempotent: true }).catch(() => {}))
-  );
-}
 
 /**
  * What the restore produced: the state to render, and the files it orphaned.
@@ -852,9 +807,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
    * See `evictFromPlayerCache` for why it is best-effort.
    */
   const deleteFiles = useCallback(async (tracks: LocalDownloadedTrackEntry[]) => {
-    await Promise.all(tracks.map(track =>
-      FileSystem.deleteAsync(track.localPath, { idempotent: true }).catch(() => {})
-    ));
+    await deleteDownloadedFiles(tracks.map(track => track.localPath));
     evictFromPlayerCache(tracks, mediaId => getBackend().evict(mediaId));
   }, []);
 
