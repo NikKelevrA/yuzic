@@ -57,6 +57,11 @@ export function unusedExports() {
       .map(line => line.replace(/^.*?(src[/\\].*)$/, '$1').replace(/\\/g, '/'))
       .filter(line => line.startsWith('src/'))
       .filter(line => !isTest(line.split(':')[0]))
+      // Drop ts-prune's line number: `path:12 - name` becomes `path - name`.
+      // Keying on the line would make every export below an inserted line read
+      // as simultaneously new and fixed, so the gate would churn on edits that
+      // changed nothing it cares about.
+      .map(line => line.replace(/^([^:]+):\d+\s*/, '$1 '))
   )].sort();
 }
 

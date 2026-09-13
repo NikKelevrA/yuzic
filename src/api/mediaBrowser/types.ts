@@ -7,6 +7,14 @@
 export interface MediaBrowserProviderIds {
   MusicBrainz?: string;
   MusicBrainzAlbum?: string;
+  /**
+   * The release-group id, distinct from `MusicBrainzAlbum` (a specific
+   * release). Cover Art Archive and other MBID consumers need to know which
+   * kind of id they were handed — domain `ExternalIds.mbidType` records it.
+   */
+  MusicBrainzReleaseGroup?: string;
+  /** Recording MBID for an individual track; ID3-tagged libraries only. */
+  MusicBrainzTrack?: string;
 }
 
 export interface MediaBrowserImageTags {
@@ -64,6 +72,11 @@ export interface MediaBrowserItem {
   IndexNumber?: number;
   PlaylistItemId?: string;
   CollectionType?: string;
+  /**
+   * Free-text artist bio. `getArtists.ts` already requests it via
+   * `Fields=Overview` but nothing previously read it back off the DTO.
+   */
+  Overview?: string;
 }
 
 export interface MediaBrowserItemsResponse<T = MediaBrowserItem> {

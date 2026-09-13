@@ -9,5 +9,7 @@
 import { enforce } from './allowlist.mjs';
 import { unsafeEscapes } from './detectors.mjs';
 
-const keys = unsafeEscapes().map(e => `${e.kind} ${e.file}:${e.line}`);
+// Keyed per file and kind rather than per line, for the same reason as the
+// provider gate: line numbers make unrelated edits look like new violations.
+const keys = unsafeEscapes().map(e => `${e.kind} ${e.file}`);
 process.exit(enforce('unsafe', keys));

@@ -2,7 +2,9 @@ import { deezerClient } from './client';
 import type { CoverSource, ExternalAlbum, ExternalAlbumBase, ExternalArtistBase, ExternalSong } from '@/types';
 import { makeLocalId } from '@/types/EntityId';
 
-type DeezerImageEntity = {
+// Exported so the mappers in this folder (mapArtist/mapAlbum/mapSong) can take
+// these as their raw DTO input type without inventing a parallel definition.
+export type DeezerImageEntity = {
   picture_xl?: string | null;
   picture_big?: string | null;
   picture_medium?: string | null;
@@ -11,7 +13,7 @@ type DeezerImageEntity = {
   cover_medium?: string | null;
 };
 
-type DeezerArtist = DeezerImageEntity & {
+export type DeezerArtist = DeezerImageEntity & {
   id: number;
   name: string;
   nb_album?: number;
@@ -19,7 +21,7 @@ type DeezerArtist = DeezerImageEntity & {
   description?: string;
 };
 
-type DeezerAlbum = DeezerImageEntity & {
+export type DeezerAlbum = DeezerImageEntity & {
   id: number;
   title: string;
   artist: DeezerArtist;
@@ -30,7 +32,7 @@ type DeezerAlbum = DeezerImageEntity & {
   tracks?: { data?: DeezerTrack[] };
 };
 
-type DeezerTrack = {
+export type DeezerTrack = {
   id: number;
   title: string;
   duration?: number;

@@ -3,6 +3,15 @@
  * populate different subsets. */
 export type PlexGenre = { tag?: string };
 
+/**
+ * An alternate identifier Plex's metadata agents attach to an item, as
+ * `scheme://value` — e.g. `mbid://<uuid>` when a music agent matched the item
+ * to MusicBrainz. Present only when the section's agent resolves external
+ * ids; the built-in Plex Music agent generally does not, third-party ones
+ * (e.g. MusicBrainz-backed agents) do.
+ */
+export type PlexGuid = { id?: string };
+
 export type PlexPart = {
   id?: number | string;
   key?: string;
@@ -53,6 +62,8 @@ export type PlexMetadata = {
   summary?: string;
   playlistType?: string;
   leafCount?: number;
+  /** Alternate ids, including a `mbid://` entry where an agent resolved one. */
+  Guid?: PlexGuid[];
 };
 
 export type PlexDirectory = {

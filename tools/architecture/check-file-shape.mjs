@@ -10,5 +10,14 @@
 import { enforce } from './allowlist.mjs';
 import { oversizedFiles } from './detectors.mjs';
 
-const keys = oversizedFiles().map(f => `${f.file} (${f.lines} > ${f.limit})`);
-process.exit(enforce('file-shape', keys));
+// Keyed on the path alone. Embedding the line count would make a file that
+// grew from 691 to 692 lines read as one violation fixed and another created,
+// which says nothing true — the file was over the limit before and after.
+// Growth within the allowlist is reported by the baseline measurement instead.
+const oversized = oversizedFiles();
+const describe = file => {
+  const entry = oversized.find(f => f.file === file);
+  return entry ? `${file} (${entry.lines} > ${entry.limit})` : file;
+};
+
+process.exit(enforce('file-shape', oversized.map(f => f.file), describe));

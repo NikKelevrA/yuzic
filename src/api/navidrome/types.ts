@@ -30,6 +30,9 @@ export interface SubsonicSong {
   bpm?: number;
   genre?: string;
   genres?: (SubsonicGenreRef | string)[];
+  /** OpenSubsonic extensions; used for matching, absent on older servers. */
+  musicBrainzId?: string;
+  isrc?: string[];
 }
 
 export interface SubsonicAlbum {
@@ -42,6 +45,8 @@ export interface SubsonicAlbum {
   genre?: string;
   created?: string;
   song?: SubsonicSong[];
+  /** OpenSubsonic extension; a release-group id where the server reports one. */
+  musicBrainzId?: string;
 }
 
 /** Shape returned by the non-ID3 getAlbumList/getStarred `album` entries (titled "title", not "name"). */
@@ -75,6 +80,8 @@ export interface SubsonicArtist {
   id?: string;
   name?: string;
   coverArt?: string;
+  /** OpenSubsonic extension; present on the ID3 endpoints, absent elsewhere. */
+  musicBrainzId?: string;
 }
 
 export interface SubsonicArtistIndex {
