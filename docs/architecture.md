@@ -261,7 +261,7 @@ behavior it flips, named for the intent. Callsites read
 
 ## 4. `useSync` — the catalog pipeline
 
-`src/hooks/useSync.ts` is the single library-sync path. It fetches lists
+`src/features/library/useSync.ts` is the single library-sync path. It fetches lists
 (albums, artists, playlists, tracks, starred, genres) from the active server,
 pushes them into a mix of react-query and redux (library slice + libraryStarred
 slice), and stamps `lastSyncedAt` when successful. Every "the library is out of
@@ -311,7 +311,7 @@ Three shapes of consumer:
    the server can't be asked, and returns `degraded` so the screen can say the
    data is local rather than fresh.
 2. **Has a local equivalent but isn't a query** — search. See
-   `contexts/searchLegs.ts`: the legs are decided before any fetch, and a
+   `features/search/searchLegs.ts`: the legs are decided before any fetch, and a
    *server* scope falls back to the local index rather than to nothing.
 3. **Has no local equivalent** (radio, podcasts, shares, the server-backed Home
    shelves) — gate `enabled` on `useServerReachable()` and render an offline
@@ -463,7 +463,7 @@ route leaf registered in `settings/_layout.tsx` with a row on the settings root.
   server left empty, so disabling instantly restores the server view. Launch
   sources: Last.fm `artist.getInfo`; Deezer artist images + Cover Art Archive
   covers. A small "via X" line, never per-item badges.
-- **Search** (`screens/settings/search/`, `contexts/searchLegs.ts`) — a segmented
+- **Search** (`screens/settings/search/`, `features/search/searchLegs.ts`) — a segmented
   **Your Library** (default, no external calls) / **Other sources** scope with a
   Filters sheet for search-enabled sources and entity types. `planSearchLegs`
   picks library **XOR** external by scope, so results are never mixed by default;
