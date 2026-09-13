@@ -39,8 +39,8 @@ import { LASTFM_API_KEY } from '@/constants/keys';
 import { QueryKeys } from '@/enums/queryKeys';
 import GetReviewSheet from '@/components/options/GetReviewSheet';
 import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
-import { formatDuration, formatSongDuration } from '@/utils/formatDuration';
-import type { ExternalAlbumBase, ExternalSong } from '@/types';
+import { formatDuration } from '@/utils/formatDuration';
+import type { Album } from '@/domain/entities/Album';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 
@@ -53,7 +53,7 @@ import { useRadius } from '@/hooks/useRadius';
 const LOCAL_COUNT = 8;
 const EXTERNAL_COUNT = 8;
 
-async function fetchExternalRecs(artistNames: string[]): Promise<ExternalSong[]> {
+async function fetchExternalRecs(artistNames: string[]): Promise<Song[]> {
   if (!artistNames.length || !LASTFM_API_KEY) return [];
 
   try {
@@ -78,16 +78,16 @@ async function fetchExternalRecs(artistNames: string[]): Promise<ExternalSong[]>
     const trackGroupResults = await Promise.allSettled(
       shuffledCandidates.map(async name => {
         const artist = await deezer.resolveDeezerArtistByName(name);
-        if (!artist) return [] as ExternalSong[];
-        return deezer.getDeezerArtistTopTracks(artist.id, 2);
+        if (!artist) return [] as Song[];
+        return deezer.getDeezerArtistTopTracks(artist.nativeId, 2);
       })
     );
     const trackGroups = trackGroupResults
-      .filter((r): r is PromiseFulfilledResult<ExternalSong[]> => r.status === 'fulfilled')
+      .filter((r): r is PromiseFulfilledResult<Song[]> => r.status === 'fulfilled')
       .map(r => r.value);
 
     const seenIds = new Set<string>();
-    const tracks: ExternalSong[] = [];
+    const tracks: Song[] = [];
     const groups = shuffleArray(trackGroups.filter(group => group.length > 0));
 
     for (let trackIndex = 0; trackIndex < 2; trackIndex++) {
@@ -95,8 +95,8 @@ async function fetchExternalRecs(artistNames: string[]): Promise<ExternalSong[]>
         if (tracks.length >= EXTERNAL_COUNT) break;
         const track = group[trackIndex];
         if (!track) continue;
-        if (!seenIds.has(track.id)) {
-          seenIds.add(track.id);
+        if (!seenIds.has(track.nativeId)) {
+          seenIds.add(track.nativeId);
           tracks.push(track);
         }
       }
@@ -107,8 +107,8 @@ async function fetchExternalRecs(artistNames: string[]): Promise<ExternalSong[]>
       if (tracks.length >= EXTERNAL_COUNT) break;
       for (const track of group) {
         if (tracks.length >= EXTERNAL_COUNT) break;
-        if (!seenIds.has(track.id)) {
-          seenIds.add(track.id);
+        if (!seenIds.has(track.nativeId)) {
+          seenIds.add(track.nativeId);
           tracks.push(track);
         }
       }
@@ -190,23 +190,25 @@ const LocalRow: React.FC<LocalRowProps> = ({ song, playlistId }) => {
 // ── External song row ──────────────────────────────────────────────────────────
 
 type ExternalRowProps = {
-  song: ExternalSong;
+  song: Song;
   hasDownloader: boolean;
-  onDownload: (song: ExternalSong) => void;
+  onDownload: (song: Song) => void;
 };
 
 const ExternalRow: React.FC<ExternalRowProps> = ({ song, hasDownloader, onDownload }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { toggle } = usePreviewPlayer();
-  const hasPreview = !!song.previewUrl;
+  // `streamId` carries a resolved preview URL — see `Song.streamId` and
+  // `usePreviewPlayer`'s `attachPreviewUrl`.
+  const hasPreview = !!song.streamId;
 
   return (
     <MediaListRow
       title={song.title}
-      subtitle={`${song.artist}${song.duration ? ` · ${formatSongDuration(song.duration)}` : ''}`}
+      subtitle={`${song.artist.name}${song.durationSeconds ? ` · ${formatDuration(song.durationSeconds)}` : ''}`}
       cover={song.cover}
-      onPress={() => song.previewUrl && void toggle(song, song.previewUrl)}
+      onPress={() => song.streamId && void toggle(song, song.streamId)}
       disabled={!hasPreview}
       variant="compact"
       trailing={
@@ -350,7 +352,7 @@ export const DeezerRecommendedSection: React.FC<DeezerRecommendedSectionProps> =
   const lastfmEnabled = useSelector(selectLastfmEnabled);
   const hasDownloader = useAnyAlbumDownloaderConnected();
   const downloadSheetRef = useSheetRef();
-  const [albumForDownload, setAlbumForDownload] = useState<ExternalAlbumBase | null>(null);
+  const [albumForDownload, setAlbumForDownload] = useState<Album | null>(null);
 
   const playlistArtistNames = useMemo(() => {
     const names = new Set<string>();
@@ -384,21 +386,21 @@ export const DeezerRecommendedSection: React.FC<DeezerRecommendedSectionProps> =
     networkMode: 'online',
   });
 
-  const handleDownloadExternalSong = useCallback(async (song: ExternalSong) => {
+  const handleDownloadExternalSong = useCallback(async (song: Song) => {
     if (!hasDownloader) return;
-    if (!song.albumId) {
+    if (!song.album.nativeId) {
       notify.error(t('externalAlbum.download.startFailed'));
       return;
     }
 
     try {
-      const album = await deezer.getDeezerAlbum(song.albumId);
-      if (!album) {
+      const detail = await deezer.getDeezerAlbum(song.album.nativeId);
+      if (!detail) {
         notify.error(t('externalAlbum.download.startFailed'));
         return;
       }
 
-      setAlbumForDownload(album);
+      setAlbumForDownload(detail.album);
       requestAnimationFrame(() => {
         downloadSheetRef.current?.present();
       });
@@ -446,7 +448,7 @@ export const DeezerRecommendedSection: React.FC<DeezerRecommendedSectionProps> =
       ) : (
         (externalQuery.data ?? []).map(song => (
           <ExternalRow
-            key={song.id}
+            key={song.localId}
             song={song}
             hasDownloader={hasDownloader}
             onDownload={handleDownloadExternalSong}

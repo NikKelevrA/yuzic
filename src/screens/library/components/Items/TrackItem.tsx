@@ -35,12 +35,8 @@ const TrackItem: React.FC<Props> = ({ song, isGridView, gridWidth, gridSpacing }
     lastPressAtRef.current = now;
     pressInFlightRef.current = true;
     try {
-      // `resolvePlayableSong` (src/hooks/songs) is typed against the legacy
-      // `@/types` Song/SongBase, not the domain `Song` this screen now has —
-      // that hook is a different agent's scope. It documents a bare-id path
-      // for exactly this case (looked up by `nativeId` — see its own
-      // `selectSongsById` comment), so this passes the id rather than the
-      // whole entity.
+      // Resolved by the origin's own id: the resolver looks the track up
+      // fresh rather than trusting fields this row happens to hold.
       const resolved = await resolvePlayableSong(song.nativeId, { timeoutMs: FULL_TRACK_FETCH_TIMEOUT_MS });
       if (!resolved) {
         notify.error(t("common.playbackError"));
@@ -67,12 +63,8 @@ const TrackItem: React.FC<Props> = ({ song, isGridView, gridWidth, gridSpacing }
     longPressInFlightRef.current = true;
     haptics.heavy();
     try {
-      // `resolvePlayableSong` (src/hooks/songs) is typed against the legacy
-      // `@/types` Song/SongBase, not the domain `Song` this screen now has —
-      // that hook is a different agent's scope. It documents a bare-id path
-      // for exactly this case (looked up by `nativeId` — see its own
-      // `selectSongsById` comment), so this passes the id rather than the
-      // whole entity.
+      // Resolved by the origin's own id: the resolver looks the track up
+      // fresh rather than trusting fields this row happens to hold.
       const resolved = await resolvePlayableSong(song.nativeId, { timeoutMs: FULL_TRACK_FETCH_TIMEOUT_MS });
       if (resolved) {
         openSongOptions(resolved.song);

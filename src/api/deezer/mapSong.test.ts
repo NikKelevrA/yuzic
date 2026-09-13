@@ -1,7 +1,11 @@
 import { isAutoplaySeed, isScrobbleable, hasReissuableUrl } from '@/domain/playback/ContentKind';
+
+/** A preview with no URL is unplayable, since nothing can reissue one. */
+const isStreamlessPreview = (song: { contentKind: string; streamId?: string }) =>
+  song.contentKind === 'preview' && !song.streamId;
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import { mapPreviewTrack, mapSong } from './mapSong';
-import type { DeezerAlbum, DeezerTrack } from './catalog';
+import type { DeezerAlbum, DeezerTrack } from './types';
 import type { DeezerPreviewTrack } from './albums';
 
 const provenance = integrationProvenance('deezer');
@@ -49,6 +53,7 @@ describe('mapSong (full catalogue track)', () => {
       cover: { kind: 'url', url: 'https://api.deezer.com/album/302127/cover-xl.jpg' },
       durationSeconds: 320,
       contentKind: 'preview',
+      streamId: 'https://cdnt-preview.dzcdn.net/api/1/1/one-more-time.mp3',
       genres: [],
     });
   });
@@ -63,6 +68,17 @@ describe('mapSong (full catalogue track)', () => {
     expect(isScrobbleable(song.contentKind)).toBe(false);
     expect(isAutoplaySeed(song.contentKind)).toBe(false);
     expect(hasReissuableUrl(song.contentKind)).toBe(false);
+  });
+
+  it('carries the clip URL, because nothing can rebuild one for a sample', () => {
+    // Regression: contentKind said 'preview' while streamId was left empty, so
+    // the resolver had nothing to play and every preview button stopped
+    // rendering — silently, because an absent URL is not a type error.
+    const song = mapSong(fullTrackDto, { provenance, album });
+
+    expect(song.streamId).toBe(fullTrackDto.preview);
+    expect(song.streamId).toBeTruthy();
+    expect(isStreamlessPreview(song)).toBe(false);
   });
 
   it('is external — a track browsed on Deezer is not one the user owns', () => {
@@ -132,6 +148,7 @@ describe('mapPreviewTrack (30-second clip)', () => {
       cover: { kind: 'url', url: 'https://api.deezer.com/album/302127/cover-xl.jpg' },
       durationSeconds: 30,
       contentKind: 'preview',
+      streamId: 'https://cdnt-preview.dzcdn.net/api/1/1/one-more-time.mp3',
       trackNumber: 1,
       genres: [],
     });

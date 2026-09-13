@@ -27,7 +27,7 @@ import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDisco
 import SelectionBottomSheet from '@/components/SelectionBottomSheet'
 import MediaTile from './MediaTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
-import type { ExternalAlbumBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
 import {
   HOME_SEED_ARTISTS,
   HOME_RELATED_PER_SEED,
@@ -77,8 +77,8 @@ async function fetchAlbumsForGenre(
   seedArtistNames: string[],
   libraryArtistNames: Set<string>,
   itemCount: number
-): Promise<ExternalAlbumBase[]> {
-  const albums: ExternalAlbumBase[] = []
+): Promise<Album[]> {
+  const albums: Album[] = []
   if (seedArtistNames.length > 0) {
     const seedArtists = (await Promise.allSettled(
       seedArtistNames.slice(0, HOME_SEED_ARTISTS).map(name => deezer.resolveDeezerArtistByName(name))
@@ -87,7 +87,7 @@ async function fetchAlbumsForGenre(
       .filter((artist): artist is NonNullable<typeof artist> => Boolean(artist))
 
     const relatedGroups = await Promise.allSettled(
-      seedArtists.map(seed => deezer.getDeezerRelatedArtists(seed.id, HOME_RELATED_PER_SEED))
+      seedArtists.map(seed => deezer.getDeezerRelatedArtists(seed.nativeId, HOME_RELATED_PER_SEED))
     )
 
     const seenArtists = new Set<string>()
@@ -114,7 +114,7 @@ async function fetchAlbumsForGenre(
 
   albums.push(...await collectCoveredAlbumsForArtists(fresh, {
     targetAlbums: itemCount - albums.length,
-    excludeAlbumIds: albums.map(album => album.id),
+    excludeAlbumIds: albums.map(album => album.nativeId),
   }))
   return albums.slice(0, itemCount)
 }
@@ -189,7 +189,7 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
     sheetRef.current?.dismiss()
   }, [allGenres, selectedGenre])
 
-  const query = useQuery<ExternalAlbumBase[]>({
+  const query = useQuery<Album[]>({
     // Include libraryArtists.length so the cache busts when the user's library
     // gains or loses artists — otherwise stale results would include artists
     // that are now in the library (or exclude ones that have been removed).
@@ -204,11 +204,11 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
   const coversToPrefetch = useMemo(() => albums.map(a => a.cover), [albums])
   usePrefetchCovers(coversToPrefetch, 'grid')
 
-  const renderAlbum = useCallback(({ item }: { item: ExternalAlbumBase }) => (
+  const renderAlbum = useCallback(({ item }: { item: Album }) => (
     <MediaTile
       cover={item.cover}
       title={item.title}
-      subtitle={item.subtext}
+      subtitle={item.artist.name}
       size={gridItemWidth}
       radius={rad.card}
       onPress={() => {
@@ -260,7 +260,7 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
           <FlashList
             horizontal
             data={albums}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.localId}
             overrideItemLayout={layout => { (layout as { size?: number }).size = gridItemWidth }}
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"

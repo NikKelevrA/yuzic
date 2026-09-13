@@ -1,7 +1,7 @@
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import type { LocalId } from '@/domain/identity/LocalId';
 import { mapAlbum } from './mapAlbum';
-import type { DeezerAlbum } from './catalog';
+import type { DeezerAlbum } from './types';
 
 const provenance = integrationProvenance('deezer');
 

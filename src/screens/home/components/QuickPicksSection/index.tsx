@@ -78,12 +78,8 @@ export default function QuickPicksSection({ refreshKey = 0 }: Props) {
 
   const inFlightRef = useRef<string | null>(null);
 
-  // `resolvePlayableSong` (src/hooks/songs) is typed against the legacy
-  // `@/types` Song/SongBase, not the domain `Song` this screen now has —
-  // that hook is a different agent's scope. It documents a bare-id path for
-  // exactly this case (looked up by `nativeId` — see its own
-  // `selectSongsById` comment), so these pass the id rather than the whole
-  // entity.
+  // Resolved by the origin's own id: the resolver looks the track up fresh
+  // rather than trusting whatever fields this screen happens to hold.
   const handlePress = async (song: Song) => {
     if (inFlightRef.current === song.nativeId) return;
     inFlightRef.current = song.nativeId;

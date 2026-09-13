@@ -1,6 +1,6 @@
 import type { MediaItem } from '../../features/player/mediaItem';
 import type { RequestHeaders } from '../../features/player/mediaHeaders';
-import { Song } from '@/types';
+import type { PlayableResource } from '@/features/playback/playableResource';
 import { buildCover } from './buildCover';
 
 export function normalizeMediaUrl(url: string): string {
@@ -17,14 +17,18 @@ export function normalizeMediaUrl(url: string): string {
  * headers through the same resolution point. Fields are set only when present,
  * so an unprotected server produces exactly the item it did before.
  */
-export function buildTrackItem(song: Song, extra?: RequestHeaders): MediaItem {
-  const url = normalizeMediaUrl(song.streamUrl);
+export function buildTrackItem(resource: PlayableResource, extra?: RequestHeaders): MediaItem {
+  const { song } = resource;
+  const url = normalizeMediaUrl(resource.streamUrl);
   return {
-    mediaId: song.id,
+    // Identity, not the origin's id: this is what the native player echoes
+    // back, and `resourceFromPlayerItem` parses it to rebuild a track the app
+    // has lost sight of.
+    mediaId: song.localId,
     title: song.title,
-    artist: song.artist,
-    albumTitle: song.albumTitle ?? '',
-    duration: Number(song.duration) || undefined,
+    artist: song.artist.name,
+    albumTitle: song.album.title,
+    duration: song.durationSeconds || undefined,
     url: url.startsWith('file://') ? { uri: url } : url,
     artworkUrl: buildCover(song.cover, 'grid') ?? undefined,
     ...(extra?.headers ? { headers: extra.headers } : {}),

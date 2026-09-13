@@ -6,7 +6,7 @@ import { Provider } from 'react-redux'
 import settingsReducer, {
   setMetadataArtworkSourceEnabled,
 } from '@/utils/redux/slices/settingsSlice'
-import type { ExternalArtist } from '@/types'
+import type { SourceArtistDetail } from '@/features/sources/registry'
 import ArtistHeader from './index'
 
 jest.mock('react-i18next', () => ({
@@ -97,7 +97,7 @@ function makeStore() {
   })
 }
 
-function renderWithStore(store: ReturnType<typeof makeStore>, externalArtist: ExternalArtist) {
+function renderWithStore(store: ReturnType<typeof makeStore>, externalArtist: SourceArtistDetail) {
   return render(
     <Provider store={store}>
       <ArtistHeader localArtist={null} externalArtist={externalArtist} showNavigation={false} />
@@ -105,15 +105,22 @@ function renderWithStore(store: ReturnType<typeof makeStore>, externalArtist: Ex
   )
 }
 
-const baseExternalArtist: ExternalArtist = {
-  id: 'ext-1',
-  name: 'Radiohead',
-  cover: { kind: 'none' },
-  subtext: '',
+const baseExternalArtist: SourceArtistDetail = {
+  artist: {
+    localId: 'local:artist:ext:deezer:ext-1' as SourceArtistDetail['artist']['localId'],
+    nativeId: 'ext-1',
+    provenance: { origin: 'integration', providerId: 'deezer' },
+    externalIds: { mbid: 'mbid-1' },
+    libraryState: 'external',
+    name: 'Radiohead',
+    cover: { kind: 'none' },
+    tags: [],
+    albumIds: [],
+  },
+  topTracks: [],
   albums: [],
   singles: [],
   similarArtists: [],
-  externalIds: { mbid: 'mbid-1' },
 }
 
 describe('ArtistHeader artwork enrichment wiring', () => {
@@ -145,7 +152,7 @@ describe('ArtistHeader artwork enrichment wiring', () => {
 
     const view = await renderWithStore(store, {
       ...baseExternalArtist,
-      cover: { kind: 'url', url: 'https://example.com/server.jpg' },
+      artist: { ...baseExternalArtist.artist, cover: { kind: 'url', url: 'https://example.com/server.jpg' } },
     })
 
     expect(mockResolveArtwork).not.toHaveBeenCalled()

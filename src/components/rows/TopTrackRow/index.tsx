@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import MediaListRow from '@/components/MediaListRow'
 import { useTheme } from '@/hooks/useTheme'
 import { formatDuration, formatSongDuration } from '@/utils/formatDuration'
-import type { ExternalSong } from '@/types'
 import type { Song } from '@/domain/entities/Song'
 import Touchable from '@/components/Touchable'
 import { hitSlopFor, iconSize, typography } from '@/constants/design'
@@ -15,16 +14,15 @@ import { useRadius } from '@/hooks/useRadius'
  *  — it sits inside a row rather than beside one. `hitSlopFor` pads it out. */
 const PREVIEW_BUTTON_SIZE = 28
 
-export type TopTrackRowSong = Song | ExternalSong
+export type TopTrackRowSong = Song
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than
- * the user's library — same discriminator as `SongRow`/`SongOptions`:
- * `ExternalSong.artist` is a plain string, a domain `Song`'s `artist` is
- * always an `ArtistRef` object.
+ * the user's library — read off `provenance`, same discriminator as
+ * `SongRow`/`SongOptions`.
  */
-function isExternalTrack(song: TopTrackRowSong): song is ExternalSong {
-  return typeof song.artist === 'string'
+function isExternalTrack(song: TopTrackRowSong): boolean {
+  return song.provenance.origin === 'integration'
 }
 
 type Props = {
@@ -39,10 +37,17 @@ function TopTrackRow({ song, index, artistName, onPress }: Props) {
   const { colors } = useTheme()
   const rad = useRadius()
   const external = isExternalTrack(song)
-  const duration = external ? formatSongDuration(song.duration) : formatDuration(song.durationSeconds)
-  // Only an external (preview) track carries a 30s clip URL — a library song
-  // is already fully playable, so it has nothing to preview and no button.
-  const previewUrl = external ? song.previewUrl : undefined
+  // `formatSongDuration` hides a zero/unknown duration entirely rather than
+  // showing "0:00" — correct for a preview track (`durationSeconds` doc:
+  // "Zero for content with no known duration"), which is what every
+  // external track here is. A library song always has a real duration, so
+  // it keeps the plain formatter.
+  const duration = external ? formatSongDuration(song.durationSeconds) : formatDuration(song.durationSeconds)
+  // Only an external (preview) track carries a 30s clip URL, attached onto
+  // `streamId` once resolved — see `Song.streamId` and `usePreviewPlayer`'s
+  // `attachPreviewUrl`. A library song is already fully playable, so it has
+  // nothing to preview and no button.
+  const previewUrl = external ? song.streamId : undefined
 
   return (
     <MediaListRow

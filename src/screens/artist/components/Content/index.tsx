@@ -5,9 +5,10 @@ import { StyleSheet, Text, View, useWindowDimensions } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import { Ellipsis, Globe } from 'lucide-react-native'
-import type { CoverSource, ExternalAlbumBase, ExternalArtist, ExternalArtistBase } from '@/types'
+import type { CoverSource } from '@/types/Cover'
 import type { Album } from '@/domain/entities/Album'
 import type { Artist } from '@/domain/entities/Artist'
+import type { SourceArtistDetail } from '@/features/sources/registry'
 import AlbumRow from '@/components/rows/AlbumRow'
 import Header, { ArtistHeaderBar } from '../Header'
 import { DetailScreen } from '@/components/DetailHeader'
@@ -19,7 +20,7 @@ import TopSongsSection from './TopSongsSection'
 import { useServerSimilarArtists } from '@/hooks/artists/useServerSimilarArtists'
 import { useLBSimilarArtists } from '@/hooks/artists/useLBSimilarArtists'
 import { useArtistExternalDiscography } from '@/hooks/artists/useArtistExternalDiscography'
-import { matchAlbumToLibrary } from '@/hooks/libraryMatch'
+import { matchAlbumToLibrary } from '@/features/library/matchToLibrary'
 import { compareByReleaseYearDesc, releaseYearLabel } from './discography'
 import { isSingleOrEp } from './releaseKind'
 import { useTracks } from '@/hooks/tracks'
@@ -39,7 +40,7 @@ import { useScrollClearance } from '@/hooks/useScrollClearance'
 
 type Props = {
   localArtist: Artist | null
-  externalArtist: ExternalArtist | null
+  externalArtist: SourceArtistDetail | null
 }
 
 type ArtistContentItem =
@@ -48,7 +49,7 @@ type ArtistContentItem =
   | { kind: 'popularOnDeezer'; id: string }
   | { kind: 'section'; id: string; title: string }
   | { kind: 'localAlbum'; id: string; album: Album }
-  | { kind: 'externalAlbum'; id: string; album: ExternalAlbumBase }
+  | { kind: 'externalAlbum'; id: string; album: Album }
   | { kind: 'showMore'; id: string; target: 'albums' | 'singles'; remaining: number }
   | { kind: 'showUnowned'; id: string; target: 'albums' | 'singles'; count: number }
   | { kind: 'similar'; id: string }
@@ -66,13 +67,7 @@ function SimilarArtistsSubSection<T extends { name: string; cover: CoverSource }
   keyPrefix: string
   badge: { color: string; letter: string }
   onPressItem: (item: T) => void
-  /** External artists key on their own `.id`; local/server ones on `.localId`. */
   keyOf: (item: T) => string
-  /**
-   * External artists carry their own (legacy) `.subtext`; local/server ones
-   * are always known-owned library artists, so they show the same generic
-   * `t('common.artist')` label an `ArtistRow` does.
-   */
   subtitleOf: (item: T) => string
 }) {
   const { t } = useTranslation()
@@ -172,7 +167,10 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
   )
 
   const libraryArtistLabel = useCallback(() => t('common.artist'), [t])
-  const externalArtistSubtitle = useCallback((item: ExternalArtistBase) => item.subtext, [])
+  // Every similar-artist source now returns the same domain `Artist`, which
+  // carries no display subtext of its own — every subsection shows the same
+  // generic label an `ArtistRow` does.
+  const externalArtistSubtitle = libraryArtistLabel
 
   return (
     <>
@@ -203,7 +201,7 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           keyPrefix="deezer"
           badge={{ color: sourceColor.deezer, letter: 'D' }}
           onPressItem={item => navigateToArtist(item)}
-          keyOf={item => item.id}
+          keyOf={item => item.localId}
           subtitleOf={externalArtistSubtitle}
         />
       )}
@@ -214,7 +212,7 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           keyPrefix="lastfm"
           badge={{ color: sourceColor.lastfm, letter: 'L' }}
           onPressItem={item => navigateToArtist(item)}
-          keyOf={item => item.id}
+          keyOf={item => item.localId}
           subtitleOf={externalArtistSubtitle}
         />
       )}
@@ -225,7 +223,7 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           keyPrefix="lb"
           badge={{ color: sourceColor.listenbrainz, letter: 'B' }}
           onPressItem={item => navigateToArtist(item)}
-          keyOf={item => item.id}
+          keyOf={item => item.localId}
           subtitleOf={externalArtistSubtitle}
         />
       )}
@@ -233,7 +231,8 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
   )
 }
 
-function ExternalSimilarArtistsSection({ similarArtists }: { similarArtists: ExternalArtistBase[] }) {
+function ExternalSimilarArtistsSection({ similarArtists }: { similarArtists: Artist[] }) {
+  const { t } = useTranslation()
   const { width: screenWidth } = useWindowDimensions()
   const itemSize = Math.min(132, Math.max(112, (screenWidth - 56) / 2.7))
   const { navigateToArtist } = useMatchedNavigation()
@@ -245,8 +244,8 @@ function ExternalSimilarArtistsSection({ similarArtists }: { similarArtists: Ext
       keyPrefix="deezer"
       badge={{ color: sourceColor.deezer, letter: 'D' }}
       onPressItem={item => navigateToArtist(item)}
-      keyOf={item => item.id}
-      subtitleOf={item => item.subtext}
+      keyOf={item => item.localId}
+      subtitleOf={() => t('common.artist')}
     />
   )
 }
@@ -292,9 +291,9 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
       // (reusing the pagination row's look) until the user opts in, so scanning
       // what you actually own isn't interrupted by releases you don't have.
       const missingAlbums = (externalDiscography?.albums ?? [])
-        .filter(ext => !matchAlbumToLibrary(ext, localAlbums))
+        .filter(ext => !matchAlbumToLibrary({ externalIds: ext.externalIds, title: ext.title, artistName: ext.artist.name }, localAlbums))
       const missingSingles = (externalDiscography?.singles ?? [])
-        .filter(ext => !matchAlbumToLibrary(ext, localAlbums))
+        .filter(ext => !matchAlbumToLibrary({ externalIds: ext.externalIds, title: ext.title, artistName: ext.artist.name }, localAlbums))
 
       const ownedAlbumItems: ArtistContentItem[] = albums
         .map(album => ({ kind: 'localAlbum' as const, id: `album-${album.localId}`, album }))
@@ -303,10 +302,10 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
         .map(album => ({ kind: 'localAlbum' as const, id: `single-${album.localId}`, album }))
         .sort((a, b) => compareByReleaseYearDesc(a.album, b.album))
       const unownedAlbumItems: ArtistContentItem[] = missingAlbums
-        .map(album => ({ kind: 'externalAlbum' as const, id: `album-ext-${album.id}`, album }))
+        .map(album => ({ kind: 'externalAlbum' as const, id: `album-ext-${album.localId}`, album }))
         .sort((a, b) => compareByReleaseYearDesc(a.album, b.album))
       const unownedSingleItems: ArtistContentItem[] = missingSingles
-        .map(album => ({ kind: 'externalAlbum' as const, id: `single-ext-${album.id}`, album }))
+        .map(album => ({ kind: 'externalAlbum' as const, id: `single-ext-${album.localId}`, album }))
         .sort((a, b) => compareByReleaseYearDesc(a.album, b.album))
 
       if (ownedAlbumItems.length > 0 || unownedAlbumItems.length > 0) {
@@ -348,7 +347,7 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
       if (sortedAlbums.length > 0) {
         rows.push({ kind: 'section', id: 'albums-section', title: t('artist.sections.albums') })
         const visibleAlbums = sortedAlbums.slice(0, visibleAlbumsCount)
-        rows.push(...visibleAlbums.map(album => ({ kind: 'externalAlbum' as const, id: `album-${album.id}`, album })))
+        rows.push(...visibleAlbums.map(album => ({ kind: 'externalAlbum' as const, id: `album-${album.localId}`, album })))
         if (visibleAlbumsCount < sortedAlbums.length) {
           rows.push({ kind: 'showMore', id: 'show-more-albums', target: 'albums', remaining: sortedAlbums.length - visibleAlbumsCount })
         }
@@ -357,7 +356,7 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
       if (sortedSingles.length > 0) {
         rows.push({ kind: 'section', id: 'singles-section', title: t('artist.sections.singles') })
         const visibleSingles = sortedSingles.slice(0, visibleSinglesCount)
-        rows.push(...visibleSingles.map(album => ({ kind: 'externalAlbum' as const, id: `single-${album.id}`, album })))
+        rows.push(...visibleSingles.map(album => ({ kind: 'externalAlbum' as const, id: `single-${album.localId}`, album })))
         if (visibleSinglesCount < sortedSingles.length) {
           rows.push({ kind: 'showMore', id: 'show-more-singles', target: 'singles', remaining: sortedSingles.length - visibleSinglesCount })
         }
@@ -460,7 +459,7 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
     return (
       <AlbumRow
         album={item.album}
-        onPress={(album) => navigateToAlbum(album as ExternalAlbumBase)}
+        onPress={(album) => navigateToAlbum(album)}
         subtextOverride={releaseYearLabel(item.album) ?? undefined}
       />
     )
@@ -492,7 +491,7 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
 // component regardless of which branch renderItem takes.
 function PopularOnDeezerSectionResolver({ localArtist, externalArtist }: {
   localArtist: Artist | null
-  externalArtist: ExternalArtist | null
+  externalArtist: SourceArtistDetail | null
 }) {
   const deezerEnabled = useDeezerDiscoveryEnabled()
   const { topTracks: localTopTracks } = useArtistTopTracks({
@@ -508,8 +507,8 @@ function PopularOnDeezerSectionResolver({ localArtist, externalArtist }: {
     return (
       <PopularOnDeezerSection
         topTracks={externalArtist.topTracks ?? []}
-        artistId={externalArtist.id}
-        artistName={externalArtist.name}
+        artistId={externalArtist.artist.nativeId}
+        artistName={externalArtist.artist.name}
       />
     )
   }
@@ -528,7 +527,7 @@ function PopularOnDeezerSectionResolver({ localArtist, externalArtist }: {
 // data, only supplements its absence.
 function BioSectionResolver({ localArtist, externalArtist }: {
   localArtist: Artist | null
-  externalArtist: ExternalArtist | null
+  externalArtist: SourceArtistDetail | null
 }) {
   const deezerEnabled = useDeezerDiscoveryEnabled()
   const { biography: localBiography } = useArtistTopTracks({
@@ -537,9 +536,9 @@ function BioSectionResolver({ localArtist, externalArtist }: {
     enabled: !!localArtist && deezerEnabled,
   })
 
-  const ownBio = localArtist ? localBiography : externalArtist?.biography
-  const artistName = localArtist?.name ?? externalArtist?.name ?? ''
-  const artistMbid = localArtist?.externalIds.mbid ?? externalArtist?.externalIds?.mbid ?? null
+  const ownBio = localArtist ? localBiography : externalArtist?.artist.biography
+  const artistName = localArtist?.name ?? externalArtist?.artist.name ?? ''
+  const artistMbid = localArtist?.externalIds.mbid ?? externalArtist?.artist.externalIds?.mbid ?? null
 
   const { bio: enrichedBio, sourceLabel } = useArtistInfoEnrichment({
     name: artistName,

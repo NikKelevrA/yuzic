@@ -7,12 +7,10 @@ import { Ellipsis, Shuffle, Play, CloudDownload, Link } from 'lucide-react-nativ
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import type { ExternalAlbum } from '@/types';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { makeLocalId } from '@/domain/identity/LocalId';
-import { integrationProvenance } from '@/domain/identity/Provenance';
 import { firstResolvableCover } from '@/types/Cover';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import GetReviewSheet from '@/components/options/GetReviewSheet';
@@ -30,7 +28,6 @@ import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useExternalAlbumPreviews } from '@/hooks/albums/useExternalAlbumPreviews';
 import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
-import { externalSongToTrack } from '@/hooks/usePreviewPlayer';
 import {
   DetailActionRow,
   DetailCircleAction,
@@ -47,7 +44,8 @@ import Touchable from '@/components/Touchable';
 type Props = {
   localAlbum: Album | null;
   localSongs?: Song[];
-  externalAlbum: ExternalAlbum | null;
+  externalAlbum: Album | null;
+  externalSongs?: Song[];
   showNavigation?: boolean;
 };
 
@@ -55,7 +53,7 @@ function isCountLikeAlbumText(value?: string | null): boolean {
   return /^\s*\d+\s+albums?\s*$/i.test(value ?? '');
 }
 
-const AlbumHeader: React.FC<Props> = ({ localAlbum, localSongs = [], externalAlbum, showNavigation = true }) => {
+const AlbumHeader: React.FC<Props> = ({ localAlbum, localSongs = [], externalAlbum, externalSongs = [], showNavigation = true }) => {
   // `localAlbum.cover ?? externalAlbum?.cover` looks equivalent but is not:
   // `{ kind: 'none' }` is a value, not an absence (see `hasCoverImage`), so a
   // plain `??` chain never falls through it to try the external cover.
@@ -67,9 +65,9 @@ const AlbumHeader: React.FC<Props> = ({ localAlbum, localSongs = [], externalAlb
       title={displayTitle}
       cover={displayCover}
       rightAction={localAlbum ? <LocalOptionsButton album={localAlbum} /> : undefined}
-      meta={localAlbum ? <LocalMetaRow album={localAlbum} songs={localSongs} /> : <ExternalMetaRow album={externalAlbum!} />}
+      meta={localAlbum ? <LocalMetaRow album={localAlbum} songs={localSongs} /> : <ExternalMetaRow album={externalAlbum!} songs={externalSongs} />}
       status={!localAlbum ? <ExternalServerStatusRow album={externalAlbum!} /> : undefined}
-      actions={localAlbum ? <LocalActionRow album={localAlbum} songs={localSongs} /> : <ExternalActionRow album={externalAlbum!} />}
+      actions={localAlbum ? <LocalActionRow album={localAlbum} songs={localSongs} /> : <ExternalActionRow album={externalAlbum!} songs={externalSongs} />}
       showNavigation={showNavigation}
     />
   );
@@ -150,37 +148,42 @@ function LocalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
   );
 }
 
-function ExternalMetaRow({ album }: { album: ExternalAlbum }) {
+function ExternalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
   const { t } = useTranslation();
   const { navigateToArtist } = useMatchedNavigation();
 
-  const songs = useMemo(() => album.songs ?? [], [album.songs]);
-
   const metadataItems = useMemo(() => {
     const items: string[] = [];
-    if (album.artist && !isCountLikeAlbumText(album.artist)) items.push(album.artist);
+    if (album.artist.name && !isCountLikeAlbumText(album.artist.name)) items.push(album.artist.name);
     if (songs.length > 0) items.push(t('externalAlbum.header.songs', { count: songs.length }));
     return [...new Set(items.map(item => item.trim()).filter(Boolean))];
-  }, [album.artist, songs.length, t]);
+  }, [album.artist.name, songs.length, t]);
+
+  // The artist reference carried on the album is a thin `ArtistRef`, not a
+  // full domain `Artist` — this builds a minimal-but-valid one to navigate
+  // with, taking provenance/libraryState from the album itself since the
+  // referenced artist has no record of its own here.
+  const handleNavigateToArtist = useCallback(() => {
+    navigateToArtist({
+      localId: album.artist.localId,
+      nativeId: album.artist.nativeId,
+      provenance: album.provenance,
+      externalIds: album.artist.externalIds,
+      libraryState: 'external',
+      name: album.artist.name,
+      cover: album.artist.cover,
+      tags: [],
+      albumIds: [],
+    });
+  }, [album, navigateToArtist]);
 
   return (
     <DetailMetaRow>
       {metadataItems.map((item, index) => (
         <React.Fragment key={`${item}-${index}`}>
           {index > 0 && <DetailMetaDot />}
-          {index === 0 && album.artist ? (
-            <Touchable
-              onPress={() =>
-                navigateToArtist({
-                  id: album.externalIds?.artistDeezerId ?? '',
-                  name: album.artist,
-                  cover: { kind: 'none' },
-                  subtext: '',
-                  externalSource: album.externalSource,
-                  externalIds: { deezerId: album.externalIds?.artistDeezerId, mbid: album.artistMbid },
-                })
-              }
-            >
+          {index === 0 && album.artist.name ? (
+            <Touchable onPress={handleNavigateToArtist}>
               <DetailMetaText>{item}</DetailMetaText>
             </Touchable>
           ) : (
@@ -192,7 +195,7 @@ function ExternalMetaRow({ album }: { album: ExternalAlbum }) {
   );
 }
 
-function ExternalServerStatusRow({ album }: { album: ExternalAlbum }) {
+function ExternalServerStatusRow({ album }: { album: Album }) {
   const { t } = useTranslation();
   const albumStatus = useExternalAlbumStatus(album);
 
@@ -277,19 +280,21 @@ function LocalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
   );
 }
 
-function ExternalActionRow({ album }: { album: ExternalAlbum }) {
+function ExternalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const canDownload = useAnyAlbumDownloaderConnected();
   const { playSongInCollection } = usePlayingActions();
   const albumStatus = useExternalAlbumStatus(album);
-  const previews = useExternalAlbumPreviews(album);
+  const previews = useExternalAlbumPreviews(album, songs);
   const downloadSheetRef = useSheetRef();
 
-  const songs = useMemo(() => album.songs ?? [], [album.songs]);
-
+  // `streamId` is the slot every adapter uses to carry "the id to build a
+  // stream from where that isn't `nativeId`" (see `Song.streamId`) — a
+  // preview's playable resource *is* its resolved URL, so this attaches it
+  // the same way `usePreviewPlayer`'s `attachPreviewUrl` does.
   const previewSongs = useMemo<Song[]>(
-    () => songs.filter(s => !!previews[s.id]).map(s => externalSongToTrack(s, previews[s.id])),
+    () => songs.filter(s => !!previews[s.nativeId]).map(s => ({ ...s, streamId: previews[s.nativeId] })),
     [songs, previews]
   );
 
@@ -300,10 +305,10 @@ function ExternalActionRow({ album }: { album: ExternalAlbum }) {
   // preview tracks have. Mirrors the equivalent build in
   // `components/options/ArtistOptions`.
   const previewCollection = useMemo<{ playlist: Playlist; songs: Song[] }>(() => {
-    const provenance = integrationProvenance(album.externalSource ?? 'external');
+    const provenance = album.provenance;
     const playlist: Playlist = {
-      localId: makeLocalId('playlist', provenance, `preview-${album.id}`),
-      nativeId: album.id,
+      localId: makeLocalId('playlist', provenance, `preview-${album.nativeId}`),
+      nativeId: album.nativeId,
       provenance,
       externalIds: {},
       libraryState: 'external',

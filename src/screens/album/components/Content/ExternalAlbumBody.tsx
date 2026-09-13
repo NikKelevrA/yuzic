@@ -2,11 +2,13 @@ import React, { useCallback, useMemo } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 
-import { ExternalAlbum, ExternalSong } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
+import { formatDuration } from '@/utils/formatDuration';
 import AlbumHeader, { AlbumHeaderBar } from '../Header';
 import SongRow from '@/components/rows/SongRow';
 import { useExternalAlbumPreviews } from '@/hooks/albums/useExternalAlbumPreviews';
-import { usePreviewPlayer, externalSongToTrack } from '@/hooks/usePreviewPlayer';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { useTheme } from '@/hooks/useTheme';
 import { ALBUM_EXTERNAL_HORIZONTAL_PADDING } from '@/constants/features';
 import { spacing, typography } from '@/constants/design';
@@ -14,51 +16,50 @@ import { DetailScreen } from '@/components/DetailHeader';
 import { useScrollClearance } from '@/hooks/useScrollClearance';
 
 type Props = {
-  album: ExternalAlbum;
+  album: Album;
+  songs: Song[];
 };
 
-const ExternalAlbumBody: React.FC<Props> = ({ album }) => {
+const ExternalAlbumBody: React.FC<Props> = ({ album, songs }) => {
   const { colors } = useTheme();
   const scrollClearance = useScrollClearance();
-  const songs = useMemo(() => album.songs ?? [], [album.songs]);
-  const previews = useExternalAlbumPreviews(album);
+  const previews = useExternalAlbumPreviews(album, songs);
   const { toggleInAlbum } = usePreviewPlayer();
 
+  // `streamId` carries the preview URL — see the equivalent comment in
+  // `../Header`'s `ExternalActionRow`.
   const albumPreviewSongs = useMemo(() =>
     songs
-      .filter(s => !!previews[s.id])
-      .map(s => externalSongToTrack(s, previews[s.id])),
+      .filter(s => !!previews[s.nativeId])
+      .map(s => ({ ...s, streamId: previews[s.nativeId] })),
     [previews, songs]
   );
 
-  const handleSongPress = useCallback((song: ExternalSong) => {
-    const url = previews[song.id];
+  const handleSongPress = useCallback((song: Song) => {
+    const url = previews[song.nativeId];
     if (!url) return;
-    toggleInAlbum(song, url, albumPreviewSongs, album.id, album.title);
-  }, [previews, albumPreviewSongs, toggleInAlbum, album.id, album.title]);
+    toggleInAlbum(song, url, albumPreviewSongs, album.nativeId, album.title);
+  }, [previews, albumPreviewSongs, toggleInAlbum, album.nativeId, album.title]);
 
   const footer = useMemo(() => {
-    const totalSec = songs.reduce((acc, s) => acc + (Number(s.duration) || 0), 0);
-    const hrs = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const duration = hrs > 0 ? `${hrs} hr ${mins} min` : `${mins} min`;
+    const totalSec = songs.reduce((acc, s) => acc + s.durationSeconds, 0);
     const label = songs.length === 1 ? 'song' : 'songs';
     return (
       <View style={styles.statsFooter}>
         <Text style={[styles.statsText, { color: colors.subtext }]}>
-          {songs.length} {label} · {duration}
+          {songs.length} {label} · {formatDuration(totalSec)}
         </Text>
       </View>
     );
   }, [songs, colors]);
 
-  const renderItem = useCallback(({ item }: { item: ExternalSong }) => {
-    const previewUrl = previews[item.id];
+  const renderItem = useCallback(({ item }: { item: Song }) => {
+    const previewUrl = previews[item.nativeId];
     return (
       <SongRow
         song={item}
         albumTitle={album.title}
-        albumArtist={album.artist}
+        albumArtist={album.artist.name}
         previewUrl={previewUrl}
         onPress={previewUrl ? () => handleSongPress(item) : undefined}
       />
@@ -70,10 +71,10 @@ const ExternalAlbumBody: React.FC<Props> = ({ album }) => {
       {scroll => (
       <FlashList
         data={songs}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.localId}
         renderItem={renderItem}
         extraData={handleSongPress}
-        ListHeaderComponent={<AlbumHeader localAlbum={null} externalAlbum={album} showNavigation={false} />}
+        ListHeaderComponent={<AlbumHeader localAlbum={null} externalAlbum={album} externalSongs={songs} showNavigation={false} />}
         ListFooterComponent={footer}
         contentContainerStyle={{ paddingBottom: scrollClearance }}
         showsVerticalScrollIndicator={false}

@@ -23,9 +23,9 @@ export default function GenreContent({ genre, albums }: Props) {
     [genre, albums]
   )
 
-  // This screen only ever hands `AlbumRow` a domain `Album` (never an
-  // `ExternalAlbumBase`), but `onPress` is typed against `AlbumRow`'s own
-  // union — narrow with its exported guard rather than asserting.
+  // This screen only ever hands `AlbumRow` a library album, but `onPress`
+  // fires for either origin — guard with the exported `isExternalAlbum`
+  // (provenance-based) rather than assuming.
   const renderItem = useCallback(
     ({ item }: { item: Album }) => (
       <AlbumRow

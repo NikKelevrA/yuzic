@@ -1,4 +1,6 @@
-import type { ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance } from '@/domain/identity/Provenance';
 
 import {
   albumRequestFromExternal,
@@ -73,20 +75,31 @@ const request = (
 
 describe('albumRequestFromExternal', () => {
   it('preserves stable album and artist identities from the catalog item', () => {
-    const album: ExternalAlbumBase = {
-      id: '684058471',
+    const provenance = integrationProvenance('deezer');
+    const album: Album = {
+      localId: makeLocalId('album', provenance, '684058471'),
+      nativeId: '684058471',
+      provenance,
+      libraryState: 'external',
       title: 'IVE EMPATHY',
-      artist: 'IVE',
-      artistMbid: 'b2f2216a-d7a9-4ce0-8b8f-f494d9a8c196',
       cover: { kind: 'none' },
-      subtext: 'IVE',
+      artist: {
+        localId: makeLocalId('artist', provenance, '153042292'),
+        nativeId: '153042292',
+        externalIds: {
+          deezerId: '153042292',
+          mbid: 'b2f2216a-d7a9-4ce0-8b8f-f494d9a8c196',
+        },
+        name: 'IVE',
+        cover: { kind: 'none' },
+      },
       releaseDate: '2025-02-03',
       releaseType: 'album',
+      genres: [],
+      songIds: [],
       externalIds: {
         deezerId: '684058471',
-        artistDeezerId: '153042292',
         mbid: '79fae544-f374-451d-8f3f-1012bd31c519',
-        artistMbid: 'b2f2216a-d7a9-4ce0-8b8f-f494d9a8c196',
       },
     };
 

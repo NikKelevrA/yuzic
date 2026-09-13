@@ -5,7 +5,9 @@ import { useSelector } from 'react-redux';
 import { getLBSimilarArtists } from '@/api/listenbrainz';
 import { QueryKeys } from '@/enums/queryKeys';
 import { selectListenbrainzDiscoveryEnabled } from '@/utils/redux/selectors/settingsSelectors';
-import type { ExternalArtistBase } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance } from '@/domain/identity/Provenance';
 
 /**
  * Similar-artists from ListenBrainz's public session-based graph. Keyed on
@@ -26,18 +28,26 @@ export function useLBSimilarArtists(
     [mbid, limit]
   );
 
-  return useQuery<ExternalArtistBase[]>({
+  return useQuery<Artist[]>({
     queryKey,
     queryFn: async () => {
       const raw = await getLBSimilarArtists(mbid!, limit);
+      const provenance = integrationProvenance('listenbrainz');
       return raw
         .filter((a) => !excludeName || a.name.trim().toLowerCase() !== excludeName)
-        .map((a) => ({
-          id: a.artistMbid,
-          name: a.name,
-          cover: { kind: 'none' as const },
-          subtext: '',
+        .map((a): Artist => ({
+          localId: makeLocalId('artist', provenance, a.artistMbid),
+          // ListenBrainz's similar-artists graph is keyed entirely on MBID —
+          // it names no artist id of its own — so the MBID doubles as
+          // `nativeId` here rather than leaving it blank.
+          nativeId: a.artistMbid,
+          provenance,
           externalIds: { mbid: a.artistMbid },
+          libraryState: 'external',
+          name: a.name,
+          cover: { kind: 'none' },
+          tags: [],
+          albumIds: [],
         }));
     },
     enabled: discoveryEnabled && Boolean(mbid),

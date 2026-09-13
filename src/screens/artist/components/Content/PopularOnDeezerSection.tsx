@@ -5,15 +5,15 @@ import { useSelector } from 'react-redux'
 import { useTheme } from '@/hooks/useTheme'
 import { useTranslation } from 'react-i18next'
 import { selectShowSourceHeaders } from '@/utils/redux/selectors/settingsSelectors'
-import { usePreviewPlayer, externalSongToTrack } from '@/hooks/usePreviewPlayer'
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer'
 import TopTrackRow from '@/components/rows/TopTrackRow'
-import type { ExternalSong } from '@/types'
+import type { Song } from '@/domain/entities/Song'
 import Touchable from '@/components/Touchable'
 import { controlSize, sourceColor, spacing, typography } from '@/constants/design'
 import { useRadius } from '@/hooks/useRadius'
 
 type Props = {
-  topTracks: ExternalSong[]
+  topTracks: Song[]
   artistId: string
   artistName: string
 }
@@ -34,9 +34,9 @@ export default function PopularOnDeezerSection({ topTracks, artistId, artistName
   const allTracks = topTracks.slice(0, 10)
   const visible = showAll ? allTracks : allTracks.slice(0, 5)
 
-  const trackQueue = topTracks
-    .filter(s => !!s.previewUrl)
-    .map(s => externalSongToTrack(s, s.previewUrl!))
+  // `streamId` carries a resolved preview URL — see `Song.streamId` and
+  // `usePreviewPlayer`'s `attachPreviewUrl`.
+  const trackQueue = topTracks.filter(s => !!s.streamId)
 
   return (
     <View>
@@ -52,12 +52,12 @@ export default function PopularOnDeezerSection({ topTracks, artistId, artistName
       </View>
       {visible.map((song, index) => (
         <TopTrackRow
-          key={song.id}
+          key={song.localId}
           song={song}
           index={index}
           artistName={artistName}
-          onPress={song.previewUrl
-            ? () => toggleInAlbum(song, song.previewUrl!, trackQueue, artistId, artistName)
+          onPress={song.streamId
+            ? () => toggleInAlbum(song, song.streamId!, trackQueue, artistId, artistName)
             : undefined}
         />
       ))}

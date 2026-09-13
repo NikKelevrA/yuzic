@@ -16,7 +16,7 @@ import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDisco
 import { QueryKeys } from '@/enums/queryKeys'
 import { STALE_DEEZER_DISCOVERY } from '@/features/home/constants'
 import MediaTile from '@/screens/home/components/MediaTile'
-import type { ExternalAlbumBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
 import {
   ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
   ALBUM_RECOMMENDATION_TILE_GAP,
@@ -34,10 +34,10 @@ type Props = {
 async function fetchRelatedAlbums(
   artistName: string,
   libraryArtistNames: Set<string>
-): Promise<ExternalAlbumBase[]> {
+): Promise<Album[]> {
   const seed = await deezer.resolveDeezerArtistByName(artistName)
   if (!seed) return []
-  const related = await deezer.getDeezerRelatedArtists(seed.id, ALBUM_RECOMMENDATION_RELATED_LIMIT)
+  const related = await deezer.getDeezerRelatedArtists(seed.nativeId, ALBUM_RECOMMENDATION_RELATED_LIMIT)
   const fresh = related.filter(a => !libraryArtistNames.has(a.name.toLowerCase()))
   return collectCoveredAlbumsForArtists(fresh, { targetAlbums: ALBUM_RECOMMENDATION_TARGET_ALBUMS })
 }
@@ -59,7 +59,7 @@ export default function AlbumRecommendedSection({ artistName, excludeAlbumId }: 
     [artists]
   )
 
-  const { data: albums = [] } = useQuery<ExternalAlbumBase[]>({
+  const { data: albums = [] } = useQuery<Album[]>({
     queryKey: [QueryKeys.ExploreBecauseYouListened, 'album-rec', artistName],
     queryFn: () => fetchRelatedAlbums(artistName, libraryArtistNames),
     enabled: enabled && !!artistName,
@@ -67,7 +67,7 @@ export default function AlbumRecommendedSection({ artistName, excludeAlbumId }: 
     networkMode: 'online',
   })
 
-  const filtered = useMemo(() => albums.filter(a => a.id !== excludeAlbumId), [albums, excludeAlbumId])
+  const filtered = useMemo(() => albums.filter(a => a.nativeId !== excludeAlbumId), [albums, excludeAlbumId])
   const covers = useMemo(() => filtered.map(a => a.cover), [filtered])
   usePrefetchCovers(covers, 'grid')
 
@@ -90,10 +90,10 @@ export default function AlbumRecommendedSection({ artistName, excludeAlbumId }: 
       >
         {filtered.map(album => (
           <MediaTile
-            key={album.id}
+            key={album.localId}
             cover={album.cover}
             title={album.title}
-            subtitle={album.subtext ?? ''}
+            subtitle={album.artist.name}
             size={tileWidth}
             radius={rad.card}
             onPress={() => {

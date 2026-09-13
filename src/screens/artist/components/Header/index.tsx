@@ -15,7 +15,7 @@ import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
 import { MediaImage } from '@/components/MediaImage';
 import ArtistOptions from '@/components/options/ArtistOptions';
-import type { ExternalArtist } from '@/types';
+import type { SourceArtistDetail } from '@/features/sources/registry';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
@@ -49,13 +49,9 @@ import { useArtworkEnrichment } from '@/features/metadata/useArtworkEnrichment';
 
 type Props = {
   localArtist: Artist | null;
-  externalArtist: ExternalArtist | null;
+  externalArtist: SourceArtistDetail | null;
   showNavigation?: boolean;
 };
-
-function isAlbumCountText(value?: string | null): boolean {
-  return /^\s*\d+\s+albums?\s*$/i.test(value ?? '');
-}
 
 const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNavigation = true }) => {
   const { t } = useTranslation();
@@ -68,9 +64,9 @@ const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNaviga
   const barInset = useDetailHeaderInset();
   const onTitleLayout = useDetailHeroTitleLayout();
 
-  const displayName = localArtist?.name ?? externalArtist?.name ?? '';
-  const serverCover = localArtist?.cover ?? externalArtist?.cover ?? { kind: 'none' as const };
-  const artistMbid = localArtist?.externalIds.mbid ?? externalArtist?.externalIds?.mbid ?? null;
+  const displayName = localArtist?.name ?? externalArtist?.artist.name ?? '';
+  const serverCover = localArtist?.cover ?? externalArtist?.artist.cover ?? { kind: 'none' as const };
+  const artistMbid = localArtist?.externalIds.mbid ?? externalArtist?.artist.externalIds?.mbid ?? null;
 
   // `metadata.enrich` (artwork half, GAPS ONLY — see features/metadata): only
   // consulted when the server/Deezer artist has no cover of its own, and a
@@ -178,7 +174,7 @@ const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNaviga
 };
 
 export const ArtistHeaderBar: React.FC<Props> = ({ localArtist, externalArtist }) => {
-  const displayName = localArtist?.name ?? externalArtist?.name ?? '';
+  const displayName = localArtist?.name ?? externalArtist?.artist.name ?? '';
   return (
     <DetailHeaderBar
       title={displayName}
@@ -238,19 +234,18 @@ function LocalMetaRow({ artist }: { artist: Artist }) {
   );
 }
 
-function ExternalMetaRow({ artist }: { artist: ExternalArtist }) {
+function ExternalMetaRow({ artist }: { artist: SourceArtistDetail }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const metadataItems = useMemo(() => {
     const items: string[] = [];
-    const albumCount = artist.albums?.length ?? 0;
+    const albumCount = artist.albums.length + artist.singles.length;
     if (albumCount > 0) {
       items.push(`${albumCount} ${albumCount === 1 ? t('common.album') : t('common.albums')}`);
     }
-    if (artist.subtext && !isAlbumCountText(artist.subtext)) items.push(artist.subtext);
     return items;
-  }, [artist.albums?.length, artist.subtext, t]);
+  }, [artist.albums.length, artist.singles.length, t]);
 
   return (
     <View style={styles.metaRow}>

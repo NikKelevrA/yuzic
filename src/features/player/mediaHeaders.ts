@@ -1,4 +1,5 @@
-import type { Server, ServerType } from '@/types';
+import type { Server } from '@/types/Server';
+import type { Provenance } from '@/domain/identity/Provenance';
 import { plexBasicAuthHeader } from '@/api/plex/client';
 
 /**
@@ -30,18 +31,24 @@ const EMPTY: RequestHeaders = {};
  * provider than the active server (a mixed queue) is likewise skipped — its
  * credentials are not the ones we hold.
  *
- * Takes a small structural type rather than the legacy `@/types` `Song` — both
- * callers already build a plain `{ sourceServerType?, streamUrl? }` literal
- * rather than pass a whole entity, and this keeps the player boundary from
- * depending on a Song shape that the queue itself no longer holds.
+ * A mixed queue is detected by the track's origin *server id*, not its server
+ * type. That is strictly more precise: two Plex servers share a type, and the
+ * credentials we hold for one are not the other's. The track's provenance says
+ * which server it came from, so nothing has to be duplicated onto it.
  */
 export function mediaHeadersForSong(
   server: Server | null | undefined,
-  song: { sourceServerType?: ServerType; streamUrl?: string }
+  resource: { song?: { provenance?: Provenance }; streamUrl?: string }
 ): RequestHeaders {
-  if (song.streamUrl?.startsWith('file:')) return EMPTY;
-  const kind = song.sourceServerType ?? server?.type;
-  if (kind !== 'plex') return EMPTY;
+  if (resource.streamUrl?.startsWith('file:')) return EMPTY;
+  const provenance = resource.song?.provenance;
+  // A track from a different origin than the active server carries none of
+  // our credentials; one with no stated origin is assumed to be the active
+  // server's, which is what every caller passing a bare URL means.
+  if (provenance && (provenance.origin !== 'server' || provenance.serverId !== server?.id)) {
+    return EMPTY;
+  }
+  if (server?.type !== 'plex') return EMPTY;
   const auth = plexBasicAuthHeader(server?.basicAuth);
   if (!auth) return EMPTY;
   return { headers: auth, artworkHeaders: auth };

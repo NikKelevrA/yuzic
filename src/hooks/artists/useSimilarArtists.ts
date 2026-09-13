@@ -6,7 +6,9 @@ import { getLastFmSimilarArtists } from '@/api/lastfm/getSimilarArtists'
 import { LASTFM_API_KEY } from '@/constants/keys'
 import { QueryKeys } from '@/enums/queryKeys'
 import { selectLastfmEnabled } from '@/utils/redux/selectors/settingsSelectors'
-import type { ExternalArtistBase } from '@/types'
+import type { Artist } from '@/domain/entities/Artist'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { integrationProvenance } from '@/domain/identity/Provenance'
 
 export type SimilarArtistsInput = {
   mbid?: string | null
@@ -20,12 +22,13 @@ async function fetchLastFmSimilarArtists(
   name: string,
   excludeName: string | undefined,
   limit: number
-): Promise<ExternalArtistBase[]> {
+): Promise<Artist[]> {
   const candidates = await getLastFmSimilarArtists(LASTFM_API_KEY, name, limit * 3)
   if (!candidates.length) return []
 
   const normalizedExclude = excludeName?.trim().toLowerCase()
   const seen = new Set<string>()
+  const provenance = integrationProvenance('lastfm')
 
   return candidates
     .filter(c => {
@@ -36,13 +39,22 @@ async function fetchLastFmSimilarArtists(
       return true
     })
     .slice(0, limit)
-    .map(c => ({
-      id: c.mbid ?? c.name,
-      name: c.name,
-      cover: { kind: 'none' as const },
-      subtext: '',
-      externalIds: c.mbid ? { mbid: c.mbid } : undefined,
-    }))
+    .map((c): Artist => {
+      // Last.fm names no artist id of its own on this endpoint — its mbid
+      // where present, else the artist's name, is all there is to key on.
+      const nativeId = c.mbid ?? c.name
+      return {
+        localId: makeLocalId('artist', provenance, nativeId),
+        nativeId,
+        provenance,
+        externalIds: c.mbid ? { mbid: c.mbid } : {},
+        libraryState: 'external',
+        name: c.name,
+        cover: { kind: 'none' },
+        tags: [],
+        albumIds: [],
+      }
+    })
 }
 
 export function useSimilarArtists(input: SimilarArtistsInput) {

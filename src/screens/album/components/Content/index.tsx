@@ -2,7 +2,6 @@ import React from 'react';
 
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
-import type { ExternalAlbum } from '@/types';
 
 import LocalAlbumBody from './LocalAlbumBody';
 import ExternalAlbumBody from './ExternalAlbumBody';
@@ -10,7 +9,8 @@ import ExternalAlbumBody from './ExternalAlbumBody';
 type Props = {
   localAlbum: Album | null;
   localSongs: Song[];
-  externalAlbum: ExternalAlbum | null;
+  externalAlbum: Album | null;
+  externalSongs?: Song[];
   songsLoading?: boolean;
 };
 
@@ -23,11 +23,11 @@ type Props = {
 // tracks only ever resolve to 30s previews. That playback-capability
 // difference is real, so the two bodies stay separate components rather than
 // being merged into one that branches internally per row.
-const AlbumContent: React.FC<Props> = ({ localAlbum, localSongs, externalAlbum, songsLoading }) => {
+const AlbumContent: React.FC<Props> = ({ localAlbum, localSongs, externalAlbum, externalSongs = [], songsLoading }) => {
   if (localAlbum) {
     return <LocalAlbumBody album={localAlbum} songs={localSongs} songsLoading={songsLoading} />;
   }
-  return <ExternalAlbumBody album={externalAlbum!} />;
+  return <ExternalAlbumBody album={externalAlbum!} songs={externalSongs} />;
 };
 
 export default AlbumContent;

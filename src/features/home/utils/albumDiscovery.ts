@@ -1,5 +1,6 @@
 import * as deezer from '@/api/deezer';
-import type { ExternalAlbumBase, ExternalArtistBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Artist } from '@/domain/entities/Artist';
 
 const DEFAULT_ARTIST_BATCH_SIZE = 4;
 const DEFAULT_ALBUMS_PER_ARTIST = 5;
@@ -12,31 +13,31 @@ type CollectCoveredAlbumsOptions = {
 };
 
 export async function collectCoveredAlbumsForArtists(
-  artists: ExternalArtistBase[],
+  artists: Artist[],
   {
     targetAlbums,
     albumsPerArtist = DEFAULT_ALBUMS_PER_ARTIST,
     artistBatchSize = DEFAULT_ARTIST_BATCH_SIZE,
     excludeAlbumIds = [],
   }: CollectCoveredAlbumsOptions
-): Promise<ExternalAlbumBase[]> {
+): Promise<Album[]> {
   if (targetAlbums <= 0) return [];
 
-  const albums: ExternalAlbumBase[] = [];
+  const albums: Album[] = [];
   const seenAlbums = new Set(excludeAlbumIds);
 
   for (let i = 0; i < artists.length && albums.length < targetAlbums; i += artistBatchSize) {
     const results = await Promise.allSettled(
       artists.slice(i, i + artistBatchSize).map(async artist => {
-        const artistAlbums = await deezer.getDeezerArtistAlbums(artist.id, albumsPerArtist, artist);
+        const artistAlbums = await deezer.getDeezerArtistAlbums(artist.nativeId, albumsPerArtist, artist);
         return artistAlbums.find(a => a.cover.kind !== 'none') ?? null;
       })
     );
 
     for (const result of results) {
       if (albums.length >= targetAlbums) break;
-      if (result.status !== 'fulfilled' || !result.value || seenAlbums.has(result.value.id)) continue;
-      seenAlbums.add(result.value.id);
+      if (result.status !== 'fulfilled' || !result.value || seenAlbums.has(result.value.nativeId)) continue;
+      seenAlbums.add(result.value.nativeId);
       albums.push(result.value);
     }
   }

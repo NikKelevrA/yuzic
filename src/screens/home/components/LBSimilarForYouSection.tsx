@@ -20,7 +20,9 @@ import {
 import MediaTile from './MediaTile';
 import SkeletonTiles from '@/components/SkeletonTiles';
 import { useSourceSectionPresence } from './SourceGroup';
-import type { ExternalArtistBase } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance } from '@/domain/identity/Provenance';
 import { spacing, typography } from '@/constants/design';
 
 type Props = {
@@ -68,17 +70,22 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
     [screenWidth]
   );
 
-  const query = useQuery<ExternalArtistBase[]>({
+  const query = useQuery<Artist[]>({
     queryKey: [QueryKeys.LbSimilarForYou, seedMbid ?? '', refreshKey],
     queryFn: async () => {
       if (!seedMbid) return [];
       const raw = await getLBSimilarArtists(seedMbid, 10);
-      return raw.map((a) => ({
-        id: a.artistMbid,
+      const provenance = integrationProvenance('listenbrainz');
+      return raw.map((a): Artist => ({
+        localId: makeLocalId('artist', provenance, a.artistMbid),
+        nativeId: a.artistMbid,
+        provenance,
+        externalIds: { mbid: a.artistMbid },
+        libraryState: 'external',
         name: a.name,
         cover: { kind: 'none' as const },
-        subtext: a.comment ?? '',
-        externalIds: { mbid: a.artistMbid },
+        tags: [],
+        albumIds: [],
       }));
     },
     enabled: discoveryEnabled && Boolean(seedMbid),
@@ -93,16 +100,16 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
 
   useSourceSectionPresence(sectionKey, hasContent);
 
-  const renderArtist = useCallback(({ item }: { item: ExternalArtistBase }) => (
+  const renderArtist = useCallback(({ item }: { item: Artist }) => (
     <MediaTile
       cover={item.cover}
       title={item.name}
-      subtitle={item.subtext}
+      subtitle={t('common.artist')}
       size={gridItemWidth}
       radius={gridItemWidth / 2}
       onPress={() => navigateToArtist(item)}
     />
-  ), [gridItemWidth, navigateToArtist]);
+  ), [gridItemWidth, navigateToArtist, t]);
 
   // A heading over an empty rail is worse than no shelf — and the source
   // header above it goes with it, told by the presence report.
@@ -124,7 +131,7 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
         <FlashList
           horizontal
           data={data}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.localId}
           overrideItemLayout={(layout) => { (layout as { size?: number }).size = gridItemWidth; }}
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"

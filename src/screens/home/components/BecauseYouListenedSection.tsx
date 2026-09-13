@@ -25,7 +25,7 @@ import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDisco
 import SelectionBottomSheet from '@/components/SelectionBottomSheet'
 import MediaTile from './MediaTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
-import type { ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 import { HOME_RELATED_ARTIST_LIMIT } from '@/constants/home';
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
@@ -35,11 +35,11 @@ async function fetchAlbumsForSeed(
   artistName: string,
   libraryArtistNames: Set<string>,
   itemCount: number
-): Promise<ExternalAlbumBase[]> {
+): Promise<Album[]> {
   const seedArtist = await deezer.resolveDeezerArtistByName(artistName)
   if (!seedArtist) return []
 
-  const related = await deezer.getDeezerRelatedArtists(seedArtist.id, HOME_RELATED_ARTIST_LIMIT)
+  const related = await deezer.getDeezerRelatedArtists(seedArtist.nativeId, HOME_RELATED_ARTIST_LIMIT)
   const fresh = related.filter(artist => !libraryArtistNames.has(artist.name.toLowerCase()))
 
   return collectCoveredAlbumsForArtists(fresh, { targetAlbums: itemCount })
@@ -97,7 +97,7 @@ export default function BecauseYouListenedSection({ artistName, refreshKey = 0 }
     sheetRef.current?.dismiss()
   }, [artistNames, selectedArtist])
 
-  const query = useQuery<ExternalAlbumBase[]>({
+  const query = useQuery<Album[]>({
     // Include libraryArtists.length so the exclusion set (libraryArtistNames)
     // stays fresh: new library artists should stop appearing in suggestions
     // rather than waiting out the full 12h staleTime.
@@ -112,11 +112,11 @@ export default function BecauseYouListenedSection({ artistName, refreshKey = 0 }
   const coversToPrefetch = useMemo(() => albums.map(a => a.cover), [albums])
   usePrefetchCovers(coversToPrefetch, 'grid')
 
-  const renderAlbum = useCallback(({ item }: { item: ExternalAlbumBase }) => (
+  const renderAlbum = useCallback(({ item }: { item: Album }) => (
     <MediaTile
       cover={item.cover}
       title={item.title}
-      subtitle={item.subtext}
+      subtitle={item.artist.name}
       size={gridItemWidth}
       radius={rad.card}
       onPress={() => {
@@ -168,7 +168,7 @@ export default function BecauseYouListenedSection({ artistName, refreshKey = 0 }
           <FlashList
             horizontal
             data={albums}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.localId}
             overrideItemLayout={layout => { (layout as { size?: number }).size = gridItemWidth }}
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"

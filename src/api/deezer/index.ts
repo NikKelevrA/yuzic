@@ -1,8 +1,6 @@
 export { searchAlbumPreviews } from './albums';
 export type { DeezerPreviewTrack } from './albums';
 export {
-  deezerAlbumToExternal,
-  deezerArtistToExternal,
   getDeezerAlbum,
   getDeezerArtist,
   getDeezerArtistsByGenreId,

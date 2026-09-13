@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import type { ContentKind, CoverSource } from '@/types';
+import type { ContentKind } from '@/domain/playback/ContentKind';
+import type { CoverSource } from '@/types/Cover';
 import type { RepeatModeState, ShuffleMode } from '@/contexts/PlayingContext';
 
 /**

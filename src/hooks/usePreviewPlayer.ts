@@ -1,52 +1,31 @@
 import { useCallback } from 'react';
 import { usePlaying } from '@/contexts/PlayingContext';
-import { ExternalSong } from '@/types';
 import type { Song } from '@/domain/entities/Song';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
-import { normalizeExternalIds } from '@/domain/identity/ExternalIds';
 
 /**
- * Turns a search/browse preview into a domain `Song` the queue can hold.
+ * Attaches a freshly-resolved preview URL to an already-mapped preview `Song`
+ * (Deezer's `mapSong`/`mapPreviewTrack` — identity, artist/album refs and
+ * `contentKind: 'preview'` are already correct on it) so the queue has
+ * somewhere to read it from.
  *
- * Provenance is read off the record rather than assumed. Only one catalogue
- * supplies previews today, but naming it here would make this the place a
- * second one silently inherits the first one's identity — two providers'
- * track `42` would collapse into the same `LocalId`, and the queue would treat
- * them as the same track. `unknown` is recorded when the record genuinely does
- * not say, which is still distinct from claiming a source it never had.
+ * `streamId` — not a new field — is what every other adapter uses to carry
+ * "the id to build a stream from where that isn't `nativeId`" (see
+ * `Song.streamId`); a preview's playable resource *is* that resolved URL, so
+ * this is the same slot doing the same job.
  */
-export function externalSongToTrack(song: ExternalSong, previewUrl: string): Song {
-  const provenance = integrationProvenance(song.externalSource ?? 'unknown');
-  const artistLocalId = makeLocalId('artist', provenance, song.id);
-  const albumLocalId = makeLocalId('album', provenance, song.albumId);
-  return {
-    localId: makeLocalId('song', provenance, song.id),
-    nativeId: song.id,
-    provenance,
-    // The ids the record already carries; matching needs them to relate this
-    // preview to a library track the user may already own.
-    externalIds: normalizeExternalIds(song.externalIds),
-    // Known only through an enabled integration — browse and preview only.
-    libraryState: 'external',
-    title: song.title,
-    artist: { localId: artistLocalId, nativeId: '', externalIds: {}, name: song.artist, cover: { kind: 'none' } },
-    album: { localId: albumLocalId, nativeId: song.albumId, externalIds: {}, title: '', cover: song.cover },
-    cover: song.cover,
-    durationSeconds: 30,
-    contentKind: 'preview',
-    genres: [],
-    streamId: previewUrl,
-  };
+function attachPreviewUrl(song: Song, previewUrl: string): Song {
+  return { ...song, streamId: previewUrl };
 }
 
 export function usePreviewPlayer() {
   const { playSong, playSongInCollection, pauseSong, resumeSong, addToQueue, playNext, currentSong, isPlaying: mainIsPlaying } = usePlaying();
 
   /** Play a single preview (no album context). */
-  const toggle = useCallback(async (song: ExternalSong, url: string) => {
-    const track = externalSongToTrack(song, url);
+  const toggle = useCallback(async (song: Song, url: string) => {
+    const track = attachPreviewUrl(song, url);
     if (currentSong?.localId === track.localId) {
       if (mainIsPlaying) await pauseSong();
       else await resumeSong();
@@ -60,13 +39,13 @@ export function usePreviewPlayer() {
    * from the album into the queue so skip-next/prev work across the album.
    */
   const toggleInAlbum = useCallback(async (
-    song: ExternalSong,
+    song: Song,
     url: string,
     albumPreviewSongs: Song[],
     albumId: string,
     albumTitle: string,
   ) => {
-    const track = externalSongToTrack(song, url);
+    const track = attachPreviewUrl(song, url);
     if (currentSong?.localId === track.localId) {
       if (mainIsPlaying) await pauseSong();
       else await resumeSong();
@@ -100,12 +79,12 @@ export function usePreviewPlayer() {
     await playSongInCollection(track, collection);
   }, [currentSong, mainIsPlaying, playSong, playSongInCollection, pauseSong, resumeSong]);
 
-  const addPreviewToQueue = useCallback((song: ExternalSong, url: string) => {
-    addToQueue(externalSongToTrack(song, url));
+  const addPreviewToQueue = useCallback((song: Song, url: string) => {
+    addToQueue(attachPreviewUrl(song, url));
   }, [addToQueue]);
 
-  const playPreviewNext = useCallback((song: ExternalSong, url: string) => {
-    playNext(externalSongToTrack(song, url));
+  const playPreviewNext = useCallback((song: Song, url: string) => {
+    playNext(attachPreviewUrl(song, url));
   }, [playNext]);
 
   return { toggle, toggleInAlbum, addPreviewToQueue, playPreviewNext };

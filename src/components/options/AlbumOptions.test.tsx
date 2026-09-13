@@ -3,7 +3,6 @@ import { render } from '@testing-library/react-native';
 
 import AlbumOptions from './AlbumOptions';
 import type { Album } from '@/domain/entities/Album';
-import type { ExternalAlbumBase } from '@/types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
@@ -76,12 +75,9 @@ jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);
-jest.mock('@/features/audiomuse/generateFromEntity', () => ({
-  useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
-}));
-
 const mockGenerateForAlbum = jest.fn();
 jest.mock('@/features/audiomuse/generatePlaylist', () => ({
+  useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
   generateSimilarPlaylistForAlbum: (...args: unknown[]) => mockGenerateForAlbum(...args),
 }));
 
@@ -181,13 +177,24 @@ const libraryAlbum: Album = {
   songIds: [],
 };
 
-const externalAlbum: ExternalAlbumBase = {
-  id: 'ext1',
+const externalAlbum: Album = {
+  localId: 'local:album:ext:deezer:ext1' as Album['localId'],
+  nativeId: 'ext1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
-  artist: 'External Artist',
-  subtext: 'External Artist',
-  localId: 'local:album:ext:deezer:ext1' as ExternalAlbumBase['localId'],
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Album['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  releaseType: 'album',
+  genres: [],
+  songIds: [],
 };
 
 describe('AlbumOptions', () => {
@@ -252,12 +259,10 @@ describe('AlbumOptions', () => {
     expect(mockDispatch.mock.calls[0][0].type).toBe('wants/removeWant');
   });
 
-  it('hides the Want row when the entity has no localId', async () => {
-    const noLocalIdAlbum: ExternalAlbumBase = { ...externalAlbum, localId: undefined };
-    const view = await render(<AlbumOptions ref={null as any} album={noLocalIdAlbum} />);
-    expect(view.queryByText('externalAlbum.menu.want')).toBeNull();
-    expect(view.queryByText('externalAlbum.menu.wanted')).toBeNull();
-  });
+  // The "no localId" case this used to cover is no longer representable:
+  // `EntityCore.localId` is a required field on every domain `Album`, not an
+  // optional one added partway through the pre-rewrite migration, so there
+  // is no longer a real album value with it absent to construct.
 
   it('hides "Make a playlist from this" for a library album when the playlist.generate slot is unfilled', async () => {
     mockCanGeneratePlaylist.mockReturnValue(false);

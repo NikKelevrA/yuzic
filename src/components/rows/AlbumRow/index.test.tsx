@@ -3,7 +3,6 @@ import { render } from '@testing-library/react-native';
 
 import AlbumRow, { isExternalAlbum } from './index';
 import type { Album } from '@/domain/entities/Album';
-import type { ExternalAlbumBase } from '@/types';
 import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
 
 jest.mock('react-i18next', () => ({
@@ -84,12 +83,24 @@ const libraryAlbum: Album = {
   songIds: [],
 };
 
-const externalAlbum: ExternalAlbumBase = {
-  id: 'ext1',
+const externalAlbum: Album = {
+  localId: 'local:album:ext:deezer:ext1' as Album['localId'],
+  nativeId: 'ext1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
-  artist: 'External Artist',
-  subtext: 'External Artist',
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Album['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  releaseType: 'album',
+  genres: [],
+  songIds: [],
 };
 
 describe('AlbumRow', () => {
@@ -97,7 +108,7 @@ describe('AlbumRow', () => {
     mockedUseExternalAlbumStatus.mockReset().mockReturnValue({ kind: 'none' });
   });
 
-  it('detects external-origin albums via the artist shape (string vs ArtistRef)', () => {
+  it('detects external-origin albums via provenance', () => {
     expect(isExternalAlbum(libraryAlbum)).toBe(false);
     expect(isExternalAlbum(externalAlbum)).toBe(true);
   });

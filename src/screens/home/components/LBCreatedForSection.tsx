@@ -15,7 +15,7 @@ import SkeletonListRow from '@/components/SkeletonListRow';
 import { useSourceSectionPresence } from './SourceGroup';
 import { spacing } from '@/constants/design';
 import { SECTION_H_PADDING as H_PADDING } from '@/features/home/constants';
-import type { ExternalSong } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
 type Props = {
   /** This shelf's key in the home layout, so the source group above it knows
@@ -56,7 +56,7 @@ export default function LBCreatedForSection({ sectionKey, mixType, refreshKey = 
 
   const enabled = discoveryEnabled && Boolean(username);
 
-  const query = useQuery<ExternalSong[]>({
+  const query = useQuery<Song[]>({
     queryKey: [QueryKeys.LbCreatedForPlaylists, username || '', mixType, refreshKey],
     queryFn: async () => {
       const mixes = await getCreatedForPlaylists(username);
@@ -73,8 +73,8 @@ export default function LBCreatedForSection({ sectionKey, mixType, refreshKey = 
 
   useSourceSectionPresence(sectionKey, hasContent);
 
-  const renderSong = useCallback((song: ExternalSong) => (
-    <SongRow key={song.id} song={song} />
+  const renderSong = useCallback((song: Song) => (
+    <SongRow key={song.localId} song={song} />
   ), []);
 
   // A heading over an empty rail is worse than no shelf — and the source

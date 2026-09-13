@@ -15,7 +15,7 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { SearchResult, useSearch, ALL_SEARCH_ENTITY_TYPES, type SearchEntityType } from '@/contexts/SearchContext';
 import type { SearchResultScope } from '@/contexts/searchLegs';
-import type { ExternalAlbumBase } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';
@@ -66,12 +66,9 @@ import { useScrollClearance } from '@/hooks/useScrollClearance';
  * `SearchResult` (src/contexts/SearchContext.tsx, out of scope) is a
  * display-flattened aggregate across all four entity kinds, not a domain
  * entity itself — it has no `localId`/`provenance` of its own. `ArtistRow`/
- * `PlaylistRow` (src/components/rows) are already converted and require a
- * real domain `Artist`/`Playlist`, so these rebuild one from the result's
- * fields, the same way `resourceFromPlayerItem` rebuilds refs from a bare id.
- * `AlbumRow` has not been converted yet (still the legacy `AlbumBase |
- * ExternalAlbumBase`) — that one is left alone below; the mismatch resolves
- * once its owner converts it.
+ * `PlaylistRow`/`AlbumRow` (src/components/rows) all require a real domain
+ * `Artist`/`Playlist`/`Album`, so these rebuild one from the result's fields,
+ * the same way `resourceFromPlayerItem` rebuilds refs from a bare id.
  */
 function searchResultToArtist(result: SearchResult, activeServerId: string | undefined): Artist {
   const provenance = result.source === 'external'
@@ -92,8 +89,65 @@ function searchResultToArtist(result: SearchResult, activeServerId: string | und
   };
 }
 
-/** For a local (library) album result — `AlbumRow` still accepts a plain
- * `ExternalAlbumBase` for an external one, built inline where it's used. */
+/**
+ * A domain `Album`/`Artist` for an external (Deezer/MusicBrainz/Last.fm)
+ * result — `AlbumRow`/navigation now require the single domain type, so this
+ * is built inline from whatever loose id/title/cover fields the caller has
+ * (a `SearchResult` row or a persisted `SearchEntityEntry`), the same way
+ * `searchResultToArtist` rebuilds a local one.
+ */
+function externalAlbumFrom(input: {
+  id: string;
+  title: string;
+  artistName: string;
+  cover: CoverSource;
+  externalSource?: string;
+  externalIds?: unknown;
+}): Album {
+  const provenance = integrationProvenance(input.externalSource ?? 'unknown');
+  return {
+    localId: makeLocalId('album', provenance, input.id),
+    nativeId: input.id,
+    provenance,
+    externalIds: normalizeExternalIds(input.externalIds),
+    libraryState: 'external',
+    title: input.title,
+    cover: input.cover,
+    artist: {
+      localId: makeLocalId('artist', provenance, ''),
+      nativeId: '',
+      externalIds: {},
+      name: input.artistName,
+      cover: { kind: 'none' },
+    },
+    releaseType: 'album',
+    genres: [],
+    songIds: [],
+  };
+}
+
+function externalArtistFrom(input: {
+  id: string;
+  name: string;
+  cover: CoverSource;
+  externalSource?: string;
+  externalIds?: unknown;
+}): Artist {
+  const provenance = integrationProvenance(input.externalSource ?? 'unknown');
+  return {
+    localId: makeLocalId('artist', provenance, input.id),
+    nativeId: input.id,
+    provenance,
+    externalIds: normalizeExternalIds(input.externalIds),
+    libraryState: 'external',
+    name: input.name,
+    cover: input.cover,
+    tags: [],
+    albumIds: [],
+  };
+}
+
+/** For a local (library) album result. */
 function searchResultToLocalAlbum(result: SearchResult, activeServerId: string | undefined): Album {
   const provenance = serverProvenance(activeServerId ?? '');
   return {
@@ -329,15 +383,14 @@ const Search = () => {
     }
     if (entity.type === 'album') {
       if (entity.source === 'external') {
-        navigateToAlbum({
+        navigateToAlbum(externalAlbumFrom({
           id: entity.id,
           title: entity.title,
-          subtext: entity.subtitle,
+          artistName: entity.subtitle,
           cover: entity.cover,
-          artist: entity.subtitle,
           externalSource: entity.externalSource,
           externalIds: entity.externalIds,
-        });
+        }));
       } else {
         navigation.navigate('albumView', { id: entity.id });
       }
@@ -345,14 +398,13 @@ const Search = () => {
     }
     if (entity.type === 'artist') {
       if (entity.source === 'external') {
-        navigateToArtist({
+        navigateToArtist(externalArtistFrom({
           id: entity.id,
           name: entity.title,
           cover: entity.cover,
-          subtext: entity.subtitle,
           externalSource: entity.externalSource,
           externalIds: entity.externalIds,
-        });
+        }));
       } else {
         navigation.navigate('artistView', { id: entity.id });
       }
@@ -460,19 +512,18 @@ const Search = () => {
     if (result.type === 'album') {
       return result.source === 'external' ? (
         <AlbumRow
-          album={{
+          album={externalAlbumFrom({
             id: result.id,
             title: result.title,
-            subtext: result.subtext,
+            artistName: result.subtext,
             cover: result.cover,
-            artist: result.subtext,
             externalSource: result.externalSource,
             externalIds: result.externalIds,
-          }}
+          })}
           onPress={album => {
             recordResult(result);
             prefetchCovers([album.cover], 'detail');
-            navigateToAlbum(album as ExternalAlbumBase);
+            navigateToAlbum(album);
           }}
         />
       ) : (
@@ -498,7 +549,13 @@ const Search = () => {
             recordResult(result);
             prefetchCovers([result.cover], 'detail');
             if (result.source === 'external') {
-              navigateToArtist({ id: result.id, name: result.title, cover: result.cover, subtext: result.subtext, externalSource: result.externalSource, externalIds: result.externalIds });
+              navigateToArtist(externalArtistFrom({
+                id: result.id,
+                name: result.title,
+                cover: result.cover,
+                externalSource: result.externalSource,
+                externalIds: result.externalIds,
+              }));
             } else {
               navigation.navigate('artistView', { id: result.id });
             }

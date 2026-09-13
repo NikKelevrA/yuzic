@@ -1,5 +1,5 @@
 import { getContentKind } from './contentKind';
-import type { ContentKind } from '@/types';
+import type { ContentKind } from '@/domain/playback/ContentKind';
 
 type ContentKindSource = { contentKind?: ContentKind } | null | undefined;
 

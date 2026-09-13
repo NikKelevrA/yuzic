@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import GetReviewSheet from './GetReviewSheet';
-import type { ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
@@ -109,13 +109,24 @@ jest.mock('@/features/downloaders/registry', () => ({
   useDownloaderStates: () => mockDownloaderStates(),
 }));
 
-const externalAlbum: ExternalAlbumBase = {
-  id: 'ext1',
+const externalAlbum: Album = {
+  localId: 'local:album:ext:deezer:ext1' as Album['localId'],
+  nativeId: 'ext1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
-  artist: 'External Artist',
-  subtext: 'External Artist',
-  localId: 'local:album:ext:deezer:ext1' as ExternalAlbumBase['localId'],
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Album['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  releaseType: 'album',
+  genres: [],
+  songIds: [],
 };
 
 const lidarrDownloadAlbum = jest.fn(async () => ({ success: true as const }));

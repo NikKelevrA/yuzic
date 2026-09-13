@@ -2,7 +2,6 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import SongRow, { isExternalSong } from './index';
-import type { ExternalSong } from '@/types';
 import type { Song } from '@/domain/entities/Song';
 
 jest.mock('react-i18next', () => ({
@@ -98,17 +97,35 @@ const librarySong: Song = {
   genres: [],
 };
 
-const externalSong: ExternalSong = {
-  id: 'ext-s1',
+const externalSong: Song = {
+  localId: 'local:song:ext:deezer:ext-s1' as Song['localId'],
+  nativeId: 'ext-s1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Song',
-  artist: 'External Artist',
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Song['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:ext:deezer:ext-al1' as Song['album']['localId'],
+    nativeId: 'ext-al1',
+    title: 'External Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'ext-al1',
+  durationSeconds: 180,
+  contentKind: 'preview',
+  genres: [],
 };
 
 describe('SongRow', () => {
-  it('detects external-origin songs via the artist shape (string vs ArtistRef)', () => {
+  it('detects external-origin songs via provenance', () => {
     expect(isExternalSong(librarySong)).toBe(false);
     expect(isExternalSong(externalSong)).toBe(true);
   });

@@ -76,7 +76,7 @@ describe('getCreatedForPlaylists', () => {
     expect(result[0].mixType).toBe('daily-jams');
   });
 
-  it('fetches tracks for each matched mix and maps them to ExternalSong', async () => {
+  it('fetches tracks for each matched mix and maps them to a domain Song', async () => {
     mockFetchSequence([
       {
         playlists: [
@@ -97,8 +97,8 @@ describe('getCreatedForPlaylists', () => {
     expect(result).toHaveLength(1);
     expect(result[0].tracks[0]).toMatchObject({
       title: 'Track One',
-      artist: 'Some Artist',
-      externalSource: 'musicbrainz',
+      artist: { name: 'Some Artist' },
+      provenance: { origin: 'integration', providerId: 'musicbrainz' },
       externalIds: { mbid: '11111111-1111-1111-1111-111111111111' },
     });
   });

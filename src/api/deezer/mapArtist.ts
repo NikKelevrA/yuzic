@@ -10,7 +10,7 @@ import type { Artist } from '@/domain/entities/Artist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { CoverSource } from '@/types/Cover';
-import type { DeezerArtist } from './catalog';
+import type { DeezerArtist } from './types';
 
 function coverOf(dto: DeezerArtist): CoverSource {
   const url = dto.picture_xl ?? dto.picture_big ?? dto.picture_medium;

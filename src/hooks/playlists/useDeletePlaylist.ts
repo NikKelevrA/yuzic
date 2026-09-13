@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { PlaylistBase } from '@/types';
+import type { Playlist } from '@/domain/entities/Playlist';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { removeLibraryPlaylist } from '@/utils/redux/slices/librarySlice';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
@@ -37,9 +37,9 @@ export function useDeletePlaylist() {
       // invalidation — invalidateQueries alone does nothing observable while
       // offline (the query stays disabled until reconnect), so a deletion
       // while offline left the playlist visibly still in the list.
-      queryClient.setQueryData<PlaylistBase[] | undefined>(
+      queryClient.setQueryData<Playlist[] | undefined>(
         [QueryKeys.Playlists, activeServer?.id],
-        (old) => old?.filter(p => p.id !== playlistId)
+        (old) => old?.filter(p => p.nativeId !== playlistId)
       );
       queryClient.invalidateQueries({ queryKey: [QueryKeys.Playlists, activeServer?.id] });
       queryClient.removeQueries({

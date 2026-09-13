@@ -438,7 +438,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
     const song = await api.tracks.get(track.nativeId).catch(() => null);
     if (!song) return null;
     const streamUrl = api.songs.buildStreamUrl(
-      streamSourceId({ id: song.nativeId, streamId: song.streamId }),
+      streamSourceId(song),
       downloadQuality,
     );
     return streamUrl ? { song, streamUrl } : null;

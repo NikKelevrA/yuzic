@@ -2,7 +2,6 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import SongOptions from './SongOptions';
-import type { ExternalSong } from '@/types';
 import type { Song } from '@/domain/entities/Song';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
@@ -166,14 +165,31 @@ const librarySong: Song = {
   genres: [],
 };
 
-const externalSong: ExternalSong = {
-  id: 'ext-s1',
+const externalSong: Song = {
+  localId: 'local:song:ext:deezer:ext-s1' as Song['localId'],
+  nativeId: 'ext-s1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Song',
-  artist: 'External Artist',
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Song['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:ext:deezer:ext-al1' as Song['album']['localId'],
+    nativeId: 'ext-al1',
+    title: 'External Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'ext-al1',
-  externalSource: 'deezer',
+  durationSeconds: 180,
+  contentKind: 'preview',
+  genres: [],
 };
 
 describe('SongOptions', () => {
@@ -270,17 +286,9 @@ describe('SongOptions', () => {
     expect(mockDispatch.mock.calls[0][0].type).toBe('wants/removeWant');
   });
 
-  it('hides the Want row when the song has no externalSource (no stable localId)', async () => {
-    const noSourceSong: ExternalSong = { ...externalSong, externalSource: undefined };
-    const view = await render(
-      <SongOptions
-        ref={null as any}
-        selectedSong={noSourceSong}
-        albumTitle="External Album"
-        albumArtist="External Artist"
-      />
-    );
-    expect(view.queryByText('externalAlbum.menu.want')).toBeNull();
-    expect(view.queryByText('externalAlbum.menu.wanted')).toBeNull();
-  });
+  // The "no externalSource / no stable localId" case this used to cover is
+  // no longer representable: every domain `Song` carries a required
+  // `provenance` and `localId` (`EntityCore`), not fields added partway
+  // through the pre-rewrite migration, so there is no longer a real song
+  // value with them absent to construct.
 });

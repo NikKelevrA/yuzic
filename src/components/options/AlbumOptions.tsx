@@ -14,7 +14,6 @@ import { useCanGeneratePlaylist } from '@/features/audiomuse/generatePlaylist';
 import { generateSimilarPlaylistForAlbum } from '@/features/audiomuse/generatePlaylist';
 
 import type { Album } from '@/domain/entities/Album';
-import type { ExternalAlbumBase } from '@/types';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectAlbumPlayCount } from '@/utils/redux/selectors/statsSelectors';
 import { usePlaying } from '@/contexts/PlayingContext';
@@ -48,23 +47,19 @@ import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
 import { addWant, removeWant } from '@/utils/redux/slices/wantsSlice';
 
 export type AlbumOptionsProps = {
-  album: Album | ExternalAlbumBase | null;
+  album: Album | null;
   /** Hide "Go to Album" when already on the album screen (library albums only). */
   hideGoToAlbum?: boolean;
 };
 
 /**
  * True when `album` came from an external catalog (Deezer/etc) rather than
- * the user's library. `ExternalAlbumBase.artist` is a plain string, while a
- * library `Album`'s `artist` is always an `ArtistRef` object — that shape
- * difference is guaranteed to hold for both types, so it doubles as the
- * discriminator without needing a new field on either type. Mirrors
+ * the user's library — read off `provenance`, the one place that
+ * distinction lives now that there is a single `Album` type. Mirrors
  * `isExternalAlbum` in `components/rows/AlbumRow`.
  */
-function isExternalAlbumOrigin(
-  album: Album | ExternalAlbumBase
-): album is ExternalAlbumBase {
-  return typeof album.artist === 'string';
+function isExternalAlbumOrigin(album: Album): boolean {
+  return album.provenance.origin === 'integration';
 }
 
 const AlbumOptions = forwardRef<BottomSheetModal, AlbumOptionsProps>(
@@ -446,7 +441,7 @@ LibraryAlbumOptionsSheet.displayName = 'LibraryAlbumOptionsSheet';
 // ---------------------------------------------------------------------------
 
 type ExternalAlbumOptionsSheetProps = {
-  album: ExternalAlbumBase;
+  album: Album;
 };
 
 const ExternalAlbumOptionsSheet = forwardRef<
@@ -483,7 +478,7 @@ const ExternalAlbumOptionsSheet = forwardRef<
           externalIds: album.externalIds,
           unit: 'album',
           title: album.title,
-          artist: album.artist,
+          artist: album.artist.name,
           origin: 'artist-page',
         },
       }));
@@ -502,7 +497,7 @@ const ExternalAlbumOptionsSheet = forwardRef<
         backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
       >
         <BottomSheetView style={[optionSheetStyles.sheetContent, sheetBg]}>
-          <OptionSheetHeader cover={album.cover} title={album.title} subtitle={album.artist} />
+          <OptionSheetHeader cover={album.cover} title={album.title} subtitle={album.artist.name} />
 
           <OptionSheetDivider />
 

@@ -76,7 +76,7 @@ export const metadataArtworkFetchers: ArtworkFetchers = {
       artworkCache.set(key, null);
       return null;
     }
-    const full = await getDeezerArtist(resolved.id);
+    const full = await getDeezerArtist(resolved.nativeId);
     const result: ArtworkResult | null =
       full && full.cover.kind !== 'none' ? { cover: full.cover, source: 'deezer' } : null;
     artworkCache.set(key, result);

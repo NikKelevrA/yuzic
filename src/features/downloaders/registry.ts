@@ -6,7 +6,8 @@ import * as slskd from '@/api/slskd'
 import * as soulsync from '@/api/soulsync'
 import type { SlskdSearchPreferences } from '@/api/slskd'
 import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice'
-import type { ExternalAlbumBase, LidarrConfig } from '@/types'
+import type { LidarrConfig } from '@/types'
+import type { Album } from '@/domain/entities/Album'
 import { selectDownloadersForActiveServer } from '@/utils/redux/selectors/downloadersSelectors'
 import type { IntegrationModule, Health } from '@/features/integrations/types'
 
@@ -40,11 +41,11 @@ export type DownloadOptions = {
 }
 
 /**
- * The whole external album, not just its title and artist: Lidarr resolves the
+ * The whole browsed album, not just its title and artist: Lidarr resolves the
  * release by MBID/Deezer id where available, and collapsing it to two strings
  * here would put it back on fuzzy name matching.
  */
-export type AlbumDownloadRequest = ExternalAlbumBase
+export type AlbumDownloadRequest = Album
 export type TrackDownloadRequest = { title: string; artist: string }
 
 /**
@@ -143,10 +144,10 @@ function slskdConfigOf(config: DownloaderConfig): slskd.SlskdConfig {
 const slskdDownloadAlbum = (config: DownloaderConfig, album: AlbumDownloadRequest) =>
   slskd.downloadAlbum(slskdConfigOf(config), {
     title: album.title,
-    artist: album.artist,
+    artist: album.artist.name,
     // Preserve any MBID the resolver captured — the slskd side uses it to
     // pull canonical strings from MusicBrainz before searching Soulseek.
-    mbid: album.externalIds?.mbid ?? null,
+    mbid: album.externalIds.mbid ?? null,
   })
 
 const slskdDownloadTrack = (config: DownloaderConfig, req: TrackDownloadRequest) =>

@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { LocalId } from '@/types/EntityId';
-import type { ExternalIds } from '@/types/Album';
+import type { LocalId } from '@/domain/identity/LocalId';
+import type { ExternalIds } from '@/domain/identity/ExternalIds';
 
 export type WantUnit = 'track' | 'album';
 

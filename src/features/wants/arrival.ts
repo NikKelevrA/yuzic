@@ -1,9 +1,9 @@
 import { normalize } from '@/utils/normalize';
-import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
+import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
+import { normalizeExternalIds } from '@/domain/identity/ExternalIds';
 import type { Want } from '@/utils/redux/slices/wantsSlice';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
-import type { ExternalAlbumBase } from '@/types';
 
 /**
  * The minimal library snapshot arrival detection needs: albums are matched
@@ -39,15 +39,10 @@ export function findArrivedWants(wants: Want[], library: ArrivalLibrary): Want[]
   const tracks = library.tracks ?? [];
   return wants.filter((want) => {
     if (want.unit === 'album') {
-      const asExternalAlbum: ExternalAlbumBase = {
-        id: want.localId,
-        title: want.title,
-        artist: want.artist,
-        cover: { kind: 'none' },
-        subtext: want.artist,
-        externalIds: want.externalIds,
-      };
-      return matchAlbumToLibrary(asExternalAlbum, library.albums) !== null;
+      return matchAlbumToLibrary(
+        { externalIds: normalizeExternalIds(want.externalIds), title: want.title, artistName: want.artist },
+        library.albums
+      ) !== null;
     }
     return trackArrived(want, tracks);
   });

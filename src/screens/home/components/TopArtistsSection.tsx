@@ -19,7 +19,7 @@ import {
 } from '@/features/home/constants'
 import MediaTile from './MediaTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
-import type { ExternalArtistBase } from '@/types'
+import type { Artist } from '@/domain/entities/Artist'
 import { spacing, typography } from '@/constants/design'
 
 type Props = { refreshKey?: number }
@@ -37,7 +37,7 @@ export default function TopArtistsSection({ refreshKey = 0 }: Props) {
     [screenWidth]
   )
 
-  const query = useQuery<ExternalArtistBase[]>({
+  const query = useQuery<Artist[]>({
     queryKey: [QueryKeys.ExploreTopArtists, dayKey, refreshKey],
     queryFn: () => getDeezerChartArtists(10),
     enabled: isEnabled,
@@ -49,11 +49,11 @@ export default function TopArtistsSection({ refreshKey = 0 }: Props) {
   const coversToPrefetch = useMemo(() => data.map(a => a.cover), [data])
   usePrefetchCovers(coversToPrefetch, 'grid')
 
-  const renderArtist = useCallback(({ item }: { item: ExternalArtistBase }) => (
+  const renderArtist = useCallback(({ item }: { item: Artist }) => (
     <MediaTile
       cover={item.cover}
       title={item.name}
-      subtitle={item.subtext}
+      subtitle={t('common.artist')}
       size={gridItemWidth}
       radius={gridItemWidth / 2}
       onPress={() => {
@@ -91,7 +91,7 @@ export default function TopArtistsSection({ refreshKey = 0 }: Props) {
         <FlashList
           horizontal
           data={data}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.localId}
           overrideItemLayout={layout => { (layout as { size?: number }).size = gridItemWidth }}
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"

@@ -8,7 +8,7 @@ import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { CoverSource } from '@/types/Cover';
 import { artistRef } from './mapRefs';
-import type { DeezerAlbum } from './catalog';
+import type { DeezerAlbum } from './types';
 
 function coverOf(dto: DeezerAlbum): CoverSource {
   const url = dto.cover_xl ?? dto.cover_big ?? dto.cover_medium;

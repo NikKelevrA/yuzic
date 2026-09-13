@@ -1,4 +1,3 @@
-import type { Song } from '@/types';
 import {
   clampSpeed,
   MAX_SPEED,
@@ -7,9 +6,11 @@ import {
   speedProfileFor,
 } from './speedProfile';
 
-const song = { id: 's', title: 'A Song' } as Song;
-const episode = { id: 'podcast:e', title: 'An Episode', contentKind: 'podcastEpisode' } as Song;
-const stream = { id: 'radio:r', title: 'A Station', contentKind: 'liveStream' } as Song;
+// These take the structural content-kind source, not a whole entity — the
+// only thing the speed profile has ever looked at is the kind.
+const song = { contentKind: 'song' } as const;
+const episode = { contentKind: 'podcastEpisode' } as const;
+const stream = { contentKind: 'liveStream' } as const;
 
 describe('speedProfileFor', () => {
   it('treats a podcast episode as spoken word', () => {

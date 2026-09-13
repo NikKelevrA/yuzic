@@ -1,15 +1,14 @@
 import { findArrivedWants } from '../arrival';
-import { makeLocalId } from '@/types/EntityId';
-import { makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';
-import { serverProvenance } from '@/domain/identity/Provenance';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance, serverProvenance } from '@/domain/identity/Provenance';
 import type { Want } from '@/utils/redux/slices/wantsSlice';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 
-const ALBUM_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'w-album-1' });
-const TRACK_LOCAL_ID = makeLocalId({ kind: 'track', externalSource: 'deezer', externalNativeId: 'w-track-1' });
-const PRESENT_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'present' });
-const MISSING_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'missing' });
+const ALBUM_LOCAL_ID = makeLocalId('album', integrationProvenance('deezer'), 'w-album-1');
+const TRACK_LOCAL_ID = makeLocalId('song', integrationProvenance('deezer'), 'w-track-1');
+const PRESENT_LOCAL_ID = makeLocalId('album', integrationProvenance('deezer'), 'present');
+const MISSING_LOCAL_ID = makeLocalId('album', integrationProvenance('deezer'), 'missing');
 
 const PROVENANCE = serverProvenance('server-1');
 
@@ -41,7 +40,7 @@ function trackWant(overrides: Partial<Want> = {}): Want {
 
 function libraryAlbum(overrides: Partial<Album> = {}): Album {
   return {
-    localId: makeDomainLocalId('album', PROVENANCE, 'lib-album-1'),
+    localId: makeLocalId('album', PROVENANCE, 'lib-album-1'),
     nativeId: 'lib-album-1',
     provenance: PROVENANCE,
     externalIds: {},
@@ -49,7 +48,7 @@ function libraryAlbum(overrides: Partial<Album> = {}): Album {
     title: 'Some Album',
     cover: { kind: 'none' },
     artist: {
-      localId: makeDomainLocalId('artist', PROVENANCE, 'artist-1'),
+      localId: makeLocalId('artist', PROVENANCE, 'artist-1'),
       nativeId: 'artist-1',
       externalIds: {},
       name: 'Some Artist',
@@ -65,21 +64,21 @@ function libraryAlbum(overrides: Partial<Album> = {}): Album {
 
 function libraryTrack(overrides: Partial<Song> = {}): Song {
   return {
-    localId: makeDomainLocalId('song', PROVENANCE, 'lib-track-1'),
+    localId: makeLocalId('song', PROVENANCE, 'lib-track-1'),
     nativeId: 'lib-track-1',
     provenance: PROVENANCE,
     externalIds: {},
     libraryState: 'in-library',
     title: 'Some Track',
     artist: {
-      localId: makeDomainLocalId('artist', PROVENANCE, 'artist-1'),
+      localId: makeLocalId('artist', PROVENANCE, 'artist-1'),
       nativeId: 'artist-1',
       externalIds: {},
       name: 'Some Artist',
       cover: { kind: 'none' },
     },
     album: {
-      localId: makeDomainLocalId('album', PROVENANCE, 'lib-album-1'),
+      localId: makeLocalId('album', PROVENANCE, 'lib-album-1'),
       nativeId: 'lib-album-1',
       externalIds: {},
       title: 'Some Album',

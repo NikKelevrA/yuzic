@@ -238,8 +238,34 @@ async function searchExternalSource(
       wantsAlbums ? deezer.searchDeezerAlbums(query, 6) : Promise.resolve([]),
     ]);
     return [
-      ...artists.map(artist => artistToResult(artist, false, 'external')),
-      ...albums.map(album => albumToResult(album, 'external', false)),
+      ...artists.map(artist => artistToResult(
+        {
+          id: artist.nativeId,
+          name: artist.name,
+          subtext: artistSubtext(),
+          cover: artist.cover,
+          externalSource: 'deezer',
+          externalIds: { deezerId: artist.externalIds.deezerId },
+        },
+        false,
+        'external'
+      )),
+      ...albums.map(album => albumToResult(
+        {
+          id: album.nativeId,
+          title: album.title,
+          subtext: albumSubtext(album),
+          cover: album.cover,
+          externalSource: 'deezer',
+          externalIds: {
+            deezerId: album.externalIds.deezerId,
+            artistDeezerId: album.artist.externalIds.deezerId,
+            upc: album.externalIds.upc,
+          },
+        },
+        'external',
+        false
+      )),
     ];
   }
 

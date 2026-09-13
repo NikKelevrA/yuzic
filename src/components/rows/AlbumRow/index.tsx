@@ -8,7 +8,6 @@ import { Ellipsis, Link, ArrowDownCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { Album } from '@/domain/entities/Album';
-import type { ExternalAlbumBase } from '@/types';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import IconActionButton from '@/components/IconActionButton';
 import MediaListRow from '@/components/MediaListRow';
@@ -17,17 +16,15 @@ import { useSheetRef } from '@/utils/useSheetRef';
 import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
 import { iconSize, spacing, statusColor, typography } from '@/constants/design';
 
-export type AlbumRowAlbum = Album | ExternalAlbumBase;
+export type AlbumRowAlbum = Album;
 
 /**
  * True when `album` came from an external catalog (Deezer/etc) rather than
- * the user's library. `ExternalAlbumBase.artist` is a plain string, while a
- * library `Album.artist` is always an `ArtistRef` object — that shape
- * difference is guaranteed to hold for both types, so it doubles as the
- * discriminator without needing a new field on either type.
+ * the user's library — read off `provenance`, the one place that
+ * distinction lives now that there is a single `Album` type.
  */
-export function isExternalAlbum(album: AlbumRowAlbum): album is ExternalAlbumBase {
-  return typeof album.artist === 'string';
+export function isExternalAlbum(album: AlbumRowAlbum): boolean {
+  return album.provenance.origin === 'integration';
 }
 
 type Props = {
@@ -74,7 +71,7 @@ const AlbumRow: React.FC<Props> = ({
       <>
         <MediaListRow
           title={album.title}
-          subtitle={subtextOverride ?? album.artist}
+          subtitle={subtextOverride ?? album.artist.name}
           subtitleTrailing={statusBadge}
           cover={album.cover}
           onPress={handlePress}

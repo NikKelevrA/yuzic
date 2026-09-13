@@ -5,7 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { Playlist, PlaylistBase } from '@/types';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { PlaylistDetail } from '@/domain/entities/Detail';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { removeLibraryPlaylistSong } from '@/utils/redux/slices/librarySlice';
 import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
@@ -50,17 +51,22 @@ export function useRemoveSongFromPlaylist() {
       // invalidateQueries alone does nothing observable while offline (the
       // query stays disabled until reconnect), so a removal while offline
       // left the song visibly still in the playlist with no feedback at all.
-      queryClient.setQueryData<Playlist | null>(
+      queryClient.setQueryData<PlaylistDetail | null>(
         [QueryKeys.Playlist, activeServer?.id, playlistId],
         (old) => {
           if (!old) return old;
-          return { ...old, songs: old.songs.filter(s => s.id !== songId) };
+          // The playlist's references and the detail's songs stay in step.
+          const removed = old.songs.filter(s => s.nativeId !== songId);
+          return {
+            playlist: { ...old.playlist, songIds: removed.map(s => s.localId) },
+            songs: removed,
+          };
         }
       );
-      queryClient.setQueryData<PlaylistBase[]>(
+      queryClient.setQueryData<Playlist[]>(
         [QueryKeys.Playlists, activeServer?.id],
         (old) => old?.map(playlist =>
-          playlist.id === playlistId ? { ...playlist, changed: new Date() } : playlist
+          playlist.nativeId === playlistId ? { ...playlist, updatedAt: Date.now() } : playlist
         )
       );
     },

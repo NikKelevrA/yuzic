@@ -74,10 +74,9 @@ function toPlayableBrowseItemFromDomainSong(
   const streamUrl = api.songs.buildStreamUrl(song.streamId ?? song.nativeId, quality, codec) || null;
   if (!streamUrl) return null;
 
-  const { headers, artworkHeaders } = mediaHeadersForSong(server, {
-    sourceServerType: server?.type,
-    streamUrl,
-  });
+  // The song's own provenance says which server it came from, so the mixed-queue
+  // check is exact rather than a server-type comparison.
+  const { headers, artworkHeaders } = mediaHeadersForSong(server, { song, streamUrl });
   return {
     mediaId: song.localId,
     title: song.title,

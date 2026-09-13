@@ -7,7 +7,7 @@ import reducer, {
   clearWantsForServer,
   type Want,
 } from './wantsSlice';
-import type { LocalId } from '@/types/EntityId';
+import type { LocalId } from '@/domain/identity/LocalId';
 
 const wantInput = (localId: string, overrides: Partial<Omit<Want, 'createdAt' | 'updatedAt'>> = {}) => ({
   localId: localId as LocalId,

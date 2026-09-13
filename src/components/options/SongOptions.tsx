@@ -9,8 +9,8 @@ import { useApi } from '@/api';
 import { selectIsAudiomuseConfigured, selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
 import { generateSimilarPlaylistForSong } from '@/features/audiomuse/generatePlaylist';
 
-import type { ExternalAlbumBase, ExternalSong } from '@/types';
 import type { Song } from '@/domain/entities/Song';
+import type { Album } from '@/domain/entities/Album';
 import { usePlayingState, usePlayingActions } from '@/contexts/PlayingContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectSongPlayCount } from '@/utils/redux/selectors/statsSelectors';
@@ -21,7 +21,7 @@ import { useStarredSongs, useStarSong, useUnstarSong } from '@/hooks/starred';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { formatDuration, formatSongDuration } from '@/utils/formatDuration';
+import { formatDuration } from '@/utils/formatDuration';
 import { useDownload } from '@/contexts/DownloadContext';
 import {
   useAnyDownloaderConnected,
@@ -44,10 +44,9 @@ import haptics, { selection as hapticsSelection } from '@/utils/haptics';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
 import { addWant, removeWant } from '@/utils/redux/slices/wantsSlice';
-import { makeLocalId } from '@/types/EntityId';
 
 type SongOptionsProps = {
-  selectedSong: Song | ExternalSong;
+  selectedSong: Song;
   /** Library-song-only: opens the add-to-playlist sheet. Ignored for external songs. */
   onAddToPlaylist?: () => void;
   onNavigate?: () => void;
@@ -72,19 +71,12 @@ function formatDate(value: string | number | undefined): string {
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than
- * the user's library. `ExternalSong.artist` is a plain string, while a
- * domain `Song`'s `artist` is always an `ArtistRef` object — that shape
- * difference is guaranteed to hold for both types, so it doubles as the
- * discriminator without needing a new field on either type. Mirrors
+ * the user's library — read off `provenance`, the one place that
+ * distinction lives now that there is a single `Song` type. Mirrors
  * `isExternalSong` in `components/rows/SongRow`.
- *
- * (The old discriminator checked for `streamUrl`, which was required on
- * every pre-rewrite library `Song`. Domain `Song` never carries a
- * `streamUrl` — that moved to `PlayableResource` — so that check would now
- * misclassify every library song as external.)
  */
-function isExternalSongOrigin(song: Song | ExternalSong): song is ExternalSong {
-  return typeof song.artist === 'string';
+function isExternalSongOrigin(song: Song): boolean {
+  return song.provenance.origin === 'integration';
 }
 
 const SongOptions = forwardRef<BottomSheetModal, SongOptionsProps>(
@@ -496,7 +488,7 @@ LibrarySongOptionsSheet.displayName = 'LibrarySongOptionsSheet';
 // ---------------------------------------------------------------------------
 
 type ExternalSongOptionsSheetProps = {
-  song: ExternalSong;
+  song: Song;
   albumTitle: string;
   albumArtist: string;
   onPlay?: () => void;
@@ -519,33 +511,41 @@ const ExternalSongOptionsSheet = forwardRef<
 
   const sheetBg = useOptionSheetBackground();
 
-  const albumBase = useMemo<ExternalAlbumBase>(() => ({
-    id: song.albumId,
+  // Built from the song's own `album`/`artist` refs and provenance rather
+  // than a lighter "just enough for a Get" shape: `def.downloadAlbum`
+  // (Lidarr's especially) now takes a full domain `Album` and reads
+  // `releaseType`/artist ids off it. Those aren't things the song's embedded
+  // `AlbumRef` carries, so they fall back to a plain default (`'album'`,
+  // empty genres) the same way `registry.ts`'s `stubDeezerArtist` fills a
+  // gap in an embedded reference rather than fabricating unrelated data.
+  const albumBase = useMemo<Album>(() => ({
+    localId: song.album.localId,
+    nativeId: song.album.nativeId,
+    provenance: song.provenance,
+    externalIds: song.album.externalIds,
+    libraryState: 'external',
     title: albumTitle,
-    artist: albumArtist,
-    cover: song.cover,
-    subtext: albumArtist,
-  }), [song.albumId, song.cover, albumTitle, albumArtist]);
+    cover: song.album.cover,
+    artist: song.artist,
+    year: song.year,
+    releaseDate: song.releaseDate,
+    releaseType: 'album',
+    genres: song.genres,
+    songIds: [],
+  }), [song, albumTitle]);
 
   const track = useMemo(() => ({
     title: song.title,
-    artist: song.artist || albumArtist,
+    artist: song.artist.name || albumArtist,
   }), [song.title, song.artist, albumArtist]);
 
-  // `ExternalSong` doesn't carry a `localId` field (Phase A only added it to
-  // the album/artist bases), so one is derived here from its own external
-  // source/id — same recipe `makeLocalId` uses elsewhere. Absent an
-  // `externalSource` there's nothing stable to key a Want on, so Want hides.
-  const localId = useMemo(
-    () => (song.externalSource ? makeLocalId({ kind: 'track', externalSource: song.externalSource, externalNativeId: song.id }) : undefined),
-    [song.externalSource, song.id]
-  );
+  const localId = song.localId;
 
   const activeServerId = useSelector(selectActiveServerId);
-  const isWanted = useSelector(localId ? selectIsWanted(localId) : () => false);
+  const isWanted = useSelector(selectIsWanted(localId));
 
   const handleToggleWant = () => {
-    if (!localId || !activeServerId) return;
+    if (!activeServerId) return;
     hapticsSelection();
     if (isWanted) {
       dispatch(removeWant({ serverId: activeServerId, localId }));
@@ -557,7 +557,7 @@ const ExternalSongOptionsSheet = forwardRef<
           externalIds: song.externalIds,
           unit: 'track',
           title: song.title,
-          artist: song.artist || albumArtist,
+          artist: song.artist.name || albumArtist,
           origin: 'search',
         },
       }));
@@ -636,7 +636,7 @@ const ExternalSongOptionsSheet = forwardRef<
           <OptionSheetSectionLabel label={t('songOptions.sections.media')} />
           <OptionSheetInfoRow
             label={t('songOptions.media.duration')}
-            value={formatSongDuration(song.duration)}
+            value={formatDuration(song.durationSeconds)}
           />
         </BottomSheetScrollView>
       </BottomSheetModal>

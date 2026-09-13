@@ -37,7 +37,11 @@ describe('local-library import', () => {
     const [track] = readLocalLibrary().tracks;
     expect(track).toEqual(expect.objectContaining({
       title: 'Track', artist: 'Artist', albumTitle: 'Album', trackNumber: 2,
-      sourceServerType: 'local', streamUrl: expect.stringContaining('/local-library/'),
+      // The copied file's path, recorded once. It used to be duplicated across
+      // `streamUrl`, `filePath` and `localPath`; the origin the track came from
+      // is now stated by its provenance rather than a `sourceServerType` field.
+      streamId: expect.stringContaining('/local-library/'),
+      localPath: expect.stringContaining('/local-library/'),
     }));
   });
 

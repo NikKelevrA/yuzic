@@ -1,20 +1,44 @@
-import { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
+import type { PlayableResource } from '@/features/playback/playableResource';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import { buildTrackItem } from './buildTrackItem';
 
 jest.mock('./buildCover', () => ({
   buildCover: () => null,
 }));
 
-const baseSong: Song = {
-  id: 'song-1',
+const provenance = serverProvenance('srv-1');
+
+const song: Song = {
+  localId: makeLocalId('song', provenance, 'song-1'),
+  nativeId: 'song-1',
+  provenance,
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Song',
-  artist: 'Artist',
-  artistId: 'artist-1',
+  artist: {
+    localId: makeLocalId('artist', provenance, 'artist-1'),
+    nativeId: 'artist-1',
+    externalIds: {},
+    name: 'Artist',
+    cover: { kind: 'none' },
+  },
+  album: {
+    localId: makeLocalId('album', provenance, 'album-1'),
+    nativeId: 'album-1',
+    externalIds: {},
+    title: 'Album',
+    cover: { kind: 'none' },
+  },
   cover: { kind: 'none' },
-  duration: '120',
-  albumId: 'album-1',
-  streamUrl: 'https://example.com/song.mp3',
+  durationSeconds: 120,
+  contentKind: 'song',
+  genres: [],
 };
+
+/** A song plus the URL to play it from — what the player is actually handed. */
+const baseSong: PlayableResource = { song, streamUrl: 'https://example.com/song.mp3' };
 
 describe('buildTrackItem', () => {
   it('keeps remote URLs as strings', () => {

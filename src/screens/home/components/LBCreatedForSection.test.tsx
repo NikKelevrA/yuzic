@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import LBCreatedForSection from './LBCreatedForSection';
+import type { Song } from '@/domain/entities/Song';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -102,13 +103,31 @@ function renderWithStore(
   return render(<Provider store={store}>{ui}</Provider>);
 }
 
-const sampleTrack = {
-  id: 't1',
+const sampleTrack: Song = {
+  localId: 'local:song:ext:listenbrainz:t1' as Song['localId'],
+  nativeId: 't1',
+  provenance: { origin: 'integration', providerId: 'listenbrainz' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'Song One',
-  artist: 'Artist One',
-  cover: { kind: 'none' as const },
-  duration: '',
-  albumId: '',
+  artist: {
+    localId: 'local:artist:ext:listenbrainz:a1' as Song['artist']['localId'],
+    nativeId: 'a1',
+    name: 'Artist One',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:ext:listenbrainz:al1' as Song['album']['localId'],
+    nativeId: '',
+    title: '',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  cover: { kind: 'none' },
+  durationSeconds: 0,
+  contentKind: 'preview',
+  genres: [],
 };
 
 describe('LBCreatedForSection', () => {

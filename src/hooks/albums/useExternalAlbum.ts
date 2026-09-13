@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '@/enums/queryKeys';
-import { ExternalAlbum } from '@/types';
+import type { AlbumDetail } from '@/domain/entities/Detail';
 import { ALL_SOURCES, useEnabledExternalSources } from '@/features/sources/registry';
 
 type UseExternalAlbumInput = {
@@ -11,7 +11,7 @@ type UseExternalAlbumInput = {
 };
 
 type UseExternalAlbumResult = {
-  album: ExternalAlbum | null;
+  album: AlbumDetail | null;
   isLoading: boolean;
   error: Error | null;
 };
@@ -21,7 +21,7 @@ export function useExternalAlbum(input: UseExternalAlbumInput): UseExternalAlbum
   const enabledSources = useEnabledExternalSources();
   const canResolveByName = !!artist && !!title && enabledSources.length > 0;
 
-  const query = useQuery<ExternalAlbum | null, Error>({
+  const query = useQuery<AlbumDetail | null, Error>({
     queryKey: [
       QueryKeys.ExternalAlbum,
       source ?? 'unknown',

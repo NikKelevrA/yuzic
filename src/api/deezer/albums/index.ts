@@ -1,13 +1,12 @@
 import { deezerClient } from '../client';
 import { resolveDeezerAlbum } from '../catalog';
+import type { DeezerPreviewTrack } from '../types';
 
-export type DeezerPreviewTrack = {
-  id: number;
-  title: string;
-  track_position: number;
-  preview: string;
-  duration: number;
-};
+// Re-exported: mapSong.ts and existing consumers import this type from
+// wherever `searchAlbumPreviews` (below) is declared. The type itself lives
+// in `../types` to avoid an import cycle (catalog -> mapSong -> here ->
+// catalog) — see that module's doc comment.
+export type { DeezerPreviewTrack } from '../types';
 
 type DeezerAlbumSearchResult = {
   id: number;
@@ -43,7 +42,9 @@ export async function searchAlbumPreviews(
   albumTitle: string
 ): Promise<DeezerPreviewTrack[]> {
   const resolved = await resolveDeezerAlbum(artist, albumTitle);
-  let album = resolved ? { id: Number(resolved.id), title: resolved.title, artist: { name: resolved.artist } } : null;
+  let album = resolved
+    ? { id: Number(resolved.nativeId), title: resolved.title, artist: { name: resolved.artist.name } }
+    : null;
 
   album ??=
     await searchAlbum(`artist:"${artist}" album:"${albumTitle}"`) ??

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
+import { fetchAlbumDetailsSettled, type FetchAlbumDetailsArgs } from '@/hooks/albums/fetchAlbumDetails';
 import { QueryKeys } from '@/enums/queryKeys';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
@@ -11,51 +12,26 @@ import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 
 /**
- * Fetches each album's detail (dropping any that fail) and flattens their
- * tracks, for building a synthetic "all of this artist's/genre's songs"
- * collection.
+ * Every track across a set of albums, for a synthetic "all of this artist's
+ * songs" collection.
  *
- * Replaces the old `fetchAlbumDetailsSettled` from `@/hooks/albums`, which is
- * still typed against the pre-rewrite `AlbumBase`/`Album` (embedded-songs)
- * shape and a `getAlbum` returning the old `Album` rather than the
- * `AlbumDetail` `api.albums.get` actually returns now — that hook belongs to
- * a different agent's scope, so this inlines the same allSettled pattern
- * against the domain types instead of calling a signature that no longer
- * matches the API it's fed.
+ * A thin flatten over `fetchAlbumDetailsSettled`, which already does the
+ * settled-fetch and cache-keying. This used to reimplement that whole pattern,
+ * because the shared helper was still typed against the pre-rewrite shapes
+ * when this was written; it no longer is.
  */
-export async function fetchAlbumSongsSettled({
-  queryClient,
-  serverId,
-  albums,
-  getAlbum,
-}: {
-  queryClient: QueryClient;
-  serverId: string;
-  albums: Album[];
-  getAlbum: (nativeId: string) => Promise<AlbumDetail>;
-}): Promise<Song[]> {
-  const results = await Promise.allSettled(
-    albums.map(album =>
-      queryClient.fetchQuery({
-        queryKey: [QueryKeys.Album, serverId, album.nativeId],
-        queryFn: () => getAlbum(album.nativeId),
-        staleTime: staleTime.albums,
-      })
-    )
-  );
-
-  return results
-    .filter((result): result is PromiseFulfilledResult<AlbumDetail> => result.status === 'fulfilled')
-    .flatMap(result => result.value.songs);
+export async function fetchAlbumSongsSettled(args: FetchAlbumDetailsArgs): Promise<Song[]> {
+  const details = await fetchAlbumDetailsSettled(args);
+  return details.flatMap(detail => detail.songs);
 }
 
 /**
  * Lazily loads an album's tracks the first time its options sheet opens.
  *
- * `Album` never embeds its tracks — see `AlbumDetail` — so unlike the old
- * `AlbumBase | Album` version there is nothing to type-guard: every input is
- * the same shape, and every call fetches the detail (React Query dedupes
- * against whatever the album screen has already cached).
+ * `Album` never embeds its tracks — see `AlbumDetail` — so there is nothing to
+ * type-guard here: every input is the same shape, and every call fetches the
+ * detail, with React Query deduping against whatever the album screen has
+ * already cached.
  */
 export function useLazyAlbumDetail(album: Album | null, isSheetOpen: boolean) {
   const queryClient = useQueryClient();

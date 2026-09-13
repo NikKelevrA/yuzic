@@ -12,17 +12,17 @@
  *   ISRC and no independent artist/album — it exists only to be that clip.
  *   It maps to `'preview'`.
  *
- * Deezer's public API never hands this app a full-length stream either way —
- * `preview` is the only audio it ever returns — but `contentKind` describes
- * what kind of record this is, not just what's currently playable: a real
- * catalogue track stays `'song'` so it behaves like one everywhere except
- * playback (scrobbleable, seekable, a valid autoplay seed, and its stream id
- * is worth re-resolving on failure), while the bare preview clip stays
- * `'preview'` so it never is. See ContentKind.ts.
+ * Both map to `'preview'`, because Deezer's public API never hands this app a
+ * full-length stream: a thirty-second clip is the only audio it returns. A
+ * catalogue record that the player accepted as a `'song'` would be scrobbled
+ * as a listen, seeded into autoplay, and retried on failure as though its URL
+ * could be reissued — none of which is true of it.
  *
- * No stream URL is produced here, in either case — Deezer's preview URLs are
- * not safe to persist, and the player boundary re-resolves one from the
- * track's native id when it actually needs to play.
+ * The clip's URL is carried on `streamId` rather than being rebuilt later.
+ * A sample is not `hasReissuableUrl`: Deezer issues the link once and no id
+ * can be turned back into it, so losing it here means the preview button
+ * silently stops working. That is the one case where the URL travels with the
+ * entity, and it is safe to because it carries no credentials of ours.
  */
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
@@ -30,8 +30,7 @@ import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import type { CoverSource } from '@/types/Cover';
 import { albumRef, artistRef } from './mapRefs';
-import type { DeezerAlbum, DeezerTrack } from './catalog';
-import type { DeezerPreviewTrack } from './albums';
+import type { DeezerAlbum, DeezerTrack, DeezerPreviewTrack } from './types';
 
 function albumCover(album: DeezerAlbum): CoverSource {
   const url = album.cover_xl ?? album.cover_big ?? album.cover_medium;
@@ -81,6 +80,8 @@ export function mapSong(dto: DeezerTrack, context: MapSongContext): Song {
     // because that is what the record says the work is; what is playable is a
     // separate question, and this field answers it.
     contentKind: 'preview',
+    // The clip Deezer will actually play, where it offered one.
+    streamId: dto.preview ?? undefined,
     genres: [],
   };
 }
@@ -108,6 +109,7 @@ export function mapPreviewTrack(dto: DeezerPreviewTrack, context: MapPreviewTrac
     durationSeconds: dto.duration ?? 0,
     // A bare 30-second clip — see module comment.
     contentKind: 'preview',
+    streamId: dto.preview,
     trackNumber: dto.track_position,
     genres: [],
   };

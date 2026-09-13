@@ -12,7 +12,7 @@ const track = (overrides: Partial<LocalTrack> = {}): LocalTrack => ({
   albumId: 'local:album:in-rainbows',
   cover: { kind: 'none' },
   duration: '0',
-  streamUrl: 'file:///a.flac',
+  streamId: 'file:///a.flac',
   localPath: 'file:///a.flac',
   ...overrides,
 });

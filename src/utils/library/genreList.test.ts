@@ -1,7 +1,7 @@
-import type { AlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 import { buildGenreRows } from './genreList';
 
-const album = (...genres: string[]) => ({ genres }) as Pick<AlbumBase, 'genres'>;
+const album = (...genres: string[]) => ({ genres }) as Pick<Album, 'genres'>;
 
 describe('buildGenreRows', () => {
   it('counts the albums carrying each genre', () => {
@@ -54,7 +54,7 @@ describe('buildGenreRows', () => {
   });
 
   it('tolerates an album with no genres', () => {
-    const rows = buildGenreRows(['Jazz'], [{ } as Pick<AlbumBase, 'genres'>, album('Jazz')]);
+    const rows = buildGenreRows(['Jazz'], [{ } as Pick<Album, 'genres'>, album('Jazz')]);
 
     expect(rows).toEqual([{ genre: 'Jazz', albumCount: 1 }]);
   });

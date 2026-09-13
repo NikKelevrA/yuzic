@@ -14,7 +14,6 @@ import Animated, {
 import { Heart, ArrowDownCircle, Ellipsis, PlayCircle } from 'lucide-react-native';
 import { notify } from '@/components/toast';
 
-import type { ExternalSong } from '@/types';
 import type { Song } from '@/domain/entities/Song';
 import type { PlayableCollection } from '@/contexts/PlayingContext';
 import { usePlayingActions } from '@/contexts/PlayingContext';
@@ -29,23 +28,16 @@ import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
 
-export type SongRowSong = Song | ExternalSong;
+export type SongRowSong = Song;
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than
- * the user's library. `ExternalSong.artist` is a plain string, while a
- * domain `Song`'s `artist` is always an `ArtistRef` object — that shape
- * difference is guaranteed to hold for both types, so it doubles as the
- * discriminator without needing a new field on either type.
- *
- * (The old discriminator checked for `streamUrl`, which was required on
- * every pre-rewrite library `Song`. Domain `Song` never carries a
- * `streamUrl` — that moved to `PlayableResource` — so that check would now
- * misclassify every library song as external. Mirrors `isExternalSongOrigin`
- * in `components/options/SongOptions`.)
+ * the user's library — read off `provenance`, the one place that
+ * distinction lives now that there is a single `Song` type. Mirrors
+ * `isExternalSongOrigin` in `components/options/SongOptions`.
  */
-export function isExternalSong(song: SongRowSong): song is ExternalSong {
-  return typeof song.artist === 'string';
+export function isExternalSong(song: SongRowSong): boolean {
+  return song.provenance.origin === 'integration';
 }
 
 type Props = {
@@ -64,7 +56,7 @@ type Props = {
 };
 
 const ExternalSongRowView: React.FC<{
-  song: ExternalSong;
+  song: Song;
   albumTitle: string;
   albumArtist: string;
   previewUrl?: string;
@@ -89,7 +81,7 @@ const ExternalSongRowView: React.FC<{
     <>
       <MediaListRow
         title={song.title}
-        subtitle={song.artist || albumArtist}
+        subtitle={song.artist.name || albumArtist}
         cover={song.cover}
         onPress={handlePress}
         showCover={false}

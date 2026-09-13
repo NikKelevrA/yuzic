@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAlbum, useExternalAlbum } from '@/hooks/albums';
 import { useLibrary } from '@/contexts/LibraryContext';
-import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
+import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { useTheme } from '@/hooks/useTheme';
 import NotFoundView from '@/components/NotFoundView';
 import StatusBanner from '@/components/StatusBanner';
@@ -46,15 +46,10 @@ const AlbumScreen: React.FC = () => {
     if (forceExternal === 'true') return null;
     if (!artist || !title) return null;
     const match = matchAlbumToLibrary(
-      { id: albumId ?? title, title, artist, cover: { kind: 'none' }, subtext: '' },
+      { externalIds: {}, title, artistName: artist },
       albums
     );
-    if (!match) return null;
-    // `matchAlbumToLibrary` is typed against the pre-rewrite `AlbumBase`
-    // (`.id`) as well as the domain `Album` (`.nativeId`) — `albums` here is
-    // always the domain shape, so `nativeId` is always the branch taken, but
-    // the return type is still the union.
-    return 'nativeId' in match ? match.nativeId : match.id;
+    return match?.nativeId ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, forceExternal, artist, title, albumId]);
 
@@ -119,7 +114,12 @@ const AlbumScreen: React.FC = () => {
 
   return (
     <View testID="album-screen" style={[styles.screen, { backgroundColor: colors.background }]}>
-      <AlbumContent localAlbum={null} localSongs={[]} externalAlbum={externalResult.album} />
+      <AlbumContent
+        localAlbum={null}
+        localSongs={[]}
+        externalAlbum={externalResult.album.album}
+        externalSongs={externalResult.album.songs}
+      />
     </View>
   );
 };

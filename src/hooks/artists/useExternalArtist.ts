@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { ExternalArtist } from '@/types';
 import { QueryKeys } from '@/enums/queryKeys';
-import { ALL_SOURCES } from '@/features/sources/registry';
+import { ALL_SOURCES, type SourceArtistDetail } from '@/features/sources/registry';
 import { selectMusicbrainzExternalEnabled, selectDeezerExternalEnabled } from '@/utils/redux/selectors/settingsSelectors';
 
 export type UseExternalArtistInput = {
@@ -27,7 +26,7 @@ export function useExternalArtist(input: UseExternalArtistInput | null) {
     enabled,
     staleTime: 1000 * 60 * 60 * 24,
 
-    queryFn: async (): Promise<ExternalArtist | null> => {
+    queryFn: async (): Promise<SourceArtistDetail | null> => {
       // Direct source + ID lookup
       const sourceDef = ALL_SOURCES.find(s => s.id === source);
       if (sourceDef && artistId) return sourceDef.fetchArtist(artistId, mbid);

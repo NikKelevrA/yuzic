@@ -6,7 +6,7 @@ import type { Album } from '@/domain/entities/Album';
  * doesn't compete with tracks / artists / playlists during cold-boot
  * rehydrate. Each collection now stringifies and MMKV-writes independently.
  *
- * Holds domain `Album` entities, not the pre-rewrite `AlbumBase`. There is no
+ * Holds domain `Album` entities. There is no
  * migration for the old persisted shape — this slice's MMKV key is read by
  * nothing else, so a fresh sync simply repopulates it in the new shape.
  */

@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '@/enums/queryKeys';
 import { useEnabledExternalSources } from '@/features/sources/registry';
-import type { ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 
 export type ArtistExternalDiscography = {
-  albums: ExternalAlbumBase[];
-  singles: ExternalAlbumBase[];
+  albums: Album[];
+  singles: Album[];
 };
 
 const DISCOGRAPHY_LIMIT = 80;
@@ -27,7 +27,7 @@ export function useArtistExternalDiscography(
     staleTime: 1000 * 60 * 60 * 24,
     queryFn: async (): Promise<ArtistExternalDiscography> => {
       const perSource = await Promise.all(
-        enabledSources.map(async (source): Promise<ExternalAlbumBase[]> => {
+        enabledSources.map(async (source): Promise<Album[]> => {
           const resolved = await source.resolveArtist(artistName!).catch(() => null);
           if (!resolved) return [];
           return source.fetchArtistAlbums(resolved.id, DISCOGRAPHY_LIMIT, artistName!).catch(() => []);

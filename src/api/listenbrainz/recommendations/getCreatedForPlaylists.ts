@@ -1,7 +1,10 @@
 import { fetchWithTimeout } from '../../fetchWithTimeout';
-import type { ExternalSong } from '@/types';
+import type { Song } from '@/domain/entities/Song';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance } from '@/domain/identity/Provenance';
 
 const BASE_URL = 'https://api.listenbrainz.org/1';
+const PROVENANCE = integrationProvenance('musicbrainz');
 
 /** The three periodic mixes troi-bot generates for a user. Anything else
  * ListenBrainz might create-for (a one-off, a different bot) is ignored —
@@ -14,7 +17,7 @@ export type LBCreatedForMix = {
   mixType: CreatedForMixType;
   title: string;
   playlistMbid: string;
-  tracks: ExternalSong[];
+  tracks: Song[];
 };
 
 type JspfTrack = {
@@ -61,18 +64,41 @@ function playlistMbidFromIdentifier(identifier?: string): string | null {
   return parts[parts.length - 1] ?? null;
 }
 
-function mapTrack(track: JspfTrack): ExternalSong | null {
+function mapTrack(track: JspfTrack): Song | null {
   if (!track.title || !track.creator) return null;
   const mbid = extractMbidFromIdentifier(track.identifier);
+  // Falls back to a synthetic "creator:title" id when the JSPF entry carries
+  // no MusicBrainz recording identifier — same fallback the pre-rewrite
+  // shape used, so a track missing an mbid still gets a stable, distinct id
+  // rather than colliding with every other id-less track.
+  const nativeId = mbid ?? `${track.creator}:${track.title}`;
   return {
-    id: mbid ?? `${track.creator}:${track.title}`,
+    localId: makeLocalId('song', PROVENANCE, nativeId),
+    nativeId,
+    provenance: PROVENANCE,
+    externalIds: mbid ? { mbid } : {},
+    libraryState: 'external',
     title: track.title,
-    artist: track.creator,
+    artist: {
+      localId: makeLocalId('artist', PROVENANCE, track.creator),
+      // No artist id in a JSPF track entry — only its display name.
+      nativeId: '',
+      externalIds: {},
+      name: track.creator,
+      cover: { kind: 'none' },
+    },
+    album: {
+      localId: makeLocalId('album', PROVENANCE, track.album ?? ''),
+      // Same — JSPF names the album, not its id.
+      nativeId: '',
+      externalIds: {},
+      title: track.album ?? '',
+      cover: { kind: 'none' },
+    },
     cover: { kind: 'none' },
-    duration: track.duration ? String(Math.round(track.duration / 1000)) : '',
-    albumId: track.album ?? '',
-    externalSource: 'musicbrainz',
-    externalIds: mbid ? { mbid } : undefined,
+    durationSeconds: track.duration ? Math.round(track.duration / 1000) : 0,
+    contentKind: 'song',
+    genres: [],
   };
 }
 
@@ -82,14 +108,14 @@ function mapTrack(track: JspfTrack): ExternalSong | null {
  * Public — createdfor playlists are always public — so no token is needed,
  * though sending one is harmless.
  */
-async function fetchPlaylistTracks(playlistMbid: string): Promise<ExternalSong[]> {
+async function fetchPlaylistTracks(playlistMbid: string): Promise<Song[]> {
   const res = await fetchWithTimeout(`${BASE_URL}/playlist/${playlistMbid}`, {
     headers: { 'Content-Type': 'application/json' },
   });
   if (!res.ok) return [];
   const data = (await res.json()) as PlaylistResponse;
   const tracks = data.playlist?.track ?? [];
-  const mapped: ExternalSong[] = [];
+  const mapped: Song[] = [];
   for (const track of tracks) {
     const song = mapTrack(track);
     if (song) mapped.push(song);

@@ -13,7 +13,7 @@ const track = (overrides: Partial<LocalTrack> = {}): LocalTrack => ({
   albumTitle: 'In Rainbows',
   cover: { kind: 'none' },
   duration: '0',
-  streamUrl: 'file:///a.flac',
+  streamId: 'file:///a.flac',
   localPath: 'file:///a.flac',
   year: 2007,
   dateAdded: '2024-05-01T00:00:00.000Z',

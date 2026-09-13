@@ -36,12 +36,9 @@ jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);
-jest.mock('@/features/audiomuse/generateFromEntity', () => ({
-  useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
-}));
-
 const mockGenerateForArtist = jest.fn();
 jest.mock('@/features/audiomuse/generatePlaylist', () => ({
+  useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
   generateSimilarPlaylistForArtist: (...args: unknown[]) => mockGenerateForArtist(...args),
 }));
 

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { QueryKeys } from '@/enums/queryKeys'
 import { ALL_SOURCES } from '@/features/sources/registry'
-import type { ExternalArtistBase, ExternalSong } from '@/types'
+import type { Song } from '@/domain/entities/Song'
+import type { Artist } from '@/domain/entities/Artist'
 
 type Input = {
   name: string
@@ -10,9 +11,9 @@ type Input = {
 }
 
 type Result = {
-  topTracks: ExternalSong[]
+  topTracks: Song[]
   biography?: string
-  similarArtists: ExternalArtistBase[]
+  similarArtists: Artist[]
   isLoading: boolean
 }
 
@@ -32,7 +33,7 @@ export function useArtistTopTracks({ name, mbid, enabled }: Input): Result {
 
   return {
     topTracks: query.data?.topTracks ?? [],
-    biography: query.data?.biography ?? undefined,
+    biography: query.data?.artist.biography,
     similarArtists: query.data?.similarArtists ?? [],
     isLoading: query.isLoading,
   }

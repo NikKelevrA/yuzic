@@ -19,7 +19,7 @@ import {
 } from '@/features/home/constants'
 import MediaTile from './MediaTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
-import type { ExternalAlbumBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
 import { spacing, typography } from '@/constants/design'
 import { useRadius } from '@/hooks/useRadius'
 
@@ -39,7 +39,7 @@ export default function DeezerChartsSection({ refreshKey = 0 }: Props) {
     [screenWidth]
   )
 
-  const query = useQuery<ExternalAlbumBase[]>({
+  const query = useQuery<Album[]>({
     queryKey: [QueryKeys.ExploreDeezerCharts, dayKey, refreshKey],
     queryFn: () => getDeezerChartAlbums(10),
     enabled: isEnabled,
@@ -51,11 +51,11 @@ export default function DeezerChartsSection({ refreshKey = 0 }: Props) {
   const coversToPrefetch = useMemo(() => data.map(a => a.cover), [data])
   usePrefetchCovers(coversToPrefetch, 'grid')
 
-  const renderAlbum = useCallback(({ item }: { item: ExternalAlbumBase }) => (
+  const renderAlbum = useCallback(({ item }: { item: Album }) => (
     <MediaTile
       cover={item.cover}
       title={item.title}
-      subtitle={item.subtext}
+      subtitle={item.artist.name}
       size={gridItemWidth}
       radius={rad.card}
       onPress={() => {
@@ -93,7 +93,7 @@ export default function DeezerChartsSection({ refreshKey = 0 }: Props) {
         <FlashList
           horizontal
           data={data}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.localId}
           overrideItemLayout={layout => { (layout as { size?: number }).size = gridItemWidth }}
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"

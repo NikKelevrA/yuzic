@@ -5,7 +5,8 @@ import {
   lookupArtist,
   type LidarrArtistLookupResult,
 } from '../artists';
-import type { ExternalAlbumBase, LidarrConfig } from '@/types';
+import type { LidarrConfig } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 
 export type LidarrAlbumErrorCode =
   | 'missing_album_identity'
@@ -153,18 +154,27 @@ function sameArtist(
   return cleanId(left.foreignArtistId) === cleanId(right.foreignArtistId);
 }
 
-export function albumRequestFromExternal(
-  album: ExternalAlbumBase
-): LidarrAlbumRequest {
+/**
+ * Domain `ReleaseType` has four values (`album`/`single`/`ep`/`compilation`);
+ * Lidarr resolution only ever disambiguates album vs. single-length releases
+ * (`resolveAlbumCandidate`'s `matchesReleaseType` groups Lidarr's own
+ * `Single`/`EP` the same way) — same collapsing the pre-rewrite Deezer
+ * catalogue mapper already did.
+ */
+function lidarrReleaseType(releaseType: Album['releaseType']): 'album' | 'single' {
+  return releaseType === 'single' || releaseType === 'ep' ? 'single' : 'album';
+}
+
+export function albumRequestFromExternal(album: Album): LidarrAlbumRequest {
   return {
     albumTitle: album.title,
-    artistName: album.artist,
-    albumMbid: album.externalIds?.mbid,
-    artistMbid: album.artistMbid ?? album.externalIds?.artistMbid,
-    albumDeezerId: album.externalIds?.deezerId,
-    artistDeezerId: album.externalIds?.artistDeezerId,
+    artistName: album.artist.name,
+    albumMbid: album.externalIds.mbid,
+    artistMbid: album.artist.externalIds.mbid,
+    albumDeezerId: album.externalIds.deezerId,
+    artistDeezerId: album.artist.externalIds.deezerId,
     releaseDate: album.releaseDate,
-    releaseType: album.releaseType,
+    releaseType: lidarrReleaseType(album.releaseType),
   };
 }
 

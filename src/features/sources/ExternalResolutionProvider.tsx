@@ -6,15 +6,20 @@ import ExternalSourcePickerSheet, { type PickerItem } from '@/components/Externa
 import { useEnabledExternalSources, type SourceResolvedAlbum, type SourceResolvedArtist } from './registry';
 import { useLibrary } from '@/contexts/LibraryContext';
 import { useArtists } from '@/hooks/artists';
-import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
-import { normalize } from '@/utils/normalize';
-import type { ExternalAlbumBase, ExternalArtistBase } from '@/types';
+import { matchAlbumToLibrary, matchArtistToLibrary } from '@/features/library/matchToLibrary';
+import type { Album } from '@/domain/entities/Album';
+import type { Artist } from '@/domain/entities/Artist';
 
 const NO_SOURCE_TOAST = 'Enable an external source in Settings to browse this content.';
 
+/** The provider id an already-external record was browsed through, if it says. */
+function providerIdOf(item: Album | Artist): string | undefined {
+  return item.provenance.origin === 'integration' ? item.provenance.providerId : undefined;
+}
+
 type ResolutionContextType = {
-  resolveAndNavigateToAlbum: (item: ExternalAlbumBase) => void;
-  resolveAndNavigateToArtist: (item: ExternalArtistBase) => void;
+  resolveAndNavigateToAlbum: (item: Album) => void;
+  resolveAndNavigateToArtist: (item: Artist) => void;
 };
 
 const ExternalResolutionContext = createContext<ResolutionContextType | null>(null);
@@ -39,18 +44,20 @@ export function ExternalResolutionProvider({ children }: { children: React.React
   // Callers that want to bypass the library match (fuzzy false positives)
   // don't come through here — they push albumView/artistView directly with
   // forceExternal, which the unified screens honor.
-  const resolveAndNavigateToAlbum = useCallback(async (item: ExternalAlbumBase) => {
-    const localMatch = matchAlbumToLibrary(item, albums);
+  const resolveAndNavigateToAlbum = useCallback(async (item: Album) => {
+    const localMatch = matchAlbumToLibrary(
+      { externalIds: item.externalIds, title: item.title, artistName: item.artist.name },
+      albums
+    );
     if (localMatch) {
       // /albumView resolves this param by calling the server adapter
       // (useAlbum -> api.albums.get(id)), so it needs the origin's own id,
-      // not the on-device localId. Domain albums carry that as `nativeId`;
-      // the pre-rewrite shapes matchAlbumToLibrary can also return still key
-      // it as `id`.
-      const nativeId = 'nativeId' in localMatch ? localMatch.nativeId : localMatch.id;
-      router.push({ pathname: '/albumView', params: { id: nativeId } });
+      // not the on-device localId.
+      router.push({ pathname: '/albumView', params: { id: localMatch.nativeId } });
       return;
     }
+
+    const providerId = providerIdOf(item);
 
     if (enabledSources.length === 0) {
       notify.error(NO_SOURCE_TOAST);
@@ -58,14 +65,14 @@ export function ExternalResolutionProvider({ children }: { children: React.React
     }
 
     // If only one source enabled and it matches the item's source, navigate directly
-    if (enabledSources.length === 1 && (!item.externalSource || enabledSources[0].id === item.externalSource)) {
-      router.push({ pathname: '/albumView', params: { source: item.externalSource ?? enabledSources[0].id, albumId: item.id, artist: item.artist, title: item.title } });
+    if (enabledSources.length === 1 && (!providerId || enabledSources[0].id === providerId)) {
+      router.push({ pathname: '/albumView', params: { source: providerId ?? enabledSources[0].id, albumId: item.nativeId, artist: item.artist.name, title: item.title } });
       return;
     }
 
     // Resolve across all enabled sources
     const results = (await Promise.all(
-      enabledSources.map(s => s.resolveAlbum(item.artist, item.title).catch(() => null))
+      enabledSources.map(s => s.resolveAlbum(item.artist.name, item.title).catch(() => null))
     )).filter(Boolean) as SourceResolvedAlbum[];
 
     if (results.length === 0) {
@@ -80,31 +87,23 @@ export function ExternalResolutionProvider({ children }: { children: React.React
     albumPickerRef.current?.present();
   }, [albums, enabledSources, router]);
 
-  const resolveAndNavigateToArtist = useCallback(async (item: ExternalArtistBase) => {
-    // `matchArtistToLibrary` (src/hooks/libraryMatch.ts) still types its
-    // `artists` param as the pre-rewrite `Artist`, and that file is out of
-    // scope here; `useArtists()` now returns domain `Artist[]`. The matching
-    // rule itself (mbid, else normalized name) is unchanged — mirrored here
-    // against the domain shape rather than casting into the legacy one.
-    const normName = normalize(item.name);
-    const itemMbid = item.externalIds?.mbid;
-    const localMatch = artists.find(a =>
-      (itemMbid && a.externalIds.mbid && a.externalIds.mbid === itemMbid) ||
-      normalize(a.name) === normName
-    ) ?? null;
+  const resolveAndNavigateToArtist = useCallback(async (item: Artist) => {
+    const localMatch = matchArtistToLibrary({ externalIds: item.externalIds, name: item.name }, artists);
     if (localMatch) {
       // Server adapter identity, same reasoning as the album branch above.
       router.push({ pathname: '/artistView', params: { id: localMatch.nativeId } });
       return;
     }
 
+    const providerId = providerIdOf(item);
+
     if (enabledSources.length === 0) {
       notify.error(NO_SOURCE_TOAST);
       return;
     }
 
-    if (enabledSources.length === 1 && (!item.externalSource || enabledSources[0].id === item.externalSource)) {
-      router.push({ pathname: '/artistView', params: { source: item.externalSource ?? enabledSources[0].id, artistId: item.externalIds?.deezerId, mbid: item.externalIds?.mbid ?? item.id, name: item.name } });
+    if (enabledSources.length === 1 && (!providerId || enabledSources[0].id === providerId)) {
+      router.push({ pathname: '/artistView', params: { source: providerId ?? enabledSources[0].id, artistId: item.externalIds.deezerId, mbid: item.externalIds.mbid ?? item.nativeId, name: item.name } });
       return;
     }
 

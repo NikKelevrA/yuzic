@@ -18,11 +18,6 @@ import { useTranslation } from 'react-i18next'
 import type { Album } from '@/domain/entities/Album'
 import type { Song } from '@/domain/entities/Song'
 import { useApi } from '@/api'
-// `fetchAlbumDetailsSettled` (src/hooks/albums) is still typed against the
-// pre-rewrite embedded-songs `Album`/`AlbumBase` and a `getAlbum` returning
-// that old shape — not the `AlbumDetail` `api.albums.get` returns now. That
-// hook is owned by a different agent's scope, so this uses the domain-typed
-// sibling already written for the same purpose (GenreOptions/ArtistOptions).
 import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails'
 import { buildCover } from '@/utils/builders/buildCover'
 import { useTheme } from '@/hooks/useTheme'

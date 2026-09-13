@@ -13,7 +13,16 @@ import {
   selectMusicbrainzExternalEnabled,
 } from '@/utils/redux/selectors/settingsSelectors'
 import * as mb from '@/api/musicbrainz'
-import type { CoverSource, ExternalAlbum, ExternalAlbumBase, ExternalArtist } from '@/types'
+import { mapAlbum as mapMbAlbum } from '@/api/musicbrainz/mapAlbum'
+import { mapArtist as mapMbArtist } from '@/api/musicbrainz/mapArtist'
+import { mapSong as mapMbSong } from '@/api/musicbrainz/mapSong'
+import type { Album } from '@/domain/entities/Album'
+import type { Artist } from '@/domain/entities/Artist'
+import type { Song } from '@/domain/entities/Song'
+import type { AlbumDetail } from '@/domain/entities/Detail'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { integrationProvenance } from '@/domain/identity/Provenance'
+import type { CoverSource } from '@/types/Cover'
 import { sourceColor } from '@/constants/design'
 import type { IntegrationModule, Health } from '@/features/integrations/types'
 
@@ -34,6 +43,21 @@ export type SourceResolvedAlbum = {
   coverUrl?: string
 }
 
+/**
+ * The bundle `fetchArtist` returns: the artist entity plus everything an
+ * artist screen wants alongside it. Not a domain type — `Artist` itself
+ * carries no `topTracks`/`similarArtists` fields, because those are
+ * relations a caller asks for, not properties of the entity — so this is a
+ * source-layer aggregate, the same shape as `AlbumDetail` plays for albums.
+ */
+export type SourceArtistDetail = {
+  artist: Artist
+  topTracks: Song[]
+  albums: Album[]
+  singles: Album[]
+  similarArtists: Artist[]
+}
+
 export type SourceDefinition = IntegrationModule & {
   // Narrows `IntegrationModule.id: string` back to the closed source-id
   // union so every existing consumer keyed on `SourceId` still compiles.
@@ -48,9 +72,9 @@ export type SourceDefinition = IntegrationModule & {
    */
   resolveArtist(name: string): Promise<SourceResolvedArtist | null>
   resolveAlbum(artist: string, title: string): Promise<SourceResolvedAlbum | null>
-  fetchAlbum(id: string): Promise<ExternalAlbum | null>
-  fetchArtist(id: string, mbid?: string | null): Promise<ExternalArtist | null>
-  fetchArtistAlbums(artistId: string, limit: number, artistName?: string): Promise<ExternalAlbumBase[]>
+  fetchAlbum(id: string): Promise<AlbumDetail | null>
+  fetchArtist(id: string, mbid?: string | null): Promise<SourceArtistDetail | null>
+  fetchArtistAlbums(artistId: string, limit: number, artistName?: string): Promise<Album[]>
 }
 
 /**
@@ -73,6 +97,28 @@ function urlFromCover(cover: CoverSource): string | undefined {
   return cover.kind === 'url' ? cover.url : undefined
 }
 
+/**
+ * A stand-in `Artist` for `getDeezerArtistAlbums`' fallback parameter, built
+ * from just the id/name a caller already has (an artist screen navigated to
+ * before the full artist has been fetched). Only ever used to fill in an
+ * album's artist reference when Deezer's albums-by-artist endpoint omits the
+ * embedded artist object — never returned to a caller as a real artist.
+ */
+function stubDeezerArtist(artistId: string, artistName: string): Artist {
+  const provenance = integrationProvenance('deezer')
+  return {
+    localId: makeLocalId('artist', provenance, artistId),
+    nativeId: artistId,
+    provenance,
+    externalIds: artistId ? { deezerId: artistId } : {},
+    libraryState: 'external',
+    name: artistName,
+    cover: { kind: 'none' },
+    tags: [],
+    albumIds: [],
+  }
+}
+
 const deezerSource: SourceDefinition = {
   id: 'deezer',
   label: 'Deezer',
@@ -90,14 +136,14 @@ const deezerSource: SourceDefinition = {
 
   async resolveArtist(name) {
     const artist = await resolveDeezerArtistByName(name)
-    if (!artist?.id) return null
-    return { source: 'deezer', id: artist.id, name: artist.name, coverUrl: urlFromCover(artist.cover) }
+    if (!artist) return null
+    return { source: 'deezer', id: artist.nativeId, name: artist.name, coverUrl: urlFromCover(artist.cover) }
   },
 
   async resolveAlbum(artist, title) {
     const album = await resolveDeezerAlbum(artist, title)
     if (!album) return null
-    return { source: 'deezer', id: album.id, title: album.title, artist: album.artist, coverUrl: urlFromCover(album.cover) }
+    return { source: 'deezer', id: album.nativeId, title: album.title, artist: album.artist.name, coverUrl: urlFromCover(album.cover) }
   },
 
   async fetchAlbum(id) {
@@ -105,9 +151,7 @@ const deezerSource: SourceDefinition = {
   },
 
   async fetchArtistAlbums(artistId, limit, artistName) {
-    const fallback = artistName
-      ? { id: artistId, name: artistName, subtext: '', cover: { kind: 'none' as const }, externalSource: 'deezer' as const, externalIds: { deezerId: artistId } }
-      : null
+    const fallback = artistName ? stubDeezerArtist(artistId, artistName) : null
     return getDeezerArtistAlbums(artistId, limit, fallback)
   },
 
@@ -119,9 +163,12 @@ const deezerSource: SourceDefinition = {
       getDeezerArtistTopTracks(id, 10),
       getDeezerRelatedArtists(id, 8),
     ])
+    const resolvedMbid = mbid ?? base.externalIds.mbid
     return {
-      ...base,
-      externalIds: { ...base.externalIds, mbid: mbid ?? base.externalIds?.mbid ?? null },
+      artist: {
+        ...base,
+        externalIds: resolvedMbid ? { ...base.externalIds, mbid: resolvedMbid } : base.externalIds,
+      },
       topTracks,
       albums: albums.filter(a => a.releaseType !== 'single'),
       singles: albums.filter(a => a.releaseType === 'single'),
@@ -130,30 +177,7 @@ const deezerSource: SourceDefinition = {
   },
 }
 
-function releaseGroupToCover(rg: mb.MbReleaseGroup): CoverSource {
-  return { kind: 'coverartarchive', mbid: rg.id, mbidType: 'release-group' }
-}
-
-function releaseGroupToAlbumBase(
-  rg: mb.MbReleaseGroup,
-  fallbackArtist: string,
-  fallbackArtistMbid?: string
-): ExternalAlbumBase {
-  const artistName = rg['artist-credit']?.[0]?.artist.name ?? fallbackArtist
-  const artistMbid = rg['artist-credit']?.[0]?.artist.id ?? fallbackArtistMbid ?? null
-  return {
-    id: rg.id,
-    title: rg.title,
-    artist: artistName,
-    artistMbid,
-    cover: releaseGroupToCover(rg),
-    subtext: rg['first-release-date']?.slice(0, 4) ?? '',
-    releaseDate: rg['first-release-date'] ?? undefined,
-    releaseType: rg['primary-type']?.toLowerCase() === 'single' ? 'single' : 'album',
-    externalSource: 'musicbrainz',
-    externalIds: { mbid: rg.id, artistMbid },
-  }
-}
+const MB_PROVENANCE = integrationProvenance('musicbrainz')
 
 const musicbrainzSource: SourceDefinition = {
   id: 'musicbrainz',
@@ -174,19 +198,21 @@ const musicbrainzSource: SourceDefinition = {
     const results = await mb.searchArtist(name, 5)
     const best = results[0]
     if (!best) return null
-    return { source: 'musicbrainz', id: best.id, name: best.name }
+    const artist = mapMbArtist(best, MB_PROVENANCE)
+    return { source: 'musicbrainz', id: artist.nativeId, name: artist.name }
   },
 
   async resolveAlbum(artist, title) {
     const results = await mb.searchReleaseGroup(artist, title, 5)
     const best = results[0]
     if (!best) return null
+    const album = mapMbAlbum(best, { provenance: MB_PROVENANCE })
     return {
       source: 'musicbrainz',
-      id: best.id,
-      title: best.title,
+      id: album.nativeId,
+      title: album.title,
       artist,
-      coverUrl: mb.coverArtArchiveUrl(best.id),
+      coverUrl: mb.coverArtArchiveUrl(album.nativeId),
     }
   },
 
@@ -195,57 +221,28 @@ const musicbrainzSource: SourceDefinition = {
       mb.getReleaseGroup(id),
       mb.getTracksForReleaseGroup(id),
     ])
-    const artistName = rg['artist-credit']?.[0]?.artist.name ?? ''
-    const artistMbid = rg['artist-credit']?.[0]?.artist.id ?? null
-    const songs = tracks.map(track => ({
-      id: track.recording?.id ?? track.id,
-      title: track.title,
-      artist: track['artist-credit']?.[0]?.artist.name ?? artistName,
-      cover: { kind: 'none' as const },
-      duration: track.length ? String(Math.round(track.length / 1000)) : '0',
-      albumId: id,
-      externalSource: 'musicbrainz' as const,
-    }))
-    return {
-      id: rg.id,
-      title: rg.title,
-      artist: artistName,
-      artistMbid,
-      cover: releaseGroupToCover(rg),
-      subtext: rg['first-release-date']?.slice(0, 4) ?? '',
-      releaseDate: rg['first-release-date'] ?? undefined,
-      releaseType: rg['primary-type']?.toLowerCase() === 'single' ? 'single' : 'album',
-      externalSource: 'musicbrainz',
-      externalIds: { mbid: rg.id, artistMbid },
-      songs,
-    }
+    const songs = tracks.map(track => mapMbSong(track, { provenance: MB_PROVENANCE, releaseGroup: rg }))
+    const album = mapMbAlbum(rg, { provenance: MB_PROVENANCE, songIds: songs.map(s => s.localId) })
+    return { album, songs }
   },
 
   async fetchArtistAlbums(artistId, limit) {
     const artist = await mb.getArtistWithReleases(artistId)
     const rgs = artist['release-groups'] ?? []
-    return rgs
-      .slice(0, limit)
-      .map(rg => releaseGroupToAlbumBase(rg, artist.name, artist.id))
+    return rgs.slice(0, limit).map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
   },
 
   async fetchArtist(id) {
-    const artist = await mb.getArtistWithReleases(id)
-    const rgs = artist['release-groups'] ?? []
+    const dto = await mb.getArtistWithReleases(id)
+    const rgs = dto['release-groups'] ?? []
     const albums = rgs
       .filter(rg => !rg['primary-type'] || rg['primary-type'] === 'Album')
-      .map(rg => releaseGroupToAlbumBase(rg, artist.name, artist.id))
+      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
     const singles = rgs
       .filter(rg => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP')
-      .map(rg => releaseGroupToAlbumBase(rg, artist.name, artist.id))
+      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
     return {
-      id: artist.id,
-      name: artist.name,
-      cover: { kind: 'none' },
-      subtext: '',
-      biography: artist.annotation ?? undefined,
-      externalSource: 'musicbrainz',
-      externalIds: { mbid: artist.id },
+      artist: mapMbArtist(dto, MB_PROVENANCE),
       topTracks: [],
       albums,
       singles,

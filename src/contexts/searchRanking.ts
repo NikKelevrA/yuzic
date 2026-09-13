@@ -1,5 +1,5 @@
 import type { CoverSource } from '@/types/Cover';
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
 /**
  * Ordering and de-duplication of search results.

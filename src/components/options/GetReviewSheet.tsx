@@ -29,7 +29,7 @@ import {
 import { selectActiveServer, selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
 import { setWantJobRef } from '@/utils/redux/slices/wantsSlice';
-import type { ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 import {
   OptionSheetDivider,
   OptionSheetHeader,
@@ -42,7 +42,7 @@ import {
 import Touchable from '@/components/Touchable';
 
 interface Props {
-  album: ExternalAlbumBase;
+  album: Album;
   /** When set, the sheet requests this single track instead of the whole album. */
   track?: { title: string; artist: string };
   sheetRef: React.RefObject<BottomSheetModal>;
@@ -183,10 +183,10 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
   };
 
   const headerTitle = track ? track.title : album.title;
-  const headerSubtext = track ? track.artist : album.artist;
+  const headerSubtext = track ? track.artist : album.artist.name;
   const requestingQuery = track
     ? `${track.title} — ${track.artist}`
-    : `${album.title} — ${album.artist}${album.externalIds?.mbid ? ` (mbid: ${album.externalIds.mbid})` : ''}`;
+    : `${album.title} — ${album.artist.name}${album.externalIds?.mbid ? ` (mbid: ${album.externalIds.mbid})` : ''}`;
 
   return (
     <BottomSheetModal

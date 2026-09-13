@@ -1,4 +1,4 @@
-import type { AlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 
 /**
  * Builds the browsable genre list.
@@ -16,7 +16,7 @@ export type GenreRow = {
 
 export function buildGenreRows(
   genres: string[],
-  albums: Pick<AlbumBase, 'genres'>[]
+  albums: Pick<Album, 'genres'>[]
 ): GenreRow[] {
   const counts = new Map<string, number>();
   for (const album of albums) {

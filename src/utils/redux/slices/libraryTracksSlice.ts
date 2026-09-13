@@ -5,7 +5,7 @@ import type { Song } from '@/domain/entities/Song';
  * Historically the biggest persisted blob. Split off so its
  * JSON.parse on cold-boot doesn't block the album/artist rehydrate.
  *
- * Holds domain `Song` entities rather than the pre-rewrite `SongBase[]` —
+ * Holds domain `Song` entities —
  * notably these carry no `streamUrl`; a stream URL is built at the player
  * boundary (see `usePlayableSongResolver`), never stored here.
  */

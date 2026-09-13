@@ -39,10 +39,31 @@ jest.mock('@/features/connectivity/serverReachability', () => ({
   useServerUnreachable: () => mockServerUnreachable,
 }));
 
+// Domain-shaped fixtures — `searchDeezerArtists`/`searchDeezerAlbums` return
+// domain `Artist`/`Album` now, not the pre-rewrite flat `{id, artist: string}`
+// shape.
+const dzAlbum = {
+  localId: 'local:album:ext:deezer:dz-1',
+  nativeId: 'dz-1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: { deezerId: 'dz-1' },
+  libraryState: 'external',
+  title: 'Rumours',
+  cover: { kind: 'none' },
+  artist: {
+    localId: 'local:artist:ext:deezer:fm-1',
+    nativeId: 'fm-1',
+    name: 'Fleetwood Mac',
+    cover: { kind: 'none' },
+    externalIds: { deezerId: 'fm-1' },
+  },
+  releaseType: 'album',
+  genres: [],
+  songIds: [],
+};
+
 const mockSearchDeezerArtists = jest.fn().mockResolvedValue([]);
-const mockSearchDeezerAlbums = jest.fn().mockResolvedValue([
-  { id: 'dz-1', title: 'Rumours', subtext: '1977', artist: 'Fleetwood Mac', cover: { kind: 'none' }, externalSource: 'deezer', externalIds: { deezerId: 'dz-1' } },
-]);
+const mockSearchDeezerAlbums = jest.fn().mockResolvedValue([dzAlbum]);
 jest.mock('@/api/deezer', () => ({
   searchDeezerArtists: (...args: unknown[]) => mockSearchDeezerArtists(...args),
   searchDeezerAlbums: (...args: unknown[]) => mockSearchDeezerAlbums(...args),
@@ -77,9 +98,7 @@ describe('SearchContext handleSearchWithFilters', () => {
     mockIsOffline = false;
     mockServerUnreachable = false;
     mockSearchDeezerArtists.mockResolvedValue([]);
-    mockSearchDeezerAlbums.mockResolvedValue([
-      { id: 'dz-1', title: 'Rumours', subtext: '1977', artist: 'Fleetwood Mac', cover: { kind: 'none' }, externalSource: 'deezer', externalIds: { deezerId: 'dz-1' } },
-    ]);
+    mockSearchDeezerAlbums.mockResolvedValue([dzAlbum]);
     mockSearchArtist.mockResolvedValue([]);
     mockSearchReleaseGroupByTitle.mockResolvedValue([
       { id: 'mb-1', title: 'Rumours', 'first-release-date': '1977-02-04' },

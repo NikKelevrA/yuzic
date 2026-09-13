@@ -1,4 +1,4 @@
-import type { ContentKind } from '@/types';
+import type { ContentKind } from '@/domain/playback/ContentKind';
 
 /**
  * Content-kind gates. A Song without an explicit contentKind is treated as a

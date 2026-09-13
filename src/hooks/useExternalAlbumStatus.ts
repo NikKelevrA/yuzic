@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 
 import { useLibrary } from '@/contexts/LibraryContext';
 import { QueryKeys } from '@/enums/queryKeys';
-import type { ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import * as lidarr from '@/api/lidarr';
 import * as slskd from '@/api/slskd';
 import {
@@ -15,14 +16,13 @@ import {
 } from '@/utils/redux/selectors/downloadersSelectors';
 import { normalize } from '@/utils/normalize';
 import { matchesQueuedRelease } from './externalAlbumMatch';
-import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
 
 export type ExternalAlbumStatus =
   | { kind: 'in_library' }
   | { kind: 'downloading'; progress: number; source: 'lidarr' | 'slskd' }
   | { kind: 'none' };
 
-export function useExternalAlbumStatus(album: ExternalAlbumBase | null): ExternalAlbumStatus {
+export function useExternalAlbumStatus(album: Album | null): ExternalAlbumStatus {
   const { albums: libraryAlbums } = useLibrary();
 
   const lidarrConfig = useSelector(selectLidarrConfig);
@@ -33,7 +33,10 @@ export function useExternalAlbumStatus(album: ExternalAlbumBase | null): Externa
 
   const isInLibrary = useMemo(() => {
     if (!album) return false;
-    return matchAlbumToLibrary(album, libraryAlbums) !== null;
+    return matchAlbumToLibrary(
+      { externalIds: album.externalIds, title: album.title, artistName: album.artist.name },
+      libraryAlbums
+    ) !== null;
   }, [libraryAlbums, album]);
 
   const { data: lidarrQueue } = useQuery({
@@ -57,7 +60,7 @@ export function useExternalAlbumStatus(album: ExternalAlbumBase | null): Externa
     if (!album) return { kind: 'none' };
 
     const normTitle = normalize(album.title);
-    const normArtist = normalize(album.artist);
+    const normArtist = normalize(album.artist.name);
 
     if (lidarrQueue) {
       const match = lidarrQueue.find(
@@ -69,7 +72,7 @@ export function useExternalAlbumStatus(album: ExternalAlbumBase | null): Externa
     if (slskdQueue) {
       const match = slskdQueue.find(r => {
         if (r.state.toLowerCase() === 'completed') return false;
-        return matchesQueuedRelease(r, { title: album.title, artist: album.artist });
+        return matchesQueuedRelease(r, { title: album.title, artist: album.artist.name });
       });
       if (match) return { kind: 'downloading', progress: match.percentComplete, source: 'slskd' };
     }

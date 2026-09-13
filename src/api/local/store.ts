@@ -2,14 +2,47 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { getAudioMetadata } from '@missingcore/audio-metadata';
 import { nanoid } from '@reduxjs/toolkit';
 
-import type { CoverSource, Song } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 import { mmkv } from '@/utils/mmkvStorage';
 
 const KEY = 'local-library.v1';
 const DIRECTORY = `${FileSystem.documentDirectory ?? ''}local-library/`;
 const EMPTY_COVER: CoverSource = { kind: 'none' };
 
-export type LocalTrack = Song & { localPath: string };
+/**
+ * One imported file, as it is persisted on device.
+ *
+ * A DTO, not a domain entity: this is the shape the importer writes and the
+ * shape `mapSong` reads, and the two are deliberately different things. It
+ * used to be declared as the app's `Song` plus a path, which quietly made the
+ * on-disk format change every time the entity did.
+ *
+ * `duration` is a string placeholder (`'0'`) until the playback engine loads
+ * the file and reports the real value — the tag reader used at import time
+ * does not know it.
+ */
+export type LocalTrack = {
+  id: string;
+  title: string;
+  artist: string;
+  artistId: string;
+  albumId: string;
+  albumTitle?: string;
+  cover: CoverSource;
+  duration: string;
+  /** The copied file's own path, which the player streams from. */
+  streamId: string;
+  localPath: string;
+  trackNumber?: number;
+  year?: number;
+  genres?: string[];
+  dateAdded?: string;
+  bitrate?: number;
+  sampleRate?: number;
+  bitsPerSample?: number;
+  mimeType?: string;
+  externalIds?: { mbid?: string; isrc?: string };
+};
 export type LocalPlaylist = { id: string; title: string; trackIds: string[]; createdAt: number; updatedAt: number };
 type Snapshot = { tracks: LocalTrack[]; starredIds: string[]; playlists: LocalPlaylist[] };
 
@@ -90,15 +123,16 @@ export async function importLocalFiles(assets: { uri: string; name?: string }[])
         albumTitle,
         cover: EMPTY_COVER,
         duration: '0', // This reader is tags-only; the engine reports real duration when it loads the file.
-        streamUrl: destination,
+        // One path, recorded once: `streamId` is what the player streams from
+        // and `localPath` is where the file lives. The old shape also carried
+        // `streamUrl` and `filePath` holding the same string, plus a server
+        // type that provenance now states.
         streamId: destination,
         localPath: destination,
         trackNumber: metadata.track || undefined,
         year: metadata.year || undefined,
         dateAdded: now,
-        filePath: destination,
         mimeType: ext === 'm4a' || ext === 'mp4' ? 'audio/mp4' : `audio/${ext}`,
-        sourceServerType: 'local',
       });
       imported += 1;
     } catch {
