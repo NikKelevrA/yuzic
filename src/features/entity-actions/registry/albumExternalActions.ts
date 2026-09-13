@@ -3,7 +3,7 @@ import { Heart, CloudDownload, ChevronRight, Link } from 'lucide-react-native';
 import type { Album } from '@/domain/entities/Album';
 import { iconSize, spacing, statusColor } from '@/constants/design';
 import type { ActionDef, BaseActionContext } from '../types';
-import type { ExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
+import type { ExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 
 export interface AlbumExternalActionContext extends BaseActionContext {
   kind: 'album';

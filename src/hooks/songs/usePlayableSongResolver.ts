@@ -9,7 +9,7 @@ import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { selectPreferredCodec } from '@/features/settings/playback/state';
 import type { Song } from '@/domain/entities/Song';
 import { isPlayable, type PlayableResource } from '@/features/playback/playableResource';
-import { useStreamQuality } from '@/hooks/useStreamQuality';
+import { useStreamQuality } from '@/features/playback/useStreamQuality';
 
 const DEFAULT_TIMEOUT_MS = 5000;
 

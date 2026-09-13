@@ -14,7 +14,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useStarredSongs } from '@/hooks/starred';
 import { useSelector } from 'react-redux';
 import { selectAlbumPlayCount } from '@/utils/redux/selectors/statsSelectors';
-import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
+import { usePreviewPlayer } from '@/features/playback/usePreviewPlayer';
 import AlbumRecommendedSection from '../AlbumRecommendedSection';
 import SimilarAlbumsSection from '../SimilarAlbumsSection';
 import type { AlbumScreenModel } from '@/features/album/useAlbumScreenModel';

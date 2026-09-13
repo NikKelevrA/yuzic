@@ -17,7 +17,7 @@ import { classifyTrackPlayability } from './trackPlayability';
 import { useAlbum, useAlbums } from '@/hooks/albums';
 import { useArtistAlbums } from '@/hooks/artists';
 import { useExternalAlbumPreviews } from '@/hooks/albums/useExternalAlbumPreviews';
-import { useExternalAlbumStatus, type ExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
+import { useExternalAlbumStatus, type ExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { ALL_SOURCES, useEnabledExternalSources } from '@/features/sources/registry';
 import { QueryKeys } from '@/enums/queryKeys';

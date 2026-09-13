@@ -7,7 +7,7 @@ import { notify } from '@/components/toast';
 import { useTheme } from '@/hooks/useTheme';
 import MediaListRow from '@/components/MediaListRow';
 import { usePlayingActions } from '@/contexts/PlayingContext';
-import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
+import { usePreviewPlayer } from '@/features/playback/usePreviewPlayer';
 import { useAddSongToPlaylist } from '@/hooks/playlists';
 import { usePlayableSongResolver } from '@/hooks/songs';
 import Touchable from '@/components/Touchable';

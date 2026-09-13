@@ -38,7 +38,7 @@ import {
 import GenreOptions from '@/components/options/GenreOptions'
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import DownloadStateIcon from '@/components/DownloadStateIcon';
-import { useCollectionDownloadProgress } from '@/hooks/useCollectionDownloadProgress';
+import { useCollectionDownloadProgress } from '@/features/downloads/useCollectionDownloadProgress';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/hooks/useRadius';
 

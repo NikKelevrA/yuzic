@@ -10,7 +10,7 @@ import Touchable from '@/components/Touchable';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { iconSize, spacing, typography } from '@/constants/design';
 import { useTheme } from '@/hooks/useTheme';
-import { useSync } from '@/hooks/useSync';
+import { useSync } from '@/features/library/useSync';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import SettingsCard from '../../components/SettingsCard';
 

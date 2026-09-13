@@ -4,7 +4,7 @@ import { getBackend } from '@/features/player/activeBackend';
 import { useApi } from '@/api';
 import type { JukeboxState } from '@/api/types';
 import { useDlna } from './DlnaContext';
-import type { DiscoveredDevice } from '@/hooks/useDlnaDiscovery';
+import type { DiscoveredDevice } from '@/features/player/useDlnaDiscovery';
 import {
   LOCAL_SINK,
   ownsPlayback,

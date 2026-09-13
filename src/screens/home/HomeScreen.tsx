@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux'
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors'
 import { selectSyncOnAppStart } from '@/features/settings/sync/state';
 import { useTheme } from '@/hooks/useTheme'
-import { useSync } from '@/hooks/useSync'
+import { useSync } from '@/features/library/useSync'
 import { useIsOffline } from '@/hooks/useIsOffline'
 import { useAccountSheet } from '@/contexts/AccountSheetContext'
 

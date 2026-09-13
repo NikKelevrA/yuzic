@@ -13,7 +13,7 @@ import { useApi } from '@/api';
 import { useAppActive } from '@/hooks/useAppActive';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { usePollWhile } from '@/hooks/usePollWhile';
-import { useSync } from '@/hooks/useSync';
+import { useSync } from '@/features/library/useSync';
 import { useDownloaderStates, type DownloaderState } from './registry';
 import { finishedSince, type DownloaderQueueItem } from './queueItem';
 import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';

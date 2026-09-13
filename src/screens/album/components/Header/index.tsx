@@ -16,7 +16,7 @@ import GetReviewSheet from '@/components/options/GetReviewSheet';
 import StatusBanner from '@/components/StatusBanner';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import DownloadStateIcon from '@/components/DownloadStateIcon';
-import { useCollectionDownloadProgress } from '@/hooks/useCollectionDownloadProgress';
+import { useCollectionDownloadProgress } from '@/features/downloads/useCollectionDownloadProgress';
 
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useDownload } from '@/contexts/DownloadContext';

@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 
-import { useNetworkType } from './useNetworkType';
+import { useNetworkType } from '@/hooks/useNetworkType';
 import { selectWifiStreamQuality, selectCellularStreamQuality, type AudioQuality } from '@/features/settings/playback/state';
 
 /**

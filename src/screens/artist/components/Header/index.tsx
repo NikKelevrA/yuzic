@@ -41,7 +41,7 @@ import {
 } from '@/components/DetailHeader';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import DownloadStateIcon from '@/components/DownloadStateIcon';
-import { useCollectionDownloadProgress } from '@/hooks/useCollectionDownloadProgress';
+import { useCollectionDownloadProgress } from '@/features/downloads/useCollectionDownloadProgress';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/hooks/useRadius';
 import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel';

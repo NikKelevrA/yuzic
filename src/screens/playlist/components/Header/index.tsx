@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { formatDuration } from '@/utils/formatDuration';
 import DownloadStateIcon from '@/components/DownloadStateIcon';
-import { useCollectionDownloadProgress } from '@/hooks/useCollectionDownloadProgress';
+import { useCollectionDownloadProgress } from '@/features/downloads/useCollectionDownloadProgress';
 import {
   DetailActionRow,
   DetailCircleAction,

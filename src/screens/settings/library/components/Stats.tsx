@@ -7,7 +7,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Eas
 import { useDispatch, useSelector } from 'react-redux';
 import { selectSyncOnAppStart, setSyncOnAppStart } from '@/features/settings/sync/state';
 import { useTheme } from '@/hooks/useTheme';
-import { useSync } from '@/hooks/useSync';
+import { useSync } from '@/features/library/useSync';
 import IconActionButton from '@/components/IconActionButton';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsInfoRow from '../../components/SettingsInfoRow';

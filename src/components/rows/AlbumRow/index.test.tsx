@@ -3,7 +3,7 @@ import { render } from '@testing-library/react-native';
 
 import AlbumRow, { isExternalAlbum } from './index';
 import type { Album } from '@/domain/entities/Album';
-import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
+import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -37,7 +37,7 @@ jest.mock('@/components/MediaListRow', () => {
   return MockMediaListRow;
 });
 
-jest.mock('@/hooks/useExternalAlbumStatus', () => ({
+jest.mock('@/features/downloaders/useExternalAlbumStatus', () => ({
   useExternalAlbumStatus: jest.fn(),
 }));
 

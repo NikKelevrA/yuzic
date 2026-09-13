@@ -121,7 +121,7 @@ jest.mock('@/hooks/starred', () => ({
   useUnstarAlbum: () => ({ mutateAsync: jest.fn() }),
 }));
 
-jest.mock('@/hooks/useExternalAlbumStatus', () => ({
+jest.mock('@/features/downloaders/useExternalAlbumStatus', () => ({
   useExternalAlbumStatus: jest.fn(() => ({ kind: 'none' })),
 }));
 
@@ -152,7 +152,7 @@ jest.mock('@/components/options/OptionSheetPrimitives', () => {
 const { useAnyAlbumDownloaderConnected } = jest.requireMock('@/features/downloaders/registry') as {
   useAnyAlbumDownloaderConnected: jest.Mock;
 };
-const { useExternalAlbumStatus } = jest.requireMock('@/hooks/useExternalAlbumStatus') as {
+const { useExternalAlbumStatus } = jest.requireMock('@/features/downloaders/useExternalAlbumStatus') as {
   useExternalAlbumStatus: jest.Mock;
 };
 

@@ -9,7 +9,7 @@ import {
   libraryScopePatch,
   type Library,
 } from '@/utils/servers/registry';
-import { useSync } from '@/hooks/useSync';
+import { useSync } from '@/features/library/useSync';
 import SettingsSelectCard from '../../components/SettingsSelectCard';
 
 const LibrarySelect: React.FC = () => {

@@ -13,7 +13,7 @@ import { useDownload } from '@/contexts/DownloadContext';
 import { useEnabledExternalSources } from '@/features/sources/registry';
 import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
 import { useStarredAlbums, useStarAlbum, useUnstarAlbum } from '@/hooks/starred';
-import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
+import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 import type { Album } from '@/domain/entities/Album';
 import { useLazyAlbumDetail } from '@/components/options/useLazyCollectionDetails';
 import { toggleFavorite } from '../shared/starActions';

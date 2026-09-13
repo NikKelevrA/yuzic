@@ -13,7 +13,7 @@ import IconActionButton from '@/components/IconActionButton';
 import MediaListRow from '@/components/MediaListRow';
 import { useTheme } from '@/hooks/useTheme';
 import { useSheetRef } from '@/utils/useSheetRef';
-import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
+import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 import { iconSize, spacing, statusColor, typography } from '@/constants/design';
 
 export type AlbumRowAlbum = Album;

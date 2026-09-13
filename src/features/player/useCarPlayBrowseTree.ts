@@ -20,7 +20,7 @@ import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import type { ApiAdapter } from '@/api/types';
-import { useStreamQuality } from './useStreamQuality';
+import { useStreamQuality } from '@/features/playback/useStreamQuality';
 import { selectPreferredCodec, type AudioQuality, type PreferredCodec } from '@/features/settings/playback/state';
 
 const CARPLAY_ALBUM_LIMIT = 50;

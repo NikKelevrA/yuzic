@@ -8,7 +8,7 @@ import Touchable from '@/components/Touchable';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { useTheme } from '@/hooks/useTheme';
 import { useRadius } from '@/hooks/useRadius';
-import { useResumableServerQueue } from '@/hooks/useResumableServerQueue';
+import { useResumableServerQueue } from '@/features/playback/useResumableServerQueue';
 /**
  * Shown at the top of Home when the server has a recent queue that this
  * session hasn't started. One tap resumes; the X dismisses for the session.

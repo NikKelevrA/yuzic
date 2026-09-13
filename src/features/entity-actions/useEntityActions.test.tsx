@@ -52,7 +52,7 @@ jest.mock('@/features/downloaders/registry', () => ({
   useAnyDownloaderConnected: () => false, useAnyTrackDownloaderConnected: () => false, useAnyAlbumDownloaderConnected: () => false,
 }));
 jest.mock('@/features/sources/registry', () => ({ useEnabledExternalSources: () => [] }));
-jest.mock('@/hooks/useExternalAlbumStatus', () => ({ useExternalAlbumStatus: () => ({ kind: 'none' }) }));
+jest.mock('@/features/downloaders/useExternalAlbumStatus', () => ({ useExternalAlbumStatus: () => ({ kind: 'none' }) }));
 jest.mock('@/hooks/artists', () => ({ useArtistAlbums: () => [] }));
 jest.mock('@/hooks/playlists', () => ({
   useDeletePlaylist: () => ({ mutateAsync: jest.fn(), isPending: false }),

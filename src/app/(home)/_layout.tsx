@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { useSync } from '@/hooks/useSync';
+import { useSync } from '@/features/library/useSync';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import { clearLibraryGenres } from '@/utils/redux/slices/librarySlice';
