@@ -569,9 +569,22 @@ src/features/           — feature-scoped modules that span providers
   audiomuse/            — Playlist generation from acoustic seed
 
 src/screens/            — one directory per top-level route
-src/state/redux/        — slices + selectors + store setup
+src/state/              — app state
+  credentials.ts        — keystore-backed secrets, never in Redux
+  redux/                — slices + selectors + store setup
 src/utils/playback/     — contentKind + Song-synthesis helpers
 ```
+
+Redux lives under `src/state/` rather than inside the features that read
+it, and that is deliberate rather than unfinished. Most of these slices are
+not feature-local: `serversSlice` is imported from roughly forty
+directories, `statsSlice` from eleven. Moving a slice into a feature would
+make every one of those directories reach through that feature's internals
+to read state it co-owns. The two that genuinely are feature-shaped
+(`searchHistorySlice`, `playbackSlice`) are not worth splitting out to
+leave the rest behind — one whole state layer is easier to follow than a
+half-moved one. What was wrong was the old address, `src/utils/redux`,
+which filed the app's state under miscellany.
 
 ## The four small unforced rules
 
