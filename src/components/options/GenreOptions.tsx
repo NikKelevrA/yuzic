@@ -29,6 +29,7 @@ import {
   optionSheetStyles,
   useOptionSheetBackground,
 } from './OptionSheetPrimitives';
+import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 
 export type GenreOptionsProps = {
   genre: string;
@@ -70,7 +71,7 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
   const { isDownloaded: isFullyDownloaded, isDownloading } = getCollectionDownloadState(genreTrackIds);
 
   const close = () => {
-    (ref as any)?.current?.dismiss();
+    dismissSheetRef(ref);
   };
 
   const fetchGenreSongs = async (): Promise<Song[]> => {

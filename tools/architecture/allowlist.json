@@ -143,9 +143,6 @@
   "shims": [],
   "unsafe": [
     "as-any src/api/mediaBrowser/adapter.ts",
-    "as-any src/api/slskd/downloads/index.ts",
-    "as-any src/components/AccountBottomSheet.tsx",
-    "as-any src/components/options/GenreOptions.tsx",
     "as-any src/screens/onboarding/libraries/index.tsx",
     "as-any src/screens/settings/library/components/LibrarySelect.tsx",
     "as-any src/utils/redux/store.ts",

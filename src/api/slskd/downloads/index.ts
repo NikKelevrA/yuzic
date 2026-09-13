@@ -82,9 +82,23 @@ function delay(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/**
+ * React Native's `crypto` is whatever the runtime provides, and `randomUUID`
+ * is present on Hermes with `expo-crypto` installed and absent otherwise —
+ * which is why this is a feature test rather than a call.
+ *
+ * Narrowed through a declared shape rather than `as any`. The cast said
+ * nothing about what was being assumed; this says exactly what is being looked
+ * for and keeps the return typed, so a runtime that grows a different
+ * `randomUUID` does not silently satisfy it.
+ */
+type MaybeRandomUuid = { randomUUID?: () => string };
+
 function randomUuid(): string {
-  if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) {
-    return (crypto as any).randomUUID();
+  const provider: MaybeRandomUuid | undefined =
+    typeof crypto !== 'undefined' ? crypto : undefined;
+  if (provider?.randomUUID) {
+    return provider.randomUUID();
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;

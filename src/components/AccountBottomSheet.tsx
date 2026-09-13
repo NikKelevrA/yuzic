@@ -17,6 +17,7 @@ import Touchable from '@/components/Touchable';
 import UserAvatar from '@/components/UserAvatar';
 import { controlSize, iconSize, radius, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/hooks/useRadius';
+import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 
 type Props = {
   onDismiss?: () => void;
@@ -41,7 +42,7 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
   const { pauseSong, resetQueue } = usePlayingActions();
 
   const cleanUrl = serverUrl?.replace(/^https?:\/\//, '');
-  const close = () => (ref as any)?.current?.dismiss();
+  const close = () => dismissSheetRef(ref);
 
   const handleSettings = () => {
     close();
