@@ -27,10 +27,8 @@ import {
 // convert into.
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
-import type { LocalId } from '@/domain/identity/LocalId';
 import {
   assertPlayable,
-  isPlayable,
   playableOnly,
   sameQueue,
   type PlayableResource,
@@ -41,12 +39,13 @@ import { buildTrackItem } from '@/utils/builders/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
-import { reconcileUnshuffledQueue, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment } from './playingQueue';
+import { reconcileUnshuffledQueue, resourcesFromPlayerQueue, QueueSegment, segmentAt } from './playingQueue';
 import { isRepeatLoop } from './repeatPlay';
 import { createTransportController } from './transportController';
 import { createQueueController } from './queueController';
 import { createAutoplayCoordinator, type AutoplayCoordinator } from './autoplayCoordinator';
 import { createPlaybackCoordinator } from './playbackCoordinator';
+import { createPlaybackStarters, type StartableCollection } from './playbackStarters';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
@@ -79,7 +78,6 @@ import {
 } from '@/utils/redux/selectors/playbackSelectors';
 import { selectActiveServerId as selectActiveServerIdSel, selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { useTracks } from '@/hooks/tracks';
-import { clampStartIndex, trimQueueAroundIndex } from './adhocQueue';
 import {
   backendRepeatMode,
   clampVolume,
@@ -106,10 +104,15 @@ export interface PlaybackProgress {
 /** An album or playlist together with the tracks to queue from it. */
 export type PlayableCollection = AlbumDetail | PlaylistDetail;
 
-function collectionSource(collection: PlayableCollection): { contextId: LocalId; contextType: 'album' | 'playlist' } {
+/**
+ * An album or playlist detail, as the starters want it: the tracks plus what
+ * context they came from. The starters take this rather than `AlbumDetail |
+ * PlaylistDetail` so they need not know the app's two detail shapes.
+ */
+function startable(collection: PlayableCollection): StartableCollection {
   return 'album' in collection
-    ? { contextId: collection.album.localId, contextType: 'album' }
-    : { contextId: collection.playlist.localId, contextType: 'playlist' };
+    ? { songs: collection.songs, contextId: collection.album.localId, contextType: 'album' }
+    : { songs: collection.songs, contextId: collection.playlist.localId, contextType: 'playlist' };
 }
 
 export interface PlayingStateType {
@@ -918,159 +921,52 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const { fillQueueIfLow, injectSmartShuffleTracks } = autoplay;
   useEffect(() => { fillQueueIfLowRef.current = fillQueueIfLow; }, [fillQueueIfLow]);
 
-  useEffect(() => { fillQueueIfLowRef.current = fillQueueIfLow; }, [fillQueueIfLow]);
 
+  /**
+   * The commands that begin playback live in `playbackStarters`. They agree on
+   * far more than they differ — resolve, settle shuffle, replace the queue and
+   * its segments, hand it over — and the shuffle snapshot in particular has a
+   * rule (taken before the shuffle, before the trim) that was written out
+   * three times here.
+   */
+  const starters = useMemo(() => createPlaybackStarters({
+    backend: getBackend,
+    queue: () => queueRef.current,
+    setQueue: resources => { queueRef.current = resources; },
+    segments: () => queueSegmentsRef.current,
+    setSegments: segments => { queueSegmentsRef.current = segments; },
+    setActive: (index, resource) => {
+      currentIndexRef.current = index;
+      setCurrentIndex(index);
+      currentSongRef.current = resource;
+      setCurrentSong(resource.song);
+    },
+    setShuffleMode,
+    setOriginalQueue: resources => { originalQueueRef.current = resources; },
+    resolvePlayableSong: song => resolvePlayableSongRef.current(song),
+    toMediaItems,
+    bumpQueue,
+    loadQueue: (resources, startIndex) => loadQueueRef.current(resources, startIndex),
+    now: Date.now,
+  }), [bumpQueue, toMediaItems]);
 
-  const playSong = useCallback(async (song: Song) => {
-    const resource = resolvePlayableSong(song);
-    if (!resource) throw new Error(`Track has no playable media URL: ${song.localId}`);
-    assertPlayable([resource]);
-    queueRef.current = [resource];
-    queueSegmentsRef.current = [{
-      startIndex: 0,
-      length: 1,
-      source: { kind: 'user', contextId: resource.song.localId, contextType: 'adhoc' },
-    }];
-    originalQueueRef.current = null;
-    setShuffleMode('off');
-    currentIndexRef.current = 0;
-    setCurrentIndex(0);
-    currentSongRef.current = resource;
-    setCurrentSong(resource.song);
-    bumpQueue();
-    await loadQueue([resource], 0);
-  }, [bumpQueue, loadQueue, resolvePlayableSong]);
+  const playSong = starters.playSong;
+  const playSongs = starters.playSongs;
 
-  const playSongs = useCallback(async (
-    input: Song[],
-    options: { startIndex?: number; shuffle?: boolean; contextId?: string } = {}
-  ) => {
-    // Library rows carry no stream URL — resolvePlayableSong derives one from
-    // the id, so this needs no per-track network call up front.
-    let resources = playableOnly(
-      input
-        .map(resolvePlayableSongRef.current)
-        .filter((resource): resource is PlayableResource => Boolean(resource))
-    );
-    if (!resources.length) throw new Error('No playable tracks in selection');
-
-    let index = clampStartIndex(resources.length, options.startIndex);
-
-    if (options.shuffle) {
-      // Shuffle the whole list before trimming, so the cap bounds the queue
-      // without bounding what the shuffle can draw from.
-      originalQueueRef.current = resources;
-      resources = shuffleArray(resources);
-      index = 0;
-      setShuffleMode('shuffle');
-    } else {
-      originalQueueRef.current = null;
-      setShuffleMode('off');
-    }
-
-    const trimmed = trimQueueAroundIndex(resources, index);
-    resources = trimmed.songs;
-    index = trimmed.index;
-
-    const contextId = options.contextId ?? `adhoc-${Date.now()}`;
-    queueRef.current = resources;
-    queueSegmentsRef.current = [{
-      startIndex: 0,
-      length: resources.length,
-      source: { kind: 'user', contextId, contextType: 'adhoc' },
-    }];
-    currentIndexRef.current = index;
-    setCurrentIndex(index);
-    currentSongRef.current = resources[index];
-    setCurrentSong(resources[index].song);
-    bumpQueue();
-    await loadQueue(resources, index);
-  }, [bumpQueue, loadQueue]);
-
-  const playSongInCollection = useCallback(async (
+  const playSongInCollection = useCallback((
     selectedSong: Song,
     collection: PlayableCollection,
     shuffle = false
-  ) => {
-    const { contextId, contextType } = collectionSource(collection);
-    let resources = playableOnly(
-      collection.songs
-        .map(resolvePlayableSong)
-        .filter((resource): resource is PlayableResource => Boolean(resource))
-    );
-    if (!resources.length) throw new Error(`Collection has no playable media URLs: ${contextId}`);
-    let index = 0;
-    const selectedResource = resolvePlayableSong(selectedSong);
-    if (!selectedResource || !isPlayable(selectedResource)) {
-      throw new Error(`Track has no playable media URL: ${selectedSong.localId}`);
-    }
-
-    if (shuffle) {
-      originalQueueRef.current = resources;
-      resources = shuffleArray(resources);
-      setShuffleMode('shuffle');
-    } else {
-      originalQueueRef.current = null;
-      index = resources.findIndex(resource => resource.song.localId === selectedSong.localId);
-      if (index === -1) index = 0;
-      setShuffleMode('off');
-    }
-
-    queueRef.current = resources;
-    queueSegmentsRef.current = [{
-      startIndex: 0,
-      length: resources.length,
-      source: { kind: 'user', contextId, contextType },
-    }];
-    currentIndexRef.current = index;
-    setCurrentIndex(index);
-    currentSongRef.current = resources[index];
-    setCurrentSong(resources[index].song);
-    bumpQueue();
-    await loadQueue(resources, index);
-  }, [bumpQueue, loadQueue, resolvePlayableSong]);
+  ) => starters.playCollection(selectedSong, startable(collection), shuffle), [starters]);
 
   const addCollectionToQueue = useCallback((collection: PlayableCollection) => {
-    const { contextId, contextType } = collectionSource(collection);
-    const existingIds = new Set(queueRef.current.map(resource => resource.song.localId));
-    const toAdd = playableOnly(
-      collection.songs
-        .filter(song => !existingIds.has(song.localId))
-        .map(resolvePlayableSong)
-        .filter((resource): resource is PlayableResource => Boolean(resource))
-    );
-    if (!toAdd.length) return;
-    const insertAt = queueRef.current.length;
-    queueRef.current = [...queueRef.current, ...toAdd];
-    queueSegmentsRef.current = tagSegment(queueSegmentsRef.current, insertAt, toAdd.length, {
-      kind: 'user',
-      contextId,
-      contextType,
-    });
-    getBackend().addMediaItems(toMediaItems(toAdd));
-    bumpQueue();
-  }, [bumpQueue, resolvePlayableSong, toMediaItems]);
+    starters.appendCollection(startable(collection), false);
+  }, [starters]);
 
   const shuffleCollectionToQueue = useCallback((collection: PlayableCollection) => {
-    const { contextId, contextType } = collectionSource(collection);
-    const existingIds = new Set(queueRef.current.map(resource => resource.song.localId));
-    const toAdd = shuffleArray(playableOnly(
-      collection.songs
-        .filter(song => !existingIds.has(song.localId))
-        .map(resolvePlayableSong)
-        .filter((resource): resource is PlayableResource => Boolean(resource))
-    ));
-    if (!toAdd.length) return;
-    const insertAt = queueRef.current.length;
-    queueRef.current = [...queueRef.current, ...toAdd];
-    queueSegmentsRef.current = tagSegment(queueSegmentsRef.current, insertAt, toAdd.length, {
-      kind: 'user',
-      contextId,
-      contextType,
-    });
-    getBackend().addMediaItems(toMediaItems(toAdd));
-    bumpQueue();
-  }, [bumpQueue, resolvePlayableSong, toMediaItems]);
+    starters.appendCollection(startable(collection), true);
+  }, [starters]);
+
 
   /**
    * Transport lives in `transportController`, which is where the rule about
