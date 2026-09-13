@@ -1,4 +1,36 @@
-import type { SectionConfig } from './hooks/useDailyLayout'
+/**
+ * What a Home shelf is, before anything decides whether to show it.
+ *
+ * Declared here, with the builders that produce them, rather than in the hook
+ * that consumes them: the hook imported the builders and the builders imported
+ * this type back, which was the app's last import cycle. A type describing the
+ * output of these functions belongs beside them.
+ */
+export type SectionType =
+  | 'quickPicks'
+  | 'recentlyPlayed'
+  | 'continuePlaying'
+  | 'recentlyAdded'
+  | 'becauseYouListened'
+  | 'topArtists'
+  | 'mostPlayed'
+  | 'charts'
+  | 'genre'
+  | 'serverRandom'
+  | 'serverNowPlaying'
+  | 'localMix'
+  | 'lbSimilarArtistsForYou'
+  | 'lbCreatedFor'
+
+export type SectionConfig = {
+  key: string
+  type: SectionType
+  artistName?: string
+  genre?: string
+  /** lbCreatedFor only — which of the three periodic mixes this shelf is. */
+  mixType?: 'daily-jams' | 'weekly-jams' | 'weekly-exploration'
+}
+
 
 /**
  * Which tier each home section belongs to.

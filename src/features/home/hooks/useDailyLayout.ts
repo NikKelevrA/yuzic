@@ -10,36 +10,13 @@ import {
   buildDiscoverySections,
   buildLibrarySections,
   buildResumeSections,
+  type SectionConfig,
+  type SectionType,
 } from '../homeLayout'
 
 const BECAUSE_SEED_COUNT = 1
 const BECAUSE_SEED_POOL_SIZE = 20
 const GENRE_COUNT = 1
-
-export type SectionType =
-  | 'quickPicks'
-  | 'recentlyPlayed'
-  | 'continuePlaying'
-  | 'recentlyAdded'
-  | 'becauseYouListened'
-  | 'topArtists'
-  | 'mostPlayed'
-  | 'charts'
-  | 'genre'
-  | 'serverRandom'
-  | 'serverNowPlaying'
-  | 'localMix'
-  | 'lbSimilarArtistsForYou'
-  | 'lbCreatedFor'
-
-export type SectionConfig = {
-  key: string
-  type: SectionType
-  artistName?: string
-  genre?: string
-  /** lbCreatedFor only — which of the three periodic mixes this shelf is. */
-  mixType?: 'daily-jams' | 'weekly-jams' | 'weekly-exploration'
-}
 
 export function getDayKey(date = new Date()): string {
   return date.toDateString()

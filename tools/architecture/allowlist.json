@@ -1,7 +1,5 @@
 {
-  "cycles": [
-    "features/home/homeLayout.ts -> features/home/hooks/useDailyLayout.ts"
-  ],
+  "cycles": [],
   "file-shape": [
     "src/api/lidarr/albums/index.ts",
     "src/components/DetailHeader.tsx",
@@ -549,7 +547,6 @@
     "src/features/downloaders/registry.ts - DownloaderDefinition (used in module)",
     "src/features/downloaders/registry.ts - TrackDownloadRequest (used in module)",
     "src/features/home/hooks/useDailyLayout.ts - HomeLayout (used in module)",
-    "src/features/home/hooks/useDailyLayout.ts - SectionType (used in module)",
     "src/features/library/catalogQueries.ts - CatalogResource (used in module)",
     "src/features/library/catalogSync.ts - CatalogSyncResult (used in module)",
     "src/features/library/catalogSync.ts - ServerStat (used in module)",
