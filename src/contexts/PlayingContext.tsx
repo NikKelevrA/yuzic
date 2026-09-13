@@ -33,7 +33,6 @@ import {
   isPlayable,
   playableOnly,
   sameQueue,
-  sourceKind,
   type PlayableResource,
 } from '@/features/playback/playableResource';
 import shuffleArray from '@/utils/shuffleArray';
@@ -45,7 +44,7 @@ import { useTranslation } from 'react-i18next';
 import { moveSongAfterCurrent, reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment, shiftSegmentsAfterInsert } from './playingQueue';
 import { isRepeatLoop } from './repeatPlay';
 import { createTransportController } from './transportController';
-import { resolvePlaybackErrorAction } from './playbackErrorRecovery';
+import { createPlaybackEventHandlers } from './playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
 import { ownsPlayback } from '@/features/player/playbackSink';
@@ -354,7 +353,6 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const isPlayingRef = useRef(false);
   const isShufflingRef = useRef(false);
   const isFillingRef = useRef(false);
-  const lastPlaybackErrorAtRef = useRef(0);
   const providersRef = useRef<QueueFillProvider[]>([]);
   const fillQueueIfLowRef = useRef<() => Promise<void>>(async () => {});
 
@@ -681,87 +679,40 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // forever. `localId` rather than `nativeId`: a queue can hold tracks from
   // more than one origin, and two origins can both call something the same
   // native id.
-  const lastRecoveryAttemptedIdRef = useRef<string | null>(null);
-  // Stalls resumed for the current song, so a connection that will never serve
-  // it cannot loop. Reset when the song changes.
-  const stallResumesRef = useRef<{ songId: string | null; count: number }>({ songId: null, count: 0 });
+  /**
+   * Failure handling lives in `playbackEvents`, which owns both the decision's
+   * enactment and the three pieces of memory it needs — what has already been
+   * retried, how many stalls this song has spent, when the last toast was.
+   * Those existed as provider refs among forty others and were reachable by
+   * anything; nothing but this uses them.
+   */
+  const playbackEvents = useMemo(() => createPlaybackEventHandlers({
+    backend: getBackend,
+    currentResource: () => currentSongRef.current,
+    queue: () => queueRef.current,
+    currentIndex: () => currentIndexRef.current,
+    refreshResource: song => resolvePlayableSongRef.current(song),
+    toMediaItems,
+    replaceQueue: resources => { queueRef.current = resources; },
+    setCurrentResource: resource => {
+      currentSongRef.current = resource;
+      if (resource) setCurrentSong(resource.song);
+    },
+    removeFailedCurrentTrack: () => removeFailedCurrentTrackRef.current(),
+    notifyError: () => notify.error(t('common.playbackError')),
+    logFailure: info => console.warn('Playback failed', info),
+    now: Date.now,
+  }), [t, toMediaItems]);
+
+  const playbackEventsRef = useRef(playbackEvents);
+  useEffect(() => { playbackEventsRef.current = playbackEvents; }, [playbackEvents]);
 
   useEffect(() => {
-    const unsubscribe = getBackend().addListener(event => {
+    return getBackend().addListener(event => {
       if (event.type !== 'error') return;
-      const resource = currentSongRef.current;
-      const song = resource?.song;
-      console.warn('Playback failed', {
-        code: event.code,
-        message: event.message,
-        songId: song?.nativeId,
-        title: song?.title,
-        source: sourceKind(resource),
-        provenance: song?.provenance,
-      });
-
-      const now = Date.now();
-
-      // Preview URLs (Deezer etc.) can't be refreshed — remove immediately.
-      if (song?.contentKind === 'preview') {
-        removeFailedCurrentTrackRef.current();
-        return;
-      }
-
-      // Where playback had reached. A failure at 57 seconds into a track is a
-      // stream that stalled, not a track that cannot be played, and the two
-      // want opposite responses: resume in place, versus rebuild and drop.
-      const positionSeconds = getBackend().getProgress().position;
-      const resourceLocalId = song?.localId ?? null;
-      if (stallResumesRef.current.songId !== resourceLocalId) {
-        stallResumesRef.current = { songId: resourceLocalId, count: 0 };
-      }
-
-      // First failure for this specific track: refresh every URL in the queue
-      // (catches stale Navidrome tokens after JS context restarts) then retry.
-      const decision = resolvePlaybackErrorAction(
-        lastRecoveryAttemptedIdRef.current,
-        song?.localId,
-        { positionSeconds, stallCount: stallResumesRef.current.count }
-      );
-
-      // A stall: put it back where it was rather than starting the track over.
-      // Restarting is what made the same minute of a song play twice before
-      // the track was removed as unplayable.
-      if (decision.action === 'resume') {
-        stallResumesRef.current = {
-          songId: resourceLocalId,
-          count: decision.nextStallCount,
-        };
-        getBackend().seekTo(decision.positionSeconds);
-        getBackend().play();
-        return;
-      }
-
-      if (decision.action === 'retry') {
-        lastRecoveryAttemptedIdRef.current = decision.nextLastRecoveryAttemptedId;
-        const freshQueue = queueRef.current
-          .map(r => resolvePlayableSongRef.current(r.song))
-          .filter((r): r is PlayableResource => Boolean(r));
-        queueRef.current = freshQueue;
-        currentSongRef.current = freshQueue[currentIndexRef.current] ?? resource ?? null;
-        if (currentSongRef.current) setCurrentSong(currentSongRef.current.song);
-        getBackend().setMediaItems(toMediaItems(freshQueue), currentIndexRef.current);
-        getBackend().play();
-        return;
-      }
-
-      // This track failed again after a retry — URL refresh didn't help, genuine failure.
-      if (now - lastPlaybackErrorAtRef.current > 1500) {
-        lastPlaybackErrorAtRef.current = now;
-        notify.error(t('common.playbackError'));
-      }
-
-      removeFailedCurrentTrackRef.current();
+      playbackEventsRef.current.onError(event);
     });
-
-    return unsubscribe;
-  }, [t, toMediaItems]);
+  }, []);
 
   useEffect(() => {
     return getBackend().addListener(event => {
@@ -819,7 +770,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     // A media item is only reported active once it's actually playing, so this
     // track is no longer in the "just retried once" state from the error handler.
-    lastRecoveryAttemptedIdRef.current = null;
+    playbackEventsRef.current.onTrackStarted();
 
     const prev = currentSongRef.current;
     if (prev && prev.song.localId !== mediaId) {

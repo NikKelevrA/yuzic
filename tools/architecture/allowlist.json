@@ -492,7 +492,6 @@
     "src/contexts/autoplayFill.ts - FillRequest (used in module)",
     "src/contexts/autoplayFill.ts - FillTrigger (used in module)",
     "src/contexts/playbackErrorRecovery.ts - PlaybackErrorAction (used in module)",
-    "src/contexts/playbackErrorRecovery.ts - STALL_MIN_POSITION_SEC (used in module)",
     "src/contexts/playingPolicies.ts - BackendRepeatMode (used in module)",
     "src/contexts/playingPolicies.ts - RepeatMode (used in module)",
     "src/contexts/playingQueue.ts - PlayNextQueueUpdate (used in module)",
