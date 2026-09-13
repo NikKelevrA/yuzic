@@ -2,7 +2,7 @@ import type { Album } from '@/domain/entities/Album';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { CoverSource } from '@/types';
 
-export type LocalArtistSummary = {
+type LocalArtistSummary = {
   /** On-device identity — used for React keys and dedup against other shelves. */
   localId: LocalId;
   /** The artist's id at the origin — used to navigate to the artist screen. */
@@ -53,4 +53,20 @@ export function findArtistsWithSharedGenres(
     .sort((a, b) => b.overlap - a.overlap)
     .slice(0, limit)
     .map(candidate => artistMeta.get(candidate.localId)!);
+}
+
+/**
+ * Drops server-similar entries that the local-similar shelf already covers.
+ *
+ * Both usually surface the same shared-genre neighbours, and showing two
+ * identical rows for the same artist is worse than showing one — the
+ * server-native shelf loses the tie since local-similar is the cheaper,
+ * always-available signal.
+ */
+export function dedupeServerSimilar<T extends { localId: LocalId }>(
+  serverSimilar: readonly T[],
+  localSimilar: readonly { localId: LocalId }[]
+): T[] {
+  const localIds = new Set(localSimilar.map(a => a.localId));
+  return serverSimilar.filter(a => !localIds.has(a.localId));
 }

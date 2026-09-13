@@ -15,7 +15,6 @@ import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
 import { MediaImage } from '@/components/MediaImage';
 import ArtistOptions from '@/components/options/ArtistOptions';
-import type { SourceArtistDetail } from '@/features/sources/registry';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
@@ -45,15 +44,15 @@ import DownloadStateIcon from '@/components/DownloadStateIcon';
 import { useCollectionDownloadProgress } from '@/hooks/useCollectionDownloadProgress';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/hooks/useRadius';
-import { useArtworkEnrichment } from '@/features/metadata/useArtworkEnrichment';
+import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel';
+import { metadataSourceNameKey } from '@/providers/registry/enrichmentBroker';
 
 type Props = {
-  localArtist: Artist | null;
-  externalArtist: SourceArtistDetail | null;
+  model: ArtistScreenModel;
   showNavigation?: boolean;
 };
 
-const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNavigation = true }) => {
+const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const { isDarkMode, colors } = useTheme();
@@ -64,21 +63,21 @@ const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNaviga
   const barInset = useDetailHeaderInset();
   const onTitleLayout = useDetailHeroTitleLayout();
 
-  const displayName = localArtist?.name ?? externalArtist?.artist.name ?? '';
-  const serverCover = localArtist?.cover ?? externalArtist?.artist.cover ?? { kind: 'none' as const };
-  const artistMbid = localArtist?.externalIds.mbid ?? externalArtist?.artist.externalIds?.mbid ?? null;
-
-  // `metadata.enrich` (artwork half, GAPS ONLY — see features/metadata): only
-  // consulted when the server/Deezer artist has no cover of its own, and a
-  // no-op the instant every artwork source is disabled — at which point this
-  // falls straight back to `serverCover` (the placeholder), restoring the
-  // pre-enrichment view with nothing left behind.
-  const { cover: enrichedCover, sourceLabel: enrichedArtworkSource } = useArtworkEnrichment({
-    name: displayName,
-    mbid: artistMbid,
-    hasOwnArtwork: serverCover.kind !== 'none',
-  });
-  const displayCover = serverCover.kind !== 'none' ? serverCover : enrichedCover ?? serverCover;
+  const { artist, isLocal, resolved, counts } = model;
+  const displayName = artist?.name ?? '';
+  // The artist's own cover is authoritative — `resolveArtistDetails`
+  // (Phase 5 enrichment) is only ever consulted for the gap, so its result
+  // is used only when the artist itself has none. Its result is also `null`
+  // both while enrichment is off and while it hasn't settled yet, so this
+  // never flashes a wrong cover ahead of the real one, same "disabling
+  // restores the server view" guarantee the old fetcher-based
+  // `useArtworkEnrichment` had.
+  const hasOwnCover = artist ? artist.cover.kind !== 'none' : true;
+  const displayCover = hasOwnCover ? (artist?.cover ?? { kind: 'none' as const }) : (resolved?.cover.value ?? { kind: 'none' as const });
+  const showsEnrichedArtworkLine = !hasOwnCover && !!resolved && resolved.cover.value.kind !== 'none';
+  const enrichedArtworkSourceNameKey = showsEnrichedArtworkLine
+    ? metadataSourceNameKey(resolved!.cover.sourceId)
+    : null;
 
   const coverUri = buildCover(displayCover, 'background');
 
@@ -136,8 +135,8 @@ const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNaviga
             >
               <ChevronLeft size={iconSize.header} color={onDark.text} style={{ marginLeft: -2 }} />
             </Touchable>
-            {localArtist ? (
-              <LocalOptionsButton artist={localArtist} />
+            {isLocal && artist ? (
+              <LocalOptionsButton artist={artist} />
             ) : (
               <View style={{ width: 36 }} />
             )}
@@ -155,30 +154,26 @@ const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNaviga
           >
             {displayName}
           </Text>
-          {localArtist ? (
-            <LocalMetaRow artist={localArtist} />
-          ) : (
-            <ExternalMetaRow artist={externalArtist!} />
-          )}
-          {serverCover.kind === 'none' && enrichedCover && enrichedArtworkSource && (
+          <MetaRow isLocal={isLocal} counts={counts} />
+          {enrichedArtworkSourceNameKey && (
             <Text style={[styles.artworkSourceLine, { color: colors.subtext }]}>
-              {t('artist.enrichedArtworkSource', { source: enrichedArtworkSource })}
+              {t('artist.enrichedArtworkSource', { source: t(enrichedArtworkSourceNameKey) })}
             </Text>
           )}
         </View>
       </View>
 
-      {localArtist ? <LocalActionRow artist={localArtist} /> : null}
+      {isLocal && artist ? <LocalActionRow artist={artist} /> : null}
     </>
   );
 };
 
-export const ArtistHeaderBar: React.FC<Props> = ({ localArtist, externalArtist }) => {
-  const displayName = localArtist?.name ?? externalArtist?.artist.name ?? '';
+export const ArtistHeaderBar: React.FC<Props> = ({ model }) => {
+  const displayName = model.artist?.name ?? '';
   return (
     <DetailHeaderBar
       title={displayName}
-      rightAction={localArtist ? <LocalOptionsButton artist={localArtist} /> : undefined}
+      rightAction={model.isLocal && model.artist ? <LocalOptionsButton artist={model.artist} /> : undefined}
     />
   );
 };
@@ -200,52 +195,26 @@ function LocalOptionsButton({ artist }: { artist: Artist }) {
   );
 }
 
-function LocalMetaRow({ artist }: { artist: Artist }) {
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-  const artistAlbums = useArtistAlbums(artist.nativeId);
-  const { tracks: allTracks } = useTracks();
-  const artistTrackIds = useMemo(
-    () => allTracks.filter(track => track.artist.localId === artist.localId).map(track => track.localId),
-    [allTracks, artist.localId]
-  );
-
-  const metadataItems = useMemo(() => {
-    const albumCount = artistAlbums.length;
-    const songCount = artistTrackIds.length;
-    const items = [`${albumCount} ${albumCount === 1 ? t('common.album') : t('common.albums')}`];
-    if (songCount > 0) {
-      items.push(`${songCount} ${songCount === 1 ? t('common.song') : t('common.songs')}`);
-    }
-    return items;
-  }, [artistAlbums.length, artistTrackIds.length, t]);
-
-  return (
-    <View style={styles.metaRow}>
-      {metadataItems.map((item, index) => (
-        <React.Fragment key={`${item}-${index}`}>
-          {index > 0 && <Text style={[styles.metaDot, { color: colors.subtext }]}>•</Text>}
-          <Text style={[styles.metaText, { color: colors.subtext }]} numberOfLines={1}>
-            {item}
-          </Text>
-        </React.Fragment>
-      ))}
-    </View>
-  );
-}
-
-function ExternalMetaRow({ artist }: { artist: SourceArtistDetail }) {
+/**
+ * One meta row for both modes — the local/external split used to live as
+ * two near-identical components (`LocalMetaRow`/`ExternalMetaRow`), each
+ * re-deriving the same album/song counts the screen model now computes
+ * once (`counts`).
+ */
+function MetaRow({ isLocal, counts }: { isLocal: boolean; counts: ArtistScreenModel['counts'] }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const metadataItems = useMemo(() => {
     const items: string[] = [];
-    const albumCount = artist.albums.length + artist.singles.length;
-    if (albumCount > 0) {
-      items.push(`${albumCount} ${albumCount === 1 ? t('common.album') : t('common.albums')}`);
+    if (isLocal || counts.albums > 0) {
+      items.push(`${counts.albums} ${counts.albums === 1 ? t('common.album') : t('common.albums')}`);
+    }
+    if (isLocal && counts.songs > 0) {
+      items.push(`${counts.songs} ${counts.songs === 1 ? t('common.song') : t('common.songs')}`);
     }
     return items;
-  }, [artist.albums.length, artist.singles.length, t]);
+  }, [isLocal, counts.albums, counts.songs, t]);
 
   return (
     <View style={styles.metaRow}>

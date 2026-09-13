@@ -11,7 +11,6 @@ import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { makeLocalId } from '@/domain/identity/LocalId';
-import { firstResolvableCover } from '@/types/Cover';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import GetReviewSheet from '@/components/options/GetReviewSheet';
 import StatusBanner from '@/components/StatusBanner';
@@ -26,8 +25,8 @@ import { useSheetRef } from '@/utils/useSheetRef';
 import { formatDuration } from '@/utils/formatDuration';
 import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
-import { useExternalAlbumPreviews } from '@/hooks/albums/useExternalAlbumPreviews';
-import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
+import { playableSongs } from '@/features/album/trackPlayability';
+import type { AlbumScreenModel } from '@/features/album/useAlbumScreenModel';
 import {
   DetailActionRow,
   DetailCircleAction,
@@ -42,10 +41,7 @@ import {
 import Touchable from '@/components/Touchable';
 
 type Props = {
-  localAlbum: Album | null;
-  localSongs?: Song[];
-  externalAlbum: Album | null;
-  externalSongs?: Song[];
+  model: AlbumScreenModel;
   showNavigation?: boolean;
 };
 
@@ -53,32 +49,36 @@ function isCountLikeAlbumText(value?: string | null): boolean {
   return /^\s*\d+\s+albums?\s*$/i.test(value ?? '');
 }
 
-const AlbumHeader: React.FC<Props> = ({ localAlbum, localSongs = [], externalAlbum, externalSongs = [], showNavigation = true }) => {
-  // `localAlbum.cover ?? externalAlbum?.cover` looks equivalent but is not:
-  // `{ kind: 'none' }` is a value, not an absence (see `hasCoverImage`), so a
-  // plain `??` chain never falls through it to try the external cover.
-  const displayTitle = localAlbum?.title ?? externalAlbum?.title ?? '';
-  const displayCover = firstResolvableCover(localAlbum?.cover, externalAlbum?.cover) ?? { kind: 'none' as const };
+const AlbumHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
+  const { album, isLocal, resolved, songs } = model;
+  const displayTitle = album?.title ?? '';
+  const hasOwnCover = album ? album.cover.kind !== 'none' : true;
+  // The album's own cover always wins — `resolveAlbumDetails` (Phase 5
+  // enrichment) is only ever consulted for the gap, and its result is
+  // `null` both while it's off and while it hasn't settled — either way
+  // this falls back to the bare `album.cover`, so nothing flashes a wrong
+  // cover ahead of the real one.
+  const displayCover = hasOwnCover ? (album?.cover ?? { kind: 'none' as const }) : (resolved?.cover.value ?? { kind: 'none' as const });
 
   return (
     <DetailHeader
       title={displayTitle}
       cover={displayCover}
-      rightAction={localAlbum ? <LocalOptionsButton album={localAlbum} /> : undefined}
-      meta={localAlbum ? <LocalMetaRow album={localAlbum} songs={localSongs} /> : <ExternalMetaRow album={externalAlbum!} songs={externalSongs} />}
-      status={!localAlbum ? <ExternalServerStatusRow album={externalAlbum!} /> : undefined}
-      actions={localAlbum ? <LocalActionRow album={localAlbum} songs={localSongs} /> : <ExternalActionRow album={externalAlbum!} songs={externalSongs} />}
+      rightAction={isLocal && album ? <LocalOptionsButton album={album} /> : undefined}
+      meta={isLocal ? <LocalMetaRow album={album} songs={songs} /> : <ExternalMetaRow album={album} songs={songs} />}
+      status={!isLocal ? <ExternalServerStatusRow model={model} /> : undefined}
+      actions={isLocal ? <LocalActionRow model={model} /> : <ExternalActionRow model={model} />}
       showNavigation={showNavigation}
     />
   );
 };
 
-export const AlbumHeaderBar: React.FC<Props> = ({ localAlbum, externalAlbum }) => {
-  const displayTitle = localAlbum?.title ?? externalAlbum?.title ?? '';
+export const AlbumHeaderBar: React.FC<Props> = ({ model }) => {
+  const displayTitle = model.album?.title ?? '';
   return (
     <DetailHeaderBar
       title={displayTitle}
-      rightAction={localAlbum ? <LocalOptionsButton album={localAlbum} /> : undefined}
+      rightAction={model.isLocal && model.album ? <LocalOptionsButton album={model.album} /> : undefined}
     />
   );
 };
@@ -100,7 +100,7 @@ function LocalOptionsButton({ album }: { album: Album }) {
   );
 }
 
-function LocalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
+function LocalMetaRow({ album, songs }: { album: Album | null; songs: Song[] }) {
   const navigation = useNavigation<any>();
 
   const totalDuration = useMemo(
@@ -110,6 +110,7 @@ function LocalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
 
   const metadataItems = useMemo(() => {
     const items: { label: string; type: 'artist' | 'genre' | 'info' }[] = [];
+    if (!album) return items;
     if (album.artist.name) items.push({ label: album.artist.name, type: 'artist' });
     const genre = album.genres?.[0]?.trim();
     if (genre) items.push({ label: genre, type: 'genre' });
@@ -120,11 +121,13 @@ function LocalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
       items.push({ label: formatDuration(totalDuration), type: 'info' });
     }
     return items;
-  }, [album.artist.name, album.genres, album.year, songs.length, totalDuration]);
+  }, [album, songs.length, totalDuration]);
 
   const handleGenrePress = useCallback((genre: string) => {
     navigation.push('genreView', { genre });
   }, [navigation]);
+
+  if (!album) return null;
 
   return (
     <DetailMetaRow>
@@ -148,22 +151,24 @@ function LocalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
   );
 }
 
-function ExternalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
+function ExternalMetaRow({ album, songs }: { album: Album | null; songs: Song[] }) {
   const { t } = useTranslation();
   const { navigateToArtist } = useMatchedNavigation();
 
   const metadataItems = useMemo(() => {
     const items: string[] = [];
+    if (!album) return items;
     if (album.artist.name && !isCountLikeAlbumText(album.artist.name)) items.push(album.artist.name);
     if (songs.length > 0) items.push(t('externalAlbum.header.songs', { count: songs.length }));
     return [...new Set(items.map(item => item.trim()).filter(Boolean))];
-  }, [album.artist.name, songs.length, t]);
+  }, [album, songs.length, t]);
 
   // The artist reference carried on the album is a thin `ArtistRef`, not a
   // full domain `Artist` — this builds a minimal-but-valid one to navigate
   // with, taking provenance/libraryState from the album itself since the
   // referenced artist has no record of its own here.
   const handleNavigateToArtist = useCallback(() => {
+    if (!album) return;
     navigateToArtist({
       localId: album.artist.localId,
       nativeId: album.artist.nativeId,
@@ -176,6 +181,8 @@ function ExternalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
       albumIds: [],
     });
   }, [album, navigateToArtist]);
+
+  if (!album) return null;
 
   return (
     <DetailMetaRow>
@@ -195,9 +202,9 @@ function ExternalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
   );
 }
 
-function ExternalServerStatusRow({ album }: { album: Album }) {
+function ExternalServerStatusRow({ model }: { model: AlbumScreenModel }) {
   const { t } = useTranslation();
-  const albumStatus = useExternalAlbumStatus(album);
+  const albumStatus = model.externalStatus;
 
   if (albumStatus.kind === 'none') return null;
 
@@ -221,11 +228,12 @@ function ExternalServerStatusRow({ album }: { album: Album }) {
   );
 }
 
-function LocalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
+function LocalActionRow({ model }: { model: AlbumScreenModel }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { playSongInCollection } = usePlayingActions();
   const { downloadAlbumById, cancelCollectionDownloads, getCollectionDownloadState } = useDownload();
+  const { album, songs } = model;
 
   const songIds = useMemo(() => songs.map(s => s.localId), [songs]);
   const { isDownloaded: isAlbumDownloaded, isDownloading: isAlbumDownloading } =
@@ -233,20 +241,21 @@ function LocalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
   const downloadFraction = useCollectionDownloadProgress(songIds);
 
   const toggleDownload = useCallback(async () => {
+    if (!album) return;
     if (isAlbumDownloading) {
       await cancelCollectionDownloads(album.nativeId);
       return;
     }
     if (!songs.length || isAlbumDownloaded) return;
     await downloadAlbumById(album.nativeId, songs);
-  }, [songs, isAlbumDownloading, isAlbumDownloaded, downloadAlbumById, cancelCollectionDownloads, album.nativeId]);
+  }, [album, songs, isAlbumDownloading, isAlbumDownloaded, downloadAlbumById, cancelCollectionDownloads]);
 
   const handlePlay = useCallback(() => {
-    if (songs.length > 0) playSongInCollection(songs[0], { album, songs }, false);
+    if (album && songs.length > 0) playSongInCollection(songs[0], { album, songs }, false);
   }, [songs, album, playSongInCollection]);
 
   const handleShuffle = useCallback(() => {
-    if (songs.length > 0) playSongInCollection(songs[0], { album, songs }, true);
+    if (album && songs.length > 0) playSongInCollection(songs[0], { album, songs }, true);
   }, [songs, album, playSongInCollection]);
 
   return (
@@ -280,23 +289,15 @@ function LocalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
   );
 }
 
-function ExternalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
+function ExternalActionRow({ model }: { model: AlbumScreenModel }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const canDownload = useAnyAlbumDownloaderConnected();
   const { playSongInCollection } = usePlayingActions();
-  const albumStatus = useExternalAlbumStatus(album);
-  const previews = useExternalAlbumPreviews(album, songs);
+  const { album, songs, playability, externalStatus: albumStatus } = model;
   const downloadSheetRef = useSheetRef();
 
-  // `streamId` is the slot every adapter uses to carry "the id to build a
-  // stream from where that isn't `nativeId`" (see `Song.streamId`) — a
-  // preview's playable resource *is* its resolved URL, so this attaches it
-  // the same way `usePreviewPlayer`'s `attachPreviewUrl` does.
-  const previewSongs = useMemo<Song[]>(
-    () => songs.filter(s => !!previews[s.nativeId]).map(s => ({ ...s, streamId: previews[s.nativeId] })),
-    [songs, previews]
-  );
+  const previewSongs = useMemo(() => playableSongs(songs, playability), [songs, playability]);
 
   // There is no real playlist behind "play the previews we could resolve" —
   // it's a transient queue seed, not a server object — so this builds a
@@ -304,7 +305,8 @@ function ExternalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
   // external album's own provenance since that's the only origin these
   // preview tracks have. Mirrors the equivalent build in
   // `components/options/ArtistOptions`.
-  const previewCollection = useMemo<{ playlist: Playlist; songs: Song[] }>(() => {
+  const previewCollection = useMemo<{ playlist: Playlist; songs: Song[] } | null>(() => {
+    if (!album) return null;
     const provenance = album.provenance;
     const playlist: Playlist = {
       localId: makeLocalId('playlist', provenance, `preview-${album.nativeId}`),
@@ -321,7 +323,7 @@ function ExternalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
   }, [album, previewSongs]);
 
   const handlePlay = useCallback(() => {
-    if (!previewSongs.length) return;
+    if (!previewSongs.length || !previewCollection) return;
     playSongInCollection(previewSongs[0], previewCollection);
   }, [previewSongs, previewCollection, playSongInCollection]);
 
@@ -329,6 +331,8 @@ function ExternalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
     if (!canDownload || albumStatus.kind !== 'none') return;
     downloadSheetRef.current?.present();
   }, [canDownload, albumStatus.kind, downloadSheetRef]);
+
+  if (!album) return null;
 
   return (
     <>

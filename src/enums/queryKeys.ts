@@ -48,6 +48,11 @@ export enum QueryKeys {
 	LocalArtistExternalDiscography = 'local-artist-external-discography',
 	MetadataArtistInfo = 'metadata-artist-info',
 	MetadataArtwork = 'metadata-artwork',
+	/** `resolveArtistDetails`/`resolveAlbumDetails` (Phase 5's broker-based
+	 * enrichment) — the screen-model resolution keys, distinct from the
+	 * fetcher-based `MetadataArtistInfo`/`MetadataArtwork` keys above. */
+	ArtistDetailsResolution = 'artist-details-resolution',
+	AlbumDetailsResolution = 'album-details-resolution',
 	/** Local-first daily mix: play-stats seed + server-native similarity, zero
 	 * external calls (see LocalMixSection). */
 	LocalMix = 'local-mix',

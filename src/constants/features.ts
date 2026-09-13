@@ -1,5 +1,3 @@
-export const ALBUM_EXTERNAL_HORIZONTAL_PADDING = 16;
-
 import { statusColor } from './design';
 
 export const PLAYING_ARTIST_CARD_HEIGHT = 280;

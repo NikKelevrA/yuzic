@@ -80,23 +80,11 @@ interface MetadataRootState {
   settingsMetadata: MetadataSettingsState;
 }
 
-export const selectEnabledMetadataArtistInfoSourcesInOrder = (state: MetadataRootState): string[] => {
-  const order = state.settingsMetadata.metadataArtistInfoOrder;
-  const enabled = state.settingsMetadata.metadataArtistInfoEnabled;
-  return order.filter(sourceId => enabled[sourceId]);
-};
-
 export const selectMetadataArtistInfoOrder = (state: MetadataRootState): string[] =>
   state.settingsMetadata.metadataArtistInfoOrder;
 
 export const selectMetadataArtistInfoSourceEnabled = (sourceId: string) =>
   (state: MetadataRootState): boolean => state.settingsMetadata.metadataArtistInfoEnabled?.[sourceId] ?? false;
-
-export const selectEnabledMetadataArtworkSourcesInOrder = (state: MetadataRootState): string[] => {
-  const order = state.settingsMetadata.metadataArtworkOrder;
-  const enabled = state.settingsMetadata.metadataArtworkEnabled;
-  return order.filter(sourceId => enabled[sourceId]);
-};
 
 export const selectMetadataArtworkOrder = (state: MetadataRootState): string[] =>
   state.settingsMetadata.metadataArtworkOrder;

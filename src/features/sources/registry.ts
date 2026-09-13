@@ -1,4 +1,6 @@
 import { useSelector } from 'react-redux'
+import { useQuery } from '@tanstack/react-query'
+import { QueryKeys } from '@/enums/queryKeys'
 import {
   resolveDeezerAlbum,
   resolveDeezerArtistByName,
@@ -7,6 +9,8 @@ import {
   getDeezerArtistAlbums,
   getDeezerArtistTopTracks,
   getDeezerRelatedArtists,
+  searchDeezerArtists,
+  searchDeezerAlbums,
 } from '@/api/deezer'
 import { selectDeezerExternalEnabled, selectMusicbrainzExternalEnabled } from '@/features/settings/search/state';
 import * as mb from '@/api/musicbrainz'
@@ -40,6 +44,42 @@ export type SourceResolvedAlbum = {
   coverUrl?: string
 }
 
+/** Which entity kinds a free-text search should ask a source for. */
+type SourceSearchWants = {
+  artists: boolean
+  albums: boolean
+}
+
+/**
+ * One source's contribution to a free-text search, already provenance-tagged
+ * (`source`) so a caller never has to know which source it came from to
+ * label it. `subtitle` is deliberately generic rather than "artist name" —
+ * Deezer's is the album's artist, MusicBrainz's is a release year, and
+ * neither is meaningful to the other.
+ */
+type SourceSearchArtist = {
+  source: SourceId
+  id: string
+  name: string
+  subtitle: string
+  cover: CoverSource
+  externalIds?: { deezerId?: string; mbid?: string }
+}
+
+type SourceSearchAlbum = {
+  source: SourceId
+  id: string
+  title: string
+  subtitle: string
+  cover: CoverSource
+  externalIds?: { deezerId?: string; artistDeezerId?: string; mbid?: string; upc?: string }
+}
+
+type SourceSearchResults = {
+  artists: SourceSearchArtist[]
+  albums: SourceSearchAlbum[]
+}
+
 /**
  * The bundle `fetchArtist` returns: the artist entity plus everything an
  * artist screen wants alongside it. Not a domain type — `Artist` itself
@@ -47,7 +87,7 @@ export type SourceResolvedAlbum = {
  * relations a caller asks for, not properties of the entity — so this is a
  * source-layer aggregate, the same shape as `AlbumDetail` plays for albums.
  */
-export type SourceArtistDetail = {
+type SourceArtistDetail = {
   artist: Artist
   topTracks: Song[]
   albums: Album[]
@@ -76,6 +116,12 @@ export type SourceDefinition = {
   fetchAlbum(id: string): Promise<AlbumDetail | null>
   fetchArtist(id: string, mbid?: string | null): Promise<SourceArtistDetail | null>
   fetchArtistAlbums(artistId: string, limit: number, artistName?: string): Promise<Album[]>
+  /**
+   * Free-text search, for Search's "Other sources" scope. The only place a
+   * search feature should ever name a source: it iterates `ALL_SOURCES` and
+   * calls this generically, rather than branching on which source it is.
+   */
+  search(query: string, wants: SourceSearchWants): Promise<SourceSearchResults>
 }
 
 /**
@@ -171,6 +217,35 @@ const deezerSource: SourceDefinition = {
       similarArtists,
     }
   },
+
+  async search(query, wants) {
+    const [artists, albums] = await Promise.all([
+      wants.artists ? searchDeezerArtists(query, 4) : Promise.resolve([]),
+      wants.albums ? searchDeezerAlbums(query, 6) : Promise.resolve([]),
+    ])
+    return {
+      artists: artists.map(artist => ({
+        source: 'deezer',
+        id: artist.nativeId,
+        name: artist.name,
+        subtitle: '',
+        cover: artist.cover,
+        externalIds: { deezerId: artist.externalIds.deezerId },
+      })),
+      albums: albums.map(album => ({
+        source: 'deezer',
+        id: album.nativeId,
+        title: album.title,
+        subtitle: album.artist.name,
+        cover: album.cover,
+        externalIds: {
+          deezerId: album.externalIds.deezerId,
+          artistDeezerId: album.artist.externalIds.deezerId,
+          upc: album.externalIds.upc,
+        },
+      })),
+    }
+  },
 }
 
 const MB_PROVENANCE = integrationProvenance('musicbrainz')
@@ -240,6 +315,30 @@ const musicbrainzSource: SourceDefinition = {
       similarArtists: [],
     }
   },
+
+  async search(query, wants) {
+    const [artists, releaseGroups] = await Promise.all([
+      wants.artists ? mb.searchArtist(query, 4) : Promise.resolve([]),
+      wants.albums ? mb.searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
+    ])
+    return {
+      artists: artists.map(artist => ({
+        source: 'musicbrainz',
+        id: artist.id,
+        name: artist.name,
+        subtitle: '',
+        cover: { kind: 'none' },
+      })),
+      albums: releaseGroups.map(rg => ({
+        source: 'musicbrainz',
+        id: rg.id,
+        title: rg.title,
+        subtitle: rg['first-release-date']?.slice(0, 4) ?? '',
+        cover: { kind: 'coverartarchive', mbid: rg.id, mbidType: 'release-group' },
+        externalIds: { mbid: rg.id },
+      })),
+    }
+  },
 }
 
 export const ALL_SOURCES: SourceDefinition[] = [deezerSource, musicbrainzSource]
@@ -255,5 +354,42 @@ export function useEnabledExternalSources(): SourceDefinition[] {
     if (s.id === 'deezer') return deezerEnabled
     if (s.id === 'musicbrainz') return musicbrainzEnabled
     return false
+  })
+}
+
+type ExternalArtistLookupInput = { enabled: boolean; source?: string; artistId: string | null; mbid: string | null; name: string | null }
+
+/** Resolves one external artist: direct source+id, then mbid (MusicBrainz,
+ *  if enabled), then a name search (Deezer, if enabled) — the artist
+ *  screen's identity fallback chain, kept here so naming a source by id
+ *  stays inside this registry. */
+export function useExternalArtistLookup(input: ExternalArtistLookupInput) {
+  const { enabled, source, artistId, mbid, name } = input
+  const musicbrainzEnabled = useSelector(selectMusicbrainzExternalEnabled)
+  const deezerEnabled = useSelector(selectDeezerExternalEnabled)
+
+  return useQuery({
+    queryKey: [QueryKeys.ExternalArtist, source ?? 'unknown', artistId ?? mbid ?? name ?? ''],
+    enabled,
+    staleTime: 1000 * 60 * 60 * 24,
+    queryFn: async (): Promise<SourceArtistDetail | null> => {
+      const sourceDef = ALL_SOURCES.find(s => s.id === source)
+      if (sourceDef && artistId) return sourceDef.fetchArtist(artistId, mbid)
+
+      if (mbid && musicbrainzEnabled) {
+        const mb = ALL_SOURCES.find(s => s.id === 'musicbrainz')
+        if (mb) return mb.fetchArtist(mbid, mbid)
+      }
+
+      if (name && deezerEnabled) {
+        const deezer = ALL_SOURCES.find(s => s.id === 'deezer')
+        if (deezer) {
+          const resolved = await deezer.resolveArtist(name)
+          if (resolved) return deezer.fetchArtist(resolved.id, mbid)
+        }
+      }
+
+      throw new Error(`Unable to resolve artist "${name ?? artistId ?? 'unknown'}"`)
+    },
   })
 }

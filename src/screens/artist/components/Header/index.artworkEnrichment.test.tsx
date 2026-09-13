@@ -1,13 +1,21 @@
 import React from 'react'
 import { render } from '@testing-library/react-native'
-import { configureStore, combineReducers } from '@reduxjs/toolkit'
-import { Provider } from 'react-redux'
 
-import settingsReducer, {
-  setMetadataArtworkSourceEnabled,
-} from '@/features/settings/metadata/state'
-import type { SourceArtistDetail } from '@/features/sources/registry'
+import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel'
 import ArtistHeader from './index'
+
+/**
+ * Ported from the old fetcher-based `useArtworkEnrichment` wiring test
+ * (deleted alongside `features/metadata/resolveArtwork.ts` — Phase 5
+ * closure, see `providers/registry/enrichmentBroker.ts`). `ArtistHeader`
+ * now takes the screen model directly, so these drive it with a model
+ * built by hand instead of mocking the resolver's network boundary —
+ * `resolveArtistDetails.test.ts` and `enrichmentBroker.test.ts` cover the
+ * resolution itself (ordered first-hit fallback, a disabled source
+ * contributing nothing); what stays to verify here is what the header does
+ * with the result: the server/own cover must always win when present, and
+ * the enriched cover must only ever appear to fill a real gap.
+ */
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string, opts?: Record<string, unknown>) => (opts?.source ? `via ${opts.source}` : key) }),
@@ -35,7 +43,7 @@ jest.mock('@/components/DetailHeader', () => ({
   DetailHeaderIconButton: 'DetailHeaderIconButton',
 }))
 
-// The one thing this test cares about: which cover MediaImage is asked to
+// The one thing these tests care about: which cover `MediaImage` is asked to
 // render. Mocked to a plain text stub that dumps its `cover` prop's `kind`
 // (and `url` when present) so the assertions below can read it back.
 jest.mock('@/components/MediaImage', () => {
@@ -67,105 +75,85 @@ jest.mock('@/hooks/artists', () => ({ useArtistAlbums: () => [] }))
 jest.mock('@/hooks/tracks', () => ({ useTracks: () => ({ tracks: [] }) }))
 jest.mock('@/api', () => ({ useApi: () => ({ albums: { get: jest.fn() } }) }))
 jest.mock('@/utils/redux/selectors/serversSelectors', () => ({ selectActiveServer: () => null }))
-jest.mock('@/hooks/albums', () => ({ fetchAlbumDetailsSettled: jest.fn(async () => []) }))
+jest.mock('react-redux', () => ({ useSelector: () => undefined }))
+jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({}) }))
 jest.mock('@/components/toast', () => ({ notify: { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() } }))
-
-let mockLastResolved: unknown
-jest.mock('@tanstack/react-query', () => ({
-  useQuery: (options: { enabled?: boolean; queryFn: () => Promise<unknown> }) => {
-    const enabled = options.enabled !== false
-    if (enabled) {
-      options.queryFn().then((value: unknown) => { mockLastResolved = value })
-    }
-    return { data: enabled ? mockLastResolved : undefined, isLoading: false }
-  },
+jest.mock('@/providers/registry/enrichmentBroker', () => ({
+  metadataSourceNameKey: (id: string) => `provider.${id}`,
 }))
 
-const mockResolveArtwork = jest.fn()
-jest.mock('@/features/metadata/resolveArtwork', () => ({
-  resolveArtwork: (...args: unknown[]) => mockResolveArtwork(...args),
-}))
-
-jest.mock('@/features/metadata/enrichmentFetchers', () => ({
-  metadataArtworkFetchers: { deezer: jest.fn(), coverartarchive: jest.fn() },
-}))
-
-function makeStore() {
-  return configureStore({
-    reducer: combineReducers({ settingsMetadata: settingsReducer }),
-    middleware: (getDefault) => getDefault({ serializableCheck: false }),
-  })
+const baseArtist: NonNullable<ArtistScreenModel['artist']> = {
+  localId: 'local:artist:ext:deezer:ext-1' as never,
+  nativeId: 'ext-1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: { mbid: 'mbid-1' },
+  libraryState: 'external',
+  name: 'Radiohead',
+  cover: { kind: 'none' },
+  tags: [],
+  albumIds: [],
 }
 
-function renderWithStore(store: ReturnType<typeof makeStore>, externalArtist: SourceArtistDetail) {
-  return render(
-    <Provider store={store}>
-      <ArtistHeader localArtist={null} externalArtist={externalArtist} showNavigation={false} />
-    </Provider>
-  )
-}
-
-const baseExternalArtist: SourceArtistDetail = {
-  artist: {
-    localId: 'local:artist:ext:deezer:ext-1' as SourceArtistDetail['artist']['localId'],
-    nativeId: 'ext-1',
-    provenance: { origin: 'integration', providerId: 'deezer' },
-    externalIds: { mbid: 'mbid-1' },
-    libraryState: 'external',
-    name: 'Radiohead',
-    cover: { kind: 'none' },
-    tags: [],
-    albumIds: [],
-  },
-  topTracks: [],
-  albums: [],
-  singles: [],
-  similarArtists: [],
+function baseModel(overrides: Partial<ArtistScreenModel> = {}): ArtistScreenModel {
+  return {
+    status: 'ready',
+    isLocal: false,
+    artist: baseArtist,
+    degraded: false,
+    resolved: null,
+    topTracks: [],
+    similarArtists: [],
+    discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [] },
+    counts: { albums: 0, songs: 0 },
+    ...overrides,
+  }
 }
 
 describe('ArtistHeader artwork enrichment wiring', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-    mockLastResolved = undefined
-  })
-
-  it('shows the enriched cover only when the server/external artist has no cover of its own (gap case)', async () => {
-    const store = makeStore()
-    store.dispatch(setMetadataArtworkSourceEnabled({ sourceId: 'deezer', enabled: true }))
-    mockResolveArtwork.mockResolvedValue({
-      cover: { kind: 'url', url: 'https://example.com/enriched.jpg' },
-      source: 'deezer',
+  it('shows the enriched cover only when the artist has no cover of its own (gap case)', async () => {
+    const model = baseModel({
+      resolved: {
+        entity: baseArtist,
+        cover: { value: { kind: 'url', url: 'https://example.com/enriched.jpg' }, sourceId: 'deezer' },
+      },
     })
 
-    const view = await renderWithStore(store, baseExternalArtist)
+    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
 
-    expect(mockResolveArtwork).toHaveBeenCalled()
-    // Synchronous mocked useQuery: no data resolved on first render, so the
-    // placeholder ('none') still shows until the promise settles — proving
-    // this never flashes a stale/wrong cover ahead of the real result.
-    expect(view.getByTestId('media-image-cover').props.children).toBe('none:')
+    expect(view.getByTestId('media-image-cover').props.children).toBe('url:https://example.com/enriched.jpg')
   })
 
   it('keeps the server cover unchanged when the artist already has artwork (no gap)', async () => {
-    const store = makeStore()
-    store.dispatch(setMetadataArtworkSourceEnabled({ sourceId: 'deezer', enabled: true }))
-
-    const view = await renderWithStore(store, {
-      ...baseExternalArtist,
-      artist: { ...baseExternalArtist.artist, cover: { kind: 'url', url: 'https://example.com/server.jpg' } },
+    const model = baseModel({
+      artist: { ...baseArtist, cover: { kind: 'url', url: 'https://example.com/server.jpg' } },
+      resolved: {
+        entity: baseArtist,
+        // Even if a stale/different resolution were present, the artist's
+        // own cover must still win — enrichment is gap-only.
+        cover: { value: { kind: 'url', url: 'https://example.com/enriched.jpg' }, sourceId: 'deezer' },
+      },
     })
 
-    expect(mockResolveArtwork).not.toHaveBeenCalled()
+    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
+
     expect(view.getByTestId('media-image-cover').props.children).toBe('url:https://example.com/server.jpg')
   })
 
-  it('restores the placeholder when artwork enrichment is disabled', async () => {
-    const store = makeStore()
-    // No dispatch — every artwork source stays disabled by default.
+  it('restores the placeholder when artwork enrichment is off (or hasn\'t resolved yet)', async () => {
+    const model = baseModel({ resolved: null })
 
-    const view = await renderWithStore(store, baseExternalArtist)
+    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
 
-    expect(mockResolveArtwork).not.toHaveBeenCalled()
+    expect(view.getByTestId('media-image-cover').props.children).toBe('none:')
+  })
+
+  it('restores the placeholder when every enrichment source misses', async () => {
+    const model = baseModel({
+      resolved: { entity: baseArtist, cover: { value: { kind: 'none' }, sourceId: 'deezer' } },
+    })
+
+    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
+
     expect(view.getByTestId('media-image-cover').props.children).toBe('none:')
   })
 })
