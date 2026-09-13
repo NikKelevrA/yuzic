@@ -48,9 +48,19 @@ export interface AutoplayDeps {
   logWarning: (message: string, error: unknown) => void;
 }
 
-interface AutoplayCoordinator {
+export interface AutoplayCoordinator {
   /** Top the queue up if it is running low. Safe to call on every track change. */
   fillQueueIfLow: () => Promise<void>;
+  /**
+   * Whether a fill is in flight.
+   *
+   * `shouldFillQueue` asks, because a fill takes a network round trip and the
+   * track changes that trigger one arrive more than once inside it. The guard
+   * inside `fillQueueIfLow` makes the second call harmless either way; this
+   * lets the caller skip deciding at all, and — more to the point — means
+   * there is no second copy of this flag anywhere to fall out of step.
+   */
+  isFilling: () => boolean;
   /** Shuffle related tracks through what is left of the queue. */
   injectSmartShuffleTracks: (wasPlaying: boolean, savedPosition: number) => Promise<void>;
   /**
@@ -118,6 +128,8 @@ export function createAutoplayCoordinator(deps: AutoplayDeps): AutoplayCoordinat
   };
 
   return {
+    isFilling: () => filling,
+
     async fillQueueIfLow() {
       if (filling) return;
       filling = true;

@@ -45,7 +45,7 @@ import { reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQue
 import { isRepeatLoop } from './repeatPlay';
 import { createTransportController } from './transportController';
 import { createQueueController } from './queueController';
-import { createAutoplayCoordinator } from './autoplayCoordinator';
+import { createAutoplayCoordinator, type AutoplayCoordinator } from './autoplayCoordinator';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
@@ -352,9 +352,13 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const autoplayEnabledRef = useRef(false);
   const isPlayingRef = useRef(false);
   const isShufflingRef = useRef(false);
-  const isFillingRef = useRef(false);
   const providersRef = useRef<QueueFillProvider[]>([]);
   const fillQueueIfLowRef = useRef<() => Promise<void>>(async () => {});
+  // Assigned during render below, like `loadQueueRef` and for the same reason:
+  // the effect that reads it is declared above the coordinator that supplies
+  // it, and effects run after the whole render rather than in declaration
+  // order relative to it.
+  const autoplayRef = useRef<AutoplayCoordinator | null>(null);
 
   // Stable refs to latest callbacks — avoids stale closures in effects without listing
   // volatile deps, while keeping the callbacks themselves stable for context consumers.
@@ -866,7 +870,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
       queueLength: queueRef.current.length,
       currentIndex: newIndex,
       autoplayEnabled: autoplayEnabledRef.current,
-      isFilling: isFillingRef.current,
+      isFilling: autoplayRef.current?.isFilling() ?? false,
     })) {
       void fillQueueIfLowRef.current();
     }
@@ -961,6 +965,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     logWarning: (message, error) => console.warn(message, error),
   }), [bumpQueue, toMediaItems]);
 
+  autoplayRef.current = autoplay;
   const { fillQueueIfLow, injectSmartShuffleTracks } = autoplay;
   useEffect(() => { fillQueueIfLowRef.current = fillQueueIfLow; }, [fillQueueIfLow]);
 

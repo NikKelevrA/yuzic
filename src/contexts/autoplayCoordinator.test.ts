@@ -65,7 +65,6 @@ function harness(over: Partial<{
   returns: Song[];
   noProvider: boolean;
   fails: boolean;
-  onFetch: () => void;
 }> = {}) {
   let queue = over.queue ?? [resource('1'), resource('2'), resource('3')];
   let segments = over.segments ?? [];
@@ -84,7 +83,6 @@ function harness(over: Partial<{
         excludeIds: [...excludeIds],
         count,
       });
-      over.onFetch?.();
       if (over.fails) throw new Error('provider is down');
       return over.returns ?? [song('90'), song('91')];
     },
@@ -184,6 +182,23 @@ describe('topping the queue up', () => {
 
     expect(h.providerCalls).toHaveLength(1);
     expect(ids(h.queue)).toEqual(['1', '2', '3', '90', '91']);
+  });
+
+  it('reports a fill in flight, so the caller need not keep its own copy', async () => {
+    // `shouldFillQueue` asks this. It used to read a provider ref that was
+    // assigned nowhere once the fill moved in here — permanently false, and
+    // silently so, because a stale `false` only ever causes an extra call that
+    // the guard below then swallows.
+    const h = harness();
+
+    expect(h.coordinator.isFilling()).toBe(false);
+
+    const inFlight = h.coordinator.fillQueueIfLow();
+    const duringFetch = h.coordinator.isFilling();
+    await inFlight;
+
+    expect(duringFetch).toBe(true);
+    expect(h.coordinator.isFilling()).toBe(false);
   });
 
   it('can fill again once the first one has finished', async () => {
