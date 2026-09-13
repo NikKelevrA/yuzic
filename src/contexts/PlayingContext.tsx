@@ -41,11 +41,12 @@ import { buildTrackItem } from '@/utils/builders/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
-import { reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment } from './playingQueue';
+import { reconcileUnshuffledQueue, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment } from './playingQueue';
 import { isRepeatLoop } from './repeatPlay';
 import { createTransportController } from './transportController';
 import { createQueueController } from './queueController';
 import { createAutoplayCoordinator, type AutoplayCoordinator } from './autoplayCoordinator';
+import { createPlaybackCoordinator } from './playbackCoordinator';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
@@ -62,9 +63,7 @@ import {
   createNativeSimilarityQueueFillProvider,
   createAudiomuseQueueFillProvider,
 } from './queueProviders';
-import { shouldFillQueue } from './autoplayFill';
 import { buildRestoredQueue } from './restoreQueue';
-import { canFillQueueFrom } from '@/utils/playback/contentKind';
 import { hasReissuableUrl } from '@/domain/playback/ContentKind';
 import { clampSpeed, speedFor, speedProfileFor } from '@/utils/playback/speedProfile';
 import { useBookmarkManager } from '@/hooks/useBookmarkManager';
@@ -767,114 +766,64 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // pruning dead reconciliation paths is outside this migration's scope.
   const librarySongByIdRef = useRef<Map<string, PlayableResource>>(new Map());
 
-  // Track changes: reconcile native queue, update current song, fire now-playing + scrobble
+  /**
+   * A track starting is eight separate things, and `playbackCoordinator` owns
+   * the order they happen in — which matters: the outgoing scrobble and
+   * bookmark are read from the player's position before anything moves the
+   * pointer, and autoplay is asked last because it reads the index this has
+   * just settled.
+   */
+  const coordinator = useMemo(() => createPlaybackCoordinator({
+    backend: getBackend,
+    queue: () => queueRef.current,
+    setQueue: resources => { queueRef.current = resources; },
+    currentResource: () => currentSongRef.current,
+    setActive: (index, resource) => {
+      currentIndexRef.current = index;
+      setCurrentIndex(index);
+      currentSongRef.current = resource;
+      setCurrentSong(resource.song);
+    },
+    library: () => librarySongByIdRef.current,
+    bumpQueue,
+
+    onTrackStarted: () => playbackEventsRef.current.onTrackStarted(),
+    scrobbleOutgoing: (song, listenedSeconds) => {
+      void scrobbleOutgoingRef.current(song, listenedSeconds);
+    },
+    markNewListen: () => { scrobbleStartTimeRef.current = Date.now(); },
+    saveBookmark: (song, positionSeconds) => {
+      // Fire and forget: a save failing must not delay the next track.
+      void bookmarksRef.current.saveOrClear(song, positionSeconds);
+    },
+    resumePositionFor: song => bookmarksRef.current.getResumePosition(song.localId),
+    persistCurrentIndex: index => persistenceRef.current.persistCurrentIndex(index),
+
+    speedFor: song => speedFor(song, playbackSpeedsRef.current),
+    currentSpeed: () => playbackSpeedRef.current,
+    setSpeed: speed => {
+      playbackSpeedRef.current = speed;
+      setPlaybackSpeedState(speed);
+      getBackend().setPlaybackSpeed(speed);
+    },
+
+    submitNowPlaying: song => submitNowPlayingRef.current(song),
+    syncServerQueue: (queue, nativeId, positionMs) => {
+      void queueSyncRef.current.save(queue, nativeId, positionMs);
+    },
+
+    autoplayEnabled: () => autoplayEnabledRef.current,
+    isFilling: () => autoplayRef.current?.isFilling() ?? false,
+    fillQueueIfLow: () => { void fillQueueIfLowRef.current(); },
+  }), [bumpQueue]);
+
+  const coordinatorRef = useRef(coordinator);
+  useEffect(() => { coordinatorRef.current = coordinator; }, [coordinator]);
+
   useEffect(() => {
-    const mediaId = activeMediaItem?.mediaId;
-    if (!mediaId) return;
+    coordinatorRef.current.onActiveTrackChanged(activeMediaItem);
+  }, [activeMediaItem]);
 
-    // A media item is only reported active once it's actually playing, so this
-    // track is no longer in the "just retried once" state from the error handler.
-    playbackEventsRef.current.onTrackStarted();
-
-    const prev = currentSongRef.current;
-    if (prev && prev.song.localId !== mediaId) {
-      const prevPosition = Math.floor(getBackend().getProgress().position);
-      scrobbleOutgoingRef.current(prev.song, prevPosition);
-      // Save a resume bookmark on the way out. isBookmarkable filters this
-      // down to long-form tracks and podcasts — a 3-min song leaving mid-way
-      // doesn't get one. Fire-and-forget: a save failing must not delay the
-      // next track loading.
-      void bookmarksRef.current.saveOrClear(prev.song, prevPosition);
-      scrobbleStartTimeRef.current = Date.now();
-    }
-
-    // `buildTrackItem` keys every item by the song's `localId`, so this is
-    // what both the in-memory queue lookup and the player's own media id are
-    // compared against.
-    const nativeQueueResources = resourcesFromPlayerQueue(
-      getBackend().getQueue(),
-      queueRef.current,
-      librarySongByIdRef.current
-    );
-
-    if (nativeQueueResources.length && !sameQueue(queueRef.current, nativeQueueResources)) {
-      queueRef.current = nativeQueueResources;
-      bumpQueue();
-    }
-
-    const nativeIndex = getBackend().getActiveMediaItemIndex();
-    let newIndex = typeof nativeIndex === 'number' && nativeIndex >= 0
-      ? nativeIndex
-      : queueRef.current.findIndex(resource => resource.song.localId === mediaId);
-    let resourceFromQueue: PlayableResource | null | undefined = newIndex >= 0
-      ? queueRef.current[newIndex]
-      : librarySongByIdRef.current.get(mediaId);
-
-    if (!resourceFromQueue && activeMediaItem.url) {
-      resourceFromQueue = resourceFromMediaItem(activeMediaItem);
-      newIndex = 0;
-    }
-
-    if (!resourceFromQueue) return;
-    if (newIndex === -1) {
-      queueRef.current = [resourceFromQueue];
-      newIndex = 0;
-      bumpQueue();
-    }
-
-    const song = resourceFromQueue.song;
-
-    currentIndexRef.current = newIndex;
-    setCurrentIndex(newIndex);
-    currentSongRef.current = resourceFromQueue;
-    setCurrentSong(song);
-
-    // Persist the pointer move — the queue itself doesn't change every track,
-    // only the current index does, so this is the frequent write.
-    persistenceRef.current.persistCurrentIndex(newIndex);
-
-    // Auto-resume for tracks that earn a bookmark (long-form + podcast).
-    // Only seek when the player is still at the top of the track — a user
-    // who already advanced past zero is where they want to be.
-    const resumeSeconds = bookmarksRef.current.getResumePosition(song.localId);
-    if (resumeSeconds && Math.floor(getBackend().getProgress().position) < 2) {
-      getBackend().seekTo(resumeSeconds);
-    }
-
-    // Rate follows the kind of thing being played, not whatever was last set.
-    // One global speed meant a podcast at 1.5x carried into the next song, and
-    // reset to 1x on every launch — both wrong for the same reason, which is
-    // that talking and music are not listened to at the same rate.
-    const nextSpeed = speedFor(song, playbackSpeedsRef.current);
-    if (nextSpeed !== playbackSpeedRef.current) {
-      playbackSpeedRef.current = nextSpeed;
-      setPlaybackSpeedState(nextSpeed);
-      getBackend().setPlaybackSpeed(nextSpeed);
-    }
-
-    submitNowPlayingRef.current(song);
-
-    // Server-side queue sync — hands the current queue and position to
-    // Subsonic so opening yuzic on another device resumes here. Throttled
-    // in the hook; a same-queue re-fire is a no-op.
-    void queueSyncRef.current.save(
-      queueRef.current,
-      song.nativeId,
-      Math.floor(getBackend().getProgress().position * 1000)
-    );
-
-    // Autoplay-fill from a radio station is meaningless: the station is its
-    // own infinite feed and there's no seed to compute a follow-up from.
-    // Podcasts skip fill too — a "next episode" isn't a similarity call.
-    if (canFillQueueFrom(song) && shouldFillQueue({
-      queueLength: queueRef.current.length,
-      currentIndex: newIndex,
-      autoplayEnabled: autoplayEnabledRef.current,
-      isFilling: autoplayRef.current?.isFilling() ?? false,
-    })) {
-      void fillQueueIfLowRef.current();
-    }
-  }, [activeMediaItem, bumpQueue]);
 
   /**
    * Builds the stream URL for a song at the point of playing, never earlier.
