@@ -612,7 +612,6 @@
     "src/hooks/starred/index.ts - useUnstarAlbum",
     "src/hooks/starred/index.ts - useUnstarSong",
     "src/hooks/tracks/index.ts - useTracks",
-    "src/hooks/useNetworkType.ts - NetworkType (used in module)",
     "src/hooks/useRadius.ts - ScaledRadius (used in module)",
     "src/hooks/useTheme.ts - ResolvedTheme (used in module)",
     "src/hooks/useTheme.ts - ThemeMode (used in module)",

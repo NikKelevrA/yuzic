@@ -70,6 +70,7 @@ import { useNetworkType } from '@/hooks/useNetworkType';
 import { streamSourceId } from '@/utils/playback/streamId';
 import { getBackend } from '@/features/player/activeBackend';
 import { downloadProgressFraction, nextDownloadingIds, collectionDownloadState } from './downloadPolicies';
+import { mayDownloadNow } from '@/features/offline/networkPolicy';
 
 /**
  * A track together with the URL to fetch its bytes from.
@@ -659,7 +660,10 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
     // without anyone asking for it — auto-download fires off a library sync,
     // not off a tap. Jobs stay queued and persisted, so the queue drains on
     // its own once WiFi is back; nothing is lost by waiting.
-    if (wifiOnlyRef.current && networkTypeRef.current === 'cellular') return;
+    if (!mayDownloadNow({
+      wifiOnly: wifiOnlyRef.current,
+      networkType: networkTypeRef.current,
+    })) return;
 
     await jobRunnerRef.current.run({
       getJobs: () => jobsRef.current,
@@ -962,7 +966,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Coming back onto WiFi — or turning the restriction off — is the other way
   // a held queue becomes runnable, and neither goes through AppState.
   useEffect(() => {
-    if (wifiOnly && networkType === 'cellular') return;
+    if (!mayDownloadNow({ wifiOnly, networkType })) return;
     if (jobsRef.current.length > 0) void processDownloadQueue();
   }, [wifiOnly, networkType, processDownloadQueue]);
 
