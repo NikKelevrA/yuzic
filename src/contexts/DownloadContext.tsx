@@ -151,9 +151,6 @@ const DownloadStateContext = createContext<DownloadStateType | undefined>(undefi
 const DownloadProgressContext = createContext<DownloadProgressType | undefined>(undefined);
 
 const DOWNLOAD_DIR = `${FileSystem.documentDirectory ?? ''}downloads/audio/`;
-// Scratch dir used by the retired download→upload→transcode pipeline; only
-// referenced so upgrades can delete anything it left behind.
-const LEGACY_TEMP_DOWNLOAD_DIR = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory ?? ''}downloads/rawarr-source/`;
 const MAX_JOB_ATTEMPTS = 5;
 const BACKGROUND_FILE_OPTIONS = {
   sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
@@ -176,8 +173,6 @@ type DownloadState = {
   jobs: PersistedDownloadJob[];
 };
 
-let legacyDownloadPathsToDelete: string[] = [];
-
 function buildStagingPath(track: Song): string {
   // Named by identity, not by the origin's id: two servers can both call a
   // track `42`, and a staging file named after that would have one download
@@ -193,12 +188,6 @@ async function ensureDownloadDir() {
   }
 }
 
-async function cleanupLegacyTempDownloads() {
-  const info = await FileSystem.getInfoAsync(LEGACY_TEMP_DOWNLOAD_DIR);
-  if (info.exists) {
-    await FileSystem.deleteAsync(LEGACY_TEMP_DOWNLOAD_DIR, { idempotent: true }).catch(() => {});
-  }
-}
 
 // Downloads land in a .part staging file and only move to their final path on
 // success, so a stray .part is safe to delete — unless we are deliberately
@@ -216,7 +205,22 @@ async function cleanupStagingFiles(keep: Set<string> = new Set()) {
   );
 }
 
-function loadInitialState(): DownloadState {
+/**
+ * What the restore produced: the state to render, and the files it orphaned.
+ *
+ * The two are returned together because they are discovered together. The
+ * paths used to be handed over in a module-level `let`, written by this
+ * function and read by an effect a hundred lines away — a channel with no type
+ * on it, no way to see from either end that the other existed, and exactly one
+ * consumer that had to run before anything else touched it.
+ */
+type InitialDownloadState = {
+  state: DownloadState;
+  /** Files of entries the restore dropped, for the caller to delete. */
+  stalePaths: string[];
+};
+
+function loadInitialState(): InitialDownloadState {
   const snapshot = readDownloadsSnapshot();
   const restored = restoreDownloadState(snapshot, FileSystem.documentDirectory ?? null);
 
@@ -225,12 +229,13 @@ function loadInitialState(): DownloadState {
     writeDownloadedCollections(restored.collections);
   }
 
-  legacyDownloadPathsToDelete = restored.stalePaths;
-
   return {
-    tracks: restored.tracks,
-    collections: restored.collections,
-    jobs: restored.jobs,
+    state: {
+      tracks: restored.tracks,
+      collections: restored.collections,
+      jobs: restored.jobs,
+    },
+    stalePaths: restored.stalePaths,
   };
 }
 
@@ -271,14 +276,18 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
   const activeServer = useSelector(selectActiveServer);
   const downloadQuality = useSelector(selectDownloadQuality);
   const localPathMapRef = useRef<Map<string, string>>(new Map());
+  // Files the restore orphaned, deleted once on mount. A ref rather than
+  // state: nothing renders from it and it is consumed exactly once.
+  const stalePathsRef = useRef<string[]>([]);
   const [state, setState] = useState<DownloadState>(() => {
     const initial = loadInitialState();
     const map = new Map<string, string>();
-    for (const track of initial.tracks) {
+    for (const track of initial.state.tracks) {
       map.set(track.trackId, normalizeLocalUri(track.localPath));
     }
     localPathMapRef.current = map;
-    return initial;
+    stalePathsRef.current = initial.stalePaths;
+    return initial.state;
   });
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(() => new Set());
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
@@ -306,12 +315,12 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
     writeResumables(next);
   }, []);
 
+  // Drop the files of entries the restore pruned. Best-effort and not awaited:
+  // a file that will not delete is wasted space, and blocking the provider's
+  // mount on it would be worse than the space.
   useEffect(() => {
-    const stalePaths = legacyDownloadPathsToDelete;
-    legacyDownloadPathsToDelete = [];
-
-    void cleanupLegacyTempDownloads();
-
+    const stalePaths = stalePathsRef.current;
+    stalePathsRef.current = [];
     if (!stalePaths.length) return;
 
     void Promise.all(stalePaths.map(path =>
