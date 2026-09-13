@@ -1,3 +1,23 @@
+import type { MediaItem } from '@/features/player/mediaItem'
+import type { PlayableResource } from '@/features/playback/playableResource'
+import { resourceFromPlayerItem } from '@/features/playback/playableResource'
+import { getMediaItemId, getMediaItemUrl } from './playableMedia'
+
+/**
+ * `resourceFromPlayerItem` wants a plain string url; `MediaItem.url` is the
+ * player's own `string | { uri }` shape, so this reads it through the same
+ * helper every other reader of that field uses.
+ */
+export function resourceFromMediaItem(item: MediaItem): PlayableResource | null {
+  return resourceFromPlayerItem({
+    mediaId: item.mediaId,
+    url: getMediaItemUrl(item),
+    title: item.title,
+    artist: item.artist,
+    duration: item.duration,
+  })
+}
+
 export type PlayNextQueueUpdate<T> = {
   queue: T[]
   currentIndex: number
@@ -149,4 +169,43 @@ export function findNextBoundaryIndex(segments: QueueSegment[], fromIndex: numbe
     if (isContextBoundary(segments, i)) return i
   }
   return null
+}
+
+/**
+ * The player's queue, expressed as the app's own resources.
+ *
+ * The engine owns which tracks are queued and in what order — it applies every
+ * edit itself, and it is the only one that knows about the changes this app did
+ * not make: a skip from the lock screen, a track it dropped because it could
+ * not be opened, a queue restored into a fresh JavaScript context. What it
+ * cannot hand back is what each track *is*; the resolved stream URL and the
+ * request headers were the app's, and they never crossed the bridge.
+ *
+ * So order and membership come from `items`, and the content of each one is
+ * looked up in what the app already holds. The in-memory queue is preferred
+ * over anything else because its URLs are the freshest — a stream URL carries
+ * a token that goes stale — and rebuilding from the player's own item is the
+ * last resort, recovering provenance and the origin's id by parsing the media
+ * id itself.
+ *
+ * Exported for its tests. This is the point where the two queues are made to
+ * agree, and getting it wrong looks like the wrong song playing after a
+ * remove rather than like an error.
+ */
+export function resourcesFromPlayerQueue(
+  items: MediaItem[],
+  inMemory: PlayableResource[],
+  library: Map<string, PlayableResource>
+): PlayableResource[] {
+  const byId = new Map<string, PlayableResource>();
+  for (const resource of inMemory) {
+    if (!byId.has(resource.song.localId)) byId.set(resource.song.localId, resource);
+  }
+
+  return items
+    .map(item => {
+      const id = getMediaItemId(item);
+      return byId.get(id) ?? library.get(id) ?? resourceFromMediaItem(item);
+    })
+    .filter((resource): resource is PlayableResource => Boolean(resource));
 }

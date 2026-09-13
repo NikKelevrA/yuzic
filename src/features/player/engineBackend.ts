@@ -31,7 +31,7 @@ import type { EngineEvent, Progress, Track } from 'yuzic-engine';
  */
 
 /** The queue as the app hands it over, kept so the sync getters can answer. */
-interface Shadow {
+export interface Shadow {
   queue: MediaItem[];
   activeIndex: number;
   progress: Progress;
@@ -72,10 +72,55 @@ export function applyEvent(shadow: Shadow, event: EngineEvent): Shadow {
       return { ...shadow, playing: event.state === 'playing' };
 
     default:
-      // queueChange carries no payload, and error/remoteCommand are the
-      // host's business rather than the shadow's.
+      // queueChange carries no payload — what it means for the shadow is
+      // `reconcileQueue`, which has to ask the engine and so cannot happen in
+      // a pure fold. error/remoteCommand are the host's business.
       return shadow;
   }
+}
+
+/**
+ * Replace the shadow's queue with the engine's, keeping the app's own items.
+ *
+ * Two things know what is in the queue, and they are not equals. The engine
+ * owns membership and order: it is what actually plays, it applies an insert
+ * or a move itself, and it resolves the cases the app cannot see — a remote
+ * command from the lock screen, a track dropped because it could not be
+ * opened, a queue restored into a fresh JavaScript context. The app owns what
+ * each item *is*: it built the `MediaItem`, with the URL it resolved and the
+ * headers it attached, and the engine cannot hand any of that back.
+ *
+ * So this takes order and membership from `engineIds` and looks each one up in
+ * what the app already has. Before it existed, both sides did the splice
+ * arithmetic separately and were expected to agree — and a disagreement did
+ * not announce itself, it showed up later as the wrong song playing after a
+ * remove, or an index pointing one track off.
+ *
+ * An id the app has never seen becomes a stub carrying only its identity,
+ * which is genuinely all the engine said about it. That is not a normal case —
+ * every track in the engine's queue was put there by this app — but a restore
+ * after the JavaScript context reloaded can reach it, and dropping the item
+ * instead would leave the two queues different lengths, which is the one
+ * outcome that makes every index after it wrong.
+ */
+export function reconcileQueue(
+  shadow: Shadow,
+  engineIds: string[],
+  activeIndex: number
+): Shadow {
+  const known = new Map<string, MediaItem>();
+  for (const item of shadow.queue) {
+    if (item.mediaId != null && !known.has(item.mediaId)) known.set(item.mediaId, item);
+  }
+
+  const queue = engineIds.map(id => known.get(id) ?? { mediaId: id, url: '' });
+  // Clamped rather than trusted: an index past the end would make
+  // `getActiveMediaItem` undefined and every caller of it wrong at once.
+  const clamped = queue.length === 0
+    ? 0
+    : Math.min(Math.max(activeIndex, 0), queue.length - 1);
+
+  return { ...shadow, queue, activeIndex: clamped };
 }
 
 /**
@@ -181,5 +226,3 @@ export function toPlaybackProgress(progress: Progress): {
     buffered: Math.max(0, progress.bufferedSec - progress.positionSec),
   };
 }
-
-export type { Shadow };

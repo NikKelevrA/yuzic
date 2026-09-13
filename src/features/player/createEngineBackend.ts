@@ -6,6 +6,7 @@ import type { PlayerBackend, BackendEvent } from './backend';
 import {
   applyEvent,
   createShadow,
+  reconcileQueue,
   toEngineTrack,
   toPlaybackProgress,
   type EngineTrackInput,
@@ -183,6 +184,38 @@ export function createEngineBackend(): PlayerBackend {
     shadow = { ...shadow, queue: next, activeIndex };
   }
 
+  /**
+   * Take the queue back from the engine, then tell the app it moved.
+   *
+   * The shadow's edits above are predictions of calls already made, and a
+   * prediction is only good until the engine says otherwise. `queueChange` is
+   * it saying otherwise — and it is also the only way the app hears about a
+   * change it did not make: a remote command from the lock screen or the car,
+   * a track the engine dropped because it could not be opened, a queue
+   * restored into a fresh JavaScript context.
+   *
+   * The event is emitted *after* the shadow has been replaced, so a listener
+   * that reacts by calling `getQueue()` gets the engine's answer rather than
+   * the stale prediction it was sent to correct. Emitting first would make
+   * this event actively misleading.
+   *
+   * Failure is silence rather than an error. The queue the app is showing is
+   * the one it last set, which is wrong only if the engine has since changed
+   * it — and a reconciliation that could not read the engine has nothing
+   * better to offer, while a thrown error here would surface as a playback
+   * failure the listener's music never actually had.
+   */
+  async function reconcileWithEngine(): Promise<void> {
+    try {
+      const api = load();
+      const [tracks, activeIndex] = await Promise.all([api.getQueue(), api.getActiveIndex()]);
+      shadow = reconcileQueue(shadow, tracks.map(track => track.id), activeIndex);
+    } catch {
+      return;
+    }
+    emit({ type: 'queueChange' });
+  }
+
   return {
     setup() {
       // The gate already exists — see `ready` above. All this has to do is
@@ -216,6 +249,9 @@ export function createEngineBackend(): PlayerBackend {
             }
             if (event.type === 'error') {
               emit({ type: 'error', code: event.code, message: event.message });
+            }
+            if (event.type === 'queueChange') {
+              void reconcileWithEngine();
             }
           });
         }

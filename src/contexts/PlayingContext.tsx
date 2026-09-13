@@ -32,19 +32,17 @@ import {
   assertPlayable,
   isPlayable,
   playableOnly,
-  resourceFromPlayerItem,
   sameQueue,
   sourceKind,
   type PlayableResource,
 } from '@/features/playback/playableResource';
 import shuffleArray from '@/utils/shuffleArray';
 import { useApi } from '@/api';
-import { getMediaItemId, getMediaItemUrl } from './playableMedia';
 import { buildTrackItem } from '@/utils/builders/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
-import { moveSongAfterCurrent, reconcileUnshuffledQueue, QueueSegment, segmentAt, tagSegment, shiftSegmentsAfterInsert } from './playingQueue';
+import { moveSongAfterCurrent, reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment, shiftSegmentsAfterInsert } from './playingQueue';
 import { isRepeatLoop } from './repeatPlay';
 import { resolvePlaybackErrorAction } from './playbackErrorRecovery';
 import { useDownloadActions } from './DownloadContext';
@@ -109,19 +107,6 @@ export interface PlaybackProgress {
 
 /** An album or playlist together with the tracks to queue from it. */
 export type PlayableCollection = AlbumDetail | PlaylistDetail;
-
-/** `resourceFromPlayerItem` wants a plain string url; `MediaItem.url` is the
- * player's own `string | { uri }` shape, so this reads it through the same
- * helper the rest of this file uses to normalise it. */
-function resourceFromMediaItem(item: MediaItem): PlayableResource | null {
-  return resourceFromPlayerItem({
-    mediaId: item.mediaId,
-    url: getMediaItemUrl(item),
-    title: item.title,
-    artist: item.artist,
-    duration: item.duration,
-  });
-}
 
 function collectionSource(collection: PlayableCollection): { contextId: LocalId; contextType: 'album' | 'playlist' } {
   return 'album' in collection
@@ -784,6 +769,42 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
   }, []);
 
+  /**
+   * The engine's queue moved, so take its answer.
+   *
+   * Every edit below applies to `queueRef` immediately as well as calling the
+   * backend, because the screen has to redraw on the tap rather than an event
+   * later. Those edits are *predictions of a call already made*, not the truth:
+   * the engine applies the same edit itself, and when the two disagree the
+   * engine is right — it is what actually plays.
+   *
+   * This is where the prediction is replaced by the answer. It also covers the
+   * changes the app never made and so could not predict: a skip from the lock
+   * screen or the car, a track the engine dropped because it would not open, a
+   * queue restored into a fresh JavaScript context. Before this, the only time
+   * the two queues were reconciled was on a track change, so a queue edited
+   * from outside the app stayed wrong until the song ended.
+   *
+   * The backend re-reads the engine before emitting, so `getQueue()` here is
+   * the engine's queue and not the shadow this is correcting.
+   */
+  useEffect(() => {
+    return getBackend().addListener(event => {
+      if (event.type !== 'queueChange') return;
+      const next = resourcesFromPlayerQueue(
+        getBackend().getQueue(),
+        queueRef.current,
+        librarySongByIdRef.current
+      );
+      // An empty queue from the engine is not taken as an instruction to clear:
+      // `clearQueue` goes through its own path, and the engine reports empty
+      // before a `setQueue` has landed as well as after a genuine clear.
+      if (!next.length || sameQueue(queueRef.current, next)) return;
+      queueRef.current = next;
+      bumpQueue();
+    });
+  }, [bumpQueue]);
+
   // Vestigial: a lookup the native-queue reconciliation below falls back to
   // when a track is in neither the in-memory queue nor rebuildable from the
   // player's own item. Nothing currently populates it, so it always misses —
@@ -815,19 +836,11 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     // `buildTrackItem` keys every item by the song's `localId`, so this is
     // what both the in-memory queue lookup and the player's own media id are
     // compared against.
-    const nativeQueue = getBackend().getQueue();
-    const nativeQueueResources = nativeQueue
-      .map(item => {
-        const id = getMediaItemId(item);
-        // Prefer in-memory queue (fresh URLs) over native cache (potentially stale tokens)
-        const known = queueRef.current.find(resource => resource.song.localId === id)
-          ?? librarySongByIdRef.current.get(id);
-        if (known) return known;
-        // Fallback: rebuild from the native item — recovers provenance and the
-        // origin's own id by parsing the media id itself.
-        return resourceFromMediaItem(item);
-      })
-      .filter((resource): resource is PlayableResource => Boolean(resource));
+    const nativeQueueResources = resourcesFromPlayerQueue(
+      getBackend().getQueue(),
+      queueRef.current,
+      librarySongByIdRef.current
+    );
 
     if (nativeQueueResources.length && !sameQueue(queueRef.current, nativeQueueResources)) {
       queueRef.current = nativeQueueResources;

@@ -1,6 +1,7 @@
 import {
   applyEvent,
   createShadow,
+  reconcileQueue,
   toEngineTrack,
   toMediaItem,
   toPlaybackProgress,
@@ -156,5 +157,80 @@ describe('progress, in the shape the app expects', () => {
     // Position can momentarily exceed the last buffered figure between events.
     const out = toPlaybackProgress({ positionSec: 40, durationSec: 180, bufferedSec: 30 });
     expect(out.buffered).toBe(0);
+  });
+});
+
+describe('reconcileQueue', () => {
+  const item = (id: string, over: Record<string, unknown> = {}) => ({
+    mediaId: id,
+    title: id,
+    url: `https://example/${id}`,
+    ...over,
+  });
+  const shadowOf = (queue: ReturnType<typeof item>[], activeIndex = 0) => ({
+    ...createShadow(),
+    queue,
+    activeIndex,
+  });
+
+  it('takes order and membership from the engine', () => {
+    // The engine applied a move the app predicted differently. It is what
+    // actually plays, so it wins.
+    const next = reconcileQueue(shadowOf([item('a'), item('b'), item('c')]), ['c', 'a', 'b'], 0);
+
+    expect(next.queue.map(i => i.mediaId)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('drops a track the engine no longer has', () => {
+    const next = reconcileQueue(shadowOf([item('a'), item('b'), item('c')]), ['a', 'c'], 0);
+
+    expect(next.queue.map(i => i.mediaId)).toEqual(['a', 'c']);
+  });
+
+  it('keeps the app\'s own item for each id, not a rebuilt one', () => {
+    // The URL and the headers were resolved by the app and never crossed the
+    // bridge; the engine cannot return them, so they have to survive here or a
+    // protected server stops playing the moment the queue is reconciled.
+    const withAuth = item('a', { headers: { Authorization: 'Basic x' } });
+
+    const next = reconcileQueue(shadowOf([withAuth]), ['a'], 0);
+
+    expect(next.queue[0]).toBe(withAuth);
+  });
+
+  it('stubs an id the app has never seen rather than dropping it', () => {
+    // Reachable when a queue is restored into a fresh JavaScript context.
+    // Dropping it instead would leave the two queues different lengths, which
+    // makes every index after it wrong — the one outcome worse than a stub.
+    const next = reconcileQueue(shadowOf([item('a')]), ['a', 'restored'], 0);
+
+    expect(next.queue.map(i => i.mediaId)).toEqual(['a', 'restored']);
+    expect(next.queue[1]).toEqual({ mediaId: 'restored', url: '' });
+  });
+
+  it('clamps an index that points past the end', () => {
+    // An index past the end makes `getActiveMediaItem` undefined and every
+    // caller of it wrong at once.
+    const next = reconcileQueue(shadowOf([item('a'), item('b')], 1), ['a'], 5);
+
+    expect(next.activeIndex).toBe(0);
+  });
+
+  it('answers zero for an emptied queue rather than a negative index', () => {
+    const next = reconcileQueue(shadowOf([item('a')], 0), [], -1);
+
+    expect(next.queue).toEqual([]);
+    expect(next.activeIndex).toBe(0);
+  });
+
+  it('leaves progress and playing-ness alone', () => {
+    // A queue edit is not a transport event. Resetting either here would show
+    // the progress bar jumping on an insert the listener made while playing.
+    const before = { ...shadowOf([item('a')]), playing: true, progress: { positionSec: 30, durationSec: 100, bufferedSec: 40 } };
+
+    const next = reconcileQueue(before, ['a'], 0);
+
+    expect(next.playing).toBe(true);
+    expect(next.progress.positionSec).toBe(30);
   });
 });

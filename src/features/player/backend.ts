@@ -132,4 +132,13 @@ export type BackendEvent =
        */
       playing?: boolean;
     }
-  | { type: 'trackChange'; index: number };
+  | { type: 'trackChange'; index: number }
+  /**
+   * The engine's queue changed, and the backend has already re-read it — so a
+   * listener's next `getQueue()` is the engine's answer, not a prediction.
+   *
+   * Carries no payload on purpose. Anything put here would be a second copy of
+   * what `getQueue()` and `getActiveMediaItemIndex()` already say, and a second
+   * copy is what this event exists to stop the app from keeping.
+   */
+  | { type: 'queueChange' };

@@ -18,6 +18,8 @@ const mockCalls: { name: string; args: unknown[] }[] = [];
 let mockListener: ((event: unknown) => void) | null = null;
 let mockFailing: string | null = null;
 let mockSetupGate: Promise<void> | null = null;
+/** What the engine answers for the getters the backend reads back. */
+const mockReturns: Record<string, unknown> = {};
 
 const mockEngine = new Proxy(
   {},
@@ -35,6 +37,7 @@ const mockEngine = new Proxy(
         // `setup` can be held open, so a test can reproduce the window in
         // which the native graph does not exist yet.
         if (name === 'setup' && mockSetupGate) return mockSetupGate;
+        if (name in mockReturns) return Promise.resolve(mockReturns[name]);
         return Promise.resolve();
       };
     },
@@ -74,6 +77,7 @@ beforeEach(() => {
   mockListener = null;
   mockFailing = null;
   mockSetupGate = null;
+  for (const key of Object.keys(mockReturns)) delete mockReturns[key];
   // Several tests here make calls fail on purpose, and `fire` warns on every
   // failure so a release build leaves a trace. Silenced rather than tolerated:
   // expected output that looks like a problem trains you to ignore the run.
@@ -339,5 +343,75 @@ describe('events from the engine', () => {
     off();
     mockListener?.({ type: 'stateChange', state: 'playing' });
     expect(seen).toEqual([]);
+  });
+});
+
+describe('queueChange', () => {
+  /**
+   * The event exists so the app can stop keeping its own splice arithmetic.
+   * If it arrived before the shadow had been replaced, a listener reacting
+   * with `getQueue()` would read back the very prediction the event was sent
+   * to correct — which is worse than not emitting at all.
+   */
+  it('re-reads the engine before telling the app the queue moved', async () => {
+    const backend = createEngineBackend();
+    const seen: string[][] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'queueChange') seen.push(backend.getQueue().map((i: MediaItem) => i.mediaId as string));
+    });
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('a'), item('b'), item('c')], 0);
+    // The engine says `b` is gone — a drop the app never asked for and could
+    // not have predicted.
+    mockReturns.getQueue = [{ id: 'a' }, { id: 'c' }];
+    mockReturns.getActiveIndex = 1;
+
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    expect(seen).toEqual([['a', 'c']]);
+    expect(backend.getActiveMediaItemIndex()).toBe(1);
+  });
+
+  it('keeps the app\'s own items, which the engine cannot hand back', async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('a', { headers: { Authorization: 'Basic x' } })], 0);
+    mockReturns.getQueue = [{ id: 'a' }];
+    mockReturns.getActiveIndex = 0;
+
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    // The resolved URL and the request headers were never sent back across the
+    // bridge; losing them here would mean a protected server stopped playing
+    // the moment the queue was reconciled.
+    expect(backend.getQueue()[0].headers).toEqual({ Authorization: 'Basic x' });
+    expect(backend.getQueue()[0].url).toBe('https://example/a');
+  });
+
+  it('says nothing when the engine could not be read', async () => {
+    const backend = createEngineBackend();
+    const seen: unknown[] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'queueChange') seen.push(event);
+    });
+    backend.setup();
+    await flush();
+    backend.setMediaItems([item('a')], 0);
+
+    mockFailing = 'getQueue';
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    // The queue the app is showing is the one it last set, which is the best
+    // answer available — and a thrown error here would surface as a playback
+    // failure the listener's music never had.
+    expect(seen).toEqual([]);
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['a']);
   });
 });
