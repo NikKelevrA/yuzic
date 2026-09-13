@@ -12,12 +12,12 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 import {
     setActiveServer,
     removeServer,
-} from '@/utils/redux/slices/serversSlice';
-import { clearOfflineMutationsForServer } from '@/utils/redux/slices/offlineMutationsSlice';
+} from '@/state/redux/slices/serversSlice';
+import { clearOfflineMutationsForServer } from '@/state/redux/slices/offlineMutationsSlice';
 import { Ellipsis } from 'lucide-react-native';
 
 import { SERVER_PROVIDERS, forgetAllServerCredentials } from '@/utils/servers/registry';

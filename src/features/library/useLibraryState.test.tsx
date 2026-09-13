@@ -7,9 +7,9 @@ import { useLibraryState } from './useLibraryState';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import type { Album } from '@/domain/entities/Album';
-import wantsReducer, { addWant } from '@/utils/redux/slices/wantsSlice';
-import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
-import downloadersReducer from '@/utils/redux/slices/downloadersSlice';
+import wantsReducer, { addWant } from '@/state/redux/slices/wantsSlice';
+import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
+import downloadersReducer from '@/state/redux/slices/downloadersSlice';
 import type { Server } from '@/types/Server';
 
 jest.mock('@/hooks/albums', () => ({

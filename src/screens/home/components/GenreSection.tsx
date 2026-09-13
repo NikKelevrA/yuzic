@@ -13,7 +13,7 @@ import { usePrefetchCovers } from '@/hooks/usePrefetchCovers'
 import { prefetchCovers } from '@/utils/images/imageCache'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
-import { selectLibraryGenres } from '@/utils/redux/selectors/librarySelectors'
+import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,

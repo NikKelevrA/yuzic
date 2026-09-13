@@ -6,7 +6,7 @@ import shuffleArray from '@/utils/shuffleArray';
 import {
   selectSongLastPlayedAt,
   selectSongPlayCounts,
-} from '@/utils/redux/selectors/statsSelectors';
+} from '@/state/redux/selectors/statsSelectors';
 
 const MAX_RECENT = 12;
 const MIN_DIAL_SONGS = 6;

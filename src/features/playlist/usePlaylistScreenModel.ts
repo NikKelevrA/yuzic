@@ -18,7 +18,7 @@ import type { PlaylistDetail } from '@/domain/entities/Detail';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { staleTime } from '@/constants/staleTime';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasValue, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
 import { usePlaylists } from '@/hooks/playlists';
 import { getPlaylist } from './playlistRepository';

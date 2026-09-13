@@ -14,7 +14,7 @@ import type { Playlist } from '@/domain/entities/Playlist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { useApi } from '@/api';
 import { fetchAlbumSongsSettled } from './useLazyCollectionDetails';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { usePlaying } from '@/contexts/PlayingContext';
 import { useDownload } from '@/contexts/DownloadContext';
 import { useTracks } from '@/hooks/tracks';

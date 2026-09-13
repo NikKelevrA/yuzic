@@ -14,7 +14,7 @@ import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import { presentableGenres } from '@/features/home/genres';
 import { onePerAlbum } from '@/features/home/randomDraw';
-import { selectLibraryGenres } from '@/utils/redux/selectors/librarySelectors';
+import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors';
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,

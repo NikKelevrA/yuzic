@@ -1,7 +1,7 @@
 import { findArrivedWants } from '../arrival';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance, serverProvenance } from '@/domain/identity/Provenance';
-import type { Want } from '@/utils/redux/slices/wantsSlice';
+import type { Want } from '@/state/redux/slices/wantsSlice';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 

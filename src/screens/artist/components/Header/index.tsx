@@ -28,7 +28,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useDownload } from '@/contexts/DownloadContext';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { useApi } from '@/api';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails';
 import {
   DetailActionRow,

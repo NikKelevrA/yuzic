@@ -18,7 +18,7 @@ import { DownloadProvider } from '@/contexts/DownloadContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider, useSelector, useDispatch } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import store, { persistor } from '@/utils/redux/store';
+import store, { persistor } from '@/state/redux/store';
 import { Alert, AppState } from 'react-native';
 import { setJSExceptionHandler, setNativeExceptionHandler } from 'react-native-exception-handler';
 import RNRestart from 'react-native-restart';
@@ -40,12 +40,12 @@ import { clearImageMemoryCache, runImageCacheMigration } from '@/utils/images/im
 import { useClientCertificate } from '@/features/mtls/useClientCertificate';
 import { hydrateAll } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';
-import { setCredentialsHydrated } from '@/utils/redux/slices/serversSlice';
+import { setCredentialsHydrated } from '@/state/redux/slices/serversSlice';
 import { serverCredentialScope } from '@/utils/servers/registry';
-import { listenBrainzCredentialScope } from '@/utils/redux/selectors/listenbrainzSelectors';
-import { audiomuseCredentialScope } from '@/utils/redux/selectors/audiomuseSelectors';
-import { downloaderCredentialScope } from '@/utils/redux/selectors/downloadersSelectors';
-import { DOWNLOADER_IDS } from '@/utils/redux/slices/downloadersSlice';
+import { listenBrainzCredentialScope } from '@/state/redux/selectors/listenbrainzSelectors';
+import { audiomuseCredentialScope } from '@/state/redux/selectors/audiomuseSelectors';
+import { downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors';
+import { DOWNLOADER_IDS } from '@/state/redux/slices/downloadersSlice';
 
 
 const LIBRARY_LOAD_FAILED_TOAST_ID = 'library-load-failed';

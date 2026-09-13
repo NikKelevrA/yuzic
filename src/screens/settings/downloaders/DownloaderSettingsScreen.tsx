@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import SettingsScreen from '../components/SettingsScreen';
 import SettingsAuthCard from '../components/SettingsAuthCard';
 import SettingsDisconnectButton from '../components/SettingsDisconnectButton';
-import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';
+import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 import {
   useDownloaderConnection,
   type DownloaderConfig,

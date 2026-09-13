@@ -37,10 +37,10 @@ import type { Library, ApiAdapter } from '@/api/types';
 import i18n from '@/i18n';
 import { getCredentials, setCredential, forgetCredentials, type CredentialBundle } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';
-import { listenBrainzCredentialScope } from '@/utils/redux/selectors/listenbrainzSelectors';
-import { audiomuseCredentialScope } from '@/utils/redux/selectors/audiomuseSelectors';
-import { downloaderCredentialScope } from '@/utils/redux/selectors/downloadersSelectors';
-import { DOWNLOADER_IDS } from '@/utils/redux/slices/downloadersSlice';
+import { listenBrainzCredentialScope } from '@/state/redux/selectors/listenbrainzSelectors';
+import { audiomuseCredentialScope } from '@/state/redux/selectors/audiomuseSelectors';
+import { downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors';
+import { DOWNLOADER_IDS } from '@/state/redux/slices/downloadersSlice';
 
 export type { Library };
 

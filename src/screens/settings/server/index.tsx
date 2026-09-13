@@ -13,7 +13,7 @@ import SettingsCardHeader from '../components/SettingsCardHeader';
 import ConnectivityIndicator from '../components/ConnectivityIndicator';
 import FallbackUrlsCard from './components/FallbackUrlsCard';
 import ClientCertificateCard from './components/ClientCertificateCard';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { selectSearchScope, setSearchScope, type SearchScope } from '@/features/settings/search/state';
 import { selectQueueSyncEnabled, setQueueSyncEnabled } from '@/features/settings/playback/state';
 import { selectServerNowPlayingShelfEnabled, setServerNowPlayingShelfEnabled } from '@/features/settings/home/state';

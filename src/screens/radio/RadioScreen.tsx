@@ -12,7 +12,7 @@ import type { InternetRadioStation } from '@/api/types';
 import type { Song } from '@/domain/entities/Song';
 import { stationToSong } from '@/utils/playback/buildStationSong';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { DetailHeaderBar, DetailHeaderIconButton } from '@/components/DetailHeader';
 import { FormSheet, FormSheetField } from '@/components/FormSheet';
 import MediaListRow from '@/components/MediaListRow';

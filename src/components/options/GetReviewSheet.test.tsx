@@ -67,27 +67,27 @@ jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
 }));
 
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServer: (state: any) => state.servers?.activeServer ?? null,
   selectActiveServerId: (state: any) => state.servers?.activeServerId ?? null,
 }));
 
 const mockIsWanted = jest.fn(() => false);
-jest.mock('@/utils/redux/selectors/wantsSelectors', () => ({
+jest.mock('@/state/redux/selectors/wantsSelectors', () => ({
   selectIsWanted: (_localId: string) => () => mockIsWanted(),
 }));
 
-jest.mock('@/utils/redux/slices/wantsSlice', () => ({
+jest.mock('@/state/redux/slices/wantsSlice', () => ({
   setWantJobRef: (payload: any) => ({ type: 'wants/setWantJobRef', payload }),
 }));
 
-jest.mock('@/utils/redux/selectors/downloadersSelectors', () => ({
+jest.mock('@/state/redux/selectors/downloadersSelectors', () => ({
   selectDefaultProviderForActiveServer: (state: any) => state.downloaders?.defaultsByServer?.['server-1'] ?? {},
   selectLidarrDefaultQualityProfileId: (state: any) =>
     state.downloaders?.defaultsByServer?.['server-1']?.lidarrDefaultQualityProfileId,
 }));
 
-jest.mock('@/utils/redux/slices/downloadersSlice', () => ({
+jest.mock('@/state/redux/slices/downloadersSlice', () => ({
   setDefaultProvider: (payload: any) => ({ type: 'downloaders/setDefaultProvider', payload }),
   setLidarrDefaultQualityProfileId: (payload: any) => ({
     type: 'downloaders/setLidarrDefaultQualityProfileId',

@@ -3,15 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
 
-import { downloaderSelectors, downloaderCredentialScope } from '@/utils/redux/selectors/downloadersSelectors';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { downloaderSelectors, downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import {
   connectDownloader,
   disconnectDownloader,
   setDownloaderAuthenticated,
   setDownloaderServerUrl,
   type DownloaderId,
-} from '@/utils/redux/slices/downloadersSlice';
+} from '@/state/redux/slices/downloadersSlice';
 import { setCredential, forgetCredentials } from '@/state/credentialCache';
 
 /** Debounce before auto-testing typed credentials, so each keystroke isn't a request. */

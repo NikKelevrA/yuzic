@@ -21,7 +21,7 @@ import { useSelector } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
 import { selectThemeColor } from '@/features/settings/appearance/state';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';

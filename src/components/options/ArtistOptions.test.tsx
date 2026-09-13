@@ -27,11 +27,11 @@ jest.mock('react-redux', () => ({
   useSelector: (selector: any) => selector({}),
 }));
 
-jest.mock('@/utils/redux/selectors/statsSelectors', () => ({
+jest.mock('@/state/redux/selectors/statsSelectors', () => ({
   selectArtistPlayCount: () => () => 0,
 }));
 
-jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
+jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
   useAudiomuseConfig: () => ({}),
 }));
 

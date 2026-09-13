@@ -10,7 +10,7 @@ import { User, Lock, Shield, ChevronUp, ChevronDown, TriangleAlert, QrCode, Chev
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
-import { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
+import { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import { notify } from '@/components/toast';
 import { nanoid } from '@reduxjs/toolkit';
 import { ProviderAuth, SERVER_PROVIDERS, saveServerCredentials } from '@/utils/servers/registry';

@@ -5,7 +5,7 @@ import { useApi } from '@/api';
 import { fetchAlbumDetailsSettled, type FetchAlbumDetailsArgs } from '@/hooks/albums/fetchAlbumDetails';
 import { QueryKeys } from '@/enums/queryKeys';
 import { staleTime } from '@/constants/staleTime';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import type { Album } from '@/domain/entities/Album';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';

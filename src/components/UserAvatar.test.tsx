@@ -20,7 +20,7 @@ jest.mock('@/features/settings/appearance/state', () => ({
   selectThemeColor: 'themeColor',
 }));
 
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServerId: 'activeServerId',
 }));
 

@@ -13,7 +13,7 @@ import MediaTile from '@/screens/home/components/MediaTile';
 import { useTheme } from '@/hooks/useTheme';
 import { useStarredSongs } from '@/hooks/starred';
 import { useSelector } from 'react-redux';
-import { selectAlbumPlayCount } from '@/utils/redux/selectors/statsSelectors';
+import { selectAlbumPlayCount } from '@/state/redux/selectors/statsSelectors';
 import { usePreviewPlayer } from '@/features/playback/usePreviewPlayer';
 import AlbumRecommendedSection from '../AlbumRecommendedSection';
 import SimilarAlbumsSection from '../SimilarAlbumsSection';

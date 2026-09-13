@@ -10,7 +10,7 @@
  * external provenance for its entity kind — one function, called once per
  * row, rather than the result's `source` field steering which of two
  * components gets rendered. `entityTo*` cover the same job for a persisted
- * `SearchEntityEntry` (src/utils/redux/slices/searchHistorySlice.ts), which
+ * `SearchEntityEntry` (src/state/redux/slices/searchHistorySlice.ts), which
  * carries the same loose id/title/cover fields but isn't a `SearchResult`.
  */
 import type { SearchResult } from '@/features/search/searchRanking';
@@ -21,7 +21,7 @@ import type { Playlist } from '@/domain/entities/Playlist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { normalizeExternalIds } from '@/domain/identity/ExternalIds';
 import { integrationProvenance, serverProvenance } from '@/domain/identity/Provenance';
-import type { SearchEntityEntry } from '@/utils/redux/slices/searchHistorySlice';
+import type { SearchEntityEntry } from '@/state/redux/slices/searchHistorySlice';
 
 /** True when `artist` came from an external catalog rather than the user's
  *  library — mirrors `AlbumRow`'s `isExternalAlbum`, which has no artist

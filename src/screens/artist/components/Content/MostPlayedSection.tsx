@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux'
 import { useTheme } from '@/hooks/useTheme'
 import { useTranslation } from 'react-i18next'
 import { notify } from '@/components/toast';
-import { selectSongPlayCounts } from '@/utils/redux/selectors/statsSelectors'
+import { selectSongPlayCounts } from '@/state/redux/selectors/statsSelectors'
 import { useTracks } from '@/hooks/tracks'
 import { usePlayingActions } from '@/contexts/PlayingContext'
 import { usePlayableSongResolver } from '@/hooks/songs'

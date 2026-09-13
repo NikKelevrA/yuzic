@@ -6,7 +6,7 @@ import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/useDailyLayout';
-import { selectSongPlayCounts } from '@/utils/redux/selectors/statsSelectors';
+import { selectSongPlayCounts } from '@/state/redux/selectors/statsSelectors';
 import { useSongsById } from '@/hooks/tracks/useSongsById';
 import type { Song } from '@/domain/entities/Song';
 

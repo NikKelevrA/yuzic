@@ -3,7 +3,7 @@ import { QueryKeys } from '@/enums/queryKeys';
 import type { Artist } from '@/domain/entities/Artist';
 import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasArrayData, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
 
 type UseArtistsResult = {

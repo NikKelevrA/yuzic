@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { notify } from '@/components/toast';
 import { nanoid } from '@reduxjs/toolkit';
-import { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
+import { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { ServerType } from '@/types';
 import { SERVER_PROVIDERS, saveServerCredentials } from '@/utils/servers/registry';

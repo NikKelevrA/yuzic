@@ -13,7 +13,7 @@ import {
   searchHistoryEntryKey,
   type SearchEntityEntry,
   type SearchQueryEntry,
-} from '@/utils/redux/slices/searchHistorySlice';
+} from '@/state/redux/slices/searchHistorySlice';
 import Touchable from '@/components/Touchable';
 
 type Props = {

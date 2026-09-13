@@ -2,7 +2,7 @@ import React, { memo, useCallback, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { selectAlbumLastPlayedAt, selectPlaylistLastPlayedAt } from '@/utils/redux/selectors/statsSelectors';
+import { selectAlbumLastPlayedAt, selectPlaylistLastPlayedAt } from '@/state/redux/selectors/statsSelectors';
 import { useAlbums } from '@/hooks/albums';
 import { usePlaylists } from '@/hooks/playlists';
 import MediaTile from '../MediaTile';

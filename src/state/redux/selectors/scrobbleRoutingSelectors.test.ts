@@ -1,7 +1,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import settingsScrobblingReducer, { setScrobbleRoute } from '@/features/settings/scrobbling/state'
-import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
-import listenbrainzReducer, { setScrobbleEnabled } from '@/utils/redux/slices/listenbrainzSlice'
+import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice'
+import listenbrainzReducer, { setScrobbleEnabled } from '@/state/redux/slices/listenbrainzSlice'
 import type { Server } from '@/types'
 import {
   deriveScrobbleRoute,
@@ -59,7 +59,7 @@ describe('deriveScrobbleRoute — no-migration default from today\'s booleans', 
 })
 
 function stateOf(store: ReturnType<typeof makeStore>) {
-  return store.getState() as unknown as import('@/utils/redux/store').RootState
+  return store.getState() as unknown as import('@/state/redux/store').RootState
 }
 
 describe('scrobble route selectors — persistence and defaults, per server/destination', () => {

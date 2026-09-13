@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { selection as hapticsSelection } from '@/utils/haptics';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
-import { addWant, removeWant, type WantOrigin, type WantUnit } from '@/utils/redux/slices/wantsSlice';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { selectIsWanted } from '@/state/redux/selectors/wantsSelectors';
+import { addWant, removeWant, type WantOrigin, type WantUnit } from '@/state/redux/slices/wantsSlice';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 

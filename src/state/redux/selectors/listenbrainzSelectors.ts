@@ -1,7 +1,7 @@
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 import { createSelector } from '@reduxjs/toolkit';
 import { useSelector } from 'react-redux';
-import { PerServerListenBrainzState } from '@/utils/redux/slices/listenbrainzSlice';
+import { PerServerListenBrainzState } from '@/state/redux/slices/listenbrainzSlice';
 import { getCredentials } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';
 import { selectCredentialsHydrated } from './serversSelectors';

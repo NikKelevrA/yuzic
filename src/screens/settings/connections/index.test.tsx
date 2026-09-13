@@ -28,11 +28,11 @@ jest.mock('react-redux', () => ({
   },
 }));
 
-jest.mock('@/utils/redux/selectors/listenbrainzSelectors', () => ({
+jest.mock('@/state/redux/selectors/listenbrainzSelectors', () => ({
   selectListenBrainzAuthenticated: 'lbAuthenticated',
 }));
 
-jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
+jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
   selectAudiomuseEnabled: 'audiomuseEnabled',
   selectAudiomuseAuthenticated: 'audiomuseAuthenticated',
 }));

@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "@/utils/redux/store";
+import { RootState } from "@/state/redux/store";
 
 const PREFIX = (serverId: string) => `${serverId}:`;
 

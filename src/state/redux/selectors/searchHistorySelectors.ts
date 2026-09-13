@@ -1,11 +1,11 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 import {
   normalizeSearchHistoryEntries,
   type SearchEntityEntry,
   type SearchHistoryEntry,
   type SearchQueryEntry,
-} from '@/utils/redux/slices/searchHistorySlice';
+} from '@/state/redux/slices/searchHistorySlice';
 
 const EMPTY: SearchHistoryEntry[] = [];
 

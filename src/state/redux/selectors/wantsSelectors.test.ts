@@ -1,6 +1,6 @@
-import type { RootState } from '@/utils/redux/store';
+import type { RootState } from '@/state/redux/store';
 import type { LocalId } from '@/domain/identity/LocalId';
-import type { Want } from '@/utils/redux/slices/wantsSlice';
+import type { Want } from '@/state/redux/slices/wantsSlice';
 import {
   selectWantsForActiveServer,
   selectIsWanted,

@@ -10,14 +10,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { selectServerById } from '@/utils/redux/selectors/serversSelectors';
-import { updateServer } from '@/utils/redux/slices/serversSlice';
+import { selectServerById } from '@/state/redux/selectors/serversSelectors';
+import { updateServer } from '@/state/redux/slices/serversSlice';
 import {
   listServerLibraries,
   libraryScopePatch,
   type Library,
 } from '@/utils/servers/registry';
-import type { RootState } from '@/utils/redux/store';
+import type { RootState } from '@/state/redux/store';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { iconSize, onDark, radius, spacing, typography } from '@/constants/design';

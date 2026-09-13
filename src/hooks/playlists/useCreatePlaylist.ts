@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { useIsOffline } from '@/hooks/useIsOffline';
 
 export function useCreatePlaylist() {

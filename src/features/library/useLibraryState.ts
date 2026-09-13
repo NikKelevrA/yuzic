@@ -8,8 +8,8 @@ import { resolveLibraryState, type LibraryState } from '@/domain/library/Library
 import {
   selectLidarrAuthenticated,
   selectSlskdAuthenticated,
-} from '@/utils/redux/selectors/downloadersSelectors';
-import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
+} from '@/state/redux/selectors/downloadersSelectors';
+import { selectIsWanted } from '@/state/redux/selectors/wantsSelectors';
 
 /**
  * Thin React wrapper around the domain `resolveLibraryState`: assembles

@@ -6,13 +6,13 @@ import * as lidarr from '@/api/lidarr';
 import type { LidarrQualityProfile } from '@/api/lidarr';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsSelectCard from '../components/SettingsSelectCard';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import {
   downloaderSelectors,
   useLidarrConfig,
   selectLidarrDefaultQualityProfileId,
-} from '@/utils/redux/selectors/downloadersSelectors';
-import { setLidarrDefaultQualityProfileId } from '@/utils/redux/slices/downloadersSlice';
+} from '@/state/redux/selectors/downloadersSelectors';
+import { setLidarrDefaultQualityProfileId } from '@/state/redux/slices/downloadersSlice';
 import DownloaderSettingsScreen from './DownloaderSettingsScreen';
 
 /**

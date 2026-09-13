@@ -10,7 +10,7 @@ jest.mock('react-redux', () => ({ useSelector: (selector: string) => ({
   authenticated: selector === 'authenticated' ? false : undefined,
   activeServer: selector === 'activeServer' ? { id: 'server-1' } : undefined,
 }[selector]), useDispatch: () => jest.fn() }));
-jest.mock('@/utils/redux/selectors/listenbrainzSelectors', () => ({
+jest.mock('@/state/redux/selectors/listenbrainzSelectors', () => ({
   selectListenBrainzUsername: 'username',
   selectListenBrainzAuthenticated: 'authenticated',
   // A real hook (not a plain selector string like the others above) since the
@@ -18,8 +18,8 @@ jest.mock('@/utils/redux/selectors/listenbrainzSelectors', () => ({
   useListenBrainzToken: () => '',
   listenBrainzCredentialScope: (serverId: string) => ({ kind: 'integration', providerId: `listenbrainz:${serverId}` }),
 }));
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({ selectActiveServer: 'activeServer' }));
-jest.mock('@/utils/redux/slices/listenbrainzSlice', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({ selectActiveServer: 'activeServer' }));
+jest.mock('@/state/redux/slices/listenbrainzSlice', () => ({
   setUsername: jest.fn(), setAuthenticated: jest.fn(), disconnect: jest.fn(),
 }));
 jest.mock('@/api/listenbrainz', () => ({ testConnection: jest.fn() }));

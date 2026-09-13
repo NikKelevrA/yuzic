@@ -8,11 +8,11 @@ import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsSelectCard from '../components/SettingsSelectCard';
 import { useTheme } from '@/hooks/useTheme';
 import { radius, spacing, typography } from '@/constants/design';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import {
   selectLastfmScrobbleRoute,
   selectListenBrainzScrobbleRoute,
-} from '@/utils/redux/selectors/scrobbleRoutingSelectors';
+} from '@/state/redux/selectors/scrobbleRoutingSelectors';
 import { setScrobbleRoute, type ScrobbleRoute } from '@/features/settings/scrobbling/state';
 
 /**

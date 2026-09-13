@@ -17,13 +17,13 @@ import {
   type OfflineMutation,
   type ScrobbleDestination,
 } from '@/utils/offline/offlineMutations';
-import { useListenBrainzConfig } from '@/utils/redux/selectors/listenbrainzSelectors';
-import { selectOfflineMutationQueue } from '@/utils/redux/selectors/offlineMutationsSelectors';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { useListenBrainzConfig } from '@/state/redux/selectors/listenbrainzSelectors';
+import { selectOfflineMutationQueue } from '@/state/redux/selectors/offlineMutationsSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import {
   markOfflineMutationFailed,
   removeOfflineMutation,
-} from '@/utils/redux/slices/offlineMutationsSlice';
+} from '@/state/redux/slices/offlineMutationsSlice';
 
 const SYNCED_TOAST_ID = 'offline-mutations-synced';
 const FAILED_TOAST_ID = 'offline-mutations-failed';

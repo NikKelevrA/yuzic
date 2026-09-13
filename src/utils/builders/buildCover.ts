@@ -1,6 +1,6 @@
 import { COVER_PX, CoverSource } from '@/types';
-import store from '@/utils/redux/store';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import store from '@/state/redux/store';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { SERVER_PROVIDERS, withServerCredentials } from '@/utils/servers/registry';
 import { normalizeImageUrlForSize } from '@/utils/images/normalizeImageUrl';
 

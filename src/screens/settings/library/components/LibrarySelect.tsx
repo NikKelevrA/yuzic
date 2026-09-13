@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { updateServer } from '@/utils/redux/slices/serversSlice';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { updateServer } from '@/state/redux/slices/serversSlice';
 import {
   listServerLibraries,
   selectedLibraryIds,

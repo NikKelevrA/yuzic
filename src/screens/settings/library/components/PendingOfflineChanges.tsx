@@ -6,12 +6,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '@/hooks/useTheme';
-import { selectOfflineMutationQueue } from '@/utils/redux/selectors/offlineMutationsSelectors';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectOfflineMutationQueue } from '@/state/redux/selectors/offlineMutationsSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import {
   clearOfflineMutationsForServer,
   retryOfflineMutationsForServer,
-} from '@/utils/redux/slices/offlineMutationsSlice';
+} from '@/state/redux/slices/offlineMutationsSlice';
 import SettingsCard from '../../components/SettingsCard';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/hooks/useRadius';

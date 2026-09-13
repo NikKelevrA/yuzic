@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/utils/builders/buildCover';
 import { CoverSource } from '@/types';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { useTheme } from '@/hooks/useTheme';
 import {
   hasImageUrlFailed,

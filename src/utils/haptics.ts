@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 
-import store from '@/utils/redux/store';
+import store from '@/state/redux/store';
 import { selectHapticsEnabled } from '@/features/settings/appearance/state';
 
 /**

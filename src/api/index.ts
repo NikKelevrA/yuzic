@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { ApiAdapter } from "./types";
 import { SERVER_PROVIDERS, withServerCredentials } from "@/utils/servers/registry";
-import { selectActiveServer, selectCredentialsHydrated } from "@/utils/redux/selectors/serversSelectors";
+import { selectActiveServer, selectCredentialsHydrated } from "@/state/redux/selectors/serversSelectors";
 
 const empty = async () => {
   throw new Error("No server connected.");

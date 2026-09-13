@@ -21,14 +21,14 @@ import {
 } from '@/features/downloaders/registry';
 import * as lidarr from '@/api/lidarr';
 import type { LidarrQualityProfile } from '@/api/lidarr';
-import { setDefaultProvider, setLidarrDefaultQualityProfileId } from '@/utils/redux/slices/downloadersSlice';
+import { setDefaultProvider, setLidarrDefaultQualityProfileId } from '@/state/redux/slices/downloadersSlice';
 import {
   selectDefaultProviderForActiveServer,
   selectLidarrDefaultQualityProfileId,
-} from '@/utils/redux/selectors/downloadersSelectors';
-import { selectActiveServer, selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
-import { setWantJobRef } from '@/utils/redux/slices/wantsSlice';
+} from '@/state/redux/selectors/downloadersSelectors';
+import { selectActiveServer, selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { selectIsWanted } from '@/state/redux/selectors/wantsSelectors';
+import { setWantJobRef } from '@/state/redux/slices/wantsSlice';
 import type { Album } from '@/domain/entities/Album';
 import {
   OptionSheetDivider,

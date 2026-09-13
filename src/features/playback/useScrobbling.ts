@@ -1,19 +1,19 @@
 import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { Song } from '@/domain/entities/Song';
-import { incrementPlay } from '@/utils/redux/slices/statsSlice';
+import { incrementPlay } from '@/state/redux/slices/statsSlice';
 import {
   buildScrobbleMutation,
   type ScrobbleDestination,
 } from '@/utils/offline/offlineMutations';
-import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
+import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
 import { canScrobble } from '@/utils/playback/contentKind';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import {
   useScrobbleDestinationPlan,
   submitDirectListen,
   submitDirectNowPlaying,
-} from '@/utils/redux/selectors/scrobbleRoutingSelectors';
+} from '@/state/redux/selectors/scrobbleRoutingSelectors';
 import { useApi } from '@/api';
 
 function passesScrobbleThreshold(listenedSeconds: number, durationSeconds: number): boolean {

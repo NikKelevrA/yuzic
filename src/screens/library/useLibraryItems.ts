@@ -13,7 +13,7 @@ import {
   selectAlbumPlayCounts,
   selectArtistLastPlayedAt,
   selectArtistPlayCounts,
-} from '@/utils/redux/selectors/statsSelectors'
+} from '@/state/redux/selectors/statsSelectors'
 import {
   EMPTY_SORT_STATS,
   sortItems,

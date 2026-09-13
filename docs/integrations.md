@@ -135,7 +135,7 @@ shows up:
 
 There used to be a per-surface switch for each of those last four. They were
 retired into the switch above them and the persisted keys are stripped by a
-store migration (`src/utils/redux/store.ts`) — don't reintroduce them.
+store migration (`src/state/redux/store.ts`) — don't reintroduce them.
 
 Deezer is also one of the two external **sources** (with MusicBrainz) behind
 artist/album resolution — see `src/features/sources/registry.ts`.

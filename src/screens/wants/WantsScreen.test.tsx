@@ -63,13 +63,13 @@ jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
 }));
 
-jest.mock('@/utils/redux/selectors/wantsSelectors', () => ({
+jest.mock('@/state/redux/selectors/wantsSelectors', () => ({
   selectWantsForActiveServer: () => mockWants,
 }));
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServerId: () => 'server-1',
 }));
-jest.mock('@/utils/redux/slices/wantsSlice', () => ({
+jest.mock('@/state/redux/slices/wantsSlice', () => ({
   removeWant: (payload: any) => ({ type: 'wants/removeWant', payload }),
 }));
 

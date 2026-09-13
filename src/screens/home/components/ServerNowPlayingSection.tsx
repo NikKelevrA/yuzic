@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { QueryKeys } from '@/enums/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { selectServerNowPlayingShelfEnabled } from '@/features/settings/home/state';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import MediaListRow from '@/components/MediaListRow';
 import { useSourceSectionPresence } from './SourceGroup';
 import { SECTION_H_PADDING as H_PADDING } from '@/features/home/constants';

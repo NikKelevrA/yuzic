@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus, X } from 'lucide-react-native';
 
 import { useTheme } from '@/hooks/useTheme';
-import { updateServer } from '@/utils/redux/slices/serversSlice';
+import { updateServer } from '@/state/redux/slices/serversSlice';
 import { forgetReachable } from '@/utils/servers/urlFailover';
 import { useRadius } from '@/hooks/useRadius';
 import SettingsCard from '../../components/SettingsCard';

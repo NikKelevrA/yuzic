@@ -1,4 +1,4 @@
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 
 export const selectPersistedPlaybackQueue = (s: RootState) => s.playback.queueSongIds;
 export const selectPersistedPlaybackCurrentIndex = (s: RootState) => s.playback.currentIndex;

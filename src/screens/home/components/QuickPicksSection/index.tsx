@@ -20,7 +20,7 @@ import MediaListRow from '@/components/MediaListRow';
 import {
   selectSongPlayCounts,
   selectSongLastPlayedAt,
-} from '@/utils/redux/selectors/statsSelectors';
+} from '@/state/redux/selectors/statsSelectors';
 import { useSongsById } from '@/hooks/tracks/useSongsById';
 import { seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import type { Song } from '@/domain/entities/Song';

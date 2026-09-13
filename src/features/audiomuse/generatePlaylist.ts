@@ -1,4 +1,4 @@
-import { useIsAudiomuseConfigured } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useIsAudiomuseConfigured } from '@/state/redux/selectors/audiomuseSelectors';
 import type { ApiAdapter } from '@/api/types';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { View, ScrollView, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { selectAlbumPlayCounts } from '@/utils/redux/selectors/statsSelectors';
+import { selectAlbumPlayCounts } from '@/state/redux/selectors/statsSelectors';
 import { useAlbums } from '@/hooks/albums';
 import AlbumItem from '@/screens/library/components/Items/AlbumItem';
 import SectionShelfHeader from '../SectionShelfHeader';

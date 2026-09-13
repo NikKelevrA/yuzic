@@ -5,7 +5,7 @@ import type { Album } from '@/domain/entities/Album';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
 import { matchesAlbum } from '@/features/downloaders/queueItem';
-import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';
+import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 
 export type ExternalAlbumStatus =
   | { kind: 'in_library' }

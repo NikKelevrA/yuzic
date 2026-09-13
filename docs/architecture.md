@@ -115,7 +115,7 @@ must never be the old shared literal `yuzic-device`.
 
 ## 2. `playbackSlice` — the source of truth for playback state
 
-`src/utils/redux/slices/playbackSlice.ts` is what makes "the app remembers what
+`src/state/redux/slices/playbackSlice.ts` is what makes "the app remembers what
 I was doing" true on every provider, not just Navidrome. It carries:
 
 - `queueSongIds[]`, `currentIndex`, `positionMs`
@@ -406,7 +406,7 @@ can do*, never *which product it is*.
 A **want** is a save-only declaration of intent; **Get** is the separate act of
 acquiring. The two are deliberately different code paths.
 
-- **`wantsSlice`** (`utils/redux/slices/wantsSlice.ts`) is per-server, persisted,
+- **`wantsSlice`** (`state/redux/slices/wantsSlice.ts`) is per-server, persisted,
   and **pure/save-only** — no reducer performs or triggers acquisition, so a
   wishlist works with zero providers connected. A want carries `localId`,
   `title`/`artist` (so it renders with no lookup), `externalIds`, `unit`,
@@ -569,7 +569,7 @@ src/features/           — feature-scoped modules that span providers
   audiomuse/            — Playlist generation from acoustic seed
 
 src/screens/            — one directory per top-level route
-src/utils/redux/        — slices + selectors + store setup
+src/state/redux/        — slices + selectors + store setup
 src/utils/playback/     — contentKind + Song-synthesis helpers
 ```
 

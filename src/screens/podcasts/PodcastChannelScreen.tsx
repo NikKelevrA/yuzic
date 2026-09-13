@@ -13,7 +13,7 @@ import type { PodcastChannel, PodcastEpisode } from '@/api/types';
 import type { Song } from '@/domain/entities/Song';
 import { podcastEpisodeToSong } from '@/utils/playback/buildPodcastSong';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import Touchable from '@/components/Touchable';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';

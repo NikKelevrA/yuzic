@@ -61,7 +61,7 @@ import {
   sanitizeFileName,
   type LocalDownloadedTrackEntry,
 } from '@/utils/downloads/restore';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { selectDownloadOnWifiOnly } from '@/features/settings/downloads/state';
 import { selectDownloadQuality } from '@/features/settings/playback/state';

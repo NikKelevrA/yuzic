@@ -3,8 +3,8 @@ import { useSelector } from 'react-redux'
 import { useAlbums } from '@/hooks/albums'
 import { useArtists } from '@/hooks/artists'
 import { useIsOffline } from '@/hooks/useIsOffline'
-import { selectArtistPlayCounts } from '@/utils/redux/selectors/statsSelectors'
-import { selectLibraryGenres } from '@/utils/redux/selectors/librarySelectors'
+import { selectArtistPlayCounts } from '@/state/redux/selectors/statsSelectors'
+import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
 import { presentableGenres } from '../genres'
 import {
   buildDiscoverySections,

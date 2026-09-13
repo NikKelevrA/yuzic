@@ -18,7 +18,7 @@ import SettingsCardHeader from '../components/SettingsCardHeader';
 import DownloaderQueueRow from './DownloaderQueueRow';
 import { useQueueRowSubtitle } from './useQueueRowSubtitle';
 import { useTheme } from '@/hooks/useTheme';
-import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';
+import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 import type { DownloaderQueueItem } from '@/features/downloaders/queueItem';
 
 type Props = {

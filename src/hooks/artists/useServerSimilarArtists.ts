@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import type { Artist } from '@/domain/entities/Artist';
 
 /**

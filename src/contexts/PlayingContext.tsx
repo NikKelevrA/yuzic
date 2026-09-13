@@ -55,7 +55,7 @@ import { useScrobbling } from '@/features/playback/useScrobbling';
 import { useCarPlayBrowseTree } from '@/features/player/useCarPlayBrowseTree';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectPreferredCodec, selectAutoplayEnabled, selectCrossfadeSeconds, selectCrossfadeAlways, selectEqualizerGains, selectPlaybackSpeeds, setPlaybackSpeedForProfile } from '@/features/settings/playback/state';
-import { useIsAudiomuseConfigured, useAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useIsAudiomuseConfigured, useAudiomuseConfig } from '@/state/redux/selectors/audiomuseSelectors';
 import { useStreamQuality } from '@/features/playback/useStreamQuality';
 import { playableQuality } from '@/utils/audio/playableFormat';
 import {
@@ -76,8 +76,8 @@ import {
   selectPersistedPlaybackQueue,
   selectPersistedPlaybackRepeatMode,
   selectPersistedPlaybackShuffleMode,
-} from '@/utils/redux/selectors/playbackSelectors';
-import { selectActiveServerId as selectActiveServerIdSel, selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+} from '@/state/redux/selectors/playbackSelectors';
+import { selectActiveServerId as selectActiveServerIdSel, selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { useTracks } from '@/hooks/tracks';
 import {
   backendRepeatMode,

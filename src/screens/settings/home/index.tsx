@@ -13,7 +13,7 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { useAnyDownloaderConnected } from '@/features/downloaders/registry';
 import { useTheme } from '@/hooks/useTheme';
 import Header from '../components/Header';

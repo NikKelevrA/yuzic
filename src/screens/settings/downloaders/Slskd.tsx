@@ -7,9 +7,9 @@ import type { SlskdSearchPreferences } from '@/api/slskd';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsSelectCard from '../components/SettingsSelectCard';
 import SettingsToggleGroup from '../components/SettingsToggleGroup';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { selectSlskdPreferences } from '@/utils/redux/selectors/downloadersSelectors';
-import { setSlskdPreferences } from '@/utils/redux/slices/downloadersSlice';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { selectSlskdPreferences } from '@/state/redux/selectors/downloadersSelectors';
+import { setSlskdPreferences } from '@/state/redux/slices/downloadersSlice';
 import DownloaderSettingsScreen from './DownloaderSettingsScreen';
 
 const MIN_BITRATE_OPTIONS: number[] = [0, 128, 192, 256, 320];

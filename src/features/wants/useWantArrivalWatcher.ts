@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useAlbums } from '@/hooks/albums';
 import { useTracks } from '@/hooks/tracks';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectWantsForActiveServer } from '@/utils/redux/selectors/wantsSelectors';
-import { removeWant } from '@/utils/redux/slices/wantsSlice';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { selectWantsForActiveServer } from '@/state/redux/selectors/wantsSelectors';
+import { removeWant } from '@/state/redux/slices/wantsSlice';
 import { findArrivedWants } from './arrival';
 
 /**

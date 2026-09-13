@@ -8,11 +8,11 @@ import SettingsCard from '../components/SettingsCard';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsDivider from '../components/SettingsDivider';
 import SettingsConnectionRow from '../components/SettingsConnectionRow';
-import { selectListenBrainzAuthenticated } from '@/utils/redux/selectors/listenbrainzSelectors';
+import { selectListenBrainzAuthenticated } from '@/state/redux/selectors/listenbrainzSelectors';
 import {
   selectAudiomuseAuthenticated,
   selectAudiomuseEnabled,
-} from '@/utils/redux/selectors/audiomuseSelectors';
+} from '@/state/redux/selectors/audiomuseSelectors';
 import { useDownloaderStates } from '@/features/downloaders/registry';
 
 /**

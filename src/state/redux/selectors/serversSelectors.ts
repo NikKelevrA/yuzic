@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { Server } from '@/types';
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 
 export const selectActiveServerId = (state: RootState) => state.servers.activeServerId;
 

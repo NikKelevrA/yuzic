@@ -1,9 +1,9 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 import type { ScrobbleDestinationKind, ScrobbleRoute } from '@/features/settings/scrobbling/state';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { useListenBrainzConfig } from '@/utils/redux/selectors/listenbrainzSelectors';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { useListenBrainzConfig } from '@/state/redux/selectors/listenbrainzSelectors';
 import type { ScrobbleDestination } from '@/utils/offline/offlineMutations';
 import type { ListenBrainzConfig } from '@/types';
 import * as listenbrainz from '@/api/listenbrainz';

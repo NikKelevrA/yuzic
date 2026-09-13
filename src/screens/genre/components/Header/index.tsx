@@ -25,7 +25,7 @@ import { useTracks } from '@/hooks/tracks'
 import { usePlayingActions } from '@/contexts/PlayingContext'
 import { useDownload } from '@/contexts/DownloadContext'
 import { useSheetRef } from '@/utils/useSheetRef'
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors'
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import {
   DetailActionRow,
   DetailCircleAction,

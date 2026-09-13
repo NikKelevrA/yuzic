@@ -19,7 +19,7 @@ import { selectThemeColor } from '@/features/settings/appearance/state';
 import { useDlnaDiscovery, type DiscoveredDevice } from '@/features/player/useDlnaDiscovery';
 import { usePlaybackSink } from '@/contexts/PlaybackSinkContext';
 import { useJukeboxAvailability } from '@/features/player/useJukeboxAvailability';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { getServerProvider } from '@/utils/servers/registry';
 import Touchable from '@/components/Touchable';
 import { iconSize, spacing, typography } from '@/constants/design';

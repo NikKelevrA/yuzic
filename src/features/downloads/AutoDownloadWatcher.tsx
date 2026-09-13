@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
 import { useDownloadActions, useDownloadState } from '@/contexts/DownloadContext';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { selectAutoDownloadNewSongs } from '@/features/settings/downloads/state';
 import { useTracks } from '@/hooks/tracks';
 

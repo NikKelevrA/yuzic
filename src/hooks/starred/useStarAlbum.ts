@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 
 // Unlike song starring, this has no offline queue — favoriting an album is
 // a lower-frequency action than favoriting a song, so it simply requires

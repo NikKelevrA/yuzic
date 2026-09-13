@@ -20,14 +20,14 @@ jest.mock('@/components/toast', () => ({
   notify: Object.assign(jest.fn(), { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() }),
 }));
 jest.mock('react-redux', () => ({ useSelector: (selector: any) => selector({}), useDispatch: () => jest.fn() }));
-jest.mock('@/utils/redux/selectors/statsSelectors', () => ({ selectSongPlayCount: () => () => 0, selectAlbumPlayCount: () => () => 0 }));
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({ selectActiveServerId: () => 'server-1' }));
-jest.mock('@/utils/redux/selectors/wantsSelectors', () => ({ selectIsWanted: () => () => false }));
-jest.mock('@/utils/redux/slices/wantsSlice', () => ({
+jest.mock('@/state/redux/selectors/statsSelectors', () => ({ selectSongPlayCount: () => () => 0, selectAlbumPlayCount: () => () => 0 }));
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({ selectActiveServerId: () => 'server-1' }));
+jest.mock('@/state/redux/selectors/wantsSelectors', () => ({ selectIsWanted: () => () => false }));
+jest.mock('@/state/redux/slices/wantsSlice', () => ({
   addWant: (payload: any) => ({ type: 'wants/addWant', payload }),
   removeWant: (payload: any) => ({ type: 'wants/removeWant', payload }),
 }));
-jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({ useIsAudiomuseConfigured: () => false, useAudiomuseConfig: () => ({}) }));
+jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({ useIsAudiomuseConfigured: () => false, useAudiomuseConfig: () => ({}) }));
 jest.mock('@/features/audiomuse/generatePlaylist', () => ({
   generateSimilarPlaylistForSong: jest.fn(), generateSimilarPlaylistForAlbum: jest.fn(), useCanGeneratePlaylist: () => false,
 }));

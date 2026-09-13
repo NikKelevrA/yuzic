@@ -4,8 +4,8 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ALL_DOWNLOADERS, useDownloaderStates } from './registry';
-import downloadersReducer from '@/utils/redux/slices/downloadersSlice';
-import serversReducer from '@/utils/redux/slices/serversSlice';
+import downloadersReducer from '@/state/redux/slices/downloadersSlice';
+import serversReducer from '@/state/redux/slices/serversSlice';
 import * as lidarr from '@/api/lidarr';
 import * as slskd from '@/api/slskd';
 import * as soulsync from '@/api/soulsync';

@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
+import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 
 export function useDeletePlaylist() {

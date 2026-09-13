@@ -13,9 +13,9 @@ import Touchable from '@/components/Touchable';
 import { useTheme } from '@/hooks/useTheme';
 import { useScrollClearance } from '@/hooks/useScrollClearance';
 import { hitSlopFor, iconSize, spacing } from '@/constants/design';
-import { selectWantsForActiveServer } from '@/utils/redux/selectors/wantsSelectors';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { removeWant, type Want } from '@/utils/redux/slices/wantsSlice';
+import { selectWantsForActiveServer } from '@/state/redux/selectors/wantsSelectors';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { removeWant, type Want } from '@/state/redux/slices/wantsSlice';
 
 /**
  * Wants library screen: the save-only wishlist for tracks/albums nothing has

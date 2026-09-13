@@ -4,8 +4,8 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { useSearchHistory } from './searchHistory';
-import searchHistoryReducer from '@/utils/redux/slices/searchHistorySlice';
-import serversReducer, { setActiveServer } from '@/utils/redux/slices/serversSlice';
+import searchHistoryReducer from '@/state/redux/slices/searchHistorySlice';
+import serversReducer, { setActiveServer } from '@/state/redux/slices/serversSlice';
 import type { SearchResult } from '@/features/search/searchRanking';
 
 function makeStore(activeServerId = 'srv-1') {

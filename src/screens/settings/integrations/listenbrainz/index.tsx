@@ -11,13 +11,13 @@ import {
   selectListenBrainzAuthenticated,
   useListenBrainzToken,
   listenBrainzCredentialScope,
-} from '@/utils/redux/selectors/listenbrainzSelectors';
+} from '@/state/redux/selectors/listenbrainzSelectors';
 import {
   setUsername,
   setAuthenticated,
   disconnect,
-} from '@/utils/redux/slices/listenbrainzSlice';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+} from '@/state/redux/slices/listenbrainzSlice';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import * as listenbrainz from '@/api/listenbrainz';
 import { setCredential, forgetCredentials } from '@/state/credentialCache';
 

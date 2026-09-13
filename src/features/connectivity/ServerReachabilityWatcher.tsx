@@ -4,7 +4,7 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { usePollWhile } from '@/hooks/usePollWhile';
 import { setServerUnreachable, useServerUnreachable } from './serverReachability';
 

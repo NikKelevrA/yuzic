@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RepeatModeState, ShuffleMode } from '@/domain/playback/PlaybackModes';
 import type { PlayableResource } from '@/features/playback/playableResource';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import {
   selectPersistedPlaybackActiveServerId,
-} from '@/utils/redux/selectors/playbackSelectors';
+} from '@/state/redux/selectors/playbackSelectors';
 import {
   resetPlaybackForServer,
   setPlaybackCurrentIndex,
@@ -14,7 +14,7 @@ import {
   setPlaybackQueue,
   setPlaybackRepeatMode,
   setPlaybackShuffleMode,
-} from '@/utils/redux/slices/playbackSlice';
+} from '@/state/redux/slices/playbackSlice';
 
 /**
  * The bridge between the in-memory PlayingContext and the persisted

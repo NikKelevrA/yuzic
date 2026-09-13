@@ -16,7 +16,7 @@ import { toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { QueryKeys } from '@/enums/queryKeys';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import type { ApiAdapter } from '@/api/types';

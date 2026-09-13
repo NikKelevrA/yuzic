@@ -2,7 +2,7 @@ import { Redirect } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { View } from 'react-native';
 
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { useTheme } from '@/hooks/useTheme';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { iconSize } from '@/constants/design';

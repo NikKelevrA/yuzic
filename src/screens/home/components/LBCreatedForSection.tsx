@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCreatedForPlaylists } from '@/api/listenbrainz';
 import type { CreatedForMixType } from '@/api/listenbrainz';
 import { QueryKeys } from '@/enums/queryKeys';
-import { selectListenBrainzUsername } from '@/utils/redux/selectors/listenbrainzSelectors';
+import { selectListenBrainzUsername } from '@/state/redux/selectors/listenbrainzSelectors';
 import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
 import SectionShelfHeader from './SectionShelfHeader';
 import SongRow from '@/components/rows/SongRow';

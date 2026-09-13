@@ -182,7 +182,7 @@ export default appearanceSlice.reducer;
 
 /* --- selectors ------------------------------------------------------------
  * Typed against a minimal duck-typed shape rather than the full `RootState`
- * so this module never imports `@/utils/redux/store` — that import would
+ * so this module never imports `@/state/redux/store` — that import would
  * cycle back here, since store.ts must import this file's reducer.
  */
 interface AppearanceRootState {

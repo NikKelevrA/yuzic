@@ -15,15 +15,15 @@ import {
   selectAudiomuseAuthenticated,
   useAudiomuseApiToken,
   audiomuseCredentialScope,
-} from '@/utils/redux/selectors/audiomuseSelectors';
+} from '@/state/redux/selectors/audiomuseSelectors';
 import {
   setAudiomuseServerUrl,
   setAudiomuseAuthenticated,
   connectAudiomuse,
   disconnectAudiomuse,
-} from '@/utils/redux/slices/audiomuseSlice';
+} from '@/state/redux/slices/audiomuseSlice';
 
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { setCredential, forgetCredentials } from '@/state/credentialCache';
 
 const AudiomuseView: React.FC = () => {

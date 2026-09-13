@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useSelector } from 'react-redux'
 
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors'
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import { selectSyncOnAppStart } from '@/features/settings/sync/state';
 import { useTheme } from '@/hooks/useTheme'
 import { useSync } from '@/features/library/useSync'

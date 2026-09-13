@@ -7,7 +7,7 @@ import { useScrollToTop } from '@react-navigation/native'
 
 import { useTheme } from '@/hooks/useTheme'
 import { useAccountSheet } from '@/contexts/AccountSheetContext'
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors'
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import { useServerReachable } from '@/features/connectivity/useServerReachable'
 
 import TabHeader from '@/components/TabHeader'

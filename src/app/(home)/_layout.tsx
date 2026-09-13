@@ -5,8 +5,8 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { useSync } from '@/features/library/useSync';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { clearLibraryGenres } from '@/utils/redux/slices/librarySlice';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { clearLibraryGenres } from '@/state/redux/slices/librarySlice';
 import { ExternalResolutionProvider } from '@/features/sources/ExternalResolutionProvider';
 import { ServerReachabilityWatcher } from '@/features/connectivity/ServerReachabilityWatcher';
 import { AutoDownloadWatcher } from '@/features/downloads/AutoDownloadWatcher';

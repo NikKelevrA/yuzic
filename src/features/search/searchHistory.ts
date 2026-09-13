@@ -13,14 +13,14 @@ import type { SearchResult } from '@/features/search/searchRanking';
 import {
   selectRecentSearchEntities,
   selectRecentSearchQueries,
-} from '@/utils/redux/selectors/searchHistorySelectors';
+} from '@/state/redux/selectors/searchHistorySelectors';
 import {
   addSearchQuery,
   addSearchEntity,
   removeSearchEntry,
   clearSearchHistory,
   type SearchEntityEntry,
-} from '@/utils/redux/slices/searchHistorySlice';
+} from '@/state/redux/slices/searchHistorySlice';
 
 export function useSearchHistory(activeServerId: string | undefined) {
   const dispatch = useDispatch();

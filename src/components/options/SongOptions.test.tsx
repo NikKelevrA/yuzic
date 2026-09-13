@@ -44,25 +44,25 @@ jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
 }));
 
-jest.mock('@/utils/redux/selectors/statsSelectors', () => ({
+jest.mock('@/state/redux/selectors/statsSelectors', () => ({
   selectSongPlayCount: () => () => 0,
 }));
 
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServerId: () => 'server-1',
 }));
 
 const mockIsWanted = jest.fn(() => false);
-jest.mock('@/utils/redux/selectors/wantsSelectors', () => ({
+jest.mock('@/state/redux/selectors/wantsSelectors', () => ({
   selectIsWanted: (_localId: string) => () => mockIsWanted(),
 }));
 
-jest.mock('@/utils/redux/slices/wantsSlice', () => ({
+jest.mock('@/state/redux/slices/wantsSlice', () => ({
   addWant: (payload: any) => ({ type: 'wants/addWant', payload }),
   removeWant: (payload: any) => ({ type: 'wants/removeWant', payload }),
 }));
 
-jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
+jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
   useIsAudiomuseConfigured: () => false,
   useAudiomuseConfig: () => ({}),
 }));

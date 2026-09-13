@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import type { RootState } from '@/utils/redux/store';
+import type { RootState } from '@/state/redux/store';
 import { applyClientCertificate, type ApplyResult } from './applyClientCertificate';
 
 /**

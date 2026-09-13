@@ -11,7 +11,7 @@ import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useRadius } from '@/hooks/useRadius';
 import { useTracks } from '@/hooks/tracks';
-import { selectPersistedPlaybackBookmarks } from '@/utils/redux/selectors/playbackSelectors';
+import { selectPersistedPlaybackBookmarks } from '@/state/redux/selectors/playbackSelectors';
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,

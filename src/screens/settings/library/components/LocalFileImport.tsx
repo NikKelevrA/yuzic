@@ -11,7 +11,7 @@ import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { iconSize, spacing, typography } from '@/constants/design';
 import { useTheme } from '@/hooks/useTheme';
 import { useSync } from '@/features/library/useSync';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import SettingsCard from '../../components/SettingsCard';
 
 /**

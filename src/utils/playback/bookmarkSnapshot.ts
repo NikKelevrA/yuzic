@@ -2,7 +2,7 @@ import type { Song } from '@/domain/entities/Song';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import { makeLocalId, parseLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
-import type { BookmarkSnapshot } from '@/utils/redux/slices/playbackSlice';
+import type { BookmarkSnapshot } from '@/state/redux/slices/playbackSlice';
 import { isPodcastEpisode, PODCAST_EPISODE_ID_PREFIX } from './contentKind';
 
 /**

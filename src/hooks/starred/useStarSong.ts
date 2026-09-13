@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { FAVORITES_ID } from '@/constants/favorites';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { usePlayableSongResolver } from '@/hooks/songs';
-import { enqueueOfflineMutationAction } from '@/utils/redux/slices/offlineMutationsSlice';
+import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 
 type StarSongInput = string | Song;

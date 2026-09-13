@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { Trash2 } from 'lucide-react-native';
 import { useTheme } from '@/hooks/useTheme';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { useAlbums } from '@/hooks/albums';
 import { usePlaylists } from '@/hooks/playlists';
 import { useTracks } from '@/hooks/tracks';

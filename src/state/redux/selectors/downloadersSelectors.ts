@@ -1,4 +1,4 @@
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 import { createSelector } from '@reduxjs/toolkit';
 import { useSelector } from 'react-redux';
 import {
@@ -6,7 +6,7 @@ import {
   DownloaderConnection,
   DownloaderId,
   PerServerDownloadersState,
-} from '@/utils/redux/slices/downloadersSlice';
+} from '@/state/redux/slices/downloadersSlice';
 import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/api/slskd';
 import { getCredentials } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';

@@ -14,7 +14,7 @@ import SettingsRow from '../components/SettingsRow';
 import StreamingQuality from './components/StreamingQuality';
 import Crossfade from './components/Crossfade';
 import { selectPreferredCodec, selectAutoplayEnabled, selectResumeLongTracksEnabled, setPreferredCodec, setAutoplayEnabled, setResumeLongTracksEnabled } from '@/features/settings/playback/state';
-import { useIsAudiomuseConfigured } from '@/utils/redux/selectors/audiomuseSelectors';
+import { useIsAudiomuseConfigured } from '@/state/redux/selectors/audiomuseSelectors';
 
 const PlayerSettings: React.FC = () => {
   const { t } = useTranslation();

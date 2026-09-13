@@ -3,8 +3,8 @@ import { renderHook } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
-import wantsReducer, { addWant } from '@/utils/redux/slices/wantsSlice';
-import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
+import wantsReducer, { addWant } from '@/state/redux/slices/wantsSlice';
+import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import { makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';

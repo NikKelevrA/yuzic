@@ -1,7 +1,7 @@
 import { normalize } from '@/utils/normalize';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { normalizeExternalIds } from '@/domain/identity/ExternalIds';
-import type { Want } from '@/utils/redux/slices/wantsSlice';
+import type { Want } from '@/state/redux/slices/wantsSlice';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 

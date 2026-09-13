@@ -4,13 +4,13 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { useApi } from '@/api';
 import type { Song } from '@/domain/entities/Song';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { selectResumeLongTracksEnabled } from '@/features/settings/playback/state';
-import { selectPersistedPlaybackBookmarks } from '@/utils/redux/selectors/playbackSelectors';
+import { selectPersistedPlaybackBookmarks } from '@/state/redux/selectors/playbackSelectors';
 import {
   seedPlaybackBookmarks,
   setPlaybackBookmark,
-} from '@/utils/redux/slices/playbackSlice';
+} from '@/state/redux/slices/playbackSlice';
 import { isPodcastEpisode } from '@/utils/playback/contentKind';
 import { needsSnapshot, toBookmarkSnapshot } from '@/utils/playback/bookmarkSnapshot';
 

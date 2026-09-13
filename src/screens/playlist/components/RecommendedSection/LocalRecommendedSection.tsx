@@ -12,7 +12,7 @@ import { useApi } from '@/api';
 import {
   useIsAudiomuseConfigured,
   useAudiomuseConfig,
-} from '@/utils/redux/selectors/audiomuseSelectors';
+} from '@/state/redux/selectors/audiomuseSelectors';
 import { useTracks } from '@/hooks/tracks';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { QueryKeys } from '@/enums/queryKeys';

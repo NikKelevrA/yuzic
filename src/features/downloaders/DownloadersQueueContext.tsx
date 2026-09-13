@@ -16,7 +16,7 @@ import { usePollWhile } from '@/hooks/usePollWhile';
 import { useSync } from '@/features/library/useSync';
 import { useDownloaderStates, type DownloaderState } from './registry';
 import { finishedSince, type DownloaderQueueItem } from './queueItem';
-import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';
+import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 
 // A completed download on a downloader (Lidarr/slskd) writes to the media
 // library the same way a manual copy would — the server has no way to know

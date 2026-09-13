@@ -42,11 +42,11 @@ jest.mock('react-redux', () => ({
   },
 }));
 
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServer: 'activeServer',
 }));
 
-jest.mock('@/utils/redux/selectors/scrobbleRoutingSelectors', () => ({
+jest.mock('@/state/redux/selectors/scrobbleRoutingSelectors', () => ({
   selectLastfmScrobbleRoute: 'lastfmRoute',
   selectListenBrainzScrobbleRoute: 'listenBrainzRoute',
 }));

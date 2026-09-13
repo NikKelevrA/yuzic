@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '@/utils/redux/store';
+import { RootState } from '@/state/redux/store';
 import type { LocalId } from '@/domain/identity/LocalId';
-import type { Want } from '@/utils/redux/slices/wantsSlice';
+import type { Want } from '@/state/redux/slices/wantsSlice';
 
 const EMPTY_WANTS: Want[] = [];
 
