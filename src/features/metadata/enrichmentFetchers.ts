@@ -84,15 +84,26 @@ export const metadataArtworkFetchers: ArtworkFetchers = {
   },
 
   coverartarchive: async entity => {
-    if (!entity.mbid) return null;
-    const key = `coverartarchive:${entity.mbid}`;
+    // Cover Art Archive is album-only: it indexes a release and a
+    // release-group under different paths and has no artist-image endpoint
+    // at all. An mbid arriving here with no type, or an explicitly
+    // '`unknown`' type — exactly what the artist header passes today, since
+    // it only ever has an *artist* mbid — must never be probed against CAA:
+    // that mbid does not name a release/release-group, so the request would
+    // either quietly 404 or, worse, coincidentally collide with an unrelated
+    // release and serve the wrong artwork as if it were this artist's own.
+    if (!entity.mbid || (entity.mbidType !== 'release' && entity.mbidType !== 'release-group')) {
+      return null;
+    }
+    const mbidType = entity.mbidType;
+    const key = `coverartarchive:${mbidType}:${entity.mbid}`;
     const cached = artworkCache.get(key);
     if (cached !== undefined) return cached;
 
     // Cover Art Archive has no "does this exist" endpoint cheaper than a
     // HEAD request against the front image; a cache hit here means we don't
     // repeat that request for the same release/release-group.
-    const url = coverArtArchiveUrl(entity.mbid);
+    const url = coverArtArchiveUrl(entity.mbid, mbidType);
     let exists = false;
     try {
       const res = await fetch(url, { method: 'HEAD' });
@@ -103,7 +114,7 @@ export const metadataArtworkFetchers: ArtworkFetchers = {
 
     const result: ArtworkResult | null = exists
       ? {
-          cover: { kind: 'coverartarchive', mbid: entity.mbid, mbidType: entity.mbidType ?? 'release-group' },
+          cover: { kind: 'coverartarchive', mbid: entity.mbid, mbidType },
           source: 'coverartarchive',
         }
       : null;

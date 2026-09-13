@@ -1,37 +1,11 @@
 import React, { forwardRef, useMemo, useState } from 'react';
-import { View, Alert } from 'react-native';
-import {
-  BottomSheetModal,
-  BottomSheetScrollView,
-} from '@gorhom/bottom-sheet';
-import { ListEnd, Play, Shuffle, List, CheckCircle, ArrowDownCircle, Trash2, Pencil, Share2 } from 'lucide-react-native';
-import { useApi } from '@/api';
-import { shareItem } from '@/utils/share';
-import haptics from '@/utils/haptics';
-import { notify } from '@/components/toast';
-
-import type { Playlist } from '@/domain/entities/Playlist';
-import { usePlayingActions } from '@/contexts/PlayingContext';
-import { useDownload } from '@/contexts/DownloadContext';
-import { useNavigation } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
-import { useTheme } from '@/hooks/useTheme';
-import { useDeletePlaylist, useRenamePlaylist } from '@/hooks/playlists';
-import { FAVORITES_ID } from '@/constants/favorites';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
-import { renderBackdrop } from '@/components/BottomSheetBackdrop';
-import { useLazyPlaylistDetail } from './useLazyCollectionDetails';
-import {
-  OptionSheetDivider,
-  OptionSheetHeader,
-  OptionSheetInfoRow,
-  OptionSheetRow,
-  OptionSheetSectionLabel,
-  optionSheetStyles,
-  useOptionSheetBackground,
-} from './OptionSheetPrimitives';
-import { iconSize, statusColor } from '@/constants/design';
-import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
+import type { Playlist } from '@/domain/entities/Playlist';
+import { OptionSheetInfoRow, OptionSheetSectionLabel, OptionSheetDivider } from './OptionSheetPrimitives';
+import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet';
+import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
+import { usePlaylistOptionsActions } from '@/features/entity-actions/hooks/usePlaylistActions';
 
 export type PlaylistOptionsProps = {
   playlist: Playlist | null;
@@ -49,299 +23,43 @@ function formatDate(value: string | number | Date | undefined): string {
   return `${month} ${day}, ${year}`;
 }
 
-const PlaylistOptions = forwardRef<
-  BottomSheetModal,
-  PlaylistOptionsProps
->(({ playlist, hideGoToPlaylist }, ref) => {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
-  const navigation = useNavigation<any>();
-  const router = useRouter();
+/**
+ * `playlist` may be null while the caller resolves it — one component
+ * throughout (not a separate loading component) so the same
+ * `BottomSheetModal` instance carries across that transition; see
+ * `EntityOptionsSheet`'s `header: null` doc.
+ */
+const PlaylistOptions = forwardRef<BottomSheetModal, PlaylistOptionsProps>(
+  ({ playlist, hideGoToPlaylist }, ref) => {
+    const { t } = useTranslation();
+    const snapPoints = useMemo(() => ['55%', '90%'], []);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const close = () => dismissSheetRef(ref);
 
-  const {
-    playSongInCollection,
-    addCollectionToQueue,
-    shuffleCollectionToQueue,
-    getQueue,
-  } = usePlayingActions();
+    const { actions, songs } = usePlaylistOptionsActions(playlist, {
+      hideGoToPlaylist: !!hideGoToPlaylist, isSheetOpen, close,
+    });
 
-  const { downloadPlaylistById, getCollectionDownloadState } =
-    useDownload();
-
-  const deletePlaylist = useDeletePlaylist();
-  const renamePlaylist = useRenamePlaylist();
-  const api = useApi();
-
-  const snapPoints = useMemo(() => ['55%', '90%'], []);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const { playlistWithSongs, songs, songsLoading } = useLazyPlaylistDetail(playlist, isSheetOpen);
-
-  const handleShare = async () => {
-    if (!playlist || !api.shares || isSharing) return;
-    haptics.selection();
-    setIsSharing(true);
-    try {
-      const created = await api.shares.create({
-        itemId: playlist.nativeId,
-        description: playlist.title,
-      });
-      if (!created?.url) {
-        notify.error(t('playlistOptions.toasts.shareFailed'));
-        return;
-      }
-      const shared = await shareItem({
-        url: created.url,
-        title: playlist.title,
-        message: playlist.title,
-      });
-      if (shared) close();
-    } catch {
-      notify.error(t('playlistOptions.toasts.shareFailed'));
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  const sheetBg = useOptionSheetBackground();
-
-  const close = () => {
-    (ref as any)?.current?.dismiss();
-  };
-
-  const songIds = useMemo(() => songs.map(s => s.localId), [songs]);
-  const { isDownloaded, isDownloading } = getCollectionDownloadState(songIds);
-  const playbackDisabled = songsLoading || !songs.length;
-
-  const handlePlay = (shuffle: boolean) => {
-    if (!playlistWithSongs || playbackDisabled) return;
-    playSongInCollection(songs[0], playlistWithSongs, shuffle);
-    close();
-  };
-
-  const handleAddToQueue = () => {
-    if (!playlistWithSongs || playbackDisabled) return;
-    const hasQueue = getQueue().length > 0;
-    if (!hasQueue) {
-      playSongInCollection(songs[0], playlistWithSongs, false);
-    } else {
-      addCollectionToQueue(playlistWithSongs);
-    }
-    close();
-  };
-
-  const handleShuffleToQueue = () => {
-    if (!playlistWithSongs || playbackDisabled) return;
-    const hasQueue = getQueue().length > 0;
-    if (!hasQueue) {
-      playSongInCollection(songs[0], playlistWithSongs, true);
-    } else {
-      shuffleCollectionToQueue(playlistWithSongs);
-    }
-    close();
-  };
-
-  const handleGoToPlaylist = () => {
-    if (!playlist) return;
-    close();
-    router.push({ pathname: '/playlistView', params: { id: playlist.nativeId } });
-  };
-
-  const handleDownload = async () => {
-    if (!playlist || isDownloaded || isDownloading) return;
-    await downloadPlaylistById(playlist.nativeId, songs);
-  };
-
-  const handleRenamePress = () => {
-    if (!playlist || playlist.nativeId === FAVORITES_ID) return;
-    Alert.prompt(
-      t('playlistOptions.rename.title'),
-      undefined,
-      async (newName) => {
-        const trimmed = newName?.trim();
-        if (!trimmed || trimmed === playlist.title) return;
-        try {
-          await renamePlaylist.mutateAsync({ id: playlist.nativeId, newName: trimmed });
-          notify.success(t('playlistOptions.toasts.renamed'));
-        } catch {
-          notify.error(t('playlistOptions.toasts.renameFailed'));
-        }
-      },
-      'plain-text',
-      playlist.title,
-      t('playlistOptions.rename.placeholder')
-    );
-  };
-
-  const handleDeletePress = () => {
-    if (!playlist || playlist.nativeId === FAVORITES_ID) return;
-    Alert.alert(
-      t('playlistOptions.delete.title'),
-      t('playlistOptions.delete.body', { title: playlist.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deletePlaylist.mutateAsync(playlist.nativeId);
-              close();
-              if (hideGoToPlaylist) {
-                navigation.goBack();
-              }
-              notify.success(t('playlistOptions.toasts.deleted'));
-            } catch {
-              notify.error(t('playlistOptions.toasts.deleteFailed'));
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  if (!playlist) {
     return (
-      <BottomSheetModal
+      <EntityOptionsSheet
         ref={ref}
         snapPoints={snapPoints}
-        enableDynamicSizing={false}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={{ backgroundColor: colors.border }}
-        backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
-      >
-        <View style={[optionSheetStyles.loading, sheetBg]}>
-          <SpinningLoaderCircle size={iconSize.loader} color={colors.subtext} />
-        </View>
-      </BottomSheetModal>
+        onChange={index => setIsSheetOpen(index >= 0)}
+        header={playlist ? { cover: playlist.cover, title: playlist.title, subtitle: t('playlistOptions.playlistLabel'), titleLines: 2 } : null}
+        actions={actions}
+        infoSection={playlist && (
+          <>
+            <OptionSheetDivider />
+            <OptionSheetSectionLabel label={t('playlistOptions.sections.info')} />
+            <OptionSheetInfoRow label={t('playlistOptions.info.lastChanged')} value={formatDate(playlist.updatedAt)} />
+            <OptionSheetInfoRow label={t('playlistOptions.info.created')} value={formatDate(playlist.createdAt)} />
+            <OptionSheetInfoRow label={t('playlistOptions.info.songs')} value={songs.length} />
+          </>
+        )}
+      />
     );
   }
-
-  return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
-      enablePanDownToClose
-      backdropComponent={renderBackdrop}
-      handleIndicatorStyle={{ backgroundColor: colors.border }}
-      backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
-      stackBehavior="push"
-      onChange={(index) => setIsSheetOpen(index >= 0)}
-    >
-      <BottomSheetScrollView
-        style={sheetBg}
-        contentContainerStyle={optionSheetStyles.sheetContent}
-      >
-        <OptionSheetHeader
-          cover={playlist.cover}
-          title={playlist.title}
-          subtitle={t('playlistOptions.playlistLabel')}
-          titleLines={2}
-        />
-
-        <OptionSheetDivider />
-
-        <OptionSheetRow
-          icon={<Play size={iconSize.loader} color={colors.secondary} fill={colors.secondary} />}
-          label={t('playlistOptions.actions.play')}
-          onPress={() => handlePlay(false)}
-          disabled={playbackDisabled}
-          dimRow={playbackDisabled}
-          loading={songsLoading}
-        />
-        <OptionSheetRow
-          icon={<Shuffle size={iconSize.loader} color={colors.secondary} />}
-          label={t('playlistOptions.actions.shuffle')}
-          onPress={() => handlePlay(true)}
-          disabled={playbackDisabled}
-          dimRow={playbackDisabled}
-        />
-        <OptionSheetRow
-          icon={<ListEnd size={iconSize.loader} color={colors.secondary} />}
-          label={t('playlistOptions.actions.addToQueue')}
-          onPress={handleAddToQueue}
-          disabled={playbackDisabled}
-          dimRow={playbackDisabled}
-        />
-        <OptionSheetRow
-          icon={<Shuffle size={iconSize.loader} color={colors.secondary} />}
-          label={t('playlistOptions.actions.shuffleToQueue')}
-          onPress={handleShuffleToQueue}
-          disabled={playbackDisabled}
-          dimRow={playbackDisabled}
-        />
-
-        {!hideGoToPlaylist && (
-          <OptionSheetRow
-            icon={<List size={iconSize.loader} color={colors.secondary} />}
-            label={t('playlistOptions.actions.goToPlaylist')}
-            onPress={handleGoToPlaylist}
-          />
-        )}
-
-        <OptionSheetRow
-          icon={
-            isDownloaded ? (
-              <CheckCircle size={iconSize.loader} color={colors.subtext} />
-            ) : (
-              <ArrowDownCircle size={iconSize.loader} color={colors.secondary} />
-            )
-          }
-          label={isDownloading ? t('playlistOptions.actions.downloading') : isDownloaded ? t('playlistOptions.actions.downloaded') : t('playlistOptions.actions.download')}
-          onPress={handleDownload}
-          disabled={isDownloaded || isDownloading}
-          loading={isDownloading}
-          dimLabel={isDownloaded || isDownloading}
-        />
-
-        {api.shares && (
-          <OptionSheetRow
-            icon={<Share2 size={iconSize.loader} color={colors.secondary} />}
-            label={t('playlistOptions.actions.share')}
-            onPress={handleShare}
-            disabled={isSharing}
-            loading={isSharing}
-          />
-        )}
-
-        {playlist.nativeId !== FAVORITES_ID && (
-          <OptionSheetRow
-            icon={<Pencil size={iconSize.loader} color={colors.secondary} />}
-            label={t('playlistOptions.actions.rename')}
-            onPress={handleRenamePress}
-          />
-        )}
-
-        {playlist.nativeId !== FAVORITES_ID && (
-          <OptionSheetRow
-            icon={<Trash2 size={iconSize.loader} color={statusColor.destructive} />}
-            label={t('playlistOptions.actions.delete')}
-            labelColor={statusColor.destructive}
-            onPress={handleDeletePress}
-            disabled={deletePlaylist.isPending}
-            loading={deletePlaylist.isPending}
-            dimLabel={deletePlaylist.isPending}
-          />
-        )}
-
-        <OptionSheetDivider />
-
-        <OptionSheetSectionLabel label={t('playlistOptions.sections.info')} />
-        <OptionSheetInfoRow
-          label={t('playlistOptions.info.lastChanged')}
-          value={formatDate(playlist.updatedAt)}
-        />
-        <OptionSheetInfoRow
-          label={t('playlistOptions.info.created')}
-          value={formatDate(playlist.createdAt)}
-        />
-        <OptionSheetInfoRow label={t('playlistOptions.info.songs')} value={songs.length} />
-      </BottomSheetScrollView>
-    </BottomSheetModal>
-  );
-});
+);
 
 PlaylistOptions.displayName = 'PlaylistOptions';
 

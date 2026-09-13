@@ -1,21 +1,21 @@
 {
   "schema": "yuzic-architecture-baseline/2",
   "size": {
-    "productionFiles": 709,
-    "productionLines": 65152,
-    "testFiles": 198,
-    "testLines": 21665
+    "productionFiles": 737,
+    "productionLines": 66050,
+    "testFiles": 214,
+    "testLines": 23401
   },
   "tests": {
-    "suites": 200,
-    "tests": 1517,
-    "passed": 1517,
+    "suites": 216,
+    "tests": 1598,
+    "passed": 1598,
     "failed": 0,
     "coverage": {
-      "lines": 66.67,
-      "statements": 64.46,
-      "functions": 54.34,
-      "branches": 58.43
+      "lines": 68.53,
+      "statements": 65.97,
+      "functions": 57.82,
+      "branches": 59.35
     }
   },
   "cycles": [
@@ -25,7 +25,7 @@
     ]
   ],
   "unusedExports": {
-    "count": 605,
+    "count": 600,
     "entries": [
       "src/api/audiomuse/index.ts - AudiomuseClient",
       "src/api/audiomuse/index.ts - AudiomuseConfig",
@@ -146,7 +146,6 @@
       "src/api/musicbrainz/index.ts - MbRelease (used in module)",
       "src/api/musicbrainz/index.ts - MbReleaseGroup (used in module)",
       "src/api/musicbrainz/index.ts - MbTrack (used in module)",
-      "src/api/musicbrainz/index.ts - coverArtArchiveUrl",
       "src/api/musicbrainz/index.ts - getArtistWithReleases",
       "src/api/musicbrainz/index.ts - getReleaseGroup",
       "src/api/musicbrainz/index.ts - getTracksForReleaseGroup",
@@ -501,7 +500,6 @@
       "src/hooks/starred/index.ts - useUnstarAlbum",
       "src/hooks/starred/index.ts - useUnstarSong",
       "src/hooks/tracks/index.ts - useTracks",
-      "src/hooks/useExternalAlbumStatus.ts - ExternalAlbumStatus (used in module)",
       "src/hooks/useNetworkType.ts - NetworkType (used in module)",
       "src/hooks/useRadius.ts - ScaledRadius (used in module)",
       "src/hooks/useTheme.ts - ResolvedTheme (used in module)",
@@ -513,7 +511,6 @@
       "src/providers/contracts/Capabilities.ts - DiscoveryShelf (used in module)",
       "src/providers/contracts/Capabilities.ts - Listen (used in module)",
       "src/providers/contracts/Capabilities.ts - LyricLine (used in module)",
-      "src/providers/contracts/Capabilities.ts - Lyrics (used in module)",
       "src/providers/contracts/Provider.ts - AuthTier (used in module)",
       "src/providers/contracts/Provider.ts - Presentation (used in module)",
       "src/providers/registry/capabilityBroker.ts - CapabilityOffer (used in module)",
@@ -621,8 +618,6 @@
       "src/utils/redux/slices/serversSlice.ts - serversSlice (used in module)",
       "src/utils/redux/slices/statsSlice.ts - ServerAlbumStat (used in module)",
       "src/utils/redux/slices/statsSlice.ts - ServerSongStat (used in module)",
-      "src/utils/redux/slices/wantsSlice.ts - WantOrigin (used in module)",
-      "src/utils/redux/slices/wantsSlice.ts - WantUnit (used in module)",
       "src/utils/redux/slices/wantsSlice.ts - WantsState (used in module)",
       "src/utils/redux/store.ts - AppDispatch",
       "src/utils/servers/registry.ts - ConnectResult (used in module)",
@@ -636,7 +631,7 @@
   },
   "unsafe": {
     "as-any": {
-      "count": 16,
+      "count": 11,
       "entries": [
         {
           "file": "src/api/mediaBrowser/adapter.ts",
@@ -655,28 +650,8 @@
           "line": 44
         },
         {
-          "file": "src/components/options/AlbumOptions.tsx",
-          "line": 130
-        },
-        {
-          "file": "src/components/options/ArtistOptions.tsx",
-          "line": 85
-        },
-        {
           "file": "src/components/options/GenreOptions.tsx",
           "line": 73
-        },
-        {
-          "file": "src/components/options/PlaylistOptions.tsx",
-          "line": 109
-        },
-        {
-          "file": "src/components/options/SongOptions.tsx",
-          "line": 157
-        },
-        {
-          "file": "src/components/options/SongOptions.tsx",
-          "line": 596
         },
         {
           "file": "src/features/downloaders/registry.ts",
@@ -724,58 +699,8 @@
     }
   },
   "providerLeakage": {
-    "count": 745,
+    "count": 741,
     "entries": [
-      {
-        "file": "src/components/options/AlbumOptions.tsx",
-        "line": 12,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/AlbumOptions.tsx",
-        "line": 13,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/AlbumOptions.tsx",
-        "line": 14,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/AlbumOptions.tsx",
-        "line": 121,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/AlbumOptions.tsx",
-        "line": 257,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/ArtistOptions.tsx",
-        "line": 18,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/ArtistOptions.tsx",
-        "line": 19,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/ArtistOptions.tsx",
-        "line": 20,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/ArtistOptions.tsx",
-        "line": 68,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/ArtistOptions.tsx",
-        "line": 198,
-        "provider": "audiomuse"
-      },
       {
         "file": "src/components/options/GetReviewSheet.tsx",
         "line": 22,
@@ -820,41 +745,6 @@
         "file": "src/components/options/GetReviewSheet.tsx",
         "line": 164,
         "provider": "lidarr"
-      },
-      {
-        "file": "src/components/options/SongOptions.tsx",
-        "line": 9,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/SongOptions.tsx",
-        "line": 10,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/SongOptions.tsx",
-        "line": 138,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/SongOptions.tsx",
-        "line": 139,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/SongOptions.tsx",
-        "line": 294,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/SongOptions.tsx",
-        "line": 298,
-        "provider": "audiomuse"
-      },
-      {
-        "file": "src/components/options/SongOptions.tsx",
-        "line": 395,
-        "provider": "audiomuse"
       },
       {
         "file": "src/components/rows/SongRow/index.tsx",
@@ -1152,6 +1042,71 @@
         "provider": "audiomuse"
       },
       {
+        "file": "src/features/entity-actions/hooks/useAlbumActions.ts",
+        "line": 8,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useAlbumActions.ts",
+        "line": 9,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useAlbumActions.ts",
+        "line": 42,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useAlbumActions.ts",
+        "line": 59,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useArtistActions.ts",
+        "line": 8,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useArtistActions.ts",
+        "line": 9,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useArtistActions.ts",
+        "line": 36,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useArtistActions.ts",
+        "line": 63,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useSongActions.ts",
+        "line": 10,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useSongActions.ts",
+        "line": 11,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useSongActions.ts",
+        "line": 34,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useSongActions.ts",
+        "line": 35,
+        "provider": "audiomuse"
+      },
+      {
+        "file": "src/features/entity-actions/hooks/useSongActions.ts",
+        "line": 51,
+        "provider": "audiomuse"
+      },
+      {
         "file": "src/features/home/hooks/useDailyLayout.ts",
         "line": 80,
         "provider": "listenbrainz"
@@ -1268,12 +1223,12 @@
       },
       {
         "file": "src/features/lyrics/resolveLyrics.ts",
-        "line": 7,
+        "line": 12,
         "provider": "lrclib"
       },
       {
         "file": "src/features/lyrics/resolveLyrics.ts",
-        "line": 9,
+        "line": 14,
         "provider": "lrclib"
       },
       {
@@ -4473,11 +4428,6 @@
         "limit": 400
       },
       {
-        "file": "src/components/options/SongOptions.tsx",
-        "lines": 655,
-        "limit": 400
-      },
-      {
         "file": "src/screens/artist/components/Content/index.tsx",
         "lines": 615,
         "limit": 400
@@ -4495,11 +4445,6 @@
       {
         "file": "src/components/DetailHeader.tsx",
         "lines": 569,
-        "limit": 400
-      },
-      {
-        "file": "src/components/options/AlbumOptions.tsx",
-        "lines": 558,
         "limit": 400
       },
       {

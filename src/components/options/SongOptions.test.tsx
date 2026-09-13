@@ -111,6 +111,8 @@ jest.mock('@/features/downloaders/registry', () => ({
 
 jest.mock('@/components/options/GetReviewSheet', () => 'GetReviewSheet');
 
+jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
+
 jest.mock('@/components/options/OptionSheetPrimitives', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
