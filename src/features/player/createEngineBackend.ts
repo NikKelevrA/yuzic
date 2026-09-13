@@ -1,5 +1,3 @@
-import type { BrowseNode } from 'yuzic-engine';
-import type { BrowseCategory, BrowseItem } from './browse';
 import { isFlat } from './audioSettings';
 import type { MediaItem } from './mediaItem';
 import type { PlayerBackend, BackendEvent } from './backend';
@@ -7,9 +5,9 @@ import {
   applyEvent,
   createShadow,
   reconcileQueue,
+  toBrowseNode,
   toEngineTrack,
   toPlaybackProgress,
-  type EngineTrackInput,
   type Shadow,
 } from './engineBackend';
 
@@ -34,42 +32,6 @@ import {
 function requireEngine() {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return (require('yuzic-engine') as typeof import('yuzic-engine')).YuzicEngine;
-}
-
-/**
- * One browse row, as the engine wants it.
- *
- * A row with a `url` becomes playable; one without becomes a folder and its
- * children are converted the same way. The app produces both, and which one a
- * row is cannot be told from its position in the tree — an album row and the
- * track rows beneath it sit at different depths in different categories.
- */
-/** `BrowseItem` with `url` narrowed to present, for the one call site above. */
-function toEngineTrackInput(item: BrowseItem, url: string): EngineTrackInput {
-  return {
-    mediaId: item.mediaId,
-    url,
-    title: item.title,
-    artist: item.artist,
-    artworkUrl: item.artworkUrl,
-    duration: item.duration,
-    headers: item.headers,
-    artworkHeaders: item.artworkHeaders,
-  };
-}
-
-function toBrowseNode(item: BrowseItem): BrowseNode {
-  return {
-    id: item.mediaId,
-    title: item.title,
-    subtitle: item.artist,
-    children: item.children?.map(toBrowseNode),
-    // Same `toEngineTrack` the queue uses — see `EngineTrackInput` — so a
-    // playable browse row and a queued track agree on every field, artwork
-    // and headers included, instead of the browse tree hand-building a
-    // second, thinner copy of the same conversion.
-    playable: item.url ? toEngineTrack(toEngineTrackInput(item, item.url)) : undefined,
-  };
 }
 
 export function createEngineBackend(): PlayerBackend {

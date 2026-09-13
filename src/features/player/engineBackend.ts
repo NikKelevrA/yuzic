@@ -1,5 +1,6 @@
 import type { MediaItem } from './mediaItem';
-import type { EngineEvent, Progress, Track } from 'yuzic-engine';
+import type { BrowseItem } from './browse';
+import type { BrowseNode, EngineEvent, Progress, Track } from 'yuzic-engine';
 
 /**
  * yuzic-engine, wearing the shape the app already talks to.
@@ -146,12 +147,12 @@ function engineUri(url: MediaItem['url'] | undefined): string {
 
 /**
  * The subset of `MediaItem` this needs, shared with `BrowseItem` (see
- * `createEngineBackend`'s `toBrowseNode`) so a browse-tree row converts to a
- * wire `Track` through this exact function rather than a second hand-rolled
- * copy of it — which is how the browse tree's `playable` track used to lose
+ * `toBrowseNode` below) so a browse-tree row converts to a wire `Track`
+ * through this exact function rather than a second hand-rolled copy of it —
+ * which is how the browse tree's `playable` track used to lose the
  * `artworkUri` that the queue's version always carried.
  */
-export interface EngineTrackInput {
+interface EngineTrackInput {
   mediaId?: string;
   url: MediaItem['url'];
   title?: string;
@@ -224,5 +225,47 @@ export function toPlaybackProgress(progress: Progress): {
     position: progress.positionSec,
     duration: progress.durationSec,
     buffered: Math.max(0, progress.bufferedSec - progress.positionSec),
+  };
+}
+
+/**
+ * One browse row, as the engine wants it.
+ *
+ * A row with a `url` becomes playable; one without becomes a folder and its
+ * children are converted the same way. The app produces both, and which one a
+ * row is cannot be told from its position in the tree — an album row and the
+ * track rows beneath it sit at different depths in different categories.
+ */
+/** `BrowseItem` with `url` narrowed to present, for the one call site above. */
+function toEngineTrackInput(item: BrowseItem, url: string): EngineTrackInput {
+  return {
+    mediaId: item.mediaId,
+    url,
+    title: item.title,
+    artist: item.artist,
+    artworkUrl: item.artworkUrl,
+    duration: item.duration,
+    headers: item.headers,
+    artworkHeaders: item.artworkHeaders,
+  };
+}
+
+export function toBrowseNode(item: BrowseItem): BrowseNode {
+  return {
+    id: item.mediaId,
+    title: item.title,
+    subtitle: item.artist,
+    // The row's own thumbnail — not the same as `playable`'s artwork, since a
+    // folder has one and nothing to play. Neither was sent at all before, so
+    // the car drew titles with no covers. Headers go with it, or a protected
+    // server answers 401 for every one; see `BrowseItem.artworkHeaders`.
+    artworkUri: item.artworkUrl,
+    ...(item.artworkHeaders ? { artworkHeaders: item.artworkHeaders } : {}),
+    children: item.children?.map(toBrowseNode),
+    // Same `toEngineTrack` the queue uses — see `EngineTrackInput` — so a
+    // playable browse row and a queued track agree on every field, artwork
+    // and headers included, instead of the browse tree hand-building a
+    // second, thinner copy of the same conversion.
+    playable: item.url ? toEngineTrack(toEngineTrackInput(item, item.url)) : undefined,
   };
 }

@@ -415,3 +415,101 @@ describe('queueChange', () => {
     expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['a']);
   });
 });
+
+describe('the browse tree the car is given', () => {
+  interface Node {
+    id: string;
+    artworkUri?: string;
+    artworkHeaders?: Record<string, string>;
+    children?: Node[];
+    playable?: { artworkUri?: string };
+  }
+
+  const treeSent = () => (named('setBrowseTree')[0].args[0] as { children: Node[] });
+  const rowsOf = (tree: { children: Node[] }) => tree.children[0].children ?? [];
+
+  const row = (over: Record<string, unknown> = {}) => ({
+    mediaId: 'album-1',
+    title: 'An Album',
+    artist: 'Someone',
+    artworkUrl: 'https://library.test/cover/1.jpg',
+    ...over,
+  });
+
+  const category = (items: ReturnType<typeof row>[]) => ({
+    mediaId: 'albums',
+    title: 'Albums',
+    items,
+  });
+
+  it("sends each row's own thumbnail", async () => {
+    // It was never sent at all, so the car drew a column of titles with no
+    // covers even though every row had a URL sitting on it.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row()])]);
+    await flush();
+
+    expect(rowsOf(treeSent())[0].artworkUri).toBe('https://library.test/cover/1.jpg');
+  });
+
+  it('sends the artwork headers a protected server needs', async () => {
+    // Without them the server answers 401 for every thumbnail and the car
+    // shows blank squares, while the same cover renders on the now-playing
+    // screen from the track's own headers.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([
+      row({ artworkHeaders: { Authorization: 'Basic abc' } }),
+    ])]);
+    await flush();
+
+    expect(rowsOf(treeSent())[0].artworkHeaders).toEqual({ Authorization: 'Basic abc' });
+  });
+
+  it('leaves artworkHeaders off entirely for an unprotected server', async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row()])]);
+    await flush();
+
+    expect(rowsOf(treeSent())[0]).not.toHaveProperty('artworkHeaders');
+  });
+
+  it('gives a folder a thumbnail and nothing to play', async () => {
+    // A row is a folder because it has no url, not because of where it sits —
+    // and a folder still has a cover.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row({ children: [row({ mediaId: 'track-1' })] })])]);
+    await flush();
+
+    const folder = rowsOf(treeSent())[0];
+    expect(folder.artworkUri).toBe('https://library.test/cover/1.jpg');
+    expect(folder.playable).toBeUndefined();
+    expect(folder.children).toHaveLength(1);
+  });
+
+  it("carries the thumbnail down to a playable row as well as its track", async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([
+      row({ mediaId: 'track-1', url: 'https://library.test/stream/1' }),
+    ])]);
+    await flush();
+
+    const leaf = rowsOf(treeSent())[0];
+    expect(leaf.artworkUri).toBe('https://library.test/cover/1.jpg');
+    expect(leaf.playable?.artworkUri).toBe('https://library.test/cover/1.jpg');
+  });
+});
