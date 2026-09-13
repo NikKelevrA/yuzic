@@ -24,7 +24,7 @@ import { makeLocalId } from '@/domain/identity/LocalId'
 import { integrationProvenance } from '@/domain/identity/Provenance'
 import type { CoverSource } from '@/types/Cover'
 import { sourceColor } from '@/constants/design'
-import type { IntegrationModule, Health } from '@/features/integrations/types'
+import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
 
 export type SourceId = 'deezer' | 'musicbrainz'
 
@@ -58,8 +58,12 @@ export type SourceArtistDetail = {
   similarArtists: Artist[]
 }
 
-export type SourceDefinition = IntegrationModule & {
-  // Narrows `IntegrationModule.id: string` back to the closed source-id
+export type SourceDefinition = {
+  /** Declared once here; capabilities live in the provider registry. */
+  label: string
+  auth: AuthDescriptor
+  testConnection(config: unknown): Promise<Health>
+  // Narrows the id back to the closed source-id
   // union so every existing consumer keyed on `SourceId` still compiles.
   id: SourceId
   color: string
@@ -127,12 +131,7 @@ const deezerSource: SourceDefinition = {
   testConnection: trivialTestConnection,
   // Deezer fills identity/metadata resolution (resolveArtist/resolveAlbum)
   // and feeds Home's external discovery shelves — hence
-  // `useEnabledExternalSources` existing at all. Values are markers onto the
-  // existing resolve/fetch methods (`SlotImpl` is `unknown`), not a new API.
-  slots: {
-    resolution: resolveDeezerArtistByName,
-    'discovery.shelf': getDeezerArtistAlbums,
-  },
+  // `useEnabledExternalSources` existing at all.
 
   async resolveArtist(name) {
     const artist = await resolveDeezerArtistByName(name)
@@ -188,11 +187,6 @@ const musicbrainzSource: SourceDefinition = {
   // MusicBrainz fills identity/metadata resolution (resolveArtist/
   // resolveAlbum) and feeds Home's external discovery shelves — hence
   // `useEnabledExternalSources` existing at all. Values are markers onto the
-  // existing resolve/fetch methods (`SlotImpl` is `unknown`), not a new API.
-  slots: {
-    resolution: mb.searchArtist,
-    'discovery.shelf': mb.getArtistWithReleases,
-  },
 
   async resolveArtist(name) {
     const results = await mb.searchArtist(name, 5)

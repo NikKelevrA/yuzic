@@ -9,7 +9,7 @@ import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice'
 import type { LidarrConfig } from '@/types'
 import type { Album } from '@/domain/entities/Album'
 import { selectDownloadersForActiveServer } from '@/utils/redux/selectors/downloadersSelectors'
-import type { IntegrationModule, Health } from '@/features/integrations/types'
+import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
 
 export { downloadErrorKey } from './errorKeys'
 
@@ -49,13 +49,19 @@ export type AlbumDownloadRequest = Album
 export type TrackDownloadRequest = { title: string; artist: string }
 
 /**
- * Downloaders converge on the `IntegrationModule` contract (auth, slots,
- * testConnection) while keeping their own operational fields — settings
- * route, toast keys, and queue polling — that aren't product capabilities
- * and so have no `CapabilitySlot` of their own.
+ * What a downloader is, beyond its capabilities.
+ *
+ * Acquiring an album or a track is declared in the provider registry, where
+ * every provider declares what it can do. What stays here is operational and
+ * downloader-specific: the settings route, the toast keys, and queue polling —
+ * none of which is a product capability anything would ask for by name.
  */
-export type DownloaderDefinition = IntegrationModule & {
-  // Narrows `IntegrationModule.id: string` back to the closed downloader-id
+export type DownloaderDefinition = {
+  /** Declared once here; capabilities live in the provider registry. */
+  label: string
+  auth: AuthDescriptor
+  testConnection(config: unknown): Promise<Health>
+  // Narrows the id back to the closed downloader-id
   // union so every existing consumer keyed on `DownloaderId` still compiles.
   id: DownloaderId
   descriptionKey: string
@@ -86,7 +92,7 @@ export type DownloaderDefinition = IntegrationModule & {
    *
    * Downloader-operational, not a product capability: it's how a downloader
    * reports progress on units it already fills, not a unit of its own — so it
-   * deliberately does not map to a `CapabilitySlot`.
+   * deliberately is not a capability: nothing asks "who can poll a queue".
    */
   fetchQueueWithDiff<T extends { id: string }>(
     config: DownloaderConfig,
@@ -118,9 +124,6 @@ const lidarrDownloader: DownloaderDefinition = {
   settingsRoute: '/settings/lidarrView',
   auth: apiKeyAuth,
   // Lidarr is album-only — no `acquisition.track` slot.
-  slots: {
-    'acquisition.album': lidarrDownloadAlbum,
-  },
   downloadAlbum: lidarrDownloadAlbum,
   fetchQueueWithDiff: lidarr.fetchQueueWithDiff as DownloaderDefinition['fetchQueueWithDiff'],
   testConnection: async (config: unknown): Promise<Health> => {
@@ -165,10 +168,6 @@ const slskdDownloader: DownloaderDefinition = {
   settingsRoute: '/settings/slskdView',
   auth: apiKeyAuth,
   // slskd does both units.
-  slots: {
-    'acquisition.album': slskdDownloadAlbum,
-    'acquisition.track': slskdDownloadTrack,
-  },
   downloadAlbum: slskdDownloadAlbum,
   downloadTrack: slskdDownloadTrack,
   fetchQueueWithDiff: ((config: DownloaderConfig, previous: { id: string }[]) =>
@@ -204,9 +203,6 @@ const soulsyncDownloader: DownloaderDefinition = {
   settingsRoute: '/settings/soulsyncView',
   auth: apiKeyAuth,
   // SoulSync is track-only — no `acquisition.album` slot.
-  slots: {
-    'acquisition.track': soulsyncDownloadTrack,
-  },
   downloadTrack: soulsyncDownloadTrack,
   fetchQueueWithDiff: ((config: DownloaderConfig, previous: { id: string }[]) =>
     soulsync.fetchQueueWithDiff(soulsyncConfigOf(config), previous as any)) as DownloaderDefinition['fetchQueueWithDiff'],

@@ -1,11 +1,10 @@
 /**
  * AudioMuse-AI as an ordinary integration provider.
  *
- * The old `capabilityRegistry.ts` special-cased AudioMuse — it isn't wired
- * as a full `IntegrationModule` there, so `audiomuseSlots()` is registered
- * directly rather than through `moduleFillsSlot`. There is no special case
- * here: it declares `similarity.songs` and `playlist.generate` exactly like
- * any other provider that has them.
+ * The registry this replaces special-cased AudioMuse, assembling its abilities
+ * by hand because it never adopted the shared contract. There is no special
+ * case here: it declares `similarity.songs` and `playlist.generate` exactly
+ * like any other provider that has them.
  *
  * Both capabilities need the AudioMuse client's own config (server URL +
  * token) *and* the active server's `ApiAdapter` — similarity results come

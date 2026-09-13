@@ -4,7 +4,6 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ALL_SOURCES, getSourceMeta, useEnabledExternalSources } from './registry';
-import { describeModule, moduleFillsSlot } from '@/features/integrations/types';
 import settingsReducer, {
   setDeezerExternalEnabled,
   setMusicbrainzExternalEnabled,
@@ -59,13 +58,13 @@ describe('useEnabledExternalSources', () => {
 
 /**
  * Both sources are keyless public APIs — no credentials, no server URL, no
- * account — so they converge on the `IntegrationModule` contract with a
+ * account — so they declare a
  * `'none'` auth tier and a trivial `testConnection` (nothing to authenticate;
  * "enabled" is a plain user setting, not a connection). Each declares both
  * `resolution` (its resolveArtist/resolveAlbum/fetchAlbum identity/metadata
  * work) and `discovery.shelf` (it feeds Home's external discovery shelves).
  */
-describe('sources as IntegrationModules', () => {
+describe('sources as providers', () => {
   const by = (id: string) => ALL_SOURCES.find((s) => s.id === id)!;
 
   it('declares none auth for every source', () => {
@@ -81,18 +80,6 @@ describe('sources as IntegrationModules', () => {
     }
   });
 
-  it('declares resolution and discovery.shelf slots for both sources', () => {
-    expect(describeModule(by('deezer')).slots.sort()).toEqual(['discovery.shelf', 'resolution'].sort());
-    expect(describeModule(by('musicbrainz')).slots.sort()).toEqual(['discovery.shelf', 'resolution'].sort());
-
-    expect(moduleFillsSlot(by('deezer'), 'resolution')).toBe(true);
-    expect(moduleFillsSlot(by('deezer'), 'discovery.shelf')).toBe(true);
-    expect(moduleFillsSlot(by('musicbrainz'), 'resolution')).toBe(true);
-    expect(moduleFillsSlot(by('musicbrainz'), 'discovery.shelf')).toBe(true);
-
-    // Not every capability slot is filled — sources don't do acquisition.
-    expect(moduleFillsSlot(by('deezer'), 'acquisition.album')).toBe(false);
-  });
 
   it('keeps the resolve/fetch methods callable independent of slots', () => {
     for (const def of ALL_SOURCES) {
