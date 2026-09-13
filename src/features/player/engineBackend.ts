@@ -100,9 +100,28 @@ function engineUri(url: MediaItem['url'] | undefined): string {
 }
 
 /**
- * The app's `MediaItem` as the engine's `Track`.
+ * The subset of `MediaItem` this needs, shared with `BrowseItem` (see
+ * `createEngineBackend`'s `toBrowseNode`) so a browse-tree row converts to a
+ * wire `Track` through this exact function rather than a second hand-rolled
+ * copy of it — which is how the browse tree's `playable` track used to lose
+ * `artworkUri` that the queue's version always carried.
  */
-export function toEngineTrack(item: MediaItem): Track {
+export interface EngineTrackInput {
+  mediaId?: string;
+  url: MediaItem['url'];
+  title?: string;
+  artist?: string;
+  albumTitle?: string;
+  artworkUrl?: string;
+  duration?: number;
+  headers?: Record<string, string>;
+  artworkHeaders?: Record<string, string>;
+}
+
+/**
+ * The app's `MediaItem` (or a `BrowseItem` row) as the engine's `Track`.
+ */
+export function toEngineTrack(item: EngineTrackInput): Track {
   const uri = engineUri(item.url);
   return {
     // `mediaId` is optional to rntp and always set by `buildTrackItem`, but the
@@ -151,7 +170,7 @@ export function toMediaItem(track: Track): MediaItem {
  * here rather than changed in the engine, because absolute is the right answer
  * for drawing a buffering bar and this is the one caller that wants otherwise.
  */
-export function toRntpProgress(progress: Progress): {
+export function toPlaybackProgress(progress: Progress): {
   position: number;
   duration: number;
   buffered: number;

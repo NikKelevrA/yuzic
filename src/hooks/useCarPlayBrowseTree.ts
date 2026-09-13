@@ -12,7 +12,8 @@ import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 import type { Song as DomainSong } from '@/domain/entities/Song';
 import type { CoverSource } from '@/types/Cover';
 import { buildCover } from '@/utils/builders/buildCover';
-import { normalizeMediaUrl } from '@/utils/builders/buildTrackItem';
+import { toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
+import type { PlayableResource } from '@/features/playback/playableResource';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { QueryKeys } from '@/enums/queryKeys';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
@@ -76,18 +77,23 @@ function toPlayableBrowseItemFromDomainSong(
   const streamUrl = api.songs.buildStreamUrl(song.streamId ?? song.nativeId, quality, codec) || null;
   if (!streamUrl) return null;
 
+  // Same `PlayableResource` shape, and the same `engineBoundary` conversion,
+  // the phone queue builds from — the reason CarPlay used to end up with
+  // different headers than the Now Playing screen for the same track is that
+  // this file built its own row by hand instead of going through it.
+  const resource: PlayableResource = { song, streamUrl };
   // The song's own provenance says which server it came from, so the mixed-queue
   // check is exact rather than a server-type comparison.
-  const { headers, artworkHeaders } = mediaHeadersForSong(server, { song, streamUrl });
+  const track = toEngineBoundaryTrack(resource, mediaHeadersForSong(server, resource));
   return {
-    mediaId: song.localId,
-    title: song.title,
-    artist: song.artist.name,
-    artworkUrl: buildCover(song.cover, 'grid') ?? undefined,
-    url: normalizeMediaUrl(streamUrl),
-    duration: song.durationSeconds || undefined,
-    ...(headers ? { headers } : {}),
-    ...(artworkHeaders ? { artworkHeaders } : {}),
+    mediaId: track.id,
+    title: track.title,
+    artist: track.artist,
+    artworkUrl: track.artworkUri,
+    url: track.uri,
+    duration: track.durationSec,
+    ...(track.headers ? { headers: track.headers } : {}),
+    ...(track.artworkHeaders ? { artworkHeaders: track.artworkHeaders } : {}),
   };
 }
 

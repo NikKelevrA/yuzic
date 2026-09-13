@@ -82,6 +82,18 @@ export interface PlayerBackend {
   clearCache(): void;
 
   /**
+   * Drop one track's cached audio, by the same id the queue keys tracks on
+   * (`MediaItem['mediaId']` / `Track['id']`).
+   *
+   * Distinct from `clearCache()`: deleting one downloaded track must not
+   * evict everything the engine has cached for the rest of the library, and
+   * without this the app has no way to tell the engine a download is gone —
+   * the deleted track's audio can still be served out of the engine's own
+   * disk cache after the app has thrown its copy away.
+   */
+  evict(mediaId: string): void;
+
+  /**
    * Publish the tree the car surfaces browse.
    *
    * Best-effort by contract: a car that is not connected has nothing to show,

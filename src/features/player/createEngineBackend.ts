@@ -7,7 +7,8 @@ import {
   applyEvent,
   createShadow,
   toEngineTrack,
-  toRntpProgress,
+  toPlaybackProgress,
+  type EngineTrackInput,
   type Shadow,
 } from './engineBackend';
 
@@ -42,23 +43,31 @@ function requireEngine() {
  * row is cannot be told from its position in the tree — an album row and the
  * track rows beneath it sit at different depths in different categories.
  */
+/** `BrowseItem` with `url` narrowed to present, for the one call site above. */
+function toEngineTrackInput(item: BrowseItem, url: string): EngineTrackInput {
+  return {
+    mediaId: item.mediaId,
+    url,
+    title: item.title,
+    artist: item.artist,
+    artworkUrl: item.artworkUrl,
+    duration: item.duration,
+    headers: item.headers,
+    artworkHeaders: item.artworkHeaders,
+  };
+}
+
 function toBrowseNode(item: BrowseItem): BrowseNode {
   return {
     id: item.mediaId,
     title: item.title,
     subtitle: item.artist,
     children: item.children?.map(toBrowseNode),
-    playable: item.url
-      ? {
-          id: item.mediaId,
-          uri: item.url,
-          title: item.title,
-          artist: item.artist,
-          durationSec: item.duration,
-          ...(item.headers ? { headers: item.headers } : {}),
-          ...(item.artworkHeaders ? { artworkHeaders: item.artworkHeaders } : {}),
-        }
-      : undefined,
+    // Same `toEngineTrack` the queue uses — see `EngineTrackInput` — so a
+    // playable browse row and a queued track agree on every field, artwork
+    // and headers included, instead of the browse tree hand-building a
+    // second, thinner copy of the same conversion.
+    playable: item.url ? toEngineTrack(toEngineTrackInput(item, item.url)) : undefined,
   };
 }
 
@@ -282,7 +291,7 @@ export function createEngineBackend(): PlayerBackend {
       fire('setRepeatMode', async () => load().setRepeatMode(engineMode));
     },
 
-    getProgress() { return toRntpProgress(shadow.progress); },
+    getProgress() { return toPlaybackProgress(shadow.progress); },
     getQueue() { return shadow.queue; },
     // Null on an empty queue, matching rntp: "nothing is active" and "the
     // first track" are different answers, and the app branches on it.
@@ -313,6 +322,7 @@ export function createEngineBackend(): PlayerBackend {
     },
 
     clearCache() { fire('clearCache', async () => load().clearCache()); },
+    evict(mediaId) { fire('evict', async () => load().evict(mediaId)); },
 
     /**
      * Flat categories in, a tree out.

@@ -3,7 +3,7 @@ import {
   createShadow,
   toEngineTrack,
   toMediaItem,
-  toRntpProgress,
+  toPlaybackProgress,
 } from './engineBackend';
 import type { MediaItem } from './mediaItem';
 
@@ -148,13 +148,13 @@ describe('progress, in the shape the app expects', () => {
     // The engine reports buffered on the same timeline as position — 30 means
     // "buffered up to 0:30" — and a caller asking how much runway is left
     // wants the difference.
-    const out = toRntpProgress({ positionSec: 12, durationSec: 180, bufferedSec: 30 });
+    const out = toPlaybackProgress({ positionSec: 12, durationSec: 180, bufferedSec: 30 });
     expect(out).toEqual({ position: 12, duration: 180, buffered: 18 });
   });
 
   it('never reports negative runway', () => {
     // Position can momentarily exceed the last buffered figure between events.
-    const out = toRntpProgress({ positionSec: 40, durationSec: 180, bufferedSec: 30 });
+    const out = toPlaybackProgress({ positionSec: 40, durationSec: 180, bufferedSec: 30 });
     expect(out.buffered).toBe(0);
   });
 });

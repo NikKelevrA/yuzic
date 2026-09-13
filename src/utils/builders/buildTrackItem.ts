@@ -1,13 +1,9 @@
 import type { MediaItem } from '../../features/player/mediaItem';
 import type { RequestHeaders } from '../../features/player/mediaHeaders';
 import type { PlayableResource } from '@/features/playback/playableResource';
-import { buildCover } from './buildCover';
+import { normalizeMediaUrl, toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
 
-export function normalizeMediaUrl(url: string): string {
-  if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return url;
-  if (url.startsWith('/')) return `file://${url}`;
-  return url;
-}
+export { normalizeMediaUrl };
 
 /**
  * `extra` carries the ephemeral request headers a protected server needs — a
@@ -16,22 +12,26 @@ export function normalizeMediaUrl(url: string): string {
  * the store here so the builder stays pure and every playback consumer routes
  * headers through the same resolution point. Fields are set only when present,
  * so an unprotected server produces exactly the item it did before.
+ *
+ * The conversion itself — URI, headers, artwork, duration, identity — is
+ * `engineBoundary`'s; this only reshapes that into `MediaItem`'s own field
+ * names, which is the one thing that is genuinely specific to the phone
+ * queue and lock screen.
  */
 export function buildTrackItem(resource: PlayableResource, extra?: RequestHeaders): MediaItem {
-  const { song } = resource;
-  const url = normalizeMediaUrl(resource.streamUrl);
+  const track = toEngineBoundaryTrack(resource, extra);
   return {
     // Identity, not the origin's id: this is what the native player echoes
     // back, and `resourceFromPlayerItem` parses it to rebuild a track the app
     // has lost sight of.
-    mediaId: song.localId,
-    title: song.title,
-    artist: song.artist.name,
-    albumTitle: song.album.title,
-    duration: song.durationSeconds || undefined,
-    url: url.startsWith('file://') ? { uri: url } : url,
-    artworkUrl: buildCover(song.cover, 'grid') ?? undefined,
-    ...(extra?.headers ? { headers: extra.headers } : {}),
-    ...(extra?.artworkHeaders ? { artworkHeaders: extra.artworkHeaders } : {}),
+    mediaId: track.id,
+    title: track.title,
+    artist: track.artist,
+    albumTitle: track.album,
+    duration: track.durationSec,
+    url: track.uri.startsWith('file://') ? { uri: track.uri } : track.uri,
+    artworkUrl: track.artworkUri,
+    ...(track.headers ? { headers: track.headers } : {}),
+    ...(track.artworkHeaders ? { artworkHeaders: track.artworkHeaders } : {}),
   };
 }
