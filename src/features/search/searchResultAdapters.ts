@@ -13,7 +13,7 @@
  * `SearchEntityEntry` (src/utils/redux/slices/searchHistorySlice.ts), which
  * carries the same loose id/title/cover fields but isn't a `SearchResult`.
  */
-import type { SearchResult } from '@/contexts/searchRanking';
+import type { SearchResult } from '@/features/search/searchRanking';
 import type { CoverSource } from '@/types/Cover';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';

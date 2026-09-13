@@ -39,15 +39,15 @@ import { buildTrackItem } from '@/utils/builders/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
-import { resourcesFromPlayerQueue, QueueSegment, segmentAt } from './playingQueue';
-import { isRepeatLoop } from './repeatPlay';
-import { createTransportController } from './transportController';
-import { createQueueController } from './queueController';
-import { createAutoplayCoordinator, type AutoplayCoordinator } from './autoplayCoordinator';
-import { createPlaybackCoordinator } from './playbackCoordinator';
-import { createPlaybackStarters, type StartableCollection } from './playbackStarters';
-import { createShuffleController } from './shuffleController';
-import { createPlaybackEventHandlers } from './playbackEvents';
+import { resourcesFromPlayerQueue, QueueSegment, segmentAt } from '@/features/playback/playingQueue';
+import { isRepeatLoop } from '@/features/playback/repeatPlay';
+import { createTransportController } from '@/features/playback/transportController';
+import { createQueueController } from '@/features/playback/queueController';
+import { createAutoplayCoordinator, type AutoplayCoordinator } from '@/features/playback/autoplayCoordinator';
+import { createPlaybackCoordinator } from '@/features/playback/playbackCoordinator';
+import { createPlaybackStarters, type StartableCollection } from '@/features/playback/playbackStarters';
+import { createShuffleController } from '@/features/playback/shuffleController';
+import { createPlaybackEventHandlers } from '@/features/playback/playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
 import { ownsPlayback } from '@/features/player/playbackSink';
@@ -62,8 +62,8 @@ import {
   QueueFillProvider,
   createNativeSimilarityQueueFillProvider,
   createAudiomuseQueueFillProvider,
-} from './queueProviders';
-import { buildRestoredQueue } from './restoreQueue';
+} from '@/features/playback/queueProviders';
+import { buildRestoredQueue } from '@/features/playback/restoreQueue';
 import { hasReissuableUrl } from '@/domain/playback/ContentKind';
 import { clampSpeed, speedFor, speedProfileFor } from '@/utils/playback/speedProfile';
 import { useBookmarkManager } from '@/features/playback/useBookmarkManager';
@@ -83,7 +83,7 @@ import {
   backendRepeatMode,
   clampVolume,
   nextRepeatMode,
-} from './playingPolicies';
+} from '@/features/playback/playingPolicies';
 
 export interface PlaybackProgress {
   position: number;

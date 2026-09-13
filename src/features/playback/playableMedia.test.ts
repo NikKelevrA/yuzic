@@ -1,4 +1,4 @@
-import type { MediaItem } from '../features/player/mediaItem';
+import type { MediaItem } from '@/features/player/mediaItem';
 import { getMediaItemId, getMediaItemUrl } from './playableMedia';
 
 

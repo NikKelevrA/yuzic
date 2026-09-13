@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
 import { type SearchResult, useSearch, type SearchEntityType } from '@/contexts/SearchContext';
-import type { SearchResultScope } from '@/contexts/searchLegs';
+import type { SearchResultScope } from '@/features/search/searchLegs';
 import { ALL_SEARCH_ENTITY_TYPES } from '@/features/search/searchPolicy';
 import { useSearchHistory } from '@/features/search/searchHistory';
 import { entityToAlbum, entityToArtist } from '@/features/search/searchResultAdapters';

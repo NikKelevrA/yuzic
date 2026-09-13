@@ -11,7 +11,7 @@
 
 export const MAX_ADHOC_QUEUE = 500;
 
-export type TrimmedQueue<T> = {
+type TrimmedQueue<T> = {
   songs: T[];
   index: number;
 };

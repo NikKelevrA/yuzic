@@ -1,4 +1,4 @@
-export type SearchScope = 'client' | 'server';
+type SearchScope = 'client' | 'server';
 
 /** The scope of a search: the user's own library, or intentionally reaching
  *  out to other sources. Distinct from `SearchScope` above, which is about
@@ -38,7 +38,7 @@ export type SearchResultScope = 'library' | 'other';
  * "Your Library" / "Other sources" choice, not an additional filter on top of
  * it. Mixing the two by default was explicitly ruled out.
  */
-export type SearchLegPlan = {
+type SearchLegPlan = {
   /** Search the locally synced library index. */
   client: boolean;
   /** Ask the music server. */

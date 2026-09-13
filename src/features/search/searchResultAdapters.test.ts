@@ -1,4 +1,4 @@
-import type { SearchResult } from '@/contexts/searchRanking';
+import type { SearchResult } from '@/features/search/searchRanking';
 import { resultToAlbum, resultToArtist, isExternalArtist } from './searchResultAdapters';
 
 const baseResult: SearchResult = {

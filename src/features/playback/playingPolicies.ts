@@ -1,5 +1,5 @@
-export type RepeatMode = 'off' | 'all' | 'one';
-export type BackendRepeatMode = 'off' | 'queue' | 'track';
+type RepeatMode = 'off' | 'all' | 'one';
+type BackendRepeatMode = 'off' | 'queue' | 'track';
 
 export function nextRepeatMode(mode: RepeatMode): RepeatMode {
   return mode === 'off' ? 'all' : mode === 'all' ? 'one' : 'off';

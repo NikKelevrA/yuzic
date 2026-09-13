@@ -18,7 +18,7 @@ export const RECENT_CONTEXT_SIZE = 5;
 /** Tracks requested per fill. */
 export const FILL_BATCH_SIZE = 10;
 
-export type FillTrigger = {
+type FillTrigger = {
   queueLength: number;
   currentIndex: number;
   autoplayEnabled: boolean;
@@ -41,7 +41,7 @@ export function shouldFillQueue({
   return remainingAfterCurrent(queueLength, currentIndex) <= LOW_WATERMARK;
 }
 
-export type FillRequest = {
+type FillRequest = {
   /** The current track and the few before it, as taste context. */
   recentResources: PlayableResource[];
   /** Everything already queued, keyed by identity, so a fill never re-adds

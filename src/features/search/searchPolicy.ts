@@ -27,7 +27,7 @@ import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
-import type { SearchResult } from '@/contexts/searchRanking';
+import type { SearchResult } from '@/features/search/searchRanking';
 import { ALL_SOURCES } from '@/features/sources/registry';
 
 /** Entity types an external source can be asked to return. Deliberately

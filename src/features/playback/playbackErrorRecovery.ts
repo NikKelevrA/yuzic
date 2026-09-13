@@ -1,4 +1,4 @@
-export type PlaybackErrorAction =
+type PlaybackErrorAction =
   | { action: 'retry'; nextLastRecoveryAttemptedId: string }
   | { action: 'resume'; positionSeconds: number; nextStallCount: number }
   | { action: 'escalate' };

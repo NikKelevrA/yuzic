@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/hooks/useTheme';
 import IconActionButton from '@/components/IconActionButton';
 import SectionHeader from '@/components/SectionHeader';
-import { createAudiomuseQueueFillProvider } from '@/contexts/queueProviders';
+import { createAudiomuseQueueFillProvider } from '@/features/playback/queueProviders';
 import { useApi } from '@/api';
 import {
   useIsAudiomuseConfigured,

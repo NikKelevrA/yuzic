@@ -22,7 +22,7 @@ const RESTART_WINDOW_SECONDS = 10
  */
 const MIN_PASS_FRACTION = 0.5
 
-export type LoopProbe = {
+type LoopProbe = {
   /** True only when the same media item is set to play again — repeat-one, or
    * repeat-all over a queue of one. Any other queue advances normally. */
   isLooping: boolean

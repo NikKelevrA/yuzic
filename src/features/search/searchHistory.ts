@@ -9,7 +9,7 @@
  * reopened directly without searching again.
  */
 import { useDispatch, useSelector } from 'react-redux';
-import type { SearchResult } from '@/contexts/searchRanking';
+import type { SearchResult } from '@/features/search/searchRanking';
 import {
   selectRecentSearchEntities,
   selectRecentSearchQueries,

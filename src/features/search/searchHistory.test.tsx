@@ -6,7 +6,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useSearchHistory } from './searchHistory';
 import searchHistoryReducer from '@/utils/redux/slices/searchHistorySlice';
 import serversReducer, { setActiveServer } from '@/utils/redux/slices/serversSlice';
-import type { SearchResult } from '@/contexts/searchRanking';
+import type { SearchResult } from '@/features/search/searchRanking';
 
 function makeStore(activeServerId = 'srv-1') {
   const store = configureStore({ reducer: { searchHistory: searchHistoryReducer, servers: serversReducer } });

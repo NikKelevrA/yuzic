@@ -77,7 +77,7 @@ import {
   ensureDownloadDir,
 } from '@/features/offline/filesystem';
 import { getBackend } from '@/features/player/activeBackend';
-import { downloadProgressFraction, nextDownloadingIds, collectionDownloadState } from './downloadPolicies';
+import { downloadProgressFraction, nextDownloadingIds, collectionDownloadState } from '@/features/offline/downloadPolicies';
 import { mayDownloadNow } from '@/features/offline/networkPolicy';
 
 /**

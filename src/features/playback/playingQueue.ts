@@ -18,7 +18,7 @@ export function resourceFromMediaItem(item: MediaItem): PlayableResource | null 
   })
 }
 
-export type PlayNextQueueUpdate<T> = {
+type PlayNextQueueUpdate<T> = {
   queue: T[]
   currentIndex: number
   insertIndex: number

@@ -1,4 +1,4 @@
-import type { MediaItem } from '../features/player/mediaItem';
+import type { MediaItem } from '@/features/player/mediaItem';
 
 /**
  * What's still genuinely about `MediaItem`'s own shape, plus the one

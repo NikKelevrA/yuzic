@@ -15,7 +15,7 @@ import {
 import { getSourceMeta, type SourceId } from '@/features/sources/registry';
 import { iconSize, spacing, typography } from '@/constants/design';
 import type { SearchEntityType } from '@/contexts/SearchContext';
-import type { SearchResultScope } from '@/contexts/searchLegs';
+import type { SearchResultScope } from '@/features/search/searchLegs';
 
 type Props = {
   resultScope: SearchResultScope;

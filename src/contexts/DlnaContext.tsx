@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getBackend } from '@/features/player/activeBackend';
-import { getMediaItemUrl } from './playableMedia';
+import { getMediaItemUrl } from '@/features/playback/playableMedia';
 import type { MediaItem } from '@/features/player/mediaItem';
 
 // ─── DLNA ────────────────────────────────────────────────────────────────────

@@ -24,8 +24,8 @@ import {
   getFullyDownloadedAlbumIds,
 } from '@/utils/downloads/collectionState';
 
-import { dedupeAndSort, type SearchResult } from './searchRanking';
-import { planSearchLegs, type SearchResultScope } from './searchLegs';
+import { dedupeAndSort, type SearchResult } from '@/features/search/searchRanking';
+import { planSearchLegs, type SearchResultScope } from '@/features/search/searchLegs';
 import {
   searchLibraryLeg,
   searchServerLeg,
@@ -36,8 +36,8 @@ import {
   type DownloadedIds,
 } from '@/features/search/searchPolicy';
 
-export type { SearchResult } from './searchRanking';
-export type { SearchResultScope } from './searchLegs';
+export type { SearchResult } from '@/features/search/searchRanking';
+export type { SearchResultScope } from '@/features/search/searchLegs';
 export type { SearchEntityType } from '@/features/search/searchPolicy';
 
 export type SearchFilters = {
