@@ -1,21 +1,21 @@
 {
   "schema": "yuzic-architecture-baseline/2",
   "size": {
-    "productionFiles": 686,
-    "productionLines": 64250,
-    "testFiles": 195,
-    "testLines": 20671
+    "productionFiles": 700,
+    "productionLines": 65170,
+    "testFiles": 197,
+    "testLines": 21324
   },
   "tests": {
-    "suites": 197,
-    "tests": 1487,
-    "passed": 1487,
+    "suites": 199,
+    "tests": 1516,
+    "passed": 1516,
     "failed": 0,
     "coverage": {
-      "lines": 64.8,
-      "statements": 62.7,
-      "functions": 51.29,
-      "branches": 57.44
+      "lines": 65.28,
+      "statements": 63.09,
+      "functions": 52.22,
+      "branches": 57.42
     }
   },
   "cycles": [
@@ -214,7 +214,7 @@
     ]
   ],
   "unusedExports": {
-    "count": 597,
+    "count": 610,
     "entries": [
       "src/api/audiomuse/index.ts - AudiomuseClient",
       "src/api/audiomuse/index.ts - AudiomuseConfig",
@@ -680,6 +680,19 @@
       "src/hooks/useRadius.ts - ScaledRadius (used in module)",
       "src/hooks/useTheme.ts - ResolvedTheme (used in module)",
       "src/hooks/useTheme.ts - ThemeMode (used in module)",
+      "src/providers/contracts/Capabilities.ts - AcquisitionRequest (used in module)",
+      "src/providers/contracts/Capabilities.ts - AcquisitionResult (used in module)",
+      "src/providers/contracts/Capabilities.ts - AlbumEnrichment (used in module)",
+      "src/providers/contracts/Capabilities.ts - ArtistEnrichment (used in module)",
+      "src/providers/contracts/Capabilities.ts - DiscoveryShelf (used in module)",
+      "src/providers/contracts/Capabilities.ts - Listen (used in module)",
+      "src/providers/contracts/Capabilities.ts - LyricLine (used in module)",
+      "src/providers/contracts/Capabilities.ts - Lyrics (used in module)",
+      "src/providers/contracts/Provider.ts - AuthDescriptor (used in module)",
+      "src/providers/contracts/Provider.ts - AuthTier (used in module)",
+      "src/providers/contracts/Provider.ts - Health (used in module)",
+      "src/providers/contracts/Provider.ts - Presentation (used in module)",
+      "src/providers/registry/capabilityBroker.ts - CapabilityOffer (used in module)",
       "src/screens/album/components/Content/index.tsx - default",
       "src/screens/album/components/Header/index.tsx - AlbumHeaderBar",
       "src/screens/album/components/Header/index.tsx - default",

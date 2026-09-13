@@ -78,6 +78,7 @@ const PROVIDER_HOMES = [
   'src/utils/servers/registry.ts',       // server provider declarations
   'src/features/downloaders/registry',   // downloader declarations
   'src/features/sources/registry',       // external source declarations
+  'src/providers/registry/',             // where a provider declares itself
   'src/features/integrations/',          // the capability contract and registry
   'src/app/',                            // route files named after a provider's settings screen
   'src/locales/',                        // product names are user-facing copy
