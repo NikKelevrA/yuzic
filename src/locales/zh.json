@@ -973,6 +973,8 @@
     "subtext": "播放列表 • {{count}} 首曲目",
     "subtext_other": "播放列表 • {{count}} 首曲目",
     "empty": "此播放列表暂无歌曲。",
+    "originShared": "共享",
+    "originExternal": "来自 {{provider}}",
     "recommended": {
       "title": "推荐",
       "local": "来自您的音乐库",

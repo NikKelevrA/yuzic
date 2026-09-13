@@ -1,16 +1,17 @@
+import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { CoverSource } from '@/types';
 
 export type SearchEntityType = 'song' | 'album' | 'artist' | 'playlist';
 
-export interface SearchHistoryExternalIds {
-  deezerId?: string;
-  artistDeezerId?: string;
-  mbid?: string | null;
-  artistMbid?: string | null;
-  upc?: string | null;
-  isrc?: string | null;
-}
+/**
+ * The ids a remembered entity carries, in the domain's own shape.
+ *
+ * It used to restate them field by field, which meant a persisted search
+ * history enumerated which catalogues exist — and would have needed editing
+ * every time one was added.
+ */
+export type SearchHistoryExternalIds = ExternalIds;
 
 /** Something the user typed and submitted. Replaying it re-runs the search. */
 export interface SearchQueryEntry {
@@ -30,7 +31,9 @@ export interface SearchEntityEntry {
   subtitle: string;
   cover: CoverSource;
   source: 'local' | 'external';
-  externalSource?: 'deezer' | 'musicbrainz' | 'lastfm';
+  /** Which integration supplied it. An opaque provider id, not a closed set:
+   * a search history entry has no business enumerating who can be searched. */
+  externalSource?: string;
   externalIds?: SearchHistoryExternalIds;
 }
 

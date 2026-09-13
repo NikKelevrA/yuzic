@@ -7,6 +7,8 @@
  * `src/api/deezer` functions; nothing here talks to the network itself.
  */
 import {
+  searchDeezerArtists,
+  searchDeezerAlbums,
   getDeezerAlbum,
   getDeezerArtist,
   getDeezerChartAlbums,
@@ -38,6 +40,18 @@ export const deezerProvider: IntegrationProvider = {
       const resolved = await resolveDeezerAlbum(album.artist.name, album.title);
       if (!resolved) return null;
       return { cover: resolved.cover, externalIds: resolved.externalIds };
+    },
+    'catalogue.search': async (query, kinds) => {
+      const [artists, albums] = await Promise.all([
+        kinds.artists ? searchDeezerArtists(query, 4) : Promise.resolve([]),
+        kinds.albums ? searchDeezerAlbums(query, 6) : Promise.resolve([]),
+      ]);
+      return {
+        // Deezer has no second line worth showing for an artist, and an
+        // album's is its artist. Both are this catalogue's own choice.
+        artists: artists.map(entity => ({ entity, subtitle: '' })),
+        albums: albums.map(entity => ({ entity, subtitle: entity.artist.name })),
+      };
     },
     'similarity.artists': async (artist, limit) => {
       const resolved = await resolveDeezerArtistByName(artist.name);

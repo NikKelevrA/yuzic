@@ -20,6 +20,8 @@
  * that actually matters for the provider-branches gate: zero named-provider
  * conditionals in this file or in `SearchContext`.
  */
+import { offersFor } from '@/providers/registry/capabilityBroker';
+import { KEYLESS_INTEGRATIONS } from '@/providers/registry/keyless';
 import type { CoverSource } from '@/types/Cover';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
@@ -164,38 +166,64 @@ export async function searchServerLeg(searchApi: ServerSearchApi, query: string,
  * existing key (`source:type:id`) still collapses true duplicates — the same
  * source returning the same id twice.
  */
-export async function searchExternalLeg(sourceIds: string[], query: string, entityTypes: SearchEntityType[]): Promise<SearchResult[]> {
+export async function searchExternalLeg(
+  sourceIds: string[],
+  query: string,
+  entityTypes: SearchEntityType[]
+): Promise<SearchResult[]> {
   if (!query.trim() || sourceIds.length === 0) return [];
-  const wants = { artists: entityTypes.includes('artist'), albums: entityTypes.includes('album') };
-  const sources = ALL_SOURCES.filter(source => sourceIds.includes(source.id));
+  const kinds = {
+    artists: entityTypes.includes('artist'),
+    albums: entityTypes.includes('album'),
+  };
 
-  const perSource = await Promise.all(sources.map(source => source.search(query, wants)));
+  // Asked of the broker, not of a list of sources: whoever can search a
+  // catalogue answers, and search never learns who that is. The enabled set
+  // arrives as ids from `planSearchLegs`, which remains the only authority on
+  // whether this leg runs at all.
+  const offers = offersFor(
+    {
+      providers: KEYLESS_INTEGRATIONS,
+      isConnected: id => sourceIds.includes(id),
+      isAllowed: id => sourceIds.includes(id),
+      order: sourceIds,
+    },
+    'catalogue.search'
+  );
+  if (offers.length === 0) return [];
+
+  const perProvider = await Promise.all(
+    offers.map(async offer => ({
+      providerId: offer.providerId,
+      found: await offer.invoke(query, kinds),
+    }))
+  );
 
   const results: SearchResult[] = [];
-  for (const { artists, albums } of perSource) {
-    for (const artist of artists) {
+  for (const { providerId, found } of perProvider) {
+    for (const { entity, subtitle } of found.artists) {
       results.push({
-        id: artist.id,
-        title: artist.name,
-        subtext: artist.subtitle,
-        cover: artist.cover,
+        id: entity.nativeId,
+        title: entity.name,
+        subtext: subtitle,
+        cover: entity.cover,
         type: 'artist',
         source: 'external',
-        externalSource: artist.source,
-        externalIds: artist.externalIds,
+        externalSource: providerId,
+        externalIds: entity.externalIds,
         isDownloaded: false,
       });
     }
-    for (const album of albums) {
+    for (const { entity, subtitle } of found.albums) {
       results.push({
-        id: album.id,
-        title: album.title,
-        subtext: album.subtitle,
-        cover: album.cover,
+        id: entity.nativeId,
+        title: entity.title,
+        subtext: subtitle,
+        cover: entity.cover,
         type: 'album',
         source: 'external',
-        externalSource: album.source,
-        externalIds: album.externalIds,
+        externalSource: providerId,
+        externalIds: entity.externalIds,
         isDownloaded: false,
       });
     }

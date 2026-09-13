@@ -56,6 +56,23 @@ export interface DiscoveryShelf {
   albums: Album[];
 }
 
+/** Which entity kinds a search should ask for. */
+export interface CatalogueSearchKinds {
+  artists: boolean;
+  albums: boolean;
+}
+
+/** One hit, with the second line the provider chose for it. */
+export interface CatalogueSearchMatch<T> {
+  entity: T;
+  subtitle: string;
+}
+
+export interface CatalogueSearchResults {
+  artists: CatalogueSearchMatch<Artist>[];
+  albums: CatalogueSearchMatch<Album>[];
+}
+
 export interface AcquisitionRequest {
   artist: string;
   title: string;
@@ -97,6 +114,19 @@ export interface CapabilityMap {
   'acquisition.track': (request: AcquisitionRequest) => Promise<AcquisitionResult>;
   /** Browse a catalogue this provider holds but the user does not own. */
   'catalogue.album': (nativeId: string) => Promise<AlbumDetail | null>;
+  /**
+   * Free-text search of a catalogue the user does not own.
+   *
+   * Returns domain entities, so who found a result is already on the result —
+   * its provenance — rather than a separate tag the caller has to carry. The
+   * `subtitle` rides alongside because it is genuinely the provider's to
+   * choose: one catalogue's second line is the album's artist, another's is a
+   * release year, and neither is derivable from the other.
+   */
+  'catalogue.search': (
+    query: string,
+    kinds: CatalogueSearchKinds
+  ) => Promise<CatalogueSearchResults>;
 }
 
 export type CapabilityName = keyof CapabilityMap;

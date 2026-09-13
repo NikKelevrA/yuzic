@@ -8,6 +8,7 @@
  */
 import * as mb from '@/api/musicbrainz';
 import { mapAlbum as mapMbAlbum } from '@/api/musicbrainz/mapAlbum';
+import { mapArtist as mapMbArtist } from '@/api/musicbrainz/mapArtist';
 import { mapSong as mapMbSong } from '@/api/musicbrainz/mapSong';
 import { sourceColor } from '@/constants/design';
 import { integrationProvenance } from '@/domain/identity/Provenance';
@@ -24,6 +25,22 @@ export const musicbrainzProvider: IntegrationProvider = {
   presentation: { nameKey: 'settings.search.musicbrainz', icon: 0, color: sourceColor.musicbrainz },
   auth: { tier: 'none' },
   capabilities: {
+    'catalogue.search': async (query, kinds) => {
+      const [artists, releaseGroups] = await Promise.all([
+        kinds.artists ? mb.searchArtist(query, 4) : Promise.resolve([]),
+        kinds.albums ? mb.searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
+      ]);
+      return {
+        // MusicBrainz names no second line for an artist; for a release group
+        // it is the first release year, which is this catalogue's own idea of
+        // what distinguishes two records with the same title.
+        artists: artists.map(dto => ({ entity: mapMbArtist(dto, MB_PROVENANCE), subtitle: '' })),
+        albums: releaseGroups.map(dto => ({
+          entity: mapMbAlbum(dto, { provenance: MB_PROVENANCE }),
+          subtitle: dto['first-release-date']?.slice(0, 4) ?? '',
+        })),
+      };
+    },
     'artist.enrich': async artist => {
       const results = await mb.searchArtist(artist.name, 1);
       const best = results[0];

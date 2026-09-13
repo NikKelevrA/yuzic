@@ -5,7 +5,6 @@ import {
   StyleSheet,
   StatusBar,
   useWindowDimensions,
-  InteractionManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlayingState, usePlayingProgress } from '@/contexts/PlayingContext';
@@ -13,9 +12,8 @@ import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { selectShowSleepTimer, selectShowPlaybackSpeed, selectShowVolumeSlider } from '@/features/settings/playback/state';
-import { selectEnabledLyricsExternalSourcesInOrder } from '@/features/settings/lyrics/state';
-import { resolveLyrics, ALL_EXTERNAL_LYRICS_SOURCES, type ExternalLyricsSourceId } from '@/features/lyrics/resolveLyrics';
-import { externalLyricsFetchers } from '@/features/lyrics/externalLyricsFetchers';
+import { useSongScreenModel, type SongScreenModel } from '@/features/song/useSongScreenModel';
+import type { LyricsResult } from '@/api/types';
 import SongOptions from '@/components/options/SongOptions';
 import Queue from './components/Queue';
 import Animated, {
@@ -29,9 +27,6 @@ import Animated, {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { PLAYER_SPRING, usePlayerExpansion } from '@/features/player/PlayerExpansion';
 import { settleFromPlayer } from '@/features/player/settle';
-import { useApi } from '@/api';
-import { LyricsResult } from '@/api/types';
-import { useAlbum } from '@/hooks/albums';
 import PlaylistList from '@/components/PlaylistList';
 import PlayingMain from './components/PlayingMain';
 import Controls from './components/Controls';
@@ -124,11 +119,9 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     const { t } = useTranslation();
     const router = useRouter();
     const { currentSong } = usePlayingState();
-    const api = useApi();
     const insets = useSafeAreaInsets();
-    const { album } = useAlbum(currentSong?.album.nativeId ?? '');
-    const [lyrics, setLyrics] = useState<LyricsResult | null>(null);
-    const [lyricsAvailable, setLyricsAvailable] = useState(false);
+    const songModel: SongScreenModel = useSongScreenModel(currentSong);
+    const { album, artistId, lyrics, lyricsAvailable } = songModel;
 
     const songOptionsRef = useSheetRef();
     const playlistRef = useSheetRef();
@@ -219,62 +212,9 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
         [dragMoved, expansion, height, scrollY],
     );
 
-    const enabledExternalLyricsSourceIds = useSelector(selectEnabledLyricsExternalSourcesInOrder);
-    // The redux slice stores plain strings so it never has to know about this
-    // union; narrow to the ids the resolver actually recognises here, at the
-    // one place that reads it.
-    const enabledExternalLyricsSources = useMemo(
-        () => enabledExternalLyricsSourceIds.filter(
-            (id): id is ExternalLyricsSourceId => (ALL_EXTERNAL_LYRICS_SOURCES as string[]).includes(id)
-        ),
-        [enabledExternalLyricsSourceIds]
-    );
-
-    useEffect(() => {
-        if (!currentSong?.nativeId) return;
-
-        let cancelled = false;
-        setLyrics(null);
-        setLyricsAvailable(false);
-
-        const task = InteractionManager.runAfterInteractions(() => {
-            (async () => {
-                try {
-                    const res = await resolveLyrics({
-                        song: {
-                            songId: currentSong.nativeId,
-                            title: currentSong.title,
-                            artist: currentSong.artist.name,
-                            album: currentSong.album.title,
-                            durationSec: currentSong.durationSeconds || undefined,
-                        },
-                        getServerLyrics: songId => api.lyrics.getBySongId(songId),
-                        enabledExternalSourcesInOrder: enabledExternalLyricsSources,
-                        fetchers: externalLyricsFetchers,
-                    });
-                    if (cancelled) return;
-                    if (res && res.lines.length > 0) {
-                        setLyrics(res);
-                        setLyricsAvailable(true);
-                    }
-                } catch {
-                    // A track without lyrics is the common case, not a fault —
-                    // the panel just stays closed. Nothing to tell the user and
-                    // nothing to retry, so this stays silent on purpose.
-                }
-            })();
-        });
-
-        return () => {
-            cancelled = true;
-            task.cancel();
-        };
-    }, [api.lyrics, currentSong?.nativeId, currentSong?.title, currentSong?.artist, currentSong?.album, currentSong?.durationSeconds, enabledExternalLyricsSources]);
-
     const showSleepTimer = useSelector(selectShowSleepTimer);
     const showPlaybackSpeed = useSelector(selectShowPlaybackSpeed);
     const showVolumeSlider = useSelector(selectShowVolumeSlider);
-    const artistId = currentSong?.artist.nativeId ?? album?.artist?.nativeId;
 
     const navigateToArtist = useCallback(() => {
         if (artistId) {

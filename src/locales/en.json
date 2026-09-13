@@ -979,6 +979,8 @@
     "subtext": "Playlist • {{count}} song",
     "subtext_other": "Playlist • {{count}} songs",
     "empty": "This playlist has no songs yet.",
+    "originShared": "Shared",
+    "originExternal": "From {{provider}}",
     "recommended": {
       "title": "Recommended",
       "local": "From your library",

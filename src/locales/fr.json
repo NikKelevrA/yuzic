@@ -977,6 +977,8 @@
     "subtext": "Liste de lecture • {{count}} morceau",
     "subtext_other": "Liste de lecture • {{count}} morceaux",
     "empty": "Cette liste de lecture n'a pas encore de morceaux.",
+    "originShared": "Partagée",
+    "originExternal": "Depuis {{provider}}",
     "recommended": {
       "title": "Recommandé",
       "local": "De votre bibliothèque",

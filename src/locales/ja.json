@@ -973,6 +973,8 @@
     "subtext": "プレイリスト・{{count}}曲",
     "subtext_other": "プレイリスト・{{count}}曲",
     "empty": "このプレイリストにはまだ曲がありません。",
+    "originShared": "共有",
+    "originExternal": "{{provider}}から",
     "recommended": {
       "title": "おすすめ",
       "local": "ライブラリから",

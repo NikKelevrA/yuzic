@@ -923,9 +923,31 @@
       "negativeControl": "pending"
     },
     {
+      "id": "capability.catalogue.search",
+      "owner": "providers/registry",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'catalogue.search'",
+      "replacementEvidence": "",
+      "unit": "pending",
+      "integration": "pending",
+      "ios": "na",
+      "android": "na",
+      "negativeControl": "pending"
+    },
+    {
       "id": "capability.discovery.shelf",
       "owner": "providers/registry",
       "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'discovery.shelf'",
+      "replacementEvidence": "",
+      "unit": "pending",
+      "integration": "pending",
+      "ios": "na",
+      "android": "na",
+      "negativeControl": "pending"
+    },
+    {
+      "id": "capability.kinds",
+      "owner": "providers/registry",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'kinds'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",
@@ -948,6 +970,17 @@
       "id": "capability.playlist.generate",
       "owner": "providers/registry",
       "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'playlist.generate'",
+      "replacementEvidence": "",
+      "unit": "pending",
+      "integration": "pending",
+      "ios": "na",
+      "android": "na",
+      "negativeControl": "pending"
+    },
+    {
+      "id": "capability.query",
+      "owner": "providers/registry",
+      "legacyEvidence": "src/providers/contracts/Capabilities.ts CapabilityMap 'query'",
       "replacementEvidence": "",
       "unit": "pending",
       "integration": "pending",

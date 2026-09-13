@@ -5,7 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CloudOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-import { usePlaylist } from '@/hooks/playlists';
+import { usePlaylistScreenModel, type PlaylistRouteParams, type PlaylistScreenModel } from '@/features/playlist/usePlaylistScreenModel';
 import { useTheme } from '@/hooks/useTheme';
 import NotFoundView from '@/components/NotFoundView';
 import StatusBanner from '@/components/StatusBanner';
@@ -17,14 +17,15 @@ import { iconSize, spacing } from '@/constants/design';
 
 const PlaylistScreen: React.FC = () => {
   const route = useRoute<any>();
-  const { id } = route.params;
+  const { id } = route.params as PlaylistRouteParams;
 
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { playlist, songs, isLoading, songsLoading, degraded, error } = usePlaylist(id);
+  const model: PlaylistScreenModel = usePlaylistScreenModel({ id });
+  const { playlist, songs, status, songsLoading, degraded } = model;
   const insets = useSafeAreaInsets();
 
-  if (isLoading) {
+  if (status === 'loading') {
     return (
       <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
         <LoadingPlaylistContent />
@@ -35,7 +36,7 @@ const PlaylistScreen: React.FC = () => {
   if (!playlist) {
     return (
       <NotFoundView
-        message={error ? t('media.playlistLoadFailed') : t('media.playlistNotFound')}
+        message={status === 'error' ? t('media.playlistLoadFailed') : t('media.playlistNotFound')}
       />
     );
   }

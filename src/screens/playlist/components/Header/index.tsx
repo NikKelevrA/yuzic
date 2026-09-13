@@ -4,6 +4,7 @@ import { Ellipsis, Shuffle, Play } from 'lucide-react-native';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
+import { resolvePlaylistOrigin } from '@/features/playlist/playlistOrigin';
 
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useDownload } from '@/contexts/DownloadContext';
@@ -51,12 +52,24 @@ const PlaylistHeader: React.FC<Props> = ({ playlist, songs = [], showNavigation 
     [songs]
   );
 
+  // The entity's own provenance/isOwned answer "where did this come from" —
+  // see `playlistOrigin.ts` — rather than the screen inferring it from the
+  // title. Owned playlists (the common case) add nothing here; a shared or
+  // externally-sourced one gets a third meta item naming it.
+  const origin = useMemo(() => resolvePlaylistOrigin(playlist), [playlist]);
+  const originLabel = origin.kind === 'shared'
+    ? t('playlist.originShared')
+    : origin.kind === 'external'
+      ? t('playlist.originExternal', { provider: origin.providerId })
+      : null;
+
   const metadataItems = useMemo(
     () => [
       `${songs.length} ${songs.length === 1 ? t('common.song') : t('common.songs')}`,
       formatDuration(totalDuration),
+      ...(originLabel ? [originLabel] : []),
     ],
-    [songs.length, totalDuration, t]
+    [songs.length, totalDuration, t, originLabel]
   );
 
   const toggleDownload = useCallback(async () => {

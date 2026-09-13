@@ -1,3 +1,4 @@
+import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import type { CoverSource } from '@/types/Cover';
 import type { Song } from '@/domain/entities/Song';
 
@@ -17,15 +18,15 @@ export interface SearchResult {
   cover: CoverSource;
   type: 'song' | 'album' | 'artist' | 'playlist';
   source: 'local' | 'external';
-  externalSource?: 'deezer' | 'musicbrainz' | 'lastfm';
-  externalIds?: {
-    deezerId?: string;
-    artistDeezerId?: string;
-    mbid?: string | null;
-    artistMbid?: string | null;
-    upc?: string | null;
-    isrc?: string | null;
-  };
+  /** Which integration supplied it, as an opaque provider id. */
+  externalSource?: string;
+  /**
+   * The ids the entity itself carries, in the domain's own shape rather than a
+   * restatement of it. An artist's ids are not among them: they belong to the
+   * artist, and the one consumer that needs them (acquisition matching) reads
+   * them off the artist reference on a domain album, not off a search row.
+   */
+  externalIds?: ExternalIds;
   isDownloaded: boolean;
   song?: Song;
 }
