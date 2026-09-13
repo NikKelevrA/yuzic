@@ -41,6 +41,35 @@ export interface DownloaderQueueItem {
    * from Soulseek; what there is, is a folder someone named.
    */
   identity: 'exact' | 'loose';
+
+  // Everything below is optional because it is genuinely optional: each
+  // downloader knows some of it and not the rest, and a field named for what
+  // it *is* can be absent honestly. Named for the fact rather than for who
+  // reports it, so the row that draws them needs no list of downloaders.
+
+  /** Tracks in this import, when the downloader counts an album's tracks. */
+  trackCount?: number;
+  /** Files in this transfer, when the downloader counts files instead. */
+  fileCount?: number;
+  /** Total size, when known. */
+  sizeBytes?: number;
+  /** Current rate, while the transfer is actually moving. */
+  speedBytesPerSec?: number;
+  /** Who is serving the files. Shown in place of an artist when none is known. */
+  peer?: string;
+  /** The album a track belongs to, when the unit being fetched is a track. */
+  albumTitle?: string;
+  /** Problems the downloader reported — shown when a row is opened. */
+  warnings?: string[];
+  /**
+   * What it takes to address the underlying transfers, for cancellation.
+   *
+   * One row is often several transfers: Lidarr groups an album's tracks and
+   * slskd groups a remote directory's files, so cancelling a row means
+   * cancelling all of them. Opaque to everything except the downloader that
+   * produced them.
+   */
+  transferIds: string[];
 }
 
 export interface AlbumIdentity {

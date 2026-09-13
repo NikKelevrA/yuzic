@@ -15,6 +15,7 @@ const loose = (title: string, artistName = ''): DownloaderQueueItem => ({
   artistName,
   active: true,
   identity: 'loose',
+  transferIds: ['t1'],
 });
 
 /** A transfer for an album the downloader actually resolved — the Lidarr case. */
@@ -25,6 +26,7 @@ const exact = (title: string, artistName: string): DownloaderQueueItem => ({
   artistName,
   active: true,
   identity: 'exact',
+  transferIds: ['t1'],
 });
 
 describe('a loosely identified transfer', () => {

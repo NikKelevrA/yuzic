@@ -104,6 +104,16 @@ export type DownloaderDefinition = {
    * asks "who can poll a queue".
    */
   fetchQueue(config: DownloaderConfig): Promise<DownloaderQueueItem[]>
+  /**
+   * Stop a queued transfer. Absent where the downloader offers no way to.
+   *
+   * Takes the normalised item rather than the downloader's own record, and
+   * reads `transferIds` and `peer` back out of it — which is all any of the
+   * three needed. Before this, cancelling was wired up at the screen, inside a
+   * three-way `if (id === ...)` that also chose the fetch and the row renderer;
+   * a fourth downloader meant a fourth branch in a file about layout.
+   */
+  cancelQueueItem?(config: DownloaderConfig, item: DownloaderQueueItem): Promise<void>
 }
 
 /** All three downloaders authenticate the same way: a server URL plus an API key. */
@@ -136,6 +146,11 @@ const lidarrDownloader: DownloaderDefinition = {
     percentComplete: record.percentComplete,
     title: record.albumTitle,
     artistName: record.artistName,
+    trackCount: record.trackCount,
+    warnings: record.statusMessages?.map(message => message.title),
+    // One row is an album's worth of Lidarr queue entries, and cancelling the
+    // row means cancelling all of them.
+    transferIds: record.rawIds.map(String),
     // Lidarr keeps a finished import in the queue while it moves the files,
     // and `trackedDownloadState` is what says so — `status` alone stays
     // "completed" through the import that has not happened yet.
@@ -143,6 +158,8 @@ const lidarrDownloader: DownloaderDefinition = {
     // It resolved the album by MBID or id before it ever queued anything.
     identity: 'exact' as const,
   })),
+  cancelQueueItem: (config, item) =>
+    lidarr.cancelQueueItem(lidarrConfigOf(config), { rawIds: item.transferIds.map(Number) }),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await lidarr.testConnection(lidarrConfigOf(config as DownloaderConfig))
     return { ok: Boolean(ok) }
@@ -192,10 +209,20 @@ const slskdDownloader: DownloaderDefinition = {
     percentComplete: record.percentComplete,
     title: record.title,
     artistName: record.artistName,
+    fileCount: record.fileCount,
+    sizeBytes: record.size,
+    speedBytesPerSec: record.averageSpeed,
+    peer: record.username,
+    transferIds: record.fileIds,
     active: record.state.toLowerCase() !== 'completed',
     // Soulseek has no album identity — the title came off a remote path.
     identity: 'loose' as const,
   })),
+  cancelQueueItem: (config, item) =>
+    slskd.cancelQueueItem(slskdConfigOf(config), {
+      username: item.peer ?? '',
+      fileIds: item.transferIds,
+    }),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await slskd.testConnection(slskdConfigOf(config as DownloaderConfig))
     return { ok }
@@ -235,10 +262,18 @@ const soulsyncDownloader: DownloaderDefinition = {
     // is looking at, and a single track's name would never match one.
     title: record.album || record.title,
     artistName: record.artist,
+    albumTitle: record.album || undefined,
+    peer: record.username,
+    transferIds: [record.id],
     active: record.status.toLowerCase() !== 'completed',
     // SoulSync searches by name, so what it found is a best effort too.
     identity: 'loose' as const,
   })),
+  cancelQueueItem: (config, item) =>
+    soulsync.cancelDownload(soulsyncConfigOf(config), {
+      id: item.id,
+      username: item.peer ?? '',
+    }),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await soulsync.testConnection(soulsyncConfigOf(config as DownloaderConfig))
     return { ok }

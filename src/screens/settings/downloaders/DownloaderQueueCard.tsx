@@ -15,46 +15,49 @@ import { notify } from '@/components/toast';
 
 import SettingsCard from '../components/SettingsCard';
 import SettingsCardHeader from '../components/SettingsCardHeader';
+import DownloaderQueueRow from './DownloaderQueueRow';
+import { useQueueRowSubtitle } from './useQueueRowSubtitle';
 import { useTheme } from '@/hooks/useTheme';
 import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';
-import { useDownloaderQueue, type QueueDiff } from './useDownloaderQueue';
-import type { DownloaderConfig } from './useDownloaderConnection';
-import type { RowCancelHelpers } from './DownloaderSettingsScreen';
-type Props<T extends { id: string }> = {
+import type { DownloaderQueueItem } from '@/features/downloaders/queueItem';
+
+type Props = {
   id: DownloaderId;
-  /** Optional card title override — the Downloads screen uses this to show
-   *  the downloader label (e.g. "Lidarr", "Slskd"); Settings just wants the
-   *  default `queue` label. */
+  /**
+   * Card title override. The Downloads screen shows the downloader's label
+   * ("Lidarr", "Soulseek"); Settings wants the default "Queue".
+   */
   title?: string;
-  config: DownloaderConfig;
-  isAuthenticated: boolean;
-  fetchQueueWithDiff: (config: DownloaderConfig, previous: T[]) => Promise<QueueDiff<T>>;
-  renderItem: (item: T, cancel: RowCancelHelpers) => React.ReactElement | null;
-  cancelQueueItem?: (config: DownloaderConfig, item: T) => Promise<void>;
+  items: DownloaderQueueItem[];
+  isLoading: boolean;
+  hasError: boolean;
+  /** Absent when the downloader offers no way to stop a transfer. */
+  cancelItem?: (item: DownloaderQueueItem) => Promise<void>;
 };
 
 /**
- * The queue card lifted out of DownloaderSettingsScreen. Renders the polled
- * queue with loading + empty + error states, and drives the cancel flow.
- * Two consumers: the per-downloader settings screen (Lidarr/Slskd views) and
- * the top-level Downloads screen.
+ * A downloader's transfer queue, rendered.
+ *
+ * Given its items rather than fetching them. It used to poll on its own, every
+ * ten seconds, while a second poller was already reading the same endpoint for
+ * the same data — and it took a `fetchQueueWithDiff` and a `renderItem` as
+ * props, so the screen above it chose both inside a three-way branch on the
+ * downloader's id.
+ *
+ * What is left here is what a card genuinely is: loading, empty, error, and a
+ * list.
  */
-function DownloaderQueueCard<T extends { id: string }>({
+export default function DownloaderQueueCard({
   id,
   title,
-  config,
-  isAuthenticated,
-  fetchQueueWithDiff,
-  renderItem,
-  cancelQueueItem,
-}: Props<T>) {
+  items,
+  isLoading,
+  hasError,
+  cancelItem,
+}: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { queue, isLoading: loadingQueue, hasError: queueError } = useDownloaderQueue<T>(
-    config,
-    isAuthenticated,
-    fetchQueueWithDiff
-  );
+  const subtitleFor = useQueueRowSubtitle();
 
   const rotation = useSharedValue(0);
   React.useEffect(() => {
@@ -71,13 +74,16 @@ function DownloaderQueueCard<T extends { id: string }>({
   }));
 
   const [cancellingId, setCancellingId] = React.useState<string | null>(null);
+  // Only one row's warnings are open at a time; opening a second closes the
+  // first, which is what a list of rows in a card wants.
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
   const runCancel = React.useCallback(
-    async (item: T) => {
-      if (!cancelQueueItem) return;
+    async (item: DownloaderQueueItem) => {
+      if (!cancelItem) return;
       setCancellingId(item.id);
       try {
-        await cancelQueueItem(config, item);
+        await cancelItem(item);
         notify.success(t('settings.downloaders.cancelled'));
       } catch {
         notify.error(t('settings.downloaders.cancelFailed'));
@@ -85,11 +91,11 @@ function DownloaderQueueCard<T extends { id: string }>({
         setCancellingId((current) => (current === item.id ? null : current));
       }
     },
-    [cancelQueueItem, config, t]
+    [cancelItem, t]
   );
 
   const confirmCancel = React.useCallback(
-    (item: T, label: string) => {
+    (item: DownloaderQueueItem, label: string) => {
       Alert.alert(
         t('settings.downloaders.cancelTitle'),
         t('settings.downloaders.cancelBody', { title: label }),
@@ -107,34 +113,55 @@ function DownloaderQueueCard<T extends { id: string }>({
   );
 
   const renderQueueItem = React.useCallback(
-    ({ item }: { item: T }) =>
-      renderItem(item, {
-        requestCancel: cancelQueueItem
-          ? (label: string) => confirmCancel(item, label)
-          : undefined,
-        isCancelling: cancellingId === item.id,
-      }),
-    [renderItem, cancelQueueItem, confirmCancel, cancellingId]
+    ({ item }: { item: DownloaderQueueItem }) => {
+      const warnings = item.warnings ?? [];
+      const isExpanded = expandedId === item.id;
+      return (
+        <DownloaderQueueRow
+          title={item.title || t('settings.downloaders.unknown')}
+          subtitle={subtitleFor(item)}
+          percent={Math.max(0, Math.min(100, Math.round(item.percentComplete)))}
+          completed={!item.active}
+          cancel={{
+            requestCancel: cancelItem
+              ? (label: string) => confirmCancel(item, label)
+              : undefined,
+            isCancelling: cancellingId === item.id,
+          }}
+          onPress={
+            warnings.length > 0
+              ? () => setExpandedId(isExpanded ? null : item.id)
+              : undefined
+          }
+          warningMessages={
+            warnings.length > 0 && isExpanded
+              ? warnings.map((message) => ({ title: message }))
+              : undefined
+          }
+        />
+      );
+    },
+    [cancelItem, cancellingId, confirmCancel, expandedId, subtitleFor, t]
   );
 
   return (
     <SettingsCard>
       <SettingsCardHeader title={title ?? t('settings.downloaders.queue')} />
-      {loadingQueue ? (
+      {isLoading ? (
         <Animated.View style={[styles.queueLoading, spinStyle]}>
           <Loader2 size={iconSize.large} color={colors.secondary} />
         </Animated.View>
-      ) : queueError ? (
+      ) : hasError ? (
         <Text style={[styles.emptyText, { color: colors.subtext }]}>
           {t(`settings.downloaders.${id}.connectionFailed`)}
         </Text>
-      ) : queue.length === 0 ? (
+      ) : items.length === 0 ? (
         <Text style={[styles.emptyText, { color: colors.subtext }]}>
           {t('settings.downloaders.emptyQueue')}
         </Text>
       ) : (
         <FlatList
-          data={queue}
+          data={items}
           keyExtractor={(item) => item.id}
           renderItem={renderQueueItem}
           scrollEnabled={false}
@@ -143,8 +170,6 @@ function DownloaderQueueCard<T extends { id: string }>({
     </SettingsCard>
   );
 }
-
-export default DownloaderQueueCard;
 
 const styles = StyleSheet.create({
   queueLoading: { alignItems: 'center', paddingVertical: spacing.roomy },

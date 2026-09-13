@@ -5,17 +5,8 @@ import { useTranslation } from 'react-i18next';
 import SettingsScreen from '../settings/components/SettingsScreen';
 import SettingsCard from '../settings/components/SettingsCard';
 import DownloaderQueueCard from '../settings/downloaders/DownloaderQueueCard';
-import { useLidarrRenderItem } from '../settings/downloaders/useLidarrRenderItem';
-import { useSlskdRenderItem } from '../settings/downloaders/useSlskdRenderItem';
-import { useSoulSyncRenderItem } from '../settings/downloaders/useSoulSyncRenderItem';
 import { useDownloaderStates } from '@/features/downloaders/registry';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
-import type { LidarrQueueRecord } from '@/api/lidarr';
-import type { SlskdQueueRecord } from '@/api/slskd';
-import type { SoulSyncQueueRecord } from '@/api/soulsync';
-import * as lidarr from '@/api/lidarr';
-import * as slskd from '@/api/slskd';
-import * as soulsync from '@/api/soulsync';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, typography } from '@/constants/design';
 
@@ -43,11 +34,7 @@ const DownloadsScreen: React.FC = () => {
   const { colors } = useTheme();
   const states = useDownloaderStates();
   const connected = states.filter((s) => s.isConnected);
-  useDownloadersQueue();
-
-  const { renderItem: lidarrRenderItem } = useLidarrRenderItem();
-  const slskdRenderItem = useSlskdRenderItem();
-  const soulsyncRenderItem = useSoulSyncRenderItem();
+  const { queues } = useDownloadersQueue();
 
   return (
     <SettingsScreen title={t('downloads.title')}>
@@ -60,50 +47,27 @@ const DownloadsScreen: React.FC = () => {
       )}
 
       {connected.map((state) => {
-        const key = state.def.id;
-        if (key === 'lidarr') {
-          return (
-            <DownloaderQueueCard<LidarrQueueRecord>
-              key={key}
-              id="lidarr"
-              title={state.def.label}
-              config={{ serverUrl: state.config.serverUrl, apiKey: state.config.apiKey }}
-              isAuthenticated
-              fetchQueueWithDiff={lidarr.fetchQueueWithDiff}
-              cancelQueueItem={lidarr.cancelQueueItem}
-              renderItem={lidarrRenderItem}
-            />
-          );
-        }
-        if (key === 'slskd') {
-          return (
-            <DownloaderQueueCard<SlskdQueueRecord>
-              key={key}
-              id="slskd"
-              title={state.def.label}
-              config={{ serverUrl: state.config.serverUrl, apiKey: state.config.apiKey }}
-              isAuthenticated
-              fetchQueueWithDiff={slskd.fetchQueueWithDiff}
-              cancelQueueItem={slskd.cancelQueueItem}
-              renderItem={slskdRenderItem}
-            />
-          );
-        }
-        if (key === 'soulsync') {
-          return (
-            <DownloaderQueueCard<SoulSyncQueueRecord>
-              key={key}
-              id="soulsync"
-              title={state.def.label}
-              config={{ serverUrl: state.config.serverUrl, apiKey: state.config.apiKey }}
-              isAuthenticated
-              fetchQueueWithDiff={soulsync.fetchQueueWithDiff}
-              cancelQueueItem={(config, item) => soulsync.cancelDownload(config, item)}
-              renderItem={soulsyncRenderItem}
-            />
-          );
-        }
-        return null;
+        // One card per connected downloader, drawn the same way. This was a
+        // three-way `if (id === ...)`, each branch naming a downloader and
+        // hand-wiring its fetch, its cancel and its row renderer — in a file
+        // whose subject is layout. All three now come off the definition and
+        // the shared queue.
+        const snapshot = queues.find((queue) => queue.id === state.def.id);
+        return (
+          <DownloaderQueueCard
+            key={state.def.id}
+            id={state.def.id}
+            title={state.def.label}
+            items={snapshot?.items ?? []}
+            isLoading={snapshot?.isLoading ?? true}
+            hasError={snapshot?.hasError ?? false}
+            cancelItem={
+              state.def.cancelQueueItem
+                ? (item) => state.def.cancelQueueItem!(state.config, item)
+                : undefined
+            }
+          />
+        );
       })}
     </SettingsScreen>
   );

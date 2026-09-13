@@ -37,16 +37,6 @@ jest.mock('@/features/downloaders/registry', () => ({
   useDownloaderStates: () => mockUseDownloaderStates(),
 }));
 
-jest.mock('../settings/downloaders/useLidarrRenderItem', () => ({
-  useLidarrRenderItem: () => ({ renderItem: () => null, resetExpanded: jest.fn() }),
-}));
-jest.mock('../settings/downloaders/useSlskdRenderItem', () => ({
-  useSlskdRenderItem: () => () => null,
-}));
-jest.mock('../settings/downloaders/useSoulSyncRenderItem', () => ({
-  useSoulSyncRenderItem: () => () => null,
-}));
-
 jest.mock('../settings/downloaders/DownloaderQueueCard', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
   const { Text: RNText } = require('react-native');
