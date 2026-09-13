@@ -47,6 +47,25 @@ describe('SettingsSourceList', () => {
     expect(onOrderChange).toHaveBeenCalledWith(['coverartarchive', 'deezer']);
   });
 
+  it('uses the drag handle without repeating positions as text', async () => {
+    const view = await render(
+      <SettingsSourceList sources={sources} onOrderChange={jest.fn()} />
+    );
+
+    expect(view.getByTestId('source-drag-deezer')).toBeTruthy();
+    expect(view.getByTestId('source-drag-coverartarchive')).toBeTruthy();
+    expect(view.queryByText('1')).toBeNull();
+    expect(view.queryByText('2')).toBeNull();
+  });
+
+  it('can omit repetitive row descriptions in compact editors', async () => {
+    const view = await render(
+      <SettingsSourceList sources={sources} onOrderChange={jest.fn()} showSubtext={false} />
+    );
+
+    expect(view.queryByText('Artwork')).toBeNull();
+  });
+
   it('does not expose a drag affordance until two enabled sources can be reordered', async () => {
     const view = await render(
       <SettingsSourceList

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import SettingsScreen from '../components/SettingsScreen';
@@ -8,7 +8,8 @@ import SettingsCard from '../components/SettingsCard';
 import SettingsSourceList from '../components/SettingsSourceList';
 import SettingsRow from '../components/SettingsRow';
 import {
-  selectHomeShelfVisibilityMap, selectHomeShelfLength, selectSleepTimerPresets,
+  selectHomeShelfVisibilityMap, selectHomeShelfLength, selectHomeShelfOrder,
+  selectSleepTimerPresets,
 } from '@/utils/redux/selectors/settingsSelectors';
 import {
   setHomeShelfVisibility, setHomeShelfOrder, setHomeShelfLength, setSleepTimerPresets,
@@ -31,12 +32,18 @@ const HomeSettings: React.FC = () => {
   const visibility = useSelector(selectHomeShelfVisibilityMap);
   const presets = useSelector(selectSleepTimerPresets);
   const length = useSelector(selectHomeShelfLength);
-  const visibilityItems = useMemo(() => TIERS.flatMap(({ ids }) => ids.map(id => ({
-    label: t(`settings.home.shelves.${id}`),
-    subtext: t('settings.home.shelfSubtext'),
-    value: visibility[id] ?? true,
-    onValueChange: (value: boolean) => dispatch(setHomeShelfVisibility({ key: id, visible: value })),
-  }))), [dispatch, t, visibility]);
+  const resumeOrder = useSelector(selectHomeShelfOrder('resume', TIERS[0].ids));
+  const libraryOrder = useSelector(selectHomeShelfOrder('library', TIERS[1].ids));
+  const serverOrder = useSelector(selectHomeShelfOrder('server', TIERS[2].ids));
+  const listenbrainzOrder = useSelector(selectHomeShelfOrder('listenbrainz', TIERS[3].ids));
+  const deezerOrder = useSelector(selectHomeShelfOrder('deezer', TIERS[4].ids));
+  const orders: Record<HomeShelfTier, string[]> = {
+    resume: resumeOrder,
+    library: libraryOrder,
+    server: serverOrder,
+    listenbrainz: listenbrainzOrder,
+    deezer: deezerOrder,
+  };
   const setLength = useCallback((next: HomeShelfLength) => dispatch(setHomeShelfLength(next)), [dispatch]);
 
   return (
@@ -47,20 +54,23 @@ const HomeSettings: React.FC = () => {
           <SettingsRow key={option} label={t(`settings.home.length.${option}`)} rightText={length === option ? t('settings.home.selected') : undefined} selected={length === option} onPress={() => setLength(option)} />
         ))}
       </SettingsCard>
-      <SettingsCardHeader subtle title={t('settings.home.shelvesTitle')} />
-      <SettingsToggleGroup items={visibilityItems} />
       {TIERS.map(({ tier, ids }) => (
-        <SettingsCardHeader key={tier} subtle title={t(`settings.home.tier.${tier}`)} />
-      ))}
-      <SettingsCardHeader subtle title={t('settings.home.orderTitle')} />
-      {TIERS.map(({ tier, ids }) => (
-        <SettingsCard key={tier}>
-          <SettingsSourceList
-            sources={ids.map(id => ({ id, label: t(`settings.home.shelves.${id}`), subtext: t('settings.home.shelfSubtext'), enabled: true, onEnabledChange: () => undefined }))}
-            sourceOrder={ids}
-            onOrderChange={order => dispatch(setHomeShelfOrder({ tier, order }))}
-          />
-        </SettingsCard>
+        <React.Fragment key={tier}>
+          <SettingsCardHeader subtle title={t(`settings.home.tier.${tier}`)} />
+          <SettingsCard>
+            <SettingsSourceList
+              sources={ids.map(id => ({
+                id,
+                label: t(`settings.home.shelves.${id}`),
+                enabled: visibility[id] ?? true,
+                onEnabledChange: visible => dispatch(setHomeShelfVisibility({ key: id, visible })),
+              }))}
+              sourceOrder={orders[tier]}
+              onOrderChange={order => dispatch(setHomeShelfOrder({ tier, order }))}
+              showSubtext={false}
+            />
+          </SettingsCard>
+        </React.Fragment>
       ))}
       <SettingsCardHeader subtle title={t('settings.home.sleepPresets')} />
       <SettingsToggleGroup items={SLEEP_OPTIONS.map(minutes => ({

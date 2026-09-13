@@ -532,11 +532,8 @@
     "home": {
       "title": "Home",
       "shelfLength": "Shelf size",
-      "shelvesTitle": "Home shelves",
-      "orderTitle": "Shelf order",
       "sleepPresets": "Sleep timer quick-adds",
       "sleepPresetsSubtext": "Show this duration as a quick-add button.",
-      "shelfSubtext": "Show this shelf on Home.",
       "selected": "Selected",
       "minutes": "{{count}} minutes",
       "length": {

@@ -12,7 +12,7 @@ import { useRadius } from '@/hooks/useRadius';
 export type SettingsSource = {
   id: string;
   label: string;
-  subtext: string;
+  subtext?: string;
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
 };
@@ -23,13 +23,20 @@ type Props = {
   sourceOrder?: string[];
   onOrderChange: (sourceIds: string[]) => void;
   pinnedSource?: { label: string; subtext: string };
+  showSubtext?: boolean;
 };
 
 /**
  * A feature-owned fallback chain. Its caller supplies the persisted ordering;
  * this component only exposes order when moving a source changes resolution.
  */
-const SettingsSourceList: React.FC<Props> = ({ sources, sourceOrder = [], onOrderChange, pinnedSource }) => {
+const SettingsSourceList: React.FC<Props> = ({
+  sources,
+  sourceOrder = [],
+  onOrderChange,
+  pinnedSource,
+  showSubtext = true,
+}) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const rad = useRadius();
@@ -41,13 +48,13 @@ const SettingsSourceList: React.FC<Props> = ({ sources, sourceOrder = [], onOrde
   const canReorder = enabledCount > 1;
 
   const renderSource = ({ item, drag, isActive }: RenderItemParams<SettingsSource>) => {
-    const order = orderedSources.filter(source => source.enabled).findIndex(source => source.id === item.id) + 1;
-
     return (
       <View style={[styles.sourceRow, isActive && { backgroundColor: colors.background }]}>
         <View style={styles.sourceCopy}>
           <Text style={[styles.sourceLabel, { color: colors.secondary }]}>{item.label}</Text>
-          <Text style={[styles.sourceSubtext, { color: colors.subtext }]}>{item.subtext}</Text>
+          {showSubtext && item.subtext && (
+            <Text style={[styles.sourceSubtext, { color: colors.subtext }]}>{item.subtext}</Text>
+          )}
         </View>
         <View style={styles.sourceControls}>
           {canReorder && item.enabled && (
@@ -59,7 +66,6 @@ const SettingsSourceList: React.FC<Props> = ({ sources, sourceOrder = [], onOrde
               disabled={isActive}
               style={styles.dragHandle}
             >
-              <Text style={[styles.orderText, { color: colors.subtext }]}>{order}</Text>
               <GripVertical size={iconSize.row} color={colors.border} />
             </Touchable>
           )}
@@ -117,7 +123,6 @@ const styles = StyleSheet.create({
   sourceSubtext: { ...typography.caption, marginTop: spacing.xxs },
   sourceControls: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   dragHandle: { alignItems: 'center', flexDirection: 'row', gap: spacing.xxs, padding: spacing.xs },
-  orderText: { ...typography.caption, fontWeight: '700' },
   alwaysFirst: { alignItems: 'center', flexDirection: 'row', gap: spacing.xxs, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
   alwaysFirstText: { ...typography.caption, fontWeight: '600' },
 });
