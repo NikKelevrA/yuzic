@@ -41,6 +41,21 @@ const song: Song = {
 const baseSong: PlayableResource = { song, streamUrl: 'https://example.com/song.mp3' };
 
 describe('buildTrackItem', () => {
+  it('keys the item by the song localId, not nativeId', () => {
+    // `resourceFromPlayerItem` parses provenance back out of this id, so it
+    // has to be the branded localId the player is handed rather than the
+    // origin's own — two servers can easily both call something `song-1`.
+    expect(buildTrackItem(baseSong).mediaId).toBe(makeLocalId('song', provenance, 'song-1'));
+  });
+
+  it('carries display fields from the nested song', () => {
+    const item = buildTrackItem(baseSong);
+    expect(item.title).toBe('Song');
+    expect(item.artist).toBe('Artist');
+    expect(item.albumTitle).toBe('Album');
+    expect(item.duration).toBe(120);
+  });
+
   it('keeps remote URLs as strings', () => {
     expect(buildTrackItem(baseSong).url).toBe('https://example.com/song.mp3');
   });

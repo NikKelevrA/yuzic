@@ -1,6 +1,7 @@
 import type { DownloadedCollectionEntry } from './downloadStore';
 import type { PersistedDownloadJob } from './localDownloadStore';
 import {
+  evictFromPlayerCache,
   collectionsWithoutTracks,
   jobMatchesCollectionId,
   jobMatchesDownloadId,
@@ -229,5 +230,48 @@ describe('orphanedTrackIds', () => {
 
   it('cancels everything when the queue is empty', () => {
     expect(orphanedTrackIds(['a', 'b'], [])).toEqual(['a', 'b']);
+  });
+});
+
+describe('evictFromPlayerCache', () => {
+  it('drops every deleted track from the engine cache', () => {
+    // The whole point: the engine has had `evict` since 1.0.0 and nothing
+    // called it, so a deleted download kept playing from cache and the space
+    // was never reclaimed.
+    const evicted: string[] = [];
+
+    evictFromPlayerCache(
+      [{ trackId: 'local:song:srv:s1:1' }, { trackId: 'local:song:srv:s1:2' }],
+      id => { evicted.push(id); }
+    );
+
+    expect(evicted).toEqual(['local:song:srv:s1:1', 'local:song:srv:s1:2']);
+  });
+
+  it('keys the eviction by the id the engine was given', () => {
+    // `trackId` is the song's localId, which is what went to the player as
+    // `mediaId`. Evicting a nativeId would silently clear nothing — or, worse,
+    // another origin's track that happens to share the number.
+    const evicted: string[] = [];
+
+    evictFromPlayerCache([{ trackId: 'local:song:srv:s1:42' }], id => { evicted.push(id); });
+
+    expect(evicted).toEqual(['local:song:srv:s1:42']);
+  });
+
+  it('carries on when one track cannot be evicted', () => {
+    // One failure must not strand the rest, and none of them may fail the
+    // deletion the user actually asked for.
+    const evicted: string[] = [];
+
+    expect(() => evictFromPlayerCache(
+      [{ trackId: 'a' }, { trackId: 'b' }, { trackId: 'c' }],
+      id => {
+        if (id === 'b') throw new Error('engine not set up');
+        evicted.push(id);
+      }
+    )).not.toThrow();
+
+    expect(evicted).toEqual(['a', 'c']);
   });
 });

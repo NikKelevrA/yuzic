@@ -39,7 +39,8 @@ import {
 } from '@/features/playback/playableResource';
 import shuffleArray from '@/utils/shuffleArray';
 import { useApi } from '@/api';
-import { buildMediaItem, getMediaItemId, getMediaItemUrl } from './playableMedia';
+import { getMediaItemId, getMediaItemUrl } from './playableMedia';
+import { buildTrackItem } from '@/utils/builders/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
@@ -309,7 +310,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // is always played against the currently active server.
   const buildItem = useCallback(
     (resource: PlayableResource): MediaItem =>
-      buildMediaItem(resource, mediaHeadersForSong(activeServerRef.current, resource)),
+      buildTrackItem(resource, mediaHeadersForSong(activeServerRef.current, resource)),
     []
   );
   const toMediaItems = useCallback(
@@ -811,7 +812,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
       scrobbleStartTimeRef.current = Date.now();
     }
 
-    // `buildMediaItem` keys every item by the song's `localId`, so this is
+    // `buildTrackItem` keys every item by the song's `localId`, so this is
     // what both the in-memory queue lookup and the player's own media id are
     // compared against.
     const nativeQueue = getBackend().getQueue();

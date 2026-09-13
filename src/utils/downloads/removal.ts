@@ -117,3 +117,36 @@ export function orphanedTrackIds(
   }
   return orphans;
 }
+
+/**
+ * Drop each deleted track from the engine's own audio cache.
+ *
+ * Deleting the file is only half of removing a download. The engine keeps a
+ * cache of fetched audio keyed by media id, and it has had `evict` since
+ * 1.0.0 — described there as "used when a download is deleted" — with nothing
+ * ever calling it. So a track the user deleted to reclaim space kept playing
+ * from the engine's copy, and the space was not reclaimed either. A function
+ * written for the case, correct, and never wired up.
+ *
+ * `trackId` is the song's `localId`, which is exactly what the engine was
+ * handed as its `mediaId` (see `buildTrackItem`), so the two agree on what is
+ * being dropped with no translation in between.
+ *
+ * Best-effort per track, and deliberately so: an engine that has not been set
+ * up yet has no cache to clear, one track's failure must not strand the rest,
+ * and failing a deletion the user asked for on account of a cache is the wrong
+ * trade in every case.
+ */
+export function evictFromPlayerCache(
+  tracks: { trackId: string }[],
+  evict: (mediaId: string) => void
+): void {
+  for (const track of tracks) {
+    try {
+      evict(track.trackId);
+    } catch {
+      // No engine, or it has nothing for this id. Either way the file is gone,
+      // which is what was asked for.
+    }
+  }
+}

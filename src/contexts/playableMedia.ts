@@ -1,8 +1,4 @@
 import type { MediaItem } from '../features/player/mediaItem';
-import type { RequestHeaders } from '../features/player/mediaHeaders';
-import type { PlayableResource } from '@/features/playback/playableResource';
-import { buildCover } from '@/utils/builders/buildCover';
-import { normalizeMediaUrl } from '@/utils/builders/buildTrackItem';
 
 /**
  * What's still genuinely about `MediaItem`'s own shape, plus the one
@@ -17,6 +13,13 @@ import { normalizeMediaUrl } from '@/utils/builders/buildTrackItem';
  * `mediaItemToFallbackSong` is likewise replaced by that module's
  * `resourceFromPlayerItem`, which recovers provenance from the media id
  * itself rather than only patching together display fields.
+ *
+ * `buildMediaItem` has gone the same way. It was a second copy of
+ * `buildTrackItem` — same inputs, same output, maintained separately — and it
+ * was the copy the phone queue actually called, so unifying the CarPlay and
+ * browse builders behind `engineBoundary` left the most travelled path still
+ * building its own. `PlayingContext` calls `buildTrackItem` now, which is the
+ * boundary's own reshaping into `MediaItem`.
  */
 
 export function getMediaItemId(item: MediaItem): string {
@@ -30,28 +33,4 @@ export function getMediaItemUrl(item: MediaItem): string {
     return typeof item.url.uri === 'string' ? item.url.uri : '';
   }
   return '';
-}
-
-/**
- * Builds the `MediaItem` the native player receives for one resource.
- *
- * `mediaId` is the song's `localId`, not `nativeId`: `resourceFromPlayerItem`
- * parses provenance and the origin's own id back out of whatever the player
- * echoes back as its media id, and that only works if this is what gets
- * handed to it in the first place.
- */
-export function buildMediaItem(resource: PlayableResource, extra?: RequestHeaders): MediaItem {
-  const { song } = resource;
-  const url = normalizeMediaUrl(resource.streamUrl);
-  return {
-    mediaId: song.localId,
-    title: song.title,
-    artist: song.artist.name,
-    albumTitle: song.album.title || undefined,
-    duration: song.durationSeconds || undefined,
-    url: url.startsWith('file://') ? { uri: url } : url,
-    artworkUrl: buildCover(song.cover, 'grid') ?? undefined,
-    ...(extra?.headers ? { headers: extra.headers } : {}),
-    ...(extra?.artworkHeaders ? { artworkHeaders: extra.artworkHeaders } : {}),
-  };
 }

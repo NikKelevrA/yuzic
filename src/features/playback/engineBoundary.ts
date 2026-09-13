@@ -31,7 +31,7 @@ import type { PlayableResource } from './playableResource';
  * local copy — see `PlayableResource.filePath` — so `file://` is the only
  * scheme this needs to add.
  */
-export function normalizeMediaUrl(url: string): string {
+function normalizeMediaUrl(url: string): string {
   if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return url;
   if (url.startsWith('/')) return `file://${url}`;
   return url;
@@ -79,7 +79,7 @@ export function toEngineBoundaryTrack(
     uri: normalizeMediaUrl(resource.streamUrl),
     title: song.title,
     artist: song.artist.name,
-    album: song.album.title,
+    album: song.album.title || undefined,
     artworkUri: buildCover(song.cover, 'grid') ?? undefined,
     durationSec: song.durationSeconds || undefined,
     contentKind: song.contentKind,

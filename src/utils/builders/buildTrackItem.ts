@@ -1,9 +1,7 @@
 import type { MediaItem } from '../../features/player/mediaItem';
 import type { RequestHeaders } from '../../features/player/mediaHeaders';
 import type { PlayableResource } from '@/features/playback/playableResource';
-import { normalizeMediaUrl, toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
-
-export { normalizeMediaUrl };
+import { toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
 
 /**
  * `extra` carries the ephemeral request headers a protected server needs — a

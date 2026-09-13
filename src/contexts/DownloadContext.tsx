@@ -45,6 +45,7 @@ import {
   jobMatchesCollectionId,
   jobMatchesDownloadId,
   jobsOutsideScope,
+  evictFromPlayerCache,
   orphanedTrackIds,
   trackIdsOfJobs,
   tracksInCollectionRemoval,
@@ -67,6 +68,7 @@ import { selectDownloadOnWifiOnly } from '@/features/settings/downloads/state';
 import { selectDownloadQuality } from '@/features/settings/playback/state';
 import { useNetworkType } from '@/hooks/useNetworkType';
 import { streamSourceId } from '@/utils/playback/streamId';
+import { getBackend } from '@/features/player/activeBackend';
 import { downloadProgressFraction, nextDownloadingIds, collectionDownloadState } from './downloadPolicies';
 
 /**
@@ -815,10 +817,16 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [setResumables]);
 
+  /**
+   * Every deletion path goes through here, which is why the eviction does too:
+   * a track is only really gone once the engine's cached copy is gone with it.
+   * See `evictFromPlayerCache` for why it is best-effort.
+   */
   const deleteFiles = useCallback(async (tracks: LocalDownloadedTrackEntry[]) => {
     await Promise.all(tracks.map(track =>
       FileSystem.deleteAsync(track.localPath, { idempotent: true }).catch(() => {})
     ));
+    evictFromPlayerCache(tracks, mediaId => getBackend().evict(mediaId));
   }, []);
 
   const deleteDownloadedTrack = useCallback(async (trackId: string) => {
