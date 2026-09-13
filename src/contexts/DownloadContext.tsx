@@ -193,7 +193,13 @@ async function ensureDownloadDir() {
 // Downloads land in a .part staging file and only move to their final path on
 // success, so a stray .part is safe to delete — unless we are deliberately
 // holding its bytes to resume from, which is what `keep` carries.
-async function cleanupStagingFiles(keep: Set<string> = new Set()) {
+//
+// `keep` has no default, deliberately. It used to default to the empty set,
+// which made "sweep everything" the thing you got by not thinking about it —
+// and one of the two call sites did exactly that, on every launch, deleting
+// the partials the resumables pointed at. Every caller states what it is
+// keeping now, or it does not compile.
+async function cleanupStagingFiles(keep: Set<string>) {
   const info = await FileSystem.getInfoAsync(DOWNLOAD_DIR);
   if (!info.exists) return;
   const names = await FileSystem.readDirectoryAsync(DOWNLOAD_DIR).catch(() => [] as string[]);
@@ -936,7 +942,13 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   useEffect(() => {
     if (!jobRunnerRef.current.isRunning()) {
-      cleanupStagingFiles().catch(() => {});
+      // Keep the partials a resumable still points at. Sweeping with no
+      // exceptions is what this did, and it ran on every launch — deleting the
+      // very bytes `PersistedResumable` exists to preserve, so an interrupted
+      // 40MB track silently started again from zero on the next open. It never
+      // looked like a bug: the download worked, it was just slower and the
+      // data was spent twice.
+      cleanupStagingFiles(stagingPathsToKeep(resumablesRef.current)).catch(() => {});
     }
 
     if (jobsRef.current.length > 0) {
