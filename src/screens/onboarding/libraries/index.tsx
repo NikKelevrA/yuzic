@@ -78,7 +78,7 @@ export default function LibrariesOnboarding() {
     if (!server) return;
     dispatch(updateServer({
       id: server.id,
-      patch: { auth: { ...server.auth, ...libraryScopePatch(server, selectedIds) } as any },
+      patch: { auth: { ...server.auth, ...libraryScopePatch(server, selectedIds) } },
     }));
     router.replace(
       onboardingDiscoveryPrompted

@@ -84,7 +84,7 @@ export const createMediaBrowserAdapter = (
   // Support new array format (parentIds) and old single-value format (parentId)
   const parentIds: string[] =
     Array.isArray(providerAuth?.parentIds) ? (providerAuth.parentIds as string[]) :
-    (providerAuth as any)?.parentId ? [String((providerAuth as any).parentId)] :
+    providerAuth?.parentId ? [String(providerAuth.parentId)] :
     [];
 
   const client = createMediaBrowserClient({ serverUrl, serverId, fallbackUrls, token, userId, basicAuth }, brand);

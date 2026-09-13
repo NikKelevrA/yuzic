@@ -142,10 +142,6 @@
   ],
   "shims": [],
   "unsafe": [
-    "as-any src/api/mediaBrowser/adapter.ts",
-    "as-any src/screens/onboarding/libraries/index.tsx",
-    "as-any src/screens/settings/library/components/LibrarySelect.tsx",
-    "as-any src/state/redux/store.ts",
     "double-cast src/utils/useSheetRef.ts"
   ],
   "unused-exports": [

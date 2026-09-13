@@ -69,7 +69,7 @@ const LibrarySelect: React.FC = () => {
     pendingSyncRef.current = true;
     dispatch(updateServer({
       id: activeServer.id,
-      patch: { auth: { ...activeServer.auth, ...libraryScopePatch(activeServer, next) } as any },
+      patch: { auth: { ...activeServer.auth, ...libraryScopePatch(activeServer, next) } },
     }));
   };
 

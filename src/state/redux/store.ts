@@ -26,7 +26,7 @@ import wantsReducer from './slices/wantsSlice';
 // Returns undefined (→ initialState) only on version bump; otherwise passes state through.
 const resetMigrate = (state: any, currentVersion: number): Promise<any> => {
   if (state?._persist?.version === currentVersion) return Promise.resolve(state);
-  return Promise.resolve(undefined as any);
+  return Promise.resolve(undefined);
 };
 
 // v1 gave history entries a shape (query vs. opened entity); before that each
@@ -73,7 +73,7 @@ const listenbrainzMigrate = (state: any, currentVersion: number): Promise<any> =
   if (!byServer) return Promise.resolve(state);
   const cleaned: Record<string, any> = {};
   for (const [serverId, entry] of Object.entries(byServer)) {
-    const { nowPlayingEnabled: _np, ...rest } = (entry as any) ?? {};
+    const { nowPlayingEnabled: _np, ...rest } = (entry as Record<string, unknown>) ?? {};
     cleaned[serverId] = rest;
   }
   return Promise.resolve({ ...state, byServer: cleaned });
