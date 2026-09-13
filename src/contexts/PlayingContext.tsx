@@ -41,9 +41,10 @@ import { buildTrackItem } from '@/utils/builders/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
-import { moveSongAfterCurrent, reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment, shiftSegmentsAfterInsert } from './playingQueue';
+import { reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment } from './playingQueue';
 import { isRepeatLoop } from './repeatPlay';
 import { createTransportController } from './transportController';
+import { createQueueController } from './queueController';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
@@ -83,7 +84,6 @@ import { clampStartIndex, trimQueueAroundIndex } from './adhocQueue';
 import {
   backendRepeatMode,
   clampVolume,
-  movedCurrentIndex,
   nextRepeatMode,
 } from './playingPolicies';
 
@@ -1226,64 +1226,30 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const getQueue = useCallback(() => queueRef.current.map(resource => resource.song), []);
 
-  const moveTrack = useCallback((from: number, to: number) => {
-    if (from === to) return;
-    const q = [...queueRef.current];
-    const [item] = q.splice(from, 1);
-    q.splice(to, 0, item);
-    queueRef.current = q;
-    getBackend().moveMediaItem(from, to);
-    setCurrentIndex(prev => {
-      currentIndexRef.current = movedCurrentIndex(prev, from, to);
-      return currentIndexRef.current;
-    });
-    bumpQueue();
-  }, [bumpQueue]);
+  /**
+   * Queue edits live in `queueController`, which is where the requirement to
+   * keep the queue, the player, the active index and the segment map in step
+   * is written down and tested. The provider supplies what "now" means for
+   * each of those.
+   */
+  const queueController = useMemo(() => createQueueController({
+    backend: getBackend,
+    queue: () => queueRef.current,
+    setQueue: resources => { queueRef.current = resources; },
+    segments: () => queueSegmentsRef.current,
+    setSegments: segments => { queueSegmentsRef.current = segments; },
+    currentIndex: () => currentIndexRef.current,
+    setCurrentIndex: index => {
+      currentIndexRef.current = index;
+      setCurrentIndex(index);
+    },
+    currentResource: () => currentSongRef.current,
+    resolvePlayableSong,
+    buildItem,
+    bumpQueue,
+  }), [bumpQueue, resolvePlayableSong, buildItem]);
 
-  const addToQueue = useCallback((song: Song) => {
-    const resource = resolvePlayableSong(song);
-    if (!resource) throw new Error(`Track has no playable media URL: ${song.localId}`);
-    assertPlayable([resource]);
-    if (queueRef.current.some(existing => existing.song.localId === resource.song.localId)) return;
-    const insertAt = queueRef.current.length;
-    queueRef.current = [...queueRef.current, resource];
-    queueSegmentsRef.current = tagSegment(queueSegmentsRef.current, insertAt, 1, {
-      kind: 'user',
-      contextId: resource.song.localId,
-      contextType: 'adhoc',
-    });
-    getBackend().addMediaItems([buildItem(resource)]);
-    bumpQueue();
-  }, [bumpQueue, resolvePlayableSong, buildItem]);
-
-  const playNext = useCallback((song: Song) => {
-    if (!currentSongRef.current) return;
-    const resource = resolvePlayableSong(song);
-    if (!resource) throw new Error(`Track has no playable media URL: ${song.localId}`);
-    assertPlayable([resource]);
-    const update = moveSongAfterCurrent(
-      queueRef.current,
-      currentIndexRef.current,
-      resource,
-      queued => queued.song.localId,
-    );
-    if (!update) return;
-    if (update.removedIndex !== null) {
-      getBackend().moveMediaItem(update.removedIndex, update.insertIndex);
-    } else {
-      getBackend().insertMediaItem(update.insertIndex, buildItem(resource));
-      queueSegmentsRef.current = tagSegment(
-        shiftSegmentsAfterInsert(queueSegmentsRef.current, update.insertIndex, 1),
-        update.insertIndex,
-        1,
-        { kind: 'user', contextId: resource.song.localId, contextType: 'adhoc' },
-      );
-    }
-    queueRef.current = update.queue;
-    currentIndexRef.current = update.currentIndex;
-    setCurrentIndex(update.currentIndex);
-    bumpQueue();
-  }, [bumpQueue, resolvePlayableSong, buildItem]);
+  const { moveTrack, addToQueue, playNext } = queueController;
 
   // AudioMuse-AI first when configured, native similar-songs as fallback —
   // same tiered provider Autoplay and Smart Shuffle use, so "Play Similar"
