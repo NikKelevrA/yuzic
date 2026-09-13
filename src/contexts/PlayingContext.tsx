@@ -44,6 +44,7 @@ import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
 import { moveSongAfterCurrent, reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQueue, QueueSegment, segmentAt, tagSegment, shiftSegmentsAfterInsert } from './playingQueue';
 import { isRepeatLoop } from './repeatPlay';
+import { createTransportController } from './transportController';
 import { resolvePlaybackErrorAction } from './playbackErrorRecovery';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
@@ -85,7 +86,6 @@ import {
   clampVolume,
   movedCurrentIndex,
   nextRepeatMode,
-  seekTarget,
 } from './playingPolicies';
 
 export interface PlaybackProgress {
@@ -1233,83 +1233,45 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     bumpQueue();
   }, [bumpQueue, resolvePlayableSong, toMediaItems]);
 
-  const skipToNext = useCallback(async () => {
-    await scrobbleOutgoingRef.current(
-      currentSongRef.current?.song ?? null,
-      Math.floor(getBackend().getProgress().position)
-    );
-    const nextIdx = currentIndexRef.current + 1;
-    if (nextIdx >= queueRef.current.length && repeatModeRef.current !== 'all') return;
-    if (remoteOwnsPlayback()) {
-      await sinkSkipTo(nextIdx % Math.max(1, queueRef.current.length));
-      return;
-    }
-    getBackend().skipToNext();
-    if (isPlayingRef.current) getBackend().play();
-  }, [sinkSkipTo]);
+  /**
+   * Transport lives in `transportController`, which is where the rule about
+   * the two players is written down and tested. The provider's job here is to
+   * say what "now" means for each fact the controller reads — the refs below
+   * are read at command time, not at render time, so a skip issued after the
+   * queue moved acts on the queue it moved to.
+   */
+  const transport = useMemo(() => createTransportController({
+    backend: getBackend,
+    remoteOwnsPlayback,
+    sink: {
+      pause: sinkPause,
+      resume: sinkResume,
+      seek: sinkSeek,
+      skipTo: sinkSkipTo,
+    },
+    jukeboxPosition: () => jukeboxPositionRef.current,
+    currentResource: () => currentSongRef.current,
+    resourceAt: index => queueRef.current[index],
+    queueLength: () => queueRef.current.length,
+    currentIndex: () => currentIndexRef.current,
+    repeatMode: () => repeatModeRef.current,
+    isPlaying: () => isPlayingRef.current,
+    scrobbleOutgoing: listenedSeconds =>
+      scrobbleOutgoingRef.current(currentSongRef.current?.song ?? null, listenedSeconds),
+    setActive: (index, resource) => {
+      currentIndexRef.current = index;
+      setCurrentIndex(index);
+      currentSongRef.current = resource;
+      setCurrentSong(resource.song);
+    },
+    markNewListen: () => { scrobbleStartTimeRef.current = Date.now(); },
+  }), [sinkPause, sinkResume, sinkSeek, sinkSkipTo]);
 
-  const skipToPrevious = useCallback(async () => {
-    await scrobbleOutgoingRef.current(
-      currentSongRef.current?.song ?? null,
-      Math.floor(getBackend().getProgress().position)
-    );
-    if (currentIndexRef.current <= 0) return;
-    if (remoteOwnsPlayback()) {
-      await sinkSkipTo(currentIndexRef.current - 1);
-      return;
-    }
-    getBackend().skipToIndex(currentIndexRef.current - 1);
-    if (isPlayingRef.current) getBackend().play();
-  }, [sinkSkipTo]);
-
-  const skipTo = useCallback(async (index: number) => {
-    const resource = queueRef.current[index];
-    if (!resource) return;
-    if (index !== currentIndexRef.current) {
-      await scrobbleOutgoingRef.current(
-        currentSongRef.current?.song ?? null,
-        Math.floor(getBackend().getProgress().position)
-      );
-      scrobbleStartTimeRef.current = Date.now();
-    }
-    currentIndexRef.current = index;
-    setCurrentIndex(index);
-    currentSongRef.current = resource;
-    setCurrentSong(resource.song);
-    if (remoteOwnsPlayback()) {
-      await sinkSkipTo(index);
-      return;
-    }
-    getBackend().skipToIndex(index);
-    if (isPlayingRef.current) getBackend().play();
-  }, [sinkSkipTo]);
-
-  // Each of these drives the local player *and* the sink, except where the
-  // sink owns playback outright — then the local player is not running and
-  // touching it would start a second copy of the track on this device.
-  const pauseSong = useCallback(async () => {
-    if (!remoteOwnsPlayback()) getBackend().pause();
-    await sinkPause();
-  }, [sinkPause]);
-
-  const resumeSong = useCallback(async () => {
-    if (!remoteOwnsPlayback()) getBackend().play();
-    await sinkResume();
-  }, [sinkResume]);
-
-  const seekSong = useCallback((positionSeconds: number) => {
-    if (!remoteOwnsPlayback()) getBackend().seekTo(positionSeconds);
-    void sinkSeek(positionSeconds);
-  }, [sinkSeek]);
-
-  const jumpBy = useCallback((deltaSeconds: number) => {
-    const { position, duration } = remoteOwnsPlayback()
-      ? { position: jukeboxPositionRef.current, duration: currentSongRef.current?.song.durationSeconds ?? 0 }
-      : getBackend().getProgress();
-    const target = seekTarget(position, deltaSeconds, duration);
-    if (!remoteOwnsPlayback()) getBackend().seekTo(target);
-    void sinkSeek(target);
-  }, [sinkSeek]);
+  const { skipToNext, skipToPrevious, skipTo } = transport;
+  const pauseSong = transport.pause;
+  const resumeSong = transport.resume;
+  const seekSong = transport.seek;
+  const jumpBy = transport.jumpBy;
 
   const getQueue = useCallback(() => queueRef.current.map(resource => resource.song), []);
 
