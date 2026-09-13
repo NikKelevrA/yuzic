@@ -11,7 +11,7 @@ jest.mock('react-i18next', () => ({
 jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
   useSelector: (selector: (state: any) => unknown) => selector({
-    settings: {
+    settingsHome: {
       homeShelfVisibility: { quickPicks: false },
       homeShelfOrder: { resume: ['recentlyPlayed', 'quickPicks'] },
       homeShelfLength: 'standard',

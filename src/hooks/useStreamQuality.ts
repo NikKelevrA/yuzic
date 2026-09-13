@@ -1,11 +1,7 @@
 import { useSelector } from 'react-redux';
 
 import { useNetworkType } from './useNetworkType';
-import {
-  selectWifiStreamQuality,
-  selectCellularStreamQuality,
-} from '@/utils/redux/selectors/settingsSelectors';
-import type { AudioQuality } from '@/utils/redux/slices/settingsSlice';
+import { selectWifiStreamQuality, selectCellularStreamQuality, type AudioQuality } from '@/features/settings/playback/state';
 
 /**
  * The quality to ask the server for right now.

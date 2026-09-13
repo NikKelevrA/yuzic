@@ -3,11 +3,9 @@ import { act, renderHook } from '@testing-library/react-native'
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
 
-import settingsReducer, {
-  setLastfmEnabled,
-  setListenbrainzDiscoveryEnabled,
-  setMusicbrainzExternalEnabled,
-} from '@/utils/redux/slices/settingsSlice'
+import settingsMetadataReducer, { setLastfmEnabled } from '@/features/settings/metadata/state'
+import settingsHomeReducer, { setListenbrainzDiscoveryEnabled } from '@/features/settings/home/state'
+import settingsSearchReducer, { setMusicbrainzExternalEnabled } from '@/features/settings/search/state'
 
 /**
  * A stand-in for react-query that does the one thing under test: run the
@@ -44,7 +42,11 @@ import { useSimilarArtists } from './useSimilarArtists'
 
 function makeStore() {
   return configureStore({
-    reducer: combineReducers({ settings: settingsReducer }),
+    reducer: combineReducers({
+      settingsMetadata: settingsMetadataReducer,
+      settingsHome: settingsHomeReducer,
+      settingsSearch: settingsSearchReducer,
+    }),
     middleware: (getDefault) => getDefault({ serializableCheck: false }),
   })
 }

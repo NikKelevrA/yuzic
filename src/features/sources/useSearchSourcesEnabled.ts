@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { useIsOffline } from '@/hooks/useIsOffline'
-import { selectSearchSourceEnabled } from '@/utils/redux/selectors/settingsSelectors'
+import { selectSearchSourceEnabled } from '@/features/settings/search/state';
 import { ALL_SOURCES, type SourceId } from '@/features/sources/registry'
 
 /**
@@ -10,7 +10,7 @@ import { ALL_SOURCES, type SourceId } from '@/features/sources/registry'
  * lighting up a Home shelf says nothing about whether Search may call it;
  * each surface's enablement is its own on/off switch.
  *
- * Mirrors `useDeezerSearchEnabled`'s offline gating: a source enabled in
+ * Mirrors `useDeezerDiscoveryEnabled`'s offline gating: a source enabled in
  * settings still isn't attempted while the device has no network at all.
  *
  * Hooks are called unconditionally, one per known source id — `ALL_SOURCES`

@@ -3,10 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import SettingsScreen from '../../components/SettingsScreen';
 import SettingsToggleGroup from '../../components/SettingsToggleGroup';
-import {
-  selectMusicbrainzExternalEnabled,
-} from '@/utils/redux/selectors/settingsSelectors';
-import { setMusicbrainzExternalEnabled } from '@/utils/redux/slices/settingsSlice';
+import { selectMusicbrainzExternalEnabled, setMusicbrainzExternalEnabled } from '@/features/settings/search/state';
 
 export default function MusicBrainzSettings() {
   const { t } = useTranslation();

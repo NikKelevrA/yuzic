@@ -8,10 +8,7 @@ import {
   getDeezerArtistTopTracks,
   getDeezerRelatedArtists,
 } from '@/api/deezer'
-import {
-  selectDeezerExternalEnabled,
-  selectMusicbrainzExternalEnabled,
-} from '@/utils/redux/selectors/settingsSelectors'
+import { selectDeezerExternalEnabled, selectMusicbrainzExternalEnabled } from '@/features/settings/search/state';
 import * as mb from '@/api/musicbrainz'
 import { mapAlbum as mapMbAlbum } from '@/api/musicbrainz/mapAlbum'
 import { mapArtist as mapMbArtist } from '@/api/musicbrainz/mapArtist'

@@ -38,7 +38,7 @@ import { usePrefetchCovers } from '@/hooks/usePrefetchCovers';
 import { prefetchCovers } from '@/utils/images/imageCache';
 import { usePlayableSongResolver } from '@/hooks/songs';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectShowSourceHeaders } from '@/utils/redux/selectors/settingsSelectors';
+import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { selectActiveServer, selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import {
   selectRecentSearchEntities,

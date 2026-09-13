@@ -20,7 +20,7 @@ import { X, Search, Plus, Check } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
-import { selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
 import type { Playlist } from '@/domain/entities/Playlist';

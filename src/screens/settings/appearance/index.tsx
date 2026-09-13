@@ -11,30 +11,8 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { GridColumns } from './components/GridColumns';
 import { RadiusPresetSelector } from './components/RadiusPresetSelector';
 import { ListDensitySelector } from './components/ListDensitySelector';
-import {
-  selectShowQualityBadge,
-  selectShowSourceHeaders,
-  selectHapticsEnabled,
-  selectTranslucentDock,
-  selectRespectReducedMotion,
-  selectCoverAccentEnabled,
-  selectShowSleepTimer,
-  selectShowPlaybackSpeed,
-  selectShowJumpButtons,
-  selectShowVolumeSlider,
-} from '@/utils/redux/selectors/settingsSelectors';
-import {
-  setShowQualityBadge,
-  setShowSourceHeaders,
-  setHapticsEnabled,
-  setTranslucentDock,
-  setRespectReducedMotion,
-  setCoverAccentEnabled,
-  setShowSleepTimer,
-  setShowPlaybackSpeed,
-  setShowJumpButtons,
-  setShowVolumeSlider,
-} from '@/utils/redux/slices/settingsSlice';
+import { selectShowQualityBadge, selectShowSourceHeaders, selectHapticsEnabled, selectTranslucentDock, selectRespectReducedMotion, selectCoverAccentEnabled, setShowQualityBadge, setShowSourceHeaders, setHapticsEnabled, setTranslucentDock, setRespectReducedMotion, setCoverAccentEnabled } from '@/features/settings/appearance/state';
+import { selectShowSleepTimer, selectShowPlaybackSpeed, selectShowJumpButtons, selectShowVolumeSlider, setShowSleepTimer, setShowPlaybackSpeed, setShowJumpButtons, setShowVolumeSlider } from '@/features/settings/playback/state';
 
 const AppearanceSettings: React.FC = () => {
   const { t } = useTranslation();

@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 
 import store from '@/utils/redux/store';
-import { selectHapticsEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectHapticsEnabled } from '@/features/settings/appearance/state';
 
 /**
  * A thin wrapper around expo-haptics that reads the user's opt-out from Redux

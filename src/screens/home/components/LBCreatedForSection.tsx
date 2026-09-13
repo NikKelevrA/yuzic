@@ -8,7 +8,7 @@ import { getCreatedForPlaylists } from '@/api/listenbrainz';
 import type { CreatedForMixType } from '@/api/listenbrainz';
 import { QueryKeys } from '@/enums/queryKeys';
 import { selectListenBrainzUsername } from '@/utils/redux/selectors/listenbrainzSelectors';
-import { selectListenbrainzDiscoveryEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
 import SectionShelfHeader from './SectionShelfHeader';
 import SongRow from '@/components/rows/SongRow';
 import SkeletonListRow from '@/components/SkeletonListRow';

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SkipForward, Heart, Dices, Cast, PlusCircle } from 'lucide-react-native';
 import { usePlaying } from '@/contexts/PlayingContext';
 import { useStarSong, useUnstarSong, useStarredSongs } from '@/hooks/starred';
-import { PlayingBarAction } from '@/utils/redux/slices/settingsSlice';
+import { PlayingBarAction } from '@/features/settings/appearance/state';
 import { notify } from '@/components/toast';
 import { useAlbums } from '@/hooks/albums';
 import { useApi } from '@/api';

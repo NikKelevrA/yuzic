@@ -51,7 +51,7 @@ jest.mock('@/utils/redux/selectors/scrobbleRoutingSelectors', () => ({
   selectListenBrainzScrobbleRoute: 'listenBrainzRoute',
 }));
 
-jest.mock('@/utils/redux/slices/settingsSlice', () => ({
+jest.mock('@/features/settings/scrobbling/state', () => ({
   setScrobbleRoute: (payload: unknown) => ({ type: 'settings/setScrobbleRoute', payload }),
 }));
 

@@ -10,7 +10,7 @@ import { QueryKeys } from '@/enums/queryKeys';
 import { useTheme } from '@/hooks/useTheme';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useArtistMbid, useArtists } from '@/hooks/artists';
-import { selectListenbrainzDiscoveryEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,

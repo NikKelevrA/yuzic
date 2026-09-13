@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 
 import { searchArtist } from '@/api/musicbrainz'
 import { QueryKeys } from '@/enums/queryKeys'
-import { selectMusicbrainzExternalEnabled } from '@/utils/redux/selectors/settingsSelectors'
+import { selectMusicbrainzExternalEnabled } from '@/features/settings/search/state';
 
 /**
  * The MusicBrainz id for an artist, from the library if the server knows it

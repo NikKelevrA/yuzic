@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { useSelector } from 'react-redux';
 
-import { selectRespectReducedMotion } from '@/utils/redux/selectors/settingsSelectors';
+import { selectRespectReducedMotion } from '@/features/settings/appearance/state';
 
 /**
  * True when animations should be softened — either because the OS reports the

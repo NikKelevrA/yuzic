@@ -14,17 +14,9 @@ import ConnectivityIndicator from '../components/ConnectivityIndicator';
 import FallbackUrlsCard from './components/FallbackUrlsCard';
 import ClientCertificateCard from './components/ClientCertificateCard';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import {
-  selectSearchScope,
-  selectQueueSyncEnabled,
-  selectServerNowPlayingShelfEnabled,
-} from '@/utils/redux/selectors/settingsSelectors';
-import {
-  setSearchScope,
-  setQueueSyncEnabled,
-  setServerNowPlayingShelfEnabled,
-  type SearchScope,
-} from '@/utils/redux/slices/settingsSlice';
+import { selectSearchScope, setSearchScope, type SearchScope } from '@/features/settings/search/state';
+import { selectQueueSyncEnabled, setQueueSyncEnabled } from '@/features/settings/playback/state';
+import { selectServerNowPlayingShelfEnabled, setServerNowPlayingShelfEnabled } from '@/features/settings/home/state';
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize } from '@/constants/design';
 

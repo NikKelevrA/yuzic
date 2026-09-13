@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 
 import { listDensity, type ListDensity } from '@/constants/design';
-import { selectListDensity } from '@/utils/redux/selectors/settingsSelectors';
+import { selectListDensity } from '@/features/settings/appearance/state';
 
 /**
  * The vertical rhythm a list row should use, for the density the user picked.

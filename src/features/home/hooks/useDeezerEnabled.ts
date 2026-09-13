@@ -1,9 +1,6 @@
 import { useSelector } from 'react-redux'
 import { useIsOffline } from '@/hooks/useIsOffline'
-import {
-  selectDeezerDiscoveryEnabled,
-  selectDeezerSearchEnabled,
-} from '@/utils/redux/selectors/settingsSelectors'
+import { selectDeezerDiscoveryEnabled } from '@/features/settings/home/state';
 import { RootState } from '@/utils/redux/store'
 
 function useDeezerBase(selector: (s: RootState) => boolean): boolean {
@@ -14,8 +11,4 @@ function useDeezerBase(selector: (s: RootState) => boolean): boolean {
 
 export function useDeezerDiscoveryEnabled(): boolean {
   return useDeezerBase(selectDeezerDiscoveryEnabled)
-}
-
-export function useDeezerSearchEnabled(): boolean {
-  return useDeezerBase(selectDeezerSearchEnabled)
 }

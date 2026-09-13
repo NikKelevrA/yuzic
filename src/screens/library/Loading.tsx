@@ -5,10 +5,7 @@ import { useSelector } from 'react-redux'
 import SkeletonGrid from '@/components/SkeletonGrid'
 import SkeletonListRow from '@/components/SkeletonListRow'
 import { spacing } from '@/constants/design'
-import {
-  selectGridColumns,
-  selectLibraryViewMode,
-} from '@/utils/redux/selectors/settingsSelectors'
+import { selectGridColumns, selectLibraryViewMode } from '@/features/settings/appearance/state';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from './layout'
 import type { LibraryCollectionType } from './librarySort'
 

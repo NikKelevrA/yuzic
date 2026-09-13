@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { useAppActive } from '@/hooks/useAppActive';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 /**
  * The signed-in user's profile picture, or their initial in a coloured disc.
  *

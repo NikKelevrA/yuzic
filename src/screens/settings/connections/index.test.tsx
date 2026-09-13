@@ -18,14 +18,6 @@ jest.mock('react-redux', () => ({
     switch (selector) {
       case 'lbAuthenticated':
         return false;
-      case 'deezerEnabled':
-        return true;
-      case 'musicbrainzEnabled':
-        return false;
-      case 'lastfmEnabled':
-        return true;
-      case 'lbDiscoveryEnabled':
-        return false;
       case 'audiomuseEnabled':
         return true;
       case 'audiomuseAuthenticated':
@@ -38,13 +30,6 @@ jest.mock('react-redux', () => ({
 
 jest.mock('@/utils/redux/selectors/listenbrainzSelectors', () => ({
   selectListenBrainzAuthenticated: 'lbAuthenticated',
-}));
-
-jest.mock('@/utils/redux/selectors/settingsSelectors', () => ({
-  selectAnyDeezerEnabled: 'deezerEnabled',
-  selectMusicbrainzExternalEnabled: 'musicbrainzEnabled',
-  selectLastfmEnabled: 'lastfmEnabled',
-  selectListenbrainzDiscoveryEnabled: 'lbDiscoveryEnabled',
 }));
 
 jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({

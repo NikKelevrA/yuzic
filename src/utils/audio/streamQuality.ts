@@ -1,4 +1,4 @@
-import type { AudioQuality } from '@/utils/redux/slices/settingsSlice';
+import { type AudioQuality } from '@/features/settings/playback/state';
 
 export type StreamParams = {
   format: 'mp3' | 'raw';

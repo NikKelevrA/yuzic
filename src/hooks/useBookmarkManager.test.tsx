@@ -5,7 +5,7 @@ import { Provider } from 'react-redux'
 
 import playbackReducer from '@/utils/redux/slices/playbackSlice'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
-import settingsReducer, { setResumeLongTracksEnabled } from '@/utils/redux/slices/settingsSlice'
+import settingsPlaybackReducer, { setResumeLongTracksEnabled } from '@/features/settings/playback/state'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { serverProvenance } from '@/domain/identity/Provenance'
 import type { Song } from '@/domain/entities/Song'
@@ -34,7 +34,7 @@ function makeStore(opts?: { resumeEnabled?: boolean; serverId?: string; seededBo
     reducer: combineReducers({
       playback: playbackReducer,
       servers: serversReducer,
-      settings: settingsReducer,
+      settingsPlayback: settingsPlaybackReducer,
     }),
     middleware: (getDefault) => getDefault({ serializableCheck: false }),
   })

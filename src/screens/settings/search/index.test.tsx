@@ -29,12 +29,9 @@ jest.mock('react-redux', () => ({
   },
 }));
 
-jest.mock('@/utils/redux/selectors/settingsSelectors', () => ({
+jest.mock('@/features/settings/search/state', () => ({
   selectSearchSourceEnabled: (sourceId: string) =>
     sourceId === 'deezer' ? 'deezerSearchEnabled' : 'musicbrainzSearchEnabled',
-}));
-
-jest.mock('@/utils/redux/slices/settingsSlice', () => ({
   setSearchSourceEnabled: (payload: unknown) => ({ type: 'settings/setSearchSourceEnabled', payload }),
 }));
 

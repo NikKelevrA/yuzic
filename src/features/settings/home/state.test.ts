@@ -1,7 +1,7 @@
-import reducer, { setHomeShelfVisibility, setHomeShelfLength, setSleepTimerPresets } from './settingsSlice';
-import { selectHomeShelfItemCount, selectHomeShelfVisibilityMap, selectSleepTimerPresets } from '../selectors/settingsSelectors';
+import reducer, { setHomeShelfVisibility, setHomeShelfLength, setSleepTimerPresets } from './state';
+import { selectHomeShelfItemCount, selectHomeShelfVisibilityMap, selectSleepTimerPresets } from './state';
 
-const state = (settings: unknown) => ({ settings } as any);
+const state = (settingsHome: unknown) => ({ settingsHome } as any);
 
 describe('home and sleep settings', () => {
   it('persists shelf visibility and bounded length through reducers/selectors', () => {
@@ -11,10 +11,10 @@ describe('home and sleep settings', () => {
     expect(selectHomeShelfItemCount(state(next))).toBe(14);
   });
 
-  it('falls back for settings blobs written before the new keys', () => {
-    const old = state({});
-    expect(selectHomeShelfItemCount(old)).toBe(10);
-    expect(selectSleepTimerPresets(old)).toEqual([5, 15, 30]);
+  it('starts from the shipped initialState defaults', () => {
+    const fresh = state(reducer(undefined, { type: '@@INIT' }));
+    expect(selectHomeShelfItemCount(fresh)).toBe(10);
+    expect(selectSleepTimerPresets(fresh)).toEqual([5, 15, 30]);
   });
 
   it('keeps configured sleep presets persisted', () => {

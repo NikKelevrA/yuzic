@@ -4,7 +4,7 @@ import { FlashList } from '@shopify/flash-list'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useSelector } from 'react-redux'
-import { selectHomeShelfItemCount } from '@/utils/redux/selectors/settingsSelectors'
+import { selectHomeShelfItemCount } from '@/features/settings/home/state';
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useTheme } from '@/hooks/useTheme'
 import { useAlbums } from '@/hooks/albums'

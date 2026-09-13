@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
 import { useTheme } from '@/hooks/useTheme';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
-import { selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 import { useDlnaDiscovery, type DiscoveredDevice } from '@/hooks/useDlnaDiscovery';
 import { usePlaybackSink } from '@/contexts/PlaybackSinkContext';
 import { useJukeboxAvailability } from '@/hooks/useJukeboxAvailability';

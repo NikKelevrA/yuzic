@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Gauge } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 import { usePlayingActions, usePlayingState } from '@/contexts/PlayingContext';
 import { speedProfileFor } from '@/utils/playback/speedProfile';
 import {

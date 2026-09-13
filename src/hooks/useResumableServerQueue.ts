@@ -6,7 +6,7 @@ import type { ServerPlayQueue } from '@/api/types';
 import type { Song } from '@/domain/entities/Song';
 import { useTracks } from '@/hooks/tracks';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectQueueSyncEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectQueueSyncEnabled } from '@/features/settings/playback/state';
 import { selectPersistedPlaybackQueue } from '@/utils/redux/selectors/playbackSelectors';
 import { usePlayingActions, usePlayingState } from '@/contexts/PlayingContext';
 

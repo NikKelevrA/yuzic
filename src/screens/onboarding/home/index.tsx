@@ -12,8 +12,8 @@ import { Redirect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { setHasSeenGetStarted } from '@/utils/redux/slices/settingsSlice';
-import { selectHasSeenGetStarted, selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
+import { setHasSeenGetStarted, selectHasSeenGetStarted } from '@/features/settings/onboarding/state';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 import { useTranslation } from 'react-i18next';
 import { useRadius } from '@/hooks/useRadius';
 

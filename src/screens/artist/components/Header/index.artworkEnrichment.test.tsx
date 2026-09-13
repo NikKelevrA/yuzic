@@ -5,7 +5,7 @@ import { Provider } from 'react-redux'
 
 import settingsReducer, {
   setMetadataArtworkSourceEnabled,
-} from '@/utils/redux/slices/settingsSlice'
+} from '@/features/settings/metadata/state'
 import type { SourceArtistDetail } from '@/features/sources/registry'
 import ArtistHeader from './index'
 
@@ -92,7 +92,7 @@ jest.mock('@/features/metadata/enrichmentFetchers', () => ({
 
 function makeStore() {
   return configureStore({
-    reducer: combineReducers({ settings: settingsReducer }),
+    reducer: combineReducers({ settingsMetadata: settingsReducer }),
     middleware: (getDefault) => getDefault({ serializableCheck: false }),
   })
 }

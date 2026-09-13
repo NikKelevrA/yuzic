@@ -5,12 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '@/hooks/useTheme';
-import {
-  selectCrossfadeSeconds,
-  selectCrossfadeAlways,
-  selectThemeColor,
-} from '@/utils/redux/selectors/settingsSelectors';
-import { setCrossfadeSeconds, setCrossfadeAlways } from '@/utils/redux/slices/settingsSlice';
+import { selectCrossfadeSeconds, selectCrossfadeAlways, setCrossfadeSeconds, setCrossfadeAlways } from '@/features/settings/playback/state';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/hooks/useRadius';
 import SettingsCard from '../../components/SettingsCard';

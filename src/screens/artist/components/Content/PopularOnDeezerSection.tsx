@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import { useSelector } from 'react-redux'
 import { useTheme } from '@/hooks/useTheme'
 import { useTranslation } from 'react-i18next'
-import { selectShowSourceHeaders } from '@/utils/redux/selectors/settingsSelectors'
+import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { usePreviewPlayer } from '@/hooks/usePreviewPlayer'
 import TopTrackRow from '@/components/rows/TopTrackRow'
 import type { Song } from '@/domain/entities/Song'

@@ -3,16 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import SettingsScreen from '../../components/SettingsScreen';
 import SettingsToggleGroup from '../../components/SettingsToggleGroup';
+import { selectDeezerDiscoveryEnabled, setDeezerDiscoveryEnabled } from '@/features/settings/home/state';
 import {
-  selectDeezerDiscoveryEnabled,
-  selectDeezerSearchEnabled,
   selectDeezerExternalEnabled,
-} from '@/utils/redux/selectors/settingsSelectors';
-import {
-  setDeezerDiscoveryEnabled,
-  setDeezerSearchEnabled,
   setDeezerExternalEnabled,
-} from '@/utils/redux/slices/settingsSlice';
+  selectSearchSourceEnabled,
+  setSearchSourceEnabled,
+} from '@/features/settings/search/state';
 
 /**
  * Deezer used to have three top-level dimensions plus five sub-toggles:
@@ -30,11 +27,20 @@ export default function DeezerSettings() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const discoveryEnabled = useSelector(selectDeezerDiscoveryEnabled);
-  const searchEnabled = useSelector(selectDeezerSearchEnabled);
+  // Writes the same unified `searchSourcesEnabled` map the Search settings
+  // screen's per-source toggle writes — see Task 4.3: this used to write a
+  // separate `deezerSearchEnabled` flag that `selectSearchSourceEnabled`
+  // only consulted as a fallback, so once a user had touched the Search
+  // screen's own toggle even once, this switch silently stopped doing
+  // anything. One flag, one switch each screen agrees on.
+  const searchEnabled = useSelector(selectSearchSourceEnabled('deezer'));
   const externalEnabled = useSelector(selectDeezerExternalEnabled);
 
   const toggleDiscovery = useCallback((v: boolean) => { dispatch(setDeezerDiscoveryEnabled(v)); }, [dispatch]);
-  const toggleSearch = useCallback((v: boolean) => { dispatch(setDeezerSearchEnabled(v)); }, [dispatch]);
+  const toggleSearch = useCallback(
+    (v: boolean) => { dispatch(setSearchSourceEnabled({ sourceId: 'deezer', enabled: v })); },
+    [dispatch]
+  );
   const toggleExternal = useCallback((v: boolean) => { dispatch(setDeezerExternalEnabled(v)); }, [dispatch]);
 
   const items = useMemo(() => [

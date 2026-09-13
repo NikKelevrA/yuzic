@@ -6,8 +6,7 @@ import { Check } from 'lucide-react-native';
 
 import { useTheme } from '@/hooks/useTheme';
 import { iconSize, spacing, type RadiusPreset, typography } from '@/constants/design';
-import { selectRadiusPreset, selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
-import { setRadiusPreset } from '@/utils/redux/slices/settingsSlice';
+import { selectRadiusPreset, selectThemeColor, setRadiusPreset } from '@/features/settings/appearance/state';
 import Touchable from '@/components/Touchable';
 import SettingsCardHeader from '../../components/SettingsCardHeader';
 import SettingsCard from '../../components/SettingsCard';

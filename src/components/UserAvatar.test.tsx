@@ -16,7 +16,7 @@ jest.mock('react-redux', () => ({
   useSelector: (selector: string) => selector === 'themeColor' ? '#123456' : 'server-1',
 }));
 
-jest.mock('@/utils/redux/selectors/settingsSelectors', () => ({
+jest.mock('@/features/settings/appearance/state', () => ({
   selectThemeColor: 'themeColor',
 }));
 

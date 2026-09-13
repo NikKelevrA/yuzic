@@ -1,5 +1,5 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
-import settingsReducer, { setScrobbleRoute } from '@/utils/redux/slices/settingsSlice'
+import settingsScrobblingReducer, { setScrobbleRoute } from '@/features/settings/scrobbling/state'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
 import listenbrainzReducer, { setScrobbleEnabled } from '@/utils/redux/slices/listenbrainzSlice'
 import {
@@ -12,7 +12,7 @@ import type { Server } from '@/types'
 function makeStore() {
   return configureStore({
     reducer: combineReducers({
-      settings: settingsReducer,
+      settingsScrobbling: settingsScrobblingReducer,
       servers: serversReducer,
       listenbrainz: listenbrainzReducer,
     }),

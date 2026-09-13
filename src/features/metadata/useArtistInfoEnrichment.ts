@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { resolveArtistInfo } from '@/features/metadata/resolveArtistInfo';
 import { metadataArtistInfoFetchers } from '@/features/metadata/enrichmentFetchers';
-import { selectEnabledMetadataArtistInfoSourcesInOrder } from '@/utils/redux/selectors/settingsSelectors';
+import { selectEnabledMetadataArtistInfoSourcesInOrder } from '@/features/settings/metadata/state';
 import { QueryKeys } from '@/enums/queryKeys';
 
 type Input = {

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { QueryKeys } from '@/enums/queryKeys';
 import { ALL_SOURCES, type SourceArtistDetail } from '@/features/sources/registry';
-import { selectMusicbrainzExternalEnabled, selectDeezerExternalEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectMusicbrainzExternalEnabled, selectDeezerExternalEnabled } from '@/features/settings/search/state';
 
 export type UseExternalArtistInput = {
   source?: string;

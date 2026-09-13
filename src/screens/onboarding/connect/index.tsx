@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/hooks/useRadius';
-import { selectOnboardingDiscoveryPrompted } from '@/utils/redux/selectors/settingsSelectors';
+import { selectOnboardingDiscoveryPrompted } from '@/features/settings/onboarding/state';
 
 export default function Connect() {
     const [selectedType, setSelectedType] = useState<ServerType | null>(null);

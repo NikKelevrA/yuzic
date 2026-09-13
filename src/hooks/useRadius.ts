@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import { radius, scaleRadius, type RadiusPreset } from '@/constants/design';
-import { selectRadiusPreset } from '@/utils/redux/selectors/settingsSelectors';
+import { selectRadiusPreset } from '@/features/settings/appearance/state';
 
 /**
  * Live radius values scaled by the user's preset.

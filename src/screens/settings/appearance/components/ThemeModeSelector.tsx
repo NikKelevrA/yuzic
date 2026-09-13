@@ -2,8 +2,7 @@ import React from 'react';
 import { Sun, Moon, Smartphone } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectThemeMode } from '@/utils/redux/selectors/settingsSelectors';
-import { setThemeMode, ThemeMode } from '@/utils/redux/slices/settingsSlice';
+import { selectThemeMode, setThemeMode, ThemeMode } from '@/features/settings/appearance/state';
 import SettingsIconSelectCard from '../../components/SettingsIconSelectCard';
 import { iconSize } from '@/constants/design';
 

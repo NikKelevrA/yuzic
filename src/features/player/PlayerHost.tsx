@@ -16,7 +16,7 @@ import { PLAYING_GRADIENT_CACHE_MAX } from '@/constants/features';
 import { usePlayingState } from '@/contexts/PlayingContext';
 import { MediaImage } from '@/components/MediaImage';
 import { buildCover } from '@/utils/builders/buildCover';
-import { selectCoverAccentEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
 import PlayingScreen from '@/screens/playing';
 import PlayingBackground from '@/screens/playing/components/PlayingBackground';
 import { useRadius } from '@/hooks/useRadius';

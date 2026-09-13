@@ -33,7 +33,7 @@ import { findArtistsWithSharedGenres } from './localSimilarArtists'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { useSelector } from 'react-redux'
-import { selectShowSourceHeaders } from '@/utils/redux/selectors/settingsSelectors'
+import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { useAlbums } from '@/hooks/albums'
 import Touchable from '@/components/Touchable'
 import { useScrollClearance } from '@/hooks/useScrollClearance'

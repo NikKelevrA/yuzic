@@ -7,8 +7,7 @@ import SettingsCard from '../components/SettingsCard';
 import SettingsToggleGroup from '../components/SettingsToggleGroup';
 import { useTheme } from '@/hooks/useTheme';
 import { spacing, typography } from '@/constants/design';
-import { selectSearchSourceEnabled } from '@/utils/redux/selectors/settingsSelectors';
-import { setSearchSourceEnabled } from '@/utils/redux/slices/settingsSlice';
+import { selectSearchSourceEnabled, setSearchSourceEnabled } from '@/features/settings/search/state';
 
 /**
  * Which sources Search's "Other sources" scope may query — entirely
@@ -17,11 +16,10 @@ import { setSearchSourceEnabled } from '@/utils/redux/slices/settingsSlice';
  * external-browse catalog, not this). A source lighting up Home says
  * nothing about whether Search may call it.
  *
- * Deezer here reads (and writes) the unified `searchSourcesEnabled` map,
- * which falls back to the older `deezerSearchEnabled` flag only when this
- * map has no entry of its own — see `selectSearchSourceEnabled`. Toggling it
- * from this screen writes the new map going forward; nothing here needs to
- * touch the old flag.
+ * Deezer here reads (and writes) the unified `searchSourcesEnabled` map —
+ * the same map the Deezer integrations screen's own "Search" toggle now
+ * writes to (Task 4.3 retired the separate `deezerSearchEnabled` flag it
+ * used to write, which this map only consulted as a fallback).
  */
 export default function SearchSettings() {
   const { t } = useTranslation();

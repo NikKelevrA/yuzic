@@ -18,3 +18,4 @@ export * from './identity/matching';
 export * from './library/LibraryState';
 export * from './playback/ContentKind';
 export * from './playback/PlaybackModes';
+export * from './playback/AudioFormat';

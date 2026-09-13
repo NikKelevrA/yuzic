@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { resolveArtwork } from '@/features/metadata/resolveArtwork';
 import { metadataArtworkFetchers } from '@/features/metadata/enrichmentFetchers';
-import { selectEnabledMetadataArtworkSourcesInOrder } from '@/utils/redux/selectors/settingsSelectors';
+import { selectEnabledMetadataArtworkSourcesInOrder } from '@/features/settings/metadata/state';
 import { QueryKeys } from '@/enums/queryKeys';
 import type { CoverSource } from '@/types/Cover';
 

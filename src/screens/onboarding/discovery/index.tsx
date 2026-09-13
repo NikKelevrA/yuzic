@@ -9,11 +9,8 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import {
-  setDeezerDiscoveryEnabled,
-  setListenbrainzDiscoveryEnabled,
-  setOnboardingDiscoveryPrompted,
-} from '@/utils/redux/slices/settingsSlice';
+import { setDeezerDiscoveryEnabled, setListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
+import { setOnboardingDiscoveryPrompted } from '@/features/settings/onboarding/state';
 import Touchable from '@/components/Touchable';
 import { onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/hooks/useRadius';

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { useApi } from '@/api';
 import type { PlayableResource } from '@/features/playback/playableResource';
-import { selectQueueSyncEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectQueueSyncEnabled } from '@/features/settings/playback/state';
 
 /**
  * Subsonic servers store one play queue per user; saving it here means opening

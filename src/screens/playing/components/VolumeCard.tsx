@@ -4,7 +4,7 @@ import Slider from '@react-native-community/slider';
 import { Volume2, VolumeX, Volume1 } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 
-import { selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 import { usePlayingActions, usePlayingState } from '@/contexts/PlayingContext';
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/hooks/useRadius';

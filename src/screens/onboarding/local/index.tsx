@@ -13,7 +13,7 @@ import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/hooks/useRadius';
 import { useSelector } from 'react-redux';
-import { selectOnboardingDiscoveryPrompted } from '@/utils/redux/selectors/settingsSelectors';
+import { selectOnboardingDiscoveryPrompted } from '@/features/settings/onboarding/state';
 
 /** First-run local-library import. Files are copied into app-private storage,
  * so a document provider revoking its temporary URI cannot break playback. */

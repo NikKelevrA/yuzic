@@ -5,8 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '@/hooks/useTheme';
-import { selectGridColumns, selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
-import { setGridColumns } from '@/utils/redux/slices/settingsSlice';
+import { selectGridColumns, selectThemeColor, setGridColumns } from '@/features/settings/appearance/state';
 import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/hooks/useRadius';
 import SettingsCard from '../../components/SettingsCard';

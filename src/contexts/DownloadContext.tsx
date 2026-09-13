@@ -63,7 +63,8 @@ import {
 } from '@/utils/downloads/restore';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
-import { selectDownloadOnWifiOnly, selectDownloadQuality } from '@/utils/redux/selectors/settingsSelectors';
+import { selectDownloadOnWifiOnly } from '@/features/settings/downloads/state';
+import { selectDownloadQuality } from '@/features/settings/playback/state';
 import { useNetworkType } from '@/hooks/useNetworkType';
 import { streamSourceId } from '@/utils/playback/streamId';
 import { downloadProgressFraction, nextDownloadingIds, collectionDownloadState } from './downloadPolicies';

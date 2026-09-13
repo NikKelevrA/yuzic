@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import SettingsScreen from '../../components/SettingsScreen';
 import SettingsToggleGroup from '../../components/SettingsToggleGroup';
-import { selectLastfmEnabled } from '@/utils/redux/selectors/settingsSelectors';
-import { setLastfmEnabled } from '@/utils/redux/slices/settingsSlice';
+import { selectLastfmEnabled, setLastfmEnabled } from '@/features/settings/metadata/state';
 
 /**
  * Last.fm is a read-only metadata source here — similar artists, and the seed

@@ -7,14 +7,7 @@ import SettingsToggleGroup from '../components/SettingsToggleGroup';
 import SettingsCard from '../components/SettingsCard';
 import SettingsSourceList from '../components/SettingsSourceList';
 import SettingsRow from '../components/SettingsRow';
-import {
-  selectHomeShelfVisibilityMap, selectHomeShelfLength, selectHomeShelfOrder,
-  selectSleepTimerPresets,
-} from '@/utils/redux/selectors/settingsSelectors';
-import {
-  setHomeShelfVisibility, setHomeShelfOrder, setHomeShelfLength, setSleepTimerPresets,
-} from '@/utils/redux/slices/settingsSlice';
-import type { HomeShelfLength, HomeShelfTier } from '@/utils/redux/slices/settingsSlice';
+import { selectHomeShelfVisibilityMap, selectHomeShelfLength, selectHomeShelfOrder, selectSleepTimerPresets, setHomeShelfVisibility, setHomeShelfOrder, setHomeShelfLength, setSleepTimerPresets, type HomeShelfLength, type HomeShelfTier } from '@/features/settings/home/state';
 
 const TIERS: { tier: HomeShelfTier; ids: string[] }[] = [
   { tier: 'resume', ids: ['quickPicks', 'continuePlaying', 'recentlyPlayed'] },

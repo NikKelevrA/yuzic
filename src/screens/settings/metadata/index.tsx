@@ -6,18 +6,7 @@ import SettingsScreen from '../components/SettingsScreen';
 import SettingsCard from '../components/SettingsCard';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsSourceList from '../components/SettingsSourceList';
-import {
-  selectMetadataArtistInfoOrder,
-  selectMetadataArtistInfoSourceEnabled,
-  selectMetadataArtworkOrder,
-  selectMetadataArtworkSourceEnabled,
-} from '@/utils/redux/selectors/settingsSelectors';
-import {
-  setMetadataArtistInfoOrder,
-  setMetadataArtistInfoSourceEnabled,
-  setMetadataArtworkOrder,
-  setMetadataArtworkSourceEnabled,
-} from '@/utils/redux/slices/settingsSlice';
+import { selectMetadataArtistInfoOrder, selectMetadataArtistInfoSourceEnabled, selectMetadataArtworkOrder, selectMetadataArtworkSourceEnabled, setMetadataArtistInfoOrder, setMetadataArtistInfoSourceEnabled, setMetadataArtworkOrder, setMetadataArtworkSourceEnabled } from '@/features/settings/metadata/state';
 
 /**
  * Optional, display-only enrichment. Each chain resolves only when server

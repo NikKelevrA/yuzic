@@ -52,14 +52,7 @@ import { ownsPlayback } from '@/features/player/playbackSink';
 import { useScrobbling } from '@/hooks/useScrobbling';
 import { useCarPlayBrowseTree } from '@/hooks/useCarPlayBrowseTree';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  selectPreferredCodec,
-  selectAutoplayEnabled,
-  selectCrossfadeSeconds,
-  selectCrossfadeAlways,
-  selectEqualizerGains,
-  selectPlaybackSpeeds,
-} from '@/utils/redux/selectors/settingsSelectors';
+import { selectPreferredCodec, selectAutoplayEnabled, selectCrossfadeSeconds, selectCrossfadeAlways, selectEqualizerGains, selectPlaybackSpeeds, setPlaybackSpeedForProfile } from '@/features/settings/playback/state';
 import { useIsAudiomuseConfigured, useAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
 import { useStreamQuality } from '@/hooks/useStreamQuality';
 import { playableQuality } from '@/utils/audio/playableFormat';
@@ -74,7 +67,6 @@ import { buildRestoredQueue } from './restoreQueue';
 import { canFillQueueFrom } from '@/utils/playback/contentKind';
 import { hasReissuableUrl } from '@/domain/playback/ContentKind';
 import { clampSpeed, speedFor, speedProfileFor } from '@/utils/playback/speedProfile';
-import { setPlaybackSpeedForProfile } from '@/utils/redux/slices/settingsSlice';
 import { useBookmarkManager } from '@/hooks/useBookmarkManager';
 import { useQueueSync } from '@/hooks/useQueueSync';
 import { usePlaybackPersistence } from '@/hooks/usePlaybackPersistence';

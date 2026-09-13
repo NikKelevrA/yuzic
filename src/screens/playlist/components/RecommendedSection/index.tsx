@@ -19,11 +19,9 @@ import { usePlayingActions } from '@/contexts/PlayingContext';
 import { createAudiomuseQueueFillProvider } from '@/contexts/queueProviders';
 import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { useApi } from '@/api';
-import {
-  selectShowSourceHeaders,
-  selectDeezerDiscoveryEnabled,
-  selectLastfmEnabled,
-} from '@/utils/redux/selectors/settingsSelectors';
+import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
+import { selectDeezerDiscoveryEnabled } from '@/features/settings/home/state';
+import { selectLastfmEnabled } from '@/features/settings/metadata/state';
 import {
   useIsAudiomuseConfigured,
   useAudiomuseConfig,

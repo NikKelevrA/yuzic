@@ -22,7 +22,7 @@ import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { iconSize, onDark, radius, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/hooks/useRadius';
-import { selectOnboardingDiscoveryPrompted } from '@/utils/redux/selectors/settingsSelectors';
+import { selectOnboardingDiscoveryPrompted } from '@/features/settings/onboarding/state';
 
 export default function LibrariesOnboarding() {
   const { t } = useTranslation();

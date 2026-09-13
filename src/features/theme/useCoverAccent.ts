@@ -4,7 +4,7 @@ import ImageColors from 'react-native-image-colors'
 
 import { buildCover } from '@/utils/builders/buildCover'
 import { PLAYING_GRADIENT_CACHE_MAX } from '@/constants/features'
-import { selectCoverAccentEnabled } from '@/utils/redux/selectors/settingsSelectors'
+import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
 import type { CoverSource } from '@/types'
 import { createAccentCache, pickAccent, toWashAccent } from './coverAccent'
 

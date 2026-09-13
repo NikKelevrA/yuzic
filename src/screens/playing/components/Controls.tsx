@@ -16,7 +16,7 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 
 import { usePlayingState, usePlayingActions } from '@/contexts/PlayingContext';
-import { selectShowJumpButtons } from '@/utils/redux/selectors/settingsSelectors';
+import { selectShowJumpButtons } from '@/features/settings/playback/state';
 import { canJumpWithin } from '@/utils/playback/contentKind';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';

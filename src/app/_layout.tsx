@@ -27,7 +27,7 @@ import { PlayerExpansionProvider } from '@/features/player/PlayerExpansion';
 import PlayerHost from '@/features/player/PlayerHost';
 import { useTheme } from '@/hooks/useTheme';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { selectLanguage } from '@/utils/redux/selectors/settingsSelectors';
+import { selectLanguage } from '@/features/settings/appearance/state';
 import i18n from '@/i18n';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';

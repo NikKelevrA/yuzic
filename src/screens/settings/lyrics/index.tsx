@@ -6,14 +6,7 @@ import SettingsScreen from '../components/SettingsScreen';
 import SettingsCard from '../components/SettingsCard';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsSourceList from '../components/SettingsSourceList';
-import {
-  selectLyricsExternalSourceEnabled,
-  selectLyricsExternalSourcesOrder,
-} from '@/utils/redux/selectors/settingsSelectors';
-import {
-  setLyricsExternalSourceEnabled,
-  setLyricsExternalSourcesOrder,
-} from '@/utils/redux/slices/settingsSlice';
+import { selectLyricsExternalSourceEnabled, selectLyricsExternalSourcesOrder, setLyricsExternalSourceEnabled, setLyricsExternalSourcesOrder } from '@/features/settings/lyrics/state';
 
 /**
  * Lyrics resolves the server first, then any opted-in external sources in the

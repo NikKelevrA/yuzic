@@ -94,7 +94,7 @@ function renderWithStore(
 ) {
   const store = configureStore({
     reducer: {
-      settings: (state = { listenbrainzDiscoveryEnabled: discoveryEnabled }) => state,
+      settingsHome: (state = { listenbrainzDiscoveryEnabled: discoveryEnabled }) => state,
       listenbrainz: (state = { byServer: { s1: { username, token: 't' } } }) => state,
       servers: (state = { activeServerId: 's1' }) => state,
     },

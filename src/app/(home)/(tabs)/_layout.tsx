@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import PlayingBar from '@/screens/playing/playingBar/PlayingBar';
 import Touchable from '@/components/Touchable';
 import { useTheme } from '@/hooks/useTheme';
-import { selectThemeColor, selectTranslucentDock } from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeColor, selectTranslucentDock } from '@/features/settings/appearance/state';
 import { iconSize, spacing } from '@/constants/design';
 
 /**

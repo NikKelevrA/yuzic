@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import type { Song } from '@/domain/entities/Song';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectResumeLongTracksEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectResumeLongTracksEnabled } from '@/features/settings/playback/state';
 import { selectPersistedPlaybackBookmarks } from '@/utils/redux/selectors/playbackSelectors';
 import {
   seedPlaybackBookmarks,

@@ -26,9 +26,12 @@ jest.mock('@/hooks/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc', card: '#111', themeColor: '#0f0', background: '#fff', muted: '#eee' } }),
 }));
 
-jest.mock('@/utils/redux/slices/settingsSlice', () => ({
+jest.mock('@/features/settings/home/state', () => ({
   setDeezerDiscoveryEnabled: (payload: boolean) => ({ type: 'setDeezerDiscoveryEnabled', payload }),
   setListenbrainzDiscoveryEnabled: (payload: boolean) => ({ type: 'setListenbrainzDiscoveryEnabled', payload }),
+}));
+
+jest.mock('@/features/settings/onboarding/state', () => ({
   setOnboardingDiscoveryPrompted: (payload: boolean) => ({ type: 'setOnboardingDiscoveryPrompted', payload }),
 }));
 

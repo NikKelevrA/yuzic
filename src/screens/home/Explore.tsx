@@ -9,13 +9,8 @@ import { useTheme } from '@/hooks/useTheme'
 import { useDailyLayout } from '@/features/home/hooks/useDailyLayout'
 import { customizeHomeSections } from '@/features/home/homeLayout'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
-import {
-  selectShowSourceHeaders,
-  selectHomeServerSectionsEnabled,
-  selectListenbrainzDiscoveryEnabled,
-  selectHomeShelfVisibilityMap,
-  selectHomeShelfOrder,
-} from '@/utils/redux/selectors/settingsSelectors'
+import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
+import { selectHomeServerSectionsEnabled, selectListenbrainzDiscoveryEnabled, selectHomeShelfVisibilityMap, selectHomeShelfOrder } from '@/features/settings/home/state';
 
 import QuickPicksSection from './components/QuickPicksSection'
 import RecentlyPlayed from './components/RecentlyPlayed'

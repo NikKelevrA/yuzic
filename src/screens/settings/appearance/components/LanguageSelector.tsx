@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectLanguage } from '@/utils/redux/selectors/settingsSelectors';
-import { setLanguage } from '@/utils/redux/slices/settingsSlice';
+import { selectLanguage, setLanguage } from '@/features/settings/appearance/state';
 import { getLanguageByCode } from '@/constants/languages';
 import { useTranslation } from 'react-i18next';
 import LanguageBottomSheet from './LanguageBottomSheet';

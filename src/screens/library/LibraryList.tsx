@@ -8,11 +8,7 @@ import { ArrowUpDown, Grid2x2, List } from 'lucide-react-native'
 import { useTheme } from '@/hooks/useTheme'
 import { controlSize, hitSlopFor, iconSize, spacing, typography } from '@/constants/design'
 import { useRadius } from '@/hooks/useRadius'
-import {
-  selectLibraryViewMode,
-  selectGridColumns,
-} from '@/utils/redux/selectors/settingsSelectors'
-import { setIsGridView, setLibraryViewMode } from '@/utils/redux/slices/settingsSlice'
+import { selectLibraryViewMode, selectGridColumns, setIsGridView, setLibraryViewMode } from '@/features/settings/appearance/state';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from './layout'
 import AlbumItem from './components/Items/AlbumItem'
 import ArtistItem from './components/Items/ArtistItem'

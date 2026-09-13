@@ -6,7 +6,7 @@ import type { AlbumDetail, PlaylistDetail } from "@/domain/entities/Detail";
 import type { CoverSource } from "@/types/Cover";
 import { AddSongToPlaylistResult } from "./navidrome/playlists/addSongToPlaylist";
 import { RemoveSongFromPlaylistResult } from "./navidrome/playlists/removeSongFromPlaylist";
-import type { AudioQuality, PreferredCodec } from '@/utils/redux/slices/settingsSlice';
+import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat';
 
 export type Library = {
   id: string;

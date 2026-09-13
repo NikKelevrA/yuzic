@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { usePlayingState, usePlayingProgress, usePlayingActions } from '@/contexts/PlayingContext';
 import { SeekableProgressBar } from './SeekableProgressBar';
 import { useSelector } from 'react-redux';
-import { selectShowQualityBadge } from '@/utils/redux/selectors/settingsSelectors';
+import { selectShowQualityBadge } from '@/features/settings/appearance/state';
 import { hasFiniteDuration } from '@/utils/playback/contentKind';
 import { CirclePlus } from 'lucide-react-native';
 import { usePlayerExpansion } from '@/features/player/PlayerExpansion';

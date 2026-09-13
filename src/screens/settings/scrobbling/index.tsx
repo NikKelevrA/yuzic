@@ -13,7 +13,7 @@ import {
   selectLastfmScrobbleRoute,
   selectListenBrainzScrobbleRoute,
 } from '@/utils/redux/selectors/scrobbleRoutingSelectors';
-import { setScrobbleRoute, type ScrobbleRoute } from '@/utils/redux/slices/settingsSlice';
+import { setScrobbleRoute, type ScrobbleRoute } from '@/features/settings/scrobbling/state';
 
 /**
  * One route per destination per server: Disabled, Through the server, or

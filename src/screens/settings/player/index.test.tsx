@@ -31,7 +31,7 @@ jest.mock('@/api', () => ({
 jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
   useSelector: (selector: (state: any) => unknown) => selector({
-    settings: {
+    settingsPlayback: {
       preferredCodec: 'mp3',
       autoplayEnabled: true,
       resumeLongTracksEnabled: false,
@@ -47,7 +47,11 @@ jest.mock('react-redux', () => ({
   }),
 }));
 
-jest.mock('@/utils/redux/slices/settingsSlice', () => ({
+// Real selectors, stubbed actions — same intent as the react-redux mock
+// above: the screen should still fail this test if a selector's shape
+// changes, while dispatch assertions stay on a plain, stable action shape.
+jest.mock('@/features/settings/playback/state', () => ({
+  ...jest.requireActual('@/features/settings/playback/state'),
   setPreferredCodec: (payload: unknown) => ({ type: 'settings/setPreferredCodec', payload }),
   setAutoplayEnabled: (payload: unknown) => ({ type: 'settings/setAutoplayEnabled', payload }),
   setResumeLongTracksEnabled: (payload: unknown) => ({ type: 'settings/setResumeLongTracksEnabled', payload }),

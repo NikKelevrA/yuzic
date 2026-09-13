@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import type { AudioQuality } from '@/utils/redux/slices/settingsSlice';
+import { type AudioQuality } from '@/features/settings/playback/state';
 
 /**
  * Whether the platform's decoder can open a file at all.

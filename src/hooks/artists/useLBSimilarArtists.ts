@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { getLBSimilarArtists } from '@/api/listenbrainz';
 import { QueryKeys } from '@/enums/queryKeys';
-import { selectListenbrainzDiscoveryEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
 import type { Artist } from '@/domain/entities/Artist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';

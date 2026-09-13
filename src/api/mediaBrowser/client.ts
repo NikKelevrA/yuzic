@@ -1,4 +1,4 @@
-import type { AudioQuality } from '@/utils/redux/slices/settingsSlice';
+import type { AudioQuality } from '@/domain/playback/AudioFormat';
 import { qualityToStreamParams } from '@/utils/audio/streamQuality';
 import { tryWithFailover, orderedUrls } from '@/utils/servers/urlFailover';
 import { serverProvenance, type Provenance } from '@/domain/identity/Provenance';

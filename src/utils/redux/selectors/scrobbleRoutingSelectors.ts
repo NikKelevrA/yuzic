@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@/utils/redux/store';
-import type { ScrobbleDestinationKind, ScrobbleRoute } from '@/utils/redux/slices/settingsSlice';
+import type { ScrobbleDestinationKind, ScrobbleRoute } from '@/features/settings/scrobbling/state';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 
 /**
@@ -42,7 +42,7 @@ export function deriveScrobbleRoute(
 }
 
 const selectScrobbleRoutesForActiveServer = createSelector(
-  [(s: RootState) => s.settings.scrobbleRoutes, selectActiveServerId],
+  [(s: RootState) => s.settingsScrobbling.scrobbleRoutes, selectActiveServerId],
   (scrobbleRoutes, activeServerId) =>
     (activeServerId ? scrobbleRoutes?.[activeServerId] : undefined)
 );
@@ -51,7 +51,7 @@ export const selectScrobbleRoute = (destination: ScrobbleDestinationKind) =>
   createSelector(
     [
       selectScrobbleRoutesForActiveServer,
-      (s: RootState) => s.settings.serverScrobbleEnabled ?? true,
+      (s: RootState) => s.settingsScrobbling.serverScrobbleEnabled,
       (s: RootState) => {
         const activeServerId = s.servers.activeServerId;
         const entry = activeServerId ? s.listenbrainz.byServer[activeServerId] : undefined;

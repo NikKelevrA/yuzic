@@ -6,8 +6,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '@/hooks/useTheme';
-import { selectEqualizerGains, selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
-import { setEqualizerGains } from '@/utils/redux/slices/settingsSlice';
+import { selectEqualizerGains, setEqualizerGains } from '@/features/settings/playback/state';
+import { selectThemeColor } from '@/features/settings/appearance/state';
 import { useRadius } from '@/hooks/useRadius';
 import SettingsCard from '../../components/SettingsCard';
 import { withAlpha } from '@/features/theme/coverAccent';

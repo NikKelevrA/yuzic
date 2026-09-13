@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { useSelector } from 'react-redux';
-import {
-  selectThemeMode,
-  selectThemeColor,
-} from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeMode, selectThemeColor } from '@/features/settings/appearance/state';
 import { statusColor, type SemanticThemeColors } from '@/constants/design';
 
 export type ThemeMode = 'system' | 'light' | 'dark';

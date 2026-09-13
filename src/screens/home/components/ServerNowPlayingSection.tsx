@@ -10,7 +10,7 @@ import { useApi } from '@/api';
 import { useTheme } from '@/hooks/useTheme';
 import { QueryKeys } from '@/enums/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
-import { selectServerNowPlayingShelfEnabled } from '@/utils/redux/selectors/settingsSelectors';
+import { selectServerNowPlayingShelfEnabled } from '@/features/settings/home/state';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import MediaListRow from '@/components/MediaListRow';
 import { useSourceSectionPresence } from './SourceGroup';

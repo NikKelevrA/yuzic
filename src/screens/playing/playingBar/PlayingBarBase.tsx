@@ -28,10 +28,7 @@ import {
 } from '@/features/player/PlayerExpansion';
 import { settleFromBar } from '@/features/player/settle';
 import { useTheme } from '@/hooks/useTheme';
-import {
-  selectPlayingBarAction,
-  selectThemeColor,
-} from '@/utils/redux/selectors/settingsSelectors';
+import { selectPlayingBarAction, selectThemeColor } from '@/features/settings/appearance/state';
 
 import { usePlayingBarAction } from './actions/usePlayingBarAction';
 import { useSheetRef } from '@/utils/useSheetRef';

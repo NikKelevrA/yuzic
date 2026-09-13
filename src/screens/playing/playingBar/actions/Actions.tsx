@@ -1,6 +1,6 @@
 import React from 'react';
 import { Minus, SkipForward, Heart, Dices, Cast, PlusCircle } from 'lucide-react-native';
-import { PlayingBarAction } from '@/utils/redux/slices/settingsSlice';
+import { PlayingBarAction } from '@/features/settings/appearance/state';
 import { iconSize } from '@/constants/design';
 
 export type PlayingBarActionMeta = {

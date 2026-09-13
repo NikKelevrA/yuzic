@@ -3,7 +3,7 @@ import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
 import { useSelector } from 'react-redux';
 
 import { spacing } from '@/constants/design';
-import { selectTranslucentDock } from '@/utils/redux/selectors/settingsSelectors';
+import { selectTranslucentDock } from '@/features/settings/appearance/state';
 
 /**
  * How much room a scrolling list should leave at its bottom.

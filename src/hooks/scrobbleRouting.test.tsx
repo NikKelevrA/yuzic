@@ -7,7 +7,7 @@ import type { Server } from '@/types'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { serverProvenance } from '@/domain/identity/Provenance'
 import type { Song } from '@/domain/entities/Song'
-import settingsReducer, { setScrobbleRoute } from '@/utils/redux/slices/settingsSlice'
+import settingsScrobblingReducer, { setScrobbleRoute } from '@/features/settings/scrobbling/state'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
 import listenbrainzReducer, { setUsername } from '@/utils/redux/slices/listenbrainzSlice'
 import statsReducer from '@/utils/redux/slices/statsSlice'
@@ -59,7 +59,7 @@ function serverOf(type: Server['type']): Server {
 function makeStore(server: Server) {
   const store = configureStore({
     reducer: combineReducers({
-      settings: settingsReducer,
+      settingsScrobbling: settingsScrobblingReducer,
       servers: serversReducer,
       listenbrainz: listenbrainzReducer,
       stats: statsReducer,

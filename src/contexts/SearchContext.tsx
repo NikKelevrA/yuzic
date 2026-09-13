@@ -24,9 +24,7 @@ import { useServerUnreachable } from '@/features/connectivity/serverReachability
 import { useTracks } from '@/hooks/tracks';
 import { useApi } from '@/api';
 import { useSelector } from 'react-redux';
-import {
-  selectSearchScope,
-} from '@/utils/redux/selectors/settingsSelectors';
+import { selectSearchScope } from '@/features/settings/search/state';
 import { useDownload } from '@/contexts/DownloadContext';
 import {
   buildDownloadedTrackIdSet,

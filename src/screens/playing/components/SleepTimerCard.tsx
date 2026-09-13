@@ -5,7 +5,8 @@ import { Moon } from 'lucide-react-native';
 import { getBackend } from '@/features/player/activeBackend';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { selectThemeColor, selectSleepTimerPresets } from '@/utils/redux/selectors/settingsSelectors';
+import { selectThemeColor } from '@/features/settings/appearance/state';
+import { selectSleepTimerPresets } from '@/features/settings/home/state';
 import { mmkv } from '@/utils/mmkvStorage';
 import {
   SLEEP_TIMER_STORAGE_KEY,

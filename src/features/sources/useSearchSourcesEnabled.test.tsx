@@ -4,10 +4,8 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { useEnabledSearchSourceIds, useSearchSourceEnabled } from './useSearchSourcesEnabled';
-import settingsReducer, {
-  setSearchSourceEnabled,
-  setDeezerDiscoveryEnabled,
-} from '@/utils/redux/slices/settingsSlice';
+import settingsSearchReducer, { setSearchSourceEnabled } from '@/features/settings/search/state';
+import settingsHomeReducer, { setDeezerDiscoveryEnabled } from '@/features/settings/home/state';
 
 jest.mock('@/hooks/useIsOffline', () => ({
   useIsOffline: () => mockIsOffline,
@@ -17,7 +15,9 @@ jest.mock('@/hooks/useIsOffline', () => ({
 var mockIsOffline = false;
 
 function makeStore() {
-  return configureStore({ reducer: { settings: settingsReducer } });
+  return configureStore({
+    reducer: { settingsSearch: settingsSearchReducer, settingsHome: settingsHomeReducer },
+  });
 }
 
 function wrapper(store: ReturnType<typeof makeStore>) {

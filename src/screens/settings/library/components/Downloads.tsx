@@ -1,8 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectAutoDownloadNewSongs, selectDownloadOnWifiOnly } from '@/utils/redux/selectors/settingsSelectors';
-import { setAutoDownloadNewSongs, setDownloadOnWifiOnly } from '@/utils/redux/slices/settingsSlice';
+import { selectAutoDownloadNewSongs, selectDownloadOnWifiOnly, setAutoDownloadNewSongs, setDownloadOnWifiOnly } from '@/features/settings/downloads/state';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsCardHeader from '../../components/SettingsCardHeader';
 import SettingsDivider from '../../components/SettingsDivider';

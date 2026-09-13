@@ -20,8 +20,7 @@ import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import type { ApiAdapter } from '@/api/types';
 import { useStreamQuality } from './useStreamQuality';
-import { selectPreferredCodec } from '@/utils/redux/selectors/settingsSelectors';
-import type { AudioQuality, PreferredCodec } from '@/utils/redux/slices/settingsSlice';
+import { selectPreferredCodec, type AudioQuality, type PreferredCodec } from '@/features/settings/playback/state';
 
 const CARPLAY_ALBUM_LIMIT = 50;
 const CARPLAY_PLAYLIST_LIMIT = 50;

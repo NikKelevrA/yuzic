@@ -6,7 +6,7 @@ import { QueryKeys } from '@/enums/queryKeys';
 import { useDownloadActions } from '@/contexts/DownloadContext';
 import { useSongsById } from '@/hooks/tracks/useSongsById';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { selectPreferredCodec } from '@/utils/redux/selectors/settingsSelectors';
+import { selectPreferredCodec } from '@/features/settings/playback/state';
 import type { Song } from '@/domain/entities/Song';
 import { isPlayable, type PlayableResource } from '@/features/playback/playableResource';
 import { useStreamQuality } from '@/hooks/useStreamQuality';

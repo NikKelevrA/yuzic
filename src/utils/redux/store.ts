@@ -5,7 +5,16 @@ import { reduxStorage as storage } from '@/utils/mmkvStorage';
 import serversReducer from './slices/serversSlice';
 import downloadersReducer from './slices/downloadersSlice';
 import audiomuseReducer from './slices/audiomuseSlice';
-import settingsReducer from './slices/settingsSlice';
+import settingsAppearanceReducer from '@/features/settings/appearance/state';
+import settingsHomeReducer from '@/features/settings/home/state';
+import settingsSearchReducer from '@/features/settings/search/state';
+import settingsMetadataReducer from '@/features/settings/metadata/state';
+import settingsLyricsReducer from '@/features/settings/lyrics/state';
+import settingsScrobblingReducer from '@/features/settings/scrobbling/state';
+import settingsPlaybackReducer from '@/features/settings/playback/state';
+import settingsDownloadsReducer from '@/features/settings/downloads/state';
+import settingsSyncReducer from '@/features/settings/sync/state';
+import settingsOnboardingReducer from '@/features/settings/onboarding/state';
 import listenbrainzReducer from './slices/listenbrainzSlice';
 import playbackReducer from './slices/playbackSlice';
 import statsReducer from './slices/statsSlice';
@@ -18,37 +27,6 @@ import wantsReducer from './slices/wantsSlice';
 const resetMigrate = (state: any, currentVersion: number): Promise<any> => {
   if (state?._persist?.version === currentVersion) return Promise.resolve(state);
   return Promise.resolve(undefined as any);
-};
-
-// Patches specific fields on version bump while preserving all other user settings.
-const settingsMigrate = (state: any, currentVersion: number): Promise<any> => {
-  if (state?._persist?.version === currentVersion) return Promise.resolve(state);
-  const scope = state?.searchScope;
-  const migratedScope =
-    scope === 'client+external' ? 'client' :
-    scope === 'server+external' ? 'server' :
-    scope ?? 'server';
-
-  // v3 strips the sub-toggle fields the consolidation pass retired
-  // (now-playing follows scrobble, Deezer sub-features follow discovery).
-  // Leaving them in the persisted payload keeps the redux state carrying
-  // dead keys forever, and any code that later resurrects a `deezerSamples-
-  // Enabled` field for a different purpose would read a stale value.
-  const {
-    serverNowPlayingEnabled: _snp,
-    deezerTopTracksEnabled: _dtt,
-    deezerSimilarArtistsEnabled: _dsa,
-    deezerAlbumRecommendationsEnabled: _dar,
-    deezerSamplesEnabled: _ds,
-    deezerPlaylistRecommendationsEnabled: _dpr,
-    ...cleaned
-  } = state ?? {};
-
-  return Promise.resolve({
-    ...cleaned,
-    syncOnAppStart: true,
-    searchScope: migratedScope,
-  });
 };
 
 // v1 gave history entries a shape (query vs. opened entity); before that each
@@ -72,12 +50,21 @@ const searchHistoryMigrate = (state: any, currentVersion: number): Promise<any> 
 const serversPersistConfig = { key: 'servers', storage, blacklist: ['credentialsHydrated'] };
 const downloadersPersistConfig = { key: 'downloaders', storage };
 const audiomusePersistConfig = { key: 'audiomuse', storage };
-const settingsPersistConfig = {
-  key: 'settings',
-  storage,
-  version: 3,
-  migrate: settingsMigrate,
-};
+// Task 4.3: the settings junk drawer (one `settings` key, 57 unrelated
+// fields) is gone — each feature owns its own slice and its own storage key.
+// These are new keys under the rewrite's storage namespace: there is no
+// legacy `settings` blob to migrate from, so no `migrate` function and no
+// version bump here — a fresh install and an upgrading one look the same.
+const settingsAppearancePersistConfig = { key: 'settingsAppearance', storage };
+const settingsHomePersistConfig = { key: 'settingsHome', storage };
+const settingsSearchPersistConfig = { key: 'settingsSearch', storage };
+const settingsMetadataPersistConfig = { key: 'settingsMetadata', storage };
+const settingsLyricsPersistConfig = { key: 'settingsLyrics', storage };
+const settingsScrobblingPersistConfig = { key: 'settingsScrobbling', storage };
+const settingsPlaybackPersistConfig = { key: 'settingsPlayback', storage };
+const settingsDownloadsPersistConfig = { key: 'settingsDownloads', storage };
+const settingsSyncPersistConfig = { key: 'settingsSync', storage };
+const settingsOnboardingPersistConfig = { key: 'settingsOnboarding', storage };
 // Strips the per-server nowPlayingEnabled key the consolidation pass
 // retired — same reasoning as the settings v3 migration.
 const listenbrainzMigrate = (state: any, currentVersion: number): Promise<any> => {
@@ -150,7 +137,16 @@ export const rootReducer = combineReducers({
     servers: serversReducer,
     downloaders: downloadersReducer,
     audiomuse: audiomuseReducer,
-    settings: settingsReducer,
+    settingsAppearance: settingsAppearanceReducer,
+    settingsHome: settingsHomeReducer,
+    settingsSearch: settingsSearchReducer,
+    settingsMetadata: settingsMetadataReducer,
+    settingsLyrics: settingsLyricsReducer,
+    settingsScrobbling: settingsScrobblingReducer,
+    settingsPlayback: settingsPlaybackReducer,
+    settingsDownloads: settingsDownloadsReducer,
+    settingsSync: settingsSyncReducer,
+    settingsOnboarding: settingsOnboardingReducer,
     listenbrainz: listenbrainzReducer,
     playback: playbackReducer,
     stats: statsReducer,
@@ -164,7 +160,16 @@ const persistedReducer = combineReducers({
     servers: persistReducer(serversPersistConfig, serversReducer),
     downloaders: persistReducer(downloadersPersistConfig, downloadersReducer),
     audiomuse: persistReducer(audiomusePersistConfig, audiomuseReducer),
-    settings: persistReducer(settingsPersistConfig, settingsReducer),
+    settingsAppearance: persistReducer(settingsAppearancePersistConfig, settingsAppearanceReducer),
+    settingsHome: persistReducer(settingsHomePersistConfig, settingsHomeReducer),
+    settingsSearch: persistReducer(settingsSearchPersistConfig, settingsSearchReducer),
+    settingsMetadata: persistReducer(settingsMetadataPersistConfig, settingsMetadataReducer),
+    settingsLyrics: persistReducer(settingsLyricsPersistConfig, settingsLyricsReducer),
+    settingsScrobbling: persistReducer(settingsScrobblingPersistConfig, settingsScrobblingReducer),
+    settingsPlayback: persistReducer(settingsPlaybackPersistConfig, settingsPlaybackReducer),
+    settingsDownloads: persistReducer(settingsDownloadsPersistConfig, settingsDownloadsReducer),
+    settingsSync: persistReducer(settingsSyncPersistConfig, settingsSyncReducer),
+    settingsOnboarding: persistReducer(settingsOnboardingPersistConfig, settingsOnboardingReducer),
     listenbrainz: persistReducer(listenbrainzPersistConfig, listenbrainzReducer),
     playback: persistReducer(playbackPersistConfig, playbackReducer),
     stats: persistReducer(statsPersistConfig, statsReducer),

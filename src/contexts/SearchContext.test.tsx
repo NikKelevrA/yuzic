@@ -81,11 +81,11 @@ jest.mock('@/api/musicbrainz', () => ({
 let mockSearchScope: 'client' | 'server' = 'server';
 jest.mock('react-redux', () => ({
   useSelector: (selector: (state: unknown) => unknown) => selector({
-    settings: { searchScope: mockSearchScope },
+    settingsSearch: { searchScope: mockSearchScope },
   }),
 }));
-jest.mock('@/utils/redux/selectors/settingsSelectors', () => ({
-  selectSearchScope: (s: { settings: { searchScope: string } }) => s.settings.searchScope,
+jest.mock('@/features/settings/search/state', () => ({
+  selectSearchScope: (s: { settingsSearch: { searchScope: string } }) => s.settingsSearch.searchScope,
 }));
 
 function wrapper({ children }: { children: React.ReactNode }) {

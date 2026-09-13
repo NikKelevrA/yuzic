@@ -1,8 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectPlayingBarAction } from '@/utils/redux/selectors/settingsSelectors';
-import { setPlayingBarAction, PlayingBarAction } from '@/utils/redux/slices/settingsSlice';
+import { selectPlayingBarAction, setPlayingBarAction, PlayingBarAction } from '@/features/settings/appearance/state';
 import { PLAYING_BAR_ACTIONS } from '@/screens/playing/playingBar/actions/Actions';
 import SettingsIconSelectCard from '../../components/SettingsIconSelectCard';
 
