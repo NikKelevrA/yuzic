@@ -108,18 +108,48 @@ export function tagSegment(
   return [...segments, { startIndex, length, source }]
 }
 
-// Every segment starting at or after `atIndex` shifts right by `insertedCount`.
+// Segments starting at or after `atIndex` shift right by `insertedCount`;
+// segments entirely before it are untouched; a segment that *spans* the insert
+// point is split in two around it.
+//
+// The third case used to be missing, and it is the one "play next" hits every
+// time: inserting after the current track means inserting into the middle of
+// whatever album or playlist is playing. The spanning segment was neither
+// shifted nor lengthened, so it went on claiming the same three slots — which
+// after the insert were a different three. The inserted track was reported as
+// part of the album, and the album's last track was reported as outside it.
+// Smart Shuffle read that as "this track is already in the selection" and
+// Smooth Transitions drew a context boundary in the wrong place.
+//
+// Splitting rather than growing, because the inserted track is genuinely not
+// part of the album it landed in. Growing would also not work: `segmentAt`
+// resolves an index to the first covering segment, and `tagSegment` appends,
+// so a grown album segment would win over the adhoc tag written afterwards.
 export function shiftSegmentsAfterInsert(
   segments: QueueSegment[],
   atIndex: number,
   insertedCount: number,
 ): QueueSegment[] {
   if (insertedCount <= 0) return segments
-  return segments.map(seg =>
-    seg.startIndex >= atIndex
-      ? { ...seg, startIndex: seg.startIndex + insertedCount }
-      : seg
-  )
+  return segments.flatMap(seg => {
+    if (seg.startIndex >= atIndex) {
+      return [{ ...seg, startIndex: seg.startIndex + insertedCount }]
+    }
+    const segEnd = seg.startIndex + seg.length
+    if (segEnd <= atIndex) return [seg]
+
+    // Spans the insert point: the part before it stays, the part after it
+    // moves along by what was inserted.
+    const headLength = atIndex - seg.startIndex
+    return [
+      { ...seg, length: headLength },
+      {
+        ...seg,
+        startIndex: atIndex + insertedCount,
+        length: seg.length - headLength,
+      },
+    ]
+  })
 }
 
 // Segments entirely before the removed range are untouched, segments entirely

@@ -218,6 +218,27 @@ describe('playNext', () => {
     ]);
   });
 
+  it('does not mark a hand-queued track as part of the album it landed in', () => {
+    // The whole reason "play next" touches the segment map: it inserts into
+    // the middle of whatever album is playing. The album segment used to go on
+    // claiming the same three slots, which after the insert were a different
+    // three — so this track read as part of the album, and the album's last
+    // track read as outside it.
+    const h = harness({
+      currentIndex: 0,
+      segments: [
+        { startIndex: 0, length: 3, source: { kind: 'user', contextId: 'al1', contextType: 'album' } },
+      ] as QueueSegment[],
+    });
+
+    h.controller.playNext(song('9'));
+
+    expect(segmentAt(h.segments, 1)?.source).toMatchObject({ contextType: 'adhoc' });
+    expect(segmentAt(h.segments, 0)?.source).toMatchObject({ contextId: 'al1' });
+    expect(segmentAt(h.segments, 2)?.source).toMatchObject({ contextId: 'al1' });
+    expect(segmentAt(h.segments, 3)?.source).toMatchObject({ contextId: 'al1' });
+  });
+
   it('leaves the segments alone when the track was only moved', () => {
     // Nothing was added, so the track keeps whatever context it was queued
     // under — inventing an adhoc segment here would split the album it is

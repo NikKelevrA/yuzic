@@ -182,6 +182,58 @@ describe('queue segment tracking', () => {
   })
 })
 
+describe('shiftSegmentsAfterInsert, inserting inside a segment', () => {
+  const album = (startIndex: number, length: number, contextId = 'al1'): QueueSegment => ({
+    startIndex,
+    length,
+    source: { kind: 'user', contextId, contextType: 'album' },
+  })
+
+  it('splits a segment the insert lands inside', () => {
+    // "Play next" hits this every time: inserting after the current track is
+    // inserting into the middle of whatever album is playing.
+    expect(shiftSegmentsAfterInsert([album(0, 3)], 1, 1)).toEqual([
+      album(0, 1),
+      album(2, 2),
+    ])
+  })
+
+  it('leaves the inserted slot claimed by nothing', () => {
+    // The point of the split. Before it, the album segment went on claiming
+    // the same three slots — which after the insert were a different three —
+    // so the inserted track read as part of the album and the album's last
+    // track read as outside it.
+    const shifted = shiftSegmentsAfterInsert([album(0, 3)], 1, 1)
+
+    expect(segmentAt(shifted, 1)).toBeUndefined()
+    expect(segmentAt(shifted, 3)?.source).toMatchObject({ contextId: 'al1' })
+  })
+
+  it('does not split when the insert lands on the segment boundary', () => {
+    // At the start of a segment is not inside it; the whole segment moves.
+    expect(shiftSegmentsAfterInsert([album(2, 2)], 2, 1)).toEqual([album(3, 2)])
+  })
+
+  it('leaves a segment that ends where the insert begins alone', () => {
+    expect(shiftSegmentsAfterInsert([album(0, 2)], 2, 1)).toEqual([album(0, 2)])
+  })
+
+  it('handles more than one inserted track', () => {
+    expect(shiftSegmentsAfterInsert([album(0, 4)], 2, 3)).toEqual([
+      album(0, 2),
+      album(5, 2),
+    ])
+  })
+
+  it('still shifts the segments that come after', () => {
+    expect(shiftSegmentsAfterInsert([album(0, 2, 'a'), album(2, 2, 'b')], 1, 1)).toEqual([
+      album(0, 1, 'a'),
+      album(2, 1, 'a'),
+      album(3, 2, 'b'),
+    ])
+  })
+})
+
 describe('resourcesFromPlayerQueue', () => {
   const provenance = serverProvenance('srv-1');
 
