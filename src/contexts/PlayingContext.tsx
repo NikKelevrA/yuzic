@@ -418,18 +418,26 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     // bare `return`, so a queue that was displayed but never handed to the
     // player looked identical from the outside to one that had been restored
     // properly — the app showed the track and play did nothing, with nothing
-    // anywhere to say which guard had stopped it. Some of these are ordinary
-    // (the library has not hydrated yet, and the effect will run again), so
-    // this is deliberately not a warning.
-    const blocked =
+    // anywhere to say which guard had stopped it.
+    //
+    // Split by whether a restore was *wanted*. "No active server" and "nothing
+    // persisted" mean there was nothing to restore, which is most launches and
+    // is silent. The other three mean something should have come back and did
+    // not, which is what someone reporting "my queue disappeared" is
+    // describing — so those say so, once, where a support log will find them.
+    const nothingToRestore =
       !currentServerId ? 'no active server'
-      : persistedServerIdForPlayback !== currentServerId ? `queue belongs to another server (${persistedServerIdForPlayback})`
       : persistedQueueIds.length === 0 ? 'nothing persisted'
+      : null;
+    if (nothingToRestore) return;
+
+    const blocked =
+      persistedServerIdForPlayback !== currentServerId ? `queue belongs to another server (${persistedServerIdForPlayback})`
       : queueRef.current.length > 0 ? 'a queue is already loaded'
       : libraryTracks.length === 0 ? 'library not hydrated yet'
       : null;
     if (blocked) {
-      console.log(`[player] not restoring the persisted queue: ${blocked}`);
+      console.warn(`[player] not restoring the persisted queue: ${blocked}`);
       return;
     }
 

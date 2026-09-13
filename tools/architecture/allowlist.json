@@ -149,7 +149,6 @@
     "as-any src/screens/onboarding/libraries/index.tsx",
     "as-any src/screens/settings/library/components/LibrarySelect.tsx",
     "as-any src/utils/redux/store.ts",
-    "console-log src/contexts/PlayingContext.tsx",
     "double-cast src/utils/useSheetRef.ts"
   ],
   "unused-exports": [
