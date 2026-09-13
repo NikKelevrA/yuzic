@@ -39,13 +39,14 @@ import { buildTrackItem } from '@/utils/builders/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
-import { reconcileUnshuffledQueue, resourcesFromPlayerQueue, QueueSegment, segmentAt } from './playingQueue';
+import { resourcesFromPlayerQueue, QueueSegment, segmentAt } from './playingQueue';
 import { isRepeatLoop } from './repeatPlay';
 import { createTransportController } from './transportController';
 import { createQueueController } from './queueController';
 import { createAutoplayCoordinator, type AutoplayCoordinator } from './autoplayCoordinator';
 import { createPlaybackCoordinator } from './playbackCoordinator';
 import { createPlaybackStarters, type StartableCollection } from './playbackStarters';
+import { createShuffleController } from './shuffleController';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
@@ -353,7 +354,6 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const shuffleModeRef = useRef<ShuffleMode>('off');
   const autoplayEnabledRef = useRef(false);
   const isPlayingRef = useRef(false);
-  const isShufflingRef = useRef(false);
   const providersRef = useRef<QueueFillProvider[]>([]);
   const fillQueueIfLowRef = useRef<() => Promise<void>>(async () => {});
   // Assigned during render below, like `loadQueueRef` and for the same reason:
@@ -1059,74 +1059,35 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [api, autoplay, playSong, playSongs, t]);
 
-  // Cycles off -> shuffle -> smart -> off, matching the shuffle button's tap
-  // behavior. 'smart' keeps the shuffled order from the previous step and
-  // additionally injects related tracks via injectSmartShuffleTracks; it does
-  // not re-snapshot originalQueueRef, so turning shuffle off from 'smart'
-  // still restores the pre-shuffle queue (reconciled for any live edits).
-  const cycleShuffleMode = useCallback(async () => {
-    if (isShufflingRef.current) return;
-    isShufflingRef.current = true;
-    const wasPlaying = isPlayingRef.current;
-    const savedPosition = getBackend().getProgress().position;
-    const current = shuffleModeRef.current;
-    try {
-      if (current === 'off') {
-        originalQueueRef.current = queueRef.current;
-        const currentResource = queueRef.current[currentIndexRef.current];
-        const rest = queueRef.current.filter((_, i) => i !== currentIndexRef.current);
-        const shuffled = [currentResource, ...shuffleArray(rest)]
-          .filter((resource): resource is PlayableResource => Boolean(resource));
-        queueRef.current = shuffled;
-        queueSegmentsRef.current = [{
-          startIndex: 0,
-          length: shuffled.length,
-          source: { kind: 'user', contextId: 'shuffled', contextType: 'adhoc' },
-        }];
-        currentIndexRef.current = 0;
-        setCurrentIndex(0);
-        setShuffleMode('shuffle');
-        bumpQueue();
-        await loadQueue(shuffled, 0, wasPlaying, savedPosition);
-      } else if (current === 'shuffle') {
-        setShuffleMode('smart');
-        bumpQueue();
-        await injectSmartShuffleTracks(wasPlaying, savedPosition);
-      } else if (originalQueueRef.current) {
-        // addToQueue/playNext/addCollectionToQueue/etc. only ever mutate the
-        // live (shuffled) queueRef, never the pre-shuffle snapshot — restoring
-        // that snapshot verbatim would silently drop anything added while
-        // shuffled, and resurrect anything removed (e.g. a failed track).
-        // Anything Smart Shuffle injected isn't in the snapshot either, so it
-        // survives here too — appended after the restored original order.
-        const original = reconcileUnshuffledQueue(
-          originalQueueRef.current,
-          queueRef.current,
-          resource => resource.song.localId,
-        );
-        const currentId = currentSongRef.current?.song.localId;
-        const idx = currentId ? original.findIndex(resource => resource.song.localId === currentId) : 0;
-        const adjustedIdx = idx === -1 ? 0 : idx;
-        queueRef.current = original;
-        queueSegmentsRef.current = [{
-          startIndex: 0,
-          length: original.length,
-          source: { kind: 'user', contextId: 'restored', contextType: 'adhoc' },
-        }];
-        currentIndexRef.current = adjustedIdx;
-        setCurrentIndex(adjustedIdx);
-        setShuffleMode('off');
-        originalQueueRef.current = null;
-        bumpQueue();
-        await loadQueue(original, adjustedIdx, wasPlaying, savedPosition);
-      } else {
-        setShuffleMode('off');
-        bumpQueue();
-      }
-    } finally {
-      isShufflingRef.current = false;
-    }
-  }, [bumpQueue, loadQueue, injectSmartShuffleTracks]);
+  /**
+   * The shuffle cycle lives in `shuffleController`, where the reason restoring
+   * is a *reconcile* rather than an assignment is written down: every queue
+   * edit made while shuffled touched the live queue and never the snapshot.
+   */
+  const shuffle = useMemo(() => createShuffleController({
+    backend: getBackend,
+    queue: () => queueRef.current,
+    setQueue: resources => { queueRef.current = resources; },
+    setSegments: segments => { queueSegmentsRef.current = segments; },
+    currentIndex: () => currentIndexRef.current,
+    setCurrentIndex: index => {
+      currentIndexRef.current = index;
+      setCurrentIndex(index);
+    },
+    currentResource: () => currentSongRef.current,
+    shuffleMode: () => shuffleModeRef.current,
+    setShuffleMode,
+    originalQueue: () => originalQueueRef.current,
+    setOriginalQueue: resources => { originalQueueRef.current = resources; },
+    isPlaying: () => isPlayingRef.current,
+    bumpQueue,
+    loadQueue: (resources, startIndex, play, seekToPosition) =>
+      loadQueueRef.current(resources, startIndex, play, seekToPosition),
+    injectSmartShuffleTracks,
+  }), [bumpQueue, injectSmartShuffleTracks]);
+
+  const cycleShuffleMode = shuffle.cycleShuffleMode;
+
 
   const toggleRepeat = useCallback(() => {
     setRepeatMode(prev => {
