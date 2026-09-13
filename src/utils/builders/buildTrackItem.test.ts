@@ -4,6 +4,12 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { buildTrackItem } from './buildTrackItem';
 
+// `buildCover` reads the active server out of the Redux store to sign cover
+// URLs, so importing it for real drags the whole store graph into a unit test
+// about field mapping. Mocked because it is a store boundary, not because it
+// is inconvenient — what it returns is covered by its own tests, and every
+// fixture here has `cover: { kind: 'none' }`, for which the real function also
+// answers null.
 jest.mock('./buildCover', () => ({
   buildCover: () => null,
 }));
