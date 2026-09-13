@@ -45,6 +45,7 @@ import { reconcileUnshuffledQueue, resourceFromMediaItem, resourcesFromPlayerQue
 import { isRepeatLoop } from './repeatPlay';
 import { createTransportController } from './transportController';
 import { createQueueController } from './queueController';
+import { createAutoplayCoordinator } from './autoplayCoordinator';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { useDownloadActions } from './DownloadContext';
 import { usePlaybackSink } from './PlaybackSinkContext';
@@ -60,9 +61,8 @@ import {
   QueueFillProvider,
   createNativeSimilarityQueueFillProvider,
   createAudiomuseQueueFillProvider,
-  resolveQueueFillProvider,
 } from './queueProviders';
-import { buildFillRequest, shouldFillQueue } from './autoplayFill';
+import { shouldFillQueue } from './autoplayFill';
 import { buildRestoredQueue } from './restoreQueue';
 import { canFillQueueFrom } from '@/utils/playback/contentKind';
 import { hasReissuableUrl } from '@/domain/playback/ContentKind';
@@ -873,36 +873,6 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, [activeMediaItem, bumpQueue]);
 
   /**
-   * Runs a queue-fill provider (`queueProviders.ts`, domain-typed) against
-   * the current queue and hands back playable resources — the shared
-   * adaptation used by Autoplay's fill, Smart Shuffle's injection, and Play
-   * Similar.
-   *
-   * `excludeIds` is read from the live queue's `localId`s: the provider
-   * interface keys exclusion on identity, and only `localId` is guaranteed to
-   * relate to what the provider itself returns. A queued song with no
-   * `localId` yet is simply not excludable by identity and is skipped here,
-   * same as it would be by any other identity-keyed lookup.
-   */
-  const fetchQueueExtension = useCallback(async (
-    provider: QueueFillProvider,
-    recentSongs: { song: Song }[],
-    excludeLocalIds: Iterable<LocalId | undefined>,
-    count: number,
-  ): Promise<PlayableResource[]> => {
-    const extension = await provider.fetchExtension({
-      recentSongs: recentSongs.map(r => ({ nativeId: r.song.nativeId })),
-      excludeIds: new Set([...excludeLocalIds].filter((id): id is LocalId => Boolean(id))),
-      count,
-    });
-    return playableOnly(
-      extension
-        .map(resolvePlayableSongRef.current)
-        .filter((resource): resource is PlayableResource => Boolean(resource))
-    );
-  }, []);
-
-  /**
    * Builds the stream URL for a song at the point of playing, never earlier.
    *
    * A local download takes priority and needs no URL at all. Otherwise the
@@ -969,69 +939,33 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // reason.
   loadQueueRef.current = loadQueue;
 
-  // Autoplay: fetches more tracks once the queue is running low, regardless
-  // of shuffle mode. Independent of Smart Shuffle — see injectSmartShuffleTracks.
-  const fillQueueIfLow = useCallback(async () => {
-    if (isFillingRef.current) return;
-    isFillingRef.current = true;
-    try {
-      const provider = resolveQueueFillProvider(providersRef.current);
-      if (!provider) return;
-      const request = buildFillRequest(queueRef.current, currentIndexRef.current);
-      const playable = await fetchQueueExtension(
-        provider,
-        request.recentResources,
-        queueRef.current.map(resource => resource.song.localId),
-        request.count,
-      );
-      if (!playable.length) return;
-      const insertAt = queueRef.current.length;
-      queueRef.current = [...queueRef.current, ...playable];
-      queueSegmentsRef.current = tagSegment(queueSegmentsRef.current, insertAt, playable.length, {
-        kind: 'autoplay-fill',
-        contextId: `autoplay-${insertAt}`,
-      });
-      getBackend().addMediaItems(toMediaItems(playable));
-      bumpQueue();
-    } catch (err) {
-      console.warn('Autoplay fill failed', err);
-    } finally {
-      isFillingRef.current = false;
-    }
-  }, [bumpQueue, fetchQueueExtension, toMediaItems]);
+  /**
+   * Autoplay and Smart Shuffle live in `autoplayCoordinator`: both extend the
+   * queue with tracks nobody chose, and they differ only in where the new
+   * tracks go. The re-entry guard that stopped a slow fill being started twice
+   * lives there now too, as closure state rather than a provider ref.
+   */
+  const autoplay = useMemo(() => createAutoplayCoordinator({
+    backend: getBackend,
+    providers: () => providersRef.current,
+    queue: () => queueRef.current,
+    setQueue: resources => { queueRef.current = resources; },
+    segments: () => queueSegmentsRef.current,
+    setSegments: segments => { queueSegmentsRef.current = segments; },
+    currentIndex: () => currentIndexRef.current,
+    resolvePlayableSong: song => resolvePlayableSongRef.current(song),
+    toMediaItems,
+    bumpQueue,
+    loadQueue: (resources, startIndex, play, seekToPosition) =>
+      loadQueueRef.current(resources, startIndex, play, seekToPosition),
+    logWarning: (message, error) => console.warn(message, error),
+  }), [bumpQueue, toMediaItems]);
+
+  const { fillQueueIfLow, injectSmartShuffleTracks } = autoplay;
   useEffect(() => { fillQueueIfLowRef.current = fillQueueIfLow; }, [fillQueueIfLow]);
 
-  // Smart Shuffle's one-shot injection: fetches related tracks and shuffles
-  // them into the remainder of the queue (everything after the current
-  // track), keeping the already-played prefix untouched.
-  const injectSmartShuffleTracks = useCallback(async (wasPlaying: boolean, savedPosition: number) => {
-    try {
-      const provider = resolveQueueFillProvider(providersRef.current);
-      if (!provider) return;
-      const request = buildFillRequest(queueRef.current, currentIndexRef.current);
-      const playable = await fetchQueueExtension(
-        provider,
-        request.recentResources,
-        queueRef.current.map(resource => resource.song.localId),
-        request.count,
-      );
-      if (!playable.length) return;
-      const before = queueRef.current.slice(0, currentIndexRef.current + 1);
-      const after = queueRef.current.slice(currentIndexRef.current + 1);
-      const merged = shuffleArray([...after, ...playable]);
-      const fullQueue = [...before, ...merged];
-      queueRef.current = fullQueue;
-      queueSegmentsRef.current = [{
-        startIndex: 0,
-        length: fullQueue.length,
-        source: { kind: 'user', contextId: 'smart-shuffled', contextType: 'adhoc' },
-      }];
-      bumpQueue();
-      await loadQueue(fullQueue, currentIndexRef.current, wasPlaying, savedPosition);
-    } catch (err) {
-      console.warn('Smart Shuffle inject failed', err);
-    }
-  }, [bumpQueue, fetchQueueExtension, loadQueue]);
+  useEffect(() => { fillQueueIfLowRef.current = fillQueueIfLow; }, [fillQueueIfLow]);
+
 
   const playSong = useCallback(async (song: Song) => {
     const resource = resolvePlayableSong(song);
@@ -1261,14 +1195,11 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // no real album/playlist here to construct a `PlayableCollection` for.
   const playSimilar = useCallback(async (song: Song) => {
     try {
-      const provider = resolveQueueFillProvider(providersRef.current);
-      const similar = provider
-        ? await fetchQueueExtension(provider, [{ song }], [song.localId], 20)
-        : playableOnly(
-            (await api.similar.getSimilarSongs(song.nativeId))
-              .map(resolvePlayableSongRef.current)
-              .filter((resource): resource is PlayableResource => Boolean(resource))
-          );
+      const similar = await autoplay.relatedTo(song, 20) ?? playableOnly(
+        (await api.similar.getSimilarSongs(song.nativeId))
+          .map(resolvePlayableSongRef.current)
+          .filter((resource): resource is PlayableResource => Boolean(resource))
+      );
       const others = similar.filter(resource => resource.song.nativeId !== song.nativeId);
       const songs = [song, ...shuffleArray(others.map(resource => resource.song))];
       await playSongs(songs, { contextId: 'similar' });
@@ -1276,7 +1207,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     } catch {
       await playSong(song);
     }
-  }, [api, fetchQueueExtension, playSong, playSongs, t]);
+  }, [api, autoplay, playSong, playSongs, t]);
 
   // Cycles off -> shuffle -> smart -> off, matching the shuffle button's tap
   // behavior. 'smart' keeps the shuffled order from the previous step and
