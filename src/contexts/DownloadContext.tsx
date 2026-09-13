@@ -291,6 +291,20 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
   });
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(() => new Set());
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
+  /**
+   * The queue's own view of the jobs, read without re-rendering.
+   *
+   * Genuinely a pair with `state.jobs`, not a mirror of it: the queue runs
+   * outside React and must see an edit immediately — `processDownloadQueue`
+   * reads this between awaits — while `getCollectionDownloadState` has to
+   * re-render when it changes. `updateJobs` writes both, in that order, and is
+   * the only writer.
+   *
+   * There used to be an effect assigning `jobsRef.current = state.jobs` on
+   * every change, which made a second writer for a value its own updater
+   * already maintained: a ref written both synchronously by the code that
+   * changed it and again, later, by a render it did not control.
+   */
   const jobsRef = useRef<PersistedDownloadJob[]>(state.jobs);
   const jobRunnerRef = useRef(createDownloadJobRunner<Song, PersistedDownloadJob>());
   const activeDownloadsRef = useRef<Map<string, FileSystem.DownloadResumable>>(new Map());
@@ -381,10 +395,6 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     void verify();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    jobsRef.current = state.jobs;
-  }, [state.jobs]);
 
   const updateTracks = useCallback((updater: (tracks: LocalDownloadedTrackEntry[]) => LocalDownloadedTrackEntry[]) => {
     setState(current => {
