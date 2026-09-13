@@ -12,6 +12,7 @@ import { selectDownloadersForActiveServer, downloaderCredentialScope } from '@/u
 import { selectActiveServerId, selectCredentialsHydrated } from '@/utils/redux/selectors/serversSelectors'
 import { getCredentials } from '@/state/credentialCache'
 import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
+import type { DownloaderQueueItem } from './queueItem'
 
 export { downloadErrorKey } from './errorKeys'
 
@@ -86,20 +87,23 @@ export type DownloaderDefinition = {
   downloadAlbum?(config: DownloaderConfig, req: AlbumDownloadRequest, options?: DownloadOptions): Promise<DownloadResult>
   downloadTrack?(config: DownloaderConfig, req: TrackDownloadRequest): Promise<DownloadResult>
   /**
-   * Reads the transfer queue and reports which items disappeared since the
-   * previous read — the global completion watcher uses these disappearances to
-   * kick a server rescan so downloaded music appears without a manual pull.
-   * Typed loosely because each downloader has its own record shape and the
-   * watcher only needs the count of finished items.
+   * Read the transfer queue, in the one shape every surface understands.
    *
-   * Downloader-operational, not a product capability: it's how a downloader
-   * reports progress on units it already fills, not a unit of its own — so it
-   * deliberately is not a capability: nothing asks "who can poll a queue".
+   * Normalising here rather than at each reader is the point. This used to
+   * returned the downloader's own records, typed
+   * `T extends { id: string }` and reached through two `as any` casts — so
+   * everything downstream either knew all three record shapes or knew none of
+   * them, and the surfaces that needed detail chose the former.
+   *
+   * Diffing moved out with the types: comparing two reads by id needs nothing
+   * downloader-specific, and it was being done three times, once per record
+   * shape. See `finishedSince`.
+   *
+   * Downloader-operational, not a product capability: it is how a downloader
+   * reports progress on units it already fills, not a unit of its own — nobody
+   * asks "who can poll a queue".
    */
-  fetchQueueWithDiff<T extends { id: string }>(
-    config: DownloaderConfig,
-    previous: T[]
-  ): Promise<{ currentQueue: T[]; finishedItems: T[] }>
+  fetchQueue(config: DownloaderConfig): Promise<DownloaderQueueItem[]>
 }
 
 /** All three downloaders authenticate the same way: a server URL plus an API key. */
@@ -127,7 +131,18 @@ const lidarrDownloader: DownloaderDefinition = {
   auth: apiKeyAuth,
   // Lidarr is album-only — no `acquisition.track` slot.
   downloadAlbum: lidarrDownloadAlbum,
-  fetchQueueWithDiff: lidarr.fetchQueueWithDiff as DownloaderDefinition['fetchQueueWithDiff'],
+  fetchQueue: async (config) => (await lidarr.fetchQueue(lidarrConfigOf(config))).map(record => ({
+    id: record.id,
+    percentComplete: record.percentComplete,
+    title: record.albumTitle,
+    artistName: record.artistName,
+    // Lidarr keeps a finished import in the queue while it moves the files,
+    // and `trackedDownloadState` is what says so — `status` alone stays
+    // "completed" through the import that has not happened yet.
+    active: (record.trackedDownloadState ?? '').toLowerCase() !== 'imported',
+    // It resolved the album by MBID or id before it ever queued anything.
+    identity: 'exact' as const,
+  })),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await lidarr.testConnection(lidarrConfigOf(config as DownloaderConfig))
     return { ok: Boolean(ok) }
@@ -172,8 +187,15 @@ const slskdDownloader: DownloaderDefinition = {
   // slskd does both units.
   downloadAlbum: slskdDownloadAlbum,
   downloadTrack: slskdDownloadTrack,
-  fetchQueueWithDiff: ((config: DownloaderConfig, previous: { id: string }[]) =>
-    slskd.fetchQueueWithDiff(slskdConfigOf(config), previous as any)) as DownloaderDefinition['fetchQueueWithDiff'],
+  fetchQueue: async (config) => (await slskd.fetchQueue(slskdConfigOf(config))).map(record => ({
+    id: record.id,
+    percentComplete: record.percentComplete,
+    title: record.title,
+    artistName: record.artistName,
+    active: record.state.toLowerCase() !== 'completed',
+    // Soulseek has no album identity — the title came off a remote path.
+    identity: 'loose' as const,
+  })),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await slskd.testConnection(slskdConfigOf(config as DownloaderConfig))
     return { ok }
@@ -206,8 +228,17 @@ const soulsyncDownloader: DownloaderDefinition = {
   auth: apiKeyAuth,
   // SoulSync is track-only — no `acquisition.album` slot.
   downloadTrack: soulsyncDownloadTrack,
-  fetchQueueWithDiff: ((config: DownloaderConfig, previous: { id: string }[]) =>
-    soulsync.fetchQueueWithDiff(soulsyncConfigOf(config), previous as any)) as DownloaderDefinition['fetchQueueWithDiff'],
+  fetchQueue: async (config) => (await soulsync.fetchQueue(soulsyncConfigOf(config))).map(record => ({
+    id: record.id,
+    percentComplete: record.progress,
+    // The album, not the track: this is matched against an album the listener
+    // is looking at, and a single track's name would never match one.
+    title: record.album || record.title,
+    artistName: record.artist,
+    active: record.status.toLowerCase() !== 'completed',
+    // SoulSync searches by name, so what it found is a best effort too.
+    identity: 'loose' as const,
+  })),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await soulsync.testConnection(soulsyncConfigOf(config as DownloaderConfig))
     return { ok }

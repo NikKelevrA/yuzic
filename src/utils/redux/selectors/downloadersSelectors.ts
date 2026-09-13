@@ -66,7 +66,6 @@ export const downloaderSelectors = Object.fromEntries(
 export const selectLidarrAuthenticated = downloaderSelectors.lidarr.isAuthenticated;
 export const selectSlskdAuthenticated = downloaderSelectors.slskd.isAuthenticated;
 export const useLidarrConfig = downloaderSelectors.lidarr.useConfig;
-export const useSlskdConfig = downloaderSelectors.slskd.useConfig;
 
 const selectSlskdConnection = createSelector(
   [selectDownloadersForActiveServer],

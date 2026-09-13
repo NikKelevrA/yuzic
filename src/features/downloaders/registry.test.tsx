@@ -89,7 +89,7 @@ describe('downloader units', () => {
   it('gives every downloader at least one unit and a way to read its queue', () => {
     for (const def of ALL_DOWNLOADERS) {
       expect(Boolean(def.downloadAlbum || def.downloadTrack)).toBe(true);
-      expect(typeof def.fetchQueueWithDiff).toBe('function');
+      expect(typeof def.fetchQueue).toBe('function');
       // The success toast is looked up by these keys, so a downloader that
       // handles a unit has to name the string for it.
       if (def.downloadAlbum) expect(def.albumAddedKey).toBeTruthy();
@@ -102,7 +102,7 @@ describe('downloader units', () => {
  * Each downloader authenticates the same
  * way (an apiKey tier), wires `testConnection` to its existing per-provider
  * function, and declares an `acquisition.*` slot for exactly the units it
- * implements above. `fetchQueueWithDiff` stays downloader-operational and is
+ * implements above. `fetchQueue` stays downloader-operational and is
  * deliberately absent from `slots` — it isn't a product capability.
  */
 describe('downloaders as providers', () => {

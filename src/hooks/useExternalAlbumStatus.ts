@@ -1,35 +1,35 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
 
 import { useAlbums } from '@/hooks/albums';
-import { QueryKeys } from '@/enums/queryKeys';
 import type { Album } from '@/domain/entities/Album';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
-import * as lidarr from '@/api/lidarr';
-import * as slskd from '@/api/slskd';
-import {
-  useLidarrConfig,
-  selectLidarrAuthenticated,
-  useSlskdConfig,
-  selectSlskdAuthenticated,
-} from '@/utils/redux/selectors/downloadersSelectors';
-import { normalize } from '@/utils/normalize';
-import { matchesQueuedRelease } from './externalAlbumMatch';
+import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
+import { matchesAlbum } from '@/features/downloaders/queueItem';
+import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';
 
 export type ExternalAlbumStatus =
   | { kind: 'in_library' }
-  | { kind: 'downloading'; progress: number; source: 'lidarr' | 'slskd' }
+  | { kind: 'downloading'; progress: number; source: DownloaderId }
   | { kind: 'none' };
 
+/**
+ * Whether a browsed album is already owned, being fetched, or neither.
+ *
+ * Reads the shared downloader queue rather than opening its own. It used to
+ * run two React Query polls of its own — Lidarr and slskd, every twelve
+ * seconds — with the matching for each written out here by name: a normalised
+ * string comparison for one, a fuzzy directory match for the other, and
+ * SoulSync missing entirely because nobody had added a third branch.
+ *
+ * That put provider knowledge in a hook mounted by every album row on screen,
+ * and it put a third poller on a server that already had two. Both are gone:
+ * the downloader normalises its own records (see `DownloaderQueueItem`) and
+ * says how confidently its titles identify an album, so the comparison here is
+ * one call that names nobody.
+ */
 export function useExternalAlbumStatus(album: Album | null): ExternalAlbumStatus {
   const { albums: libraryAlbums } = useAlbums();
-
-  const lidarrConfig = useLidarrConfig();
-  const isLidarrConnected = useSelector(selectLidarrAuthenticated);
-
-  const slskdConfig = useSlskdConfig();
-  const isSlskdConnected = useSelector(selectSlskdAuthenticated);
+  const { queues } = useDownloadersQueue();
 
   const isInLibrary = useMemo(() => {
     if (!album) return false;
@@ -39,44 +39,21 @@ export function useExternalAlbumStatus(album: Album | null): ExternalAlbumStatus
     ) !== null;
   }, [libraryAlbums, album]);
 
-  const { data: lidarrQueue } = useQuery({
-    queryKey: [QueryKeys.LidarrQueue],
-    queryFn: () => lidarr.fetchQueue(lidarrConfig),
-    enabled: !isInLibrary && isLidarrConnected && !!album,
-    staleTime: 0,
-    refetchInterval: 12_000,
-  });
-
-  const { data: slskdQueue } = useQuery({
-    queryKey: [QueryKeys.SlskdQueue],
-    queryFn: () => slskd.fetchQueue(slskdConfig),
-    enabled: !isInLibrary && isSlskdConnected && !!album,
-    staleTime: 0,
-    refetchInterval: 12_000,
-  });
-
   return useMemo<ExternalAlbumStatus>(() => {
+    // Owned beats fetching: an album that arrived while its transfer was still
+    // showing should read as in the library, not as still coming.
     if (isInLibrary) return { kind: 'in_library' };
     if (!album) return { kind: 'none' };
 
-    const normTitle = normalize(album.title);
-    const normArtist = normalize(album.artist.name);
+    const identity = { title: album.title, artist: album.artist.name };
 
-    if (lidarrQueue) {
-      const match = lidarrQueue.find(
-        r => normalize(r.albumTitle) === normTitle && normalize(r.artistName) === normArtist
-      );
-      if (match) return { kind: 'downloading', progress: match.percentComplete, source: 'lidarr' };
-    }
-
-    if (slskdQueue) {
-      const match = slskdQueue.find(r => {
-        if (r.state.toLowerCase() === 'completed') return false;
-        return matchesQueuedRelease(r, { title: album.title, artist: album.artist.name });
-      });
-      if (match) return { kind: 'downloading', progress: match.percentComplete, source: 'slskd' };
+    for (const queue of queues) {
+      const match = queue.items.find(item => item.active && matchesAlbum(item, identity));
+      if (match) {
+        return { kind: 'downloading', progress: match.percentComplete, source: queue.id };
+      }
     }
 
     return { kind: 'none' };
-  }, [isInLibrary, album, lidarrQueue, slskdQueue]);
+  }, [isInLibrary, album, queues]);
 }
