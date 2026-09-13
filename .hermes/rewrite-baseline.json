@@ -1,21 +1,21 @@
 {
   "schema": "yuzic-architecture-baseline/2",
   "size": {
-    "productionFiles": 695,
-    "productionLines": 64587,
-    "testFiles": 194,
-    "testLines": 21191
+    "productionFiles": 698,
+    "productionLines": 64687,
+    "testFiles": 195,
+    "testLines": 21325
   },
   "tests": {
-    "suites": 196,
-    "tests": 1499,
-    "passed": 1499,
+    "suites": 197,
+    "tests": 1505,
+    "passed": 1505,
     "failed": 0,
     "coverage": {
-      "lines": 65.92,
-      "statements": 63.71,
-      "functions": 53.08,
-      "branches": 57.78
+      "lines": 66.1,
+      "statements": 63.87,
+      "functions": 53.53,
+      "branches": 57.83
     }
   },
   "cycles": [
@@ -25,7 +25,7 @@
     ]
   ],
   "unusedExports": {
-    "count": 594,
+    "count": 597,
     "entries": [
       "src/api/audiomuse/index.ts - AudiomuseClient",
       "src/api/audiomuse/index.ts - AudiomuseConfig",
@@ -424,6 +424,9 @@
       "src/features/home/hooks/useDailyLayout.ts - HomeLayout (used in module)",
       "src/features/home/hooks/useDailyLayout.ts - SectionType (used in module)",
       "src/features/home/hooks/useDeezerEnabled.ts - useDeezerSearchEnabled",
+      "src/features/library/catalogQueries.ts - CatalogResource (used in module)",
+      "src/features/library/catalogSync.ts - CatalogSyncResult (used in module)",
+      "src/features/library/catalogSync.ts - ServerStat (used in module)",
       "src/features/lyrics/resolveLyrics.ts - ExternalLyricsFetcher (used in module)",
       "src/features/lyrics/resolveLyrics.ts - ResolveLyricsInput (used in module)",
       "src/features/metadata/resolveArtistInfo.ts - ALL_ARTIST_INFO_SOURCES",

@@ -165,7 +165,11 @@ describe('offline cold start reads the persisted query cache', () => {
     expect(getByTestId('loading').props.children).toBe('false');
 
     await unmount();
+    // Clearing drops the cached data; unmounting stops the gc timers that
+    // would otherwise hold the jest process open past the run.
     firstSessionClient.clear();
+    firstSessionClient.unmount();
     secondSessionClient.clear();
+    secondSessionClient.unmount();
   });
 });
