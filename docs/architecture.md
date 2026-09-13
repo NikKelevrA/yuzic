@@ -201,10 +201,25 @@ Three things about it are not obvious:
 proprietary from v5 (non-commercial, with a non-compete clause), which is a
 probable GPL-3 conflict for yuzic and a definite F-Droid blocker.
 
-The engine is complete on iOS. On Android it is missing nine of the methods
-the app calls; they reject by name rather than throwing `is not a function`,
-and `setCrossfade` there is a stub that records its options and schedules no
-overlap, so crossfade is an iOS feature today.
+The engine implements the same surface on both platforms. `Tools/parity.py` in
+the engine repo compares the two native modules by signature — not by name —
+and fails on any difference not declared in it with a reason. Read that rather
+than this paragraph: the count here was wrong for months, claiming nine
+missing Android methods and a stubbed `setCrossfade` long after both had been
+implemented.
+
+Two differences are declared there today:
+
+- `configureCache` is absent on Android — deliberately absent rather than
+  stubbed, so it rejects by name at the bridge. Media3 takes the cache limit as
+  a constructor argument to its evictor, so changing it needs a second
+  `SimpleCache` over one directory (documented as corrupting the index) or
+  releasing the live one mid-track.
+- `BrowseNode.artworkHeaders` is carried on the bridge and unusable on Android:
+  a browse row's cover goes through Media3, which takes a URI on
+  `MediaMetadata` and fetches it itself with no hook for a request header. So
+  car thumbnails render for an ordinary server and not for a
+  header-authenticated one.
 
 `PlaybackSinkContext` owns which sink is selected and routes transport to it.
 This replaced four copies of `if (activeDevice) castX()` in the player and a
@@ -333,11 +348,14 @@ bodies' worth of divergence.
   is the *pure* single source of truth for the state — precedence
   in-library > wanted > acquirable > external, fallthrough to `external` (never
   silently claims ownership). `useLibraryState()` assembles the facts.
-  `isWanted` is stubbed until the Wants system exists.
+  `isWanted` reads `selectIsWanted` — the Wants system exists
+  (`features/wants/`, and `want` is its own action in the entity-action
+  registry, distinct from `get`).
 - **`useExternalAlbumStatus` still exists on purpose.** `resolveLibraryState`
-  answers *which* state; `useExternalAlbumStatus` additionally polls the
-  downloader queues for in-flight **download progress %**, which the state enum
-  does not carry. The shared rows call it only for external-origin entities
+  answers *which* state; `useExternalAlbumStatus` additionally reports in-flight
+  **download progress %**, which the state enum does not carry. It reads the
+  shared `DownloadersQueueContext` rather than polling — there is exactly one
+  poll per downloader in the app, and this is one of its readers. The shared rows call it only for external-origin entities
   (it no-ops on a null album), so a plain library row makes no queue calls.
   This is a deliberate split of concerns, not leftover duplication.
 - **Two album bodies remain** (`LocalAlbumBody` vs `ExternalAlbumBody`) even
@@ -367,9 +385,11 @@ can do*, never *which product it is*.
   (their `id` re-narrowed to the closed union). Downloaders are `apiKey`-tier and
   fill `acquisition.*`; sources are `none`-tier (keyless public APIs; a trivial
   `{ok:true}` testConnection — enablement is a user setting, not a connection)
-  and fill `resolution` + `discovery.shelf`. A downloader's `fetchQueueWithDiff`
+  and fill `resolution` + `discovery.shelf`. A downloader's `fetchQueue`
   deliberately maps to **no** slot — it's operational progress reporting, not a
-  product capability.
+  product capability. It returns `DownloaderQueueItem[]`, normalised by the
+  downloader that owns the records, so nothing downstream branches on which
+  downloader a transfer came from; `finishedSince` diffs two reads by id.
 - **Server adapters stay their own concern.** An `ApiAdapter` is required core,
   not an optional integration, so it does **not** become an `IntegrationModule`.
   Instead `serverAdapterSlots()` (`features/integrations/capabilityRegistry.ts`)
