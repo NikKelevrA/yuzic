@@ -6,14 +6,18 @@ import {
 } from '@gorhom/bottom-sheet';
 import { ListEnd, Play, Shuffle, CheckCircle, ArrowDownCircle, User, Globe, Sparkles } from 'lucide-react-native';
 
-import { Artist, Song } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
+import type { Song } from '@/domain/entities/Song';
+import type { Playlist } from '@/domain/entities/Playlist';
+import { makeLocalId } from '@/domain/identity/LocalId';
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useEnabledExternalSources } from '@/features/sources/registry';
 import { selectArtistPlayCount } from '@/utils/redux/selectors/statsSelectors';
 import { selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
-import { useCanGeneratePlaylist, generateForArtist } from '@/features/audiomuse/generateFromEntity';
+import { useCanGeneratePlaylist } from '@/features/audiomuse/generatePlaylist';
+import { generateSimilarPlaylistForArtist } from '@/features/audiomuse/generatePlaylist';
 import { useApi } from '@/api';
 import { useTheme } from '@/hooks/useTheme';
 import { useArtistAlbums } from '@/hooks/artists';
@@ -65,11 +69,11 @@ const ArtistOptions = forwardRef<
   const canGeneratePlaylist = useCanGeneratePlaylist();
 
   const snapPoints = useMemo(() => ['55%', '90%'], []);
-  const playCount = useSelector(selectArtistPlayCount(artist?.id ?? ''));
+  const playCount = useSelector(selectArtistPlayCount(artist?.nativeId ?? ''));
 
-  const artistAlbums = useArtistAlbums(artist?.id ?? '');
+  const artistAlbums = useArtistAlbums(artist?.nativeId ?? '');
   const { songs: artistSongs, songsLoading } = useLazyArtistSongs(
-    artist?.id,
+    artist?.nativeId,
     artistAlbums,
     isSheetOpen
   );
@@ -81,23 +85,33 @@ const ArtistOptions = forwardRef<
     (ref as any)?.current?.dismiss();
   }, [ref]);
 
+  /**
+   * There is no real playlist behind "play this artist's known songs" — it's
+   * a transient queue seed, not a server object — so this builds a
+   * minimal-but-valid domain `Playlist` wrapper the same way the pre-rewrite
+   * version built a fake `{ id, title, songs, changed, created }` shape. Its
+   * `localId`/`nativeId` are namespaced under the artist's own so two
+   * different artists never collide, and nothing here is sent to a server:
+   * `playSongInCollection` only reads `playlist.title`/`cover` and the
+   * `songs` array off the `PlaylistDetail`.
+   */
   const buildCollection = useCallback(
-    (songs: Song[]) => ({
-      id: artist!.id,
-      title: artist!.name,
-      artist: {
-        id: artist!.id,
-        name: artist!.name,
-        cover: artist!.cover,
-        subtext: t('artistOptions.artistLabel'),
-      },
-      cover: artist!.cover,
-      subtext: t('artistOptions.artistLabel'),
-      songs,
-      changed: new Date('1995-12-17T03:24:00'),
-      created: new Date('1995-12-17T03:24:00'),
-    }),
-    [artist, t]
+    (songs: Song[]) => {
+      const collectionArtist = artist!;
+      const playlist: Playlist = {
+        localId: makeLocalId('playlist', collectionArtist.provenance, `artist:${collectionArtist.nativeId}`),
+        nativeId: collectionArtist.nativeId,
+        provenance: collectionArtist.provenance,
+        externalIds: {},
+        libraryState: collectionArtist.libraryState,
+        title: collectionArtist.name,
+        cover: collectionArtist.cover,
+        isOwned: false,
+        songIds: songs.map(song => song.localId),
+      };
+      return { playlist, songs };
+    },
+    [artist]
   );
 
   const handlePlay = (shuffle: boolean) => {
@@ -134,7 +148,7 @@ const ArtistOptions = forwardRef<
   const handleGoToArtist = () => {
     if (!artist) return;
     close();
-    router.push({ pathname: '/artistView', params: { id: artist.id } });
+    router.push({ pathname: '/artistView', params: { id: artist.nativeId } });
   };
 
   // Recovery path for fuzzy-match false positives: local library matching
@@ -151,7 +165,7 @@ const ArtistOptions = forwardRef<
       pathname: '/artistView',
       params: {
         forceExternal: 'true',
-        mbid: artist.mbid ?? undefined,
+        mbid: artist.externalIds.mbid ?? undefined,
         name: artist.name,
       },
     });
@@ -159,7 +173,7 @@ const ArtistOptions = forwardRef<
 
 
   const { isDownloaded, isDownloading: isCollectionDownloading } = getCollectionDownloadState(
-    artistSongs.map(s => s.id)
+    artistSongs.map(s => s.localId)
   );
   const isDownloading = isDownloadingAll || isCollectionDownloading;
   const playbackDisabled = songsLoading || !artistSongs.length;
@@ -168,7 +182,7 @@ const ArtistOptions = forwardRef<
     if (!artist || isDownloaded || isDownloading || !artistAlbums.length) return;
     setIsDownloadingAll(true);
     try {
-      await Promise.all(artistAlbums.map(album => downloadAlbumById(album.id)));
+      await Promise.all(artistAlbums.map(album => downloadAlbumById(album.nativeId)));
     } catch {
       notify.error(t('artistOptions.downloadAllFailed'));
     } finally {
@@ -181,7 +195,7 @@ const ArtistOptions = forwardRef<
     generatePlaylistInFlightRef.current = true;
     setIsGeneratingPlaylist(true);
     try {
-      const result = await generateForArtist(api, audiomuseConfig, artist, artistSongs, { size: 25 });
+      const result = await generateSimilarPlaylistForArtist(api, audiomuseConfig, artist, artistSongs, { size: 25 });
       notify.success(t('artistOptions.toasts.playlistGenerated', { count: result.trackCount }));
       close();
       router.push({ pathname: '/playlistView', params: { id: result.playlistId } });

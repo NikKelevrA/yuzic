@@ -1,7 +1,9 @@
 import { normalize } from '@/utils/normalize';
 import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
 import type { Want } from '@/utils/redux/slices/wantsSlice';
-import type { AlbumBase, ExternalAlbumBase, SongBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
+import type { ExternalAlbumBase } from '@/types';
 
 /**
  * The minimal library snapshot arrival detection needs: albums are matched
@@ -10,15 +12,15 @@ import type { AlbumBase, ExternalAlbumBase, SongBase } from '@/types';
  * repo (`@/utils/normalize`), no new fuzzy algorithm.
  */
 export interface ArrivalLibrary {
-  albums: AlbumBase[];
-  tracks?: SongBase[];
+  albums: Album[];
+  tracks?: Song[];
 }
 
-function trackArrived(want: Want, tracks: SongBase[]): boolean {
+function trackArrived(want: Want, tracks: Song[]): boolean {
   const normTitle = normalize(want.title);
   const normArtist = normalize(want.artist);
   return tracks.some(
-    (track) => normalize(track.title) === normTitle && normalize(track.artist) === normArtist
+    (track) => normalize(track.title) === normTitle && normalize(track.artist.name) === normArtist
   );
 }
 

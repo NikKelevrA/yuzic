@@ -1,13 +1,22 @@
 import type { MediaItem } from '../features/player/mediaItem';
-
-import type { Song } from '@/types';
+import type { RequestHeaders } from '../features/player/mediaHeaders';
+import type { PlayableResource } from '@/features/playback/playableResource';
+import { buildCover } from '@/utils/builders/buildCover';
+import { normalizeMediaUrl } from '@/utils/builders/buildTrackItem';
 
 /**
- * Conversions and guards between the app's `Song` and the player's `MediaItem`.
+ * What's still genuinely about `MediaItem`'s own shape, plus the one
+ * conversion from a `PlayableResource` into it.
  *
- * Split out of PlayingContext because these decide what reaches the native
- * player: hand it a track with no usable URL and playback fails at the point
- * the user pressed play, with nothing in the UI explaining why.
+ * `hasPlayableMediaUrl`, `assertPlayableSongs`, `playableSongsOnly`,
+ * `getSourceKind` and `hasSameQueueIds` used to live here as their own
+ * `Song`-typed implementations; they are now exactly what
+ * `src/features/playback/playableResource.ts` provides (`isPlayable`,
+ * `assertPlayable`, `playableOnly`, `sourceKind`, `sameQueue`), so callers
+ * import from there instead of duplicating the logic against a second type.
+ * `mediaItemToFallbackSong` is likewise replaced by that module's
+ * `resourceFromPlayerItem`, which recovers provenance from the media id
+ * itself rather than only patching together display fields.
  */
 
 export function getMediaItemId(item: MediaItem): string {
@@ -24,69 +33,25 @@ export function getMediaItemUrl(item: MediaItem): string {
 }
 
 /**
- * Rebuilds a minimal Song from what the player reports, for when the native
- * queue holds a track the app's own queue has lost track of. Null when the
- * item lacks the identity or URL that makes it playable at all.
+ * Builds the `MediaItem` the native player receives for one resource.
+ *
+ * `mediaId` is the song's `localId`, not `nativeId`: `resourceFromPlayerItem`
+ * parses provenance and the origin's own id back out of whatever the player
+ * echoes back as its media id, and that only works if this is what gets
+ * handed to it in the first place.
  */
-export function mediaItemToFallbackSong(item: MediaItem): Song | null {
-  const id = getMediaItemId(item);
-  const streamUrl = getMediaItemUrl(item);
-  if (!id || !streamUrl) return null;
+export function buildMediaItem(resource: PlayableResource, extra?: RequestHeaders): MediaItem {
+  const { song } = resource;
+  const url = normalizeMediaUrl(resource.streamUrl);
   return {
-    id,
-    title: item.title ?? '',
-    artist: item.artist ?? '',
-    albumId: '',
-    artistId: '',
-    duration: String(item.duration ?? 0),
-    streamUrl,
-    cover: { kind: 'none' },
-  } as Song;
-}
-
-export function hasSameQueueIds(current: Song[], next: Song[]): boolean {
-  return (
-    current.length === next.length &&
-    current.every((song, index) => song.id === next[index]?.id)
-  );
-}
-
-/** Coarse origin of a track's media, used for error reporting and recovery. */
-export function getSourceKind(song: Song | null): string {
-  if (!song?.streamUrl) return 'none';
-  if (song.filePath || song.streamUrl.startsWith('file:')) return 'file';
-  if (song.streamUrl.startsWith('http://') || song.streamUrl.startsWith('https://')) {
-    return 'remote';
-  }
-  return 'unknown';
-}
-
-/**
- * Whether the player can actually open this track: a remote URL, a file URL,
- * or a bare absolute path. Anything else — an empty string, a relative path, a
- * scheme the player can't open — would fail inside the native player.
- */
-export function hasPlayableMediaUrl(song: Song): boolean {
-  const url = song.streamUrl?.trim();
-  if (!url) return false;
-  return (
-    url.startsWith('http://') ||
-    url.startsWith('https://') ||
-    url.startsWith('file://') ||
-    url.startsWith('/')
-  );
-}
-
-/** Fails loudly for an explicit play request, where silently dropping the
- * track would look like the button did nothing. */
-export function assertPlayableSongs(songs: Song[]) {
-  const invalid = songs.find(song => !hasPlayableMediaUrl(song));
-  if (invalid) {
-    throw new Error(`Track has no playable media URL: ${invalid.id}`);
-  }
-}
-
-/** Drops unplayable tracks, for queue fills where the rest should still play. */
-export function playableSongsOnly(songs: Song[]): Song[] {
-  return songs.filter(hasPlayableMediaUrl);
+    mediaId: song.localId,
+    title: song.title,
+    artist: song.artist.name,
+    albumTitle: song.album.title || undefined,
+    duration: song.durationSeconds || undefined,
+    url: url.startsWith('file://') ? { uri: url } : url,
+    artworkUrl: buildCover(song.cover, 'grid') ?? undefined,
+    ...(extra?.headers ? { headers: extra.headers } : {}),
+    ...(extra?.artworkHeaders ? { artworkHeaders: extra.artworkHeaders } : {}),
+  };
 }

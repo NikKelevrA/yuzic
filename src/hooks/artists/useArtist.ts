@@ -1,11 +1,12 @@
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { QueryKeys } from '@/enums/queryKeys';
-import { Artist } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
 import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { useLibrary } from '@/contexts/LibraryContext';
 import { hasValue, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
+import { useLibrary } from '@/contexts/LibraryContext';
 
 type UseArtistResult = {
   artist: Artist | null;
@@ -15,18 +16,27 @@ type UseArtistResult = {
   degraded: boolean;
 };
 
+/**
+ * `ArtistsApi.get` returns the domain `Artist`, and `LibraryContext.artists`
+ * is now the same domain shape, so the offline fallback is a plain lookup by
+ * `nativeId` in the synced artist list — no conversion needed.
+ */
 export function useArtist(id: string): UseArtistResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
-  const { artists } = useLibrary();
-  const cachedArtist = artists.find(a => a.id === id) ?? null;
+  const { artists: libraryArtists } = useLibrary();
+
+  const fallbackData = useMemo(
+    () => libraryArtists.find(a => a.nativeId === id) ?? null,
+    [libraryArtists, id]
+  );
 
   const query = useOfflineFirstQuery<Artist | null>({
     queryKey: [QueryKeys.Artist, activeServer?.id, id],
     queryFn: async () => api.artists.get(id),
     enabled: !!activeServer?.id && !!id,
     staleTime: staleTime.artists,
-    fallbackData: cachedArtist,
+    fallbackData,
     hasFallbackData: hasValue,
   });
 

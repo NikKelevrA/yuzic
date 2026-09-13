@@ -2,7 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import SongRow, { isExternalSong } from './index';
-import type { ExternalSong, Song } from '@/types';
+import type { ExternalSong } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -71,14 +72,30 @@ jest.mock('react-native-reanimated', () => {
 });
 
 const librarySong: Song = {
-  id: 's1',
+  localId: 'local:song:srv:server1:s1' as Song['localId'],
+  nativeId: 's1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Local Song',
-  artist: 'Some Artist',
-  artistId: 'ar1',
+  artist: {
+    localId: 'local:artist:srv:server1:ar1' as Song['artist']['localId'],
+    nativeId: 'ar1',
+    name: 'Some Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:srv:server1:al1' as Song['album']['localId'],
+    nativeId: 'al1',
+    title: 'Local Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'al1',
-  streamUrl: 'https://example.com/stream',
+  durationSeconds: 180,
+  contentKind: 'song',
+  genres: [],
 };
 
 const externalSong: ExternalSong = {
@@ -91,7 +108,7 @@ const externalSong: ExternalSong = {
 };
 
 describe('SongRow', () => {
-  it('detects external-origin songs via the missing streamUrl field', () => {
+  it('detects external-origin songs via the artist shape (string vs ArtistRef)', () => {
     expect(isExternalSong(librarySong)).toBe(false);
     expect(isExternalSong(externalSong)).toBe(true);
   });

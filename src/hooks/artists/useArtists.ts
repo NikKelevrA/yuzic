@@ -1,11 +1,11 @@
 import { useSelector } from 'react-redux';
 import { QueryKeys } from '@/enums/queryKeys';
-import { Artist } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
 import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { useLibrary } from '@/contexts/LibraryContext';
 import { hasArrayData, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
+import { useLibrary } from '@/contexts/LibraryContext';
 
 type UseArtistsResult = {
   artists: Artist[];
@@ -13,6 +13,10 @@ type UseArtistsResult = {
   error: Error | null;
 };
 
+/**
+ * `ArtistsApi.list` returns domain `Artist[]`. See `useArtist` for why the
+ * synced-library fallback needs no conversion now.
+ */
 export function useArtists(): UseArtistsResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);

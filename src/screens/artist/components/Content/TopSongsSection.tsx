@@ -11,7 +11,7 @@ import { usePlayingActions } from '@/contexts/PlayingContext'
 import { usePlayableSongResolver } from '@/hooks/songs'
 import TopTrackRow from '@/components/rows/TopTrackRow'
 import { spacing, typography } from '@/constants/design'
-import type { Artist } from '@/types'
+import type { Artist } from '@/domain/entities/Artist'
 
 const TOP_SONG_LIMIT = 5
 
@@ -52,10 +52,10 @@ export default function TopSongsSection({ artist }: Props) {
     queryFn: async () => (await getTopSongs?.(artist.name, TOP_SONG_LIMIT)) ?? [],
   })
 
-  const handlePress = useCallback(async (trackId: string) => {
+  const handlePress = useCallback(async (nativeId: string) => {
     try {
-      const song = await resolvePlayableSong(trackId)
-      if (song) await playSong(song)
+      const resource = await resolvePlayableSong(nativeId)
+      if (resource) await playSong(resource.song)
     } catch {
       notify.error(t('common.playbackError'))
     }
@@ -72,11 +72,11 @@ export default function TopSongsSection({ artist }: Props) {
       </View>
       {songs.map((song, index) => (
         <TopTrackRow
-          key={song.id}
+          key={song.localId}
           song={song}
           index={index}
           artistName={artist.name}
-          onPress={() => void handlePress(song.id)}
+          onPress={() => void handlePress(song.nativeId)}
         />
       ))}
     </View>

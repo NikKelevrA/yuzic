@@ -1,22 +1,30 @@
 import { findArtistsWithSharedGenres } from './localSimilarArtists'
-import type { AlbumBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
+import type { LocalId } from '@/domain/identity/LocalId'
+
+const asLocalId = (id: string) => `local:artist:srv:server1:${id}` as LocalId
 
 const artistRef = (id: string, name: string) => ({
-  id,
+  localId: asLocalId(id),
+  nativeId: id,
   name,
   cover: { kind: 'none' as const },
-  subtext: '',
+  externalIds: {},
 })
 
-const album = (id: string, artistId: string, artistName: string, genres: string[]): AlbumBase => ({
-  id,
+const album = (id: string, artistId: string, artistName: string, genres: string[]): Album => ({
+  localId: `local:album:srv:server1:${id}` as LocalId,
+  nativeId: id,
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: `Album ${id}`,
   cover: { kind: 'none' },
-  subtext: '',
   artist: artistRef(artistId, artistName),
   year: 2000,
+  releaseType: 'album',
   genres,
-  created: new Date(0),
+  songIds: [],
 })
 
 describe('findArtistsWithSharedGenres', () => {
@@ -28,8 +36,8 @@ describe('findArtistsWithSharedGenres', () => {
       album('4', 'c', 'Artist C', ['jazz']),
     ]
 
-    const result = findArtistsWithSharedGenres('target', albums)
-    expect(result.map(a => a.id)).toEqual(['a', 'b'])
+    const result = findArtistsWithSharedGenres(asLocalId('target'), albums)
+    expect(result.map(a => a.nativeId)).toEqual(['a', 'b'])
   })
 
   it('excludes the target artist itself', () => {
@@ -38,7 +46,7 @@ describe('findArtistsWithSharedGenres', () => {
       album('2', 'target', 'Target Artist', ['rock']),
     ]
 
-    expect(findArtistsWithSharedGenres('target', albums)).toEqual([])
+    expect(findArtistsWithSharedGenres(asLocalId('target'), albums)).toEqual([])
   })
 
   it('returns nothing when the target artist has no genre data', () => {
@@ -47,7 +55,7 @@ describe('findArtistsWithSharedGenres', () => {
       album('2', 'a', 'Artist A', ['rock']),
     ]
 
-    expect(findArtistsWithSharedGenres('target', albums)).toEqual([])
+    expect(findArtistsWithSharedGenres(asLocalId('target'), albums)).toEqual([])
   })
 
   it('respects the limit', () => {
@@ -56,6 +64,6 @@ describe('findArtistsWithSharedGenres', () => {
       ...Array.from({ length: 10 }, (_, i) => album(`${i}`, `artist-${i}`, `Artist ${i}`, ['rock'])),
     ]
 
-    expect(findArtistsWithSharedGenres('target', albums, 3)).toHaveLength(3)
+    expect(findArtistsWithSharedGenres(asLocalId('target'), albums, 3)).toHaveLength(3)
   })
 })

@@ -91,18 +91,21 @@ export function useLibrarySummary(): Record<LibraryEntryKey, LibraryEntrySummary
     // Counted the way the downloaded screen builds its list, so the number on
     // the row matches what opening it shows — a collection whose album has
     // since left the library is not on that screen either.
+    // `downloadedIds` is the id `downloadAlbumById`/`downloadPlaylistById`
+    // were called with, which they hand straight to `api.albums.get`/
+    // `api.playlists.get` — i.e. `nativeId`.
     const downloadedIds = new Set(getAllDownloadedCollections().map(c => c.id))
     const downloaded = [
-      ...albums.filter(a => downloadedIds.has(a.id)),
-      ...playlists.filter(p => downloadedIds.has(p.id)),
+      ...albums.filter(a => downloadedIds.has(a.nativeId)),
+      ...playlists.filter(p => downloadedIds.has(p.nativeId)),
     ]
 
     // Deduped by album, or four songs off one record give four copies of the
-    // same square.
+    // same square. Equality between loaded entities, so `localId`.
     const seenAlbums = new Set<string>()
     const trackCovers: CoverSource[] = []
     for (const track of tracks) {
-      const key = track.albumId || track.id
+      const key = track.album.localId || track.localId
       if (seenAlbums.has(key) || !hasArt(track.cover)) continue
       seenAlbums.add(key)
       trackCovers.push(track.cover)

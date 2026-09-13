@@ -1,8 +1,9 @@
+import type { LocalId } from '@/domain/identity/LocalId';
 import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { useApi } from '@/api';
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import { selectResumeLongTracksEnabled } from '@/utils/redux/selectors/settingsSelectors';
 import { selectPersistedPlaybackBookmarks } from '@/utils/redux/selectors/playbackSelectors';
@@ -34,8 +35,7 @@ const BOOKMARK_MAX_PROGRESS = 0.97;
 function isBookmarkable(song: Song | null | undefined): boolean {
   if (!song) return false;
   if (isPodcastEpisode(song)) return true;
-  const duration = Number(song.duration) || 0;
-  return duration >= BOOKMARK_MIN_DURATION_SECONDS;
+  return (song.durationSeconds || 0) >= BOOKMARK_MIN_DURATION_SECONDS;
 }
 
 export function useBookmarkManager() {
@@ -73,9 +73,10 @@ export function useBookmarkManager() {
     return () => { cancelled = true; };
   }, [api.bookmarks, dispatch, enabled, serverId, supportsServer]);
 
-  const getResumePosition = useCallback((songId: string): number | null => {
+  /** Looked up by identity, which is how `saveOrClear` keys the local map. */
+  const getResumePosition = useCallback((bookmarkId: LocalId): number | null => {
     if (!enabled) return null;
-    const entry = bookmarksRef.current[songId];
+    const entry = bookmarksRef.current[bookmarkId];
     return entry && entry.positionMs > 0 ? Math.floor(entry.positionMs / 1000) : null;
   }, [enabled]);
 
@@ -83,21 +84,32 @@ export function useBookmarkManager() {
     if (!enabled || !song) return;
     if (!isBookmarkable(song)) return;
 
-    const duration = Number(song.duration) || 0;
+    const duration = song.durationSeconds || 0;
     const progress = duration > 0 ? positionSeconds / duration : 0;
+
+    // Two ids, because there are two stores with different scopes.
+    //
+    // The local map holds bookmarks for everything the user plays — imported
+    // local files beside server tracks — and two origins can each call a track
+    // `42`, so it is keyed by identity. The server's own bookmark endpoint
+    // only knows its own ids, so calls to it take `nativeId`. Keying the local
+    // map by the origin's id would let a local import silently resume at a
+    // server track's position.
+    const bookmarkId = song.localId;
+    const serverSongId = song.nativeId;
 
     // Too early → don't bother; too late → treat as finished and clear.
     if (progress <= BOOKMARK_MIN_PROGRESS || progress >= BOOKMARK_MAX_PROGRESS) {
-      if (bookmarksRef.current[song.id]) {
-        dispatch(setPlaybackBookmark({ songId: song.id, positionMs: null }));
-        if (supportsServer) api.bookmarks!.remove(song.id).catch(() => {});
+      if (bookmarksRef.current[bookmarkId]) {
+        dispatch(setPlaybackBookmark({ songId: bookmarkId, positionMs: null }));
+        if (supportsServer) api.bookmarks!.remove(serverSongId).catch(() => {});
       }
       return;
     }
 
     const positionMs = Math.floor(positionSeconds * 1000);
     dispatch(setPlaybackBookmark({
-      songId: song.id,
+      songId: bookmarkId,
       positionMs,
       // Only for content the library cannot describe later. A library track
       // is joined by id, so snapshotting it would freeze a title the user may
@@ -106,7 +118,7 @@ export function useBookmarkManager() {
     }));
 
     if (supportsServer) {
-      api.bookmarks!.create({ songId: song.id, positionMs }).catch(() => {});
+      api.bookmarks!.create({ songId: serverSongId, positionMs }).catch(() => {});
     }
   }, [api.bookmarks, dispatch, enabled, supportsServer]);
 

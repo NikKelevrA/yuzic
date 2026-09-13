@@ -63,16 +63,20 @@ export function mapSong(dto: SubsonicSong, context: MapSongContext): Song {
     // Everything reachable through the library's song endpoints is a song;
     // radio and podcast entries are mapped by their own endpoints.
     contentKind: 'song',
+    bpm: dto.bpm,
     discNumber: dto.discNumber,
     trackNumber: dto.track,
     year: dto.year,
     genres: genresOf(dto),
     addedAt: dto.created ? Date.parse(dto.created) || undefined : undefined,
+    serverPlayCount: dto.playCount,
+    serverLastPlayedAt: dto.played ? Date.parse(dto.played) || undefined : undefined,
     audio: {
       bitrateKbps: dto.bitRate,
       sampleRateHz: dto.samplingRate,
       bitsPerSample: dto.bitDepth,
       mimeType: dto.contentType,
+      path: dto.path,
     },
   };
 }

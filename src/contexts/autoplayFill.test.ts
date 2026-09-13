@@ -1,4 +1,7 @@
-import type { Song } from '@/types';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
+import type { PlayableResource } from '@/features/playback/playableResource';
+import type { Song } from '@/domain/entities/Song';
 import {
   FILL_BATCH_SIZE,
   LOW_WATERMARK,
@@ -8,8 +11,29 @@ import {
   shouldFillQueue,
 } from './autoplayFill';
 
-function queue(size: number): Song[] {
-  return Array.from({ length: size }, (_, i) => ({ id: `track-${i}` }) as Song);
+const provenance = serverProvenance('srv-1');
+
+function resource(nativeId: string): PlayableResource {
+  const localId = makeLocalId('song', provenance, nativeId);
+  const song = {
+    localId,
+    nativeId,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title: `track-${nativeId}`,
+    artist: { localId: makeLocalId('artist', provenance, 'a'), nativeId: 'a', externalIds: {}, name: 'A', cover: { kind: 'none' } },
+    album: { localId: makeLocalId('album', provenance, 'al'), nativeId: 'al', externalIds: {}, title: 'Al', cover: { kind: 'none' } },
+    cover: { kind: 'none' },
+    durationSeconds: 100,
+    contentKind: 'song',
+    genres: [],
+  } as Song;
+  return { song, streamUrl: `https://server.test/${nativeId}` };
+}
+
+function queue(size: number): PlayableResource[] {
+  return Array.from({ length: size }, (_, i) => resource(String(i)));
 }
 
 const enabled = { autoplayEnabled: true, isFilling: false };
@@ -73,40 +97,38 @@ describe('buildFillRequest', () => {
   it('sends the current track and the recent ones as context', () => {
     const request = buildFillRequest(queue(20), 10);
 
-    expect(request.recentSongs.map(song => song.id)).toEqual([
-      'track-5', 'track-6', 'track-7', 'track-8', 'track-9', 'track-10',
-    ]);
+    expect(request.recentResources.map(r => r.song.nativeId)).toEqual(
+      ['5', '6', '7', '8', '9', '10'],
+    );
   });
 
   it('includes the current track in the context', () => {
     const request = buildFillRequest(queue(20), 10);
 
-    expect(request.recentSongs[request.recentSongs.length - 1].id).toBe('track-10');
+    expect(request.recentResources[request.recentResources.length - 1].song.nativeId).toBe('10');
   });
 
   it('caps the context window', () => {
-    expect(buildFillRequest(queue(50), 40).recentSongs).toHaveLength(RECENT_CONTEXT_SIZE + 1);
+    expect(buildFillRequest(queue(50), 40).recentResources).toHaveLength(RECENT_CONTEXT_SIZE + 1);
   });
 
   it('does not run off the start of the queue', () => {
     const request = buildFillRequest(queue(20), 2);
 
-    expect(request.recentSongs.map(song => song.id)).toEqual([
-      'track-0', 'track-1', 'track-2',
-    ]);
+    expect(request.recentResources.map(r => r.song.nativeId)).toEqual(['0', '1', '2']);
   });
 
   it('excludes everything already queued so a fill cannot duplicate it', () => {
-    const request = buildFillRequest(queue(4), 1);
+    const q = queue(4);
+    const request = buildFillRequest(q, 1);
 
-    expect([...request.excludeIds].sort()).toEqual([
-      'track-0', 'track-1', 'track-2', 'track-3',
-    ]);
+    expect(request.excludeIds).toEqual(new Set(q.map(r => r.song.localId)));
   });
 
   it('excludes tracks ahead of the current one, not just played ones', () => {
     // The queue's tail is what a fill would otherwise re-add.
-    expect(buildFillRequest(queue(10), 0).excludeIds.has('track-9')).toBe(true);
+    const q = queue(10);
+    expect(buildFillRequest(q, 0).excludeIds.has(q[9].song.localId)).toBe(true);
   });
 
   it('requests the default batch size', () => {
@@ -120,7 +142,7 @@ describe('buildFillRequest', () => {
   it('handles an empty queue without throwing', () => {
     const request = buildFillRequest([], 0);
 
-    expect(request.recentSongs).toEqual([]);
+    expect(request.recentResources).toEqual([]);
     expect(request.excludeIds.size).toBe(0);
   });
 });

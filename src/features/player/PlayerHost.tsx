@@ -67,18 +67,18 @@ export default function PlayerHost() {
   useEffect(() => {
     if (
       !coverSlide || coverSlide.phase !== 'exiting' ||
-      !currentSong?.id || currentSong.id === coverSlide.outgoingSongId
+      !currentSong?.localId || currentSong.localId === coverSlide.outgoingSongId
     ) return;
 
     coverSwipeX.value = coverSlideOffset(coverSlide.direction, 'entering', width);
-    enterCoverSlide(currentSong.id);
+    enterCoverSlide(currentSong.localId);
     const frame = requestAnimationFrame(() => {
       coverSwipeX.value = withTiming(0, { duration: motion.swipe }, finished => {
         if (finished) runOnJS(finishCoverSlide)();
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [coverSlide, coverSwipeX, currentSong?.id, enterCoverSlide, finishCoverSlide, width]);
+  }, [coverSlide, coverSwipeX, currentSong?.localId, enterCoverSlide, finishCoverSlide, width]);
 
   const extractColors = useCallback(async (uri: string) => {
     const cached = gradientCache.get(uri);
@@ -117,7 +117,7 @@ export default function PlayerHost() {
       buildCover(currentSong.cover, 'grid') ??
       buildCover({ kind: 'none' }, 'grid');
     if (uri) extractColors(uri);
-  }, [coverAccentEnabled, currentSong?.cover, currentSong?.id, extractColors]);
+  }, [coverAccentEnabled, currentSong?.cover, currentSong?.localId, extractColors]);
 
   const handleFadeComplete = useCallback(() => {
     setCurrentGradient(nextGradient);

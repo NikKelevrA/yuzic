@@ -68,7 +68,7 @@ export function jobMatchesDownloadId(job: PersistedDownloadJob, downloadId: stri
   return (
     job.id === downloadId ||
     job.collectionId === downloadId ||
-    job.tracks.some(track => track.id === downloadId)
+    job.tracks.some(track => track.localId === downloadId)
   );
 }
 
@@ -78,7 +78,7 @@ export function jobMatchesCollectionId(job: PersistedDownloadJob, collectionId: 
 }
 
 export function trackIdsOfJobs(jobs: PersistedDownloadJob[]): string[] {
-  return jobs.flatMap(job => job.tracks.map(track => track.id));
+  return jobs.flatMap(job => job.tracks.map(track => track.localId));
 }
 
 /**
@@ -91,7 +91,12 @@ export function jobsOutsideScope(
 ): PersistedDownloadJob[] {
   return jobs.filter(job =>
     job.tracks.some(track => !doesTrackMatchProviderScope(
-      { serverId: track.sourceServerId, serverType: track.sourceServerType },
+      // A track's origin is its provenance. The server *type* is a property of
+      // the server's configuration, looked up by id — duplicating it onto every
+      // persisted track is how the two could disagree after a server was
+      // re-typed. Matching on the id alone is also strictly more precise: ids
+      // are unique per configured server, types are shared between them.
+      { serverId: track.provenance.origin === 'server' ? track.provenance.serverId : null },
       scope
     ))
   );

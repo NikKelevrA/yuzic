@@ -4,8 +4,9 @@ import { Play } from 'lucide-react-native'
 import { useTranslation } from 'react-i18next'
 import MediaListRow from '@/components/MediaListRow'
 import { useTheme } from '@/hooks/useTheme'
-import { formatSongDuration } from '@/utils/formatDuration'
+import { formatDuration, formatSongDuration } from '@/utils/formatDuration'
 import type { ExternalSong } from '@/types'
+import type { Song } from '@/domain/entities/Song'
 import Touchable from '@/components/Touchable'
 import { hitSlopFor, iconSize, typography } from '@/constants/design'
 import { useRadius } from '@/hooks/useRadius'
@@ -14,8 +15,20 @@ import { useRadius } from '@/hooks/useRadius'
  *  — it sits inside a row rather than beside one. `hitSlopFor` pads it out. */
 const PREVIEW_BUTTON_SIZE = 28
 
+export type TopTrackRowSong = Song | ExternalSong
+
+/**
+ * True when `song` came from an external catalog (Deezer/etc) rather than
+ * the user's library — same discriminator as `SongRow`/`SongOptions`:
+ * `ExternalSong.artist` is a plain string, a domain `Song`'s `artist` is
+ * always an `ArtistRef` object.
+ */
+function isExternalTrack(song: TopTrackRowSong): song is ExternalSong {
+  return typeof song.artist === 'string'
+}
+
 type Props = {
-  song: ExternalSong
+  song: TopTrackRowSong
   index: number
   artistName: string
   onPress?: () => void
@@ -25,7 +38,11 @@ function TopTrackRow({ song, index, artistName, onPress }: Props) {
   const { t } = useTranslation()
   const { colors } = useTheme()
   const rad = useRadius()
-  const duration = formatSongDuration(song.duration)
+  const external = isExternalTrack(song)
+  const duration = external ? formatSongDuration(song.duration) : formatDuration(song.durationSeconds)
+  // Only an external (preview) track carries a 30s clip URL — a library song
+  // is already fully playable, so it has nothing to preview and no button.
+  const previewUrl = external ? song.previewUrl : undefined
 
   return (
     <MediaListRow
@@ -40,7 +57,7 @@ function TopTrackRow({ song, index, artistName, onPress }: Props) {
         </Text>
       }
       trailing={
-        song.previewUrl ? (
+        previewUrl ? (
           <Touchable
             accessibilityRole="button"
             accessibilityLabel={t('a11y.topTrack.playPreview', { title: song.title })}

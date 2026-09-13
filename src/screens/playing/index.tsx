@@ -1,3 +1,4 @@
+import { firstResolvableCover } from '@/types/Cover';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -124,7 +125,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     const { currentSong } = usePlayingState();
     const api = useApi();
     const insets = useSafeAreaInsets();
-    const { album } = useAlbum(currentSong?.albumId ?? '');
+    const { album } = useAlbum(currentSong?.album.nativeId ?? '');
     const [lyrics, setLyrics] = useState<LyricsResult | null>(null);
     const [lyricsAvailable, setLyricsAvailable] = useState(false);
 
@@ -229,7 +230,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     );
 
     useEffect(() => {
-        if (!currentSong?.id) return;
+        if (!currentSong?.nativeId) return;
 
         let cancelled = false;
         setLyrics(null);
@@ -240,11 +241,11 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                 try {
                     const res = await resolveLyrics({
                         song: {
-                            songId: currentSong.id,
+                            songId: currentSong.nativeId,
                             title: currentSong.title,
-                            artist: currentSong.artist,
-                            album: currentSong.albumTitle,
-                            durationSec: Number(currentSong.duration) || undefined,
+                            artist: currentSong.artist.name,
+                            album: currentSong.album.title,
+                            durationSec: currentSong.durationSeconds || undefined,
                         },
                         getServerLyrics: songId => api.lyrics.getBySongId(songId),
                         enabledExternalSourcesInOrder: enabledExternalLyricsSources,
@@ -267,12 +268,12 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
             cancelled = true;
             task.cancel();
         };
-    }, [api.lyrics, currentSong?.id, currentSong?.title, currentSong?.artist, currentSong?.albumTitle, currentSong?.duration, enabledExternalLyricsSources]);
+    }, [api.lyrics, currentSong?.nativeId, currentSong?.title, currentSong?.artist, currentSong?.album, currentSong?.durationSeconds, enabledExternalLyricsSources]);
 
     const showSleepTimer = useSelector(selectShowSleepTimer);
     const showPlaybackSpeed = useSelector(selectShowPlaybackSpeed);
     const showVolumeSlider = useSelector(selectShowVolumeSlider);
-    const artistId = currentSong?.artistId ?? album?.artist?.id;
+    const artistId = currentSong?.artist.nativeId ?? album?.artist?.nativeId;
 
     const navigateToArtist = useCallback(() => {
         if (artistId) {
@@ -414,12 +415,11 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                             )}
 
                             <AboutTheArtistCard
-                                artistName={currentSong.artist}
-                                artistCover={
-                                  album?.artist?.cover ??
-                                  currentSong.cover ??
-                                  null
-                                }
+                                artistName={currentSong.artist.name}
+                                artistCover={firstResolvableCover(
+                                  album?.artist?.cover,
+                                  currentSong.cover
+                                )}
                                 contentWidth={contentWidth}
                                 onPress={artistId ? navigateToArtist : undefined}
                             />

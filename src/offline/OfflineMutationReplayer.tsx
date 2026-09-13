@@ -1,3 +1,4 @@
+import { parseLocalId } from '@/domain/identity/LocalId';
 import { useEffect, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -64,16 +65,20 @@ async function replayMutation(ctx: ReplayContext, mutation: OfflineMutation) {
   const api = ctx.api;
   switch (mutation.type) {
     case 'starSong':
-      await api.starred.add(mutation.song.id);
+      await api.starred.add(mutation.song.nativeId);
       break;
     case 'unstarSong':
-      await api.starred.remove(mutation.songId);
+      // The queue holds identity; the server only knows its own id.
+      await api.starred.remove(parseLocalId(mutation.songId)?.nativeId ?? mutation.songId);
       break;
     case 'addSongToPlaylist':
-      await api.playlists.addSong(mutation.playlistId, mutation.song.id);
+      await api.playlists.addSong(mutation.playlistId, mutation.song.nativeId);
       break;
     case 'removeSongFromPlaylist':
-      await api.playlists.removeSong(mutation.playlistId, mutation.songId);
+      await api.playlists.removeSong(
+        mutation.playlistId,
+        parseLocalId(mutation.songId)?.nativeId ?? mutation.songId,
+      );
       break;
     case 'deletePlaylist':
       await api.playlists.delete(mutation.playlistId);

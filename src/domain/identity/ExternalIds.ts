@@ -23,6 +23,23 @@ export interface ExternalIds {
   upc?: string;
 }
 
+/**
+ * Normalises a loosely-typed id bag into the domain's strict one.
+ *
+ * Provider payloads and the pre-rewrite types express "no id" as `null` as
+ * often as by omission. The domain uses omission only, so that an id known to
+ * be absent and an id never asked for stay indistinguishable from each other
+ * and both stay distinguishable from an id that is present.
+ */
+export function normalizeExternalIds(ids: unknown): ExternalIds {
+  if (!ids || typeof ids !== 'object') return {};
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(ids)) {
+    if (typeof value === 'string' && value !== '') out[key] = value;
+  }
+  return out as ExternalIds;
+}
+
 export const EMPTY_EXTERNAL_IDS: ExternalIds = Object.freeze({});
 
 /**

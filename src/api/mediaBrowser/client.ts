@@ -1,6 +1,7 @@
 import type { AudioQuality } from '@/utils/redux/slices/settingsSlice';
 import { qualityToStreamParams } from '@/utils/audio/streamQuality';
 import { tryWithFailover, orderedUrls } from '@/utils/servers/urlFailover';
+import { serverProvenance, type Provenance } from '@/domain/identity/Provenance';
 import { MediaBrowserBrand } from './brand';
 import { mediaBrowserClientHeader } from './clientHeader';
 import { serverFetch } from '@/features/mtls/serverFetch';
@@ -20,6 +21,27 @@ export interface MediaBrowserClientConfig {
 }
 
 export type MediaBrowserClient = ReturnType<typeof createMediaBrowserClient>;
+
+/**
+ * `Provenance`, derived from `client.serverId` at the point every endpoint
+ * already has a client in hand — the one place this adapter builds it, so
+ * every mapper call in the folder gets the same record for the same server.
+ *
+ * A missing `serverId` here is not a data case a server can send: every real
+ * adapter is constructed from `Server.id`, which is required. Inventing a
+ * placeholder scope would silently merge that client's entities under one
+ * shared bucket of `LocalId`s, which corrupts identity on-device far worse
+ * than a thrown error during development.
+ */
+export function requireProvenance(client: Pick<MediaBrowserClient, 'serverId'>): Provenance {
+  if (!client.serverId) {
+    throw new Error(
+      'MediaBrowser client has no serverId — cannot derive entity identity. ' +
+      'This is a programming error: every adapter is constructed from Server.id.'
+    );
+  }
+  return serverProvenance(client.serverId);
+}
 
 export function createMediaBrowserClient(config: MediaBrowserClientConfig, brand: MediaBrowserBrand) {
   const { serverUrl, serverId, fallbackUrls, token, userId, parentId, basicAuth } = config;

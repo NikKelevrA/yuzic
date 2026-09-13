@@ -92,26 +92,54 @@ jest.mock('@tanstack/react-query', () => ({
 }));
 
 const mockGetSimilarSongs = jest.fn();
+import type { Song } from '@/domain/entities/Song';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
+
 jest.mock('@/api', () => ({
   useApi: jest.fn(),
 }));
 
-const sampleSimilarSong = {
-  id: 's1',
-  title: 'Similar Song',
-  artist: 'Some Artist',
-  cover: { kind: 'none' as const },
-  duration: '',
-  albumId: '',
-  streamUrl: 'http://example.com/s1',
-};
+const provenance = serverProvenance('server-A');
+
+/** A domain song, built the way a mapper would build one. */
+function domainSong(nativeId: string, title: string, artistName: string): Song {
+  return {
+    localId: makeLocalId('song', provenance, nativeId),
+    nativeId,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title,
+    artist: {
+      localId: makeLocalId('artist', provenance, 'a1'),
+      nativeId: 'a1',
+      externalIds: {},
+      name: artistName,
+      cover: { kind: 'none' },
+    },
+    album: {
+      localId: makeLocalId('album', provenance, 'al1'),
+      nativeId: 'al1',
+      externalIds: {},
+      title: 'Album',
+      cover: { kind: 'none' },
+    },
+    cover: { kind: 'none' },
+    durationSeconds: 180,
+    contentKind: 'song',
+    genres: [],
+  };
+}
+
+const sampleSimilarSong = domainSong('s1', 'Similar Song', 'Some Artist');
 
 function renderWithStore(
   ui: React.ReactElement,
   {
     songPlays = { 's1:seed1': 5 },
-    tracks = [{ id: 'seed1', title: 'Seed Song', artist: 'Seed Artist', cover: { kind: 'none' }, duration: '', albumId: '' }],
-  }: { songPlays?: Record<string, number>; tracks?: any[] } = {}
+    tracks = [domainSong('seed1', 'Seed Song', 'Seed Artist')],
+  }: { songPlays?: Record<string, number>; tracks?: Song[] } = {}
 ) {
   const store = configureStore({
     reducer: {

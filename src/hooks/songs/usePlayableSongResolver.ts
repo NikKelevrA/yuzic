@@ -6,28 +6,29 @@ import { QueryKeys } from '@/enums/queryKeys';
 import { useDownloadActions } from '@/contexts/DownloadContext';
 import { selectSongsById } from '@/utils/redux/selectors/librarySelectors';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import type { Song, SongBase } from '@/types';
+import { selectPreferredCodec } from '@/utils/redux/selectors/settingsSelectors';
+import type { Song } from '@/domain/entities/Song';
+import { isPlayable, type PlayableResource } from '@/features/playback/playableResource';
+import { useStreamQuality } from '@/hooks/useStreamQuality';
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
-export type PlayableSongInput = string | SongBase | Song | null | undefined;
+/**
+ * Anything that names a song: the origin's own id, or a song that already
+ * carries it. Only the id is taken from an object input — the resource is
+ * always built from the library's own record or a fresh fetch, never from
+ * whatever fields the caller happened to be holding.
+ */
+export type PlayableSongInput = string | Song | null | undefined;
 
 type ResolvePlayableSongOptions = {
   allowNetwork?: boolean;
   timeoutMs?: number;
 };
 
-export function isPlayableSong(song: PlayableSongInput): song is Song {
-  return typeof song === 'object' &&
-    !!song &&
-    'streamUrl' in song &&
-    typeof song.streamUrl === 'string' &&
-    song.streamUrl.length > 0;
-}
-
 function songIdFromInput(input: PlayableSongInput): string | null {
   if (!input) return null;
-  return typeof input === 'string' ? input : input.id;
+  return typeof input === 'string' ? input : input.nativeId;
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {
@@ -37,44 +38,71 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | nul
   ]);
 }
 
+/**
+ * Resolves anything identifying a song (an id, or a legacy-shaped object
+ * carrying one) into a `PlayableResource` — the domain `Song` plus a stream
+ * URL valid for this session, built at the moment of playing rather than
+ * trusted from whatever the caller already had on hand.
+ */
 export function usePlayableSongResolver() {
   const api = useApi();
   const queryClient = useQueryClient();
   const activeServer = useSelector(selectActiveServer);
+  // Keyed by nativeId — see librarySelectors' selectSongsById.
   const songsById = useSelector(selectSongsById);
   const { getLocalPath } = useDownloadActions();
+  const streamQuality = useStreamQuality();
+  const preferredCodec = useSelector(selectPreferredCodec);
 
   const resolvePlayableSong = useCallback(async (
     input: PlayableSongInput,
     options: ResolvePlayableSongOptions = {}
-  ): Promise<Song | null> => {
-    if (isPlayableSong(input)) return input;
-
+  ): Promise<PlayableResource | null> => {
     const songId = songIdFromInput(input);
     if (!songId) return null;
 
-    const baseSong = typeof input === 'string' ? songsById.get(songId) : input;
     const localPath = getLocalPath(songId);
-    if (localPath && baseSong) {
-      const localSong = { ...baseSong, streamUrl: localPath, filePath: localPath } as Song;
-      queryClient.setQueryData([QueryKeys.Song, activeServer?.id, songId], localSong);
-      return localSong;
+    if (localPath) {
+      // A downloaded file is playable from its own bytes regardless of server
+      // reachability, so it takes priority over the cache below. Its metadata
+      // comes from the synced library — a domain `Song` is the only shape
+      // this hook hands onward now, so a track downloaded but never synced
+      // (should not happen — download starts from a synced row) has no
+      // honest metadata to attach and is left unresolved rather than guessed.
+      const domainSong = songsById.get(songId);
+      if (!domainSong) return null;
+      const resource: PlayableResource = { song: domainSong, streamUrl: localPath, filePath: localPath };
+      queryClient.setQueryData([QueryKeys.Song, activeServer?.id, songId], resource);
+      return resource;
     }
 
-    const cachedSong = queryClient.getQueryData<Song | null>([QueryKeys.Song, activeServer?.id, songId]);
-    if (isPlayableSong(cachedSong)) return cachedSong;
+    const cachedResource = queryClient.getQueryData<PlayableResource | null>(
+      [QueryKeys.Song, activeServer?.id, songId]
+    );
+    if (cachedResource && isPlayable(cachedResource)) return cachedResource;
 
     if (options.allowNetwork === false) return null;
 
-    const fetchedSong = await withTimeout(
+    // Prefer the synced library's own copy — no network round trip — and
+    // fall back to fetching it fresh (a track outside the synced library:
+    // search, an artist page never opened before, ...).
+    const domainSong = songsById.get(songId) ?? await withTimeout(
       api.tracks.get(songId),
       options.timeoutMs ?? DEFAULT_TIMEOUT_MS
     ).catch(() => null);
+    if (!domainSong) return null;
 
-    if (!isPlayableSong(fetchedSong)) return null;
-    queryClient.setQueryData([QueryKeys.Song, activeServer?.id, songId], fetchedSong);
-    return fetchedSong;
-  }, [activeServer?.id, api.tracks, getLocalPath, queryClient, songsById]);
+    const streamUrl = api.songs.buildStreamUrl(
+      domainSong.streamId ?? domainSong.nativeId,
+      streamQuality,
+      preferredCodec
+    );
+    if (!streamUrl) return null;
+
+    const resource: PlayableResource = { song: domainSong, streamUrl };
+    queryClient.setQueryData([QueryKeys.Song, activeServer?.id, songId], resource);
+    return resource;
+  }, [activeServer?.id, api.songs, api.tracks, getLocalPath, preferredCodec, queryClient, songsById, streamQuality]);
 
   return { resolvePlayableSong };
 }

@@ -1,45 +1,21 @@
-import { SongBase } from "@/types";
-import { makeLocalId } from "@/types/EntityId";
+import type { Song } from '@/domain/entities/Song';
+import type { Provenance } from '@/domain/identity/Provenance';
 import type { NavidromeClient } from "../client";
 import { SubsonicResponse, SubsonicSong } from "../types";
 import { getAlbumList } from "../albums/getAlbumList";
+import { mapSong } from "../mapSong";
 
 const ALBUM_BATCH_SIZE = 15;
-
-function mapToSongBase(song: SubsonicSong & { id: string }, sourceServerId?: string): SongBase {
-  return {
-    id: song.id,
-    title: song.title ?? 'Unknown',
-    artist: song.artist ?? 'Unknown Artist',
-    artistId: song.artistId ?? '',
-    cover: song.coverArt
-      ? { kind: 'navidrome' as const, coverArtId: song.coverArt }
-      : { kind: 'none' as const },
-    duration: String(song.duration ?? 0),
-    albumId: song.albumId ?? '',
-    disc: song.discNumber ?? undefined,
-    trackNumber: song.track ?? undefined,
-    year: song.year ?? undefined,
-    dateAdded: song.created,
-    serverPlayCount: song.playCount ?? undefined,
-    serverLastPlayedAt: song.played ? (new Date(song.played).getTime() || undefined) : undefined,
-    localId: sourceServerId
-      ? makeLocalId({ kind: 'track', sourceServerId, serverItemId: song.id })
-      : undefined,
-    libraryState: 'in-library',
-  };
-}
 
 function asArray<T>(value: T | T[] | null | undefined): T[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
 }
 
-async function getTracksViaSearch(client: NavidromeClient): Promise<SongBase[]> {
+async function getTracksViaSearch(client: NavidromeClient, provenance: Provenance): Promise<Song[]> {
   const PAGE = 500;
-  const all = new Map<string, SongBase>();
+  const all = new Map<string, Song>();
   let offset = 0;
-  const sourceServerId = client.serverId;
 
   while (true) {
     const data = await client.request<SubsonicResponse>("search3.view", {
@@ -57,7 +33,7 @@ async function getTracksViaSearch(client: NavidromeClient): Promise<SongBase[]> 
 
     for (const song of songs) {
       if (!song?.id || all.has(song.id)) continue;
-      all.set(song.id, mapToSongBase(song as SubsonicSong & { id: string }, sourceServerId));
+      all.set(song.id, mapSong(song as SubsonicSong & { id: string }, { provenance }));
     }
     if (songs.length < PAGE) break;
     offset += PAGE;
@@ -66,15 +42,14 @@ async function getTracksViaSearch(client: NavidromeClient): Promise<SongBase[]> 
   return [...all.values()];
 }
 
-async function getTracksViaAlbumList(client: NavidromeClient): Promise<SongBase[]> {
-  const albums = await getAlbumList(client, "alphabeticalByName");
-  const all = new Map<string, SongBase>();
-  const sourceServerId = client.serverId;
+async function getTracksViaAlbumList(client: NavidromeClient, provenance: Provenance): Promise<Song[]> {
+  const albums = await getAlbumList(client, provenance, "alphabeticalByName");
+  const all = new Map<string, Song>();
 
   for (let i = 0; i < albums.length; i += ALBUM_BATCH_SIZE) {
     const batch = albums.slice(i, i + ALBUM_BATCH_SIZE);
     const settled = await Promise.allSettled(
-      batch.map((a) => client.request<SubsonicResponse>("getAlbum.view", { id: a.id }))
+      batch.map((a) => client.request<SubsonicResponse>("getAlbum.view", { id: a.nativeId }))
     );
 
     for (const result of settled) {
@@ -84,6 +59,10 @@ async function getTracksViaAlbumList(client: NavidromeClient): Promise<SongBase[
 
       for (const song of album.song ?? []) {
         if (!song?.id || all.has(song.id)) continue;
+        // Plain Subsonic album entries sometimes omit fields the track itself
+        // would have carried; the album is the fallback source for all of
+        // them, the same fallback this endpoint used before it spoke domain
+        // entities — only the destination shape has changed.
         const withAlbumFallbacks: SubsonicSong & { id: string } = {
           ...song,
           id: song.id,
@@ -93,7 +72,7 @@ async function getTracksViaAlbumList(client: NavidromeClient): Promise<SongBase[
           coverArt: song.coverArt ?? album.coverArt,
           created: song.created ?? album.created,
         };
-        all.set(song.id, mapToSongBase(withAlbumFallbacks, sourceServerId));
+        all.set(song.id, mapSong(withAlbumFallbacks, { provenance }));
       }
     }
   }
@@ -101,17 +80,17 @@ async function getTracksViaAlbumList(client: NavidromeClient): Promise<SongBase[
   return [...all.values()];
 }
 
-export async function getTracks(client: NavidromeClient): Promise<SongBase[]> {
+export async function getTracks(client: NavidromeClient, provenance: Provenance): Promise<Song[]> {
   // OpenSubsonic servers (Navidrome, recent gonic) return the full library for an
   // empty search3 query; plain Subsonic servers (Ampache, Airsonic, …) return
   // nothing or an error for it, so fall back to walking the album list.
-  let viaSearch: SongBase[] = [];
+  let viaSearch: Song[] = [];
   try {
-    viaSearch = await getTracksViaSearch(client);
+    viaSearch = await getTracksViaSearch(client, provenance);
   } catch {
     viaSearch = [];
   }
   if (viaSearch.length > 0) return viaSearch;
 
-  return getTracksViaAlbumList(client);
+  return getTracksViaAlbumList(client, provenance);
 }

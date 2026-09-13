@@ -1,11 +1,11 @@
-import type { AlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 import {
   SINGLE_OR_EP_MAX_TRACKS,
   isSingleOrEp,
   isSingleOrEpTitle,
 } from './releaseKind';
 
-const album = (title: string) => ({ id: 'a', title } as AlbumBase);
+const album = (title: string) => ({ nativeId: 'a', title } as Album);
 
 describe('isSingleOrEp by track count', () => {
   it('treats a short release as a single or EP', () => {

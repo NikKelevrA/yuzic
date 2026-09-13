@@ -23,7 +23,7 @@ import {
 } from '@/utils/redux/selectors/statsSelectors';
 import { selectSongsById } from '@/utils/redux/selectors/librarySelectors';
 import { seededShuffle } from '@/features/home/hooks/useDailyLayout';
-import type { Song, SongBase } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import {
   QUICK_PICKS_PAGE_SIZE,
   QUICK_PICKS_TOTAL,
@@ -34,14 +34,14 @@ import {
 import { SECTION_H_PADDING } from '@/features/home/constants';
 import { iconSize, spacing, typography } from '@/constants/design';
 
-function useQuickPicks(refreshKey: number, itemCount: number): SongBase[] {
+function useQuickPicks(refreshKey: number, itemCount: number): Song[] {
   const songsById = useSelector(selectSongsById);
   const playCounts = useSelector(selectSongPlayCounts);
   const lastPlayedAt = useSelector(selectSongLastPlayedAt);
 
   return useMemo(() => {
     const now = Date.now();
-    const scored: { song: SongBase; score: number }[] = [];
+    const scored: { song: Song; score: number }[] = [];
 
     // Only iterate songs that actually have stats — avoids scanning the full 9000-song
     // library on every play count change (O(played) instead of O(library)).
@@ -78,25 +78,31 @@ export default function QuickPicksSection({ refreshKey = 0 }: Props) {
 
   const inFlightRef = useRef<string | null>(null);
 
-  const handlePress = async (song: SongBase) => {
-    if (inFlightRef.current === song.id) return;
-    inFlightRef.current = song.id;
+  // `resolvePlayableSong` (src/hooks/songs) is typed against the legacy
+  // `@/types` Song/SongBase, not the domain `Song` this screen now has —
+  // that hook is a different agent's scope. It documents a bare-id path for
+  // exactly this case (looked up by `nativeId` — see its own
+  // `selectSongsById` comment), so these pass the id rather than the whole
+  // entity.
+  const handlePress = async (song: Song) => {
+    if (inFlightRef.current === song.nativeId) return;
+    inFlightRef.current = song.nativeId;
     try {
-      const playable = await resolvePlayableSong(song);
-      if (playable) await playSong(playable);
+      const playable = await resolvePlayableSong(song.nativeId);
+      if (playable) await playSong(playable.song);
       else notify.error(t('common.playbackError'));
     } finally {
       inFlightRef.current = null;
     }
   };
 
-  const handleOptions = async (song: SongBase) => {
-    const resolved = await resolvePlayableSong(song, { allowNetwork: false });
-    openSongOptions(resolved ?? ({ ...song, streamUrl: '' } as Song));
+  const handleOptions = async (song: Song) => {
+    const resolved = await resolvePlayableSong(song.nativeId, { allowNetwork: false });
+    openSongOptions(resolved?.song ?? song);
   };
 
   const pages = useMemo(() => {
-    const result: SongBase[][] = [];
+    const result: Song[][] = [];
     for (let i = 0; i < picks.length; i += QUICK_PICKS_PAGE_SIZE) {
       result.push(picks.slice(i, i + QUICK_PICKS_PAGE_SIZE));
     }
@@ -124,9 +130,9 @@ export default function QuickPicksSection({ refreshKey = 0 }: Props) {
           <View key={pageIdx} style={[styles.page, { width: screenWidth - QUICK_PICKS_PEEK }]}>
             {page.map(song => (
               <MediaListRow
-                key={song.id}
+                key={song.localId}
                 title={song.title}
-                subtitle={song.artist}
+                subtitle={song.artist.name}
                 cover={song.cover}
                 onPress={() => { void handlePress(song); }}
                 variant="compact"

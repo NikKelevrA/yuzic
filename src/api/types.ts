@@ -1,14 +1,9 @@
-import {
-  Playlist,
-  PlaylistBase,
-  Album,
-  AlbumBase,
-  Artist,
-  CoverSource,
-  ExternalArtistBase,
-  Song,
-  SongBase,
-} from "@/types";
+import type { Album } from "@/domain/entities/Album";
+import type { Artist } from "@/domain/entities/Artist";
+import type { Playlist } from "@/domain/entities/Playlist";
+import type { Song } from "@/domain/entities/Song";
+import type { AlbumDetail, PlaylistDetail } from "@/domain/entities/Detail";
+import type { CoverSource } from "@/types/Cover";
 import { AddSongToPlaylistResult } from "./navidrome/playlists/addSongToPlaylist";
 import { RemoveSongFromPlaylistResult } from "./navidrome/playlists/removeSongFromPlaylist";
 import type { AudioQuality, PreferredCodec } from '@/utils/redux/slices/settingsSlice';
@@ -60,7 +55,7 @@ export interface SongsApi {
 }
 
 export interface TracksApi {
-  list(): Promise<SongBase[]>;
+  list(): Promise<Song[]>;
   get(id: string): Promise<Song | null>;
 }
 
@@ -71,13 +66,12 @@ export interface SimilarApi {
    * these from Last.fm server-side (getArtistInfo2), Jellyfin/Emby from
    * their tag graph (/Items/{id}/Similar). Distinct from the app's
    * Deezer/Last.fm/AudioMuse sources: users on a server without those
-   * integrations still get similar-artists. Uses ExternalArtistBase for
-   * the same reason Deezer/Last.fm do — the record needs just enough to
-   * navigate and tile, and the caller uses matched-navigation to resolve
-   * an id that already lives in the local library when it does.
+   * integrations still get similar-artists. These are full domain artists
+   * carrying the server's own provenance — the caller relates them to library
+   * records through matching rather than through a second, thinner type.
    */
-  getSimilarArtists?(artistId: string, limit?: number): Promise<ExternalArtistBase[]>;
-  getSimilarAlbums?(albumId: string, limit?: number): Promise<AlbumBase[]>;
+  getSimilarArtists?(artistId: string, limit?: number): Promise<Artist[]>;
+  getSimilarAlbums?(albumId: string, limit?: number): Promise<Album[]>;
 }
 
 export interface ApiAdapter {
@@ -299,10 +293,10 @@ export interface AuthApi {
 }
 
 export interface AlbumsApi {
-  list(): Promise<AlbumBase[]>;
-  get(id: string): Promise<Album>;
+  list(): Promise<Album[]>;
+  get(id: string): Promise<AlbumDetail>;
   /** Optional bulk fetch — returns all albums with songs in the fewest possible requests. */
-  listWithSongs?(): Promise<Album[]>;
+  listWithSongs?(): Promise<AlbumDetail[]>;
 }
 
 export interface ArtistsApi {
@@ -322,8 +316,8 @@ export interface GenresApi {
 }
 
 export interface PlaylistsApi {
-  list(): Promise<PlaylistBase[]>;
-  get(id: string): Promise<Playlist>;
+  list(): Promise<Playlist[]>;
+  get(id: string): Promise<PlaylistDetail>;
   create(name: string): Promise<string>;
   rename(id: string, newName: string): Promise<void>;
   addSong(playlistId: string, songId: string): Promise<AddSongToPlaylistResult>;
@@ -336,7 +330,7 @@ export type StarredItemType = 'song' | 'album';
 export interface StarredApi {
   list(): Promise<{
     songs: Song[];
-    albums: AlbumBase[];
+    albums: Album[];
   }>;
   add(id: string, type?: StarredItemType): Promise<void>;
   remove(id: string, type?: StarredItemType): Promise<void>;
@@ -375,7 +369,7 @@ export type LyricsResult = {
 
 export type SearchApi = {
   search: (query: string) => Promise<{
-    albums: AlbumBase[];
+    albums: Album[];
     artists: Artist[];
     songs: Song[];
   }>;

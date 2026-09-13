@@ -21,7 +21,7 @@ const PlaylistScreen: React.FC = () => {
 
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { playlist, isLoading, songsLoading, degraded, error } = usePlaylist(id);
+  const { playlist, songs, isLoading, songsLoading, degraded, error } = usePlaylist(id);
   const insets = useSafeAreaInsets();
 
   if (isLoading) {
@@ -55,7 +55,7 @@ const PlaylistScreen: React.FC = () => {
           />
         </View>
       )}
-      <PlaylistContent playlist={playlist} songsLoading={songsLoading} />
+      <PlaylistContent playlist={playlist} songs={songs} songsLoading={songsLoading} />
     </View>
   );
 };

@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import { incrementPlay } from '@/utils/redux/slices/statsSlice';
 import {
   buildScrobbleMutation,
@@ -70,10 +70,10 @@ export function useScrobbling() {
     dispatch(enqueueOfflineMutationAction(buildScrobbleMutation({
       serverId: activeServer.id,
       destination,
-      songId: song.id,
-      artist: song.artist,
+      songId: song.nativeId,
+      artist: song.artist.name,
       track: song.title,
-      album: song.albumTitle,
+      album: song.album.title,
       startedAt: startTime,
       durationSeconds,
       listenedSeconds,
@@ -101,30 +101,30 @@ export function useScrobbling() {
     // episodes still scrobble; a finished episode is a listen the same way a
     // finished track is.
     if (!canScrobble(song)) return;
-    if (lastScrobbledIdRef.current === song.id) return;
-    const songDuration = Number(song.duration) || 0;
+    if (lastScrobbledIdRef.current === song.nativeId) return;
+    const songDuration = song.durationSeconds || 0;
     if (!passesScrobbleThreshold(opts.listenedSeconds, songDuration)) return;
-    lastScrobbledIdRef.current = song.id;
+    lastScrobbledIdRef.current = song.nativeId;
 
     if (activeServer?.id) {
       dispatch(incrementPlay({
         serverId: activeServer.id,
-        songId: song.id,
-        albumId: song.albumId,
-        artistId: song.artistId,
+        songId: song.nativeId,
+        albumId: song.album.nativeId,
+        artistId: song.artist.nativeId,
         playlistId: opts.playlistId,
       }));
     }
 
     if (serverScrobbleEnabled) {
       try {
-        await api.songs.scrobble(song.id, opts.startTime);
+        await api.songs.scrobble(song.nativeId, opts.startTime);
         // Jellyfin/Emby's Last.fm plugin scrobbles on PlaybackStopped; markPlayed
         // alone doesn't reach it. Send the session-stop event with the actual
         // listened position so the plugin picks it up. Navidrome's scrobble is
         // the whole story on its own and implements no session events, so the
         // `?.` skips this there.
-        api.songs.reportPlaybackStop?.(song.id, opts.listenedSeconds * 1000).catch(() => {});
+        api.songs.reportPlaybackStop?.(song.nativeId, opts.listenedSeconds * 1000).catch(() => {});
       } catch {
         queueScrobble('server', song, opts.startTime, songDuration, opts.listenedSeconds);
       }
@@ -133,12 +133,12 @@ export function useScrobbling() {
     if (listenBrainzConfig?.token && lbScrobbleEnabled) {
       try {
         await listenbrainz.submitScrobble(listenBrainzConfig, {
-          artist: song.artist,
+          artist: song.artist.name,
           track: song.title,
           listenedAt: Math.floor(opts.startTime / 1000),
           durationSeconds: songDuration > 0 ? songDuration : undefined,
           durationPlayedSeconds: opts.listenedSeconds,
-          album: song.albumTitle,
+          album: song.album.title,
         });
       } catch {
         queueScrobble('listenbrainz', song, opts.startTime, songDuration, opts.listenedSeconds);
@@ -151,22 +151,22 @@ export function useScrobbling() {
     // server would either reject an empty-duration nowPlaying or record it
     // as an odd zero-length listen. Skip the whole path for them.
     if (!canScrobble(song)) return;
-    const songDuration = Number(song.duration) || undefined;
+    const songDuration = song.durationSeconds || undefined;
 
     // Whatever the provider calls it — scrobble.view with submission=false on
     // Subsonic, a session-start event on Jellyfin/Emby. Fire-and-forget: the
     // scrobble plugin reads these events, but a report outage should never
     // block the player.
     if (serverScrobbleEnabled) {
-      api.songs.reportNowPlaying?.(song.id).catch(() => {});
+      api.songs.reportNowPlaying?.(song.nativeId).catch(() => {});
     }
 
     if (listenBrainzConfig?.token && lbScrobbleEnabled) {
       listenbrainz.submitNowPlaying(listenBrainzConfig, {
-        artist: song.artist,
+        artist: song.artist.name,
         track: song.title,
         durationSeconds: songDuration,
-        album: song.albumTitle,
+        album: song.album.title,
       }).catch(() => {});
     }
   }, [serverScrobbleEnabled, listenBrainzConfig, lbScrobbleEnabled, api]);
@@ -181,7 +181,7 @@ export function useScrobbling() {
    */
   const reportPlaybackProgress = useCallback((song: Song, positionMs: number, isPaused: boolean) => {
     if (!serverScrobbleEnabled) return;
-    api.songs.reportPlaybackProgress?.(song.id, positionMs, isPaused).catch(() => {});
+    api.songs.reportPlaybackProgress?.(song.nativeId, positionMs, isPaused).catch(() => {});
   }, [serverScrobbleEnabled, api]);
 
   return { scrobbleIfNeeded, submitNowPlaying, reportPlaybackProgress, resetLastScrobbled };

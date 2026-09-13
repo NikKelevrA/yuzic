@@ -26,7 +26,7 @@ export default function MostPlayedAlbums() {
     // O(n) scan + O(k log k) sort where k = played albums, not O(n log n) over all.
     const withCounts: { album: typeof albums[0]; count: number }[] = [];
     for (const album of albums) {
-      const count = albumPlayCounts[album.id] ?? 0;
+      const count = albumPlayCounts[album.nativeId] ?? 0;
       if (count > 0) withCounts.push({ album, count });
     }
     withCounts.sort((a, b) => b.count - a.count);
@@ -64,7 +64,7 @@ export default function MostPlayedAlbums() {
         contentContainerStyle={sectionStyles.scrollContent}
       >
         {itemsToRender.map(album => (
-          <View key={album.id} style={[sectionStyles.item, { width: gridItemWidth }]}>
+          <View key={album.localId} style={[sectionStyles.item, { width: gridItemWidth }]}>
             <AlbumItem album={album} isGridView gridWidth={gridItemWidth} gridSpacing={0} />
           </View>
         ))}

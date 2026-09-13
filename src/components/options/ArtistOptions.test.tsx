@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import ArtistOptions from './ArtistOptions';
-import type { Artist } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
@@ -36,10 +36,13 @@ jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);
-const mockGenerateForArtist = jest.fn();
 jest.mock('@/features/audiomuse/generateFromEntity', () => ({
   useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
-  generateForArtist: (...args: unknown[]) => mockGenerateForArtist(...args),
+}));
+
+const mockGenerateForArtist = jest.fn();
+jest.mock('@/features/audiomuse/generatePlaylist', () => ({
+  generateSimilarPlaylistForArtist: (...args: unknown[]) => mockGenerateForArtist(...args),
 }));
 
 jest.mock('@/api', () => ({
@@ -100,10 +103,14 @@ jest.mock('@/components/options/OptionSheetPrimitives', () => {
 });
 
 const artist: Artist = {
-  id: 'ar1',
+  localId: 'local:artist:srv:server1:ar1' as Artist['localId'],
+  nativeId: 'ar1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   cover: { kind: 'none' },
   name: 'Some Artist',
-  subtext: '',
+  tags: [],
   albumIds: [],
 };
 

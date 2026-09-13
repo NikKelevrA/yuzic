@@ -1,14 +1,13 @@
-import { AlbumBase, Song } from "@/types";
-import { makeLocalId } from "@/types/EntityId";
-import type { MediaBrowserClient } from "../client";
-import { buildSongCover } from "../brand";
-import { normalizeGenres } from "../utils/normalizeGenres";
+import type { Album } from "@/domain/entities/Album";
+import type { Song } from "@/domain/entities/Song";
+import { requireProvenance, type MediaBrowserClient } from "../client";
+import { mapSong } from "../mapSong";
 import { normalizeAlbum } from "../albums/getAlbums";
 import { MediaBrowserItemsResponse } from "../types";
 
 export interface GetStarredItemsResult {
   songs: Song[];
-  albums: AlbumBase[];
+  albums: Album[];
 }
 
 async function fetchGetStarredSongs(client: MediaBrowserClient) {
@@ -31,40 +30,6 @@ async function fetchGetStarredAlbums(client: MediaBrowserClient) {
   return client.request<MediaBrowserItemsResponse>(path);
 }
 
-function normalizeStarredSongs(raw: MediaBrowserItemsResponse, client: MediaBrowserClient): Song[] {
-  const items = raw?.Items ?? [];
-  const sourceServerId = client.serverId;
-
-  return items.map((i) => {
-    const ms = i.MediaSources?.[0];
-    const audioStream = ms?.MediaStreams?.find((m) => m.Type === "Audio");
-    const id = i.Id ?? "";
-    return {
-      id,
-      title: i.Name ?? "Unknown",
-      artist: i.ArtistItems?.[0]?.Name ?? "Unknown Artist",
-      artistId: i.ArtistItems?.[0]?.Id ?? "",
-      albumId: i.AlbumId ?? "",
-      cover: buildSongCover(client.brand, i.Id, i.AlbumId, i.AlbumPrimaryImageTag ?? undefined),
-      duration: String(Math.floor((i.RunTimeTicks ?? 0) / 10_000_000)),
-      streamUrl: client.buildStreamUrl(id),
-      bitrate: (audioStream?.BitRate ?? ms?.Bitrate) ?? undefined,
-      sampleRate: audioStream?.SampleRate ?? undefined,
-      bitsPerSample: audioStream?.BitDepth ?? undefined,
-      mimeType: ms?.Container ? `audio/${ms.Container}` : undefined,
-      dateReleased: i.PremiereDate ?? undefined,
-      disc: i.ParentIndexNumber ?? undefined,
-      trackNumber: i.IndexNumber ?? undefined,
-      dateAdded: i.DateCreated ?? undefined,
-      genres: normalizeGenres(i.Genres),
-      localId: sourceServerId
-        ? makeLocalId({ kind: "track", sourceServerId, serverItemId: id })
-        : undefined,
-      libraryState: "in-library",
-    };
-  });
-}
-
 export async function getStarredItems(
   client: MediaBrowserClient
 ): Promise<GetStarredItemsResult> {
@@ -74,11 +39,13 @@ export async function getStarredItems(
       fetchGetStarredAlbums(client),
     ]);
 
+    const provenance = requireProvenance(client);
+    const songItems = songsRaw?.Items ?? [];
     const albumItems = albumsRaw?.Items ?? [];
 
     return {
-      songs: normalizeStarredSongs(songsRaw, client),
-      albums: albumItems.map((a) => normalizeAlbum(a, client)).filter((a): a is AlbumBase => a !== null),
+      songs: songItems.map((s) => mapSong(s, { provenance, brand: client.brand })),
+      albums: albumItems.map((a) => normalizeAlbum(a, client)).filter((a): a is Album => a !== null),
     };
   } catch (error) {
     console.error(`Failed to fetch ${client.brand.label} starred items:`, error);

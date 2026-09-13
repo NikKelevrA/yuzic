@@ -7,13 +7,11 @@ import React, {
   ReactNode,
   useRef,
 } from 'react';
-import {
-  AlbumBase,
-  Artist,
-  PlaylistBase,
-  CoverSource,
-  Song,
-} from '@/types';
+import type { CoverSource } from '@/types/Cover';
+import type { Album } from '@/domain/entities/Album';
+import type { Artist } from '@/domain/entities/Artist';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { Song } from '@/domain/entities/Song';
 
 import * as deezer from '@/api/deezer';
 import * as mb from '@/api/musicbrainz';
@@ -114,7 +112,7 @@ function albumToResult(
 }
 
 function artistToResult(
-  artist: Artist | {
+  artist: {
     id: string;
     name: string;
     subtext: string;
@@ -132,16 +130,24 @@ function artistToResult(
     cover: artist.cover,
     type: 'artist',
     source,
-    externalSource: 'externalSource' in artist ? artist.externalSource : undefined,
-    externalIds: 'externalIds' in artist ? artist.externalIds : undefined,
+    externalSource: artist.externalSource,
+    externalIds: artist.externalIds,
     isDownloaded,
   };
 }
 
+/**
+ * `SearchResult.song` no longer carries a domain `Song` for a library match.
+ * The entity has no `streamUrl` (see the domain `Song` doc — it's
+ * credentialled and built on demand), and this row's own `Song` type still
+ * requires one, so there's nothing safe to attach here without fabricating a
+ * URL nobody asked for yet. Screens fall back to resolving the track by id
+ * when they actually play it, same as they already do for any result that
+ * arrives without one.
+ */
 function songToResult(
   song: { id: string; title: string; artist: string; cover: CoverSource },
-  isDownloaded: boolean,
-  fullSong?: Song
+  isDownloaded: boolean
 ): SearchResult {
   return {
     id: song.id,
@@ -151,11 +157,13 @@ function songToResult(
     type: 'song',
     source: 'local',
     isDownloaded,
-    ...(fullSong ? { song: fullSong } : {}),
   };
 }
 
-function playlistToResult(playlist: PlaylistBase, isDownloaded: boolean): SearchResult {
+function playlistToResult(
+  playlist: { id: string; title: string; subtext: string; cover: CoverSource },
+  isDownloaded: boolean
+): SearchResult {
   return {
     id: playlist.id,
     title: playlist.title,
@@ -166,6 +174,50 @@ function playlistToResult(playlist: PlaylistBase, isDownloaded: boolean): Search
     isDownloaded,
   };
 }
+
+/**
+ * Presentation strings the domain entities no longer carry (`subtext` was
+ * dropped as a stored field — see the domain `EntityCore` doc). Kept in one
+ * place rather than inlined at each `*ToResult` call site.
+ */
+const albumSubtext = (album: Album): string => album.artist.name;
+const artistSubtext = (): string => '';
+const playlistSubtext = (playlist: Playlist): string => playlist.description ?? '';
+
+/**
+ * `id` here is `nativeId`, not `localId`. It doubles as the row's React key
+ * (via `resultKey`, `source:type:id`) and as what the search screen hands
+ * back to resolve/play the track (`resolvePlayableSong(result.id)`) — the
+ * screen is unconverted and still expects the id it can look a track up by.
+ * A `source`-scoped local-vs-external collision is already ruled out by
+ * `resultKey`'s `source` segment; a same-native-id collision between two
+ * *local* origins (e.g. an imported file alongside a server track) is not
+ * handled here — same gap called out in DownloadContext's `toQueueTrack`.
+ */
+const albumSearchRow = (album: Album) => ({
+  id: album.nativeId,
+  title: album.title,
+  subtext: albumSubtext(album),
+  cover: album.cover,
+});
+const artistSearchRow = (artist: Artist) => ({
+  id: artist.nativeId,
+  name: artist.name,
+  subtext: artistSubtext(),
+  cover: artist.cover,
+});
+const playlistSearchRow = (playlist: Playlist) => ({
+  id: playlist.nativeId,
+  title: playlist.title,
+  subtext: playlistSubtext(playlist),
+  cover: playlist.cover,
+});
+const songSearchRow = (song: Song) => ({
+  id: song.nativeId,
+  title: song.title,
+  artist: song.artist.name,
+  cover: song.cover,
+});
 
 /**
  * One external source's contribution to a search, kept provenance-tagged
@@ -274,7 +326,11 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({
 
   const downloadedAlbumIds = useMemo(
     () => getFullyDownloadedAlbumIds(
-      tracks.map(track => ({ id: track.id, albumId: track.albumId })),
+      // `nativeId`, matching what DownloadContext persists a track under
+      // (`trackId`/`originalTrack.id` are `nativeId` there too — see its
+      // `toQueueTrack` doc) — these two sides have to agree on which id they
+      // key by, or every album would read as never fully downloaded.
+      tracks.map(track => ({ id: track.nativeId, albumId: track.album.nativeId })),
       downloadedTrackIds
     ),
     [tracks, downloadedTrackIds]
@@ -300,7 +356,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({
   // Pre-compute lowercased strings once when library data changes, not on every keystroke.
   // With 9000 tracks this avoids 18,000 toLowerCase() calls per search query.
   const searchIndex = useMemo(() => ({
-    tracks: tracks.map(t => ({ item: t, lc: `${t.title.toLowerCase()} ${(t.artist ?? '').toLowerCase()}` })),
+    tracks: tracks.map(t => ({ item: t, lc: `${t.title.toLowerCase()} ${t.artist.name.toLowerCase()}` })),
     albums: albums.map(a => ({ item: a, lc: a.title.toLowerCase() })),
     artists: artists.map(a => ({ item: a, lc: a.name.toLowerCase() })),
     playlists: playlists.map(p => ({ item: p, lc: p.title.toLowerCase() })),
@@ -315,26 +371,26 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({
       .filter(({ lc }) => lc.includes(lowerQuery))
       .slice(0, 5)
       .map(({ item }) =>
-        albumToResult(item, 'local', downloadedAlbumIds.has(item.id))
+        albumToResult(albumSearchRow(item), 'local', downloadedAlbumIds.has(item.nativeId))
       );
 
     const artistResults = searchIndex.artists
       .filter(({ lc }) => lc.includes(lowerQuery))
       .slice(0, 3)
-      .map(({ item }) => artistToResult(item));
+      .map(({ item }) => artistToResult(artistSearchRow(item)));
 
     const playlistResults = searchIndex.playlists
       .filter(({ lc }) => lc.includes(lowerQuery))
       .slice(0, 3)
       .map(({ item }) =>
-        playlistToResult(item, downloadedPlaylistIds.has(item.id))
+        playlistToResult(playlistSearchRow(item), downloadedPlaylistIds.has(item.nativeId))
       );
 
     const songResults = searchIndex.tracks
       .filter(({ lc }) => lc.includes(lowerQuery))
       .slice(0, 5)
       .map(({ item }) =>
-        songToResult(item, downloadedTrackIds.has(item.id))
+        songToResult(songSearchRow(item), downloadedTrackIds.has(item.nativeId))
       );
 
     return [
@@ -359,9 +415,9 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({
       await api.search.search(query);
 
     return [
-      ...songs.map((song: Song) => songToResult(song, downloadedTrackIds.has(song.id), song)),
-      ...albums.map((album: AlbumBase) => albumToResult(album, 'local', downloadedAlbumIds.has(album.id))),
-      ...artists.map((artist: Artist) => artistToResult(artist)),
+      ...songs.map((song: Song) => songToResult(songSearchRow(song), downloadedTrackIds.has(song.nativeId))),
+      ...albums.map((album: Album) => albumToResult(albumSearchRow(album), 'local', downloadedAlbumIds.has(album.nativeId))),
+      ...artists.map((artist: Artist) => artistToResult(artistSearchRow(artist))),
     ];
   }, [api, downloadedAlbumIds, downloadedTrackIds]);
 

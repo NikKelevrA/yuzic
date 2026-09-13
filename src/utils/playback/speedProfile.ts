@@ -1,5 +1,7 @@
-import type { Song } from '@/types';
 import { getContentKind } from './contentKind';
+import type { ContentKind } from '@/types';
+
+type ContentKindSource = { contentKind?: ContentKind } | null | undefined;
 
 /**
  * Which playback speed a track should use.
@@ -16,7 +18,7 @@ import { getContentKind } from './contentKind';
  */
 export type SpeedProfile = 'music' | 'spoken';
 
-export function speedProfileFor(song: Song | null | undefined): SpeedProfile {
+export function speedProfileFor(song: ContentKindSource): SpeedProfile {
   return getContentKind(song) === 'podcastEpisode' ? 'spoken' : 'music';
 }
 
@@ -48,7 +50,7 @@ export function clampSpeed(speed: number): number {
  * worst way for a setting to be missing.
  */
 export function speedFor(
-  song: Song | null | undefined,
+  song: ContentKindSource,
   speeds: Partial<Record<SpeedProfile, number>> | undefined,
 ): number {
   const profile = speedProfileFor(song);

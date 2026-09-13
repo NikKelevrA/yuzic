@@ -1,2 +1,2 @@
 export { useRecentSongs } from './useRecentSongs';
-export { isPlayableSong, usePlayableSongResolver } from './usePlayableSongResolver';
+export { usePlayableSongResolver } from './usePlayableSongResolver';

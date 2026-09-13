@@ -21,7 +21,7 @@ export default function RecentlyAdded() {
 
   const recentlyAdded = useMemo(() => {
     return [...albums]
-      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
+      .sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0))
       .slice(0, MAX_ALBUMS);
   }, [albums]);
 
@@ -59,7 +59,7 @@ export default function RecentlyAdded() {
           contentContainerStyle={sectionStyles.scrollContent}
         >
           {recentlyAdded.map(album => (
-            <View key={album.id} style={[sectionStyles.item, { width: gridItemWidth }]}>
+            <View key={album.localId} style={[sectionStyles.item, { width: gridItemWidth }]}>
               <AlbumItem album={album} isGridView gridWidth={gridItemWidth} gridSpacing={0} />
             </View>
           ))}

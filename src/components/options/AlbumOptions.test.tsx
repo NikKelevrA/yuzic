@@ -2,7 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import AlbumOptions from './AlbumOptions';
-import type { AlbumBase, ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { ExternalAlbumBase } from '@/types';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
@@ -75,10 +76,13 @@ jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);
-const mockGenerateForAlbum = jest.fn();
 jest.mock('@/features/audiomuse/generateFromEntity', () => ({
   useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
-  generateForAlbum: (...args: unknown[]) => mockGenerateForAlbum(...args),
+}));
+
+const mockGenerateForAlbum = jest.fn();
+jest.mock('@/features/audiomuse/generatePlaylist', () => ({
+  generateSimilarPlaylistForAlbum: (...args: unknown[]) => mockGenerateForAlbum(...args),
 }));
 
 jest.mock('@/contexts/PlayingContext', () => ({
@@ -156,15 +160,25 @@ const { useExternalAlbumStatus } = jest.requireMock('@/hooks/useExternalAlbumSta
   useExternalAlbumStatus: jest.Mock;
 };
 
-const libraryAlbum: AlbumBase = {
-  id: 'a1',
+const libraryAlbum: Album = {
+  localId: 'local:album:srv:server1:a1' as Album['localId'],
+  nativeId: 'a1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Local Album',
   cover: { kind: 'none' },
-  subtext: 'Some Artist',
-  artist: { id: 'ar1', name: 'Some Artist', subtext: '', cover: { kind: 'none' } },
+  artist: {
+    localId: 'local:artist:srv:server1:ar1' as Album['artist']['localId'],
+    nativeId: 'ar1',
+    name: 'Some Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   year: 2020,
+  releaseType: 'album',
   genres: [],
-  created: new Date(0),
+  songIds: [],
 };
 
 const externalAlbum: ExternalAlbumBase = {

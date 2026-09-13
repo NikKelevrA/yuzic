@@ -10,4 +10,7 @@
 import { enforce } from './allowlist.mjs';
 import { cycles } from './detectors.mjs';
 
-process.exit(enforce('cycles', cycles().map(cycle => cycle.join(' -> '))));
+// Cycles opt into swap-on-prune: this rewrite moves modules constantly, and a
+// cycle re-expressed through a renamed file is not a new cycle. The count is
+// still not allowed to grow.
+process.exit(enforce('cycles', cycles().map(cycle => cycle.join(' -> ')), key => key, { allowSwap: true }));

@@ -10,7 +10,8 @@ import SectionShelfHeader from '../SectionShelfHeader';
 import { SECTION_H_PADDING } from '../sectionStyles';
 import { useTranslation } from 'react-i18next';
 import { usePrefetchCovers } from '@/hooks/usePrefetchCovers';
-import { AlbumBase, PlaylistBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Playlist } from '@/domain/entities/Playlist';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import { useSheetRef } from '@/utils/useSheetRef';
@@ -31,8 +32,8 @@ const getItemWidth = (width: number) => {
 };
 
 type RecentItem =
-  | { kind: 'album'; data: AlbumBase; ts: number }
-  | { kind: 'playlist'; data: PlaylistBase; ts: number };
+  | { kind: 'album'; data: Album; ts: number }
+  | { kind: 'playlist'; data: Playlist; ts: number };
 
 type TileProps = {
   item: RecentItem;
@@ -40,16 +41,18 @@ type TileProps = {
 };
 
 const RecentTile = memo(function RecentTile({ item, itemWidth }: TileProps) {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const sheetRef = useSheetRef();
   const [optionsMounted, setOptionsMounted] = useState(false);
   const rad = useRadius();
 
   const handlePress = useCallback(() => {
+    // Server adapter identity — this becomes `useAlbum(id)`/`usePlaylist(id)`.
     if (item.kind === 'album') {
-      navigation.navigate('albumView', { id: item.data.id });
+      navigation.navigate('albumView', { id: item.data.nativeId });
     } else {
-      navigation.navigate('playlistView', { id: item.data.id });
+      navigation.navigate('playlistView', { id: item.data.nativeId });
     }
   }, [item, navigation]);
 
@@ -62,13 +65,20 @@ const RecentTile = memo(function RecentTile({ item, itemWidth }: TileProps) {
     }
   }, [optionsMounted, sheetRef]);
 
+  // A shelf that mixes albums and playlists needs the type prefix on every
+  // row — it's the only thing telling the two apart (see LibraryList's
+  // `showTypeLabel`).
+  const subtitle = item.kind === 'album'
+    ? t('library.albumTypeLabel', { artist: item.data.artist.name })
+    : t('playlist.subtext', { count: item.data.songIds.length });
+
   return (
     <>
       <View style={[styles.item, { width: itemWidth }]}>
         <MediaTile
           cover={item.data.cover}
           title={item.data.title}
-          subtitle={item.data.subtext}
+          subtitle={subtitle}
           size={itemWidth}
           radius={rad.card}
           onPress={handlePress}
@@ -96,8 +106,11 @@ export default function RecentlyPlayed() {
   const { playlists } = usePlaylists();
 
   const items = useMemo<RecentItem[]>(() => {
-    const albumMap = new Map(albums.map(a => [a.id, a]));
-    const playlistMap = new Map(playlists.map(p => [p.id, p]));
+    // `selectAlbumLastPlayedAt`/`selectPlaylistLastPlayedAt` key by the
+    // origin's own id (see `useScrobbling`'s `incrementPlay` dispatch), so
+    // these maps look albums/playlists up by `nativeId`, not `localId`.
+    const albumMap = new Map(albums.map(a => [a.nativeId, a]));
+    const playlistMap = new Map(playlists.map(p => [p.nativeId, p]));
     const result: RecentItem[] = [];
 
     for (const [id, ts] of Object.entries(albumLastPlayedAt)) {
@@ -148,7 +161,7 @@ export default function RecentlyPlayed() {
         contentContainerStyle={styles.scrollContent}
       >
         {items.map(item => (
-          <RecentTile key={`${item.kind}-${item.data.id}`} item={item} itemWidth={itemWidth} />
+          <RecentTile key={`${item.kind}-${item.data.localId}`} item={item} itemWidth={itemWidth} />
         ))}
       </ScrollView>
     </View>

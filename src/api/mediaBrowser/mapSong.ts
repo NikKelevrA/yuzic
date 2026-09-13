@@ -63,6 +63,10 @@ export function mapSong(dto: MediaBrowserItem, context: MapSongContext): Song {
     year: dto.ProductionYear,
     genres: normalizeGenres(dto.Genres) ?? [],
     addedAt: dto.DateCreated ? Date.parse(dto.DateCreated) || undefined : undefined,
+    serverPlayCount: dto.UserData?.PlayCount,
+    serverLastPlayedAt: dto.UserData?.LastPlayedDate
+      ? Date.parse(dto.UserData.LastPlayedDate) || undefined
+      : undefined,
     audio: {
       bitrateKbps: audioStream?.BitRate ?? mediaSource?.Bitrate,
       sampleRateHz: audioStream?.SampleRate,

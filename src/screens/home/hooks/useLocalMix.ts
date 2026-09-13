@@ -8,7 +8,7 @@ import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import { selectSongPlayCounts } from '@/utils/redux/selectors/statsSelectors';
 import { selectSongsById } from '@/utils/redux/selectors/librarySelectors';
-import type { Song, SongBase } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
 const SEED_POOL_SIZE = 20;
 const SEED_COUNT = 2;
@@ -29,13 +29,13 @@ export function useLocalMix(refreshKey = 0) {
   const serverReachable = useServerReachable();
   const dayKey = getDayKey();
 
-  const seeds = useMemo<SongBase[]>(() => {
+  const seeds = useMemo<Song[]>(() => {
     const played = Object.entries(playCounts)
       .filter(([, count]) => count > 0)
       .sort((a, b) => b[1] - a[1])
       .slice(0, SEED_POOL_SIZE)
       .map(([id]) => songsById.get(id))
-      .filter((song): song is SongBase => Boolean(song));
+      .filter((song): song is Song => Boolean(song));
 
     return seededShuffle(played, getDailySeed(`${dayKey}:localMix:${refreshKey}`)).slice(0, SEED_COUNT);
   }, [dayKey, playCounts, refreshKey, songsById]);
@@ -44,18 +44,22 @@ export function useLocalMix(refreshKey = 0) {
   const enabled = hasSimilarity && serverReachable && seeds.length > 0;
 
   const query = useQuery<Song[]>({
-    queryKey: [QueryKeys.LocalMix, dayKey, refreshKey, seeds.map(song => song.id).join(',')],
+    // The cache key is identity: the same seed reached from two servers is
+    // two different mixes.
+    queryKey: [QueryKeys.LocalMix, dayKey, refreshKey, seeds.map(song => song.localId).join(',')],
     queryFn: async () => {
-      const seedIds = new Set(seeds.map(song => song.id));
+      // Seeds are excluded from their own mix by identity, but asked for by
+      // the id the server knows them under.
+      const seedIds = new Set(seeds.map(song => song.localId));
       const batches = await Promise.all(
-        seeds.map(seed => api.similar.getSimilarSongs(seed.id).catch(() => []))
+        seeds.map(seed => api.similar.getSimilarSongs(seed.nativeId).catch(() => []))
       );
       const seen = new Set<string>();
       const mix: Song[] = [];
       for (const batch of batches) {
         for (const song of batch) {
-          if (seedIds.has(song.id) || seen.has(song.id)) continue;
-          seen.add(song.id);
+          if (seedIds.has(song.localId) || seen.has(song.localId)) continue;
+          seen.add(song.localId);
           mix.push(song);
         }
       }

@@ -39,8 +39,10 @@ import { LASTFM_API_KEY } from '@/constants/keys';
 import { QueryKeys } from '@/enums/queryKeys';
 import GetReviewSheet from '@/components/options/GetReviewSheet';
 import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
-import { formatSongDuration } from '@/utils/formatDuration';
-import type { Playlist, SongBase, ExternalAlbumBase, ExternalSong } from '@/types';
+import { formatDuration, formatSongDuration } from '@/utils/formatDuration';
+import type { ExternalAlbumBase, ExternalSong } from '@/types';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { Song } from '@/domain/entities/Song';
 
 import shuffleArray from '@/utils/shuffleArray';
 import seededShuffle from '@/utils/seededShuffle';
@@ -121,7 +123,7 @@ async function fetchExternalRecs(artistNames: string[]): Promise<ExternalSong[]>
 // ── Local song row ─────────────────────────────────────────────────────────────
 
 type LocalRowProps = {
-  song: SongBase;
+  song: Song;
   playlistId: string;
 };
 
@@ -136,8 +138,8 @@ const LocalRow: React.FC<LocalRowProps> = ({ song, playlistId }) => {
 
   const handlePress = useCallback(async () => {
     try {
-      const full = await resolvePlayableSong(song);
-      if (full) await playSimilar(full);
+      const full = await resolvePlayableSong(song.nativeId);
+      if (full) await playSimilar(full.song);
       else notify.error(t('common.playbackError'));
     } catch {
       notify.error(t('common.playbackError'));
@@ -148,7 +150,7 @@ const LocalRow: React.FC<LocalRowProps> = ({ song, playlistId }) => {
     if (adding || added) return;
     setAdding(true);
     try {
-      await addToPlaylist.mutateAsync({ playlistId, songId: song.id });
+      await addToPlaylist.mutateAsync({ playlistId, songId: song.nativeId });
       setAdded(true);
       notify.success(t('playlist.recommended.added'));
     } catch {
@@ -156,12 +158,12 @@ const LocalRow: React.FC<LocalRowProps> = ({ song, playlistId }) => {
     } finally {
       setAdding(false);
     }
-  }, [adding, added, addToPlaylist, playlistId, song.id, t]);
+  }, [adding, added, addToPlaylist, playlistId, song.nativeId, t]);
 
   return (
     <MediaListRow
       title={song.title}
-      subtitle={`${song.artist}${song.duration ? ` · ${formatSongDuration(song.duration)}` : ''}`}
+      subtitle={`${song.artist.name}${song.durationSeconds ? ` · ${formatDuration(song.durationSeconds)}` : ''}`}
       cover={song.cover}
       onPress={() => void handlePress()}
       variant="compact"
@@ -231,12 +233,14 @@ const ExternalRow: React.FC<ExternalRowProps> = ({ song, hasDownloader, onDownlo
 
 type LocalRecommendedSectionProps = {
   playlist: Playlist;
+  songs: Song[];
   localSeed: number;
   onRefresh: () => void;
 };
 
 export const LocalRecommendedSection: React.FC<LocalRecommendedSectionProps> = ({
   playlist,
+  songs,
   localSeed,
   onRefresh,
 }) => {
@@ -249,26 +253,26 @@ export const LocalRecommendedSection: React.FC<LocalRecommendedSectionProps> = (
   const audiomuseConfig = useSelector(selectAudiomuseConfig);
 
   const playlistSongIds = useMemo(
-    () => new Set((playlist.songs ?? []).map(s => s.id)),
-    [playlist.songs]
+    () => new Set(songs.map(s => s.localId)),
+    [songs]
   );
 
   const playlistArtistNames = useMemo(() => {
     const names = new Set<string>();
-    for (const song of playlist.songs ?? []) {
-      if (song.artist && song.artist.toLowerCase() !== 'various artists') {
-        names.add(song.artist);
+    for (const song of songs) {
+      if (song.artist.name && song.artist.name.toLowerCase() !== 'various artists') {
+        names.add(song.artist.name);
       }
     }
     return [...names].slice(0, 3);
-  }, [playlist.songs]);
+  }, [songs]);
 
   // Same-artist shuffle from the local library — used whenever AudioMuse-AI
   // isn't configured, and as a safety net if its similarity call fails.
-  const fallbackLocalSongs = useMemo<SongBase[]>(() => {
+  const fallbackLocalSongs = useMemo<Song[]>(() => {
     const artistSet = new Set(playlistArtistNames.map(n => n.toLowerCase()));
     const pool = tracks.filter(
-      s => !playlistSongIds.has(s.id) && s.artist && artistSet.has(s.artist.toLowerCase())
+      s => !playlistSongIds.has(s.localId) && s.artist.name && artistSet.has(s.artist.name.toLowerCase())
     );
     return seededShuffle(pool, localSeed).slice(0, LOCAL_COUNT);
   }, [tracks, playlistSongIds, playlistArtistNames, localSeed]);
@@ -276,16 +280,16 @@ export const LocalRecommendedSection: React.FC<LocalRecommendedSectionProps> = (
   // Reseed a handful of playlist tracks each refresh so acoustic similarity
   // results vary too, matching the fallback's shuffled feel.
   const audiomuseSeeds = useMemo(
-    () => seededShuffle(playlist.songs ?? [], localSeed).slice(0, 5),
-    [playlist.songs, localSeed]
+    () => seededShuffle(songs, localSeed).slice(0, 5),
+    [songs, localSeed]
   );
 
   const audiomuseQuery = useQuery({
     queryKey: [
       QueryKeys.RecommendedLocalSongs,
       'audiomuse',
-      playlist.id,
-      audiomuseSeeds.map(s => s.id).join(','),
+      playlist.nativeId,
+      audiomuseSeeds.map(s => s.nativeId).join(','),
     ],
     queryFn: () => createAudiomuseQueueFillProvider(audiomuseConfig, api).fetchExtension({
       recentSongs: audiomuseSeeds,
@@ -297,7 +301,7 @@ export const LocalRecommendedSection: React.FC<LocalRecommendedSectionProps> = (
     networkMode: 'online',
   });
 
-  const localSongs: SongBase[] = audiomuseQuery.data?.length
+  const localSongs: Song[] = audiomuseQuery.data?.length
     ? audiomuseQuery.data
     : fallbackLocalSongs;
 
@@ -318,7 +322,7 @@ export const LocalRecommendedSection: React.FC<LocalRecommendedSectionProps> = (
       />
 
       {localSongs.map(song => (
-        <LocalRow key={song.id} song={song} playlistId={playlist.id} />
+        <LocalRow key={song.localId} song={song} playlistId={playlist.nativeId} />
       ))}
     </View>
   );
@@ -328,11 +332,13 @@ export const LocalRecommendedSection: React.FC<LocalRecommendedSectionProps> = (
 
 type DeezerRecommendedSectionProps = {
   playlist: Playlist;
+  songs: Song[];
   onRefreshExternal: () => void;
 };
 
 export const DeezerRecommendedSection: React.FC<DeezerRecommendedSectionProps> = ({
   playlist,
+  songs,
   onRefreshExternal,
 }) => {
   const { t } = useTranslation();
@@ -348,17 +354,17 @@ export const DeezerRecommendedSection: React.FC<DeezerRecommendedSectionProps> =
 
   const playlistArtistNames = useMemo(() => {
     const names = new Set<string>();
-    for (const song of playlist.songs ?? []) {
-      if (song.artist && song.artist.toLowerCase() !== 'various artists') {
-        names.add(song.artist);
+    for (const song of songs) {
+      if (song.artist.name && song.artist.name.toLowerCase() !== 'various artists') {
+        names.add(song.artist.name);
       }
     }
     return [...names].slice(0, 3);
-  }, [playlist.songs]);
+  }, [songs]);
 
   const externalQueryKey = useMemo(
-    () => [QueryKeys.RecommendedExternalSongs, 'playlist', playlist.id, playlistArtistNames.join(',')],
-    [playlist.id, playlistArtistNames]
+    () => [QueryKeys.RecommendedExternalSongs, 'playlist', playlist.nativeId, playlistArtistNames.join(',')],
+    [playlist.nativeId, playlistArtistNames]
   );
 
   const externalQuery = useQuery({
@@ -462,25 +468,26 @@ export const DeezerRecommendedSection: React.FC<DeezerRecommendedSectionProps> =
 
 type RecommendedSectionProps = {
   playlist: Playlist;
+  songs: Song[];
 };
 
-const RecommendedSection: React.FC<RecommendedSectionProps> = ({ playlist }) => {
+const RecommendedSection: React.FC<RecommendedSectionProps> = ({ playlist, songs }) => {
   const queryClient = useQueryClient();
   const [localSeed, setLocalSeed] = useState(() => Math.random());
 
   const playlistArtistNames = useMemo(() => {
     const names = new Set<string>();
-    for (const song of playlist.songs ?? []) {
-      if (song.artist && song.artist.toLowerCase() !== 'various artists') {
-        names.add(song.artist);
+    for (const song of songs) {
+      if (song.artist.name && song.artist.name.toLowerCase() !== 'various artists') {
+        names.add(song.artist.name);
       }
     }
     return [...names].slice(0, 3);
-  }, [playlist.songs]);
+  }, [songs]);
 
   const externalQueryKey = useMemo(
-    () => [QueryKeys.RecommendedExternalSongs, 'playlist', playlist.id, playlistArtistNames.join(',')],
-    [playlist.id, playlistArtistNames]
+    () => [QueryKeys.RecommendedExternalSongs, 'playlist', playlist.nativeId, playlistArtistNames.join(',')],
+    [playlist.nativeId, playlistArtistNames]
   );
 
   const handleRefreshLocal = useCallback(() => {
@@ -495,11 +502,13 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ playlist }) => 
     <View style={styles.container}>
       <LocalRecommendedSection
         playlist={playlist}
+        songs={songs}
         localSeed={localSeed}
         onRefresh={handleRefreshLocal}
       />
       <DeezerRecommendedSection
         playlist={playlist}
+        songs={songs}
         onRefreshExternal={handleRefreshExternal}
       />
     </View>

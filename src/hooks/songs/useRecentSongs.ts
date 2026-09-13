@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { SongBase } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import { useTracks } from '@/hooks/tracks';
 import shuffleArray from '@/utils/shuffleArray';
 import {
@@ -12,7 +12,7 @@ const MAX_RECENT = 12;
 const MIN_DIAL_SONGS = 6;
 
 type UseRecentSongsResult = {
-  songs: SongBase[];
+  songs: Song[];
   isLoading: boolean;
 };
 
@@ -21,10 +21,13 @@ export function useRecentSongs(): UseRecentSongsResult {
   const songLastPlayedAt = useSelector(selectSongLastPlayedAt);
   const songPlayCounts = useSelector(selectSongPlayCounts);
 
+  // The stats maps are keyed by the server's own song id, which for a domain
+  // Song is `nativeId` (there is no `.id` any more — see `LocalId`/`nativeId`
+  // on `EntityCore`).
   const librarySongMap = useMemo(() => {
-    const map = new Map<string, SongBase>();
+    const map = new Map<string, Song>();
     for (const track of tracks) {
-      map.set(track.id, track);
+      map.set(track.nativeId, track);
     }
     return map;
   }, [tracks]);
@@ -52,7 +55,7 @@ export function useRecentSongs(): UseRecentSongsResult {
     if (merged.length < MIN_DIAL_SONGS) {
       const fallbackTrackIds = shuffleArray(
         tracks
-          .map(track => String(track.id ?? '').trim())
+          .map(track => track.nativeId.trim())
           .filter(Boolean)
           .filter(id => !seen.has(id))
       );
@@ -70,7 +73,7 @@ export function useRecentSongs(): UseRecentSongsResult {
   const songs = useMemo(() => {
     return songIds
       .map(id => librarySongMap.get(id))
-      .filter((s): s is SongBase => !!s);
+      .filter((s): s is Song => !!s);
   }, [songIds, librarySongMap]);
 
   return { songs, isLoading: false };

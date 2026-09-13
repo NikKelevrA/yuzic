@@ -15,7 +15,11 @@ import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
 import { MediaImage } from '@/components/MediaImage';
 import ArtistOptions from '@/components/options/ArtistOptions';
-import { Artist, ExternalArtist, Song } from '@/types';
+import type { ExternalArtist } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { Song } from '@/domain/entities/Song';
+import { makeLocalId } from '@/domain/identity/LocalId';
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { notify } from '@/components/toast';
 import { useArtistAlbums } from '@/hooks/artists';
@@ -26,7 +30,7 @@ import { useDownload } from '@/contexts/DownloadContext';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { useApi } from '@/api';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { fetchAlbumDetailsSettled } from '@/hooks/albums';
+import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails';
 import {
   DetailActionRow,
   DetailCircleAction,
@@ -66,7 +70,7 @@ const ArtistHeader: React.FC<Props> = ({ localArtist, externalArtist, showNaviga
 
   const displayName = localArtist?.name ?? externalArtist?.name ?? '';
   const serverCover = localArtist?.cover ?? externalArtist?.cover ?? { kind: 'none' as const };
-  const artistMbid = localArtist?.mbid ?? externalArtist?.externalIds?.mbid ?? null;
+  const artistMbid = localArtist?.externalIds.mbid ?? externalArtist?.externalIds?.mbid ?? null;
 
   // `metadata.enrich` (artwork half, GAPS ONLY — see features/metadata): only
   // consulted when the server/Deezer artist has no cover of its own, and a
@@ -203,11 +207,11 @@ function LocalOptionsButton({ artist }: { artist: Artist }) {
 function LocalMetaRow({ artist }: { artist: Artist }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const artistAlbums = useArtistAlbums(artist.id);
+  const artistAlbums = useArtistAlbums(artist.nativeId);
   const { tracks: allTracks } = useTracks();
   const artistTrackIds = useMemo(
-    () => allTracks.filter(track => track.artistId === artist.id).map(track => track.id),
-    [allTracks, artist.id]
+    () => allTracks.filter(track => track.artist.localId === artist.localId).map(track => track.localId),
+    [allTracks, artist.localId]
   );
 
   const metadataItems = useMemo(() => {
@@ -274,22 +278,21 @@ function LocalActionRow({ artist }: { artist: Artist }) {
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const [songsLoading, setSongsLoading] = useState(false);
 
-  const artistAlbums = useArtistAlbums(artist.id);
+  const artistAlbums = useArtistAlbums(artist.nativeId);
   const { tracks: allTracks } = useTracks();
   const artistTrackIds = useMemo(
-    () => allTracks.filter(track => track.artistId === artist.id).map(track => track.id),
-    [allTracks, artist.id]
+    () => allTracks.filter(track => track.artist.localId === artist.localId).map(track => track.localId),
+    [allTracks, artist.localId]
   );
 
   const fetchArtistSongs = useCallback(async (): Promise<Song[]> => {
     if (!activeServer?.id || !artistAlbums.length) return [];
-    const fullAlbums = await fetchAlbumDetailsSettled({
+    return fetchAlbumSongsSettled({
       queryClient,
       serverId: activeServer.id,
       albums: artistAlbums,
       getAlbum: api.albums.get,
     });
-    return fullAlbums.flatMap(a => a.songs ?? []);
   }, [queryClient, activeServer, artistAlbums, api.albums.get]);
 
   const playArtist = useCallback(async (shuffle = false) => {
@@ -310,25 +313,21 @@ function LocalActionRow({ artist }: { artist: Artist }) {
       return;
     }
 
-    playSongInCollection(
-      songs[0],
-      {
-        id: artist.id,
-        title: artist.name,
-        artist: {
-          id: artist.id,
-          name: artist.name,
-          cover: artist.cover,
-          subtext: t('common.artist'),
-        },
-        cover: artist.cover,
-        songs,
-        subtext: t('common.playlist'),
-        changed: new Date('1995-12-17T03:24:00'),
-        created: new Date('1995-12-17T03:24:00')
-      },
-      shuffle
-    );
+    // There is no real playlist behind "play this artist's known songs" —
+    // see the equivalent comment in `components/options/ArtistOptions`.
+    const playlist: Playlist = {
+      localId: makeLocalId('playlist', artist.provenance, `artist:${artist.nativeId}`),
+      nativeId: artist.nativeId,
+      provenance: artist.provenance,
+      externalIds: {},
+      libraryState: artist.libraryState,
+      title: artist.name,
+      cover: artist.cover,
+      isOwned: false,
+      songIds: songs.map(song => song.localId),
+    };
+
+    playSongInCollection(songs[0], { playlist, songs }, shuffle);
   }, [songsLoading, fetchArtistSongs, playSongInCollection, artist, t]);
 
   const {
@@ -341,7 +340,7 @@ function LocalActionRow({ artist }: { artist: Artist }) {
     if (isDownloadingAll || isArtistDownloading || isArtistFullyDownloaded || !artistAlbums.length) return;
     setIsDownloadingAll(true);
     try {
-      await Promise.all(artistAlbums.map(album => downloadAlbumById(album.id)));
+      await Promise.all(artistAlbums.map(album => downloadAlbumById(album.nativeId)));
     } finally {
       setIsDownloadingAll(false);
     }

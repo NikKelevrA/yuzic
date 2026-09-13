@@ -16,7 +16,6 @@
 import type { Album } from './Album';
 import type { Playlist } from './Playlist';
 import type { Song } from './Song';
-import type { Artist } from './Artist';
 
 export interface AlbumDetail {
   album: Album;
@@ -28,10 +27,4 @@ export interface PlaylistDetail {
   playlist: Playlist;
   /** The playlist's tracks in playlist order. Matches `playlist.songIds`. */
   songs: Song[];
-}
-
-export interface ArtistDetail {
-  artist: Artist;
-  /** The artist's albums. Matches `artist.albumIds`. */
-  albums: Album[];
 }

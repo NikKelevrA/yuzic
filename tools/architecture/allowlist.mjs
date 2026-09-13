@@ -39,7 +39,7 @@ export function writeAllowlist(next) {
  * `--baseline` accepts the current violations as the starting state, which is
  * only legitimate when the gate is first installed.
  */
-export function enforce(gate, violations, describe = key => key) {
+export function enforce(gate, violations, describe = key => key, options = {}) {
   const args = new Set(process.argv.slice(2));
   const allowlist = readAllowlist();
   const allowed = new Set(allowlist[gate] ?? []);
@@ -55,9 +55,20 @@ export function enforce(gate, violations, describe = key => key) {
   const fixed = [...allowed].filter(key => !current.includes(key)).sort();
 
   if (args.has('--prune')) {
-    if (added.length) {
+    // Moving code can replace one violation with another without making
+    // anything worse — a cycle that now runs through a renamed module is the
+    // same cycle. Gates that opt into `allowSwap` accept that during a prune,
+    // but only while the total does not grow, so the set can still never
+    // expand. Gates without it stay strictly removal-only.
+    const isSwap = options.allowSwap && current.length <= allowed.size;
+    if (added.length && !isSwap) {
       report(gate, added, [], describe);
       return 1;
+    }
+    if (added.length) {
+      process.stderr.write(
+        `${gate}: ${added.length} replaced ${fixed.length} (total ${allowed.size} -> ${current.length}, not increased)\n`
+      );
     }
     writeAllowlist({ ...allowlist, [gate]: current });
     process.stderr.write(`${gate}: pruned ${fixed.length} fixed entries, ${current.length} remain\n`);

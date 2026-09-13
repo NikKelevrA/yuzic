@@ -1,20 +1,22 @@
-import { Album, Song } from "@/types";
-import { makeLocalId } from "@/types/EntityId";
-import type { MediaBrowserClient } from "../client";
-import { buildCover, buildCoverWithTag } from "../brand";
-import { normalizeGenres } from "../utils/normalizeGenres";
-import { MediaBrowserItemsResponse } from "../types";
+import type { Album } from "@/domain/entities/Album";
+import type { AlbumDetail } from "@/domain/entities/Detail";
+import type { Song } from "@/domain/entities/Song";
+import type { LocalId } from "@/domain/identity/LocalId";
+import { requireProvenance, type MediaBrowserClient } from "../client";
+import { mapAlbum } from "../mapAlbum";
+import { mapSong } from "../mapSong";
+import { MediaBrowserItem, MediaBrowserItemsResponse } from "../types";
 
 // Fetches all albums + all songs in 2 requests instead of 2 per album (2N).
 export async function getAlbumsWithSongs(
   client: MediaBrowserClient,
-): Promise<Album[]> {
+): Promise<AlbumDetail[]> {
   const baseParams = client.parentId
     ? `&ParentId=${encodeURIComponent(client.parentId)}`
     : "";
 
   const isEmby = client.brand.kind === "emby";
-  const sourceServerId = client.serverId;
+  const provenance = requireProvenance(client);
 
   // Request 1: all album metadata
   const albumsRaw = await client.request<MediaBrowserItemsResponse>(
@@ -23,43 +25,15 @@ export async function getAlbumsWithSongs(
     baseParams,
   );
 
-  const albumMap = new Map<string, Album>();
+  const albumDtoById = new Map<string, MediaBrowserItem>();
+  const albumById = new Map<string, Album>();
   for (const a of albumsRaw?.Items ?? []) {
     if (!a.Id) continue;
-    const artistItem = a.ArtistItems?.[0];
-    const cover = buildCoverWithTag(client.brand, a.Id, a.ImageTags?.Primary ?? undefined);
-    const artistId = artistItem?.Id ?? "unknown";
-    albumMap.set(a.Id, {
-      id: a.Id,
-      cover,
-      title: a.Name ?? "Unknown Album",
-      subtext: "",
-      artist: {
-        id: artistId,
-        name: artistItem?.Name ?? "Unknown Artist",
-        cover: isEmby ? { kind: "none" } : buildCover(client.brand, artistItem?.Id),
-        subtext: "Artist",
-        mbid: artistItem?.ProviderIds?.MusicBrainz ?? null,
-        localId: sourceServerId
-          ? makeLocalId({ kind: "artist", sourceServerId, serverItemId: artistId })
-          : undefined,
-      },
-      year: a.ProductionYear ?? 0,
-      genres: (a.Genres ?? [])
-        .flatMap((g: string) => g.split(";"))
-        .map((g: string) => g.trim())
-        .filter(Boolean),
-      created: a.DateCreated ? new Date(a.DateCreated) : new Date(0),
-      mbid: a.ProviderIds?.MusicBrainzAlbum ?? a.ProviderIds?.MusicBrainz ?? null,
-      songs: [],
-      localId: sourceServerId
-        ? makeLocalId({ kind: "album", sourceServerId, serverItemId: a.Id })
-        : undefined,
-      libraryState: "in-library",
-    });
+    albumDtoById.set(a.Id, a);
+    albumById.set(a.Id, mapAlbum(a, { provenance, brand: client.brand }));
   }
 
-  if (albumMap.size === 0) return [];
+  if (albumById.size === 0) return [];
 
   // Request 2: all songs across the entire library
   const songsRaw = await client.request<MediaBrowserItemsResponse>(
@@ -71,54 +45,34 @@ export async function getAlbumsWithSongs(
   const songsByAlbum = new Map<string, Song[]>();
   for (const s of songsRaw?.Items ?? []) {
     const albumId = s.AlbumId ?? "";
-    if (!albumId || !albumMap.has(albumId)) continue;
+    const album = albumId ? albumById.get(albumId) : undefined;
+    if (!album) continue;
 
-    const artistItem = s.ArtistItems?.[0];
-    const ms = s.MediaSources?.[0];
-    const audioStream = ms?.MediaStreams?.find((m) => m.Type === "Audio");
-    const album = albumMap.get(albumId)!;
-    const songId = s.Id ?? "";
-
-    const song: Song = {
-      id: songId,
-      title: s.Name ?? "Unknown",
-      artist: artistItem?.Name ?? "Unknown Artist",
-      artistId: artistItem?.Id ?? album.artist.id,
+    // Emby's list endpoints never resolved an album title on the song there
+    // (the endpoint predates `albumTitle` existing at all) — preserved here
+    // by simply not passing one, same as the pre-rewrite behaviour.
+    const song = mapSong(s, {
+      provenance,
+      brand: client.brand,
       cover: album.cover,
-      duration: String(Math.round(Number(s.RunTimeTicks ?? 0) / 10_000_000)),
-      streamUrl: client.buildStreamUrl(songId),
+      albumTitle: isEmby ? undefined : album.title,
       albumId,
-      ...(isEmby ? {} : { albumTitle: album.title }),
-      bitrate: (audioStream?.BitRate ?? ms?.Bitrate) ?? undefined,
-      sampleRate: audioStream?.SampleRate ?? undefined,
-      bitsPerSample: audioStream?.BitDepth ?? undefined,
-      mimeType: ms?.Container ? `audio/${ms.Container}` : undefined,
-      dateReleased: s.PremiereDate ?? undefined,
-      disc: s.ParentIndexNumber ?? undefined,
-      trackNumber: s.IndexNumber ?? undefined,
-      dateAdded: s.DateCreated ?? undefined,
-      genres: normalizeGenres(s.Genres),
-      localId: sourceServerId
-        ? makeLocalId({ kind: "track", sourceServerId, serverItemId: songId })
-        : undefined,
-      libraryState: "in-library",
-    };
+    });
 
     const list = songsByAlbum.get(albumId) ?? [];
     list.push(song);
     songsByAlbum.set(albumId, list);
   }
 
-  const albums: Album[] = [];
-  for (const [id, album] of albumMap) {
+  const details: AlbumDetail[] = [];
+  for (const id of albumById.keys()) {
     const songs = songsByAlbum.get(id) ?? [];
-    albums.push({
-      ...album,
+    const songIds: LocalId[] = songs.map((s) => s.localId);
+    const dto = albumDtoById.get(id)!;
+    details.push({
+      album: mapAlbum(dto, { provenance, brand: client.brand, songIds }),
       songs,
-      subtext: songs.length === 1
-        ? `Single • ${album.artist.name}`
-        : `Album • ${album.artist.name}`,
     });
   }
-  return albums;
+  return details;
 }

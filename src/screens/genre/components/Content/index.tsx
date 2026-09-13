@@ -2,16 +2,16 @@ import React, { useCallback, useMemo } from 'react'
 import { FlashList } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 
-import { AlbumBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
 import { useTheme } from '@/hooks/useTheme'
-import AlbumRow from '@/components/rows/AlbumRow'
+import AlbumRow, { isExternalAlbum } from '@/components/rows/AlbumRow'
 import GenreHeader, { GenreHeaderBar } from '../Header'
 import { DetailScreen } from '@/components/DetailHeader'
 import { spacing } from '@/constants/design'
 
 type Props = {
   genre: string
-  albums: AlbumBase[]
+  albums: Album[]
 }
 
 export default function GenreContent({ genre, albums }: Props) {
@@ -23,11 +23,18 @@ export default function GenreContent({ genre, albums }: Props) {
     [genre, albums]
   )
 
+  // This screen only ever hands `AlbumRow` a domain `Album` (never an
+  // `ExternalAlbumBase`), but `onPress` is typed against `AlbumRow`'s own
+  // union — narrow with its exported guard rather than asserting.
   const renderItem = useCallback(
-    ({ item }: { item: AlbumBase }) => (
+    ({ item }: { item: Album }) => (
       <AlbumRow
         album={item}
-        onPress={(album) => navigation.push('albumView', { id: album.id })}
+        onPress={(album) => {
+          if (isExternalAlbum(album)) return;
+          // Server adapter identity — becomes `useAlbum(id)` -> `api.albums.get(id)`.
+          navigation.push('albumView', { id: album.nativeId });
+        }}
       />
     ),
     [navigation]
@@ -38,7 +45,7 @@ export default function GenreContent({ genre, albums }: Props) {
       {scroll => (
       <FlashList
         data={albums}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.localId}
         ListHeaderComponent={header}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}

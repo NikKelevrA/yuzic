@@ -3,7 +3,10 @@ import { act, renderHook } from '@testing-library/react-native'
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
 
-import type { Server, Song } from '@/types'
+import type { Server } from '@/types'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { serverProvenance } from '@/domain/identity/Provenance'
+import type { Song } from '@/domain/entities/Song'
 import settingsReducer, { setScrobbleRoute } from '@/utils/redux/slices/settingsSlice'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
 import listenbrainzReducer, { setUsername, setToken } from '@/utils/redux/slices/listenbrainzSlice'
@@ -69,15 +72,21 @@ function wrapperFor(store: ReturnType<typeof makeStore>) {
   return Wrapper
 }
 
+const provenance = serverProvenance('srv-1')
+
 const song: Song = {
-  id: 's1',
+  localId: makeLocalId('song', provenance, 's1'),
+  nativeId: 's1',
+  provenance,
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Roygbiv',
-  artist: 'Boards of Canada',
-  artistId: 'a1',
-  albumId: 'al1',
-  duration: '200',
-  streamUrl: 'https://media.example/stream/s1',
+  artist: { localId: makeLocalId('artist', provenance, 'a1'), nativeId: 'a1', externalIds: {}, name: 'Boards of Canada', cover: { kind: 'none' } },
+  album: { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1', externalIds: {}, title: 'Album', cover: { kind: 'none' } },
   cover: { kind: 'none' },
+  durationSeconds: 200,
+  contentKind: 'song',
+  genres: [],
 }
 
 /**

@@ -3,42 +3,40 @@ import libraryPlaylistsReducer, {
   removeLibraryPlaylistSong,
   setLibraryPlaylists,
 } from './libraryPlaylistsSlice'
-import { PlaylistBase, Song } from '@/types'
+import type { Playlist } from '@/domain/entities/Playlist'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { serverProvenance } from '@/domain/identity/Provenance'
 
-const song: Song = {
-  id: 'song-1',
-  title: 'Song',
-  artist: 'Artist',
-  artistId: 'artist-1',
-  cover: { kind: 'none' },
-  duration: '120',
-  albumId: 'album-1',
-  streamUrl: 'https://example.com/song.mp3',
-}
+const provenance = serverProvenance('srv-1')
 
-const playlist: PlaylistBase = {
-  id: 'playlist-1',
+const playlist: Playlist = {
+  localId: makeLocalId('playlist', provenance, 'playlist-1'),
+  nativeId: 'playlist-1',
+  provenance,
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Playlist',
-  subtext: '',
   cover: { kind: 'none' },
-  changed: new Date(0),
-  created: new Date(0),
+  isOwned: true,
+  createdAt: 0,
+  updatedAt: 0,
+  songIds: [],
 }
 
 describe('library offline reducers', () => {
-  it('optimistically adds and removes playlist songs', () => {
+  it('optimistically bumps updatedAt on add and remove', () => {
     const initial = libraryPlaylistsReducer(undefined, setLibraryPlaylists([playlist]))
 
     const added = libraryPlaylistsReducer(
       initial,
-      addLibraryPlaylistSong({ playlistId: playlist.id, song })
+      addLibraryPlaylistSong({ playlistId: playlist.nativeId, song: {} })
     )
-    expect(new Date(added.playlists[0].changed).getTime()).toBeGreaterThan(0)
+    expect(added.playlists[0].updatedAt).toBeGreaterThan(0)
 
     const removed = libraryPlaylistsReducer(
       added,
-      removeLibraryPlaylistSong({ playlistId: playlist.id, songId: song.id })
+      removeLibraryPlaylistSong({ playlistId: playlist.nativeId, songId: 'song-1' })
     )
-    expect(new Date(removed.playlists[0].changed).getTime()).toBeGreaterThan(0)
+    expect(removed.playlists[0].updatedAt).toBeGreaterThan(0)
   })
 })

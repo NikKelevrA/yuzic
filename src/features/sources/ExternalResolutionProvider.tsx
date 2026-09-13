@@ -6,7 +6,8 @@ import ExternalSourcePickerSheet, { type PickerItem } from '@/components/Externa
 import { useEnabledExternalSources, type SourceResolvedAlbum, type SourceResolvedArtist } from './registry';
 import { useLibrary } from '@/contexts/LibraryContext';
 import { useArtists } from '@/hooks/artists';
-import { matchAlbumToLibrary, matchArtistToLibrary } from '@/hooks/libraryMatch';
+import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
+import { normalize } from '@/utils/normalize';
 import type { ExternalAlbumBase, ExternalArtistBase } from '@/types';
 
 const NO_SOURCE_TOAST = 'Enable an external source in Settings to browse this content.';
@@ -41,7 +42,13 @@ export function ExternalResolutionProvider({ children }: { children: React.React
   const resolveAndNavigateToAlbum = useCallback(async (item: ExternalAlbumBase) => {
     const localMatch = matchAlbumToLibrary(item, albums);
     if (localMatch) {
-      router.push({ pathname: '/albumView', params: { id: localMatch.id } });
+      // /albumView resolves this param by calling the server adapter
+      // (useAlbum -> api.albums.get(id)), so it needs the origin's own id,
+      // not the on-device localId. Domain albums carry that as `nativeId`;
+      // the pre-rewrite shapes matchAlbumToLibrary can also return still key
+      // it as `id`.
+      const nativeId = 'nativeId' in localMatch ? localMatch.nativeId : localMatch.id;
+      router.push({ pathname: '/albumView', params: { id: nativeId } });
       return;
     }
 
@@ -74,9 +81,20 @@ export function ExternalResolutionProvider({ children }: { children: React.React
   }, [albums, enabledSources, router]);
 
   const resolveAndNavigateToArtist = useCallback(async (item: ExternalArtistBase) => {
-    const localMatch = matchArtistToLibrary(item, artists);
+    // `matchArtistToLibrary` (src/hooks/libraryMatch.ts) still types its
+    // `artists` param as the pre-rewrite `Artist`, and that file is out of
+    // scope here; `useArtists()` now returns domain `Artist[]`. The matching
+    // rule itself (mbid, else normalized name) is unchanged — mirrored here
+    // against the domain shape rather than casting into the legacy one.
+    const normName = normalize(item.name);
+    const itemMbid = item.externalIds?.mbid;
+    const localMatch = artists.find(a =>
+      (itemMbid && a.externalIds.mbid && a.externalIds.mbid === itemMbid) ||
+      normalize(a.name) === normName
+    ) ?? null;
     if (localMatch) {
-      router.push({ pathname: '/artistView', params: { id: localMatch.id } });
+      // Server adapter identity, same reasoning as the album branch above.
+      router.push({ pathname: '/artistView', params: { id: localMatch.nativeId } });
       return;
     }
 

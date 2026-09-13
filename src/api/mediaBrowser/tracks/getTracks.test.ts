@@ -7,6 +7,7 @@ function makeClient(overrides: Partial<MediaBrowserClient> = {}): MediaBrowserCl
     request: jest.fn().mockResolvedValue({ Items: [] }),
     requestText: jest.fn(),
     serverUrl: 'https://server.example',
+    serverId: 'server-1',
     token: 'tok',
     userId: 'user-1',
     parentId: undefined,

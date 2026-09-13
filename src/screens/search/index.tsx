@@ -16,7 +16,13 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { SearchResult, useSearch, ALL_SEARCH_ENTITY_TYPES, type SearchEntityType } from '@/contexts/SearchContext';
 import type { SearchResultScope } from '@/contexts/searchLegs';
 import type { ExternalAlbumBase } from '@/types';
-import AlbumRow from '@/components/rows/AlbumRow';
+import type { Album } from '@/domain/entities/Album';
+import type { Artist } from '@/domain/entities/Artist';
+import type { Playlist } from '@/domain/entities/Playlist';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { normalizeExternalIds } from '@/domain/identity/ExternalIds';
+import { integrationProvenance, serverProvenance } from '@/domain/identity/Provenance';
+import AlbumRow, { isExternalAlbum } from '@/components/rows/AlbumRow';
 import ArtistRow from '@/components/rows/ArtistRow';
 import PlaylistRow from '@/components/rows/PlaylistRow';
 import SkeletonListRow from '@/components/SkeletonListRow';
@@ -55,6 +61,76 @@ import { useAccountSheet } from '@/contexts/AccountSheetContext';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/hooks/useRadius';
 import { useScrollClearance } from '@/hooks/useScrollClearance';
+
+/**
+ * `SearchResult` (src/contexts/SearchContext.tsx, out of scope) is a
+ * display-flattened aggregate across all four entity kinds, not a domain
+ * entity itself — it has no `localId`/`provenance` of its own. `ArtistRow`/
+ * `PlaylistRow` (src/components/rows) are already converted and require a
+ * real domain `Artist`/`Playlist`, so these rebuild one from the result's
+ * fields, the same way `resourceFromPlayerItem` rebuilds refs from a bare id.
+ * `AlbumRow` has not been converted yet (still the legacy `AlbumBase |
+ * ExternalAlbumBase`) — that one is left alone below; the mismatch resolves
+ * once its owner converts it.
+ */
+function searchResultToArtist(result: SearchResult, activeServerId: string | undefined): Artist {
+  const provenance = result.source === 'external'
+    ? integrationProvenance(result.externalSource ?? 'unknown')
+    : serverProvenance(activeServerId ?? '');
+  return {
+    localId: makeLocalId('artist', provenance, result.id),
+    nativeId: result.id,
+    provenance,
+    externalIds: normalizeExternalIds(result.externalIds),
+    libraryState: result.source === 'external'
+      ? (result.isDownloaded ? 'in-library' : 'external')
+      : 'in-library',
+    name: result.title,
+    cover: result.cover,
+    tags: [],
+    albumIds: [],
+  };
+}
+
+/** For a local (library) album result — `AlbumRow` still accepts a plain
+ * `ExternalAlbumBase` for an external one, built inline where it's used. */
+function searchResultToLocalAlbum(result: SearchResult, activeServerId: string | undefined): Album {
+  const provenance = serverProvenance(activeServerId ?? '');
+  return {
+    localId: makeLocalId('album', provenance, result.id),
+    nativeId: result.id,
+    provenance,
+    externalIds: normalizeExternalIds(result.externalIds),
+    libraryState: 'in-library',
+    title: result.title,
+    cover: result.cover,
+    artist: {
+      localId: makeLocalId('artist', provenance, ''),
+      nativeId: '',
+      externalIds: {},
+      name: result.subtext,
+      cover: { kind: 'none' },
+    },
+    releaseType: 'album',
+    genres: [],
+    songIds: [],
+  };
+}
+
+function searchResultToPlaylist(result: SearchResult, activeServerId: string | undefined): Playlist {
+  const provenance = serverProvenance(activeServerId ?? '');
+  return {
+    localId: makeLocalId('playlist', provenance, result.id),
+    nativeId: result.id,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title: result.title,
+    cover: result.cover,
+    isOwned: true,
+    songIds: [],
+  };
+}
 
 const Search = () => {
   const searchInputRef = useRef<TextInput>(null);
@@ -233,8 +309,8 @@ const Search = () => {
 
   const handleRecentSongPress = async (entity: SearchEntityEntry) => {
     try {
-      const song = await resolvePlayableSong(entity.id);
-      if (song) await playSong(song);
+      const resolved = await resolvePlayableSong(entity.id);
+      if (resolved) await playSong(resolved.song);
       else notify.error(t('common.playbackError'));
     } catch {
       notify.error(t('common.playbackError'));
@@ -292,9 +368,12 @@ const Search = () => {
   const handleSongPress = async (result: SearchResult) => {
     recordResult(result);
     try {
-      if (result.song) { await playSong(result.song); return; }
-      const song = await resolvePlayableSong(result.id);
-      if (song) await playSong(song);
+      // `SearchResult.song` (src/contexts/searchRanking.ts) is never
+      // populated for a library match any more — it would need a
+      // credentialled stream URL nobody has asked for yet — so this always
+      // resolves by id, same as any result that arrives without one.
+      const resolved = await resolvePlayableSong(result.id);
+      if (resolved) await playSong(resolved.song);
       else notify.error(t('common.playbackError'));
     } catch {
       notify.error(t('common.playbackError'));
@@ -303,9 +382,9 @@ const Search = () => {
 
   const handleSongOptions = async (result: SearchResult) => {
     try {
-      const song = result.song ?? await resolvePlayableSong(result.id);
-      if (song) {
-        openSongOptions(song);
+      const resolved = await resolvePlayableSong(result.id);
+      if (resolved) {
+        openSongOptions(resolved.song);
       } else {
         notify.error(t('common.songDetailsError'));
       }
@@ -398,20 +477,13 @@ const Search = () => {
         />
       ) : (
         <AlbumRow
-          album={{
-            id: result.id,
-            title: result.title,
-            subtext: result.subtext,
-            cover: result.cover,
-            artist: { id: '', name: result.subtext, subtext: '', cover: { kind: 'none' } },
-            year: 0,
-            genres: [],
-            created: new Date(0),
-          }}
+          album={searchResultToLocalAlbum(result, activeServerId ?? undefined)}
           onPress={album => {
             recordResult(result);
             prefetchCovers([album.cover], 'detail');
-            navigation.navigate('albumView', { id: album.id });
+            if (isExternalAlbum(album)) return;
+            // Server adapter identity — becomes `useAlbum(id)` -> `api.albums.get(id)`.
+            navigation.navigate('albumView', { id: album.nativeId });
           }}
         />
       );
@@ -420,7 +492,7 @@ const Search = () => {
     if (result.type === 'artist') {
       return (
         <ArtistRow
-          artist={{ id: result.id, name: result.title, subtext: result.subtext, cover: result.cover, albumIds: [] }}
+          artist={searchResultToArtist(result, activeServerId ?? undefined)}
           rounded
           onPress={() => {
             recordResult(result);
@@ -438,7 +510,7 @@ const Search = () => {
     if (result.type === 'playlist') {
       return (
         <PlaylistRow
-          playlist={{ id: result.id, title: result.title, subtext: result.subtext, cover: result.cover, changed: new Date(), created: new Date() }}
+          playlist={searchResultToPlaylist(result, activeServerId ?? undefined)}
           onPress={() => {
             recordResult(result);
             prefetchCovers([result.cover], 'detail');

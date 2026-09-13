@@ -23,7 +23,7 @@ import {
 import MediaTile from './MediaTile';
 import SkeletonTiles from '@/components/SkeletonTiles';
 import { useSourceSectionPresence } from './SourceGroup';
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import { spacing, typography } from '@/constants/design';
 
 type Props = {
@@ -126,7 +126,7 @@ export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Prop
     <MediaTile
       cover={item.cover}
       title={item.title}
-      subtitle={item.artist}
+      subtitle={item.artist.name}
       size={gridItemWidth}
       radius={rad.card}
       onPress={() => handlePlay(index)}
@@ -156,7 +156,7 @@ export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Prop
         <FlashList
           horizontal
           data={data}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.localId}
           overrideItemLayout={(layout) => { (layout as { size?: number }).size = gridItemWidth; }}
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"

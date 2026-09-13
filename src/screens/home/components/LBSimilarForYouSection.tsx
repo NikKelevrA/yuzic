@@ -59,7 +59,7 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
   // The name-to-MBID lookup is MusicBrainz's own call and carries its own
   // setting inside the hook, so on a Subsonic server with MusicBrainz off
   // there is no seed and this shelf stays away.
-  const { mbid: seedMbid, isResolving } = useArtistMbid(artistName, seed?.mbid, {
+  const { mbid: seedMbid, isResolving } = useArtistMbid(artistName, seed?.externalIds.mbid, {
     enabled: discoveryEnabled,
   });
 

@@ -10,7 +10,7 @@ import { shareItem } from '@/utils/share';
 import haptics from '@/utils/haptics';
 import { notify } from '@/components/toast';
 
-import { Playlist, PlaylistBase } from '@/types';
+import type { Playlist } from '@/domain/entities/Playlist';
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useDownload } from '@/contexts/DownloadContext';
 import { useNavigation } from '@react-navigation/native';
@@ -34,12 +34,12 @@ import { iconSize, statusColor } from '@/constants/design';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 
 export type PlaylistOptionsProps = {
-  playlist: PlaylistBase | Playlist | null;
+  playlist: Playlist | null;
   /** Hide "Go to Playlist" when already on the playlist screen */
   hideGoToPlaylist?: boolean;
 };
 
-function formatDate(value: string | Date): string {
+function formatDate(value: string | number | Date | undefined): string {
   if (!value) return '—';
   const d = value instanceof Date ? value : new Date(value);
   if (isNaN(d.getTime())) return '—';
@@ -83,7 +83,7 @@ const PlaylistOptions = forwardRef<
     setIsSharing(true);
     try {
       const created = await api.shares.create({
-        itemId: playlist.id,
+        itemId: playlist.nativeId,
         description: playlist.title,
       });
       if (!created?.url) {
@@ -109,7 +109,7 @@ const PlaylistOptions = forwardRef<
     (ref as any)?.current?.dismiss();
   };
 
-  const songIds = useMemo(() => songs.map(s => s.id), [songs]);
+  const songIds = useMemo(() => songs.map(s => s.localId), [songs]);
   const { isDownloaded, isDownloading } = getCollectionDownloadState(songIds);
   const playbackDisabled = songsLoading || !songs.length;
 
@@ -144,16 +144,16 @@ const PlaylistOptions = forwardRef<
   const handleGoToPlaylist = () => {
     if (!playlist) return;
     close();
-    router.push({ pathname: '/playlistView', params: { id: playlist.id } });
+    router.push({ pathname: '/playlistView', params: { id: playlist.nativeId } });
   };
 
   const handleDownload = async () => {
     if (!playlist || isDownloaded || isDownloading) return;
-    await downloadPlaylistById(playlist.id, songs);
+    await downloadPlaylistById(playlist.nativeId, songs);
   };
 
   const handleRenamePress = () => {
-    if (!playlist || playlist.id === FAVORITES_ID) return;
+    if (!playlist || playlist.nativeId === FAVORITES_ID) return;
     Alert.prompt(
       t('playlistOptions.rename.title'),
       undefined,
@@ -161,7 +161,7 @@ const PlaylistOptions = forwardRef<
         const trimmed = newName?.trim();
         if (!trimmed || trimmed === playlist.title) return;
         try {
-          await renamePlaylist.mutateAsync({ id: playlist.id, newName: trimmed });
+          await renamePlaylist.mutateAsync({ id: playlist.nativeId, newName: trimmed });
           notify.success(t('playlistOptions.toasts.renamed'));
         } catch {
           notify.error(t('playlistOptions.toasts.renameFailed'));
@@ -174,7 +174,7 @@ const PlaylistOptions = forwardRef<
   };
 
   const handleDeletePress = () => {
-    if (!playlist || playlist.id === FAVORITES_ID) return;
+    if (!playlist || playlist.nativeId === FAVORITES_ID) return;
     Alert.alert(
       t('playlistOptions.delete.title'),
       t('playlistOptions.delete.body', { title: playlist.title }),
@@ -185,7 +185,7 @@ const PlaylistOptions = forwardRef<
           style: 'destructive',
           onPress: async () => {
             try {
-              await deletePlaylist.mutateAsync(playlist.id);
+              await deletePlaylist.mutateAsync(playlist.nativeId);
               close();
               if (hideGoToPlaylist) {
                 navigation.goBack();
@@ -306,7 +306,7 @@ const PlaylistOptions = forwardRef<
           />
         )}
 
-        {playlist.id !== FAVORITES_ID && (
+        {playlist.nativeId !== FAVORITES_ID && (
           <OptionSheetRow
             icon={<Pencil size={iconSize.loader} color={colors.secondary} />}
             label={t('playlistOptions.actions.rename')}
@@ -314,7 +314,7 @@ const PlaylistOptions = forwardRef<
           />
         )}
 
-        {playlist.id !== FAVORITES_ID && (
+        {playlist.nativeId !== FAVORITES_ID && (
           <OptionSheetRow
             icon={<Trash2 size={iconSize.loader} color={statusColor.destructive} />}
             label={t('playlistOptions.actions.delete')}
@@ -331,11 +331,11 @@ const PlaylistOptions = forwardRef<
         <OptionSheetSectionLabel label={t('playlistOptions.sections.info')} />
         <OptionSheetInfoRow
           label={t('playlistOptions.info.lastChanged')}
-          value={formatDate(playlist.changed)}
+          value={formatDate(playlist.updatedAt)}
         />
         <OptionSheetInfoRow
           label={t('playlistOptions.info.created')}
-          value={formatDate(playlist.created)}
+          value={formatDate(playlist.createdAt)}
         />
         <OptionSheetInfoRow label={t('playlistOptions.info.songs')} value={songs.length} />
       </BottomSheetScrollView>

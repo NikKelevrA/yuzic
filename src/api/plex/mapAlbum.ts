@@ -52,6 +52,9 @@ export function mapAlbum(dto: PlexMetadata, context: MapAlbumContext): Album {
     releaseType: 'album' satisfies ReleaseType,
     genres: (dto.Genre ?? []).flatMap(genre => genre.tag?.split(';') ?? []).map(genre => genre.trim()).filter(Boolean),
     addedAt: dto.addedAt ? dto.addedAt * 1000 : undefined,
+    serverPlayCount: dto.viewCount,
+    // Plex reports this in unix seconds; the domain stores unix ms.
+    serverLastPlayedAt: dto.lastViewedAt ? dto.lastViewedAt * 1000 : undefined,
     songIds: context.songIds ?? [],
   };
 }

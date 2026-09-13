@@ -98,10 +98,7 @@ const LibraryList: React.FC<Props> = ({
         return (
           <ArtistItem
             artist={item.data}
-            id={item.data.id}
-            name={item.data.name}
-            subtext={showTypeLabel ? item.data.subtext : undefined}
-            cover={item.data.cover}
+            showTypeLabel={showTypeLabel}
             isGridView={isGridView}
             gridWidth={gridWidth}
             gridSpacing={GRID_SPACING}
@@ -111,10 +108,7 @@ const LibraryList: React.FC<Props> = ({
         return (
           <PlaylistItem
             playlist={item.data}
-            id={item.data.id}
-            title={item.data.title}
-            subtext={showTypeLabel ? item.data.subtext : undefined}
-            cover={item.data.cover}
+            showTypeLabel={showTypeLabel}
             isGridView={isGridView}
             gridWidth={gridWidth}
             gridSpacing={GRID_SPACING}
@@ -137,7 +131,7 @@ const LibraryList: React.FC<Props> = ({
       <FlashList<LibraryItem>
         key={`${isGridView ? `grid-${gridColumns}` : 'list'}`}
         data={items}
-        keyExtractor={item => `${item.kind}-${item.data.id}`}
+        keyExtractor={item => `${item.kind}-${item.data.localId}`}
         renderItem={renderItem}
         numColumns={isGridView ? gridColumns : 1}
         getItemType={item => item.kind}

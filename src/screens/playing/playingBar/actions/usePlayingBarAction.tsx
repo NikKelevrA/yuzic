@@ -49,7 +49,7 @@ export function usePlayingBarAction(
 
   const isFavorite =
     !!currentSong &&
-    starredSongs.some(s => s.id === currentSong.id);
+    starredSongs.some(s => s.localId === currentSong.localId);
 
   const label = (key: PlayingBarAction) =>
     t(`settings.appearance.playingBarAction.actions.${key}`);
@@ -74,7 +74,7 @@ export function usePlayingBarAction(
 
           try {
             if (isFavorite) {
-              await unstar.mutateAsync(currentSong.id);
+              await unstar.mutateAsync(currentSong.nativeId);
               notify.success(
                 t(
                   isOffline
@@ -84,7 +84,7 @@ export function usePlayingBarAction(
                 )
               );
             } else {
-              await star.mutateAsync(currentSong);
+              await star.mutateAsync(currentSong.nativeId);
               notify.success(
                 t(
                   isOffline
@@ -116,12 +116,12 @@ export function usePlayingBarAction(
             albums[Math.floor(Math.random() * albums.length)];
 
           try {
-            const album = await api.albums.get(base.id);
+            const detail = await api.albums.get(base.nativeId);
 
-            if (!album.songs.length) return;
+            if (!detail.songs.length) return;
 
-            playSongInCollection(album.songs[0], album, true);
-            notify.success(t('playing.actions.randomAlbum', { title: album.title }));
+            playSongInCollection(detail.songs[0], detail, true);
+            notify.success(t('playing.actions.randomAlbum', { title: detail.album.title }));
           } catch {
             notify.error(t('playing.actions.loadAlbumFailed'));
           }

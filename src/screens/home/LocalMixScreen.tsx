@@ -51,7 +51,7 @@ export default function LocalMixScreen() {
               onShuffle={() => { void play(true); }}
             />
           </View>
-          {songs.map(song => <SongRow key={song.id} song={song} />)}
+          {songs.map(song => <SongRow key={song.localId} song={song} />)}
         </ScrollView>
       ) : (
         <EmptyState message={t('library.collection.empty')} />

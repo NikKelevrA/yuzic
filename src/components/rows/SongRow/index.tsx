@@ -14,14 +14,16 @@ import Animated, {
 import { Heart, ArrowDownCircle, Ellipsis, PlayCircle } from 'lucide-react-native';
 import { notify } from '@/components/toast';
 
-import { ExternalSong, Song } from '@/types';
+import type { ExternalSong } from '@/types';
+import type { Song } from '@/domain/entities/Song';
+import type { PlayableCollection } from '@/contexts/PlayingContext';
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useSongActionSheets } from '@/contexts/SongActionSheetContext';
 import MediaListRow from '@/components/MediaListRow';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { useDownloadState } from '@/contexts/DownloadContext';
-import { formatSongDuration } from '@/utils/formatDuration';
+import { formatDuration } from '@/utils/formatDuration';
 import Touchable from '@/components/Touchable';
 import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/utils/useSheetRef';
@@ -31,18 +33,24 @@ export type SongRowSong = Song | ExternalSong;
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than
- * the user's library. `Song.streamUrl` is required on every library song and
- * absent on `ExternalSong` — that difference is guaranteed by the type
- * definitions, so it doubles as the discriminator without needing a new
- * field on either type.
+ * the user's library. `ExternalSong.artist` is a plain string, while a
+ * domain `Song`'s `artist` is always an `ArtistRef` object — that shape
+ * difference is guaranteed to hold for both types, so it doubles as the
+ * discriminator without needing a new field on either type.
+ *
+ * (The old discriminator checked for `streamUrl`, which was required on
+ * every pre-rewrite library `Song`. Domain `Song` never carries a
+ * `streamUrl` — that moved to `PlayableResource` — so that check would now
+ * misclassify every library song as external. Mirrors `isExternalSongOrigin`
+ * in `components/options/SongOptions`.)
  */
 export function isExternalSong(song: SongRowSong): song is ExternalSong {
-  return !('streamUrl' in song);
+  return typeof song.artist === 'string';
 }
 
 type Props = {
   song: SongRowSong;
-  collection?: any;
+  collection?: PlayableCollection;
   onPress?: () => void;
   variant?: 'default' | 'albumCompact';
   showDownloadedDot?: boolean;
@@ -138,7 +146,7 @@ const SongRow: React.FC<Props> = ({
   // library-only bits (download state, favorite animation) still run for an
   // external song — same as they were simply absent for it before the merge,
   // just now computed and discarded rather than never mounted.
-  const downloaded = !isExternalSong(song) && isTrackDownloaded(song.id);
+  const downloaded = !isExternalSong(song) && isTrackDownloaded(song.localId);
 
   /**
    * The track's position on the record.
@@ -191,7 +199,7 @@ const SongRow: React.FC<Props> = ({
       <MediaListRow
         title={song.title}
         testID="song-row"
-        subtitle={`${song.artist || t('songOptions.unknownArtist')}${!isAlbumCompact ? ` • ${formatSongDuration(song.duration)}` : ''}`}
+        subtitle={`${song.artist.name || t('songOptions.unknownArtist')}${!isAlbumCompact ? ` • ${formatDuration(song.durationSeconds)}` : ''}`}
         cover={song.cover}
         onPress={handlePress}
         disabled={!onPress && !collection}

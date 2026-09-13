@@ -10,7 +10,7 @@ import { useSourceSectionPresence } from './SourceGroup';
 import { useLocalMix } from '../hooks/useLocalMix';
 import { spacing } from '@/constants/design';
 import { SECTION_H_PADDING as H_PADDING } from '@/features/home/constants';
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
 type Props = {
   /** This shelf's key in the home layout, so the source group above it knows
@@ -30,7 +30,7 @@ export default function LocalMixSection({ sectionKey, refreshKey = 0 }: Props) {
   useSourceSectionPresence(sectionKey, hasContent);
 
   const renderSong = useCallback((song: Song) => (
-    <SongRow key={song.id} song={song} />
+    <SongRow key={song.localId} song={song} />
   ), []);
 
   if (!hasContent) return null;

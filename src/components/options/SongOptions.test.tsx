@@ -2,7 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import SongOptions from './SongOptions';
-import type { ExternalSong, Song } from '@/types';
+import type { ExternalSong } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
@@ -69,7 +70,7 @@ jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
 
 const mockGenerateSimilarPlaylist = jest.fn();
 jest.mock('@/features/audiomuse/generatePlaylist', () => ({
-  generateSimilarPlaylist: (...args: unknown[]) => mockGenerateSimilarPlaylist(...args),
+  generateSimilarPlaylistForSong: (...args: unknown[]) => mockGenerateSimilarPlaylist(...args),
 }));
 
 jest.mock('@/api', () => ({
@@ -139,14 +140,30 @@ const { useAnyDownloaderConnected, useAnyTrackDownloaderConnected } = jest.requi
 };
 
 const librarySong: Song = {
-  id: 's1',
+  localId: 'local:song:srv:server1:s1' as Song['localId'],
+  nativeId: 's1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Local Song',
-  artist: 'Some Artist',
-  artistId: 'ar1',
+  artist: {
+    localId: 'local:artist:srv:server1:ar1' as Song['artist']['localId'],
+    nativeId: 'ar1',
+    name: 'Some Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:srv:server1:al1' as Song['album']['localId'],
+    nativeId: 'al1',
+    title: 'Local Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'al1',
-  streamUrl: 'https://example.com/stream',
+  durationSeconds: 180,
+  contentKind: 'song',
+  genres: [],
 };
 
 const externalSong: ExternalSong = {

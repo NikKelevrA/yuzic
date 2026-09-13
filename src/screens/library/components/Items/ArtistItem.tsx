@@ -1,19 +1,17 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Artist, CoverSource } from '@/types';
+import { useTranslation } from 'react-i18next';
+import type { Artist } from '@/domain/entities/Artist';
 import ArtistOptions from '@/components/options/ArtistOptions';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { prefetchCovers } from '@/utils/images/imageCache';
 import LibraryItem from './LibraryItem';
 
 interface ItemProps {
-  artist?: Artist;
-  id: string;
-  name: string;
-  /** Undefined on a screen of nothing but artists, where the server's subtext
-   *  is the literal word "Artist" under every name. */
-  subtext?: string;
-  cover: CoverSource;
+  artist: Artist;
+  /** False on a screen of nothing but artists, where "Artist" under every
+   *  name is the same word repeated — see `AlbumItem`'s `showTypeLabel`. */
+  showTypeLabel?: boolean;
   isGridView: boolean;
   gridWidth: number;
   gridSpacing?: number;
@@ -21,30 +19,21 @@ interface ItemProps {
 
 const ArtistItem: React.FC<ItemProps> = ({
   artist,
-  id,
-  name,
-  subtext,
-  cover,
+  showTypeLabel = true,
   isGridView,
   gridWidth,
   gridSpacing,
 }) => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const sheetRef = useSheetRef();
   const [optionsMounted, setOptionsMounted] = useState(false);
 
-  const artistForOptions = useMemo(() => artist ?? {
-    id,
-    name,
-    subtext: subtext ?? '',
-    cover,
-    albumIds: [],
-  }, [artist, cover, id, name, subtext]);
-
   const handlePress = useCallback(() => {
-    prefetchCovers([cover], 'detail');
-    navigation.navigate('artistView', { id });
-  }, [cover, navigation, id]);
+    prefetchCovers([artist.cover], 'detail');
+    // Server adapter identity — becomes `useArtist(id)` -> `api.artists.get(id)`.
+    navigation.navigate('artistView', { id: artist.nativeId });
+  }, [artist, navigation]);
 
   const handleLongPress = useCallback(() => {
     if (!optionsMounted) {
@@ -65,10 +54,10 @@ const ArtistItem: React.FC<ItemProps> = ({
         // grid is three across, and scrollUntilVisible steps a whole row at a
         // time, so it scrolls clean past the wanted name to the end of the
         // list without ever matching it.
-        titleTestID={`library-artist-item-${name}`}
-        cover={cover}
-        title={name}
-        subtext={subtext}
+        titleTestID={`library-artist-item-${artist.name}`}
+        cover={artist.cover}
+        title={artist.name}
+        subtext={showTypeLabel ? t('common.artist') : undefined}
         isGridView={isGridView}
         gridWidth={gridWidth}
         gridSpacing={gridSpacing}
@@ -76,7 +65,7 @@ const ArtistItem: React.FC<ItemProps> = ({
         onPress={handlePress}
         onLongPress={handleLongPress}
       />
-      {optionsMounted && <ArtistOptions ref={sheetRef} artist={artistForOptions} hideGoToArtist={false} />}
+      {optionsMounted && <ArtistOptions ref={sheetRef} artist={artist} hideGoToArtist={false} />}
     </>
   );
 };

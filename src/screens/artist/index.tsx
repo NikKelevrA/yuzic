@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useArtist, useArtists } from '@/hooks/artists';
 import { useExternalArtist } from '@/hooks/artists/useExternalArtist';
-import { matchArtistToLibrary } from '@/hooks/libraryMatch';
+import { matchArtistToLibrary, matchedArtistNativeId } from '@/hooks/libraryMatch';
 import { useTheme } from '@/hooks/useTheme';
 import NotFoundView from '@/components/NotFoundView';
 import StatusBanner from '@/components/StatusBanner';
@@ -49,7 +49,7 @@ const ArtistScreen: React.FC = () => {
       { id: artistId ?? mbid ?? name, name, cover: { kind: 'none' }, subtext: '', externalIds: { mbid } },
       artists
     );
-    return match?.id ?? null;
+    return match ? matchedArtistNativeId(match) : null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, forceExternal, name, artistId, mbid]);
 

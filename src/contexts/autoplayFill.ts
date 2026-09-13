@@ -1,4 +1,4 @@
-import type { Song } from '@/types';
+import type { PlayableResource } from '@/features/playback/playableResource';
 
 /**
  * When Autoplay tops the queue up, and what it asks for.
@@ -43,21 +43,22 @@ export function shouldFillQueue({
 
 export type FillRequest = {
   /** The current track and the few before it, as taste context. */
-  recentSongs: Song[];
-  /** Everything already queued, so a fill never re-adds what is present. */
+  recentResources: PlayableResource[];
+  /** Everything already queued, keyed by identity, so a fill never re-adds
+   * what is present — see `QueueFillProvider.fetchExtension`'s `excludeIds`. */
   excludeIds: Set<string>;
   count: number;
 };
 
 export function buildFillRequest(
-  queue: Song[],
+  queue: PlayableResource[],
   currentIndex: number,
   count: number = FILL_BATCH_SIZE
 ): FillRequest {
   const start = Math.max(0, currentIndex - RECENT_CONTEXT_SIZE);
   return {
-    recentSongs: queue.slice(start, currentIndex + 1),
-    excludeIds: new Set(queue.map(song => song.id)),
+    recentResources: queue.slice(start, currentIndex + 1),
+    excludeIds: new Set(queue.map(resource => resource.song.localId)),
     count,
   };
 }

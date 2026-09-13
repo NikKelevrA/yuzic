@@ -1,36 +1,75 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { fetchAlbumDetailsSettled } from '@/hooks/albums';
-import type { Album, AlbumBase, Playlist, PlaylistBase, Song } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { Song } from '@/domain/entities/Song';
+import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 
-export function hasAlbumSongs(album: AlbumBase | Album | null): album is Album {
-  return !!album && 'songs' in album && Array.isArray(album.songs);
+/**
+ * Fetches each album's detail (dropping any that fail) and flattens their
+ * tracks, for building a synthetic "all of this artist's/genre's songs"
+ * collection.
+ *
+ * Replaces the old `fetchAlbumDetailsSettled` from `@/hooks/albums`, which is
+ * still typed against the pre-rewrite `AlbumBase`/`Album` (embedded-songs)
+ * shape and a `getAlbum` returning the old `Album` rather than the
+ * `AlbumDetail` `api.albums.get` actually returns now — that hook belongs to
+ * a different agent's scope, so this inlines the same allSettled pattern
+ * against the domain types instead of calling a signature that no longer
+ * matches the API it's fed.
+ */
+export async function fetchAlbumSongsSettled({
+  queryClient,
+  serverId,
+  albums,
+  getAlbum,
+}: {
+  queryClient: QueryClient;
+  serverId: string;
+  albums: Album[];
+  getAlbum: (nativeId: string) => Promise<AlbumDetail>;
+}): Promise<Song[]> {
+  const results = await Promise.allSettled(
+    albums.map(album =>
+      queryClient.fetchQuery({
+        queryKey: [QueryKeys.Album, serverId, album.nativeId],
+        queryFn: () => getAlbum(album.nativeId),
+        staleTime: staleTime.albums,
+      })
+    )
+  );
+
+  return results
+    .filter((result): result is PromiseFulfilledResult<AlbumDetail> => result.status === 'fulfilled')
+    .flatMap(result => result.value.songs);
 }
 
-export function hasPlaylistSongs(playlist: PlaylistBase | Playlist | null): playlist is Playlist {
-  return !!playlist && 'songs' in playlist && Array.isArray(playlist.songs);
-}
-
-export function useLazyAlbumDetail(album: AlbumBase | Album | null, isSheetOpen: boolean) {
+/**
+ * Lazily loads an album's tracks the first time its options sheet opens.
+ *
+ * `Album` never embeds its tracks — see `AlbumDetail` — so unlike the old
+ * `AlbumBase | Album` version there is nothing to type-guard: every input is
+ * the same shape, and every call fetches the detail (React Query dedupes
+ * against whatever the album screen has already cached).
+ */
+export function useLazyAlbumDetail(album: Album | null, isSheetOpen: boolean) {
   const queryClient = useQueryClient();
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
-  const [hydratedAlbum, setHydratedAlbum] = useState<Album | null>(null);
+  const [detail, setDetail] = useState<AlbumDetail | null>(null);
   const [songsLoading, setSongsLoading] = useState(false);
 
-  const hasDetail = hasAlbumSongs(album);
+  useEffect(() => {
+    setDetail(null);
+  }, [album?.localId]);
 
   useEffect(() => {
-    setHydratedAlbum(null);
-  }, [album?.id]);
-
-  useEffect(() => {
-    if (!isSheetOpen || !album?.id || !activeServer?.id || hasDetail) {
+    if (!isSheetOpen || !album?.nativeId || !activeServer?.id) {
       setSongsLoading(false);
       return;
     }
@@ -39,12 +78,12 @@ export function useLazyAlbumDetail(album: AlbumBase | Album | null, isSheetOpen:
     setSongsLoading(true);
 
     queryClient.fetchQuery({
-      queryKey: [QueryKeys.Album, activeServer.id, album.id],
-      queryFn: () => api.albums.get(album.id),
+      queryKey: [QueryKeys.Album, activeServer.id, album.nativeId],
+      queryFn: () => api.albums.get(album.nativeId),
       staleTime: staleTime.albums,
     })
-      .then(fullAlbum => {
-        if (!cancelled) setHydratedAlbum(fullAlbum);
+      .then(fetched => {
+        if (!cancelled) setDetail(fetched);
       })
       .catch(() => {})
       .finally(() => {
@@ -54,36 +93,29 @@ export function useLazyAlbumDetail(album: AlbumBase | Album | null, isSheetOpen:
     return () => {
       cancelled = true;
     };
-  }, [activeServer?.id, album?.id, api, hasDetail, isSheetOpen, queryClient]);
-
-  const albumCandidate = hydratedAlbum ?? album;
-  const albumWithSongs = hasAlbumSongs(albumCandidate) ? albumCandidate : null;
+  }, [activeServer?.id, album?.nativeId, api, isSheetOpen, queryClient]);
 
   return {
-    albumWithSongs,
-    songs: albumWithSongs?.songs ?? [],
+    albumWithSongs: detail,
+    songs: detail?.songs ?? [],
     songsLoading,
   };
 }
 
-export function useLazyPlaylistDetail(
-  playlist: PlaylistBase | Playlist | null,
-  isSheetOpen: boolean
-) {
+/** Same shape as `useLazyAlbumDetail`, for playlists — see there for the rationale. */
+export function useLazyPlaylistDetail(playlist: Playlist | null, isSheetOpen: boolean) {
   const queryClient = useQueryClient();
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
-  const [hydratedPlaylist, setHydratedPlaylist] = useState<Playlist | null>(null);
+  const [detail, setDetail] = useState<PlaylistDetail | null>(null);
   const [songsLoading, setSongsLoading] = useState(false);
 
-  const hasDetail = hasPlaylistSongs(playlist);
+  useEffect(() => {
+    setDetail(null);
+  }, [playlist?.localId]);
 
   useEffect(() => {
-    setHydratedPlaylist(null);
-  }, [playlist?.id]);
-
-  useEffect(() => {
-    if (!isSheetOpen || !playlist?.id || !activeServer?.id || hasDetail) {
+    if (!isSheetOpen || !playlist?.nativeId || !activeServer?.id) {
       setSongsLoading(false);
       return;
     }
@@ -92,12 +124,12 @@ export function useLazyPlaylistDetail(
     setSongsLoading(true);
 
     queryClient.fetchQuery({
-      queryKey: [QueryKeys.Playlist, activeServer.id, playlist.id],
-      queryFn: () => api.playlists.get(playlist.id),
+      queryKey: [QueryKeys.Playlist, activeServer.id, playlist.nativeId],
+      queryFn: () => api.playlists.get(playlist.nativeId),
       staleTime: staleTime.playlists,
     })
-      .then(fullPlaylist => {
-        if (!cancelled) setHydratedPlaylist(fullPlaylist);
+      .then(fetched => {
+        if (!cancelled) setDetail(fetched);
       })
       .catch(() => {})
       .finally(() => {
@@ -107,21 +139,18 @@ export function useLazyPlaylistDetail(
     return () => {
       cancelled = true;
     };
-  }, [activeServer?.id, api, hasDetail, isSheetOpen, playlist?.id, queryClient]);
-
-  const playlistCandidate = hydratedPlaylist ?? playlist;
-  const playlistWithSongs = hasPlaylistSongs(playlistCandidate) ? playlistCandidate : null;
+  }, [activeServer?.id, api, isSheetOpen, playlist?.nativeId, queryClient]);
 
   return {
-    playlistWithSongs,
-    songs: playlistWithSongs?.songs ?? [],
+    playlistWithSongs: detail,
+    songs: detail?.songs ?? [],
     songsLoading,
   };
 }
 
 export function useLazyArtistSongs(
   artistId: string | undefined,
-  artistAlbums: AlbumBase[],
+  artistAlbums: Album[],
   isSheetOpen: boolean
 ) {
   const queryClient = useQueryClient();
@@ -131,7 +160,7 @@ export function useLazyArtistSongs(
   const [songsLoading, setSongsLoading] = useState(false);
 
   const albumIdsKey = useMemo(
-    () => artistAlbums.map(album => album.id).join('|'),
+    () => artistAlbums.map(album => album.nativeId).join('|'),
     [artistAlbums]
   );
 
@@ -145,14 +174,14 @@ export function useLazyArtistSongs(
     let cancelled = false;
     setSongsLoading(true);
 
-    fetchAlbumDetailsSettled({
+    fetchAlbumSongsSettled({
       queryClient,
       serverId: activeServer.id,
       albums: artistAlbums,
       getAlbum: api.albums.get,
     })
-      .then(fullAlbums => {
-        if (!cancelled) setSongs(fullAlbums.flatMap(album => album.songs ?? []));
+      .then(fetchedSongs => {
+        if (!cancelled) setSongs(fetchedSongs);
       })
       .catch(() => {
         if (!cancelled) setSongs(current => current.length ? [] : current);

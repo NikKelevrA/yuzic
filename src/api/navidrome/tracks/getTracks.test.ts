@@ -1,6 +1,7 @@
 import { getTracks } from './getTracks';
 import { NavidromeClient } from '../client';
 import { SubsonicResponse } from '../types';
+import { serverProvenance } from '@/domain/identity/Provenance';
 
 type RequestHandler = (endpoint: string, params?: Record<string, unknown>) => SubsonicResponse;
 
@@ -11,10 +12,13 @@ function makeClient(handler: RequestHandler): NavidromeClient {
     ),
     buildStreamUrl: jest.fn().mockReturnValue('https://server.example/stream'),
     serverUrl: 'https://server.example',
+    serverId: 'server-1',
     username: 'user',
     password: 'pass',
   } as unknown as NavidromeClient;
 }
+
+const provenance = serverProvenance('server-1');
 
 describe('getTracks', () => {
   it('returns songs from empty-query search3 when the server supports it', async () => {
@@ -31,9 +35,9 @@ describe('getTracks', () => {
       throw new Error(`unexpected endpoint ${endpoint}`);
     });
 
-    const tracks = await getTracks(client);
+    const tracks = await getTracks(client, provenance);
     expect(tracks).toHaveLength(1);
-    expect(tracks[0].id).toBe('song-1');
+    expect(tracks[0].nativeId).toBe('song-1');
     expect(client.request).toHaveBeenCalledTimes(1);
   });
 
@@ -72,17 +76,18 @@ describe('getTracks', () => {
       throw new Error(`unexpected endpoint ${endpoint}`);
     });
 
-    const tracks = await getTracks(client);
+    const tracks = await getTracks(client, provenance);
     expect(tracks).toHaveLength(2);
     expect(tracks[0]).toMatchObject({
-      id: 'song-1',
+      nativeId: 'song-1',
       title: 'Song One',
-      artist: 'Artist One',
-      artistId: 'artist-1',
-      albumId: 'album-1',
-      cover: { kind: 'navidrome', coverArtId: 'cover-1' },
+      durationSeconds: 100,
     });
-    expect(tracks[1].artist).toBe('Featured Artist');
+    expect(tracks[0].artist.name).toBe('Artist One');
+    expect(tracks[0].artist.nativeId).toBe('artist-1');
+    expect(tracks[0].album.nativeId).toBe('album-1');
+    expect(tracks[0].cover).toEqual({ kind: 'navidrome', coverArtId: 'cover-1' });
+    expect(tracks[1].artist.name).toBe('Featured Artist');
   });
 
   it('falls back to the album list when search3 throws (servers rejecting empty queries)', async () => {
@@ -107,8 +112,8 @@ describe('getTracks', () => {
       throw new Error(`unexpected endpoint ${endpoint}`);
     });
 
-    const tracks = await getTracks(client);
+    const tracks = await getTracks(client, provenance);
     expect(tracks).toHaveLength(1);
-    expect(tracks[0].id).toBe('song-1');
+    expect(tracks[0].nativeId).toBe('song-1');
   });
 });

@@ -1,12 +1,17 @@
 import { findArrivedWants } from '../arrival';
 import { makeLocalId } from '@/types/EntityId';
+import { makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import type { Want } from '@/utils/redux/slices/wantsSlice';
-import type { AlbumBase, SongBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
 
 const ALBUM_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'w-album-1' });
 const TRACK_LOCAL_ID = makeLocalId({ kind: 'track', externalSource: 'deezer', externalNativeId: 'w-track-1' });
 const PRESENT_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'present' });
 const MISSING_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'missing' });
+
+const PROVENANCE = serverProvenance('server-1');
 
 function albumWant(overrides: Partial<Want> = {}): Want {
   return {
@@ -34,29 +39,56 @@ function trackWant(overrides: Partial<Want> = {}): Want {
   };
 }
 
-function libraryAlbum(overrides: Partial<AlbumBase> = {}): AlbumBase {
+function libraryAlbum(overrides: Partial<Album> = {}): Album {
   return {
-    id: 'lib-album-1',
+    localId: makeDomainLocalId('album', PROVENANCE, 'lib-album-1'),
+    nativeId: 'lib-album-1',
+    provenance: PROVENANCE,
+    externalIds: {},
+    libraryState: 'in-library',
     title: 'Some Album',
     cover: { kind: 'none' },
-    subtext: 'Some Artist',
-    artist: { id: 'artist-1', name: 'Some Artist', cover: { kind: 'none' }, subtext: '' },
+    artist: {
+      localId: makeDomainLocalId('artist', PROVENANCE, 'artist-1'),
+      nativeId: 'artist-1',
+      externalIds: {},
+      name: 'Some Artist',
+      cover: { kind: 'none' },
+    },
     year: 2020,
+    releaseType: 'album',
     genres: [],
-    created: new Date(),
+    songIds: [],
     ...overrides,
   };
 }
 
-function libraryTrack(overrides: Partial<SongBase> = {}): SongBase {
+function libraryTrack(overrides: Partial<Song> = {}): Song {
   return {
-    id: 'lib-track-1',
+    localId: makeDomainLocalId('song', PROVENANCE, 'lib-track-1'),
+    nativeId: 'lib-track-1',
+    provenance: PROVENANCE,
+    externalIds: {},
+    libraryState: 'in-library',
     title: 'Some Track',
-    artist: 'Some Artist',
-    artistId: 'artist-1',
+    artist: {
+      localId: makeDomainLocalId('artist', PROVENANCE, 'artist-1'),
+      nativeId: 'artist-1',
+      externalIds: {},
+      name: 'Some Artist',
+      cover: { kind: 'none' },
+    },
+    album: {
+      localId: makeDomainLocalId('album', PROVENANCE, 'lib-album-1'),
+      nativeId: 'lib-album-1',
+      externalIds: {},
+      title: 'Some Album',
+      cover: { kind: 'none' },
+    },
     cover: { kind: 'none' },
-    duration: '180',
-    albumId: 'lib-album-1',
+    durationSeconds: 180,
+    contentKind: 'song',
+    genres: [],
     ...overrides,
   };
 }
@@ -73,7 +105,7 @@ describe('findArrivedWants', () => {
       title: '  SOME    Album ',
       externalIds: { mbid: 'mbid-123' },
     });
-    const album = libraryAlbum({ title: 'Totally Different Title', mbid: 'mbid-123' });
+    const album = libraryAlbum({ title: 'Totally Different Title', externalIds: { mbid: 'mbid-123' } });
     const arrived = findArrivedWants([want], { albums: [album] });
     expect(arrived).toEqual([want]);
   });

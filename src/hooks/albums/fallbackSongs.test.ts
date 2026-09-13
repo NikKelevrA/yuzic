@@ -1,14 +1,39 @@
 import { buildFallbackAlbumSongs } from './fallbackSongs'
-import type { SongBase } from '@/types'
+import type { Song } from '@/domain/entities/Song'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { serverProvenance } from '@/domain/identity/Provenance'
 
-const track = (id: string, albumId: string, overrides: Partial<SongBase> = {}): SongBase => ({
-  id,
-  title: `Track ${id}`,
-  artist: 'Artist',
-  artistId: 'artist-1',
+const provenance = serverProvenance('srv-1')
+
+const track = (
+  nativeId: string,
+  albumNativeId: string,
+  overrides: Partial<Song> = {}
+): Song => ({
+  localId: makeLocalId('song', provenance, nativeId),
+  nativeId,
+  provenance,
+  externalIds: {},
+  libraryState: 'in-library',
+  title: `Track ${nativeId}`,
+  artist: {
+    localId: makeLocalId('artist', provenance, 'artist-1'),
+    nativeId: 'artist-1',
+    externalIds: {},
+    name: 'Artist',
+    cover: { kind: 'none' },
+  },
+  album: {
+    localId: makeLocalId('album', provenance, albumNativeId),
+    nativeId: albumNativeId,
+    externalIds: {},
+    title: 'Album',
+    cover: { kind: 'none' },
+  },
   cover: { kind: 'none' },
-  duration: '200',
-  albumId,
+  durationSeconds: 200,
+  contentKind: 'song',
+  genres: [],
   ...overrides,
 })
 
@@ -20,17 +45,17 @@ describe('buildFallbackAlbumSongs', () => {
       track('c', 'album-1'),
     ]
 
-    expect(buildFallbackAlbumSongs(tracks, 'album-1').map(s => s.id)).toEqual(['a', 'c'])
+    expect(buildFallbackAlbumSongs(tracks, 'album-1').map(s => s.nativeId)).toEqual(['a', 'c'])
   })
 
   it('orders by disc then track number', () => {
     const tracks = [
-      track('d2t1', 'album-1', { disc: 2, trackNumber: 1 }),
-      track('d1t2', 'album-1', { disc: 1, trackNumber: 2 }),
-      track('d1t1', 'album-1', { disc: 1, trackNumber: 1 }),
+      track('d2t1', 'album-1', { discNumber: 2, trackNumber: 1 }),
+      track('d1t2', 'album-1', { discNumber: 1, trackNumber: 2 }),
+      track('d1t1', 'album-1', { discNumber: 1, trackNumber: 1 }),
     ]
 
-    expect(buildFallbackAlbumSongs(tracks, 'album-1').map(s => s.id))
+    expect(buildFallbackAlbumSongs(tracks, 'album-1').map(s => s.nativeId))
       .toEqual(['d1t1', 'd1t2', 'd2t1'])
   })
 
@@ -40,13 +65,8 @@ describe('buildFallbackAlbumSongs', () => {
       track('t1', 'album-1', { trackNumber: 1 }),
     ]
 
-    expect(buildFallbackAlbumSongs(tracks, 'album-1').map(s => s.id))
+    expect(buildFallbackAlbumSongs(tracks, 'album-1').map(s => s.nativeId))
       .toEqual(['t1', 'unnumbered'])
-  })
-
-  it('produces playable-shaped songs with an empty streamUrl for lazy resolution', () => {
-    const result = buildFallbackAlbumSongs([track('a', 'album-1')], 'album-1')
-    expect(result[0].streamUrl).toBe('')
   })
 
   it('returns empty for a missing album id', () => {

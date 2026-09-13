@@ -1,10 +1,14 @@
-import type { AlbumBase, CoverSource } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { LocalId } from '@/domain/identity/LocalId';
+import type { CoverSource } from '@/types';
 
 export type LocalArtistSummary = {
-  id: string;
+  /** On-device identity — used for React keys and dedup against other shelves. */
+  localId: LocalId;
+  /** The artist's id at the origin — used to navigate to the artist screen. */
+  nativeId: string;
   name: string;
   cover: CoverSource;
-  subtext: string;
 };
 
 // A cheap, always-available approximation of "similar artists" — other
@@ -12,41 +16,41 @@ export type LocalArtistSummary = {
 // real similarity graph (Deezer/Last.fm), which is why it's labeled and
 // rendered as its own sub-group rather than merged into their results.
 export function findArtistsWithSharedGenres(
-  targetArtistId: string,
-  albums: AlbumBase[],
+  targetArtistLocalId: LocalId,
+  albums: Album[],
   limit = 8
 ): LocalArtistSummary[] {
-  const genresByArtist = new Map<string, Set<string>>();
-  const artistMeta = new Map<string, LocalArtistSummary>();
+  const genresByArtist = new Map<LocalId, Set<string>>();
+  const artistMeta = new Map<LocalId, LocalArtistSummary>();
 
   for (const album of albums) {
-    const artistId = album.artist.id;
-    if (!artistMeta.has(artistId)) {
-      artistMeta.set(artistId, {
-        id: artistId,
+    const artistLocalId = album.artist.localId;
+    if (!artistMeta.has(artistLocalId)) {
+      artistMeta.set(artistLocalId, {
+        localId: artistLocalId,
+        nativeId: album.artist.nativeId,
         name: album.artist.name,
         cover: album.artist.cover,
-        subtext: album.artist.subtext,
       });
     }
-    const genres = genresByArtist.get(artistId) ?? new Set<string>();
+    const genres = genresByArtist.get(artistLocalId) ?? new Set<string>();
     album.genres.forEach(g => genres.add(g));
-    genresByArtist.set(artistId, genres);
+    genresByArtist.set(artistLocalId, genres);
   }
 
-  const targetGenres = genresByArtist.get(targetArtistId);
+  const targetGenres = genresByArtist.get(targetArtistLocalId);
   if (!targetGenres || targetGenres.size === 0) return [];
 
   return [...artistMeta.keys()]
-    .filter(id => id !== targetArtistId)
-    .map(id => {
-      const genres = genresByArtist.get(id) ?? new Set<string>();
+    .filter(localId => localId !== targetArtistLocalId)
+    .map(localId => {
+      const genres = genresByArtist.get(localId) ?? new Set<string>();
       let overlap = 0;
       for (const g of genres) if (targetGenres.has(g)) overlap++;
-      return { id, overlap };
+      return { localId, overlap };
     })
     .filter(candidate => candidate.overlap > 0)
     .sort((a, b) => b.overlap - a.overlap)
     .slice(0, limit)
-    .map(candidate => artistMeta.get(candidate.id)!);
+    .map(candidate => artistMeta.get(candidate.localId)!);
 }

@@ -1,4 +1,4 @@
-import { isAutoplaySeed, isScrobbleable, isStreamRefreshable } from '@/domain/playback/ContentKind';
+import { isAutoplaySeed, isScrobbleable, hasReissuableUrl } from '@/domain/playback/ContentKind';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import { mapPreviewTrack, mapSong } from './mapSong';
 import type { DeezerAlbum, DeezerTrack } from './catalog';
@@ -62,7 +62,7 @@ describe('mapSong (full catalogue track)', () => {
     expect(song.durationSeconds).toBe(320);
     expect(isScrobbleable(song.contentKind)).toBe(false);
     expect(isAutoplaySeed(song.contentKind)).toBe(false);
-    expect(isStreamRefreshable(song.contentKind)).toBe(false);
+    expect(hasReissuableUrl(song.contentKind)).toBe(false);
   });
 
   it('is external — a track browsed on Deezer is not one the user owns', () => {

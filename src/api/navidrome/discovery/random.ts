@@ -1,11 +1,14 @@
+import type { Song } from '@/domain/entities/Song';
+import type { Provenance } from '@/domain/identity/Provenance';
 import type { NavidromeClient } from '../client';
 import type { SubsonicResponse } from '../types';
-import type { CoverSource, Song } from '@/types';
+import { mapSong } from '../mapSong';
 
 /** A random slice of the user's library. Optional genre/year filters route to
  * a themed shelf (a random draw of 80s tracks, jazz picks, etc.). */
 export async function getRandomSongs(
   client: NavidromeClient,
+  provenance: Provenance,
   opts: { size?: number; genre?: string; fromYear?: number; toYear?: number } = {}
 ): Promise<Song[]> {
   try {
@@ -19,22 +22,7 @@ export async function getRandomSongs(
     if (!Array.isArray(songs)) return [];
     return songs
       .filter((s): s is typeof s & { id: string } => !!s?.id)
-      .map((s) => {
-        const cover: CoverSource = s.coverArt
-          ? { kind: 'navidrome', coverArtId: s.coverArt }
-          : { kind: 'none' };
-        return {
-          id: s.id,
-          title: s.title ?? 'Unknown',
-          artist: s.artist ?? 'Unknown Artist',
-          artistId: s.artistId ?? '',
-          albumId: s.albumId ?? '',
-          cover,
-          duration: String(s.duration ?? 0),
-          streamUrl: client.buildStreamUrl(s.id),
-          dateReleased: s.year != null ? String(s.year) : undefined,
-        };
-      });
+      .map((s) => mapSong(s, { provenance }));
   } catch (error) {
     console.error('Navidrome getRandomSongs failed:', error);
     throw error;

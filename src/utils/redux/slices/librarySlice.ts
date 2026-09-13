@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { Song } from '@/types';
 
 // Post-split shell. Genres stay here — the payload is tiny (a
 // Record<serverId, string[]>) and keeping it in its own slice would create
@@ -82,8 +81,5 @@ export {
   setLibraryTracks,
   clearLibraryTracks,
 } from './libraryTracksSlice';
-
-// Type shim: some code (Song type import) still references this file.
-export type { Song };
 
 export default librarySlice.reducer;

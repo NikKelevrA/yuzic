@@ -10,7 +10,7 @@ import { usePlayingActions } from '@/contexts/PlayingContext'
 import { usePlayableSongResolver } from '@/hooks/songs'
 import TopTrackRow from '@/components/rows/TopTrackRow'
 import { rankMostPlayedTracks } from './mostPlayed'
-import type { Artist } from '@/types'
+import type { Artist } from '@/domain/entities/Artist'
 import { spacing, typography } from '@/constants/design'
 
 type Props = {
@@ -28,15 +28,19 @@ export default function MostPlayedSection({ artist }: Props) {
   const { playSong } = usePlayingActions()
   const { resolvePlayableSong } = usePlayableSongResolver()
 
-  const ranked = rankMostPlayedTracks(tracks, playCounts, artist.id)
+  // `rankMostPlayedTracks` works over a generic `{ id, artistId }` shape —
+  // play counts are keyed by nativeId (server-scoped), so that's what feeds
+  // it, not the domain identity.
+  const playCountTracks = tracks.map(track => ({ id: track.nativeId, artistId: track.artist.nativeId }))
+  const ranked = rankMostPlayedTracks(playCountTracks, playCounts, artist.nativeId)
   if (ranked.length === 0) return null
 
-  const tracksById = new Map(tracks.map(t => [t.id, t]))
+  const tracksByNativeId = new Map(tracks.map(t => [t.nativeId, t]))
 
-  const handlePress = async (trackId: string) => {
+  const handlePress = async (nativeId: string) => {
     try {
-      const song = await resolvePlayableSong(trackId);
-      if (song) await playSong(song);
+      const resource = await resolvePlayableSong(nativeId);
+      if (resource) await playSong(resource.song);
     } catch {
       notify.error(t('common.playbackError'));
     }
@@ -50,15 +54,15 @@ export default function MostPlayedSection({ artist }: Props) {
         </Text>
       </View>
       {ranked.map((ranking, index) => {
-        const track = tracksById.get(ranking.id);
+        const track = tracksByNativeId.get(ranking.id);
         if (!track) return null;
         return (
           <TopTrackRow
-            key={track.id}
+            key={track.localId}
             song={track}
             index={index}
             artistName={artist.name}
-            onPress={() => { void handlePress(track.id); }}
+            onPress={() => { void handlePress(track.nativeId); }}
           />
         );
       })}

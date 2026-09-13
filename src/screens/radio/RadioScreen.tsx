@@ -2,12 +2,17 @@ import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
 import { CloudOff, Pencil, Plus, Radio as RadioIcon, Trash2 } from 'lucide-react-native';
 
 import { useApi } from '@/api';
 import type { InternetRadioStation } from '@/api/types';
+import type { Song } from '@/domain/entities/Song';
+import { stationToSong } from '@/utils/playback/buildStationSong';
+import { serverProvenance } from '@/domain/identity/Provenance';
+import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { DetailHeaderBar, DetailHeaderIconButton } from '@/components/DetailHeader';
 import { FormSheet, FormSheetField } from '@/components/FormSheet';
 import MediaListRow from '@/components/MediaListRow';
@@ -21,7 +26,6 @@ import { useRadius } from '@/hooks/useRadius';
 import { useScrollClearance } from '@/hooks/useScrollClearance';
 import { useTheme } from '@/hooks/useTheme';
 import { usePlayingActions } from '@/contexts/PlayingContext';
-import { stationToSong } from '@/utils/playback/buildStationSong';
 import haptics from '@/utils/haptics';
 
 type Editing =
@@ -41,6 +45,7 @@ export default function RadioScreen() {
   const serverReachable = useServerReachable();
   const scrollClearance = useScrollClearance();
   const { playSong } = usePlayingActions();
+  const activeServer = useSelector(selectActiveServer);
   const [editing, setEditing] = useState<Editing | null>(null);
 
   const stationsQuery = useQuery({
@@ -51,9 +56,10 @@ export default function RadioScreen() {
   });
 
   const handlePlay = useCallback((station: InternetRadioStation) => {
+    if (!activeServer?.id) return;
     haptics.primary();
-    void playSong(stationToSong(station));
-  }, [playSong]);
+    void playSong(stationToSong(station, activeServer.id));
+  }, [activeServer?.id, playSong]);
 
   const handleDelete = useCallback((station: InternetRadioStation) => {
     Alert.alert(

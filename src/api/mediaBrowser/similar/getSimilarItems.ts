@@ -1,8 +1,8 @@
-import type { MediaBrowserClient } from '../client';
+import type { Album } from '@/domain/entities/Album';
+import type { Artist } from '@/domain/entities/Artist';
+import { requireProvenance, type MediaBrowserClient } from '../client';
 import type { MediaBrowserItemsResponse } from '../types';
-import type { AlbumBase, ExternalArtistBase } from '@/types';
-import { makeLocalId } from '@/types/EntityId';
-import { buildCoverWithTag } from '../brand';
+import { mapArtist } from '../mapArtist';
 import { normalizeAlbum } from '../albums/getAlbums';
 
 /**
@@ -32,7 +32,7 @@ export async function getSimilarAlbums(
   client: MediaBrowserClient,
   albumId: string,
   limit = 12
-): Promise<AlbumBase[]> {
+): Promise<Album[]> {
   const items = await fetchSimilar(
     client,
     albumId,
@@ -42,31 +42,22 @@ export async function getSimilarAlbums(
   );
   return items
     .map((a) => normalizeAlbum(a, client))
-    .filter((a): a is AlbumBase => a !== null);
+    .filter((a): a is Album => a !== null);
 }
 
 /**
- * Returns lightweight artist references — the shape the artist page's
- * similar-artists carousel already accepts. IDs are the server's own itemIds
- * so tapping one lands on the local artistView.
+ * Full domain artists, carrying this server's own provenance — the caller
+ * relates them to library records through matching (see
+ * `@/domain/identity/matching`) rather than through a second, thinner type.
  */
 export async function getSimilarArtists(
   client: MediaBrowserClient,
   artistId: string,
   limit = 12
-): Promise<ExternalArtistBase[]> {
-  const items = await fetchSimilar(client, artistId, limit, 'MusicArtist');
-  const sourceServerId = client.serverId;
+): Promise<Artist[]> {
+  const items = await fetchSimilar(client, artistId, limit, 'MusicArtist', 'PrimaryImageTag,Overview,ProviderIds');
+  const provenance = requireProvenance(client);
   return items
     .filter((s) => s.Id && s.Type === 'MusicArtist')
-    .map((s) => ({
-      id: s.Id!,
-      name: s.Name ?? 'Unknown Artist',
-      cover: buildCoverWithTag(client.brand, s.Id, s.ImageTags?.Primary),
-      subtext: '',
-      localId: sourceServerId
-        ? makeLocalId({ kind: 'artist', sourceServerId, serverItemId: s.Id! })
-        : undefined,
-      libraryState: 'in-library',
-    }));
+    .map((s) => mapArtist(s, { provenance, brand: client.brand }));
 }

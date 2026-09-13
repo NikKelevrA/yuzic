@@ -6,8 +6,11 @@ import { configureStore } from '@reduxjs/toolkit';
 import wantsReducer, { addWant } from '@/utils/redux/slices/wantsSlice';
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
 import { makeLocalId } from '@/types/EntityId';
+import { makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import type { Server } from '@/types/Server';
-import type { AlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
 import { useWantArrivalWatcher } from '../useWantArrivalWatcher';
 
 const WANT_1_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'w-1' });
@@ -22,8 +25,8 @@ jest.mock('@/components/toast', () => ({
 // an album "into" the library between renders without a real sync/redux path.
 // jest.mock calls are hoisted above all imports by Babel, so this takes
 // effect for `useWantArrivalWatcher`'s own import of LibraryContext above.
-let mockAlbums: AlbumBase[] = [];
-let mockTracks: AlbumBase[] = [];
+let mockAlbums: Album[] = [];
+let mockTracks: Song[] = [];
 jest.mock('@/contexts/LibraryContext', () => ({
   useLibrary: () => ({ albums: mockAlbums, tracks: mockTracks }),
 }));
@@ -40,16 +43,28 @@ function testServer(): Server {
   };
 }
 
-function libraryAlbum(): AlbumBase {
+const PROVENANCE = serverProvenance(SERVER_ID);
+
+function libraryAlbum(): Album {
   return {
-    id: 'lib-album-1',
+    localId: makeDomainLocalId('album', PROVENANCE, 'lib-album-1'),
+    nativeId: 'lib-album-1',
+    provenance: PROVENANCE,
+    externalIds: {},
+    libraryState: 'in-library',
     title: 'Some Album',
     cover: { kind: 'none' },
-    subtext: 'Some Artist',
-    artist: { id: 'artist-1', name: 'Some Artist', cover: { kind: 'none' }, subtext: '' },
+    artist: {
+      localId: makeDomainLocalId('artist', PROVENANCE, 'artist-1'),
+      nativeId: 'artist-1',
+      externalIds: {},
+      name: 'Some Artist',
+      cover: { kind: 'none' },
+    },
     year: 2020,
+    releaseType: 'album',
     genres: [],
-    created: new Date(),
+    songIds: [],
   };
 }
 

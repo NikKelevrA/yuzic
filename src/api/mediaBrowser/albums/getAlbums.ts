@@ -1,64 +1,24 @@
-import { AlbumBase } from "@/types";
-import { makeLocalId } from "@/types/EntityId";
-import type { MediaBrowserClient } from "../client";
-import { buildCoverWithTag } from "../brand";
-import { MediaBrowserItem, MediaBrowserItemsResponse } from "../types";
+import type { Album } from "@/domain/entities/Album";
+import { requireProvenance, type MediaBrowserClient } from "../client";
+import { mapAlbum } from "../mapAlbum";
+import type { MediaBrowserItem, MediaBrowserItemsResponse } from "../types";
 
-export type GetAlbumsResult = AlbumBase[];
+export type GetAlbumsResult = Album[];
 
-export function normalizeAlbum(a: MediaBrowserItem, client: MediaBrowserClient): AlbumBase | null {
+/**
+ * Shared with `getStarredItems` and `getSimilarItems` — every endpoint that
+ * hands back a bare album listing (no tracks) goes through this one
+ * normalizer, so a DTO never gets a second, drifting mapping path.
+ */
+export function normalizeAlbum(a: MediaBrowserItem, client: MediaBrowserClient): Album | null {
+  if (!a.Id) return null;
   try {
-    const albumId = a.Id;
-    if (!albumId) return null;
-
-    const cover = buildCoverWithTag(client.brand, albumId, a.ImageTags?.Primary ?? undefined);
-
-    const artistItem = a.ArtistItems?.[0];
-    const sourceServerId = client.serverId;
-    const artistId = artistItem?.Id ?? "unknown";
-
-    const artist = {
-      id: artistId,
-      name: artistItem?.Name ?? "Unknown Artist",
-      cover: { kind: "none" as const },
-      subtext: "Artist",
-      mbid: artistItem?.ProviderIds?.MusicBrainz ?? null,
-      localId: sourceServerId
-        ? makeLocalId({ kind: "artist", sourceServerId, serverItemId: artistId })
-        : undefined,
-    };
-
-    const albumMbid = a.ProviderIds?.MusicBrainzAlbum ?? a.ProviderIds?.MusicBrainz ?? null;
-    const serverLastPlayedAt = a.UserData?.LastPlayedDate
-      ? new Date(a.UserData.LastPlayedDate).getTime()
-      : undefined;
-
-    return {
-      id: albumId,
-      cover,
-      title: a.Name ?? "Unknown Album",
-      subtext: `Album • ${artist.name}`,
-      artist,
-      year: a.ProductionYear ?? 0,
-      genres: (a.Genres ?? [])
-        .flatMap((g: string) => g.split(";"))
-        .map((g: string) => g.trim())
-        .filter(Boolean),
-      created: a.DateCreated ? new Date(a.DateCreated) : new Date(0),
-      mbid: albumMbid,
-      serverPlayCount: a.UserData?.PlayCount ?? undefined,
-      serverLastPlayedAt: serverLastPlayedAt && !isNaN(serverLastPlayedAt) ? serverLastPlayedAt : undefined,
-      localId: sourceServerId
-        ? makeLocalId({ kind: "album", sourceServerId, serverItemId: albumId })
-        : undefined,
-      libraryState: "in-library",
-    };
+    return mapAlbum(a, { provenance: requireProvenance(client), brand: client.brand });
   } catch (error) {
     console.error(`Failed to normalize album:`, error);
     return null;
   }
 }
-
 
 export async function getAlbums(
   client: MediaBrowserClient,
@@ -78,5 +38,5 @@ export async function getAlbums(
   const raw = await client.request<MediaBrowserItemsResponse>(path);
   const items = raw?.Items ?? [];
 
-  return items.map((a) => normalizeAlbum(a, client)).filter((a): a is AlbumBase => a !== null);
+  return items.map((a) => normalizeAlbum(a, client)).filter((a): a is Album => a !== null);
 }

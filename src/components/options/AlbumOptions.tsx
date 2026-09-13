@@ -10,9 +10,11 @@ import { notify } from '@/components/toast';
 import { useApi } from '@/api';
 import { shareItem } from '@/utils/share';
 import { selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
-import { useCanGeneratePlaylist, generateForAlbum } from '@/features/audiomuse/generateFromEntity';
+import { useCanGeneratePlaylist } from '@/features/audiomuse/generatePlaylist';
+import { generateSimilarPlaylistForAlbum } from '@/features/audiomuse/generatePlaylist';
 
-import { Album, AlbumBase, ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { ExternalAlbumBase } from '@/types';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectAlbumPlayCount } from '@/utils/redux/selectors/statsSelectors';
 import { usePlaying } from '@/contexts/PlayingContext';
@@ -46,7 +48,7 @@ import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
 import { addWant, removeWant } from '@/utils/redux/slices/wantsSlice';
 
 export type AlbumOptionsProps = {
-  album: AlbumBase | Album | ExternalAlbumBase | null;
+  album: Album | ExternalAlbumBase | null;
   /** Hide "Go to Album" when already on the album screen (library albums only). */
   hideGoToAlbum?: boolean;
 };
@@ -54,13 +56,13 @@ export type AlbumOptionsProps = {
 /**
  * True when `album` came from an external catalog (Deezer/etc) rather than
  * the user's library. `ExternalAlbumBase.artist` is a plain string, while a
- * library `AlbumBase`/`Album`'s `artist` is always an `ArtistRef` object —
- * that shape difference is guaranteed to hold for both types, so it doubles
- * as the discriminator without needing a new field on either type. Mirrors
+ * library `Album`'s `artist` is always an `ArtistRef` object — that shape
+ * difference is guaranteed to hold for both types, so it doubles as the
+ * discriminator without needing a new field on either type. Mirrors
  * `isExternalAlbum` in `components/rows/AlbumRow`.
  */
 function isExternalAlbumOrigin(
-  album: AlbumBase | Album | ExternalAlbumBase
+  album: Album | ExternalAlbumBase
 ): album is ExternalAlbumBase {
   return typeof album.artist === 'string';
 }
@@ -85,7 +87,7 @@ export default AlbumOptions;
 // ---------------------------------------------------------------------------
 
 type LibraryAlbumOptionsProps = {
-  album: AlbumBase | Album | null;
+  album: Album | null;
   hideGoToAlbum?: boolean;
 };
 
@@ -115,7 +117,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
   const unstarAlbum = useUnstarAlbum();
 
   const snapPoints = useMemo(() => ['55%', '90%'], []);
-  const playCount = useSelector(selectAlbumPlayCount(album?.id ?? ''));
+  const playCount = useSelector(selectAlbumPlayCount(album?.nativeId ?? ''));
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isGeneratingPlaylist, setIsGeneratingPlaylist] = useState(false);
@@ -125,7 +127,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
   const canGeneratePlaylist = useCanGeneratePlaylist();
   const { albumWithSongs, songs, songsLoading } = useLazyAlbumDetail(album, isSheetOpen);
 
-  const isStarred = starredAlbums.some(a => a.id === album?.id);
+  const isStarred = starredAlbums.some(a => a.localId === album?.localId);
 
   const sheetBg = useOptionSheetBackground();
 
@@ -138,10 +140,10 @@ const LibraryAlbumOptionsSheet = forwardRef<
     if (!album) return;
     try {
       if (isStarred) {
-        await unstarAlbum.mutateAsync(album.id);
+        await unstarAlbum.mutateAsync(album.nativeId);
         notify.success(t('albumOptions.toasts.removedFromFavorites', { title: album.title }));
       } else {
-        await starAlbum.mutateAsync(album.id);
+        await starAlbum.mutateAsync(album.nativeId);
         notify.success(t('albumOptions.toasts.addedToFavorites', { title: album.title }));
       }
     } catch {
@@ -151,7 +153,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
     }
   };
 
-  const songIds = useMemo(() => songs.map(s => s.id), [songs]);
+  const songIds = useMemo(() => songs.map(s => s.localId), [songs]);
   const { isDownloaded, isDownloading } = getCollectionDownloadState(songIds);
   const playbackDisabled = songsLoading || !songs.length;
 
@@ -168,7 +170,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
       return;
     }
     [...songs].reverse().forEach(song => playNext(song));
-    notify.success(t('albumOptions.toasts.addedNext', { title: albumWithSongs.title }));
+    notify.success(t('albumOptions.toasts.addedNext', { title: albumWithSongs.album.title }));
     close();
   };
 
@@ -179,7 +181,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
       playSongInCollection(songs[0], albumWithSongs, false);
     } else {
       addCollectionToQueue(albumWithSongs);
-      notify.success(t('albumOptions.toasts.addedToEnd', { title: albumWithSongs.title }));
+      notify.success(t('albumOptions.toasts.addedToEnd', { title: albumWithSongs.album.title }));
     }
     close();
   };
@@ -191,7 +193,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
       playSongInCollection(songs[0], albumWithSongs, true);
     } else {
       shuffleCollectionToQueue(albumWithSongs);
-      notify.success(t('albumOptions.toasts.shuffledToQueue', { title: albumWithSongs.title }));
+      notify.success(t('albumOptions.toasts.shuffledToQueue', { title: albumWithSongs.album.title }));
     }
     close();
   };
@@ -199,7 +201,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
   const handleGoToAlbum = () => {
     if (!album) return;
     close();
-    router.push({ pathname: '/albumView', params: { id: album.id } });
+    router.push({ pathname: '/albumView', params: { id: album.nativeId } });
   };
 
   // Recovery path for fuzzy-match false positives, mirroring ArtistOptions:
@@ -227,7 +229,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
     setIsSharing(true);
     try {
       const created = await api.shares.create({
-        itemId: album.id,
+        itemId: album.nativeId,
         description: album.title,
       });
       if (!created?.url) {
@@ -249,7 +251,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
 
   const handleDownload = async () => {
     if (!album || isDownloaded || isDownloading) return;
-    await downloadAlbumById(album.id, songs);
+    await downloadAlbumById(album.nativeId, songs);
   };
 
   const handleGeneratePlaylist = async () => {
@@ -257,7 +259,7 @@ const LibraryAlbumOptionsSheet = forwardRef<
     generatePlaylistInFlightRef.current = true;
     setIsGeneratingPlaylist(true);
     try {
-      const result = await generateForAlbum(api, audiomuseConfig, albumWithSongs, { size: 25 });
+      const result = await generateSimilarPlaylistForAlbum(api, audiomuseConfig, albumWithSongs, { size: 25 });
       notify.success(t('albumOptions.toasts.playlistGenerated', { count: result.trackCount }));
       close();
       router.push({ pathname: '/playlistView', params: { id: result.playlistId } });

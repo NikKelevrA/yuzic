@@ -17,9 +17,12 @@ import {
   setLibraryStarredAlbums,
 } from '@/utils/redux/slices/libraryStarredSlice'
 import { setServerAlbumStats, setServerSongStats } from '@/utils/redux/slices/statsSlice'
-import { AlbumBase, Artist, PlaylistBase, SongBase, Song } from '@/types'
 import { useApi } from '@/api'
 import { staleTime } from '@/constants/staleTime'
+import type { Album as DomainAlbum } from '@/domain/entities/Album'
+import type { Artist as DomainArtist } from '@/domain/entities/Artist'
+import type { Playlist as DomainPlaylist } from '@/domain/entities/Playlist'
+import type { Song as DomainSong } from '@/domain/entities/Song'
 
 const SYNC_THROTTLE_MS = 30 * 60 * 1000
 
@@ -127,23 +130,23 @@ export function useSync() {
 
       // Immediately dispatch list-level data so the UI is responsive
       const albums = albumsResult.status === 'fulfilled'
-        ? albumsResult.value as AlbumBase[]
-        : queryClient.getQueryData<AlbumBase[]>([QueryKeys.Albums, serverId])
+        ? albumsResult.value
+        : queryClient.getQueryData<DomainAlbum[]>([QueryKeys.Albums, serverId])
       const artists = artistsResult.status === 'fulfilled'
-        ? artistsResult.value as Artist[]
-        : queryClient.getQueryData<Artist[]>([QueryKeys.Artists, serverId])
+        ? artistsResult.value
+        : queryClient.getQueryData<DomainArtist[]>([QueryKeys.Artists, serverId])
       const playlists = playlistsResult.status === 'fulfilled'
-        ? playlistsResult.value as PlaylistBase[]
-        : queryClient.getQueryData<PlaylistBase[]>([QueryKeys.Playlists, serverId])
+        ? playlistsResult.value
+        : queryClient.getQueryData<DomainPlaylist[]>([QueryKeys.Playlists, serverId])
       const tracks = tracksResult.status === 'fulfilled'
-        ? tracksResult.value as SongBase[]
-        : queryClient.getQueryData<SongBase[]>([QueryKeys.Tracks, serverId])
+        ? tracksResult.value
+        : queryClient.getQueryData<DomainSong[]>([QueryKeys.Tracks, serverId])
       const genres = genresResult.status === 'fulfilled'
-        ? genresResult.value as string[]
+        ? genresResult.value
         : queryClient.getQueryData<string[]>([QueryKeys.Genres, serverId])
       const starred = starredResult.status === 'fulfilled'
-        ? starredResult.value as { songs: Song[]; albums: AlbumBase[] }
-        : queryClient.getQueryData<{ songs: Song[]; albums: AlbumBase[] }>([QueryKeys.Starred, serverId])
+        ? starredResult.value
+        : queryClient.getQueryData<{ songs: DomainSong[]; albums: DomainAlbum[] }>([QueryKeys.Starred, serverId])
       const hasAnyLibraryData = !!(
         albums?.length ||
         artists?.length ||
@@ -153,34 +156,42 @@ export function useSync() {
         starred?.songs?.length
       )
 
-      // Server stats go in whenever the collection itself came back, empty list
-      // included: the action replaces this server's entries rather than merging
-      // into them, so an album whose count went to zero, or one that left the
-      // library, stops carrying a number it no longer has. Each entity the
-      // server reports on also drops its local tally, which is what keeps a
-      // listen from being counted twice — and, just as importantly, leaves the
-      // tally alone for everything the server said nothing about.
       if (albums) {
         dispatch(setLibraryAlbums(albums))
-        dispatch(setServerAlbumStats({
-          serverId,
-          stats: albums
-            .filter(a => (a.serverPlayCount ?? 0) > 0 || (a.serverLastPlayedAt ?? 0) > 0)
-            .map(a => ({
-              id: a.id,
-              playCount: a.serverPlayCount ?? 0,
-              lastPlayedAt: a.serverLastPlayedAt ?? 0,
-            })),
-        }))
+
+        // Server-reported play count/last-played, where the origin reports
+        // them (Album.serverPlayCount/serverLastPlayedAt). Only dispatched
+        // when at least one album actually carries a count: an empty stats
+        // list here isn't "nobody has played anything", it's usually "this
+        // origin doesn't report play stats at all" (e.g. Jellyfin), and
+        // setServerAlbumStats *replaces* this server's whole stats
+        // namespace — dispatching it unconditionally would wipe every
+        // locally-tracked optimistic play count on every sync.
+        const albumStats = albums
+          .filter((a): a is DomainAlbum & { serverPlayCount: number } => a.serverPlayCount !== undefined)
+          .map(a => ({
+            id: a.nativeId,
+            playCount: a.serverPlayCount,
+            lastPlayedAt: a.serverLastPlayedAt ?? 0,
+          }))
+        if (albumStats.length > 0) {
+          dispatch(setServerAlbumStats({ serverId, stats: albumStats }))
+        }
       }
       if (tracks) {
         dispatch(setLibraryTracks(tracks))
-        dispatch(setServerSongStats({
-          serverId,
-          stats: (tracks as SongBase[])
-            .filter(t => (t.serverPlayCount ?? 0) > 0 || (t.serverLastPlayedAt ?? 0) > 0)
-            .map(t => ({ id: t.id, playCount: t.serverPlayCount ?? 0, lastPlayedAt: t.serverLastPlayedAt })),
-        }))
+
+        // Same reasoning as the album stats above, for songs.
+        const songStats = tracks
+          .filter((s): s is DomainSong & { serverPlayCount: number } => s.serverPlayCount !== undefined)
+          .map(s => ({
+            id: s.nativeId,
+            playCount: s.serverPlayCount,
+            lastPlayedAt: s.serverLastPlayedAt,
+          }))
+        if (songStats.length > 0) {
+          dispatch(setServerSongStats({ serverId, stats: songStats }))
+        }
       }
       if (artists) dispatch(setLibraryArtists(artists))
       if (playlists) dispatch(setLibraryPlaylists(playlists))

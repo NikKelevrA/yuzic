@@ -12,11 +12,18 @@ import type {
   StarredApi,
   TracksApi,
 } from '@/api/types';
-import type { Playlist, PlaylistBase, Server } from '@/types';
+import type { Server } from '@/types';
+import type { Song } from '@/domain/entities/Song';
+import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import type { PlexMetadata, PlexResponse } from './types';
 import { createPlexClient } from './client';
 import type { PlexClient } from './client';
-import { normalizePlexAlbum, normalizePlexAlbumWithSongs, normalizePlexArtist, normalizePlexSong, plexCover } from './normalize';
+import { mapSong } from './mapSong';
+import { mapAlbum } from './mapAlbum';
+import { mapArtist } from './mapArtist';
+import { mapPlaylist } from './mapPlaylist';
 
 const FAVORITE_RATING = 10;
 const PAGE_SIZE = 200;
@@ -70,6 +77,9 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     basicAuth: server.basicAuth,
   });
   const sections = sectionIds(server);
+  // Built once at the client boundary and threaded into every mapper call —
+  // every entity this adapter produces comes from this one server.
+  const provenance = serverProvenance(server.id);
 
   async function libraryItems(type: number, extra = ''): Promise<PlexMetadata[]> {
     const ids = sections.length ? sections : (await client.request<PlexResponse>('/library/sections')).MediaContainer?.Directory?.map(s => String(s.key)).filter(Boolean) ?? [];
@@ -92,6 +102,16 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     return pagedMetadata(client, `/library/metadata/${encodeURIComponent(id)}/children`);
   }
 
+  function mapTracks(items: PlexMetadata[]): Song[] {
+    return items.filter(track => track.type === 'track').map(track => mapSong(track, { provenance }));
+  }
+
+  async function albumDetail(dto: PlexMetadata, trackItems: PlexMetadata[]): Promise<AlbumDetail> {
+    const songs = mapTracks(trackItems);
+    const album = mapAlbum(dto, { provenance, songIds: songs.map(song => song.localId) });
+    return { album, songs };
+  }
+
   const auth: AuthApi = {
     connect: async () => ({ success: false, message: 'Plex uses code sign-in.' }),
     ping: async () => {
@@ -112,28 +132,28 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   };
 
   const albums: AlbumsApi = {
-    list: async () => (await libraryItems(9)).map(normalizePlexAlbum),
+    list: async () => (await libraryItems(9)).map(dto => mapAlbum(dto, { provenance })),
     get: async (id) => {
-      const [album, tracks] = await Promise.all([item(id), itemTracks(id)]);
+      const [album, trackItems] = await Promise.all([item(id), itemTracks(id)]);
       if (!album) throw new Error('Album not found');
-      return normalizePlexAlbumWithSongs(album, tracks.filter(track => track.type === 'track').map(track => normalizePlexSong(track, client)));
+      return albumDetail(album, trackItems);
     },
     listWithSongs: async () => {
       const base = await libraryItems(9);
-      return Promise.all(base.map(async album => {
-        const tracks = await itemTracks(String(album.ratingKey));
-        return normalizePlexAlbumWithSongs(album, tracks.filter(track => track.type === 'track').map(track => normalizePlexSong(track, client)));
-      }));
+      return Promise.all(base.map(async album => albumDetail(album, await itemTracks(String(album.ratingKey)))));
     },
   };
 
   const artists: ArtistsApi = {
-    list: async () => (await libraryItems(8)).map(normalizePlexArtist),
+    list: async () => (await libraryItems(8)).map(dto => mapArtist(dto, provenance)),
     get: async (id) => {
       const artist = await item(id);
       if (!artist) throw new Error('Artist not found');
-      const albumIds = (await itemTracks(id)).filter(a => a.type === 'album').map(a => String(a.ratingKey));
-      return { ...normalizePlexArtist(artist), albumIds };
+      // An artist's children under Plex are its albums, not its tracks.
+      const albumIds = (await itemTracks(id))
+        .filter(entry => entry.type === 'album')
+        .map(entry => makeLocalId('album', provenance, String(entry.ratingKey ?? '')));
+      return { ...mapArtist(artist, provenance), albumIds };
     },
   };
 
@@ -145,10 +165,10 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   };
 
   const tracks: TracksApi = {
-    list: async () => (await libraryItems(10)).map(track => normalizePlexSong(track, client)),
+    list: async () => mapTracks(await libraryItems(10)),
     get: async (id) => {
       const track = await item(id);
-      return track?.type === 'track' ? normalizePlexSong(track, client) : null;
+      return track?.type === 'track' ? mapSong(track, { provenance }) : null;
     },
   };
 
@@ -169,8 +189,8 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   const starred: StarredApi = {
     list: async () => {
       const items = await libraryItems(10, `&userRating=${FAVORITE_RATING}`);
-      const songs = items.map(track => normalizePlexSong(track, client));
-      const albums = (await libraryItems(9, `&userRating=${FAVORITE_RATING}`)).map(normalizePlexAlbum);
+      const songs = mapTracks(items);
+      const albums = (await libraryItems(9, `&userRating=${FAVORITE_RATING}`)).map(dto => mapAlbum(dto, { provenance }));
       return { songs, albums };
     },
     add: async (id) => { await client.request(`/:/rate?key=${encodeURIComponent(`/library/metadata/${id}`)}&rating=${FAVORITE_RATING}`, { method: 'PUT' }); },
@@ -178,15 +198,14 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   };
 
   const playlists: PlaylistsApi = {
-    list: async () => (await pagedMetadata(client, '/playlists?playlistType=audio')).map((p): PlaylistBase => ({
-      id: String(p.ratingKey), title: p.title ?? 'Untitled playlist', cover: plexCover(p.thumb),
-      subtext: `Playlist • ${p.leafCount ?? 0} songs`, created: new Date((p.addedAt ?? 0) * 1000), changed: new Date((p.updatedAt ?? p.addedAt ?? 0) * 1000),
-    })),
-    get: async (id) => {
+    list: async () => (await pagedMetadata(client, '/playlists?playlistType=audio')).map(dto => mapPlaylist(dto, { provenance })),
+    get: async (id): Promise<PlaylistDetail> => {
       const base = metadata(await client.request<PlexResponse>(`/playlists/${encodeURIComponent(id)}`))[0];
       if (!base) throw new Error('Playlist not found');
       const entries = await pagedMetadata(client, `/playlists/${encodeURIComponent(id)}/items`);
-      return { id, title: base.title ?? 'Untitled playlist', cover: plexCover(base.thumb), subtext: `Playlist • ${entries.length} songs`, created: new Date((base.addedAt ?? 0) * 1000), changed: new Date((base.updatedAt ?? base.addedAt ?? 0) * 1000), songs: entries.map(entry => normalizePlexSong(entry, client)) } as Playlist;
+      const songs = mapTracks(entries);
+      const playlist = mapPlaylist(base, { provenance, songIds: songs.map(song => song.localId) });
+      return { playlist, songs };
     },
     create: async () => { throw new Error('Creating Plex playlists is not available yet.'); },
     rename: async () => { throw new Error('Renaming Plex playlists is not available yet.'); },
@@ -203,9 +222,9 @@ export function createPlexAdapter(server: Server): ApiAdapter {
       const response = await client.request<PlexResponse>(`/hubs/search?query=${encodeURIComponent(query)}`);
       const results = response.MediaContainer?.Hub?.flatMap(hub => hub.Metadata ?? []) ?? metadata(response);
       return {
-        albums: results.filter(result => result.type === 'album').map(normalizePlexAlbum),
-        artists: results.filter(result => result.type === 'artist').map(normalizePlexArtist),
-        songs: results.filter(result => result.type === 'track').map(result => normalizePlexSong(result, client)),
+        albums: results.filter(result => result.type === 'album').map(dto => mapAlbum(dto, { provenance })),
+        artists: results.filter(result => result.type === 'artist').map(dto => mapArtist(dto, provenance)),
+        songs: mapTracks(results),
       };
     },
   };

@@ -1,4 +1,4 @@
-import type { Server, Song } from '@/types';
+import type { Server, ServerType } from '@/types';
 import { plexBasicAuthHeader } from '@/api/plex/client';
 
 /**
@@ -29,10 +29,15 @@ const EMPTY: RequestHeaders = {};
  * it is skipped even on a Basic-auth Plex server. A song that names a different
  * provider than the active server (a mixed queue) is likewise skipped — its
  * credentials are not the ones we hold.
+ *
+ * Takes a small structural type rather than the legacy `@/types` `Song` — both
+ * callers already build a plain `{ sourceServerType?, streamUrl? }` literal
+ * rather than pass a whole entity, and this keeps the player boundary from
+ * depending on a Song shape that the queue itself no longer holds.
  */
 export function mediaHeadersForSong(
   server: Server | null | undefined,
-  song: Pick<Song, 'sourceServerType' | 'streamUrl'>
+  song: { sourceServerType?: ServerType; streamUrl?: string }
 ): RequestHeaders {
   if (song.streamUrl?.startsWith('file:')) return EMPTY;
   const kind = song.sourceServerType ?? server?.type;

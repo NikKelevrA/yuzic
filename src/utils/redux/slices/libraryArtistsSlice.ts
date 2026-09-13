@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { Artist } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
 
+/** Holds domain `Artist` entities. See `libraryAlbumsSlice` for why this is
+ * split out and why there's no migration from the pre-rewrite shape. */
 interface LibraryArtistsState {
   artists: Artist[];
 }

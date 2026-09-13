@@ -1,7 +1,6 @@
-import { Artist } from "@/types";
-import { makeLocalId } from "@/types/EntityId";
-import type { MediaBrowserClient } from "../client";
-import { buildCoverWithTag } from "../brand";
+import type { Artist } from "@/domain/entities/Artist";
+import { requireProvenance, type MediaBrowserClient } from "../client";
+import { mapArtist } from "../mapArtist";
 import { MediaBrowserItemsResponse } from "../types";
 
 export type GetArtistsResult = Artist[];
@@ -22,25 +21,7 @@ export async function getArtists(client: MediaBrowserClient): Promise<GetArtists
 
   const raw = await client.request<MediaBrowserItemsResponse>(path);
   const items = raw?.Items ?? [];
-  const sourceServerId = client.serverId;
+  const provenance = requireProvenance(client);
 
-  return items.map((a) => {
-    const cover = buildCoverWithTag(client.brand, a.Id, a.ImageTags?.Primary ?? undefined);
-
-    const mbid = a.ProviderIds?.MusicBrainz ?? null;
-    const id = a.Id ?? "";
-
-    return {
-      id,
-      name: a.Name ?? "Unknown Artist",
-      cover,
-      subtext: "Artist",
-      mbid,
-      albumIds: [],
-      localId: sourceServerId
-        ? makeLocalId({ kind: "artist", sourceServerId, serverItemId: id })
-        : undefined,
-      libraryState: "in-library",
-    };
-  });
+  return items.map((a) => mapArtist(a, { provenance, brand: client.brand }));
 }

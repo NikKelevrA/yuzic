@@ -17,10 +17,28 @@ import {
   usePlayerProgress,
 } from '@/features/player/usePlayerState';
 
-import { Album, Playlist, Song, SongBase } from '@/types';
+// The queue holds `PlayableResource` end to end now — `Song` below is the
+// domain entity (metadata only, no `streamUrl`), and every function in this
+// directory (autoplayFill, restoreQueue, playingQueue, playableMedia) speaks
+// it too. The compatibility bridges that used to translate a domain `Song`
+// into this file's own pre-rewrite queue shape (one here, two more in
+// usePlayableSongResolver) are gone — there is no second shape left to
+// convert into.
+import type { Song } from '@/domain/entities/Song';
+import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
+import type { LocalId } from '@/domain/identity/LocalId';
+import {
+  assertPlayable,
+  isPlayable,
+  playableOnly,
+  resourceFromPlayerItem,
+  sameQueue,
+  sourceKind,
+  type PlayableResource,
+} from '@/features/playback/playableResource';
 import shuffleArray from '@/utils/shuffleArray';
 import { useApi } from '@/api';
-import { buildTrackItem } from '@/utils/builders/buildTrackItem';
+import { buildMediaItem, getMediaItemId, getMediaItemUrl } from './playableMedia';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
@@ -50,20 +68,11 @@ import {
   createAudiomuseQueueFillProvider,
   resolveQueueFillProvider,
 } from './queueProviders';
-import {
-  assertPlayableSongs,
-  getMediaItemId,
-  getSourceKind,
-  hasPlayableMediaUrl,
-  hasSameQueueIds,
-  mediaItemToFallbackSong,
-  playableSongsOnly,
-} from './playableMedia';
 import { buildFillRequest, shouldFillQueue } from './autoplayFill';
 import { buildRestoredQueue } from './restoreQueue';
 import { canFillQueueFrom } from '@/utils/playback/contentKind';
+import { hasReissuableUrl } from '@/domain/playback/ContentKind';
 import { clampSpeed, speedFor, speedProfileFor } from '@/utils/playback/speedProfile';
-import { streamSourceId } from '@/utils/playback/streamId';
 import { setPlaybackSpeedForProfile } from '@/utils/redux/slices/settingsSlice';
 import { useBookmarkManager } from '@/hooks/useBookmarkManager';
 import { useQueueSync } from '@/hooks/useQueueSync';
@@ -101,6 +110,28 @@ export type RepeatModeState = 'off' | 'all' | 'one';
 // shuffle-mode-independent feature that extends the queue once it runs out.
 export type ShuffleMode = 'off' | 'shuffle' | 'smart';
 
+/** An album or playlist together with the tracks to queue from it. */
+export type PlayableCollection = AlbumDetail | PlaylistDetail;
+
+/** `resourceFromPlayerItem` wants a plain string url; `MediaItem.url` is the
+ * player's own `string | { uri }` shape, so this reads it through the same
+ * helper the rest of this file uses to normalise it. */
+function resourceFromMediaItem(item: MediaItem): PlayableResource | null {
+  return resourceFromPlayerItem({
+    mediaId: item.mediaId,
+    url: getMediaItemUrl(item),
+    title: item.title,
+    artist: item.artist,
+    duration: item.duration,
+  });
+}
+
+function collectionSource(collection: PlayableCollection): { contextId: LocalId; contextType: 'album' | 'playlist' } {
+  return 'album' in collection
+    ? { contextId: collection.album.localId, contextType: 'album' }
+    : { contextId: collection.playlist.localId, contextType: 'playlist' };
+}
+
 export interface PlayingStateType {
   currentSong: Song | null;
   isPlaying: boolean;
@@ -130,17 +161,17 @@ export interface PlayingActionsType {
   playSong(song: Song): Promise<void>;
   playSongInCollection(
     selectedSong: Song,
-    collection: Album | Playlist,
+    collection: PlayableCollection,
     shuffle?: boolean
   ): Promise<void>;
   /** Plays an arbitrary list of songs — a library screen, a genre, a filter —
    * rather than an album or playlist. */
   playSongs(
-    songs: (Song | SongBase)[],
+    songs: Song[],
     options?: { startIndex?: number; shuffle?: boolean; contextId?: string }
   ): Promise<void>;
-  addCollectionToQueue(collection: Album | Playlist): void;
-  shuffleCollectionToQueue(collection: Album | Playlist): void;
+  addCollectionToQueue(collection: PlayableCollection): void;
+  shuffleCollectionToQueue(collection: PlayableCollection): void;
   skipTo(index: number): Promise<void>;
   skipToNext(): Promise<void>;
   skipToPrevious(): Promise<void>;
@@ -221,7 +252,7 @@ const PlayingProgressProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const progress = useMemo<PlaybackProgress>(() => {
     if (jukeboxState) {
-      const songDuration = Number(currentSong?.duration) || 0;
+      const songDuration = currentSong?.durationSeconds || 0;
       return { position: jukeboxState.positionSeconds, duration: songDuration, buffered: 0 };
     }
     return {
@@ -271,17 +302,22 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const activeServerRef = useRef(activeServer);
   activeServerRef.current = activeServer;
 
-  // Every Song->MediaItem crossing in this file goes through these two, so the
-  // header-attachment happens in exactly one place regardless of which
+  // Every resource->MediaItem crossing in this file goes through these two, so
+  // the header-attachment happens in exactly one place regardless of which
   // consumer (foreground play, queue add, autoplay fill, play-next, restore)
   // built the queue. Unprotected servers get an item identical to before.
+  //
+  // `sourceServerType` is left for `mediaHeadersForSong` to default to the
+  // active server's own type — the domain `Song` inside a resource carries
+  // provenance (which server), not that server's type, and every track here
+  // is always played against the currently active server.
   const buildItem = useCallback(
-    (song: Song): MediaItem =>
-      buildTrackItem(song, mediaHeadersForSong(activeServerRef.current, song)),
+    (resource: PlayableResource): MediaItem =>
+      buildMediaItem(resource, mediaHeadersForSong(activeServerRef.current, resource)),
     []
   );
   const toMediaItems = useCallback(
-    (songs: Song[]): MediaItem[] => songs.map(buildItem),
+    (resources: PlayableResource[]): MediaItem[] => resources.map(buildItem),
     [buildItem]
   );
   const autoplayEnabled = useSelector(selectAutoplayEnabled);
@@ -324,12 +360,12 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [volume, setVolumeState] = useState(1.0);
   const [queueVersion, setQueueVersion] = useState(0);
 
-  const queueRef = useRef<Song[]>([]);
+  const queueRef = useRef<PlayableResource[]>([]);
   const queueSegmentsRef = useRef<QueueSegment[]>([]);
-  const originalQueueRef = useRef<Song[] | null>(null);
+  const originalQueueRef = useRef<PlayableResource[] | null>(null);
   const scrobbleStartTimeRef = useRef<number>(0);
   const currentIndexRef = useRef(0);
-  const currentSongRef = useRef<Song | null>(null);
+  const currentSongRef = useRef<PlayableResource | null>(null);
   const repeatModeRef = useRef<RepeatModeState>('off');
   const shuffleModeRef = useRef<ShuffleMode>('off');
   const autoplayEnabledRef = useRef(false);
@@ -353,7 +389,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const lastTickPositionRef = useRef(0);
   const submitNowPlayingRef = useRef<(song: Song) => void>(() => {});
   const removeFailedCurrentTrackRef = useRef<() => void>(() => {});
-  const resolvePlayableSongRef = useRef<(song: Song) => Song>((s) => s);
+  const resolvePlayableSongRef = useRef<(song: Song) => PlayableResource | null>(() => null);
 
   const { scrobbleIfNeeded, submitNowPlaying, reportPlaybackProgress, resetLastScrobbled } = useScrobbling();
   const bookmarks = useBookmarkManager();
@@ -380,6 +416,11 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const persistedShuffleMode = useSelector(selectPersistedPlaybackShuffleMode);
   const persistedServerIdForPlayback = useSelector(selectPersistedPlaybackActiveServerId);
   const currentServerId = useSelector(selectActiveServerIdSel);
+  // Already the domain `Song[]` the queue itself now speaks — no cast needed
+  // to hand it to `buildRestoredQueue`. It used to require `libraryTracks as
+  // unknown as Song[]` here, laundering a domain `Song` into the legacy shape
+  // the queue held at the time; the type migration removes the need for it
+  // rather than fixing it in place.
   const libraryTracks = useSelector(selectLibraryTracks);
   const hasAutoRestoredRef = useRef(false);
   useEffect(() => {
@@ -407,7 +448,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     const { queue: restored, index: idx } = buildRestoredQueue({
       persistedIds: persistedQueueIds,
       persistedIndex: persistedCurrentIndex,
-      libraryTracks: libraryTracks as unknown as Song[],
+      libraryTracks,
       resolve: resolvePlayableSongRef.current,
     });
     if (restored.length === 0) {
@@ -429,7 +470,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     currentIndexRef.current = idx;
     setCurrentIndex(idx);
     currentSongRef.current = restored[idx];
-    setCurrentSong(restored[idx]);
+    setCurrentSong(restored[idx].song);
     // Load paused at the persisted position — the user didn't ask us to
     // start playing on cold boot, they asked us to remember where they were.
     // Reported rather than dropped. This was `void`, so the failure that made
@@ -449,7 +490,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     persistedShuffleMode,
     libraryTracks,
   ]);
-  const loadQueueRef = useRef<(songs: Song[], startIndex: number, play?: boolean, seek?: number) => Promise<void>>(async () => {});
+  const loadQueueRef = useRef<(resources: PlayableResource[], startIndex: number, play?: boolean, seek?: number) => Promise<void>>(async () => {});
 
   /**
    * Records the listen that is ending, attributed to the collection it came
@@ -490,8 +531,9 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
     const interval = setInterval(() => {
-      const song = currentSongRef.current;
-      if (!song) return;
+      const resource = currentSongRef.current;
+      if (!resource) return;
+      const song = resource.song;
       const { position: positionSeconds, duration } = getBackend().getProgress();
 
       // A track on repeat never changes media item, so nothing else in here
@@ -625,22 +667,23 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
+    const failedLocalId = currentQueue[failedIndex]?.song.localId;
     const nextQueue = currentQueue.filter((_, index) => index !== failedIndex);
     const nextIndex = Math.min(failedIndex, nextQueue.length - 1);
-    const nextSong = nextQueue[nextIndex] ?? null;
+    const nextResource = nextQueue[nextIndex] ?? null;
 
     queueRef.current = nextQueue;
     originalQueueRef.current = originalQueueRef.current
-      ? originalQueueRef.current.filter(song => song.id !== currentQueue[failedIndex]?.id)
+      ? originalQueueRef.current.filter(resource => resource.song.localId !== failedLocalId)
       : null;
     currentIndexRef.current = nextIndex;
-    currentSongRef.current = nextSong;
+    currentSongRef.current = nextResource;
     setCurrentIndex(nextIndex);
-    setCurrentSong(nextSong);
+    setCurrentSong(nextResource ? nextResource.song : null);
     bumpQueue();
 
     getBackend().removeMediaItem(failedIndex);
-    if (nextSong) {
+    if (nextResource) {
       getBackend().skipToIndex(nextIndex);
       getBackend().play();
     }
@@ -648,9 +691,12 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   removeFailedCurrentTrackRef.current = removeFailedCurrentTrack;
 
   // Id of the track we've already attempted one URL-refresh retry for. Keyed by
-  // song id rather than a time window — a wall-clock gate breaks when a failure
-  // (e.g. an unreachable server) takes longer than the window to surface, which
-  // makes every retry look like a "first" attempt and loops forever.
+  // `localId` rather than a time window — a wall-clock gate breaks when a
+  // failure (e.g. an unreachable server) takes longer than the window to
+  // surface, which makes every retry look like a "first" attempt and loops
+  // forever. `localId` rather than `nativeId`: a queue can hold tracks from
+  // more than one origin, and two origins can both call something the same
+  // native id.
   const lastRecoveryAttemptedIdRef = useRef<string | null>(null);
   // Stalls resumed for the current song, so a connection that will never serve
   // it cannot loop. Reset when the song changes.
@@ -659,15 +705,15 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => {
     const unsubscribe = getBackend().addListener(event => {
       if (event.type !== 'error') return;
-      const song = currentSongRef.current;
+      const resource = currentSongRef.current;
+      const song = resource?.song;
       console.warn('Playback failed', {
         code: event.code,
         message: event.message,
-        songId: song?.id,
+        songId: song?.nativeId,
         title: song?.title,
-        source: getSourceKind(song),
-        serverId: song?.sourceServerId,
-        serverType: song?.sourceServerType,
+        source: sourceKind(resource),
+        provenance: song?.provenance,
       });
 
       const now = Date.now();
@@ -682,15 +728,16 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
       // stream that stalled, not a track that cannot be played, and the two
       // want opposite responses: resume in place, versus rebuild and drop.
       const positionSeconds = getBackend().getProgress().position;
-      if (stallResumesRef.current.songId !== (song?.id ?? null)) {
-        stallResumesRef.current = { songId: song?.id ?? null, count: 0 };
+      const resourceLocalId = song?.localId ?? null;
+      if (stallResumesRef.current.songId !== resourceLocalId) {
+        stallResumesRef.current = { songId: resourceLocalId, count: 0 };
       }
 
       // First failure for this specific track: refresh every URL in the queue
       // (catches stale Navidrome tokens after JS context restarts) then retry.
       const decision = resolvePlaybackErrorAction(
         lastRecoveryAttemptedIdRef.current,
-        song?.id,
+        song?.localId,
         { positionSeconds, stallCount: stallResumesRef.current.count }
       );
 
@@ -699,7 +746,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
       // the track was removed as unplayable.
       if (decision.action === 'resume') {
         stallResumesRef.current = {
-          songId: song?.id ?? null,
+          songId: resourceLocalId,
           count: decision.nextStallCount,
         };
         getBackend().seekTo(decision.positionSeconds);
@@ -709,9 +756,12 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       if (decision.action === 'retry') {
         lastRecoveryAttemptedIdRef.current = decision.nextLastRecoveryAttemptedId;
-        const freshQueue = queueRef.current.map(s => resolvePlayableSongRef.current(s));
+        const freshQueue = queueRef.current
+          .map(r => resolvePlayableSongRef.current(r.song))
+          .filter((r): r is PlayableResource => Boolean(r));
         queueRef.current = freshQueue;
-        currentSongRef.current = freshQueue[currentIndexRef.current] ?? song;
+        currentSongRef.current = freshQueue[currentIndexRef.current] ?? resource ?? null;
+        if (currentSongRef.current) setCurrentSong(currentSongRef.current.song);
         getBackend().setMediaItems(toMediaItems(freshQueue), currentIndexRef.current);
         getBackend().play();
         return;
@@ -735,8 +785,12 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
   }, []);
 
-  // Build a song lookup map from the library for queue reconciliation
-  const librarySongByIdRef = useRef<Map<string, Song>>(new Map());
+  // Vestigial: a lookup the native-queue reconciliation below falls back to
+  // when a track is in neither the in-memory queue nor rebuildable from the
+  // player's own item. Nothing currently populates it, so it always misses —
+  // left in place as the existing fallback chain rather than removed, since
+  // pruning dead reconciliation paths is outside this migration's scope.
+  const librarySongByIdRef = useRef<Map<string, PlayableResource>>(new Map());
 
   // Track changes: reconcile native queue, update current song, fire now-playing + scrobble
   useEffect(() => {
@@ -748,60 +802,65 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     lastRecoveryAttemptedIdRef.current = null;
 
     const prev = currentSongRef.current;
-    if (prev && prev.id !== mediaId) {
+    if (prev && prev.song.localId !== mediaId) {
       const prevPosition = Math.floor(getBackend().getProgress().position);
-      scrobbleOutgoingRef.current(prev, prevPosition);
+      scrobbleOutgoingRef.current(prev.song, prevPosition);
       // Save a resume bookmark on the way out. isBookmarkable filters this
       // down to long-form tracks and podcasts — a 3-min song leaving mid-way
       // doesn't get one. Fire-and-forget: a save failing must not delay the
       // next track loading.
-      void bookmarksRef.current.saveOrClear(prev, prevPosition);
+      void bookmarksRef.current.saveOrClear(prev.song, prevPosition);
       scrobbleStartTimeRef.current = Date.now();
     }
 
+    // `buildMediaItem` keys every item by the song's `localId`, so this is
+    // what both the in-memory queue lookup and the player's own media id are
+    // compared against.
     const nativeQueue = getBackend().getQueue();
-    const nativeQueueSongs = nativeQueue
+    const nativeQueueResources = nativeQueue
       .map(item => {
         const id = getMediaItemId(item);
         // Prefer in-memory queue (fresh URLs) over native cache (potentially stale tokens)
-        const known = queueRef.current.find(song => song.id === id)
+        const known = queueRef.current.find(resource => resource.song.localId === id)
           ?? librarySongByIdRef.current.get(id);
         if (known) return known;
-        // Fallback: build from native item, then immediately refresh the URL
-        const fallback = mediaItemToFallbackSong(item);
-        return fallback ? resolvePlayableSongRef.current(fallback) : null;
+        // Fallback: rebuild from the native item — recovers provenance and the
+        // origin's own id by parsing the media id itself.
+        return resourceFromMediaItem(item);
       })
-      .filter((song): song is Song => Boolean(song));
+      .filter((resource): resource is PlayableResource => Boolean(resource));
 
-    if (nativeQueueSongs.length && !hasSameQueueIds(queueRef.current, nativeQueueSongs)) {
-      queueRef.current = nativeQueueSongs;
+    if (nativeQueueResources.length && !sameQueue(queueRef.current, nativeQueueResources)) {
+      queueRef.current = nativeQueueResources;
       bumpQueue();
     }
 
     const nativeIndex = getBackend().getActiveMediaItemIndex();
     let newIndex = typeof nativeIndex === 'number' && nativeIndex >= 0
       ? nativeIndex
-      : queueRef.current.findIndex(s => s.id === mediaId);
-    let songFromQueue: Song | null | undefined = newIndex >= 0
+      : queueRef.current.findIndex(resource => resource.song.localId === mediaId);
+    let resourceFromQueue: PlayableResource | null | undefined = newIndex >= 0
       ? queueRef.current[newIndex]
       : librarySongByIdRef.current.get(mediaId);
 
-    if (!songFromQueue && activeMediaItem.url) {
-      songFromQueue = mediaItemToFallbackSong(activeMediaItem);
+    if (!resourceFromQueue && activeMediaItem.url) {
+      resourceFromQueue = resourceFromMediaItem(activeMediaItem);
       newIndex = 0;
     }
 
-    if (!songFromQueue) return;
+    if (!resourceFromQueue) return;
     if (newIndex === -1) {
-      queueRef.current = [songFromQueue];
+      queueRef.current = [resourceFromQueue];
       newIndex = 0;
       bumpQueue();
     }
 
+    const song = resourceFromQueue.song;
+
     currentIndexRef.current = newIndex;
     setCurrentIndex(newIndex);
-    currentSongRef.current = songFromQueue;
-    setCurrentSong(songFromQueue);
+    currentSongRef.current = resourceFromQueue;
+    setCurrentSong(song);
 
     // Persist the pointer move — the queue itself doesn't change every track,
     // only the current index does, so this is the frequent write.
@@ -810,7 +869,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Auto-resume for tracks that earn a bookmark (long-form + podcast).
     // Only seek when the player is still at the top of the track — a user
     // who already advanced past zero is where they want to be.
-    const resumeSeconds = bookmarksRef.current.getResumePosition(songFromQueue.id);
+    const resumeSeconds = bookmarksRef.current.getResumePosition(song.localId);
     if (resumeSeconds && Math.floor(getBackend().getProgress().position) < 2) {
       getBackend().seekTo(resumeSeconds);
     }
@@ -819,28 +878,28 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     // One global speed meant a podcast at 1.5x carried into the next song, and
     // reset to 1x on every launch — both wrong for the same reason, which is
     // that talking and music are not listened to at the same rate.
-    const nextSpeed = speedFor(songFromQueue, playbackSpeedsRef.current);
+    const nextSpeed = speedFor(song, playbackSpeedsRef.current);
     if (nextSpeed !== playbackSpeedRef.current) {
       playbackSpeedRef.current = nextSpeed;
       setPlaybackSpeedState(nextSpeed);
       getBackend().setPlaybackSpeed(nextSpeed);
     }
 
-    submitNowPlayingRef.current(songFromQueue);
+    submitNowPlayingRef.current(song);
 
     // Server-side queue sync — hands the current queue and position to
     // Subsonic so opening yuzic on another device resumes here. Throttled
     // in the hook; a same-queue re-fire is a no-op.
     void queueSyncRef.current.save(
       queueRef.current,
-      songFromQueue.id,
+      song.nativeId,
       Math.floor(getBackend().getProgress().position * 1000)
     );
 
     // Autoplay-fill from a radio station is meaningless: the station is its
     // own infinite feed and there's no seed to compute a follow-up from.
     // Podcasts skip fill too — a "next episode" isn't a similarity call.
-    if (canFillQueueFrom(songFromQueue) && shouldFillQueue({
+    if (canFillQueueFrom(song) && shouldFillQueue({
       queueLength: queueRef.current.length,
       currentIndex: newIndex,
       autoplayEnabled: autoplayEnabledRef.current,
@@ -850,45 +909,86 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [activeMediaItem, bumpQueue]);
 
-  const resolvePlayableSong = useCallback((song: Song): Song => {
-    // Preview URLs (Deezer etc.), live-stream URLs and resolved podcast
-    // episode URLs are external — the server doesn't own them and rebuilding
-    // through api.songs.buildStreamUrl would send the client to a broken
-    // /rest/stream endpoint. Leave the song as-is.
-    if (song.contentKind && song.contentKind !== 'song') return song;
-    const localPath = getLocalPath(song.id);
-    if (localPath) return { ...song, streamUrl: localPath };
+  /**
+   * Runs a queue-fill provider (`queueProviders.ts`, domain-typed) against
+   * the current queue and hands back playable resources — the shared
+   * adaptation used by Autoplay's fill, Smart Shuffle's injection, and Play
+   * Similar.
+   *
+   * `excludeIds` is read from the live queue's `localId`s: the provider
+   * interface keys exclusion on identity, and only `localId` is guaranteed to
+   * relate to what the provider itself returns. A queued song with no
+   * `localId` yet is simply not excludable by identity and is skipped here,
+   * same as it would be by any other identity-keyed lookup.
+   */
+  const fetchQueueExtension = useCallback(async (
+    provider: QueueFillProvider,
+    recentSongs: { song: Song }[],
+    excludeLocalIds: Iterable<LocalId | undefined>,
+    count: number,
+  ): Promise<PlayableResource[]> => {
+    const extension = await provider.fetchExtension({
+      recentSongs: recentSongs.map(r => ({ nativeId: r.song.nativeId })),
+      excludeIds: new Set([...excludeLocalIds].filter((id): id is LocalId => Boolean(id))),
+      count,
+    });
+    return playableOnly(
+      extension
+        .map(resolvePlayableSongRef.current)
+        .filter((resource): resource is PlayableResource => Boolean(resource))
+    );
+  }, []);
+
+  /**
+   * Builds the stream URL for a song at the point of playing, never earlier.
+   *
+   * A local download takes priority and needs no URL at all. Otherwise the
+   * real, credentialled URL is built here from `streamId ?? nativeId` — the
+   * id to build a stream from, per `Song.streamId`'s own doc — with the
+   * user's current quality/codec. `null` means the server could not build one
+   * right now; callers drop the track rather than queue something unplayable.
+   */
+  const resolvePlayableSong = useCallback((song: Song): PlayableResource | null => {
+    const localPath = getLocalPath(song.nativeId);
+    if (localPath) return { song, streamUrl: localPath, filePath: localPath };
+    // A preview clip (Deezer etc.) is issued once and cannot be rebuilt —
+    // see `hasReissuableUrl` — so `streamId` carries the literal,
+    // already-playable URL rather than an id to build one from. Everything
+    // else (song, live stream, podcast episode) is refreshable, and is built
+    // fresh here every time rather than trusted from whatever was queued —
+    // that staleness is exactly what made a restored queue play nothing.
+    if (!hasReissuableUrl(song.contentKind)) {
+      return song.streamId ? { song, streamUrl: song.streamId } : null;
+    }
     // "Original" serves the untouched file, which is the only way to hear a
     // lossless library losslessly — and the only setting that can hand the
     // device something it cannot decode at all. An Ogg Vorbis album played on
     // every quality except Original, where iOS has no Vorbis decoder and the
     // track failed outright. Transcoding it is a smaller loss than silence.
-    const quality = playableQuality(song, streamQualityRef.current);
-    // A provider can expose a playable resource under a different id from the
-    // queue item (Plex direct-play parts are the concrete case). `streamId`
-    // survives queue persistence precisely so the credentialled URL can be
-    // rebuilt here without asking provider-specific code what an id means.
+    const quality = playableQuality({ mimeType: song.audio?.mimeType }, streamQualityRef.current);
     const freshUrl = api.songs.buildStreamUrl(
-      streamSourceId(song),
+      song.streamId ?? song.nativeId,
       quality,
       preferredCodecRef.current
     );
-    return freshUrl ? { ...song, streamUrl: freshUrl } : song;
+    return freshUrl ? { song, streamUrl: freshUrl } : null;
   }, [api, getLocalPath]);
   // Keep ref in sync during render so effects/handlers always have the latest version
   resolvePlayableSongRef.current = resolvePlayableSong;
 
-  const loadQueue = useCallback(async (songs: Song[], startIndex: number, play = true, seekToPosition?: number) => {
-    assertPlayableSongs(songs);
+  const loadQueue = useCallback(async (resources: PlayableResource[], startIndex: number, play = true, seekToPosition?: number) => {
+    assertPlayable(resources);
     resetLastScrobbled();
     scrobbleStartTimeRef.current = Date.now();
     if (remoteOwnsPlayback()) {
       // The server plays from its own playlist of ids; nothing is streamed to
       // this device, so the local player is never given the queue at all.
-      await sinkLoadQueue(songs.map(song => song.id), startIndex, play);
+      // Sent to the server, so `nativeId` — the id it understands — not the
+      // app's own branded identity.
+      await sinkLoadQueue(resources.map(resource => resource.song.nativeId), startIndex, play);
       return;
     }
-    getBackend().setMediaItems(toMediaItems(songs), startIndex);
+    getBackend().setMediaItems(toMediaItems(resources), startIndex);
     getBackend().setRepeatMode(backendRepeatMode(repeatModeRef.current));
     if (seekToPosition !== undefined && seekToPosition > 0) getBackend().seekTo(seekToPosition);
     if (play) getBackend().play();
@@ -914,10 +1014,13 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       const provider = resolveQueueFillProvider(providersRef.current);
       if (!provider) return;
-      const extension = await provider.fetchExtension(
-        buildFillRequest(queueRef.current, currentIndexRef.current)
+      const request = buildFillRequest(queueRef.current, currentIndexRef.current);
+      const playable = await fetchQueueExtension(
+        provider,
+        request.recentResources,
+        queueRef.current.map(resource => resource.song.localId),
+        request.count,
       );
-      const playable = playableSongsOnly(extension.map(resolvePlayableSongRef.current));
       if (!playable.length) return;
       const insertAt = queueRef.current.length;
       queueRef.current = [...queueRef.current, ...playable];
@@ -932,7 +1035,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     } finally {
       isFillingRef.current = false;
     }
-  }, [bumpQueue, toMediaItems]);
+  }, [bumpQueue, fetchQueueExtension, toMediaItems]);
   useEffect(() => { fillQueueIfLowRef.current = fillQueueIfLow; }, [fillQueueIfLow]);
 
   // Smart Shuffle's one-shot injection: fetches related tracks and shuffles
@@ -942,10 +1045,13 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       const provider = resolveQueueFillProvider(providersRef.current);
       if (!provider) return;
-      const extension = await provider.fetchExtension(
-        buildFillRequest(queueRef.current, currentIndexRef.current)
+      const request = buildFillRequest(queueRef.current, currentIndexRef.current);
+      const playable = await fetchQueueExtension(
+        provider,
+        request.recentResources,
+        queueRef.current.map(resource => resource.song.localId),
+        request.count,
       );
-      const playable = playableSongsOnly(extension.map(resolvePlayableSongRef.current));
       if (!playable.length) return;
       const before = queueRef.current.slice(0, currentIndexRef.current + 1);
       const after = queueRef.current.slice(currentIndexRef.current + 1);
@@ -962,45 +1068,48 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     } catch (err) {
       console.warn('Smart Shuffle inject failed', err);
     }
-  }, [bumpQueue, loadQueue]);
+  }, [bumpQueue, fetchQueueExtension, loadQueue]);
 
   const playSong = useCallback(async (song: Song) => {
-    const playableSong = resolvePlayableSong(song);
-    assertPlayableSongs([playableSong]);
-    queueRef.current = [playableSong];
+    const resource = resolvePlayableSong(song);
+    if (!resource) throw new Error(`Track has no playable media URL: ${song.localId}`);
+    assertPlayable([resource]);
+    queueRef.current = [resource];
     queueSegmentsRef.current = [{
       startIndex: 0,
       length: 1,
-      source: { kind: 'user', contextId: playableSong.id, contextType: 'adhoc' },
+      source: { kind: 'user', contextId: resource.song.localId, contextType: 'adhoc' },
     }];
     originalQueueRef.current = null;
     setShuffleMode('off');
     currentIndexRef.current = 0;
     setCurrentIndex(0);
-    currentSongRef.current = playableSong;
-    setCurrentSong(playableSong);
+    currentSongRef.current = resource;
+    setCurrentSong(resource.song);
     bumpQueue();
-    await loadQueue([playableSong], 0);
+    await loadQueue([resource], 0);
   }, [bumpQueue, loadQueue, resolvePlayableSong]);
 
   const playSongs = useCallback(async (
-    input: (Song | SongBase)[],
+    input: Song[],
     options: { startIndex?: number; shuffle?: boolean; contextId?: string } = {}
   ) => {
     // Library rows carry no stream URL — resolvePlayableSong derives one from
-    // the id, so this needs no per-track network call.
-    let songs = playableSongsOnly(
-      (input as Song[]).map(resolvePlayableSongRef.current)
+    // the id, so this needs no per-track network call up front.
+    let resources = playableOnly(
+      input
+        .map(resolvePlayableSongRef.current)
+        .filter((resource): resource is PlayableResource => Boolean(resource))
     );
-    if (!songs.length) throw new Error('No playable tracks in selection');
+    if (!resources.length) throw new Error('No playable tracks in selection');
 
-    let index = clampStartIndex(songs.length, options.startIndex);
+    let index = clampStartIndex(resources.length, options.startIndex);
 
     if (options.shuffle) {
       // Shuffle the whole list before trimming, so the cap bounds the queue
       // without bounding what the shuffle can draw from.
-      originalQueueRef.current = songs;
-      songs = shuffleArray(songs);
+      originalQueueRef.current = resources;
+      resources = shuffleArray(resources);
       index = 0;
       setShuffleMode('shuffle');
     } else {
@@ -1008,96 +1117,105 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
       setShuffleMode('off');
     }
 
-    const trimmed = trimQueueAroundIndex(songs, index);
-    songs = trimmed.songs;
+    const trimmed = trimQueueAroundIndex(resources, index);
+    resources = trimmed.songs;
     index = trimmed.index;
 
     const contextId = options.contextId ?? `adhoc-${Date.now()}`;
-    queueRef.current = songs;
+    queueRef.current = resources;
     queueSegmentsRef.current = [{
       startIndex: 0,
-      length: songs.length,
+      length: resources.length,
       source: { kind: 'user', contextId, contextType: 'adhoc' },
     }];
     currentIndexRef.current = index;
     setCurrentIndex(index);
-    currentSongRef.current = songs[index];
-    setCurrentSong(songs[index]);
+    currentSongRef.current = resources[index];
+    setCurrentSong(resources[index].song);
     bumpQueue();
-    await loadQueue(songs, index);
+    await loadQueue(resources, index);
   }, [bumpQueue, loadQueue]);
 
   const playSongInCollection = useCallback(async (
     selectedSong: Song,
-    collection: Album | Playlist,
+    collection: PlayableCollection,
     shuffle = false
   ) => {
-    let songs = playableSongsOnly(collection.songs.map(resolvePlayableSong));
-    if (!songs.length) throw new Error(`Collection has no playable media URLs: ${collection.id}`);
+    const { contextId, contextType } = collectionSource(collection);
+    let resources = playableOnly(
+      collection.songs
+        .map(resolvePlayableSong)
+        .filter((resource): resource is PlayableResource => Boolean(resource))
+    );
+    if (!resources.length) throw new Error(`Collection has no playable media URLs: ${contextId}`);
     let index = 0;
-    const selectedPlayableSong = resolvePlayableSong(selectedSong);
-    if (!hasPlayableMediaUrl(selectedPlayableSong)) {
-      throw new Error(`Track has no playable media URL: ${selectedSong.id}`);
+    const selectedResource = resolvePlayableSong(selectedSong);
+    if (!selectedResource || !isPlayable(selectedResource)) {
+      throw new Error(`Track has no playable media URL: ${selectedSong.localId}`);
     }
 
-    const contextType: 'album' | 'playlist' = 'year' in collection ? 'album' : 'playlist';
-
     if (shuffle) {
-      originalQueueRef.current = songs;
-      songs = shuffleArray(songs);
+      originalQueueRef.current = resources;
+      resources = shuffleArray(resources);
       setShuffleMode('shuffle');
     } else {
       originalQueueRef.current = null;
-      index = songs.findIndex(s => s.id === selectedSong.id);
+      index = resources.findIndex(resource => resource.song.localId === selectedSong.localId);
       if (index === -1) index = 0;
       setShuffleMode('off');
     }
 
-    queueRef.current = songs;
+    queueRef.current = resources;
     queueSegmentsRef.current = [{
       startIndex: 0,
-      length: songs.length,
-      source: { kind: 'user', contextId: collection.id, contextType },
+      length: resources.length,
+      source: { kind: 'user', contextId, contextType },
     }];
     currentIndexRef.current = index;
     setCurrentIndex(index);
-    currentSongRef.current = songs[index];
-    setCurrentSong(songs[index]);
+    currentSongRef.current = resources[index];
+    setCurrentSong(resources[index].song);
     bumpQueue();
-    await loadQueue(songs, index);
+    await loadQueue(resources, index);
   }, [bumpQueue, loadQueue, resolvePlayableSong]);
 
-  const addCollectionToQueue = useCallback((collection: Album | Playlist) => {
-    const existingIds = new Set(queueRef.current.map(s => s.id));
-    const toAdd = playableSongsOnly(collection.songs
-      .filter(s => !existingIds.has(s.id))
-      .map(resolvePlayableSong));
+  const addCollectionToQueue = useCallback((collection: PlayableCollection) => {
+    const { contextId, contextType } = collectionSource(collection);
+    const existingIds = new Set(queueRef.current.map(resource => resource.song.localId));
+    const toAdd = playableOnly(
+      collection.songs
+        .filter(song => !existingIds.has(song.localId))
+        .map(resolvePlayableSong)
+        .filter((resource): resource is PlayableResource => Boolean(resource))
+    );
     if (!toAdd.length) return;
     const insertAt = queueRef.current.length;
     queueRef.current = [...queueRef.current, ...toAdd];
     queueSegmentsRef.current = tagSegment(queueSegmentsRef.current, insertAt, toAdd.length, {
       kind: 'user',
-      contextId: collection.id,
-      contextType: 'year' in collection ? 'album' : 'playlist',
+      contextId,
+      contextType,
     });
     getBackend().addMediaItems(toMediaItems(toAdd));
     bumpQueue();
   }, [bumpQueue, resolvePlayableSong, toMediaItems]);
 
-  const shuffleCollectionToQueue = useCallback((collection: Album | Playlist) => {
-    const existingIds = new Set(queueRef.current.map(s => s.id));
-    const toAdd = shuffleArray(playableSongsOnly(
+  const shuffleCollectionToQueue = useCallback((collection: PlayableCollection) => {
+    const { contextId, contextType } = collectionSource(collection);
+    const existingIds = new Set(queueRef.current.map(resource => resource.song.localId));
+    const toAdd = shuffleArray(playableOnly(
       collection.songs
-        .filter(s => !existingIds.has(s.id))
+        .filter(song => !existingIds.has(song.localId))
         .map(resolvePlayableSong)
+        .filter((resource): resource is PlayableResource => Boolean(resource))
     ));
     if (!toAdd.length) return;
     const insertAt = queueRef.current.length;
     queueRef.current = [...queueRef.current, ...toAdd];
     queueSegmentsRef.current = tagSegment(queueSegmentsRef.current, insertAt, toAdd.length, {
       kind: 'user',
-      contextId: collection.id,
-      contextType: 'year' in collection ? 'album' : 'playlist',
+      contextId,
+      contextType,
     });
     getBackend().addMediaItems(toMediaItems(toAdd));
     bumpQueue();
@@ -1105,7 +1223,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const skipToNext = useCallback(async () => {
     await scrobbleOutgoingRef.current(
-      currentSongRef.current,
+      currentSongRef.current?.song ?? null,
       Math.floor(getBackend().getProgress().position)
     );
     const nextIdx = currentIndexRef.current + 1;
@@ -1120,7 +1238,7 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const skipToPrevious = useCallback(async () => {
     await scrobbleOutgoingRef.current(
-      currentSongRef.current,
+      currentSongRef.current?.song ?? null,
       Math.floor(getBackend().getProgress().position)
     );
     if (currentIndexRef.current <= 0) return;
@@ -1133,19 +1251,19 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, [sinkSkipTo]);
 
   const skipTo = useCallback(async (index: number) => {
-    const song = queueRef.current[index];
-    if (!song) return;
+    const resource = queueRef.current[index];
+    if (!resource) return;
     if (index !== currentIndexRef.current) {
       await scrobbleOutgoingRef.current(
-        currentSongRef.current,
+        currentSongRef.current?.song ?? null,
         Math.floor(getBackend().getProgress().position)
       );
       scrobbleStartTimeRef.current = Date.now();
     }
     currentIndexRef.current = index;
     setCurrentIndex(index);
-    currentSongRef.current = song;
-    setCurrentSong(song);
+    currentSongRef.current = resource;
+    setCurrentSong(resource.song);
     if (remoteOwnsPlayback()) {
       await sinkSkipTo(index);
       return;
@@ -1174,14 +1292,14 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const jumpBy = useCallback((deltaSeconds: number) => {
     const { position, duration } = remoteOwnsPlayback()
-      ? { position: jukeboxPositionRef.current, duration: Number(currentSongRef.current?.duration) || 0 }
+      ? { position: jukeboxPositionRef.current, duration: currentSongRef.current?.song.durationSeconds ?? 0 }
       : getBackend().getProgress();
     const target = seekTarget(position, deltaSeconds, duration);
     if (!remoteOwnsPlayback()) getBackend().seekTo(target);
     void sinkSeek(target);
   }, [sinkSeek]);
 
-  const getQueue = useCallback(() => [...queueRef.current], []);
+  const getQueue = useCallback(() => queueRef.current.map(resource => resource.song), []);
 
   const moveTrack = useCallback((from: number, to: number) => {
     if (from === to) return;
@@ -1198,35 +1316,42 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, [bumpQueue]);
 
   const addToQueue = useCallback((song: Song) => {
-    const playableSong = resolvePlayableSong(song);
-    assertPlayableSongs([playableSong]);
-    if (queueRef.current.some(s => s.id === playableSong.id)) return;
+    const resource = resolvePlayableSong(song);
+    if (!resource) throw new Error(`Track has no playable media URL: ${song.localId}`);
+    assertPlayable([resource]);
+    if (queueRef.current.some(existing => existing.song.localId === resource.song.localId)) return;
     const insertAt = queueRef.current.length;
-    queueRef.current = [...queueRef.current, playableSong];
+    queueRef.current = [...queueRef.current, resource];
     queueSegmentsRef.current = tagSegment(queueSegmentsRef.current, insertAt, 1, {
       kind: 'user',
-      contextId: playableSong.id,
+      contextId: resource.song.localId,
       contextType: 'adhoc',
     });
-    getBackend().addMediaItems([buildItem(playableSong)]);
+    getBackend().addMediaItems([buildItem(resource)]);
     bumpQueue();
   }, [bumpQueue, resolvePlayableSong, buildItem]);
 
   const playNext = useCallback((song: Song) => {
     if (!currentSongRef.current) return;
-    const playableSong = resolvePlayableSong(song);
-    assertPlayableSongs([playableSong]);
-    const update = moveSongAfterCurrent(queueRef.current, currentIndexRef.current, playableSong);
+    const resource = resolvePlayableSong(song);
+    if (!resource) throw new Error(`Track has no playable media URL: ${song.localId}`);
+    assertPlayable([resource]);
+    const update = moveSongAfterCurrent(
+      queueRef.current,
+      currentIndexRef.current,
+      resource,
+      queued => queued.song.localId,
+    );
     if (!update) return;
     if (update.removedIndex !== null) {
       getBackend().moveMediaItem(update.removedIndex, update.insertIndex);
     } else {
-      getBackend().insertMediaItem(update.insertIndex, buildItem(playableSong));
+      getBackend().insertMediaItem(update.insertIndex, buildItem(resource));
       queueSegmentsRef.current = tagSegment(
         shiftSegmentsAfterInsert(queueSegmentsRef.current, update.insertIndex, 1),
         update.insertIndex,
         1,
-        { kind: 'user', contextId: playableSong.id, contextType: 'adhoc' },
+        { kind: 'user', contextId: resource.song.localId, contextType: 'adhoc' },
       );
     }
     queueRef.current = update.queue;
@@ -1238,29 +1363,29 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // AudioMuse-AI first when configured, native similar-songs as fallback —
   // same tiered provider Autoplay and Smart Shuffle use, so "Play Similar"
   // gets acoustic similarity too instead of always hitting the native API.
+  //
+  // Reuses `playSongs` rather than building a synthetic collection to hand to
+  // `playSongInCollection`: the seed is always placed first, which is exactly
+  // what `playSongs([song, ...shuffled(others)])` already does, and there is
+  // no real album/playlist here to construct a `PlayableCollection` for.
   const playSimilar = useCallback(async (song: Song) => {
     try {
       const provider = resolveQueueFillProvider(providersRef.current);
-      const similarSongs = provider
-        ? await provider.fetchExtension({ recentSongs: [song], excludeIds: new Set([song.id]), count: 20 })
-        : await api.similar.getSimilarSongs(song.id);
-      const others = similarSongs.filter(s => s.id !== song.id);
-      const songs = [song, ...shuffleArray(others)];
-      const collection: Playlist = {
-        id: 'similar',
-        title: 'Similar',
-        subtext: '',
-        cover: { kind: 'none' },
-        changed: new Date(),
-        created: new Date(),
-        songs,
-      };
-      await playSongInCollection(song, collection, false);
+      const similar = provider
+        ? await fetchQueueExtension(provider, [{ song }], [song.localId], 20)
+        : playableOnly(
+            (await api.similar.getSimilarSongs(song.nativeId))
+              .map(resolvePlayableSongRef.current)
+              .filter((resource): resource is PlayableResource => Boolean(resource))
+          );
+      const others = similar.filter(resource => resource.song.nativeId !== song.nativeId);
+      const songs = [song, ...shuffleArray(others.map(resource => resource.song))];
+      await playSongs(songs, { contextId: 'similar' });
       if (others.length > 0) notify.success(t('common.playingSimilar'));
     } catch {
       await playSong(song);
     }
-  }, [api, playSong, playSongInCollection, t]);
+  }, [api, fetchQueueExtension, playSong, playSongs, t]);
 
   // Cycles off -> shuffle -> smart -> off, matching the shuffle button's tap
   // behavior. 'smart' keeps the shuffled order from the previous step and
@@ -1276,9 +1401,10 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       if (current === 'off') {
         originalQueueRef.current = queueRef.current;
-        const currentSong = queueRef.current[currentIndexRef.current];
+        const currentResource = queueRef.current[currentIndexRef.current];
         const rest = queueRef.current.filter((_, i) => i !== currentIndexRef.current);
-        const shuffled = [currentSong, ...shuffleArray(rest)].filter(Boolean);
+        const shuffled = [currentResource, ...shuffleArray(rest)]
+          .filter((resource): resource is PlayableResource => Boolean(resource));
         queueRef.current = shuffled;
         queueSegmentsRef.current = [{
           startIndex: 0,
@@ -1301,9 +1427,13 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
         // shuffled, and resurrect anything removed (e.g. a failed track).
         // Anything Smart Shuffle injected isn't in the snapshot either, so it
         // survives here too — appended after the restored original order.
-        const original = reconcileUnshuffledQueue(originalQueueRef.current, queueRef.current);
-        const currentId = currentSongRef.current?.id;
-        const idx = currentId ? original.findIndex(s => s.id === currentId) : 0;
+        const original = reconcileUnshuffledQueue(
+          originalQueueRef.current,
+          queueRef.current,
+          resource => resource.song.localId,
+        );
+        const currentId = currentSongRef.current?.song.localId;
+        const idx = currentId ? original.findIndex(resource => resource.song.localId === currentId) : 0;
         const adjustedIdx = idx === -1 ? 0 : idx;
         queueRef.current = original;
         queueSegmentsRef.current = [{
@@ -1349,14 +1479,14 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
     // podcast does not follow the user into the next song — and survives a
     // relaunch, which a listener halfway through a series expects.
     dispatch(setPlaybackSpeedForProfile({
-      profile: speedProfileFor(currentSongRef.current),
+      profile: speedProfileFor(currentSongRef.current?.song),
       speed: clamped,
     }));
   }, [dispatch]);
 
   const resetQueue = useCallback(async () => {
     await scrobbleOutgoingRef.current(
-      currentSongRef.current,
+      currentSongRef.current?.song ?? null,
       Math.floor(getBackend().getProgress().position)
     );
     resetLastScrobbled();

@@ -12,6 +12,9 @@ import {
   tracksWithout,
 } from './removal';
 import type { LocalDownloadedTrackEntry } from './restore';
+import type { Song } from '@/domain/entities/Song';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 
 function track(
   trackId: string,
@@ -34,6 +37,42 @@ function collection(
   return { id, type: 'album', trackIds, downloadedAt: 0 };
 }
 
+/**
+ * A queued track, as the store now persists it: a whole domain song.
+ *
+ * The job queue keys on `localId` rather than the origin's own id, because two
+ * origins can each call a track `42` and a download queue holds both at once.
+ */
+function queued(nativeId: string, serverId = 'server-1'): Song {
+  const provenance = serverProvenance(serverId);
+  const ref = (kind: 'artist' | 'album', id: string, name: string) => ({
+    localId: makeLocalId(kind, provenance, id),
+    nativeId: id,
+    externalIds: {},
+    cover: { kind: 'none' } as const,
+    ...(kind === 'artist' ? { name } : { title: name }),
+  });
+
+  return {
+    localId: makeLocalId('song', provenance, nativeId),
+    nativeId,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title: nativeId,
+    artist: ref('artist', 'artist-1', 'Artist') as Song['artist'],
+    album: ref('album', 'album-1', 'Album') as Song['album'],
+    cover: { kind: 'none' },
+    durationSeconds: 120,
+    contentKind: 'song',
+    genres: [],
+  };
+}
+
+/** The identity the queue stores a track under, for asserting against. */
+const queuedId = (nativeId: string, serverId = 'server-1') =>
+  makeLocalId('song', serverProvenance(serverId), nativeId);
+
 function job(
   id: string,
   trackIds: string[],
@@ -41,7 +80,7 @@ function job(
 ): PersistedDownloadJob {
   return {
     id,
-    tracks: trackIds.map(trackId => ({ id: trackId })),
+    tracks: trackIds.map(trackId => queued(trackId)),
     ...extra,
   } as PersistedDownloadJob;
 }
@@ -133,7 +172,7 @@ describe('job matching', () => {
 
     expect(jobMatchesDownloadId(target, 'job-1')).toBe(true);
     expect(jobMatchesDownloadId(target, 'album-1')).toBe(true);
-    expect(jobMatchesDownloadId(target, 't1')).toBe(true);
+    expect(jobMatchesDownloadId(target, queuedId('t1'))).toBe(true);
     expect(jobMatchesDownloadId(target, 'other')).toBe(false);
   });
 
@@ -144,32 +183,33 @@ describe('job matching', () => {
 
     expect(jobMatchesCollectionId(target, 'album-1')).toBe(true);
     expect(jobMatchesCollectionId(target, 'job-1')).toBe(true);
-    expect(jobMatchesCollectionId(target, 't1')).toBe(false);
+    expect(jobMatchesCollectionId(target, queuedId('t1'))).toBe(false);
   });
 
   it('collects the track ids of the given jobs', () => {
-    expect(trackIdsOfJobs([job('j1', ['a', 'b']), job('j2', ['c'])])).toEqual(['a', 'b', 'c']);
+    expect(trackIdsOfJobs([job('j1', ['a', 'b']), job('j2', ['c'])]))
+      .toEqual([queuedId('a'), queuedId('b'), queuedId('c')]);
   });
 });
 
 describe('jobsOutsideScope', () => {
   it('keeps a job that still has work for another provider', () => {
-    const mixed = {
-      id: 'job-1',
-      tracks: [
-        { id: 'a', sourceServerId: 'server-1' },
-        { id: 'b', sourceServerId: 'server-2' },
-      ],
-    } as unknown as PersistedDownloadJob;
+    // Origin now comes from each track's provenance rather than a duplicated
+    // sourceServerId field, so a job spanning two servers is expressed by
+    // queueing tracks whose provenance differs.
+    const mixed: PersistedDownloadJob = {
+      ...job('job-1', []),
+      tracks: [queued('a', 'server-1'), queued('b', 'server-2')],
+    };
 
     expect(jobsOutsideScope([mixed], { serverId: 'server-1' })).toHaveLength(1);
   });
 
   it('drops a job entirely inside the cleared scope', () => {
-    const scoped = {
-      id: 'job-1',
-      tracks: [{ id: 'a', sourceServerId: 'server-1' }],
-    } as unknown as PersistedDownloadJob;
+    const scoped: PersistedDownloadJob = {
+      ...job('job-1', []),
+      tracks: [queued('a', 'server-1')],
+    };
 
     expect(jobsOutsideScope([scoped], { serverId: 'server-1' })).toEqual([]);
   });
@@ -177,13 +217,14 @@ describe('jobsOutsideScope', () => {
 
 describe('orphanedTrackIds', () => {
   it('cancels a track no remaining job still wants', () => {
-    expect(orphanedTrackIds(['a', 'b'], [job('j1', ['b'])])).toEqual(['a']);
+    expect(orphanedTrackIds([queuedId('a'), queuedId('b')], [job('j1', ['b'])]))
+      .toEqual([queuedId('a')]);
   });
 
   it('leaves a track another job still needs alone', () => {
     // The same track can belong to two collections; removing one must not
     // cancel the download the other still depends on.
-    expect(orphanedTrackIds(['a'], [job('j1', ['a'])])).toEqual([]);
+    expect(orphanedTrackIds([queuedId('a')], [job('j1', ['a'])])).toEqual([]);
   });
 
   it('cancels everything when the queue is empty', () => {

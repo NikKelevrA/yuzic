@@ -51,7 +51,18 @@ export function mapAlbum(dto: MediaBrowserItem, context: MapAlbumContext): Album
     libraryState: 'in-library',
     title: dto.Name ?? 'Unknown Album',
     cover,
-    artist: artistRef(provenance, artistItem?.Id, artistItem?.Name ?? dto.AlbumArtist),
+    // The embedded artist gets a cover derived from the album payload itself —
+    // Jellyfin resolves artist art from the item id alone, so no second fetch
+    // is needed, while Emby needs an image tag this endpoint does not return
+    // and correctly ends up with none. Dropping this made the Playing screen's
+    // "About the artist" card fall back to a `{ kind: 'none' }` cover, which is
+    // not nullish and so did not fall through to the song's cover at all.
+    artist: artistRef(
+      provenance,
+      artistItem?.Id,
+      artistItem?.Name ?? dto.AlbumArtist,
+      buildCoverWithTag(brand, artistItem?.Id, undefined)
+    ),
     year: dto.ProductionYear,
     releaseDate: dto.PremiereDate,
     // Neither brand's item schema carries a release-type field; everything in
@@ -60,6 +71,10 @@ export function mapAlbum(dto: MediaBrowserItem, context: MapAlbumContext): Album
     releaseType: 'album' satisfies ReleaseType,
     genres: (dto.Genres ?? []).flatMap(genre => genre.split(/[,;]/)).map(genre => genre.trim()).filter(Boolean),
     addedAt: dto.DateCreated ? Date.parse(dto.DateCreated) || undefined : undefined,
+    serverPlayCount: dto.UserData?.PlayCount,
+    serverLastPlayedAt: dto.UserData?.LastPlayedDate
+      ? Date.parse(dto.UserData.LastPlayedDate) || undefined
+      : undefined,
     songIds: context.songIds ?? [],
   };
 }

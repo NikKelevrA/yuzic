@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RepeatModeState, ShuffleMode } from '@/contexts/PlayingContext';
-import type { Song } from '@/types';
+import type { PlayableResource } from '@/features/playback/playableResource';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import {
   selectPersistedPlaybackActiveServerId,
@@ -49,7 +49,7 @@ export function usePlaybackPersistence() {
   const lastPositionWriteAtRef = useRef(0);
 
   const persistQueue = useCallback((args: {
-    queue: Song[];
+    queue: PlayableResource[];
     currentIndex: number;
     repeatMode: RepeatModeState;
     shuffleMode: ShuffleMode;
@@ -58,14 +58,19 @@ export function usePlaybackPersistence() {
     // ids no other client (or this client on the next run) could resolve.
     // Their playback is transient by nature; nobody expects to "resume the
     // radio station I was on" through queue persistence.
+    //
+    // Persisted as `localId`, not `nativeId`: this is a reference read back
+    // after the app restarts, once the library may have moved on, and only
+    // `localId` is guaranteed to still mean the same track (see the identity
+    // note on `PlayableResource`).
     const ids = args.queue
-      .filter((s) => (s.contentKind ?? 'song') === 'song')
-      .map((s) => s.id);
+      .filter((r) => r.song.contentKind === 'song')
+      .map((r) => r.song.localId);
     // Dropping those items shifts everything after them, so the index has to
     // be re-found rather than clamped: the current song's own id is what says
     // where it ended up. It has no place in the saved list only when it is
     // itself one of the dropped kinds, and then the clamp is all there is.
-    const currentId = args.queue[args.currentIndex]?.id;
+    const currentId = args.queue[args.currentIndex]?.song.localId;
     const mappedIndex = currentId ? ids.indexOf(currentId) : -1;
     dispatch(setPlaybackQueue({
       activeServerId,

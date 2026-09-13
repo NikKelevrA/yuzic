@@ -6,7 +6,9 @@ import { Provider } from 'react-redux'
 import playbackReducer from '@/utils/redux/slices/playbackSlice'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
 import settingsReducer, { setResumeLongTracksEnabled } from '@/utils/redux/slices/settingsSlice'
-import type { Song } from '@/types'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { serverProvenance } from '@/domain/identity/Provenance'
+import type { Song } from '@/domain/entities/Song'
 
 // Mocked api adapter — supplies (or withholds) api.bookmarks depending on
 // what the test needs. `useApi` is imported by useBookmarkManager. Variables
@@ -68,27 +70,34 @@ function wrapperFor(store: ReturnType<typeof makeStore>) {
   return Wrapper
 }
 
-const longAudiobook = (id = 'ab'): Song => ({
-  id,
-  title: 'Long audiobook',
-  artist: 'Author',
-  artistId: 'a1',
-  cover: { kind: 'none' },
-  duration: String(60 * 60), // 60 minutes — over the 20-min bookmark cutoff
-  albumId: 'ab-album',
-  streamUrl: 'https://example.com/ab.mp3',
-})
+const provenance = serverProvenance('server-A')
 
-const shortSong = (id = 's'): Song => ({
-  id,
-  title: 'Short song',
-  artist: 'A',
-  artistId: 'a1',
-  cover: { kind: 'none' },
-  duration: '180', // 3 minutes — under the cutoff, not bookmarkable
-  albumId: 'al1',
-  streamUrl: 'https://example.com/s.mp3',
-})
+/**
+ * The local bookmark map is keyed by identity; the server's own bookmark
+ * endpoint is called with the origin's id. The two are deliberately different.
+ */
+const bookmarkId = (nativeId: string) => makeLocalId('song', provenance, nativeId)
+
+function song(id: string, durationSeconds: number): Song {
+  return {
+    localId: makeLocalId('song', provenance, id),
+    nativeId: id,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title: 'Track',
+    artist: { localId: makeLocalId('artist', provenance, 'a1'), nativeId: 'a1', externalIds: {}, name: 'Author', cover: { kind: 'none' } },
+    album: { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1', externalIds: {}, title: 'Album', cover: { kind: 'none' } },
+    cover: { kind: 'none' },
+    durationSeconds,
+    contentKind: 'song',
+    genres: [],
+  }
+}
+
+const longAudiobook = (id = 'ab'): Song => song(id, 60 * 60) // 60 minutes — over the 20-min bookmark cutoff
+
+const shortSong = (id = 's'): Song => song(id, 180) // 3 minutes — under the cutoff, not bookmarkable
 
 beforeEach(() => {
   mockList.mockReset()
@@ -104,23 +113,23 @@ describe('useBookmarkManager', () => {
   it('reports getResumePosition in seconds and returns null for unknown tracks', async () => {
     const store = makeStore({
       serverId: 'server-A',
-      seededBookmark: { songId: 'ab', positionMs: 900_000 }, // 15 minutes
+      seededBookmark: { songId: bookmarkId('ab'), positionMs: 900_000 }, // 15 minutes
     })
     const { result } = await renderHook(() => useBookmarkManager(), { wrapper: wrapperFor(store) })
 
-    expect(result.current.getResumePosition('ab')).toBe(900)
-    expect(result.current.getResumePosition('nope')).toBeNull()
+    expect(result.current.getResumePosition(bookmarkId('ab'))).toBe(900)
+    expect(result.current.getResumePosition(bookmarkId('nope'))).toBeNull()
   })
 
   it('returns null from getResumePosition when the resume toggle is off', async () => {
     const store = makeStore({
       serverId: 'server-A',
       resumeEnabled: false,
-      seededBookmark: { songId: 'ab', positionMs: 900_000 },
+      seededBookmark: { songId: bookmarkId('ab'), positionMs: 900_000 },
     })
     const { result } = await renderHook(() => useBookmarkManager(), { wrapper: wrapperFor(store) })
 
-    expect(result.current.getResumePosition('ab')).toBeNull()
+    expect(result.current.getResumePosition(bookmarkId('ab'))).toBeNull()
   })
 
   it('saves a bookmark and mirrors to the server for a long track mid-play', async () => {
@@ -131,7 +140,7 @@ describe('useBookmarkManager', () => {
       await result.current.saveOrClear(longAudiobook('ab'), 900) // 15m in a 60m track
     })
 
-    expect(store.getState().playback.bookmarks.ab?.positionMs).toBe(900_000)
+    expect(store.getState().playback.bookmarks[bookmarkId('ab')]?.positionMs).toBe(900_000)
     expect(mockCreate).toHaveBeenCalledWith({ songId: 'ab', positionMs: 900_000 })
   })
 
@@ -150,7 +159,7 @@ describe('useBookmarkManager', () => {
   it('clears the bookmark past the near-end cutoff', async () => {
     const store = makeStore({
       serverId: 'server-A',
-      seededBookmark: { songId: 'ab', positionMs: 900_000 },
+      seededBookmark: { songId: bookmarkId('ab'), positionMs: 900_000 },
     })
     const { result } = await renderHook(() => useBookmarkManager(), { wrapper: wrapperFor(store) })
 
@@ -159,7 +168,7 @@ describe('useBookmarkManager', () => {
       await result.current.saveOrClear(longAudiobook('ab'), 3540)
     })
 
-    expect(store.getState().playback.bookmarks.ab).toBeUndefined()
+    expect(store.getState().playback.bookmarks[bookmarkId('ab')]).toBeUndefined()
     expect(mockRemove).toHaveBeenCalledWith('ab')
     expect(mockCreate).not.toHaveBeenCalled()
   })
@@ -172,7 +181,7 @@ describe('useBookmarkManager', () => {
       await result.current.saveOrClear(longAudiobook('ab'), 900)
     })
 
-    expect(store.getState().playback.bookmarks.ab).toBeUndefined()
+    expect(store.getState().playback.bookmarks[bookmarkId('ab')]).toBeUndefined()
     expect(mockCreate).not.toHaveBeenCalled()
     expect(mockList).not.toHaveBeenCalled()
   })
@@ -186,7 +195,7 @@ describe('useBookmarkManager', () => {
       await result.current.saveOrClear(longAudiobook('ab'), 900)
     })
 
-    expect(store.getState().playback.bookmarks.ab?.positionMs).toBe(900_000)
+    expect(store.getState().playback.bookmarks[bookmarkId('ab')]?.positionMs).toBe(900_000)
     expect(mockCreate).not.toHaveBeenCalled()
     expect(mockList).not.toHaveBeenCalled()
   })

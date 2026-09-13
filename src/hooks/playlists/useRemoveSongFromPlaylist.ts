@@ -1,3 +1,5 @@
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/api';
@@ -26,12 +28,16 @@ export function useRemoveSongFromPlaylist() {
       if (isOffline) {
         if (!activeServer?.id) throw new Error('No active server.');
         dispatch(removeLibraryPlaylistSong({ playlistId, songId }));
+        // The queue is keyed by identity so a queued add and a later remove of
+        // the same track collapse. These operations only ever address the
+        // active server, so its provenance is the right scope to build it in.
+        const queuedSongId = makeLocalId('song', serverProvenance(activeServer.id), songId);
         dispatch(enqueueOfflineMutationAction({
           id: createOfflineMutationId('removeSongFromPlaylist', [activeServer.id, playlistId, songId]),
           serverId: activeServer.id,
           type: 'removeSongFromPlaylist',
           playlistId,
-          songId,
+          songId: queuedSongId,
           createdAt: Date.now(),
         }));
         return;

@@ -1,19 +1,17 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { CoverSource, PlaylistBase } from '@/types';
+import { useTranslation } from 'react-i18next';
+import type { Playlist } from '@/domain/entities/Playlist';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { prefetchCovers } from '@/utils/images/imageCache';
 import LibraryItem from './LibraryItem';
 
 interface ItemProps {
-  playlist?: PlaylistBase;
-  id: string;
-  title: string;
-  /** Undefined on a screen of nothing but playlists, where the server's
-   *  subtext is the literal word "Playlist" under every title. */
-  subtext?: string;
-  cover: CoverSource;
+  playlist: Playlist;
+  /** False on a screen of nothing but playlists, where "Playlist" under every
+   *  title is the same word repeated — see `AlbumItem`'s `showTypeLabel`. */
+  showTypeLabel?: boolean;
   isGridView: boolean;
   gridWidth: number;
   gridSpacing?: number;
@@ -21,31 +19,21 @@ interface ItemProps {
 
 const PlaylistItem: React.FC<ItemProps> = ({
   playlist,
-  id,
-  title,
-  subtext,
-  cover,
+  showTypeLabel = true,
   isGridView,
   gridWidth,
   gridSpacing,
 }) => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const sheetRef = useSheetRef();
   const [optionsMounted, setOptionsMounted] = useState(false);
 
-  const playlistForOptions = useMemo(() => playlist ?? {
-    id,
-    title,
-    subtext: subtext ?? '',
-    cover,
-    changed: new Date(0),
-    created: new Date(0),
-  }, [cover, id, playlist, subtext, title]);
-
   const handlePress = useCallback(() => {
-    prefetchCovers([cover], 'detail');
-    navigation.navigate('playlistView', { id });
-  }, [cover, navigation, id]);
+    prefetchCovers([playlist.cover], 'detail');
+    // Server adapter identity — becomes `usePlaylist(id)` -> `api.playlists.get(id)`.
+    navigation.navigate('playlistView', { id: playlist.nativeId });
+  }, [playlist, navigation]);
 
   const handleLongPress = useCallback(() => {
     if (!optionsMounted) {
@@ -60,16 +48,16 @@ const PlaylistItem: React.FC<ItemProps> = ({
     <>
       <LibraryItem
         testID="library-playlist-item"
-        cover={cover}
-        title={title}
-        subtext={subtext}
+        cover={playlist.cover}
+        title={playlist.title}
+        subtext={showTypeLabel ? t('playlist.subtext', { count: playlist.songIds.length }) : undefined}
         isGridView={isGridView}
         gridWidth={gridWidth}
         gridSpacing={gridSpacing}
         onPress={handlePress}
         onLongPress={handleLongPress}
       />
-      {optionsMounted && <PlaylistOptions ref={sheetRef} playlist={playlistForOptions} hideGoToPlaylist={false} />}
+      {optionsMounted && <PlaylistOptions ref={sheetRef} playlist={playlist} />}
     </>
   );
 };

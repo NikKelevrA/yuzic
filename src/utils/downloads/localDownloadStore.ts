@@ -1,5 +1,5 @@
 import { mmkv } from '@/utils/mmkvStorage';
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import type { DownloadedCollectionEntry, DownloadedTrackEntry } from './downloadStore';
 
 const TRACKS_KEY = 'downloads.tracks.v1';

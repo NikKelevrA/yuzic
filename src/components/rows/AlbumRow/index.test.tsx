@@ -2,7 +2,8 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import AlbumRow, { isExternalAlbum } from './index';
-import type { AlbumBase, ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { ExternalAlbumBase } from '@/types';
 import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
 
 jest.mock('react-i18next', () => ({
@@ -62,15 +63,25 @@ jest.mock('react-native-reanimated', () => {
 
 const mockedUseExternalAlbumStatus = useExternalAlbumStatus as jest.Mock;
 
-const libraryAlbum: AlbumBase = {
-  id: 'a1',
+const libraryAlbum: Album = {
+  localId: 'local:album:srv:server1:a1' as Album['localId'],
+  nativeId: 'a1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Local Album',
   cover: { kind: 'none' },
-  subtext: 'Some Artist',
-  artist: { id: 'ar1', name: 'Some Artist', subtext: '', cover: { kind: 'none' } },
+  artist: {
+    localId: 'local:artist:srv:server1:ar1' as Album['artist']['localId'],
+    nativeId: 'ar1',
+    name: 'Some Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   year: 2020,
+  releaseType: 'album',
   genres: [],
-  created: new Date(0),
+  songIds: [],
 };
 
 const externalAlbum: ExternalAlbumBase = {

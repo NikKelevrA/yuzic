@@ -4,7 +4,7 @@ import {
   isAutoplaySeed,
   isScrobbleable,
   isSeekable,
-  isStreamRefreshable,
+  hasReissuableUrl,
 } from './ContentKind';
 import type { ContentKind } from './ContentKind';
 
@@ -20,7 +20,7 @@ describe('contentKindBehaviour', () => {
           isScrobbleable: expect.any(Boolean),
           isSeekable: expect.any(Boolean),
           isAutoplaySeed: expect.any(Boolean),
-          isStreamRefreshable: expect.any(Boolean),
+          hasReissuableUrl: expect.any(Boolean),
         })
       );
     }
@@ -32,7 +32,7 @@ describe('contentKindBehaviour', () => {
       isScrobbleable: true,
       isSeekable: true,
       isAutoplaySeed: true,
-      isStreamRefreshable: true,
+      hasReissuableUrl: true,
     });
   });
 
@@ -40,7 +40,16 @@ describe('contentKindBehaviour', () => {
     expect(hasDuration('preview')).toBe(true);
     expect(isScrobbleable('preview')).toBe(false);
     expect(isAutoplaySeed('preview')).toBe(false);
-    expect(isStreamRefreshable('preview')).toBe(false);
+    expect(hasReissuableUrl('preview')).toBe(false);
+  });
+
+  it('refuses to reissue a live stream URL, because the station owns it', () => {
+    // Regression: routing a radio station through the server's stream builder
+    // produces a URL for a track the server does not have, breaking radio
+    // playback entirely and silently.
+    expect(hasReissuableUrl('liveStream')).toBe(false);
+    expect(hasReissuableUrl('song')).toBe(true);
+    expect(hasReissuableUrl('podcastEpisode')).toBe(true);
   });
 
   it('liveStream has no duration and is not seekable', () => {

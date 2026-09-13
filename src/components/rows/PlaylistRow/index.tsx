@@ -6,7 +6,7 @@ import {
 import { Ellipsis } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-import { PlaylistBase } from '@/types';
+import type { Playlist } from '@/domain/entities/Playlist';
 import { useTheme } from '@/hooks/useTheme';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import IconActionButton from '@/components/IconActionButton';
@@ -15,8 +15,8 @@ import { useSheetRef } from '@/utils/useSheetRef';
 import { iconSize, spacing } from '@/constants/design';
 
 type Props = {
-  playlist: PlaylistBase;
-  onPress?: (playlist: PlaylistBase) => void;
+  playlist: Playlist;
+  onPress?: (playlist: Playlist) => void;
 };
 
 const PlaylistRow: React.FC<Props> = ({ playlist, onPress }) => {
@@ -34,7 +34,7 @@ const PlaylistRow: React.FC<Props> = ({ playlist, onPress }) => {
     <View style={styles.wrapper}>
       <MediaListRow
         title={playlist.title}
-        subtitle={playlist.subtext}
+        subtitle={t('common.playlist')}
         cover={playlist.cover}
         onPress={handlePress}
         trailing={

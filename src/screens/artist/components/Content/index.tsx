@@ -1,12 +1,13 @@
-import { onDark } from '@/constants/design';
+import { iconSize, onDark, sourceColor, spacing, statusColor, typography } from '@/constants/design'
 import React, { useCallback, useMemo, useState } from 'react'
-import { iconSize, sourceColor, spacing, statusColor, typography } from '@/constants/design'
 import { useRadius } from '@/hooks/useRadius'
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import { Ellipsis, Globe } from 'lucide-react-native'
-import type { AlbumBase, Artist, ExternalAlbumBase, ExternalArtist, ExternalArtistBase } from '@/types'
+import type { CoverSource, ExternalAlbumBase, ExternalArtist, ExternalArtistBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
+import type { Artist } from '@/domain/entities/Artist'
 import AlbumRow from '@/components/rows/AlbumRow'
 import Header, { ArtistHeaderBar } from '../Header'
 import { DetailScreen } from '@/components/DetailHeader'
@@ -27,7 +28,7 @@ import MostPlayedSection from './MostPlayedSection'
 import PopularOnDeezerSection from './PopularOnDeezerSection'
 import BioSection from './BioSection'
 import { useArtistInfoEnrichment } from '@/features/metadata/useArtistInfoEnrichment'
-import { findArtistsWithSharedGenres, type LocalArtistSummary } from './localSimilarArtists'
+import { findArtistsWithSharedGenres } from './localSimilarArtists'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { useSelector } from 'react-redux'
@@ -46,7 +47,7 @@ type ArtistContentItem =
   | { kind: 'topSongs'; id: string }
   | { kind: 'popularOnDeezer'; id: string }
   | { kind: 'section'; id: string; title: string }
-  | { kind: 'localAlbum'; id: string; album: AlbumBase }
+  | { kind: 'localAlbum'; id: string; album: Album }
   | { kind: 'externalAlbum'; id: string; album: ExternalAlbumBase }
   | { kind: 'showMore'; id: string; target: 'albums' | 'singles'; remaining: number }
   | { kind: 'showUnowned'; id: string; target: 'albums' | 'singles'; count: number }
@@ -57,14 +58,22 @@ const INITIAL_RELEASE_ROWS = 3
 
 const LOCAL_COLOR = statusColor.success
 
-function SimilarArtistsSubSection<T extends ExternalArtistBase | LocalArtistSummary>({
-  data, itemSize, keyPrefix, badge, onPressItem,
+function SimilarArtistsSubSection<T extends { name: string; cover: CoverSource }>({
+  data, itemSize, keyPrefix, badge, onPressItem, keyOf, subtitleOf,
 }: {
   data: T[]
   itemSize: number
   keyPrefix: string
   badge: { color: string; letter: string }
   onPressItem: (item: T) => void
+  /** External artists key on their own `.id`; local/server ones on `.localId`. */
+  keyOf: (item: T) => string
+  /**
+   * External artists carry their own (legacy) `.subtext`; local/server ones
+   * are always known-owned library artists, so they show the same generic
+   * `t('common.artist')` label an `ArtistRow` does.
+   */
+  subtitleOf: (item: T) => string
 }) {
   const { t } = useTranslation()
   const { colors } = useTheme()
@@ -75,12 +84,12 @@ function SimilarArtistsSubSection<T extends ExternalArtistBase | LocalArtistSumm
     <MediaTile
       cover={item.cover}
       title={item.name}
-      subtitle={item.subtext}
+      subtitle={subtitleOf(item)}
       size={itemSize}
       radius={itemSize / 2}
       onPress={() => onPressItem(item)}
     />
-  ), [itemSize, onPressItem])
+  ), [itemSize, onPressItem, subtitleOf])
 
   if (data.length === 0) return null
 
@@ -99,7 +108,7 @@ function SimilarArtistsSubSection<T extends ExternalArtistBase | LocalArtistSumm
       <FlashList
         horizontal
         data={data}
-        keyExtractor={item => `${keyPrefix}-${item.id}`}
+        keyExtractor={item => `${keyPrefix}-${keyOf(item)}`}
         renderItem={renderArtist}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.similarListContent}
@@ -110,6 +119,7 @@ function SimilarArtistsSubSection<T extends ExternalArtistBase | LocalArtistSumm
 }
 
 function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
+  const { t } = useTranslation()
   const navigation = useNavigation<any>()
   const { width: screenWidth } = useWindowDimensions()
   const itemSize = Math.min(132, Math.max(112, (screenWidth - 56) / 2.7))
@@ -117,10 +127,11 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
   const { navigateToArtist } = useMatchedNavigation()
   const deezerEnabled = useDeezerDiscoveryEnabled()
   const libraryAlbums = useSelector(selectLibraryAlbums)
+  const artistMbid = artist.externalIds.mbid
 
   const { similarArtists: deezerSimilar } = useArtistTopTracks({
     name: artist.name,
-    mbid: artist.mbid,
+    mbid: artistMbid,
     enabled: deezerEnabled,
   })
 
@@ -128,7 +139,7 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
   // the hook returns results and this section renders. If it doesn't, the
   // hook stays disabled and this branch is silently skipped.
   const { data: lastfmSimilar = [] } = useSimilarArtists({
-    mbid: artist.mbid,
+    mbid: artistMbid,
     name: artist.name,
     excludeName: artist.name,
     limit: 8,
@@ -137,28 +148,31 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
   // ListenBrainz similar-artists: MBID-only, no auth required. Runs whenever
   // the local artist carries an MBID (which most do via server metadata).
   const { data: lbSimilar = [] } = useLBSimilarArtists(
-    artist.mbid ? { mbid: artist.mbid, excludeName: artist.name } : null,
+    artistMbid ? { mbid: artistMbid, excludeName: artist.name } : null,
     8
   )
 
   const localSimilar = useMemo(
-    () => findArtistsWithSharedGenres(artist.id, libraryAlbums),
-    [artist.id, libraryAlbums]
+    () => findArtistsWithSharedGenres(artist.localId, libraryAlbums),
+    [artist.localId, libraryAlbums]
   )
 
   // Server-native similar (Navidrome getArtistInfo2 / Jellyfin+Emby /Similar).
   // Falls back to nothing when the server adapter doesn't implement it, so
   // there is no toggle: it either has data or it doesn't render.
-  const { data: serverSimilar = [] } = useServerSimilarArtists(artist.id, 12)
+  const { data: serverSimilar = [] } = useServerSimilarArtists(artist.nativeId, 12)
 
   // Drop server-similar entries that the local-similar shelf already covers —
   // both usually surface the same shared-genre neighbours, and showing two
   // identical rows for the same artist is worse than showing one.
-  const localSimilarIds = useMemo(() => new Set(localSimilar.map(a => a.id)), [localSimilar])
+  const localSimilarIds = useMemo(() => new Set(localSimilar.map(a => a.localId)), [localSimilar])
   const dedupedServerSimilar = useMemo(
-    () => serverSimilar.filter(a => !localSimilarIds.has(a.id)),
+    () => serverSimilar.filter(a => !localSimilarIds.has(a.localId)),
     [serverSimilar, localSimilarIds]
   )
+
+  const libraryArtistLabel = useCallback(() => t('common.artist'), [t])
+  const externalArtistSubtitle = useCallback((item: ExternalArtistBase) => item.subtext, [])
 
   return (
     <>
@@ -167,7 +181,9 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
         itemSize={itemSize}
         keyPrefix="local"
         badge={{ color: LOCAL_COLOR, letter: 'L' }}
-        onPressItem={item => navigation.push('artistView', { id: item.id })}
+        onPressItem={item => navigation.push('artistView', { id: item.nativeId })}
+        keyOf={item => item.localId}
+        subtitleOf={libraryArtistLabel}
       />
       {dedupedServerSimilar.length > 0 && (
         <SimilarArtistsSubSection
@@ -175,7 +191,9 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           itemSize={itemSize}
           keyPrefix="server"
           badge={{ color: LOCAL_COLOR, letter: 'S' }}
-          onPressItem={item => navigation.push('artistView', { id: item.id })}
+          onPressItem={item => navigation.push('artistView', { id: item.nativeId })}
+          keyOf={item => item.localId}
+          subtitleOf={libraryArtistLabel}
         />
       )}
       {deezerEnabled && deezerSimilar.length > 0 && (
@@ -185,6 +203,8 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           keyPrefix="deezer"
           badge={{ color: sourceColor.deezer, letter: 'D' }}
           onPressItem={item => navigateToArtist(item)}
+          keyOf={item => item.id}
+          subtitleOf={externalArtistSubtitle}
         />
       )}
       {lastfmSimilar.length > 0 && (
@@ -194,6 +214,8 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           keyPrefix="lastfm"
           badge={{ color: sourceColor.lastfm, letter: 'L' }}
           onPressItem={item => navigateToArtist(item)}
+          keyOf={item => item.id}
+          subtitleOf={externalArtistSubtitle}
         />
       )}
       {lbSimilar.length > 0 && (
@@ -203,6 +225,8 @@ function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           keyPrefix="lb"
           badge={{ color: sourceColor.listenbrainz, letter: 'B' }}
           onPressItem={item => navigateToArtist(item)}
+          keyOf={item => item.id}
+          subtitleOf={externalArtistSubtitle}
         />
       )}
     </>
@@ -221,6 +245,8 @@ function ExternalSimilarArtistsSection({ similarArtists }: { similarArtists: Ext
       keyPrefix="deezer"
       badge={{ color: sourceColor.deezer, letter: 'D' }}
       onPressItem={item => navigateToArtist(item)}
+      keyOf={item => item.id}
+      subtitleOf={item => item.subtext}
     />
   )
 }
@@ -236,14 +262,14 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
   const [visibleSinglesCount, setVisibleSinglesCount] = useState(INITIAL_RELEASE_ROWS)
   const [showUnownedAlbums, setShowUnownedAlbums] = useState(false)
   const [showUnownedSingles, setShowUnownedSingles] = useState(false)
-  const localAlbums = useArtistAlbums(localArtist?.id ?? '')
+  const localAlbums = useArtistAlbums(localArtist?.nativeId ?? '')
   const { tracks: libraryTracks } = useTracks()
   const { data: externalDiscography } = useArtistExternalDiscography(localArtist?.name ?? null, !!localArtist)
 
   const songCountByAlbumId = useMemo(() => {
     const counts = new Map<string, number>()
     libraryTracks.forEach(track => {
-      counts.set(track.albumId, (counts.get(track.albumId) ?? 0) + 1)
+      counts.set(track.album.localId, (counts.get(track.album.localId) ?? 0) + 1)
     })
     return counts
   }, [libraryTracks])
@@ -256,8 +282,8 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
       rows.push({ kind: 'topSongs', id: 'server-top-songs' })
       rows.push({ kind: 'popularOnDeezer', id: 'popular-on-deezer' })
 
-      const albums = localAlbums.filter(album => !isSingleOrEp(album, songCountByAlbumId.get(album.id) ?? 0))
-      const singles = localAlbums.filter(album => isSingleOrEp(album, songCountByAlbumId.get(album.id) ?? 0))
+      const albums = localAlbums.filter(album => !isSingleOrEp(album, songCountByAlbumId.get(album.localId) ?? 0))
+      const singles = localAlbums.filter(album => isSingleOrEp(album, songCountByAlbumId.get(album.localId) ?? 0))
 
       // Owned and unowned releases are kept in separate groups rather than
       // merged chronologically — the shared AlbumRow double-checks
@@ -271,10 +297,10 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
         .filter(ext => !matchAlbumToLibrary(ext, localAlbums))
 
       const ownedAlbumItems: ArtistContentItem[] = albums
-        .map(album => ({ kind: 'localAlbum' as const, id: `album-${album.id}`, album }))
+        .map(album => ({ kind: 'localAlbum' as const, id: `album-${album.localId}`, album }))
         .sort((a, b) => compareByReleaseYearDesc(a.album, b.album))
       const ownedSingleItems: ArtistContentItem[] = singles
-        .map(album => ({ kind: 'localAlbum' as const, id: `single-${album.id}`, album }))
+        .map(album => ({ kind: 'localAlbum' as const, id: `single-${album.localId}`, album }))
         .sort((a, b) => compareByReleaseYearDesc(a.album, b.album))
       const unownedAlbumItems: ArtistContentItem[] = missingAlbums
         .map(album => ({ kind: 'externalAlbum' as const, id: `album-ext-${album.id}`, album }))
@@ -425,7 +451,7 @@ export default function ArtistContent({ localArtist, externalArtist }: Props) {
       return (
         <AlbumRow
           album={item.album}
-          onPress={(album) => navigation.push('albumView', { id: album.id })}
+          onPress={() => navigation.push('albumView', { id: item.album.nativeId })}
           subtextOverride={releaseYearLabel(item.album) ?? undefined}
         />
       )
@@ -471,12 +497,12 @@ function PopularOnDeezerSectionResolver({ localArtist, externalArtist }: {
   const deezerEnabled = useDeezerDiscoveryEnabled()
   const { topTracks: localTopTracks } = useArtistTopTracks({
     name: localArtist?.name ?? '',
-    mbid: localArtist?.mbid,
+    mbid: localArtist?.externalIds.mbid,
     enabled: !!localArtist && deezerEnabled,
   })
 
   if (localArtist) {
-    return <PopularOnDeezerSection topTracks={localTopTracks} artistId={localArtist.id} artistName={localArtist.name} />
+    return <PopularOnDeezerSection topTracks={localTopTracks} artistId={localArtist.nativeId} artistName={localArtist.name} />
   }
   if (externalArtist) {
     return (
@@ -507,13 +533,13 @@ function BioSectionResolver({ localArtist, externalArtist }: {
   const deezerEnabled = useDeezerDiscoveryEnabled()
   const { biography: localBiography } = useArtistTopTracks({
     name: localArtist?.name ?? '',
-    mbid: localArtist?.mbid,
+    mbid: localArtist?.externalIds.mbid,
     enabled: !!localArtist && deezerEnabled,
   })
 
   const ownBio = localArtist ? localBiography : externalArtist?.biography
   const artistName = localArtist?.name ?? externalArtist?.name ?? ''
-  const artistMbid = localArtist?.mbid ?? externalArtist?.externalIds?.mbid ?? null
+  const artistMbid = localArtist?.externalIds.mbid ?? externalArtist?.externalIds?.mbid ?? null
 
   const { bio: enrichedBio, sourceLabel } = useArtistInfoEnrichment({
     name: artistName,

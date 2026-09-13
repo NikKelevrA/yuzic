@@ -734,6 +734,7 @@
       "switchToList": "切换到列表视图",
       "switchToGrid": "切换到网格视图"
     },
+    "albumTypeLabel": "专辑 • {{artist}}",
     "genres": {
       "title": "流派",
       "albumCount_one": "{{count}} 张专辑",

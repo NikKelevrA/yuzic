@@ -70,6 +70,9 @@ export function mapSong(dto: PlexMetadata, context: MapSongContext): Song {
     year: dto.parentYear,
     genres: genresOf(dto),
     addedAt: dto.addedAt ? dto.addedAt * 1000 : undefined,
+    serverPlayCount: dto.viewCount,
+    // Plex reports this in unix seconds; the domain stores unix ms.
+    serverLastPlayedAt: dto.lastViewedAt ? dto.lastViewedAt * 1000 : undefined,
     audio: {
       bitrateKbps: media?.bitrate,
       mimeType: media?.container ? `audio/${media.container}` : undefined,

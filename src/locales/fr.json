@@ -735,6 +735,7 @@
       "switchToList": "Passer à la vue liste",
       "switchToGrid": "Passer à la vue grille"
     },
+    "albumTypeLabel": "Album • {{artist}}",
     "genres": {
       "title": "Genres",
       "albumCount_one": "{{count}} album",

@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { Ellipsis, Shuffle, Play } from 'lucide-react-native';
 
-import { Playlist } from '@/types';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { Song } from '@/domain/entities/Song';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 
 import { usePlayingActions } from '@/contexts/PlayingContext';
@@ -27,11 +28,12 @@ import { iconSize, spacing } from '@/constants/design';
 
 type Props = {
   playlist: Playlist;
+  songs?: Song[];
   showNavigation?: boolean;
   onOptions?: () => void;
 };
 
-const PlaylistHeader: React.FC<Props> = ({ playlist, showNavigation = true, onOptions }) => {
+const PlaylistHeader: React.FC<Props> = ({ playlist, songs = [], showNavigation = true, onOptions }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const optionsSheetRef = useSheetRef();
@@ -39,14 +41,13 @@ const PlaylistHeader: React.FC<Props> = ({ playlist, showNavigation = true, onOp
   const { playSongInCollection } = usePlayingActions();
   const { downloadPlaylistById, cancelCollectionDownloads, getCollectionDownloadState } = useDownload();
 
-  const songs = useMemo(() => playlist.songs ?? [], [playlist.songs]);
-  const songIds = useMemo(() => songs.map(s => s.id), [songs]);
+  const songIds = useMemo(() => songs.map(s => s.localId), [songs]);
   const { isDownloaded: isPlaylistDownloaded, isDownloading: isPlaylistDownloading } =
     getCollectionDownloadState(songIds);
   const downloadFraction = useCollectionDownloadProgress(songIds);
 
   const totalDuration = useMemo(
-    () => songs.reduce((sum, song) => sum + Number(song.duration), 0),
+    () => songs.reduce((sum, song) => sum + song.durationSeconds, 0),
     [songs]
   );
 
@@ -60,12 +61,12 @@ const PlaylistHeader: React.FC<Props> = ({ playlist, showNavigation = true, onOp
 
   const toggleDownload = useCallback(async () => {
     if (isPlaylistDownloading) {
-      await cancelCollectionDownloads(playlist.id);
+      await cancelCollectionDownloads(playlist.nativeId);
       return;
     }
     if (!songs.length || isPlaylistDownloaded) return;
-    await downloadPlaylistById(playlist.id, songs);
-  }, [songs, isPlaylistDownloading, isPlaylistDownloaded, downloadPlaylistById, cancelCollectionDownloads, playlist.id]);
+    await downloadPlaylistById(playlist.nativeId, songs);
+  }, [songs, isPlaylistDownloading, isPlaylistDownloaded, downloadPlaylistById, cancelCollectionDownloads, playlist.nativeId]);
 
   // No play is counted here. Pressing play is not listening: these used to
   // credit songs[0] — and its album and artist — the instant the button was
@@ -76,12 +77,12 @@ const PlaylistHeader: React.FC<Props> = ({ playlist, showNavigation = true, onOp
   // started from anywhere else count.
   const handleShuffle = useCallback(() => {
     if (!songs.length) return;
-    playSongInCollection(songs[0], playlist, true);
+    playSongInCollection(songs[0], { playlist, songs }, true);
   }, [songs, playlist, playSongInCollection]);
 
   const handlePlay = useCallback(() => {
     if (!songs.length) return;
-    playSongInCollection(songs[0], playlist);
+    playSongInCollection(songs[0], { playlist, songs });
   }, [songs, playlist, playSongInCollection]);
 
   return (

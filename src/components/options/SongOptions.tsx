@@ -7,9 +7,10 @@ import {
 import { Heart, CirclePlus, Disc, Radio, Mic2, ListEnd, ListStart, CheckCircle, ArrowDownCircle, Sparkles, CloudDownload, Download, Play, ChevronRight } from 'lucide-react-native';
 import { useApi } from '@/api';
 import { selectIsAudiomuseConfigured, selectAudiomuseConfig } from '@/utils/redux/selectors/audiomuseSelectors';
-import { generateSimilarPlaylist } from '@/features/audiomuse/generatePlaylist';
+import { generateSimilarPlaylistForSong } from '@/features/audiomuse/generatePlaylist';
 
-import { ExternalAlbumBase, ExternalSong, Song } from '@/types';
+import type { ExternalAlbumBase, ExternalSong } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import { usePlayingState, usePlayingActions } from '@/contexts/PlayingContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectSongPlayCount } from '@/utils/redux/selectors/statsSelectors';
@@ -20,7 +21,7 @@ import { useStarredSongs, useStarSong, useUnstarSong } from '@/hooks/starred';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { formatSongDuration } from '@/utils/formatDuration';
+import { formatDuration, formatSongDuration } from '@/utils/formatDuration';
 import { useDownload } from '@/contexts/DownloadContext';
 import {
   useAnyDownloaderConnected,
@@ -58,11 +59,11 @@ type SongOptionsProps = {
   onPlay?: () => void;
 };
 
-function formatDate(value: string): string {
-  if (!value) return value;
-  if (/^\d{4}$/.test(value.trim())) return value;
+function formatDate(value: string | number | undefined): string {
+  if (!value) return '';
+  if (typeof value === 'string' && /^\d{4}$/.test(value.trim())) return value;
   const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
+  if (isNaN(d.getTime())) return String(value);
   const year = d.getFullYear();
   const month = d.toLocaleString('default', { month: 'short' });
   const day = d.getDate();
@@ -71,13 +72,19 @@ function formatDate(value: string): string {
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than
- * the user's library. `Song.streamUrl` is required on every library song and
- * absent on `ExternalSong` — that difference is guaranteed by the type
- * definitions, so it doubles as the discriminator without needing a new
- * field on either type. Mirrors `isExternalSong` in `components/rows/SongRow`.
+ * the user's library. `ExternalSong.artist` is a plain string, while a
+ * domain `Song`'s `artist` is always an `ArtistRef` object — that shape
+ * difference is guaranteed to hold for both types, so it doubles as the
+ * discriminator without needing a new field on either type. Mirrors
+ * `isExternalSong` in `components/rows/SongRow`.
+ *
+ * (The old discriminator checked for `streamUrl`, which was required on
+ * every pre-rewrite library `Song`. Domain `Song` never carries a
+ * `streamUrl` — that moved to `PlayableResource` — so that check would now
+ * misclassify every library song as external.)
  */
 function isExternalSongOrigin(song: Song | ExternalSong): song is ExternalSong {
-  return !('streamUrl' in song);
+  return typeof song.artist === 'string';
 }
 
 const SongOptions = forwardRef<BottomSheetModal, SongOptionsProps>(
@@ -138,19 +145,19 @@ const LibrarySongOptionsSheet = forwardRef<
     const api = useApi();
     const audiomuseConfigured = useSelector(selectIsAudiomuseConfigured);
     const audiomuseConfig = useSelector(selectAudiomuseConfig);
-    const playCount = useSelector(selectSongPlayCount(selectedSong.id));
+    const playCount = useSelector(selectSongPlayCount(selectedSong.nativeId));
 
     const { songs: starredSongs } = useStarredSongs();
     const starSong = useStarSong();
     const unstarSong = useUnstarSong();
 
     const isStarred = starredSongs.some(
-      s => s.id === selectedSong.id
+      s => s.localId === selectedSong.localId
     );
 
     const { downloadTrack, deleteDownloadedTrack, isTrackDownloaded, isTrackDownloading } = useDownload();
-    const isDownloaded = isTrackDownloaded(selectedSong.id);
-    const isDownloading = isTrackDownloading(selectedSong.id);
+    const isDownloaded = isTrackDownloaded(selectedSong.localId);
+    const isDownloading = isTrackDownloading(selectedSong.localId);
 
     const sheetBg = useOptionSheetBackground();
 
@@ -162,7 +169,7 @@ const LibrarySongOptionsSheet = forwardRef<
       haptics.selection();
       try {
         if (isStarred) {
-          await unstarSong.mutateAsync(selectedSong.id);
+          await unstarSong.mutateAsync(selectedSong.nativeId);
           notify.success(t(
             isOffline
               ? 'songOptions.toasts.removedFromFavoritesOffline'
@@ -170,7 +177,7 @@ const LibrarySongOptionsSheet = forwardRef<
             { title: selectedSong.title }
           ));
         } else {
-          await starSong.mutateAsync(selectedSong);
+          await starSong.mutateAsync(selectedSong.nativeId);
           notify.success(t(
             isOffline
               ? 'songOptions.toasts.addedToFavoritesOffline'
@@ -196,7 +203,7 @@ const LibrarySongOptionsSheet = forwardRef<
             style: 'destructive',
             onPress: async () => {
               try {
-                await deleteDownloadedTrack(selectedSong.id);
+                await deleteDownloadedTrack(selectedSong.localId);
               } catch {
                 notify.error(t('settings.library.downloads.removeFailedBody'));
               }
@@ -225,7 +232,7 @@ const LibrarySongOptionsSheet = forwardRef<
         return;
       }
 
-      if (selectedSong.id === currentSong.id) {
+      if (selectedSong.localId === currentSong.localId) {
         notify.error(t('songOptions.toasts.alreadyPlaying', { title: selectedSong.title }));
         return;
       }
@@ -246,7 +253,7 @@ const LibrarySongOptionsSheet = forwardRef<
         return;
       }
 
-      if (selectedSong.id === currentSong.id) {
+      if (selectedSong.localId === currentSong.localId) {
         notify.error(t('songOptions.toasts.alreadyPlaying', { title: selectedSong.title }));
         return;
       }
@@ -269,13 +276,13 @@ const LibrarySongOptionsSheet = forwardRef<
     const handleGoToAlbum = () => {
       close();
       onNavigate?.();
-      router.push({ pathname: '/albumView', params: { id: selectedSong.albumId } });
+      router.push({ pathname: '/albumView', params: { id: selectedSong.album.nativeId } });
     };
 
     const handleGoToArtist = () => {
       close();
       onNavigate?.();
-      router.push({ pathname: '/artistView', params: { id: selectedSong.artistId } });
+      router.push({ pathname: '/artistView', params: { id: selectedSong.artist.nativeId } });
     };
 
     const handleInstantMix = async () => {
@@ -296,7 +303,7 @@ const LibrarySongOptionsSheet = forwardRef<
       generatePlaylistInFlightRef.current = true;
       setIsGeneratingPlaylist(true);
       try {
-        const result = await generateSimilarPlaylist(api, audiomuseConfig, selectedSong, { size: 25 });
+        const result = await generateSimilarPlaylistForSong(api, audiomuseConfig, selectedSong, { size: 25 });
         notify.success(t('songOptions.toasts.playlistGenerated', { count: result.trackCount }));
         close();
         router.push({ pathname: '/playlistView', params: { id: result.playlistId } });
@@ -327,7 +334,7 @@ const LibrarySongOptionsSheet = forwardRef<
           <OptionSheetHeader
             cover={selectedSong.cover}
             title={selectedSong.title}
-            subtitle={selectedSong.artist || t('songOptions.unknownArtist')}
+            subtitle={selectedSong.artist.name || t('songOptions.unknownArtist')}
           />
 
           <OptionSheetDivider />
@@ -371,7 +378,7 @@ const LibrarySongOptionsSheet = forwardRef<
             dimLabel={isDownloaded || isDownloading}
           />
 
-          {selectedSong.albumId && (
+          {selectedSong.album.nativeId && (
             <OptionSheetRow
               icon={<Disc size={iconSize.loader} color={colors.secondary} />}
               label={t('songOptions.actions.goToAlbum')}
@@ -379,7 +386,7 @@ const LibrarySongOptionsSheet = forwardRef<
             />
           )}
 
-          {selectedSong.artistId && (
+          {selectedSong.artist.nativeId && (
             <OptionSheetRow
               icon={<Mic2 size={iconSize.loader} color={colors.secondary} />}
               label={t('songOptions.actions.goToArtist')}
@@ -408,40 +415,40 @@ const LibrarySongOptionsSheet = forwardRef<
           <OptionSheetSectionLabel label={t('songOptions.sections.media')} />
           <OptionSheetInfoRow
             label={t('songOptions.media.duration')}
-            value={formatSongDuration(selectedSong.duration)}
+            value={formatDuration(selectedSong.durationSeconds)}
           />
           <OptionSheetInfoRow label={t('songOptions.media.plays')} value={playCount} />
-          {selectedSong.bitrate != null && (
+          {selectedSong.audio?.bitrateKbps != null && (
             <OptionSheetInfoRow
               label={t('songOptions.media.bitrate')}
-              value={t('songOptions.media.kbps', { value: selectedSong.bitrate })}
+              value={t('songOptions.media.kbps', { value: selectedSong.audio.bitrateKbps })}
             />
           )}
-          {selectedSong.sampleRate != null && (
+          {selectedSong.audio?.sampleRateHz != null && (
             <OptionSheetInfoRow
               label={t('songOptions.media.sampleRate')}
-              value={t('songOptions.media.hz', { value: selectedSong.sampleRate })}
+              value={t('songOptions.media.hz', { value: selectedSong.audio.sampleRateHz })}
             />
           )}
-          {selectedSong.bitsPerSample != null && (
+          {selectedSong.audio?.bitsPerSample != null && (
             <OptionSheetInfoRow
               label={t('songOptions.media.bitsPerSample')}
-              value={selectedSong.bitsPerSample}
+              value={selectedSong.audio.bitsPerSample}
             />
           )}
-          {selectedSong.mimeType && (
+          {selectedSong.audio?.mimeType && (
             <OptionSheetInfoRow
               label={t('songOptions.media.format')}
-              value={selectedSong.mimeType}
+              value={selectedSong.audio.mimeType}
               valueLines={1}
             />
           )}
 
-          {(selectedSong.disc != null || selectedSong.trackNumber != null) && (
+          {(selectedSong.discNumber != null || selectedSong.trackNumber != null) && (
             <>
               <OptionSheetSectionLabel label={t('songOptions.sections.track')} spaced />
-              {selectedSong.disc != null && (
-                <OptionSheetInfoRow label={t('songOptions.track.disc')} value={selectedSong.disc} />
+              {selectedSong.discNumber != null && (
+                <OptionSheetInfoRow label={t('songOptions.track.disc')} value={selectedSong.discNumber} />
               )}
               {selectedSong.trackNumber != null && (
                 <OptionSheetInfoRow label={t('songOptions.track.track')} value={selectedSong.trackNumber} />
@@ -449,41 +456,29 @@ const LibrarySongOptionsSheet = forwardRef<
             </>
           )}
 
-          {(selectedSong.dateReleased || selectedSong.dateAdded) && (
+          {(selectedSong.year != null || selectedSong.addedAt != null) && (
             <>
               <OptionSheetSectionLabel label={t('songOptions.sections.dates')} spaced />
-              {selectedSong.dateReleased && (
+              {selectedSong.year != null && (
                 <OptionSheetInfoRow
                   label={t('songOptions.dates.released')}
-                  value={formatDate(selectedSong.dateReleased)}
+                  value={formatDate(String(selectedSong.year))}
                 />
               )}
-              {selectedSong.dateAdded && (
+              {selectedSong.addedAt != null && (
                 <OptionSheetInfoRow
                   label={t('songOptions.dates.added')}
-                  value={formatDate(selectedSong.dateAdded)}
+                  value={formatDate(selectedSong.addedAt)}
                   valueLines={1}
                 />
               )}
             </>
           )}
 
-          {(selectedSong.bpm != null || selectedSong.genres?.length || selectedSong.filePath) && (
+          {selectedSong.genres.length > 0 && (
             <>
               <OptionSheetSectionLabel label={t('songOptions.sections.other')} spaced />
-              {selectedSong.bpm != null && (
-                <OptionSheetInfoRow label={t('songOptions.other.bpm')} value={selectedSong.bpm} />
-              )}
-              {selectedSong.genres?.length ? (
-                <OptionSheetChipsRow label={t('songOptions.other.genres')} values={selectedSong.genres} />
-              ) : null}
-              {selectedSong.filePath ? (
-                <OptionSheetInfoRow
-                  label={t('songOptions.other.filePath')}
-                  value={selectedSong.filePath}
-                  valueLines={2}
-                />
-              ) : null}
+              <OptionSheetChipsRow label={t('songOptions.other.genres')} values={selectedSong.genres} />
             </>
           )}
         </BottomSheetScrollView>

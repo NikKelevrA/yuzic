@@ -7,7 +7,7 @@ function makeClient(overrides: Partial<MediaBrowserClient> = {}): MediaBrowserCl
     request: jest.fn().mockResolvedValue({ Items: [] }),
     requestText: jest.fn(),
     serverUrl: 'https://server.example',
-    serverId: undefined,
+    serverId: 'server-1',
     token: 'tok',
     userId: 'user-1',
     parentId: undefined,
@@ -58,7 +58,7 @@ describe('getAlbums', () => {
     });
     const albums = await getAlbums(client);
     expect(albums).toHaveLength(1);
-    expect(albums[0].id).toBe('album-1');
+    expect(albums[0].nativeId).toBe('album-1');
   });
 });
 
@@ -75,11 +75,16 @@ describe('normalizeAlbum localId/libraryState', () => {
     expect(again?.localId).toBe(album?.localId);
   });
 
-  it('leaves localId unset when the client has no serverId, rather than fabricating one', () => {
+  // A missing serverId is a programming error (every real adapter is built
+  // from `Server.id`, which is required) — not a data case to paper over with
+  // a fabricated scope that would corrupt every LocalId built against it.
+  // `normalizeAlbum` reports it (console.error, same as any other
+  // unparseable item) and drops the record rather than inventing one.
+  it('drops the album instead of fabricating a placeholder identity, when the client has no serverId', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     const client = makeClient({ serverId: undefined });
-    const album = normalizeAlbum(rawAlbum, client);
-    expect(album?.localId).toBeUndefined();
-    expect(album?.artist.localId).toBeUndefined();
-    expect(album?.libraryState).toBe('in-library');
+    expect(normalizeAlbum(rawAlbum, client)).toBeNull();
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

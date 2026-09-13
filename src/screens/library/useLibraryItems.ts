@@ -93,9 +93,12 @@ export function useLibraryItems(
       case 'tracks':
         return sortItems(tracks.map(tr => ({ kind: 'track' as const, data: tr })), sortOrder, statsForSort)
       case 'downloaded':
+        // `getAllDownloadedCollections()[].id` is the id `downloadAlbumById`/
+        // `downloadPlaylistById` were called with, which they hand straight
+        // to `api.albums.get`/`api.playlists.get` — i.e. `nativeId`.
         return sortItems([
-          ...albums.filter(a => downloadedCollectionIds.has(a.id)).map(a => ({ kind: 'album' as const, data: a })),
-          ...playlists.filter(p => downloadedCollectionIds.has(p.id)).map(p => ({ kind: 'playlist' as const, data: p })),
+          ...albums.filter(a => downloadedCollectionIds.has(a.nativeId)).map(a => ({ kind: 'album' as const, data: a })),
+          ...playlists.filter(p => downloadedCollectionIds.has(p.nativeId)).map(p => ({ kind: 'playlist' as const, data: p })),
         ], sortOrder, statsForSort)
       default:
         return sortItems([

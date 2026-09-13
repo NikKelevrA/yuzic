@@ -49,7 +49,12 @@ const AlbumScreen: React.FC = () => {
       { id: albumId ?? title, title, artist, cover: { kind: 'none' }, subtext: '' },
       albums
     );
-    return match?.id ?? null;
+    if (!match) return null;
+    // `matchAlbumToLibrary` is typed against the pre-rewrite `AlbumBase`
+    // (`.id`) as well as the domain `Album` (`.nativeId`) — `albums` here is
+    // always the domain shape, so `nativeId` is always the branch taken, but
+    // the return type is still the union.
+    return 'nativeId' in match ? match.nativeId : match.id;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, forceExternal, artist, title, albumId]);
 
@@ -88,7 +93,12 @@ const AlbumScreen: React.FC = () => {
             />
           </View>
         )}
-        <AlbumContent localAlbum={localResult.album} externalAlbum={null} songsLoading={localResult.songsLoading} />
+        <AlbumContent
+          localAlbum={localResult.album}
+          localSongs={localResult.songs}
+          externalAlbum={null}
+          songsLoading={localResult.songsLoading}
+        />
       </View>
     );
   }
@@ -109,7 +119,7 @@ const AlbumScreen: React.FC = () => {
 
   return (
     <View testID="album-screen" style={[styles.screen, { backgroundColor: colors.background }]}>
-      <AlbumContent localAlbum={null} externalAlbum={externalResult.album} />
+      <AlbumContent localAlbum={null} localSongs={[]} externalAlbum={externalResult.album} />
     </View>
   );
 };

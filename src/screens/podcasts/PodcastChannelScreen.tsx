@@ -7,8 +7,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
 import { ArrowDownCircle, CheckCircle, Play } from 'lucide-react-native';
 
+import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import type { PodcastChannel, PodcastEpisode } from '@/api/types';
+import type { Song } from '@/domain/entities/Song';
+import { podcastEpisodeToSong } from '@/utils/playback/buildPodcastSong';
+import { serverProvenance } from '@/domain/identity/Provenance';
+import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import Touchable from '@/components/Touchable';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
@@ -20,7 +25,6 @@ import { useListDensity } from '@/hooks/useListDensity';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { QueryKeys } from '@/enums/queryKeys';
 import { usePlayingActions } from '@/contexts/PlayingContext';
-import { podcastEpisodeToSong } from '@/utils/playback/buildPodcastSong';
 
 function formatDate(publishDate: string | undefined): string {
   if (!publishDate) return '';
@@ -48,6 +52,7 @@ export default function PodcastChannelScreen() {
   const queryClient = useQueryClient();
   const { channelId } = useLocalSearchParams<{ channelId: string }>();
   const { playSong } = usePlayingActions();
+  const activeServer = useSelector(selectActiveServer);
 
   const channelsQuery = useQuery<PodcastChannel[]>({
     queryKey: [QueryKeys.Podcasts, 'withEpisodes'],
@@ -62,13 +67,11 @@ export default function PodcastChannelScreen() {
   );
 
   const handlePlay = useCallback((episode: PodcastEpisode) => {
-    if (!channel || !episode.playableStreamId) return;
-    // buildStreamUrl needs the server-side stream id, not the episode id.
-    // playableStreamId is only populated once the episode is downloaded, so
-    // this path only fires for downloaded episodes.
-    const streamUrl = api.songs.buildStreamUrl(episode.playableStreamId, 'high');
-    void playSong(podcastEpisodeToSong(episode, channel, streamUrl));
-  }, [api.songs, channel, playSong]);
+    // `playableStreamId` is only populated once the episode is downloaded,
+    // so this path only fires for downloaded episodes.
+    if (!channel || !episode.playableStreamId || !activeServer?.id) return;
+    void playSong(podcastEpisodeToSong(episode, channel, activeServer.id));
+  }, [activeServer?.id, channel, playSong]);
 
   const handleDownload = useCallback(async (episode: PodcastEpisode) => {
     if (!api.podcasts) return;

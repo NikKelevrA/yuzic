@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { useApi } from '@/api';
 import type { ServerPlayQueue } from '@/api/types';
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import { selectLibraryTracks } from '@/utils/redux/selectors/librarySelectors';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
 import { selectQueueSyncEnabled } from '@/utils/redux/selectors/settingsSelectors';
@@ -86,19 +86,21 @@ export function useResumableServerQueue() {
     try {
       // Resolve each song id to a library track. Anything the library doesn't
       // know about (a track from a shared server, since deleted) is skipped —
-      // partial resume beats no resume.
-      const byId = new Map(tracks.map((t) => [t.id, t]));
+      // partial resume beats no resume. `tracks` is already the domain
+      // `Song[]` the queue itself holds, so no stream URL is fabricated here —
+      // `playSongs` builds a real one per track when it queues them.
+      const byId = new Map(tracks.map((t) => [t.nativeId, t]));
       const resolved: Song[] = [];
       for (const id of available.songIds) {
         const t = byId.get(id);
-        if (t) resolved.push({ ...(t as unknown as Song), streamUrl: '' });
+        if (t) resolved.push(t);
       }
       if (resolved.length === 0) {
         dismiss();
         return;
       }
       const currentIndex = available.currentSongId
-        ? Math.max(0, resolved.findIndex((s) => s.id === available.currentSongId))
+        ? Math.max(0, resolved.findIndex((s) => s.nativeId === available.currentSongId))
         : 0;
       await playSongs(resolved, { startIndex: currentIndex });
       setAvailable(null);

@@ -3,7 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { Playlist, PlaylistBase, Song } from '@/types';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { PlaylistDetail } from '@/domain/entities/Detail';
+import type { Song } from '@/domain/entities/Song';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { usePlayableSongResolver } from '@/hooks/songs';
 import { addLibraryPlaylistSong } from '@/utils/redux/slices/librarySlice';
@@ -26,15 +28,18 @@ export function useAddSongToPlaylist() {
 
   return useMutation({
     mutationFn: async ({ playlistId, songId, song: inputSong }: AddSongArgs) => {
-      const resolvedSongId = songId ?? inputSong?.id;
+      const resolvedSongId = songId ?? inputSong?.nativeId;
       if (!resolvedSongId) throw new Error('Missing song id.');
-      const song = await resolvePlayableSong(inputSong ?? resolvedSongId, { allowNetwork: !isOffline });
+      // The resolver returns a playable resource; the cache and the offline
+      // queue want the song inside it, never the session-scoped URL.
+      const resolved = await resolvePlayableSong(inputSong ?? resolvedSongId, { allowNetwork: !isOffline });
+      const song = resolved?.song;
 
       if (isOffline) {
         if (!activeServer?.id || !song) throw new Error('Song is not available offline.');
         dispatch(addLibraryPlaylistSong({ playlistId, song }));
         dispatch(enqueueOfflineMutationAction({
-          id: createOfflineMutationId('addSongToPlaylist', [activeServer.id, playlistId, song.id]),
+          id: createOfflineMutationId('addSongToPlaylist', [activeServer.id, playlistId, song.localId]),
           serverId: activeServer.id,
           type: 'addSongToPlaylist',
           playlistId,
@@ -50,20 +55,27 @@ export function useAddSongToPlaylist() {
     onSuccess: (result, { playlistId }) => {
       if (result.song) {
         const song = result.song;
-        const addToCache = (old: Playlist | null | undefined): Playlist | null | undefined => {
+        // Membership is an identity comparison: the same recording reached
+        // from two origins is not the same track.
+        const addToCache = (old: PlaylistDetail | null | undefined): PlaylistDetail | null | undefined => {
           if (!old) return old;
-          if (old.songs.some(s => s.id === song.id)) return old;
-          return { ...old, songs: [...old.songs, song] };
+          if (old.songs.some(s => s.localId === song.localId)) return old;
+          // The playlist's own references and the detail's songs have to stay
+          // in agreement, so both grow together.
+          return {
+            playlist: { ...old.playlist, songIds: [...old.playlist.songIds, song.localId] },
+            songs: [...old.songs, song],
+          };
         };
 
-        queryClient.setQueryData<Playlist | null>(
+        queryClient.setQueryData<PlaylistDetail | null>(
           [QueryKeys.Playlist, activeServer?.id, playlistId],
           addToCache
         );
-        queryClient.setQueryData<PlaylistBase[]>(
+        queryClient.setQueryData<Playlist[]>(
           [QueryKeys.Playlists, activeServer?.id],
           (old) => old?.map(playlist =>
-            playlist.id === playlistId ? { ...playlist, changed: new Date() } : playlist
+            playlist.nativeId === playlistId ? { ...playlist, updatedAt: Date.now() } : playlist
           )
         );
         dispatch(addLibraryPlaylistSong({ playlistId, song }));

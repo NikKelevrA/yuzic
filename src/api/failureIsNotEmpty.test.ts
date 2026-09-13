@@ -1,3 +1,4 @@
+import { serverProvenance } from '@/domain/identity/Provenance';
 import { getSimilarSongs } from './navidrome/similar/getSimilarSongs';
 import { getSimilarArtists } from './navidrome/similar/getSimilarArtists';
 import { getTopSongs } from './navidrome/artists/getTopSongs';
@@ -38,20 +39,22 @@ describe('a failed request rejects rather than resolving empty', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
+  const provenance = serverProvenance('srv-1');
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
   it('getSimilarSongs rejects', async () => {
-    await expect(getSimilarSongs(failing, 'song-1')).rejects.toThrow('Network request failed');
+    await expect(getSimilarSongs(failing, provenance, 'song-1')).rejects.toThrow('Network request failed');
   });
 
   it('getSimilarArtists rejects', async () => {
-    await expect(getSimilarArtists(failing, 'artist-1')).rejects.toThrow('Network request failed');
+    await expect(getSimilarArtists(failing, provenance, 'artist-1')).rejects.toThrow('Network request failed');
   });
 
   it('getTopSongs rejects', async () => {
-    await expect(getTopSongs(failing, 'Artist Name')).rejects.toThrow('Network request failed');
+    await expect(getTopSongs(failing, provenance, 'Artist Name')).rejects.toThrow('Network request failed');
   });
 
   it('getInternetRadioStations rejects', async () => {
@@ -59,11 +62,11 @@ describe('a failed request rejects rather than resolving empty', () => {
   });
 
   it('getRandomSongs rejects', async () => {
-    await expect(getRandomSongs(failing)).rejects.toThrow('Network request failed');
+    await expect(getRandomSongs(failing, provenance)).rejects.toThrow('Network request failed');
   });
 
   it('still logs the failure, so the reason survives the rethrow', async () => {
-    await expect(getSimilarSongs(failing, 'song-1')).rejects.toThrow();
+    await expect(getSimilarSongs(failing, provenance, 'song-1')).rejects.toThrow();
     expect(console.error).toHaveBeenCalled();
   });
 });

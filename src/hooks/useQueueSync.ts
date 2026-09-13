@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 
 import { useApi } from '@/api';
-import type { Song } from '@/types';
-import { getContentKind } from '@/utils/playback/contentKind';
+import type { PlayableResource } from '@/features/playback/playableResource';
 import { selectQueueSyncEnabled } from '@/utils/redux/selectors/settingsSelectors';
 
 /**
@@ -18,8 +17,8 @@ import { selectQueueSyncEnabled } from '@/utils/redux/selectors/settingsSelector
 // the server on a long shuffle. This is the minimum gap between two saves.
 const SAVE_MIN_INTERVAL_MS = 15_000;
 
-function isServerAddressable(song: Song): boolean {
-  return getContentKind(song) === 'song' && !!song.id;
+function isServerAddressable(resource: PlayableResource): boolean {
+  return resource.song.contentKind === 'song' && !!resource.song.nativeId;
 }
 
 export function useQueueSync() {
@@ -32,10 +31,13 @@ export function useQueueSync() {
   const inFlightRef = useRef(false);
 
   const save = useCallback(
-    async (queue: Song[], currentSongId: string | undefined, positionMs: number) => {
+    async (queue: PlayableResource[], currentSongId: string | undefined, positionMs: number) => {
       if (!supported || !api.queue || inFlightRef.current) return;
 
-      const ids = queue.filter(isServerAddressable).map((s) => s.id);
+      // Sent to the server's own queue endpoint, so this is `nativeId` — the
+      // id the server itself understands — not the branded `localId` the app
+      // uses to key its own queue.
+      const ids = queue.filter(isServerAddressable).map((r) => r.song.nativeId);
       if (!ids.length) return;
 
       // Nothing changed since the last successful save — the position update

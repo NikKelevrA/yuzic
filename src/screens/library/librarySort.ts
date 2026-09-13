@@ -1,4 +1,7 @@
-import type { AlbumBase, Artist, PlaylistBase, SongBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
+import type { Artist } from '@/domain/entities/Artist'
+import type { Playlist } from '@/domain/entities/Playlist'
+import type { Song } from '@/domain/entities/Song'
 
 /**
  * Ordering for the library's mixed entity list.
@@ -10,10 +13,10 @@ import type { AlbumBase, Artist, PlaylistBase, SongBase } from '@/types'
  */
 
 export type LibraryItem =
-  | { kind: 'album'; data: AlbumBase }
+  | { kind: 'album'; data: Album }
   | { kind: 'artist'; data: Artist }
-  | { kind: 'playlist'; data: PlaylistBase }
-  | { kind: 'track'; data: SongBase }
+  | { kind: 'playlist'; data: Playlist }
+  | { kind: 'track'; data: Song }
 
 /**
  * A browse destination in the library.
@@ -77,30 +80,31 @@ function releaseYear(item: LibraryItem): number {
   return 0
 }
 
+// The stats maps (`SortStats`) are keyed by the origin's own id — see
+// `useScrobbling`'s `incrementPlay` dispatch, which records `song.nativeId`/
+// `album.nativeId`/`artist.nativeId` — so lookups here read `nativeId` too,
+// never `localId`.
 function lastPlayedAt(item: LibraryItem, stats: SortStats): number {
-  if (item.kind === 'album') return stats.albumLastPlayed[item.data.id] ?? 0
-  if (item.kind === 'track') return stats.songLastPlayed[item.data.id] ?? 0
-  if (item.kind === 'artist') return stats.artistLastPlayed[item.data.id] ?? 0
+  if (item.kind === 'album') return stats.albumLastPlayed[item.data.nativeId] ?? 0
+  if (item.kind === 'track') return stats.songLastPlayed[item.data.nativeId] ?? 0
+  if (item.kind === 'artist') return stats.artistLastPlayed[item.data.nativeId] ?? 0
   if (item.kind === 'playlist') {
-    return item.data.changed ? new Date(item.data.changed).getTime() : 0
+    return item.data.updatedAt ?? 0
   }
   return 0
 }
 
 function playCount(item: LibraryItem, stats: SortStats): number {
-  if (item.kind === 'track') return stats.songPlays[item.data.id] ?? 0
-  if (item.kind === 'album') return stats.albumPlays[item.data.id] ?? 0
-  if (item.kind === 'artist') return stats.artistPlays[item.data.id] ?? 0
+  if (item.kind === 'track') return stats.songPlays[item.data.nativeId] ?? 0
+  if (item.kind === 'album') return stats.albumPlays[item.data.nativeId] ?? 0
+  if (item.kind === 'artist') return stats.artistPlays[item.data.nativeId] ?? 0
   return 0
 }
 
 function addedAt(item: LibraryItem): number {
-  if (item.kind === 'album' || item.kind === 'playlist') {
-    return item.data.created ? new Date(item.data.created).getTime() : 0
-  }
-  if (item.kind === 'track') {
-    return item.data.dateAdded ? new Date(item.data.dateAdded).getTime() : 0
-  }
+  if (item.kind === 'album') return item.data.addedAt ?? 0
+  if (item.kind === 'playlist') return item.data.createdAt ?? 0
+  if (item.kind === 'track') return item.data.addedAt ?? 0
   return 0
 }
 

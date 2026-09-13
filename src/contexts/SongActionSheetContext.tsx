@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
-import { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import SongOptions from '@/components/options/SongOptions';
 import PlaylistList from '@/components/PlaylistList';
 

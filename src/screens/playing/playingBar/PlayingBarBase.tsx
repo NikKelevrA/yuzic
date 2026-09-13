@@ -354,7 +354,7 @@ export default function PlayingBarBase({ variant }: Props) {
             { color: colors.subtext },
           ]}
         >
-          {currentSong?.artist || t('playing.bar.selectTrack')}
+          {currentSong?.artist.name || t('playing.bar.selectTrack')}
         </Text>
       </View>
 
@@ -406,7 +406,7 @@ export default function PlayingBarBase({ variant }: Props) {
        * entirely rather than let it sit flat at zero. Podcast episodes keep it. */}
       {hasFiniteDuration(currentSong) && (
         <ProgressBarStrip
-          fallbackDuration={Number(currentSong?.duration) || 1}
+          fallbackDuration={currentSong?.durationSeconds || 1}
           themeColor={themeColor}
           containerStyle={[
             stylesForVariant.progressBarContainer,

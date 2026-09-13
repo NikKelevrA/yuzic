@@ -1,4 +1,4 @@
-import type { AlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 
 /**
  * Splits an artist's releases between the Albums and the Singles & EPs
@@ -29,7 +29,7 @@ export function isSingleOrEpTitle(title: string): boolean {
  * @param songCount tracks the library knows about; zero means unknown, not
  * empty, so it falls through to the title rather than counting as a single.
  */
-export function isSingleOrEp(album: AlbumBase, songCount: number): boolean {
+export function isSingleOrEp(album: Album, songCount: number): boolean {
   if (songCount > 0) return songCount <= SINGLE_OR_EP_MAX_TRACKS;
   return isSingleOrEpTitle(album.title);
 }

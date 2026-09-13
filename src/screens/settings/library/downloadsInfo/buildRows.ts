@@ -10,17 +10,15 @@ import {
 } from '@/utils/downloads/collectionState';
 import { DownloadedCollectionEntry } from '@/utils/downloads/downloadStore';
 import type { DownloadedTrack } from '@/contexts/DownloadContext';
-import { AlbumBase } from '@/types/Album';
-import { SongBase } from '@/types/Song';
-import { PlaylistBase } from '@/types/Playlist';
-import type { Song } from '@/types/Song';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
+import type { Playlist } from '@/domain/entities/Playlist';
 import { DownloadRow } from './types';
 
 type BuildDownloadRowsArgs = {
-  albums: AlbumBase[];
-  tracks: SongBase[];
-  playlists: PlaylistBase[];
-  fullPlaylists: (PlaylistBase & { songs?: Song[] })[];
+  albums: Album[];
+  tracks: Song[];
+  playlists: Playlist[];
   downloadedTracks: DownloadedTrack[];
   downloadedCollections: DownloadedCollectionEntry[];
   t: TFunction;
@@ -59,7 +57,6 @@ export function buildDownloadRows({
   albums,
   tracks,
   playlists,
-  fullPlaylists,
   downloadedTracks,
   downloadedCollections,
   t,
@@ -86,15 +83,19 @@ export function buildDownloadRows({
     downloadedMap.set(String(col.id), col);
   }
 
+  // `downloadAlbumById`/`downloadPlaylistById` (DownloadContext) key a
+  // downloaded collection by the id they pass to `api.albums.get`/
+  // `api.playlists.get` — i.e. the origin's own id, `nativeId` — not the
+  // on-device `localId`.
   const allItems = [
-    ...albums.map(item => ({ ...item, type: 'album' as const })),
-    ...playlists.map(item => ({ ...item, type: 'playlist' as const })),
+    ...albums.map(item => ({ ...item, id: item.nativeId, type: 'album' as const })),
+    ...playlists.map(item => ({ ...item, id: item.nativeId, type: 'playlist' as const })),
   ];
 
-  const filtered = allItems.filter(item => downloadedMap.has(String(item.id)));
+  const filtered = allItems.filter(item => downloadedMap.has(item.id));
 
   const normalized: DownloadRow[] = filtered.map(item => {
-    const id = String(item.id);
+    const id = item.id;
     const downloaded = downloadedMap.get(id);
     // Sum bytes using the collection's stored trackIds — avoids albumId mapping issues
     const downloadedBytes = (downloaded?.trackIds ?? []).reduce(
@@ -106,29 +107,31 @@ export function buildDownloadRows({
     const downloadedTrackIdsForCollection =
       item.type === 'album'
         ? (() => {
+            // Membership is an equality check between two loaded entities
+            // (this track, this album), so it compares `localId` — never the
+            // origin id, which two different origins could coincidentally
+            // share.
             const fromLibraryTracks = tracks
-              .filter(track => String(track?.albumId ?? '') === id)
-              .map(track => String(track?.id ?? '').trim())
-              .filter((trackId: string) => Boolean(trackId) && downloadedTrackIds.has(trackId));
+              .filter(track => track.album.localId === item.localId)
+              .map(track => track.localId)
+              .filter((trackId: string) => downloadedTrackIds.has(trackId));
             if (fromLibraryTracks.length) return fromLibraryTracks;
             return downloadedTracks
-              .filter(track => String(track.albumId ?? '') === id)
+              .filter(track => track.albumId === item.localId)
               .map(track => track.trackId)
               .filter(Boolean);
           })()
-        : (() => {
-            const playlistSongs = fullPlaylists.find(playlist => String(playlist.id) === id)?.songs;
-            const fromPlaylist = Array.isArray(playlistSongs) ? playlistSongs
-              .map(song => String(song.id ?? '').trim())
-              .filter(songId => Boolean(songId) && downloadedTrackIds.has(songId)) : [];
-            if (fromPlaylist.length) return fromPlaylist;
-            return (downloaded?.trackIds ?? []).filter((id: string) => downloadedTrackIds.has(id));
-          })();
+        : // Domain playlists don't embed their track list (see
+          // domain/entities/Detail.ts) — only `api.playlists.get()` (a
+          // per-playlist detail fetch) would supply one, which this summary
+          // screen has no reason to trigger for every downloaded playlist.
+          // The persisted download record already lists exactly the tracks
+          // that were downloaded for it, which is what this row is reporting.
+          (downloaded?.trackIds ?? []).filter((tid: string) => downloadedTrackIds.has(tid));
 
-    const downloadTracksForRow =
-      item.type === 'album'
-        ? downloadedTracks.filter(track => downloadedTrackIdsForCollection.includes(track.trackId))
-        : downloadedTracks.filter(track => downloadedTrackIdsForCollection.includes(String(track?.trackId ?? track?.originalTrack?.id ?? '')));
+    const downloadTracksForRow = downloadedTracks.filter(track =>
+      downloadedTrackIdsForCollection.includes(track.trackId)
+    );
 
     const firstTrack = downloadTracksForRow[0];
     const provider: DownloadProviderType = (
@@ -168,7 +171,10 @@ export function buildDownloadRows({
 
   const trackRows: DownloadRow[] = standaloneTracks.map(track => {
     const trackId = track.trackId;
-    const libraryTrack = tracks.find(t => String(t.id) === trackId);
+    // `track.trackId` is the downloaded entry's `localId` (see
+    // DownloadContext's `performDownloadTrack`), so the library lookup
+    // compares `localId` too.
+    const libraryTrack = tracks.find(t => t.localId === trackId);
     const title = libraryTrack?.title || t('settings.library.downloads.unknownTrack');
     const cover = libraryTrack?.cover ?? { kind: 'none' as const };
     const provider: DownloadProviderType = (

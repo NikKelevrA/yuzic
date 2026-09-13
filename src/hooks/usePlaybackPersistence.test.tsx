@@ -6,7 +6,10 @@ import { Provider } from 'react-redux'
 import { usePlaybackPersistence } from './usePlaybackPersistence'
 import playbackReducer from '@/utils/redux/slices/playbackSlice'
 import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice'
-import type { Song } from '@/types'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { serverProvenance } from '@/domain/identity/Provenance'
+import type { Song } from '@/domain/entities/Song'
+import type { PlayableResource } from '@/features/playback/playableResource'
 
 function makeStore(preload?: { activeServerId?: string; persistedServerId?: string | null }) {
   const store = configureStore({
@@ -52,16 +55,24 @@ function wrapperFor(store: ReturnType<typeof makeStore>) {
   return Wrapper
 }
 
-const song = (id: string, contentKind: Song['contentKind'] = 'song'): Song => ({
-  id,
-  title: id,
-  artist: 'A',
-  artistId: 'a1',
-  cover: { kind: 'none' },
-  duration: '120',
-  albumId: 'al1',
+const provenance = serverProvenance('server-A')
+
+const resource = (id: string, contentKind: Song['contentKind'] = 'song'): PlayableResource => ({
+  song: {
+    localId: makeLocalId('song', provenance, id),
+    nativeId: id,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title: id,
+    artist: { localId: makeLocalId('artist', provenance, 'a1'), nativeId: 'a1', externalIds: {}, name: 'A', cover: { kind: 'none' } },
+    album: { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1', externalIds: {}, title: 'Al', cover: { kind: 'none' } },
+    cover: { kind: 'none' },
+    durationSeconds: 120,
+    contentKind,
+    genres: [],
+  },
   streamUrl: `https://example.com/${id}.mp3`,
-  contentKind,
 })
 
 describe('usePlaybackPersistence', () => {
@@ -92,10 +103,10 @@ describe('usePlaybackPersistence', () => {
     await act(async () => {
       result.current.persistQueue({
         queue: [
-          song('s1'),
-          song('radio-1', 'liveStream'),
-          song('s2'),
-          song('pod-1', 'podcastEpisode'),
+          resource('s1'),
+          resource('radio-1', 'liveStream'),
+          resource('s2'),
+          resource('pod-1', 'podcastEpisode'),
         ],
         currentIndex: 3,
         repeatMode: 'off',
@@ -104,7 +115,7 @@ describe('usePlaybackPersistence', () => {
     })
 
     const state = store.getState().playback
-    expect(state.queueSongIds).toEqual(['s1', 's2'])
+    expect(state.queueSongIds).toEqual([resource('s1').song.localId, resource('s2').song.localId])
     // currentIndex clamps to the filtered list length
     expect(state.currentIndex).toBe(1)
   })
@@ -118,11 +129,11 @@ describe('usePlaybackPersistence', () => {
     await act(async () => {
       result.current.persistQueue({
         queue: [
-          song('radio-1', 'liveStream'),
-          song('s1'),
-          song('s2'),
-          song('s3'),
-          song('s4'),
+          resource('radio-1', 'liveStream'),
+          resource('s1'),
+          resource('s2'),
+          resource('s3'),
+          resource('s4'),
         ],
         currentIndex: 2,
         repeatMode: 'off',
@@ -131,8 +142,10 @@ describe('usePlaybackPersistence', () => {
     })
 
     const state = store.getState().playback
-    expect(state.queueSongIds).toEqual(['s1', 's2', 's3', 's4'])
-    expect(state.queueSongIds[state.currentIndex]).toBe('s2')
+    expect(state.queueSongIds).toEqual(
+      ['s1', 's2', 's3', 's4'].map((id) => resource(id).song.localId)
+    )
+    expect(state.queueSongIds[state.currentIndex]).toBe(resource('s2').song.localId)
   })
 
   it('throttles persistPosition writes and honors force', async () => {

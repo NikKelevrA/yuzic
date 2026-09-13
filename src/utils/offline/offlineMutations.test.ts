@@ -1,18 +1,40 @@
+import type { Song } from '@/domain/entities/Song';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import {
   enqueueOfflineMutation,
   OfflineMutation,
 } from './offlineMutations'
 
-const song = {
-  id: 'song-1',
-  title: 'Song',
-  artist: 'Artist',
-  artistId: 'artist-1',
-  cover: { kind: 'none' as const },
-  duration: '120',
-  albumId: 'album-1',
-  streamUrl: 'https://example.com/song.mp3',
+const provenance = serverProvenance('srv-1');
+
+
+/** A domain song, as a mapper would build it. */
+function makeSong(nativeId: string): Song {
+  const ref = (kind: 'artist' | 'album', id: string, label: string) => ({
+    localId: makeLocalId(kind, provenance, id),
+    nativeId: id,
+    externalIds: {},
+    cover: { kind: 'none' as const },
+    ...(kind === 'artist' ? { name: label } : { title: label }),
+  });
+  return {
+    localId: makeLocalId('song', provenance, nativeId),
+    nativeId,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title: nativeId,
+    artist: ref('artist', 'a1', 'Artist') as Song['artist'],
+    album: ref('album', 'al1', 'Album') as Song['album'],
+    cover: { kind: 'none' },
+    durationSeconds: 120,
+    contentKind: 'song',
+    genres: [],
+  };
 }
+
+const song = makeSong('song-1');
 
 describe('enqueueOfflineMutation', () => {
   it('keeps only the latest favorite operation for a song', () => {
@@ -27,7 +49,7 @@ describe('enqueueOfflineMutation', () => {
       id: '2',
       serverId: 'server',
       type: 'unstarSong',
-      songId: song.id,
+      songId: song.localId,
       createdAt: 2,
     }
 
@@ -48,7 +70,7 @@ describe('enqueueOfflineMutation', () => {
       serverId: 'server',
       type: 'removeSongFromPlaylist',
       playlistId: 'playlist',
-      songId: song.id,
+      songId: song.localId,
       createdAt: 2,
     }
 
@@ -60,7 +82,7 @@ describe('enqueueOfflineMutation', () => {
       id: '1',
       serverId: 'server-a',
       type: 'unstarSong',
-      songId: song.id,
+      songId: song.localId,
       createdAt: 1,
     }
     const second: OfflineMutation = {

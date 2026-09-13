@@ -1,5 +1,8 @@
 import { getTopSongs } from './getTopSongs';
 import type { NavidromeClient } from '../client';
+import { serverProvenance } from '@/domain/identity/Provenance';
+
+const provenance = serverProvenance('server-1');
 
 function makeClient(topSongs: unknown): { client: NavidromeClient; request: jest.Mock } {
   const request = jest.fn().mockResolvedValue({
@@ -11,6 +14,7 @@ function makeClient(topSongs: unknown): { client: NavidromeClient; request: jest
       request,
       buildStreamUrl: (id: string) => `https://example/stream/${id}`,
       serverUrl: 'https://example',
+      serverId: 'server-1',
       username: 'u',
       password: 'p',
     } as unknown as NavidromeClient,
@@ -21,7 +25,7 @@ describe('getTopSongs', () => {
   it('asks by artist name, which is what the endpoint takes', async () => {
     const { client, request } = makeClient({ song: [] });
 
-    await getTopSongs(client, 'Radiohead', 5);
+    await getTopSongs(client, provenance, 'Radiohead', 5);
 
     expect(request).toHaveBeenCalledWith('getTopSongs.view', {
       artist: 'Radiohead',
@@ -37,9 +41,9 @@ describe('getTopSongs', () => {
       ],
     });
 
-    const songs = await getTopSongs(client, 'A');
+    const songs = await getTopSongs(client, provenance, 'A');
 
-    expect(songs.map(s => s.id)).toEqual(['s1', 's2']);
+    expect(songs.map((s) => s.nativeId)).toEqual(['s1', 's2']);
     expect(songs[0].title).toBe('First');
   });
 
@@ -51,18 +55,18 @@ describe('getTopSongs', () => {
    */
   it('is empty when the server has no ranking to give', async () => {
     const { client } = makeClient({});
-    expect(await getTopSongs(client, 'Anyone')).toEqual([]);
+    expect(await getTopSongs(client, provenance, 'Anyone')).toEqual([]);
   });
 
   it('is empty rather than a request when the artist has no name', async () => {
     const { client, request } = makeClient({ song: [] });
 
-    expect(await getTopSongs(client, '   ')).toEqual([]);
+    expect(await getTopSongs(client, provenance, '   ')).toEqual([]);
     expect(request).not.toHaveBeenCalled();
   });
 
   it('is empty when the server answers with something that is not a list', async () => {
     const { client } = makeClient({ song: 'nonsense' });
-    expect(await getTopSongs(client, 'A')).toEqual([]);
+    expect(await getTopSongs(client, provenance, 'A')).toEqual([]);
   });
 });

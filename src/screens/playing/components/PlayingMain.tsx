@@ -86,7 +86,7 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   const { t } = useTranslation();
   const { currentSong, currentIndex, repeatMode } = usePlayingState();
   const { skipToNext, skipToPrevious, getQueue } = usePlayingActions();
-  const currentSongId = currentSong?.id;
+  const currentSongId = currentSong?.localId;
   const currentCover = currentSong?.cover ?? null;
   const queueLength = getQueue().length;
   const rad = useRadius();
@@ -170,12 +170,13 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   }
   const qualityLabel = (() => {
     const parts: string[] = [];
-    if (currentSong.mimeType) {
-      const fmt = currentSong.mimeType.split('/')[1]?.toUpperCase().replace('MPEG', 'MP3').replace('X-FLAC', 'FLAC') ?? '';
+    const audio = currentSong.audio;
+    if (audio?.mimeType) {
+      const fmt = audio.mimeType.split('/')[1]?.toUpperCase().replace('MPEG', 'MP3').replace('X-FLAC', 'FLAC') ?? '';
       if (fmt) parts.push(fmt);
     }
-    if (currentSong.bitrate) parts.push(`${currentSong.bitrate}kbps`);
-    else if (currentSong.sampleRate) parts.push(`${(currentSong.sampleRate / 1000).toFixed(1)}kHz`);
+    if (audio?.bitrateKbps) parts.push(`${audio.bitrateKbps}kbps`);
+    else if (audio?.sampleRateHz) parts.push(`${(audio.sampleRateHz / 1000).toFixed(1)}kHz`);
     return parts.join(' · ') || null;
   })();
 
@@ -207,14 +208,14 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
             {currentSong.title}
           </Text>
 
-          {currentSong.artist && (
+          {currentSong.artist.name && (
             <Touchable
               accessibilityRole="link"
               accessibilityHint={t('a11y.player.goToArtist')}
               onPress={onPressArtist}
             >
               <Text style={styles.artist} numberOfLines={1}>
-                {currentSong.artist}
+                {currentSong.artist.name}
               </Text>
             </Touchable>
           )}
@@ -246,7 +247,7 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
        * A radio station's position is meaningless, and the "-0:00 remaining"
        * label under an infinite stream reads as broken. */}
       {hasFiniteDuration(currentSong) && (
-        <PlayingProgressSection songDuration={Number(currentSong.duration)} />
+        <PlayingProgressSection songDuration={currentSong.durationSeconds} />
       )}
     </View>
   );

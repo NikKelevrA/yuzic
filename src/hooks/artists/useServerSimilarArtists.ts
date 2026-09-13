@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import { QueryKeys } from '@/enums/queryKeys';
 import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import type { ExternalArtistBase } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
 
 /**
  * Similar-artists sourced from the media server itself (Navidrome's
@@ -25,7 +25,7 @@ export function useServerSimilarArtists(artistId: string | null | undefined, lim
     [serverId, artistId, limit]
   );
 
-  return useQuery<ExternalArtistBase[]>({
+  return useQuery<Artist[]>({
     queryKey,
     queryFn: () => api.similar.getSimilarArtists!(artistId!, limit),
     enabled,

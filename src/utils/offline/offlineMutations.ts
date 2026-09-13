@@ -1,4 +1,5 @@
-import { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
+import type { LocalId } from '@/domain/identity/LocalId';
 
 export type OfflineMutationFailure = {
   retryCount?: number;
@@ -23,8 +24,14 @@ export type OfflineMutation =
       song: Song;
     })
   | (OfflineMutationBase & {
+      /**
+       * Identified the way the queued song beside it is, so that a star and a
+       * later unstar of the same track collapse to one entry. Keying one on
+       * identity and the other on the origin's id left both in the queue, and
+       * the replay then re-starred a track the user had unstarred.
+       */
       type: 'unstarSong';
-      songId: string;
+      songId: LocalId;
     })
   | (OfflineMutationBase & {
       type: 'addSongToPlaylist';
@@ -34,7 +41,8 @@ export type OfflineMutation =
   | (OfflineMutationBase & {
       type: 'removeSongFromPlaylist';
       playlistId: string;
-      songId: string;
+      /** Identity, matching `addSongToPlaylist`'s song, so the pair collapses. */
+      songId: LocalId;
     })
   | (OfflineMutationBase & {
       type: 'deletePlaylist';
@@ -90,8 +98,8 @@ function sameTarget(a: OfflineMutation, b: OfflineMutation): boolean {
     (a.type === 'starSong' || a.type === 'unstarSong') &&
     (b.type === 'starSong' || b.type === 'unstarSong')
   ) {
-    const aSongId = a.type === 'starSong' ? a.song.id : a.songId;
-    const bSongId = b.type === 'starSong' ? b.song.id : b.songId;
+    const aSongId = a.type === 'starSong' ? a.song.localId : a.songId;
+    const bSongId = b.type === 'starSong' ? b.song.localId : b.songId;
     return aSongId === bSongId;
   }
 
@@ -99,8 +107,8 @@ function sameTarget(a: OfflineMutation, b: OfflineMutation): boolean {
     (a.type === 'addSongToPlaylist' || a.type === 'removeSongFromPlaylist') &&
     (b.type === 'addSongToPlaylist' || b.type === 'removeSongFromPlaylist')
   ) {
-    const aSongId = a.type === 'addSongToPlaylist' ? a.song.id : a.songId;
-    const bSongId = b.type === 'addSongToPlaylist' ? b.song.id : b.songId;
+    const aSongId = a.type === 'addSongToPlaylist' ? a.song.localId : a.songId;
+    const bSongId = b.type === 'addSongToPlaylist' ? b.song.localId : b.songId;
     return a.playlistId === b.playlistId && aSongId === bSongId;
   }
 

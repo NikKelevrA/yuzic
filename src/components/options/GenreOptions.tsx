@@ -8,9 +8,12 @@ import { notify } from '@/components/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 
-import { AlbumBase, Song } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
+import type { Playlist } from '@/domain/entities/Playlist';
+import { makeLocalId } from '@/domain/identity/LocalId';
 import { useApi } from '@/api';
-import { fetchAlbumDetailsSettled } from '@/hooks/albums';
+import { fetchAlbumSongsSettled } from './useLazyCollectionDetails';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
 import { usePlaying } from '@/contexts/PlayingContext';
 import { useDownload } from '@/contexts/DownloadContext';
@@ -29,7 +32,7 @@ import {
 
 export type GenreOptionsProps = {
   genre: string;
-  albums: AlbumBase[];
+  albums: Album[];
 };
 
 const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, albums }, ref) => {
@@ -59,9 +62,9 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
 
   const sheetBg = useOptionSheetBackground();
 
-  const albumIds = useMemo(() => new Set(albums.map(a => a.id)), [albums]);
+  const albumIds = useMemo(() => new Set(albums.map(a => a.localId)), [albums]);
   const genreTrackIds = useMemo(
-    () => tracks.filter(track => albumIds.has(track.albumId)).map(track => track.id),
+    () => tracks.filter(track => albumIds.has(track.album.localId)).map(track => track.localId),
     [albumIds, tracks]
   );
   const { isDownloaded: isFullyDownloaded, isDownloading } = getCollectionDownloadState(genreTrackIds);
@@ -72,13 +75,12 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
 
   const fetchGenreSongs = async (): Promise<Song[]> => {
     if (!activeServer?.id || !albums.length) return [];
-    const fullAlbums = await fetchAlbumDetailsSettled({
+    return fetchAlbumSongsSettled({
       queryClient,
       serverId: activeServer.id,
       albums,
       getAlbum: api.albums.get,
     });
-    return fullAlbums.flatMap(album => album.songs ?? []);
   };
 
   const ensureSongsLoaded = async (): Promise<Song[]> => {
@@ -93,21 +95,28 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
     }
   };
 
-  const genreCollection = (loadedSongs: Song[]) => ({
-    id: genre,
-    title: genre,
-    artist: {
-      id: genre,
-      name: genre,
-      cover: albums[0]?.cover ?? { kind: 'none' as const },
-      subtext: '',
-    },
-    cover: albums[0]?.cover ?? { kind: 'none' as const },
-    songs: loadedSongs,
-    subtext: t('common.playlist'),
-    changed: new Date('1995-12-17T03:24:00'),
-    created: new Date('1995-12-17T03:24:00'),
-  });
+  /**
+   * A genre has no real playlist behind it either — see the equivalent
+   * comment on `ArtistOptions.buildCollection`. Scoped under the first
+   * album's provenance (there is no other origin to namespace under) since
+   * every album shown for one genre in this sheet comes from the same
+   * active server.
+   */
+  const genreCollection = (loadedSongs: Song[]): { playlist: Playlist; songs: Song[] } => {
+    const provenance = albums[0]?.provenance ?? { origin: 'server' as const, serverId: '' };
+    const playlist: Playlist = {
+      localId: makeLocalId('playlist', provenance, `genre:${genre}`),
+      nativeId: genre,
+      provenance,
+      externalIds: {},
+      libraryState: 'in-library',
+      title: genre,
+      cover: albums[0]?.cover ?? { kind: 'none' },
+      isOwned: false,
+      songIds: loadedSongs.map(song => song.localId),
+    };
+    return { playlist, songs: loadedSongs };
+  };
 
   const handleAddToNext = async () => {
     const loaded = await ensureSongsLoaded();
@@ -153,7 +162,7 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
     if (isDownloadingAll || isDownloading || isFullyDownloaded || !albums.length) return;
     setIsDownloadingAll(true);
     try {
-      await Promise.all(albums.map(album => downloadAlbumById(album.id)));
+      await Promise.all(albums.map(album => downloadAlbumById(album.nativeId)));
     } finally {
       setIsDownloadingAll(false);
     }

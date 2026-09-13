@@ -11,6 +11,7 @@ import {
 } from './playingQueue'
 
 const song = (id: string) => ({ id })
+const getId = (item: { id: string }) => item.id
 
 describe('moveSongAfterCurrent', () => {
   it('inserts a new song directly after the current song', () => {
@@ -18,6 +19,7 @@ describe('moveSongAfterCurrent', () => {
       [song('a'), song('b'), song('c')],
       1,
       song('x'),
+      getId,
     )
 
     expect(result?.queue.map(item => item.id)).toEqual(['a', 'b', 'x', 'c'])
@@ -31,6 +33,7 @@ describe('moveSongAfterCurrent', () => {
       [song('a'), song('b'), song('c'), song('d')],
       2,
       song('a'),
+      getId,
     )
 
     expect(result?.queue.map(item => item.id)).toEqual(['b', 'c', 'a', 'd'])
@@ -44,6 +47,7 @@ describe('moveSongAfterCurrent', () => {
       [song('a'), song('b'), song('c'), song('d')],
       1,
       song('d'),
+      getId,
     )
 
     expect(result?.queue.map(item => item.id)).toEqual(['a', 'b', 'd', 'c'])
@@ -57,6 +61,7 @@ describe('moveSongAfterCurrent', () => {
       [song('a'), song('b'), song('c')],
       1,
       song('b'),
+      getId,
     )
 
     expect(result).toBeNull()
@@ -68,6 +73,7 @@ describe('reconcileUnshuffledQueue', () => {
     const result = reconcileUnshuffledQueue(
       [song('a'), song('b'), song('c')],
       [song('c'), song('a'), song('b')],
+      getId,
     )
 
     expect(result.map(item => item.id)).toEqual(['a', 'b', 'c'])
@@ -80,6 +86,7 @@ describe('reconcileUnshuffledQueue', () => {
     const result = reconcileUnshuffledQueue(
       [song('a'), song('b'), song('c')],
       [song('b'), song('a'), song('x'), song('c')],
+      getId,
     )
 
     expect(result.map(item => item.id)).toEqual(['a', 'b', 'c', 'x'])
@@ -89,6 +96,7 @@ describe('reconcileUnshuffledQueue', () => {
     const result = reconcileUnshuffledQueue(
       [song('a'), song('b'), song('c')],
       [song('c'), song('a')],
+      getId,
     )
 
     expect(result.map(item => item.id)).toEqual(['a', 'c'])

@@ -9,6 +9,15 @@ export interface AudioProperties {
   sampleRateHz?: number;
   bitsPerSample?: number;
   mimeType?: string;
+  /**
+   * The file's path on the server, where it reports one.
+   *
+   * Distinct from a `PlayableResource`'s `filePath`, which names a downloaded
+   * local copy and lives only for the session: this is what the origin says
+   * about where the file sits in its own library, and it is shown in the
+   * track's info sheet.
+   */
+  path?: string;
 }
 
 /**
@@ -41,11 +50,32 @@ export interface Song extends EntityCore {
    * needs the id anyway.
    */
   streamId?: string;
+  /** Beats per minute, where the origin reports it. */
+  bpm?: number;
   discNumber?: number;
   trackNumber?: number;
   year?: number;
+  /**
+   * Full release date as reported, where the origin knows more than the year.
+   *
+   * Kept alongside `year` rather than replacing it: most servers report only a
+   * year, and a date synthesised from one would claim a precision the origin
+   * never stated.
+   */
+  releaseDate?: string;
   genres: string[];
   /** When this arrived in the library, unix ms. Server-originated records only. */
   addedAt?: number;
+  /**
+   * Plays the origin has recorded for this song, where it reports them.
+   *
+   * Server-reported rather than local: sync seeds the app's own stats from
+   * these, so an install that has never played a track still knows what the
+   * library has been listening to. Absent is distinct from zero — a server
+   * that does not report play counts must not be read as reporting none.
+   */
+  serverPlayCount?: number;
+  /** When the origin last recorded a play, unix ms. Same caveat as above. */
+  serverLastPlayedAt?: number;
   audio?: AudioProperties;
 }

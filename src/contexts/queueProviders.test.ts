@@ -1,4 +1,6 @@
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import type { ApiAdapter } from '@/api/types';
 import { getAudiomuseQueueExtension } from '@/api/audiomuse/similarity';
 import {
@@ -15,15 +17,36 @@ jest.mock('@/api/audiomuse/similarity', () => ({
   getAudiomuseQueueExtension: jest.fn(),
 }));
 
-const song = (id: string): Song => ({
-  id,
-  title: id,
-  artist: 'Artist',
-  artistId: 'artist-1',
+const provenance = serverProvenance('srv-1');
+
+/** Identity as the app would derive it for a track on the active server. */
+const idOf = (nativeId: string) => makeLocalId('song', provenance, nativeId);
+
+const song = (nativeId: string): Song => ({
+  localId: idOf(nativeId),
+  nativeId,
+  provenance,
+  externalIds: {},
+  libraryState: 'in-library',
+  title: nativeId,
+  artist: {
+    localId: makeLocalId('artist', provenance, 'artist-1'),
+    nativeId: 'artist-1',
+    externalIds: {},
+    name: 'Artist',
+    cover: { kind: 'none' },
+  },
+  album: {
+    localId: makeLocalId('album', provenance, 'album-1'),
+    nativeId: 'album-1',
+    externalIds: {},
+    title: 'Album',
+    cover: { kind: 'none' },
+  },
   cover: { kind: 'none' },
-  duration: '120',
-  albumId: 'album-1',
-  streamUrl: `https://example.com/${id}.mp3`,
+  durationSeconds: 120,
+  contentKind: 'song',
+  genres: [],
 });
 
 function fakeApi(overrides: Partial<ApiAdapter> = {}): ApiAdapter {
@@ -86,12 +109,13 @@ describe('createNativeSimilarityQueueFillProvider', () => {
 
     const result = await provider.fetchExtension({
       recentSongs: [song('x'), song('seed')],
-      excludeIds: new Set(['b']),
+      excludeIds: new Set([idOf('b')]),
       count: 10,
     });
 
+    // The seed goes to the server, so it is the native id.
     expect(getSimilarSongs).toHaveBeenCalledWith('seed');
-    expect(result.map(s => s.id).sort()).toEqual(['a', 'c']);
+    expect(result.map(s => s.nativeId).sort()).toEqual(['a', 'c']);
   });
 
   it('caps the result at count', async () => {
@@ -125,11 +149,32 @@ describe('createAudiomuseQueueFillProvider', () => {
 
     const result = await provider.fetchExtension({
       recentSongs: [song('seed')],
-      excludeIds: new Set(['b']),
+      excludeIds: new Set([idOf('b')]),
       count: 10,
     });
 
-    expect(result.map(s => s.id)).toEqual(['a']);
+    expect(result.map(s => s.nativeId)).toEqual(['a']);
+  });
+
+  it('sends AudioMuse native item ids to exclude, not on-device identities', async () => {
+    // AudioMuse only knows the media server's own item ids. Passing the
+    // identity strings straight through would exclude nothing, because none of
+    // them would match anything it holds.
+    (getAudiomuseQueueExtension as jest.Mock).mockResolvedValue([{ itemId: 'a' }]);
+    const get = jest.fn(async (id: string) => song(id));
+    const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const } });
+    const provider = createAudiomuseQueueFillProvider(config, api);
+
+    await provider.fetchExtension({
+      recentSongs: [song('seed')],
+      excludeIds: new Set([idOf('b'), idOf('c')]),
+      count: 10,
+    });
+
+    expect(getAudiomuseQueueExtension).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ seedItemIds: ['seed'], excludeItemIds: ['b', 'c'] })
+    );
   });
 
   it('requests a larger candidate pool than count and samples down, so repeat plays of the same seed vary', async () => {

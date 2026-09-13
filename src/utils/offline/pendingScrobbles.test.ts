@@ -1,3 +1,5 @@
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { serverProvenance } from '@/domain/identity/Provenance';
 import {
   MAX_SCROBBLE_AGE_MS,
   affectsLibraryQueries,
@@ -74,7 +76,7 @@ describe('queued scrobbles', () => {
       type: 'unstarSong',
       serverId: 'server-1',
       createdAt: NOW,
-      songId: 'song-1',
+      songId: makeLocalId('song', serverProvenance('server-1'), 'song-1'),
     };
 
     expect(enqueueOfflineMutation([star], scrobble())).toHaveLength(2);
@@ -98,6 +100,8 @@ describe('buildScrobbleMutation', () => {
       type: 'scrobble',
       destination: 'listenbrainz',
       serverId: 'server-1',
+      // A scrobble is submitted to a server, so it names the track by the
+      // origin's own id rather than by on-device identity.
       songId: 'song-1',
       artist: 'Radiohead',
       track: '15 Step',

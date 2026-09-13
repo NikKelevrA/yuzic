@@ -7,7 +7,13 @@ import { Ellipsis, Shuffle, Play, CloudDownload, Link } from 'lucide-react-nativ
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import { Album, ExternalAlbum, Playlist, Song } from '@/types';
+import type { ExternalAlbum } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
+import type { Playlist } from '@/domain/entities/Playlist';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance } from '@/domain/identity/Provenance';
+import { firstResolvableCover } from '@/types/Cover';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import GetReviewSheet from '@/components/options/GetReviewSheet';
 import StatusBanner from '@/components/StatusBanner';
@@ -40,6 +46,7 @@ import Touchable from '@/components/Touchable';
 
 type Props = {
   localAlbum: Album | null;
+  localSongs?: Song[];
   externalAlbum: ExternalAlbum | null;
   showNavigation?: boolean;
 };
@@ -48,18 +55,21 @@ function isCountLikeAlbumText(value?: string | null): boolean {
   return /^\s*\d+\s+albums?\s*$/i.test(value ?? '');
 }
 
-const AlbumHeader: React.FC<Props> = ({ localAlbum, externalAlbum, showNavigation = true }) => {
+const AlbumHeader: React.FC<Props> = ({ localAlbum, localSongs = [], externalAlbum, showNavigation = true }) => {
+  // `localAlbum.cover ?? externalAlbum?.cover` looks equivalent but is not:
+  // `{ kind: 'none' }` is a value, not an absence (see `hasCoverImage`), so a
+  // plain `??` chain never falls through it to try the external cover.
   const displayTitle = localAlbum?.title ?? externalAlbum?.title ?? '';
-  const displayCover = localAlbum?.cover ?? externalAlbum?.cover ?? { kind: 'none' as const };
+  const displayCover = firstResolvableCover(localAlbum?.cover, externalAlbum?.cover) ?? { kind: 'none' as const };
 
   return (
     <DetailHeader
       title={displayTitle}
       cover={displayCover}
       rightAction={localAlbum ? <LocalOptionsButton album={localAlbum} /> : undefined}
-      meta={localAlbum ? <LocalMetaRow album={localAlbum} /> : <ExternalMetaRow album={externalAlbum!} />}
+      meta={localAlbum ? <LocalMetaRow album={localAlbum} songs={localSongs} /> : <ExternalMetaRow album={externalAlbum!} />}
       status={!localAlbum ? <ExternalServerStatusRow album={externalAlbum!} /> : undefined}
-      actions={localAlbum ? <LocalActionRow album={localAlbum} /> : <ExternalActionRow album={externalAlbum!} />}
+      actions={localAlbum ? <LocalActionRow album={localAlbum} songs={localSongs} /> : <ExternalActionRow album={externalAlbum!} />}
       showNavigation={showNavigation}
     />
   );
@@ -92,18 +102,17 @@ function LocalOptionsButton({ album }: { album: Album }) {
   );
 }
 
-function LocalMetaRow({ album }: { album: Album }) {
+function LocalMetaRow({ album, songs }: { album: Album; songs: Song[] }) {
   const navigation = useNavigation<any>();
 
-  const songs = useMemo(() => album.songs ?? [], [album.songs]);
   const totalDuration = useMemo(
-    () => songs.reduce((sum, song) => sum + Number(song.duration), 0),
+    () => songs.reduce((sum, song) => sum + song.durationSeconds, 0),
     [songs]
   );
 
   const metadataItems = useMemo(() => {
     const items: { label: string; type: 'artist' | 'genre' | 'info' }[] = [];
-    if (album.artist?.name) items.push({ label: album.artist.name, type: 'artist' });
+    if (album.artist.name) items.push({ label: album.artist.name, type: 'artist' });
     const genre = album.genres?.[0]?.trim();
     if (genre) items.push({ label: genre, type: 'genre' });
     const year = Number(album.year);
@@ -113,7 +122,7 @@ function LocalMetaRow({ album }: { album: Album }) {
       items.push({ label: formatDuration(totalDuration), type: 'info' });
     }
     return items;
-  }, [album.artist?.name, album.genres, album.year, songs.length, totalDuration]);
+  }, [album.artist.name, album.genres, album.year, songs.length, totalDuration]);
 
   const handleGenrePress = useCallback((genre: string) => {
     navigation.push('genreView', { genre });
@@ -124,8 +133,8 @@ function LocalMetaRow({ album }: { album: Album }) {
       {metadataItems.map((item, index) => (
         <React.Fragment key={`${item.label}-${index}`}>
           {index > 0 && <DetailMetaDot />}
-          {item.type === 'artist' && album.artist ? (
-            <Touchable onPress={() => navigation.push('artistView', { id: album.artist.id })}>
+          {item.type === 'artist' ? (
+            <Touchable onPress={() => navigation.push('artistView', { id: album.artist.nativeId })}>
               <DetailMetaText>{item.label}</DetailMetaText>
             </Touchable>
           ) : item.type === 'genre' ? (
@@ -209,33 +218,32 @@ function ExternalServerStatusRow({ album }: { album: ExternalAlbum }) {
   );
 }
 
-function LocalActionRow({ album }: { album: Album }) {
+function LocalActionRow({ album, songs }: { album: Album; songs: Song[] }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { playSongInCollection } = usePlayingActions();
   const { downloadAlbumById, cancelCollectionDownloads, getCollectionDownloadState } = useDownload();
 
-  const songs = useMemo(() => album.songs ?? [], [album.songs]);
-  const songIds = useMemo(() => songs.map(s => s.id), [songs]);
+  const songIds = useMemo(() => songs.map(s => s.localId), [songs]);
   const { isDownloaded: isAlbumDownloaded, isDownloading: isAlbumDownloading } =
     getCollectionDownloadState(songIds);
   const downloadFraction = useCollectionDownloadProgress(songIds);
 
   const toggleDownload = useCallback(async () => {
     if (isAlbumDownloading) {
-      await cancelCollectionDownloads(album.id);
+      await cancelCollectionDownloads(album.nativeId);
       return;
     }
     if (!songs.length || isAlbumDownloaded) return;
-    await downloadAlbumById(album.id, songs);
-  }, [songs, isAlbumDownloading, isAlbumDownloaded, downloadAlbumById, cancelCollectionDownloads, album.id]);
+    await downloadAlbumById(album.nativeId, songs);
+  }, [songs, isAlbumDownloading, isAlbumDownloaded, downloadAlbumById, cancelCollectionDownloads, album.nativeId]);
 
   const handlePlay = useCallback(() => {
-    if (songs.length > 0) playSongInCollection(songs[0], album, false);
+    if (songs.length > 0) playSongInCollection(songs[0], { album, songs }, false);
   }, [songs, album, playSongInCollection]);
 
   const handleShuffle = useCallback(() => {
-    if (songs.length > 0) playSongInCollection(songs[0], album, true);
+    if (songs.length > 0) playSongInCollection(songs[0], { album, songs }, true);
   }, [songs, album, playSongInCollection]);
 
   return (
@@ -285,15 +293,27 @@ function ExternalActionRow({ album }: { album: ExternalAlbum }) {
     [songs, previews]
   );
 
-  const previewCollection = useMemo<Playlist>(() => ({
-    id: `preview-${album.id}`,
-    title: album.title,
-    subtext: album.artist,
-    cover: album.cover,
-    changed: new Date(),
-    created: new Date(),
-    songs: previewSongs,
-  }), [album, previewSongs]);
+  // There is no real playlist behind "play the previews we could resolve" —
+  // it's a transient queue seed, not a server object — so this builds a
+  // minimal-but-valid domain `Playlist` wrapper, namespaced under the
+  // external album's own provenance since that's the only origin these
+  // preview tracks have. Mirrors the equivalent build in
+  // `components/options/ArtistOptions`.
+  const previewCollection = useMemo<{ playlist: Playlist; songs: Song[] }>(() => {
+    const provenance = integrationProvenance(album.externalSource ?? 'external');
+    const playlist: Playlist = {
+      localId: makeLocalId('playlist', provenance, `preview-${album.id}`),
+      nativeId: album.id,
+      provenance,
+      externalIds: {},
+      libraryState: 'external',
+      title: album.title,
+      cover: album.cover,
+      isOwned: false,
+      songIds: previewSongs.map(s => s.localId),
+    };
+    return { playlist, songs: previewSongs };
+  }, [album, previewSongs]);
 
   const handlePlay = useCallback(() => {
     if (!previewSongs.length) return;

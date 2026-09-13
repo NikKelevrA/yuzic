@@ -1,16 +1,20 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { QueryKeys } from '@/enums/queryKeys';
-import { Album } from '@/types';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
+import type { AlbumDetail } from '@/domain/entities/Detail';
 import { useApi } from '@/api';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { useLibrary } from '@/contexts/LibraryContext';
 import { hasValue, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
+import { useLibrary } from '@/contexts/LibraryContext';
 import { buildFallbackAlbumSongs } from './fallbackSongs';
 
 type UseAlbumResult = {
   album: Album | null;
+  /** The album's tracks, in running order — see `AlbumDetail`. */
+  songs: Song[];
   isLoading: boolean;
   songsLoading: boolean;
   error: Error | null;
@@ -18,33 +22,38 @@ type UseAlbumResult = {
   degraded: boolean;
 };
 
+/**
+ * `AlbumsApi.get` returns the album and its tracks as a pair rather than an
+ * album with an embedded `songs` array — see `AlbumDetail`. The offline
+ * fallback reconstructs the same shape from `LibraryContext`, now that it
+ * holds domain entities too: the album is looked up by `nativeId` in the
+ * synced album list, and its tracks are rebuilt from the synced track list
+ * via `buildFallbackAlbumSongs` (matching on `song.album.nativeId`, see that
+ * function's comment for why `nativeId` rather than `localId` is safe here).
+ */
 export function useAlbum(id: string): UseAlbumResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
-  const { albums, tracks } = useLibrary();
-  const cachedAlbum = albums.find(a => a.id === id) ?? null;
+  const { albums: libraryAlbums, tracks: libraryTracks } = useLibrary();
 
-  // Hydrate the fallback's song list from the synced library tracks — a
-  // header with zero songs reads as a bug when the real cause is the server
-  // being unreachable. The songs resolve to local files or fresh stream URLs
-  // at play time (PlayingContext.resolvePlayableSong).
-  const fallbackSongs = useMemo(
-    () => (cachedAlbum ? buildFallbackAlbumSongs(tracks, id) : []),
-    [cachedAlbum, tracks, id]
-  );
-  const fallbackAlbum = cachedAlbum ? { ...cachedAlbum, songs: fallbackSongs } : null;
+  const fallbackData = useMemo<AlbumDetail | null>(() => {
+    const album = libraryAlbums.find(a => a.nativeId === id) ?? null;
+    if (!album) return null;
+    return { album, songs: buildFallbackAlbumSongs(libraryTracks, id) };
+  }, [libraryAlbums, libraryTracks, id]);
 
-  const query = useOfflineFirstQuery<Album | null>({
+  const query = useOfflineFirstQuery<AlbumDetail | null>({
     queryKey: [QueryKeys.Album, activeServer?.id, id],
     queryFn: async () => api.albums.get(id),
     enabled: !!activeServer?.id && !!id,
     staleTime: staleTime.albums,
-    fallbackData: fallbackAlbum,
+    fallbackData,
     hasFallbackData: hasValue,
   });
 
   return {
-    album: query.data,
+    album: query.data?.album ?? null,
+    songs: query.data?.songs ?? [],
     isLoading: query.isLoading,
     songsLoading: query.query.isFetching && (query.data?.songs?.length ?? 0) === 0,
     error: query.error,

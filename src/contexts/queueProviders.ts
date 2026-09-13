@@ -1,4 +1,5 @@
-import { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
+import { parseLocalId, type LocalId } from '@/domain/identity/LocalId';
 import type { ApiAdapter } from '@/api/types';
 import shuffleArray from '@/utils/shuffleArray';
 import { createAudiomuseClient, type AudiomuseConfig } from '@/api/audiomuse/client';
@@ -13,8 +14,20 @@ export interface QueueFillProvider {
   id: 'audiomuse' | 'native-similarity';
   isAvailable(): boolean;
   fetchExtension(opts: {
-    recentSongs: { id: string }[];
-    excludeIds: Set<string>;
+    /**
+     * Seeds, identified the way the server that will be asked about them
+     * identifies them. Both providers hand these straight back to a server —
+     * AudioMuse indexes the active server's own item ids, and `getSimilarSongs`
+     * queries the adapter — so this is `nativeId`, not identity.
+     */
+    recentSongs: { nativeId: string }[];
+    /**
+     * What is already queued, keyed by identity rather than by native id. A
+     * queue can hold tracks from more than one origin at once — imported local
+     * files alongside server tracks — and two origins can easily both call
+     * something `42`. Excluding on native id would drop the wrong track.
+     */
+    excludeIds: Set<LocalId>;
     count: number;
   }): Promise<Song[]>;
 }
@@ -31,9 +44,18 @@ export function createAudiomuseQueueFillProvider(config: AudiomuseConfig, api: A
       // track) comes up. Over-fetch a larger pool and randomly sample from
       // it — same pattern the native provider uses — so repeat plays vary.
       const poolSize = Math.max(count * 3, 30);
+      // The exclusion set is keyed by identity, but this list is sent to
+      // AudioMuse, which only knows the media server's own item ids — so it has
+      // to be read back down to native ids. Ids from another origin (an
+      // imported local file) survive the translation and simply match nothing
+      // there, which is the correct outcome: AudioMuse was never going to
+      // return them anyway.
+      const excludeItemIds = [...excludeIds]
+        .map(id => parseLocalId(id)?.nativeId)
+        .filter((id): id is string => id !== undefined);
       const refs = await getAudiomuseQueueExtension(client, {
-        seedItemIds: recentSongs.map(s => s.id),
-        excludeItemIds: [...excludeIds],
+        seedItemIds: recentSongs.map(s => s.nativeId),
+        excludeItemIds,
         limit: poolSize,
       });
       // AudioMuse returns track references keyed to the active media server's
@@ -43,7 +65,7 @@ export function createAudiomuseQueueFillProvider(config: AudiomuseConfig, api: A
       const songs = resolved
         .filter((r): r is PromiseFulfilledResult<Song | null> => r.status === 'fulfilled')
         .map(r => r.value)
-        .filter((s): s is Song => s !== null && !excludeIds.has(s.id));
+        .filter((s): s is Song => s !== null && !excludeIds.has(s.localId));
       return shuffleArray(songs).slice(0, count);
     },
   };
@@ -56,8 +78,8 @@ export function createNativeSimilarityQueueFillProvider(api: ApiAdapter): QueueF
     fetchExtension: async ({ recentSongs, excludeIds, count }) => {
       const seed = recentSongs[recentSongs.length - 1];
       if (!seed) return [];
-      const similar = await api.similar.getSimilarSongs(seed.id);
-      return shuffleArray(similar.filter(s => !excludeIds.has(s.id))).slice(0, count);
+      const similar = await api.similar.getSimilarSongs(seed.nativeId);
+      return shuffleArray(similar.filter(s => !excludeIds.has(s.localId))).slice(0, count);
     },
   };
 }

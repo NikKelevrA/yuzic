@@ -1,15 +1,27 @@
 import { compareByReleaseYearDesc, releaseYearLabel, releaseYearOf } from './discography'
-import type { AlbumBase, ExternalAlbumBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
+import type { LocalId } from '@/domain/identity/LocalId'
+import type { ExternalAlbumBase } from '@/types'
 
-const local = (id: string, year: number): AlbumBase => ({
-  id,
+const local = (id: string, year: number): Album => ({
+  localId: `local:album:srv:server1:${id}` as LocalId,
+  nativeId: id,
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: `Album ${id}`,
   cover: { kind: 'none' },
-  subtext: '',
-  artist: { id: 'a1', name: 'Artist', cover: { kind: 'none' }, subtext: '' },
+  artist: {
+    localId: 'local:artist:srv:server1:a1' as LocalId,
+    nativeId: 'a1',
+    name: 'Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   year,
+  releaseType: 'album',
   genres: [],
-  created: new Date(0),
+  songIds: [],
 })
 
 const external = (id: string, overrides: Partial<ExternalAlbumBase> = {}): ExternalAlbumBase => ({
@@ -52,7 +64,7 @@ describe('compareByReleaseYearDesc', () => {
       external('e-2000', { subtext: '2000' }),
     ]
 
-    expect([...items].sort(compareByReleaseYearDesc).map(a => a.id))
+    expect([...items].sort(compareByReleaseYearDesc).map(a => 'nativeId' in a ? a.nativeId : a.id))
       .toEqual(['l-2016', 'e-2007', 'e-2000', 'l-1997'])
   })
 
@@ -62,7 +74,7 @@ describe('compareByReleaseYearDesc', () => {
       local('l-1997', 1997),
     ]
 
-    expect([...items].sort(compareByReleaseYearDesc).map(a => a.id))
+    expect([...items].sort(compareByReleaseYearDesc).map(a => 'nativeId' in a ? a.nativeId : a.id))
       .toEqual(['l-1997', 'e-unknown'])
   })
 
@@ -72,7 +84,7 @@ describe('compareByReleaseYearDesc', () => {
       external('e-2007', { releaseDate: '2007-01-01' }),
     ]
 
-    expect([...items].sort(compareByReleaseYearDesc).map(a => a.id))
+    expect([...items].sort(compareByReleaseYearDesc).map(a => 'nativeId' in a ? a.nativeId : a.id))
       .toEqual(['l-2007', 'e-2007'])
   })
 })

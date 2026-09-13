@@ -27,6 +27,7 @@ function makeClient(brand: typeof JELLYFIN_BRAND | typeof EMBY_BRAND): MediaBrow
     request,
     requestText: jest.fn(),
     serverUrl: 'https://server.example',
+    serverId: 'server-1',
     token: 'tok',
     userId: 'user-1',
     parentId: undefined,
@@ -46,7 +47,7 @@ describe('getStarredItems', () => {
 
   it('normalizes starred albums using the shared album normalizer', async () => {
     const result = await getStarredItems(makeClient(EMBY_BRAND));
-    expect(result.albums[0].id).toBe('album-1');
+    expect(result.albums[0].nativeId).toBe('album-1');
     expect(result.albums[0].cover).toEqual({ kind: 'emby', itemId: 'album-1', tag: 'tag-abc' });
   });
 

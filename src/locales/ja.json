@@ -734,6 +734,7 @@
       "switchToList": "リスト表示に切り替え",
       "switchToGrid": "グリッド表示に切り替え"
     },
+    "albumTypeLabel": "アルバム • {{artist}}",
     "genres": {
       "title": "ジャンル",
       "albumCount_one": "{{count}} 枚のアルバム",

@@ -42,7 +42,7 @@ const OfflineSection: React.FC = () => {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [freeBytes, setFreeBytes] = useState<number | null>(null);
   const { albums = [] } = useAlbums();
-  const { playlists: fullPlaylists = [] } = usePlaylists();
+  const { playlists = [] } = usePlaylists();
   const { tracks = [] } = useTracks();
 
   useEffect(() => {
@@ -56,8 +56,8 @@ const OfflineSection: React.FC = () => {
   const formattedAvailable = freeBytes != null ? formatBytes(freeBytes) : '—';
 
   const rows = useMemo(
-    () => buildDownloadRows({ albums, tracks, playlists: fullPlaylists, fullPlaylists, downloadedTracks, downloadedCollections, t }),
-    [albums, tracks, fullPlaylists, downloadedTracks, downloadedCollections, t]
+    () => buildDownloadRows({ albums, tracks, playlists, downloadedTracks, downloadedCollections, t }),
+    [albums, tracks, playlists, downloadedTracks, downloadedCollections, t]
   );
 
   const confirmRemove = useCallback((row: DownloadRow) => {

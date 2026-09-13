@@ -15,9 +15,15 @@ import { useSelector } from 'react-redux'
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next'
 
-import { AlbumBase, Song } from '@/types'
+import type { Album } from '@/domain/entities/Album'
+import type { Song } from '@/domain/entities/Song'
 import { useApi } from '@/api'
-import { fetchAlbumDetailsSettled } from '@/hooks/albums'
+// `fetchAlbumDetailsSettled` (src/hooks/albums) is still typed against the
+// pre-rewrite embedded-songs `Album`/`AlbumBase` and a `getAlbum` returning
+// that old shape — not the `AlbumDetail` `api.albums.get` returns now. That
+// hook is owned by a different agent's scope, so this uses the domain-typed
+// sibling already written for the same purpose (GenreOptions/ArtistOptions).
+import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails'
 import { buildCover } from '@/utils/builders/buildCover'
 import { useTheme } from '@/hooks/useTheme'
 import { useTracks } from '@/hooks/tracks'
@@ -43,7 +49,7 @@ import { useRadius } from '@/hooks/useRadius';
 
 type Props = {
   genre: string
-  albums: AlbumBase[]
+  albums: Album[]
   showNavigation?: boolean
 }
 
@@ -54,7 +60,7 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
   const { isDarkMode, colors } = useTheme()
   const rad = useRadius()
   const activeServer = useSelector(selectActiveServer)
-  const { playSongInCollection } = usePlayingActions()
+  const { playSongs } = usePlayingActions()
   const { downloadAlbumById, getCollectionDownloadState } = useDownload()
   const { t } = useTranslation()
 
@@ -70,14 +76,19 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
 
   const coverUri = albums[0]?.cover ? buildCover(albums[0].cover, 'background') : null
 
+  // Membership is an equality check between loaded entities, so it compares
+  // `localId` — never the origin id, which two different origins could
+  // coincidentally share.
   const albumIds = useMemo(
-    () => new Set(albums.map(album => album.id)),
+    () => new Set(albums.map(album => album.localId)),
     [albums]
   )
+  // Download tracking (getCollectionDownloadState/useCollectionDownloadProgress)
+  // keys tracks by `localId` too — see DownloadContext's `performDownloadTrack`.
   const genreTrackIds = useMemo(
     () => tracks
-      .filter(track => albumIds.has(track.albumId))
-      .map(track => track.id),
+      .filter(track => albumIds.has(track.album.localId))
+      .map(track => track.localId),
     [albumIds, tracks]
   )
 
@@ -90,16 +101,18 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
   const fetchGenreSongs = async (): Promise<Song[]> => {
     if (!activeServer?.id || !albums.length) return []
 
-    const fullAlbums = await fetchAlbumDetailsSettled({
+    return fetchAlbumSongsSettled({
       queryClient,
       serverId: activeServer.id,
       albums,
       getAlbum: api.albums.get,
     })
-
-    return fullAlbums.flatMap(album => album.songs ?? [])
   }
 
+  // A genre shelf isn't a real collection (no server-side playlist backs
+  // it), so this plays a plain song list rather than fabricating a
+  // `PlaylistDetail` for something with no identity of its own — same
+  // pattern as the library's "all tracks" and local-mix shuffles.
   const play = async (shuffle = false) => {
     if (songsLoading) return
 
@@ -118,32 +131,14 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
       notify.error(t('common.oneSecond'))
       return
     }
-    playSongInCollection(
-      playableSongs[0],
-      {
-        id: genre,
-        title: genre,
-        artist: {
-          id: genre,
-          name: genre,
-          cover: albums[0]?.cover ?? { kind: 'none' },
-          subtext: '',
-        },
-        cover: albums[0]?.cover ?? { kind: 'none' },
-        songs: playableSongs,
-        subtext: t('common.playlist'),
-        changed: new Date('1995-12-17T03:24:00'),
-        created: new Date('1995-12-17T03:24:00'),
-      },
-      shuffle,
-    )
+    await playSongs(playableSongs, { shuffle, contextId: `genre:${genre}` })
   }
 
   const handleDownloadAll = async () => {
     if (isDownloadingAll || isDownloading || isFullyDownloaded || !albums.length) return
     setIsDownloadingAll(true)
     try {
-      await Promise.all(albums.map(album => downloadAlbumById(album.id)))
+      await Promise.all(albums.map(album => downloadAlbumById(album.nativeId)))
     } finally {
       setIsDownloadingAll(false)
     }
@@ -257,7 +252,7 @@ export const GenreHeaderBar: React.FC<Props> = ({ genre, albums }) => (
   <DetailHeaderBar title={genre} rightAction={<GenreOptionsButton genre={genre} albums={albums} />} />
 )
 
-function GenreOptionsButton({ genre, albums }: { genre: string; albums: AlbumBase[] }) {
+function GenreOptionsButton({ genre, albums }: { genre: string; albums: Album[] }) {
   const { t } = useTranslation()
   const { colors } = useTheme()
   const optionsSheetRef = useSheetRef()

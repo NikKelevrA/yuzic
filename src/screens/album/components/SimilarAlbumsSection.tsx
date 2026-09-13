@@ -11,7 +11,7 @@ import { useRadius } from '@/hooks/useRadius'
 import { usePrefetchCovers } from '@/hooks/usePrefetchCovers'
 import { prefetchCovers } from '@/utils/images/imageCache'
 import MediaTile from '@/screens/home/components/MediaTile'
-import type { AlbumBase } from '@/types'
+import type { Album } from '@/domain/entities/Album'
 import {
   ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
   ALBUM_RECOMMENDATION_TILE_GAP,
@@ -55,7 +55,7 @@ export default function SimilarAlbumsSection({ albumId }: Props) {
       - ALBUM_RECOMMENDATION_TILE_GAP * 2)
     / ALBUM_RECOMMENDATION_VISIBLE_TILES
 
-  const { data: albums } = useQuery<AlbumBase[]>({
+  const { data: albums } = useQuery<Album[]>({
     queryKey: [QueryKeys.ServerSimilarAlbums, albumId],
     // Jellyfin and Emby only; Navidrome's adapter does not implement it, so
     // the query never runs there rather than showing an empty shelf.
@@ -65,7 +65,7 @@ export default function SimilarAlbumsSection({ albumId }: Props) {
   })
 
   const filtered = useMemo(
-    () => (albums ?? []).filter(album => album.id !== albumId),
+    () => (albums ?? []).filter(album => album.nativeId !== albumId),
     [albums, albumId]
   )
   const covers = useMemo(() => filtered.map(album => album.cover), [filtered])
@@ -85,15 +85,15 @@ export default function SimilarAlbumsSection({ albumId }: Props) {
       >
         {filtered.map(album => (
           <MediaTile
-            key={album.id}
+            key={album.localId}
             cover={album.cover}
             title={album.title}
-            subtitle={album.artist?.name ?? ''}
+            subtitle={album.artist.name}
             size={tileWidth}
             radius={rad.card}
             onPress={() => {
               prefetchCovers([album.cover], 'detail')
-              navigation.push('albumView', { id: album.id })
+              navigation.push('albumView', { id: album.nativeId })
             }}
           />
         ))}

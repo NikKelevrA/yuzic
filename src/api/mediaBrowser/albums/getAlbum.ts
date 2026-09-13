@@ -1,11 +1,10 @@
-import { Album } from "@/types";
-import { makeLocalId } from "@/types/EntityId";
-import type { MediaBrowserClient } from "../client";
-import { buildCover } from "../brand";
+import type { AlbumDetail } from "@/domain/entities/Detail";
+import { requireProvenance, type MediaBrowserClient } from "../client";
+import { mapAlbum } from "../mapAlbum";
 import { getAlbumSongs } from "./getAlbumSongs";
 import { MediaBrowserItemsResponse } from "../types";
 
-export type GetAlbumResult = Album | null;
+export type GetAlbumResult = AlbumDetail | null;
 
 async function fetchGetAlbum(client: MediaBrowserClient, albumId: string) {
   const path =
@@ -16,68 +15,25 @@ async function fetchGetAlbum(client: MediaBrowserClient, albumId: string) {
   return client.request<MediaBrowserItemsResponse>(path);
 }
 
-function normalizeAlbum(raw: MediaBrowserItemsResponse, client: MediaBrowserClient): Album | null {
-  const a = raw?.Items?.[0];
-  if (!a) return null;
-
-  const artistItem = a.ArtistItems?.[0];
-  if (!artistItem) return null;
-
-  const cover = buildCover(client.brand, a.Id);
-  const sourceServerId = client.serverId;
-  const artistId = artistItem.Id ?? "unknown";
-
-  const artist = {
-    id: artistId,
-    name: artistItem.Name ?? "Unknown Artist",
-    cover: buildCover(client.brand, artistItem.Id),
-    subtext: "Artist",
-    mbid: artistItem.ProviderIds?.MusicBrainz ?? null,
-    localId: sourceServerId
-      ? makeLocalId({ kind: "artist", sourceServerId, serverItemId: artistId })
-      : undefined,
-  };
-
-  const albumMbid = a.ProviderIds?.MusicBrainzAlbum ?? a.ProviderIds?.MusicBrainz ?? null;
-  const albumId = a.Id ?? "";
-
-  return {
-    id: albumId,
-    cover,
-    title: a.Name ?? "Unknown Album",
-    subtext: "",
-    artist,
-    year: a.ProductionYear ?? 0,
-    songs: [],
-    genres: (a.Genres ?? [])
-      .flatMap((g: string) => g.split(";"))
-      .map((g: string) => g.trim())
-      .filter(Boolean),
-    created: a.DateCreated ? new Date(a.DateCreated) : new Date(0),
-    mbid: albumMbid,
-    localId: sourceServerId
-      ? makeLocalId({ kind: "album", sourceServerId, serverItemId: albumId })
-      : undefined,
-    libraryState: "in-library",
-  };
-}
-
 export async function getAlbum(
   client: MediaBrowserClient,
   albumId: string
 ): Promise<GetAlbumResult> {
   const raw = await fetchGetAlbum(client, albumId);
-  const base = normalizeAlbum(raw, client);
-  if (!base) return null;
+  const dto = raw?.Items?.[0];
+  if (!dto) return null;
 
-  const songs = await getAlbumSongs(client, base);
+  const provenance = requireProvenance(client);
+  // The album's own record has no songIds yet; its tracks are fetched
+  // against the un-songed album so `getAlbumSongs` can borrow its title and
+  // cover for songs, then get folded back in below.
+  const bare = mapAlbum(dto, { provenance, brand: client.brand });
+  const songs = await getAlbumSongs(client, bare);
+  const album = mapAlbum(dto, {
+    provenance,
+    brand: client.brand,
+    songIds: songs.map((s) => s.localId),
+  });
 
-  return {
-    ...base,
-    subtext:
-      songs.length > 1
-        ? `Album • ${base.artist.name}`
-        : `Single • ${base.artist.name}`,
-    songs,
-  };
+  return { album, songs };
 }

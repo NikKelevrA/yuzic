@@ -7,6 +7,7 @@ function makeClient(overrides: Partial<MediaBrowserClient> = {}): MediaBrowserCl
     request: jest.fn().mockResolvedValue({ Items: [] }),
     requestText: jest.fn(),
     serverUrl: 'https://server.example',
+    serverId: 'server-1',
     token: 'tok',
     userId: 'user-1',
     parentId: undefined,
@@ -49,7 +50,8 @@ describe('getArtists', () => {
     });
     const artists = await getArtists(makeClient({ request }));
     expect(artists).toHaveLength(2);
-    expect(artists[0]).toMatchObject({ id: 'a1', name: 'Artist One', mbid: 'mbid-1' });
-    expect(artists[1].mbid).toBeNull();
+    expect(artists[0]).toMatchObject({ nativeId: 'a1', name: 'Artist One' });
+    expect(artists[0].externalIds).toEqual({ mbid: 'mbid-1' });
+    expect(artists[1].externalIds).toEqual({});
   });
 });

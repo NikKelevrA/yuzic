@@ -14,7 +14,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { notify } from '@/components/toast';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
-import type { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import { DownloadProviderScope } from '@/utils/downloads/provider';
 import {
   DownloadedCollectionEntry,
@@ -67,6 +67,20 @@ import { selectDownloadOnWifiOnly, selectDownloadQuality } from '@/utils/redux/s
 import { useNetworkType } from '@/hooks/useNetworkType';
 import { streamSourceId } from '@/utils/playback/streamId';
 import { downloadProgressFraction, nextDownloadingIds, collectionDownloadState } from './downloadPolicies';
+
+/**
+ * A track together with the URL to fetch its bytes from.
+ *
+ * `Song` never carries a stream URL — it's credentialled, unsafe to persist,
+ * and goes stale with the session (see `Song.streamId` doc). Downloading
+ * needs actual bytes, so this pairs the entity with a URL built on demand via
+ * `api.songs.buildStreamUrl`, right before it's used, instead of splicing a
+ * URL onto the entity the way this file used to.
+ */
+export interface DownloadableTrack {
+  song: Song;
+  streamUrl: string;
+}
 
 export type DownloadedTrack = DownloadedTrackEntry & {
   localPath: string;
@@ -162,7 +176,10 @@ type DownloadState = {
 let legacyDownloadPathsToDelete: string[] = [];
 
 function buildStagingPath(track: Song): string {
-  return `${DOWNLOAD_DIR}${sanitizeFileName(track.id)}${STAGING_SUFFIX}`;
+  // Named by identity, not by the origin's id: two servers can both call a
+  // track `42`, and a staging file named after that would have one download
+  // overwrite the other mid-flight.
+  return `${DOWNLOAD_DIR}${sanitizeFileName(track.localId)}${STAGING_SUFFIX}`;
 }
 
 async function ensureDownloadDir() {
@@ -404,27 +421,43 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
     setDownloadingIds(current => nextDownloadingIds(current, trackId, downloading));
   }, []);
 
-  const resolveTrack = useCallback(async (track: Song): Promise<Song | null> => {
-    const fullSong = await api.tracks.get(track.id).catch(() => null);
-    const base = fullSong ?? (track.streamUrl ? track : null);
-    if (!base) return null;
-    const freshUrl = api.songs.buildStreamUrl(streamSourceId(base), downloadQuality);
-    return freshUrl ? { ...base, streamUrl: freshUrl } : base;
+
+  /**
+   * Looks the track up fresh and builds a URL to fetch it from right now.
+   *
+   * A queued job can sit for a long time (Wi-Fi-only, paused, backgrounded),
+   * so the URL is never trusted from enqueue time — it's credentialled and
+   * goes stale with the session. `track.id` is the id the queue stores the
+   * job under, which — for anything that reached the queue through this file
+   * The queue stores whole domain songs, so the id to send back to the origin
+   * is simply the track's `nativeId`; everything the download itself is keyed
+   * by — staging paths, resumables, progress, the on-disk index — uses
+   * `localId`, because two servers can each call a track `42`.
+   */
+  const resolveTrack = useCallback(async (track: Song): Promise<DownloadableTrack | null> => {
+    const song = await api.tracks.get(track.nativeId).catch(() => null);
+    if (!song) return null;
+    const streamUrl = api.songs.buildStreamUrl(
+      streamSourceId({ id: song.nativeId, streamId: song.streamId }),
+      downloadQuality,
+    );
+    return streamUrl ? { song, streamUrl } : null;
   }, [api, downloadQuality]);
 
   // The music server transcodes server-side (format/maxBitRate on the stream
   // URL — see qualityToStreamParams), so a single direct download replaces the
   // old download→upload-to-rawarr→transcode→re-download round trip.
   const performDownloadTrack = useCallback(async (track: Song, collectionId?: string) => {
-    if (isTrackDownloaded(track.id) || isTrackDownloading(track.id)) return;
+    if (isTrackDownloaded(track.localId) || isTrackDownloading(track.localId)) return;
 
-    const resolvedTrack = await resolveTrack(track);
-    if (!resolvedTrack?.streamUrl) {
+    const resolved = await resolveTrack(track);
+    if (!resolved) {
       throw new Error('Track stream URL unavailable');
     }
+    const { song: freshSong, streamUrl } = resolved;
 
     await ensureDownloadDir();
-    setTrackDownloading(track.id, true);
+    setTrackDownloading(track.localId, true);
     const stagingPath = buildStagingPath(track);
 
     try {
@@ -432,29 +465,34 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
       // against the very same URL — see findUsableResumable.
       const saved = findUsableResumable(
         resumablesRef.current,
-        track.id,
-        resolvedTrack.streamUrl,
+        track.localId,
+        streamUrl,
       );
 
       // A header-authenticated server (Plex behind Basic auth) rejects a bare
       // download URL — the credentials ride in a request header, not the query
       // string. Attach them to the file-download session the same way playback
       // does, resolved against the active server. Unprotected servers add none.
-      const requestHeaders = mediaHeadersForSong(activeServer, resolvedTrack).headers;
+      // `sourceServerType` is deliberately omitted: a domain Song's
+      // provenance carries which server it came from, not that server's
+      // type, so this falls straight to `server?.type` inside
+      // mediaHeadersForSong — the same value `activeServer?.type` resolves to
+      // below, since a download only ever runs against the active server.
+      const requestHeaders = mediaHeadersForSong(activeServer, { streamUrl }).headers;
 
       const runWithSession = async (options: typeof BACKGROUND_FILE_OPTIONS) => {
         const resumable = FileSystem.createDownloadResumable(
-          resolvedTrack.streamUrl!,
+          streamUrl,
           stagingPath,
           requestHeaders ? { ...options, headers: requestHeaders } : options,
           progress => reportDownloadProgress(
-            track.id,
+            track.localId,
             progress.totalBytesWritten,
             progress.totalBytesExpectedToWrite,
           ),
           saved?.resumeData,
         );
-        activeDownloadsRef.current.set(track.id, resumable);
+        activeDownloadsRef.current.set(track.localId, resumable);
         return saved
           ? await resumable.resumeAsync()
           : await resumable.downloadAsync();
@@ -468,7 +506,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
         // second attempt on the same session type would fail identically.
         // Drop to a foreground session once before giving up.
         console.warn(
-          `Background download session failed for track ${track.id}; retrying in the foreground`,
+          `Background download session failed for track ${track.localId}; retrying in the foreground`,
           error,
         );
         result = await runWithSession(FOREGROUND_FILE_OPTIONS);
@@ -481,39 +519,45 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
 
       const extension = extensionFromContentType(headerValue(result.headers, 'Content-Type'));
-      const localPath = `${DOWNLOAD_DIR}${sanitizeFileName(track.id)}.${extension}`;
+      const localPath = `${DOWNLOAD_DIR}${sanitizeFileName(track.localId)}.${extension}`;
       await FileSystem.deleteAsync(localPath, { idempotent: true }).catch(() => {});
       await FileSystem.moveAsync({ from: stagingPath, to: localPath });
 
       const info = await FileSystem.getInfoAsync(localPath);
       const fileSize = info.exists ? info.size : 0;
+      // The freshly resolved song's own provenance is the ground truth for
+      // which server this came from; the active server is only a fallback
+      // for the (external/non-server) case where provenance has no serverId.
+      const serverId = (freshSong.provenance.origin === 'server' ? freshSong.provenance.serverId : undefined)
+        ?? activeServer?.id ?? '';
+      const serverType = activeServer?.type ?? '';
       const entry: LocalDownloadedTrackEntry = {
-        trackId: track.id,
+        trackId: track.localId,
         localPath,
         fileSize,
         downloadedAt: Date.now(),
-        albumId: track.albumId,
-        artistId: track.artistId,
-        serverId: resolvedTrack.sourceServerId ?? activeServer?.id ?? '',
-        serverType: resolvedTrack.sourceServerType ?? activeServer?.type ?? '',
+        albumId: track.album.localId,
+        artistId: track.artist.localId,
+        serverId,
+        serverType,
         coverKind: track.cover.kind,
         schemaVersion: DOWNLOAD_SCHEMA_VERSION,
         title: track.title,
         originalTrack: {
-          id: track.id,
+          id: track.localId,
           extraPayload: {
-            serverId: resolvedTrack.sourceServerId ?? activeServer?.id ?? '',
-            serverType: resolvedTrack.sourceServerType ?? activeServer?.type ?? '',
+            serverId,
+            serverType,
             coverKind: track.cover.kind,
           },
         },
       };
 
       // The file is whole and moved; there is nothing left to resume.
-      setResumables(removeResumable(resumablesRef.current, track.id));
+      setResumables(removeResumable(resumablesRef.current, track.localId));
 
       updateTracks(tracks => [
-        ...tracks.filter(existing => existing.trackId !== track.id),
+        ...tracks.filter(existing => existing.trackId !== track.localId),
         entry,
       ]);
 
@@ -523,25 +567,25 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
           if (!existing) return collections;
           return collections.map(collection => (
             collection.id === collectionId
-              ? { ...collection, trackIds: [...new Set([...collection.trackIds, track.id])] }
+              ? { ...collection, trackIds: [...new Set([...collection.trackIds, track.localId])] }
               : collection
           ));
         });
       }
     } finally {
-      activeDownloadsRef.current.delete(track.id);
-      clearDownloadProgress(track.id);
+      activeDownloadsRef.current.delete(track.localId);
+      clearDownloadProgress(track.localId);
 
       // Normally the staging file is scratch and goes. The exception is a
       // download we paused on purpose and saved state for — deleting that
       // here would throw away the very bytes the pause existed to keep.
       const held = resumablesRef.current.some(
-        saved => saved.trackId === track.id && saved.resumeData
+        saved => saved.trackId === track.localId && saved.resumeData
       );
       if (!held) {
         await FileSystem.deleteAsync(stagingPath, { idempotent: true }).catch(() => {});
       }
-      setTrackDownloading(track.id, false);
+      setTrackDownloading(track.localId, false);
     }
   }, [activeServer, clearDownloadProgress, isTrackDownloaded, isTrackDownloading, reportDownloadProgress, resolveTrack, setResumables, setTrackDownloading, updateCollections, updateTracks]);
 
@@ -657,7 +701,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const downloadTrack = useCallback(async (track: Song, collectionId?: string) => {
     await enqueueDownloadJob({
-      id: `track:${track.id}`,
+      id: `track:${track.nativeId}`,
       type: 'track',
       collectionId,
       tracks: [track],
@@ -666,7 +710,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const downloadTracks = useCallback(async (tracks: Song[]) => {
     const pending = tracks.filter(track =>
-      !localPathMapRef.current.has(track.id)
+      !localPathMapRef.current.has(track.nativeId)
     );
     if (!pending.length) return;
     await enqueueDownloadJob({
@@ -681,7 +725,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
     type: DownloadedCollectionEntry['type'],
     tracks: Song[],
   ) => {
-    const trackIds = tracks.map(track => track.id);
+    const trackIds = tracks.map(track => track.nativeId);
     updateCollections(collections => [
       ...collections.filter(collection => collection.id !== collectionId),
       {
@@ -704,7 +748,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
   // per-track rejection, so users saw "download complete" over an empty
   // downloads list. Verify what actually landed before claiming success.
   const toastCollectionResult = useCallback((tracks: Song[], label: string) => {
-    const downloadedCount = tracks.filter(track => localPathMapRef.current.has(track.id)).length;
+    const downloadedCount = tracks.filter(track => localPathMapRef.current.has(track.nativeId)).length;
     if (downloadedCount === tracks.length) {
       notify.success(t('settings.downloaders.downloadComplete'));
     } else {
@@ -714,9 +758,11 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [t]);
 
   const downloadAlbumById = useCallback(async (albumId: string, songs?: Song[]) => {
+    // AlbumsApi.get always resolves an AlbumDetail (never null) — the old
+    // optional-chaining here was for a shape that no longer exists.
     const tracks = songs?.length
       ? songs
-      : (await api.albums.get(albumId))?.songs ?? [];
+      : (await api.albums.get(albumId)).songs;
     if (!tracks.length) return;
 
     try {
@@ -729,9 +775,11 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [api, downloadCollection, t, toastCollectionResult]);
 
   const downloadPlaylistById = useCallback(async (playlistId: string, songs?: Song[]) => {
+    // PlaylistsApi.get always resolves a PlaylistDetail (never null) — same
+    // shape change as downloadAlbumById above.
     const tracks = songs?.length
       ? songs
-      : (await api.playlists.get(playlistId))?.songs ?? [];
+      : (await api.playlists.get(playlistId)).songs;
     if (!tracks.length) return;
 
     try {
@@ -845,7 +893,7 @@ export const DownloadProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const getCollectionDownloadState = useCallback((trackIds: string[]) => {
     const downloadedIds = new Set(state.tracks.map(track => track.trackId));
-    const queuedIds = new Set(state.jobs.flatMap(job => job.tracks.map(track => track.id)));
+    const queuedIds = new Set(state.jobs.flatMap(job => job.tracks.map(track => track.localId)));
     return collectionDownloadState(
       trackIds,
       downloadedIds,

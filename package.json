@@ -16,8 +16,8 @@
     "test:e2e:details": "maestro test .maestro/detail-flows.yaml",
     "lint": "expo lint",
     "postinstall": "if [ -e node_modules/.bin/patch-package ]; then patch-package --error-on-fail; fi",
-    "architecture:check": "node tools/architecture/check-cycles.mjs && node tools/architecture/check-unused.mjs && node tools/architecture/check-provider-branches.mjs && node tools/architecture/check-file-shape.mjs && node tools/architecture/check-unsafe.mjs",
-    "architecture:prune": "node tools/architecture/check-cycles.mjs --prune && node tools/architecture/check-unused.mjs --prune && node tools/architecture/check-provider-branches.mjs --prune && node tools/architecture/check-file-shape.mjs --prune && node tools/architecture/check-unsafe.mjs --prune",
+    "architecture:check": "node tools/architecture/check-cycles.mjs && node tools/architecture/check-unused.mjs && node tools/architecture/check-provider-branches.mjs && node tools/architecture/check-file-shape.mjs && node tools/architecture/check-unsafe.mjs && node tools/architecture/check-shims.mjs",
+    "architecture:prune": "node tools/architecture/check-cycles.mjs --prune && node tools/architecture/check-unused.mjs --prune && node tools/architecture/check-provider-branches.mjs --prune && node tools/architecture/check-file-shape.mjs --prune && node tools/architecture/check-unsafe.mjs --prune && node tools/architecture/check-shims.mjs --prune",
     "architecture:measure": "node tools/architecture/measure.mjs"
   },
   "overrides": {

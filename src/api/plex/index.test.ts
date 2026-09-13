@@ -42,7 +42,7 @@ describe('Plex adapter', () => {
     });
 
     await expect(createPlexAdapter(server).search.search('track')).resolves.toEqual({
-      albums: [], artists: [], songs: [expect.objectContaining({ id: '7', title: 'Track', streamId: '/library/parts/7' })],
+      albums: [], artists: [], songs: [expect.objectContaining({ nativeId: '7', title: 'Track', streamId: '/library/parts/7' })],
     });
   });
   it("paginates catalog requests instead of silently stopping at Plex’s first page", async () => {

@@ -96,7 +96,7 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
     return seededShuffle(
       [...libraryArtists]
         .filter(a => a.name.trim() && a.name.toLowerCase() !== 'various artists')
-        .sort((a, b) => (artistPlayCounts[b.id] ?? 0) - (artistPlayCounts[a.id] ?? 0))
+        .sort((a, b) => (artistPlayCounts[b.nativeId] ?? 0) - (artistPlayCounts[a.nativeId] ?? 0))
         .slice(0, BECAUSE_SEED_POOL_SIZE),
       dailySeed
     )

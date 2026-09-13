@@ -13,9 +13,9 @@ import {
   JukeboxState
 } from "../types";
 import { FAVORITES_ID } from "@/constants/favorites";
-import { buildFavoritesPlaylist } from "@/utils/builders/buildFavoritesPlaylist";
+import { serverProvenance } from "@/domain/identity/Provenance";
 
-import { Song, Server } from "@/types";
+import { Server } from "@/types";
 
 import { createNavidromeClient } from "./client";
 import { connect } from "./auth/connect";
@@ -32,6 +32,7 @@ import { getArtists } from "./artists/getArtists";
 
 import { getPlaylists } from "./playlists/getPlaylists";
 import { getPlaylist } from "./playlists/getPlaylist";
+import { buildFavoritesPlaylist } from "@/utils/builders/buildFavoritesPlaylist";
 import { createPlaylist } from "./playlists/createPlaylist";
 import { deletePlaylist } from "./playlists/deletePlaylist";
 import { renamePlaylist } from "./playlists/renamePlaylist";
@@ -99,6 +100,16 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   const { id: serverId, serverUrl, fallbackUrls, username, auth: providerAuth, basicAuth } = server;
   const password = providerAuth?.password as string;
 
+  // Every domain entity requires provenance, and provenance for a server
+  // record needs a real server id. `Server.id` is a required field of the
+  // `Server` type, so this is always sound here — unlike `NavidromeClient`'s
+  // own `serverId`, which is optional only because `NavidromeClientConfig`
+  // doubles as the shape used before a server is saved (auth/testServerUrl,
+  // connect), where no id exists yet. Building provenance once here, rather
+  // than reading `client.serverId` inside every endpoint, means those
+  // pre-save code paths never have to fake one.
+  const provenance = serverProvenance(serverId);
+
   // Support new array format (musicFolderIds) and old single-value format (musicFolderId)
   const musicFolderIds: string[] =
     Array.isArray(providerAuth?.musicFolderIds) ? (providerAuth.musicFolderIds as string[]) :
@@ -110,14 +121,24 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   const clientFor = (folderId: string) =>
     createNavidromeClient({ serverUrl, serverId, fallbackUrls, username, password, defaultParams: { musicFolderId: folderId }, basicAuth });
 
-  async function fromFolders<T extends { id: string }>(
-    fn: (c: ReturnType<typeof createNavidromeClient>) => Promise<T[]>
+  // Domain entities have no top-level `id` to de-dupe on (that ambiguity is
+  // exactly what `localId`/`nativeId` replaced), so callers say how to key
+  // whatever shape `fn` returns — a bare entity by `nativeId`, an
+  // entity+tracks pair by the entity's.
+  async function fromFolders<T>(
+    fn: (c: ReturnType<typeof createNavidromeClient>) => Promise<T[]>,
+    keyOf: (item: T) => string
   ): Promise<T[]> {
     if (musicFolderIds.length === 0) return fn(client);
     if (musicFolderIds.length === 1) return fn(clientFor(musicFolderIds[0]));
     const all = (await Promise.all(musicFolderIds.map(id => fn(clientFor(id))))).flat();
     const seen = new Set<string>();
-    return all.filter(item => !seen.has(item.id) && (seen.add(item.id), true));
+    return all.filter(item => {
+      const key = keyOf(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   const auth: AuthApi = {
@@ -132,44 +153,46 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   const albums: AlbumsApi = {
     list: async () => {
       const [baseAlbums, starred] = await Promise.all([
-        fromFolders(c => getAlbumList(c)),
-        getStarredItems(client),
+        fromFolders(c => getAlbumList(c, provenance), (a) => a.nativeId),
+        getStarredItems(client, provenance),
       ]);
-      const baseIds = new Set(baseAlbums.map((a) => a.id));
+      const baseIds = new Set(baseAlbums.map((a) => a.nativeId));
       const seenStarredIds = new Set<string>();
       const albumIdsFromStarred: string[] = [];
-      for (const s of starred.songs ?? []) {
-        if (s.albumId && !seenStarredIds.has(s.albumId)) {
-          seenStarredIds.add(s.albumId);
-          if (!baseIds.has(s.albumId)) albumIdsFromStarred.push(s.albumId);
+      for (const s of starred.songs) {
+        const albumId = s.album.nativeId;
+        if (albumId && !seenStarredIds.has(albumId)) {
+          seenStarredIds.add(albumId);
+          if (!baseIds.has(albumId)) albumIdsFromStarred.push(albumId);
         }
       }
       const extraAlbums = await Promise.all(
-        albumIdsFromStarred.map((id) => getAlbum(client, id))
+        albumIdsFromStarred.map((id) => getAlbum(client, id, provenance))
       );
-      const added = extraAlbums.filter(
-        (a): a is NonNullable<typeof a> => a !== null
-      );
+      const added = extraAlbums
+        .filter((a): a is NonNullable<typeof a> => a !== null)
+        .map((detail) => detail.album);
       return [...baseAlbums, ...added];
     },
 
     get: async (id: string) => {
-      const full = await getAlbum(client, id);
+      const full = await getAlbum(client, id, provenance);
       if (!full) throw new Error("Album not found");
       return full;
     },
 
-    listWithSongs: async () => fromFolders(c => getAlbumsWithSongs(c)),
+    listWithSongs: async () =>
+      fromFolders(c => getAlbumsWithSongs(c, provenance), (d) => d.album.nativeId),
   };
 
   const artists: ArtistsApi = {
-    list: async () => fromFolders(c => getArtists(c)),
+    list: async () => fromFolders(c => getArtists(c, provenance), (a) => a.nativeId),
     get: async (id: string) => {
-      const artist = await getArtist(client, id);
+      const artist = await getArtist(client, id, provenance);
       if (!artist) throw new Error("Artist not found");
       return artist;
     },
-    getTopSongs: async (artistName, limit) => getTopSongs(client, artistName, limit),
+    getTopSongs: async (artistName, limit) => getTopSongs(client, provenance, artistName, limit),
   };
 
   const genres: GenresApi = {
@@ -179,21 +202,21 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   const playlists: PlaylistsApi = {
     list: async () => {
       const [playlists, starred] = await Promise.all([
-        getPlaylists(client),
-        getStarredItems(client),
+        getPlaylists(client, provenance),
+        getStarredItems(client, provenance),
       ]);
-      const favorites = buildFavoritesPlaylist(starred.songs ?? []);
+      const favorites = buildFavoritesPlaylist(starred.songs, provenance);
       return [favorites, ...playlists];
     },
 
     get: async (id: string) => {
       if (id === FAVORITES_ID) {
-        const starred = await getStarredItems(client);
-        return buildFavoritesPlaylist(starred.songs ?? []);
+        const starred = await getStarredItems(client, provenance);
+        return { playlist: buildFavoritesPlaylist(starred.songs, provenance), songs: starred.songs };
       }
-      const playlist = await getPlaylist(client, id);
-      if (!playlist) throw new Error("Playlist not found");
-      return playlist;
+      const detail = await getPlaylist(client, id, provenance);
+      if (!detail) throw new Error("Playlist not found");
+      return detail;
     },
 
     create: async (name: string) => {
@@ -215,9 +238,9 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
         await unstar(client, songId);
         return { success: true };
       }
-      const playlist = await getPlaylist(client, playlistId);
-      if (!playlist) throw new Error("Playlist not found");
-      const index = playlist.songs.findIndex((s: Song) => s.id === songId);
+      const detail = await getPlaylist(client, playlistId, provenance);
+      if (!detail) throw new Error("Playlist not found");
+      const index = detail.songs.findIndex((s) => s.nativeId === songId);
       if (index === -1) throw new Error("Song not found in playlist");
       return removeSongFromPlaylist(client, playlistId, index.toString());
     },
@@ -238,13 +261,13 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   };
 
   const starred: StarredApi = {
-    list: async () => getStarredItems(client),
+    list: async () => getStarredItems(client, provenance),
     add: async (id, type) => { await star(client, id, type); },
     remove: async (id, type) => { await unstar(client, id, type); },
   };
 
   const songs: SongsApi = {
-    get: async (id: string) => getSong(client, id),
+    get: async (id: string) => getSong(client, id, provenance),
     scrobble: async (songId, timestamp) => scrobble(client, songId, timestamp),
     reportNowPlaying: async (songId) => nowPlaying(client, songId),
     buildStreamUrl: (songId, quality) => client.buildStreamUrl(songId, quality),
@@ -253,13 +276,13 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   };
 
   const tracks: TracksApi = {
-    list: async () => fromFolders(c => getTracks(c)),
-    get: async (id: string) => getSong(client, id),
+    list: async () => fromFolders(c => getTracks(c, provenance), (s) => s.nativeId),
+    get: async (id: string) => getSong(client, id, provenance),
   };
 
   const similar: SimilarApi = {
-    getSimilarSongs: async (songId: string) => getSimilarSongs(client, songId),
-    getSimilarArtists: async (artistId, limit) => getNavidromeSimilarArtists(client, artistId, limit),
+    getSimilarSongs: async (songId: string) => getSimilarSongs(client, provenance, songId),
+    getSimilarArtists: async (artistId, limit) => getNavidromeSimilarArtists(client, provenance, artistId, limit),
   };
 
   const lyrics: LyricsApi = {
@@ -267,7 +290,7 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   };
 
   const search = {
-    search: async (query: string) => searchNavidrome(client, query),
+    search: async (query: string) => searchNavidrome(client, provenance, query),
   };
 
   const radio = {
@@ -303,7 +326,7 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
 
   const discovery = {
     getRandomSongs: async (opts?: { size?: number; genre?: string; fromYear?: number; toYear?: number }) =>
-      getRandomSongs(client, opts),
+      getRandomSongs(client, provenance, opts),
     getNowPlaying: async () => getNowPlaying(client),
   };
 

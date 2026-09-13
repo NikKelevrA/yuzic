@@ -26,6 +26,7 @@ function makeClient(brand: typeof JELLYFIN_BRAND | typeof EMBY_BRAND): MediaBrow
     request,
     requestText: jest.fn(),
     serverUrl: 'https://server.example',
+    serverId: 'server-1',
     token: 'tok',
     userId: 'user-1',
     parentId: undefined,
@@ -35,21 +36,30 @@ function makeClient(brand: typeof JELLYFIN_BRAND | typeof EMBY_BRAND): MediaBrow
 }
 
 describe('getAlbumsWithSongs', () => {
-  it('includes albumTitle on songs for jellyfin', async () => {
-    const albums = await getAlbumsWithSongs(makeClient(JELLYFIN_BRAND));
-    expect(albums[0].songs[0].albumTitle).toBe('Album One');
+  it('gives songs the album title via their album reference for jellyfin', async () => {
+    const details = await getAlbumsWithSongs(makeClient(JELLYFIN_BRAND));
+    expect(details[0].songs[0].album.title).toBe('Album One');
   });
 
-  it('omits albumTitle on songs for emby (matches existing emby behavior)', async () => {
-    const albums = await getAlbumsWithSongs(makeClient(EMBY_BRAND));
-    expect(albums[0].songs[0].albumTitle).toBeUndefined();
+  // Matches the pre-rewrite behaviour: emby's bulk listing never resolved an
+  // album title onto the song, so its album reference falls back to
+  // "Unknown Album" rather than the real title — the same gap, just now
+  // visible on `song.album.title` instead of a since-removed `albumTitle`.
+  it('falls back to "Unknown Album" on the song reference for emby (matches existing emby behavior)', async () => {
+    const details = await getAlbumsWithSongs(makeClient(EMBY_BRAND));
+    expect(details[0].songs[0].album.title).toBe('Unknown Album');
   });
 
   it('gives jellyfin the nested artist cover but gives emby none', async () => {
-    const jellyfinAlbums = await getAlbumsWithSongs(makeClient(JELLYFIN_BRAND));
-    expect(jellyfinAlbums[0].artist.cover).toEqual({ kind: 'jellyfin', itemId: 'artist-1' });
+    // Jellyfin resolves artist art from the item id alone, so the album payload
+    // already carries everything the cover needs; Emby requires an image tag
+    // this endpoint does not return, and honestly has none. The distinction
+    // matters because `{ kind: 'none' }` is not nullish: a consumer written as
+    // `album.artist.cover ?? song.cover` does not fall through it.
+    const jellyfinDetails = await getAlbumsWithSongs(makeClient(JELLYFIN_BRAND));
+    expect(jellyfinDetails[0].album.artist.cover).toEqual({ kind: 'jellyfin', itemId: 'artist-1' });
 
-    const embyAlbums = await getAlbumsWithSongs(makeClient(EMBY_BRAND));
-    expect(embyAlbums[0].artist.cover).toEqual({ kind: 'none' });
+    const embyDetails = await getAlbumsWithSongs(makeClient(EMBY_BRAND));
+    expect(embyDetails[0].album.artist.cover).toEqual({ kind: 'none' });
   });
 });

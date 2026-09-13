@@ -23,6 +23,8 @@ const fullDto: SubsonicSong = {
   track: 1,
   created: '2024-03-02T10:15:00.000Z',
   genres: [{ name: 'Electronic' }, { name: 'Rock' }],
+  bpm: 92,
+  path: 'Radiohead/Kid A/01 Everything In Its Right Place.mp3',
   musicBrainzId: 'rec-mbid',
   isrc: ['GBAYE0000971', 'GBAYE0000972'],
 };
@@ -44,11 +46,15 @@ describe('mapSong', () => {
       year: 2000,
       genres: ['Electronic', 'Rock'],
     });
+    expect(song.bpm).toBe(92);
     expect(song.audio).toEqual({
       bitrateKbps: 320,
       sampleRateHz: 44100,
       bitsPerSample: 16,
       mimeType: 'audio/mpeg',
+      // The server's own path for the file, shown in the track info sheet —
+      // not a downloaded copy, which lives on a PlayableResource instead.
+      path: 'Radiohead/Kid A/01 Everything In Its Right Place.mp3',
     });
   });
 

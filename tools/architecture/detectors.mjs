@@ -104,11 +104,27 @@ function providerMatcher(name) {
 
 const PROVIDER_MATCHERS = PROVIDER_NAMES.map(name => [name, providerMatcher(name)]);
 
+/**
+ * Blanks out comments so the gate measures code rather than prose.
+ *
+ * A doc comment saying a capability is "filled by Jellyfin today" is useful
+ * and is not a branch; a `switch` on a provider name is the thing being
+ * hunted. Matching comments made the two indistinguishable and punished
+ * writing the explanation down.
+ */
+function stripComments(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, match => match.replace(/[^\n]/g, ' '))
+    .split('\n')
+    .map(line => line.replace(/\/\/.*$/, ''))
+    .join('\n');
+}
+
 export function providerReferences(files = sourceFiles()) {
   const found = [];
   for (const file of files) {
     if (isTest(file) || PROVIDER_HOMES.some(home => file.startsWith(home))) continue;
-    readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
+    stripComments(readFileSync(file, 'utf8')).split('\n').forEach((line, index) => {
       for (const [name, pattern] of PROVIDER_MATCHERS) {
         if (pattern.test(line)) found.push({ file, line: index + 1, provider: name });
       }
@@ -120,22 +136,37 @@ export function providerReferences(files = sourceFiles()) {
 
 // --- unsafe escapes ---------------------------------------------------------
 
+/**
+ * Patterns checked against code with comments blanked out. `as any` written in
+ * a sentence ("same as any other result") is prose, not a cast, and flagging it
+ * taught people to avoid the phrase rather than avoid the cast.
+ */
 export const UNSAFE_PATTERNS = [
   ['as-any', /\bas\s+any\b/],
   ['double-cast', /\bas\s+unknown\s+as\b/],
   // Only the directive form counts. `@ts-ignore` written mid-sentence is prose
   // about a suppression, not a suppression.
-  ['ts-suppression', /(^|\/\/|\/\*|\*)\s*@ts-(ignore|expect-error)\b/],
   ['console-log', /\bconsole\.log\s*\(/],
 ];
+
+/**
+ * Checked against the raw source, because a suppression *is* a comment. Only
+ * the directive form counts: `@ts-ignore` mid-sentence is prose about one.
+ */
+const SUPPRESSION_PATTERN = /(^|\/\/|\/\*|\*)\s*@ts-(ignore|expect-error)\b/;
 
 export function unsafeEscapes(files = sourceFiles()) {
   const found = [];
   for (const file of files) {
     if (isTest(file)) continue;
-    readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
+    const raw = readFileSync(file, 'utf8');
+    const code = stripComments(raw).split('\n');
+    raw.split('\n').forEach((rawLine, index) => {
       for (const [kind, pattern] of UNSAFE_PATTERNS) {
-        if (pattern.test(line)) found.push({ kind, file, line: index + 1 });
+        if (pattern.test(code[index] ?? '')) found.push({ kind, file, line: index + 1 });
+      }
+      if (SUPPRESSION_PATTERN.test(rawLine)) {
+        found.push({ kind: 'ts-suppression', file, line: index + 1 });
       }
     });
   }

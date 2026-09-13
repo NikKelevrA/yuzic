@@ -12,7 +12,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { selectAlbumsById } from '@/utils/redux/selectors/librarySelectors';
-import { Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 import Touchable from '@/components/Touchable';
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/hooks/useRadius';
@@ -27,9 +27,9 @@ type QueueItemProps = {
 
 function queueItemPropsAreEqual(prev: QueueItemProps, next: QueueItemProps) {
   return (
-    prev.item.id === next.item.id &&
+    prev.item.localId === next.item.localId &&
     prev.item.title === next.item.title &&
-    prev.item.artist === next.item.artist &&
+    prev.item.artist.name === next.item.artist.name &&
     prev.index === next.index &&
     prev.isCurrent === next.isCurrent &&
     prev.onPress === next.onPress
@@ -63,7 +63,7 @@ const QueueItem = memo(
           {item.title}
         </Text>
         <Text style={styles.artist} numberOfLines={1}>
-          {item.artist}
+          {item.artist.name}
         </Text>
       </View>
 
@@ -95,7 +95,7 @@ const Queue: React.FC<{ onBack: () => void; width: number }> = ({
     setQueue(getQueue());
   }, [getQueue, queueVersion]);
 
-  const currentAlbum = currentSong?.albumId ? albumsById.get(currentSong.albumId) : undefined;
+  const currentAlbum = currentSong?.album.nativeId ? albumsById.get(currentSong.album.nativeId) : undefined;
 
   const handleSongClick = useCallback(
     (index: number) => {
@@ -129,13 +129,13 @@ const Queue: React.FC<{ onBack: () => void; width: number }> = ({
         <QueueItem
           item={item}
           index={index}
-          isCurrent={item.id === currentSong?.id}
+          isCurrent={item.localId === currentSong?.localId}
           onPress={handleSongClick}
           onLongPress={drag}
         />
       );
     },
-    [currentSong?.id, handleSongClick]
+    [currentSong?.localId, handleSongClick]
   );
 
   return (
@@ -171,7 +171,7 @@ const Queue: React.FC<{ onBack: () => void; width: number }> = ({
             style={styles.nowPlayingArtist}
             numberOfLines={1}
           >
-            {currentSong?.artist}
+            {currentSong?.artist.name}
           </Text>
         </View>
 
@@ -209,7 +209,7 @@ const Queue: React.FC<{ onBack: () => void; width: number }> = ({
       {/* List */}
       <DraggableFlatList
         data={queue}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.localId}
         onDragEnd={handleDragEnd}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}

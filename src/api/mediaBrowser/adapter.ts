@@ -13,10 +13,14 @@ import {
   SearchApi
 } from "../types";
 
-import { Playlist, Server } from "@/types";
+import { Server } from "@/types";
+import type { Playlist } from "@/domain/entities/Playlist";
+import type { PlaylistDetail } from "@/domain/entities/Detail";
+import { makeLocalId } from "@/domain/identity/LocalId";
+import i18n from "@/i18n";
 
 import { MediaBrowserBrand } from "./brand";
-import { createMediaBrowserClient, MediaBrowserClient } from "./client";
+import { createMediaBrowserClient, requireProvenance, MediaBrowserClient } from "./client";
 import { connect } from "./auth/connect";
 import { ping } from "./auth/ping";
 import { testServerUrl } from "./auth/testServerUrl";
@@ -26,7 +30,8 @@ import { getAlbums } from "./albums/getAlbums";
 import { getAlbumsWithSongs } from "./albums/getAlbumsWithSongs";
 import { getArtists } from "./artists/getArtists";
 import { getPlaylists } from "./playlists/getPlaylists";
-import { getPlaylistItems, getPlaylistEntryIdForSong } from "./playlists/getPlaylistItems";
+import { getPlaylist } from "./playlists/getPlaylist";
+import { getPlaylistEntryIdForSong } from "./playlists/getPlaylistItems";
 import { createPlaylist } from "./playlists/createPlaylist";
 import { deletePlaylist } from "./playlists/deletePlaylist";
 import { updatePlaylistName } from "./playlists/updatePlaylistName";
@@ -37,7 +42,7 @@ import { star } from "./starred/star";
 import { unstar } from "./starred/unstar";
 import { getArtist } from "./artists/getArtist";
 import { getGenres } from "./genres/getGenres";
-import { buildFavoritesPlaylist } from "@/utils/builders/buildFavoritesPlaylist";
+import { buildFavoritesPlaylist } from '@/utils/builders/buildFavoritesPlaylist';
 import { FAVORITES_ID } from "@/constants/favorites";
 import { getLyricsBySongId } from "./lyrics/getLyricsBySongId";
 import { getSong } from "./songs/getSong";
@@ -49,6 +54,14 @@ import { getInstantMix } from "./instantMix/getInstantMix";
 import { getSimilarAlbums, getSimilarArtists } from "./similar/getSimilarItems";
 import { search } from "./search/search";
 
+/**
+ * The synthetic "Favorites" playlist, built locally from starred songs
+ * rather than fetched — neither brand has a native favorites-as-playlist
+ * concept, only a per-item IsFavorite flag. It still needs the same identity
+ * contract as a real playlist (a stable `LocalId`, this server's
+ * provenance) so the UI can't tell it apart from one that came off the wire
+ * except by its id.
+ */
 /**
  * The adapter both MediaBrowser-derived servers share.
  *
@@ -79,14 +92,23 @@ export const createMediaBrowserAdapter = (
   const clientFor = (pid: string) =>
     createMediaBrowserClient({ serverUrl, serverId, fallbackUrls, token, userId, parentId: pid, basicAuth }, brand);
 
-  async function fromParents<T extends { id: string }>(
-    fn: (c: MediaBrowserClient) => Promise<T[]>
+  // Keyed by `keyOf` rather than a hardcoded `.id` — the domain entities this
+  // now fans out over carry their identity as `localId`, and `listWithSongs`
+  // fans out over `AlbumDetail`, whose identity is nested under `.album`.
+  async function fromParents<T>(
+    fn: (c: MediaBrowserClient) => Promise<T[]>,
+    keyOf: (item: T) => string
   ): Promise<T[]> {
     if (parentIds.length === 0) return fn(client);
     if (parentIds.length === 1) return fn(clientFor(parentIds[0]));
     const all = (await Promise.all(parentIds.map(id => fn(clientFor(id))))).flat();
     const seen = new Set<string>();
-    return all.filter(item => !seen.has(item.id) && (seen.add(item.id), true));
+    return all.filter(item => {
+      const key = keyOf(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   const auth: AuthApi = {
@@ -103,17 +125,17 @@ export const createMediaBrowserAdapter = (
   };
 
   const albums: AlbumsApi = {
-    list: async () => fromParents(c => getAlbums(c)),
+    list: async () => fromParents(c => getAlbums(c), a => a.localId),
     get: async (id: string) => {
-      const album = await getAlbum(client, id);
-      if (!album) throw new Error("Album not found");
-      return album;
+      const detail = await getAlbum(client, id);
+      if (!detail) throw new Error("Album not found");
+      return detail;
     },
-    listWithSongs: async () => fromParents(c => getAlbumsWithSongs(c)),
+    listWithSongs: async () => fromParents(c => getAlbumsWithSongs(c), d => d.album.localId),
   };
 
   const artists: ArtistsApi = {
-    list: async () => fromParents(c => getArtists(c)),
+    list: async () => fromParents(c => getArtists(c), a => a.localId),
     get: async (id: string) => {
       const artist = await getArtist(client, id);
       if (!artist) throw new Error("Artist not found");
@@ -136,20 +158,19 @@ export const createMediaBrowserAdapter = (
         getPlaylists(client),
         getStarredItems(client),
       ]);
-      const favorites = buildFavoritesPlaylist(starred.songs ?? []);
+      const favorites = buildFavoritesPlaylist(starred.songs ?? [], requireProvenance(client));
       return [favorites, ...base];
     },
 
     get: async (id: string) => {
       if (id === FAVORITES_ID) {
         const starred = await getStarredItems(client);
-        return buildFavoritesPlaylist(starred.songs ?? []);
+        const songs = starred.songs ?? [];
+        return { playlist: buildFavoritesPlaylist(songs, requireProvenance(client)), songs };
       }
-      const basePlaylists = await getPlaylists(client);
-      const base = basePlaylists.find((p) => p.id === id);
-      if (!base) throw new Error("Playlist not found");
-      const songs = await getPlaylistItems(client, id);
-      return { ...base, subtext: `Playlist • ${songs.length} songs`, songs } as Playlist;
+      const detail = await getPlaylist(client, id);
+      if (!detail) throw new Error("Playlist not found");
+      return detail;
     },
 
     create: async (name: string) => {
@@ -213,7 +234,7 @@ export const createMediaBrowserAdapter = (
   };
 
   const tracks: TracksApi = {
-    list: async () => fromParents(c => getTracks(c)),
+    list: async () => fromParents(c => getTracks(c), s => s.localId),
     get: async (id: string) => getSong(client, id),
   };
 

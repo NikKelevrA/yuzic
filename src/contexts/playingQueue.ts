@@ -1,28 +1,32 @@
-export type QueueSong = {
-  id: string
-}
-
-export type PlayNextQueueUpdate<T extends QueueSong> = {
+export type PlayNextQueueUpdate<T> = {
   queue: T[]
   currentIndex: number
   insertIndex: number
   removedIndex: number | null
 }
 
-export function moveSongAfterCurrent<T extends QueueSong>(
+// Generic over the queue's entry type and keyed by an explicit `getId` rather
+// than an `{ id: string }` constraint: the queue now holds `PlayableResource`,
+// which has no `id` field of its own — its identity is `song.localId` — and a
+// queue can hold entries from more than one origin at once, where only that
+// branded identity (not `nativeId`) is guaranteed not to collide.
+export function moveSongAfterCurrent<T>(
   queue: T[],
   currentIndex: number,
   song: T,
+  getId: (item: T) => string,
 ): PlayNextQueueUpdate<T> | null {
   const current = queue[currentIndex]
-  if (!current || current.id === song.id) return null
+  if (!current || getId(current) === getId(song)) return null
 
-  const removedIndex = queue.findIndex(item => item.id === song.id)
+  const songId = getId(song)
+  const removedIndex = queue.findIndex(item => getId(item) === songId)
   const withoutSong = removedIndex === -1
     ? [...queue]
-    : queue.filter(item => item.id !== song.id)
+    : queue.filter(item => getId(item) !== songId)
 
-  const adjustedCurrentIndex = withoutSong.findIndex(item => item.id === current.id)
+  const currentId = getId(current)
+  const adjustedCurrentIndex = withoutSong.findIndex(item => getId(item) === currentId)
   if (adjustedCurrentIndex === -1) return null
 
   const insertIndex = adjustedCurrentIndex + 1
@@ -41,14 +45,15 @@ export function moveSongAfterCurrent<T extends QueueSong>(
 // anything removed from it (e.g. a track dropped after a playback failure).
 // Keep snapshot entries still present in the live queue, then append
 // whatever's in the live queue that the snapshot doesn't know about.
-export function reconcileUnshuffledQueue<T extends QueueSong>(
+export function reconcileUnshuffledQueue<T>(
   originalQueue: T[],
   liveQueue: T[],
+  getId: (item: T) => string,
 ): T[] {
-  const liveIds = new Set(liveQueue.map(item => item.id))
-  const restoredBase = originalQueue.filter(item => liveIds.has(item.id))
-  const restoredIds = new Set(restoredBase.map(item => item.id))
-  const addedWhileShuffled = liveQueue.filter(item => !restoredIds.has(item.id))
+  const liveIds = new Set(liveQueue.map(getId))
+  const restoredBase = originalQueue.filter(item => liveIds.has(getId(item)))
+  const restoredIds = new Set(restoredBase.map(getId))
+  const addedWhileShuffled = liveQueue.filter(item => !restoredIds.has(getId(item)))
   return [...restoredBase, ...addedWhileShuffled]
 }
 
