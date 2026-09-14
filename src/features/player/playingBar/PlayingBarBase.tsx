@@ -1,6 +1,6 @@
-import { cappedTypography, fontScaleCap, hitSlopFor, iconSize, motion, onDark, radius, spacing } from '@/constants/design';
-import React, { useCallback, useEffect, memo, useMemo, useRef } from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle, useWindowDimensions } from 'react-native';
+import { cappedTypography, fontScaleCap, hitSlopFor, iconSize, radius, spacing } from '@/constants/design';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Music, Play, Pause } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -9,15 +9,13 @@ import { useSelector } from 'react-redux';
 import PlaylistList from '@/components/PlaylistList';
 import OutputDeviceSheet from '@/features/player/components/OutputDeviceSheet';
 import { MediaImage } from '@/components/MediaImage';
-import { usePlayingState, usePlayingActions, usePlayingProgress } from '@/features/playback/PlayingContext';
+import { usePlayingState, usePlayingActions } from '@/features/playback/PlayingContext';
 import { hasDuration } from '@/domain/playback/ContentKind';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   withSpring,
   runOnJS,
-  Easing,
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
@@ -31,160 +29,12 @@ import { useTheme } from '@/features/theme/useTheme';
 import { selectPlayingBarAction, selectThemeColor } from '@/features/settings/appearance/state';
 
 import { usePlayingBarAction } from './actions/usePlayingBarAction';
+import ProgressBarStrip from './ProgressBarStrip';
 import { useSheetRef } from '@/components/useSheetRef';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
-type Variant = 'ios' | 'android';
 
-type Props = {
-  variant: Variant;
-};
-
-// Isolated component so 1-second progress ticks don't rerender the full bar.
-const ProgressBarStrip = memo(({
-  fallbackDuration,
-  themeColor,
-  containerStyle,
-}: {
-  fallbackDuration: number;
-  themeColor: string;
-  containerStyle: StyleProp<ViewStyle>;
-}) => {
-  const { position, duration } = usePlayingProgress();
-  const effectiveDuration = duration > 0 ? duration : fallbackDuration;
-  const displayRatio = useSharedValue(0);
-
-  useEffect(() => {
-    const ratio = effectiveDuration > 0 ? Math.max(0, Math.min(1, position / effectiveDuration)) : 0;
-    displayRatio.value = withTiming(ratio, { duration: motion.progress, easing: Easing.linear });
-  }, [position, effectiveDuration, displayRatio]);
-
-  const fillStyle = useAnimatedStyle(() => ({
-    width: `${displayRatio.value * 100}%`,
-  }));
-
-  return (
-    <View style={[styles.progressBarContainer, containerStyle]}>
-      <Animated.View style={[styles.progressBar, fillStyle, { backgroundColor: themeColor }]} />
-    </View>
-  );
-});
-ProgressBarStrip.displayName = 'ProgressBarStrip';
-
-const variantStyles = {
-  ios: {
-    // No margins, radius or shadow: the bar is the top row of the tab dock,
-    // not a card resting on it. The dock owns the surface and the hairline.
-    wrapper: {},
-    container: {
-      flexDirection: 'column' as const,
-      // Equal above the row and below it. Tighter than the gap around the
-      // 40pt cover was: the art grows into this padding rather than pushing
-      // the row taller, so the cover gains prominence and the bar does not
-      // gain height.
-      paddingTop: spacing.sm,
-      paddingBottom: 0,
-      paddingHorizontal: spacing.page,
-    },
-    topRowWrapper: {
-      justifyContent: 'center' as const,
-    },
-    topRow: {
-      // The artwork sets the row height rather than sitting inside it with
-      // slack, so the cover can grow without the dock growing with it.
-      minHeight: 48,
-      paddingRight: 0,
-    },
-    coverArt: {
-      width: 48,
-      height: 48,
-      marginRight: spacing.md,
-    },
-    // The title was `caption` like the artist under it, so the two read as
-    // one block of small text with no hierarchy. It is the loudest thing in
-    // the row now, with the artist staying quiet beneath.
-    title: {
-      ...cappedTypography.control.compactRowTitle,
-    },
-    artist: {
-      ...cappedTypography.control.caption,
-    },
-    progressBarContainer: {
-      // Edge to edge: this is the rule between the now-playing row and the
-      // tabs, so it cancels the container's page padding rather than sitting
-      // inset like a widget's own progress bar.
-      height: 2,
-      marginTop: spacing.sm,
-      marginHorizontal: -spacing.page,
-      borderRadius: radius.none,
-    },
-    playPauseButton: {
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      marginRight: spacing.roomy,
-    },
-    actionButton: {
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    },
-    placeholderIconSize: 32,
-  },
-  android: {
-    wrapper: {},
-    container: {
-      flexDirection: 'column' as const,
-      // Equal above the row and below it. Tighter than the gap around the
-      // 40pt cover was: the art grows into this padding rather than pushing
-      // the row taller, so the cover gains prominence and the bar does not
-      // gain height.
-      paddingTop: spacing.sm,
-      paddingBottom: 0,
-      paddingHorizontal: spacing.page,
-    },
-    topRowWrapper: {
-      justifyContent: 'center' as const,
-    },
-    topRow: {
-      // The artwork sets the row height rather than sitting inside it with
-      // slack, so the cover can grow without the dock growing with it.
-      minHeight: 48,
-      paddingRight: 0,
-    },
-    coverArt: {
-      width: 48,
-      height: 48,
-      marginRight: spacing.md,
-    },
-    // The title was `caption` like the artist under it, so the two read as
-    // one block of small text with no hierarchy. It is the loudest thing in
-    // the row now, with the artist staying quiet beneath.
-    title: {
-      ...cappedTypography.control.compactRowTitle,
-    },
-    artist: {
-      ...cappedTypography.control.caption,
-    },
-    progressBarContainer: {
-      // Edge to edge: this is the rule between the now-playing row and the
-      // tabs, so it cancels the container's page padding rather than sitting
-      // inset like a widget's own progress bar.
-      height: 2,
-      marginTop: spacing.sm,
-      marginHorizontal: -spacing.page,
-      borderRadius: radius.none,
-    },
-    playPauseButton: {
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-      marginRight: spacing.roomy,
-    },
-    actionButton: {
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    },
-    placeholderIconSize: 32,
-  },
-};
+const PLACEHOLDER_ICON_SIZE = 32;
 
 /**
  * The faintest the bar is drawn while the player is rising over it.
@@ -198,7 +48,11 @@ const variantStyles = {
  */
 const BAR_MIN_OPACITY = 0.02;
 
-export default function PlayingBarBase({ variant }: Props) {
+/**
+ * The now-playing row at the top of the tab dock. iOS and Android draw it the
+ * same way; each platform's `PlayingBar` renders this.
+ */
+export default function PlayingBarBase() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const themeColor = useSelector(selectThemeColor);
@@ -213,7 +67,6 @@ export default function PlayingBarBase({ variant }: Props) {
   // nothing must not settle as though it decided something — see `settle.ts`.
   const dragMoved = useSharedValue(false);
 
-  const stylesForVariant = variantStyles[variant];
   const playlistSheetRef = useSheetRef();
   const castSheetRef = useSheetRef();
 
@@ -306,114 +159,6 @@ export default function PlayingBarBase({ variant }: Props) {
     opacity: coverHandedOver(expansion.value, barCover.value, fullCover.value) ? 0 : 1,
   }));
 
-  const content = (
-    <View style={[styles.topRow, stylesForVariant.topRow]}>
-      <Animated.View
-        ref={coverRef}
-        onLayout={measureCover}
-        style={[styles.coverArt, stylesForVariant.coverArt, coverHandoffStyle]}
-      >
-        {currentSong?.cover ? (
-          <MediaImage
-            cover={currentSong.cover}
-            size="thumb"
-            style={styles.coverFill}
-          />
-        ) : (
-          <View style={[styles.coverFill, styles.iconPlaceholder]}>
-            <Music
-              size={stylesForVariant.placeholderIconSize}
-              color={colors.secondary}
-            />
-          </View>
-        )}
-      </Animated.View>
-
-      <View style={styles.details}>
-        <Text
-          testID="playing-bar-title"
-          numberOfLines={1}
-          maxFontSizeMultiplier={fontScaleCap.control}
-          style={[
-            styles.title,
-            stylesForVariant.title,
-            { color: colors.secondary },
-          ]}
-        >
-          {currentSong?.title || t('playing.bar.noSong')}
-        </Text>
-        <Text
-          numberOfLines={1}
-          maxFontSizeMultiplier={fontScaleCap.control}
-          style={[
-            styles.artist,
-            stylesForVariant.artist,
-            { color: colors.subtext },
-          ]}
-        >
-          {currentSong?.artist.name || t('playing.bar.selectTrack')}
-        </Text>
-      </View>
-
-      {currentSong && (
-        <Touchable
-          accessibilityLabel={isPlaying ? t('a11y.player.pause') : t('a11y.player.play')}
-          accessibilityRole="button"
-          testID="playing-bar-play-pause"
-          style={[styles.playPauseButton, stylesForVariant.playPauseButton]}
-          onPress={handlePlayPause}
-          hitSlop={hitSlopFor(iconSize.control)}
-        >
-          {isBuffering
-            ? <SpinningLoaderCircle size={iconSize.control} color={colors.secondary} />
-            : isPlaying
-              ? <Pause size={iconSize.header} color={colors.secondary} fill={colors.secondary} />
-              : <Play size={iconSize.header} color={colors.secondary} fill={colors.secondary} />
-          }
-        </Touchable>
-      )}
-
-      {/* A filled accent disc here made the contextual action the loudest
-          thing in the dock while play/pause was a bare glyph beside it. Both
-          are plain now, separated by size and colour instead. */}
-      {primaryAction && (
-        <Touchable
-          accessibilityRole="button"
-          accessibilityLabel={primaryAction.label}
-          accessibilityState={primaryAction.selected === undefined
-            ? undefined
-            : { selected: primaryAction.selected }}
-          style={[styles.actionButton, stylesForVariant.actionButton]}
-          onPress={primaryAction.onPress}
-          hitSlop={hitSlopFor(iconSize.control)}
-        >
-          {primaryAction.icon}
-        </Touchable>
-      )}
-    </View>
-  );
-
-  const barContent = (
-    <>
-      {stylesForVariant.topRowWrapper ? (
-        <View style={stylesForVariant.topRowWrapper}>{content}</View>
-      ) : content}
-
-      {/* A radio station has no meaningful position to draw — hide the strip
-       * entirely rather than let it sit flat at zero. Podcast episodes keep it. */}
-      {(!currentSong || hasDuration(currentSong.contentKind)) && (
-        <ProgressBarStrip
-          fallbackDuration={currentSong?.durationSeconds || 1}
-          themeColor={themeColor}
-          containerStyle={[
-            stylesForVariant.progressBarContainer,
-            { backgroundColor: colors.border },
-          ]}
-        />
-      )}
-    </>
-  );
-
   return (
     <>
       <GestureDetector gesture={dragToOpen}>
@@ -425,8 +170,92 @@ export default function PlayingBarBase({ variant }: Props) {
             onPressIn={prepare}
             onPress={handleExpand}
           >
-            <View style={[styles.wrapper, stylesForVariant.wrapper]}>
-              <View style={[styles.container, stylesForVariant.container]}>{barContent}</View>
+            <View style={styles.container}>
+              <View style={styles.topRowWrapper}>
+                <View style={styles.topRow}>
+                  <Animated.View
+                    ref={coverRef}
+                    onLayout={measureCover}
+                    style={[styles.coverArt, coverHandoffStyle]}
+                  >
+                    {currentSong?.cover ? (
+                      <MediaImage
+                        cover={currentSong.cover}
+                        size="thumb"
+                        style={styles.coverFill}
+                      />
+                    ) : (
+                      <View style={[styles.coverFill, styles.iconPlaceholder]}>
+                        <Music size={PLACEHOLDER_ICON_SIZE} color={colors.secondary} />
+                      </View>
+                    )}
+                  </Animated.View>
+
+                  <View style={styles.details}>
+                    <Text
+                      testID="playing-bar-title"
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={fontScaleCap.control}
+                      style={[styles.title, { color: colors.secondary }]}
+                    >
+                      {currentSong?.title || t('playing.bar.noSong')}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={fontScaleCap.control}
+                      style={[styles.artist, { color: colors.subtext }]}
+                    >
+                      {currentSong?.artist.name || t('playing.bar.selectTrack')}
+                    </Text>
+                  </View>
+
+                  {currentSong && (
+                    <Touchable
+                      accessibilityLabel={isPlaying ? t('a11y.player.pause') : t('a11y.player.play')}
+                      accessibilityRole="button"
+                      testID="playing-bar-play-pause"
+                      style={styles.playPauseButton}
+                      onPress={handlePlayPause}
+                      hitSlop={hitSlopFor(iconSize.control)}
+                    >
+                      {isBuffering
+                        ? <SpinningLoaderCircle size={iconSize.control} color={colors.secondary} />
+                        : isPlaying
+                          ? <Pause size={iconSize.header} color={colors.secondary} fill={colors.secondary} />
+                          : <Play size={iconSize.header} color={colors.secondary} fill={colors.secondary} />
+                      }
+                    </Touchable>
+                  )}
+
+                  {/* A filled accent disc here made the contextual action the loudest
+                      thing in the dock while play/pause was a bare glyph beside it. Both
+                      are plain now, separated by size and colour instead. */}
+                  {primaryAction && (
+                    <Touchable
+                      accessibilityRole="button"
+                      accessibilityLabel={primaryAction.label}
+                      accessibilityState={primaryAction.selected === undefined
+                        ? undefined
+                        : { selected: primaryAction.selected }}
+                      style={styles.actionButton}
+                      onPress={primaryAction.onPress}
+                      hitSlop={hitSlopFor(iconSize.control)}
+                    >
+                      {primaryAction.icon}
+                    </Touchable>
+                  )}
+                </View>
+              </View>
+
+              {/* A radio station has no meaningful position to draw — hide the strip
+               * entirely rather than let it sit flat at zero. Podcast episodes keep it. */}
+              {(!currentSong || hasDuration(currentSong.contentKind)) && (
+                <ProgressBarStrip
+                  fallbackDuration={currentSong?.durationSeconds || 1}
+                  fillColor={themeColor}
+                  trackColor={colors.border}
+                />
+              )}
             </View>
           </Touchable>
         </Animated.View>
@@ -444,44 +273,64 @@ export default function PlayingBarBase({ variant }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {},
-  container: {},
+  // No margins, radius or shadow: the bar is the top row of the tab dock,
+  // not a card resting on it. The dock owns the surface and the hairline.
+  container: {
+    flexDirection: 'column',
+    // Equal above the row and below it. Tighter than the gap around the
+    // 40pt cover was: the art grows into this padding rather than pushing
+    // the row taller, so the cover gains prominence and the bar does not
+    // gain height.
+    paddingTop: spacing.sm,
+    paddingBottom: 0,
+    paddingHorizontal: spacing.page,
+  },
+  topRowWrapper: {
+    justifyContent: 'center',
+  },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  coverFill: {
-    width: '100%',
-    height: '100%',
+    // The artwork sets the row height rather than sitting inside it with
+    // slack, so the cover can grow without the dock growing with it.
+    minHeight: 48,
   },
   coverArt: {
+    width: 48,
+    height: 48,
+    marginRight: spacing.md,
     borderRadius: radius.sm,
     // The artwork fills this slot now rather than being it, so the slot has to
     // do the clipping — it is what the player measures and hands over.
     overflow: 'hidden',
   },
+  coverFill: {
+    width: '100%',
+    height: '100%',
+  },
   details: {
     flex: 1,
   },
+  // The title was `caption` like the artist under it, so the two read as
+  // one block of small text with no hierarchy. It is the loudest thing in
+  // the row now, with the artist staying quiet beneath.
   title: {
+    ...cappedTypography.control.compactRowTitle,
     fontWeight: '500',
   },
   artist: {
+    ...cappedTypography.control.caption,
     marginTop: spacing.xxs,
   },
   iconPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  progressBarContainer: {
-    backgroundColor: onDark.mutedText,
-    borderRadius: radius.xs,
-    overflow: 'hidden',
+  playPauseButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.roomy,
   },
-  progressBar: {
-    height: '100%',
-  },
-  playPauseButton: {},
   actionButton: {
     justifyContent: 'center',
     alignItems: 'center',

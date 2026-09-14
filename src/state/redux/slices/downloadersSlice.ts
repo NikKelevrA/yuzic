@@ -133,7 +133,7 @@ const downloadersSlice = createSlice({
      * per-Get override and asks to keep it. `qualityProfileId` undefined
      * clears back to Lidarr's own default (profile id 1).
      */
-    setLidarrDefaultQualityProfileId(
+    setDefaultQualityProfileId(
       state,
       action: PayloadAction<{ serverId: string; qualityProfileId: number | undefined }>
     ) {
@@ -154,7 +154,7 @@ export const {
   disconnectDownloader,
   setSlskdPreferences,
   setDefaultProvider,
-  setLidarrDefaultQualityProfileId,
+  setDefaultQualityProfileId,
 } = downloadersSlice.actions;
 
 export default downloadersSlice.reducer;

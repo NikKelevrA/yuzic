@@ -83,14 +83,14 @@ jest.mock('@/state/redux/slices/wantsSlice', () => ({
 
 jest.mock('@/state/redux/selectors/downloadersSelectors', () => ({
   selectDefaultProviderForActiveServer: (state: any) => state.downloaders?.defaultsByServer?.['server-1'] ?? {},
-  selectLidarrDefaultQualityProfileId: (state: any) =>
+  selectDefaultQualityProfileId: (state: any) =>
     state.downloaders?.defaultsByServer?.['server-1']?.lidarrDefaultQualityProfileId,
 }));
 
 jest.mock('@/state/redux/slices/downloadersSlice', () => ({
   setDefaultProvider: (payload: any) => ({ type: 'downloaders/setDefaultProvider', payload }),
-  setLidarrDefaultQualityProfileId: (payload: any) => ({
-    type: 'downloaders/setLidarrDefaultQualityProfileId',
+  setDefaultQualityProfileId: (payload: any) => ({
+    type: 'downloaders/setDefaultQualityProfileId',
     payload,
   }),
 }));
@@ -99,9 +99,6 @@ const mockGetQualityProfiles = jest.fn(async (..._args: unknown[]) => [
   { id: 1, name: 'Standard' },
   { id: 4, name: 'Lossless' },
 ]);
-jest.mock('@/providers/integration/lidarr', () => ({
-  getQualityProfiles: (...args: unknown[]) => mockGetQualityProfiles(...args),
-}));
 
 const mockDownloaderStates = jest.fn();
 jest.mock('@/features/downloaders/registry', () => ({
@@ -141,6 +138,7 @@ function makeDownloaderStates() {
         descriptionKey: 'externalAlbum.download.lidarrDesc',
         albumAddedKey: 'externalAlbum.download.addedToLidarr',
         downloadAlbum: lidarrDownloadAlbum,
+        getQualityProfiles: (...args: unknown[]) => mockGetQualityProfiles(...args),
       },
       config: { serverUrl: 'http://lidarr', apiKey: 'k1' },
       isConnected: true,
@@ -284,7 +282,7 @@ describe('GetReviewSheet', () => {
     );
   });
 
-  it('shows the quality-profile selector only when Lidarr is selected for an album Get', async () => {
+  it('shows the quality-profile selector only when a downloader with profiles is selected for an album Get', async () => {
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
 
     // Nothing selected yet — no quality-profile section.
@@ -330,7 +328,7 @@ describe('GetReviewSheet', () => {
       { qualityProfileId: 4 }
     );
     expect(mockDispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'downloaders/setLidarrDefaultQualityProfileId' })
+      expect.objectContaining({ type: 'downloaders/setDefaultQualityProfileId' })
     );
   });
 
@@ -345,7 +343,7 @@ describe('GetReviewSheet', () => {
     await flush();
 
     expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'downloaders/setLidarrDefaultQualityProfileId',
+      type: 'downloaders/setDefaultQualityProfileId',
       payload: { serverId: 'server-1', qualityProfileId: 4 },
     });
   });

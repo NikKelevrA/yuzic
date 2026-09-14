@@ -1,13 +1,7 @@
 {
   "cycles": [],
-  "file-shape": [
-    "src/components/PlaylistList.tsx",
-    "src/components/options/GetReviewSheet.tsx",
-    "src/features/player/PlayingScreen.tsx",
-    "src/features/player/playingBar/PlayingBarBase.tsx"
-  ],
+  "file-shape": [],
   "provider-branches": [
-    "src/components/options/GetReviewSheet.tsx lidarr",
     "src/components/rows/SongRow/index.tsx deezer",
     "src/constants/design.ts audiomuse",
     "src/constants/design.ts deezer",

@@ -107,7 +107,7 @@ export const selectDefaultProviderForActiveServer = createSelector(
  * Undefined means Lidarr applies its own default (profile id 1) — see
  * `ensureArtist`'s fallback.
  */
-export const selectLidarrDefaultQualityProfileId = createSelector(
+export const selectDefaultQualityProfileId = createSelector(
   [selectDefaultProviderForActiveServer],
   (defaults) => defaults.lidarrDefaultQualityProfileId
 );

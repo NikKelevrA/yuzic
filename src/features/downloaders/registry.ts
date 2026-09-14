@@ -43,6 +43,9 @@ type DownloadOptions = {
   qualityProfileId?: number
 }
 
+/** One of a downloader's named quality settings, chosen by id per Get. */
+export type QualityProfile = { id: number; name: string }
+
 /**
  * The whole browsed album, not just its title and artist: Lidarr resolves the
  * release by MBID/Deezer id where available, and collapsing it to two strings
@@ -81,6 +84,12 @@ type DownloaderDefinition = {
    */
   downloadAlbum?(config: DownloaderConfig, req: AlbumDownloadRequest, options?: DownloadOptions): Promise<DownloadResult>
   downloadTrack?(config: DownloaderConfig, req: TrackDownloadRequest): Promise<DownloadResult>
+  /**
+   * The quality profiles an album Get can pick from, passed back as
+   * `options.qualityProfileId`. Absent where a downloader has no such setting,
+   * which is how the Get sheet knows not to offer one.
+   */
+  getQualityProfiles?(config: DownloaderConfig): Promise<QualityProfile[]>
   /**
    * Read the transfer queue, in the one shape every surface understands.
    *
@@ -136,6 +145,7 @@ const lidarrDownloader: DownloaderDefinition = {
   auth: apiKeyAuth,
   // Lidarr is album-only — no `downloadTrack`.
   downloadAlbum: lidarrDownloadAlbum,
+  getQualityProfiles: (config) => lidarr.getQualityProfiles(lidarrConfigOf(config)),
   fetchQueue: async (config) => (await lidarr.fetchQueue(lidarrConfigOf(config))).map(record => ({
     id: record.id,
     percentComplete: record.percentComplete,

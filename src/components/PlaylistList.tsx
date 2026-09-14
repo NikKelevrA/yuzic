@@ -4,7 +4,6 @@ import React, {
   useState,
   forwardRef,
   useMemo,
-  useEffect,
 } from 'react';
 import {
   View,
@@ -18,26 +17,21 @@ import {
 } from '@gorhom/bottom-sheet';
 import { X, Search, Plus, Check } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
-import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
 import { selectThemeColor } from '@/features/settings/appearance/state';
-import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import type { PlaylistDetail } from '@/domain/entities/Detail';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
-import { QueryKeys } from '@/state/query/queryKeys';
 import { MediaImage } from './MediaImage';
 import { useTheme } from '@/features/theme/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlaylists } from '@/features/playlist/usePlaylists';
 import { useCreatePlaylist } from '@/features/playlist/useCreatePlaylist';
 import { useAddSongToPlaylist } from '@/features/playlist/useAddSongToPlaylist';
+import { usePlaylistMembership } from '@/features/playlist/usePlaylistMembership';
 import { useRemoveSongFromPlaylist } from '@/features/playlist/useRemoveSongFromPlaylist';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
-import { useApi } from '@/providers/registry/useApi';
-import { staleTime } from '@/state/query/staleTime';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
@@ -57,9 +51,6 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
     const themeColor = useSelector(selectThemeColor);
     const insets = useSafeAreaInsets();
 
-    const api = useApi();
-    const queryClient = useQueryClient();
-    const activeServer = useSelector(selectActiveServer);
     const { playlists: allPlaylists } = usePlaylists();
     // Favorites is a synthetic playlist backed by starred songs: toggling it
     // here would call the same star/unstar as the heart button already on the
@@ -77,10 +68,13 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
 
     const [searchQuery, setSearchQuery] = useState('');
     const [newPlaylistName, setNewPlaylistName] = useState('');
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [baseSelectedIds, setBaseSelectedIds] = useState<Set<string>>(new Set());
     const [isSheetOpen, setIsSheetOpen] = useState(false);
-    const [membershipLoading, setMembershipLoading] = useState(false);
+    const {
+      selectedIds,
+      baseSelectedIds,
+      loading: membershipLoading,
+      toggle: togglePlaylist,
+    } = usePlaylistMembership(selectedSong, playlists, isSheetOpen);
 
     const snapPoints = useMemo(() => ['85%'], []);
 
@@ -91,93 +85,6 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
         ),
       [playlists, searchQuery]
     );
-
-    const initialIds = useMemo(() => {
-      if (!selectedSong) return new Set<string>();
-      // Membership is an identity question — the same song reached from two
-      // origins is not the same track — so it compares localId, not the
-      // origin's own id.
-      const selectedSongId = selectedSong.localId;
-
-      return new Set(
-        playlists
-          .filter(p => {
-            // Only the individual playlist's cache entry carries its songs; the
-            // list query returns playlists whose songIds are empty by design.
-            const cached = queryClient.getQueryData<PlaylistDetail | null>(
-              [QueryKeys.Playlist, activeServer?.id, p.nativeId]
-            );
-            if (cached) return cached.songs.some(s => s.localId === selectedSongId);
-            return false;
-          })
-          .map(p => p.nativeId)
-      );
-    }, [playlists, selectedSong, queryClient, activeServer?.id]);
-
-    useEffect(() => {
-      setSelectedIds(new Set(initialIds));
-      setBaseSelectedIds(new Set(initialIds));
-    }, [initialIds]);
-
-    useEffect(() => {
-      if (!isSheetOpen || !selectedSong || !activeServer?.id || !playlists.length) {
-        setMembershipLoading(false);
-        return;
-      }
-
-      let cancelled = false;
-      const selectedSongId = selectedSong.localId;
-      setMembershipLoading(true);
-
-      const hydrateMembership = async () => {
-        const results: PlaylistDetail[] = [];
-        for (let start = 0; start < playlists.length; start += 3) {
-          const batch = await Promise.all(
-            playlists.slice(start, start + 3).map(playlist =>
-              queryClient.fetchQuery<PlaylistDetail>({
-                queryKey: [QueryKeys.Playlist, activeServer.id, playlist.nativeId],
-                queryFn: () => api.playlists.get(playlist.nativeId),
-                staleTime: staleTime.playlists,
-              })
-            )
-          );
-          results.push(...batch);
-        }
-
-        if (cancelled) return;
-        const hydratedIds = new Set<string>();
-        results.forEach((result, index) => {
-          if (result.songs.some(song => song.localId === selectedSongId)) {
-            hydratedIds.add(playlists[index].nativeId);
-          }
-        });
-        setSelectedIds(hydratedIds);
-        setBaseSelectedIds(hydratedIds);
-      };
-
-      void hydrateMembership()
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) setMembershipLoading(false);
-        });
-
-      return () => {
-        cancelled = true;
-      };
-    }, [activeServer?.id, api, isSheetOpen, playlists, queryClient, selectedSong]);
-
-    const togglePlaylist = useCallback((id: string) => {
-      if (membershipLoading) return;
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-        return next;
-      });
-    }, [membershipLoading]);
 
     const renderPlaylistItem = useCallback(({ item }: { item: Playlist }) => {
       const isChecked = selectedIds.has(item.nativeId);

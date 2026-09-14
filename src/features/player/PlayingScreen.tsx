@@ -1,5 +1,5 @@
 import { firstResolvableCover } from '@/domain/entities/Cover';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,17 +16,9 @@ import { useSongScreenModel, type SongScreenModel } from '@/features/song/useSon
 import type { LyricsResult } from '@/providers/contracts/ServerAdapter';
 import SongOptions from '@/components/options/SongOptions';
 import Queue from './components/Queue';
-import Animated, {
-    useSharedValue,
-    type SharedValue,
-    useAnimatedStyle,
-    useAnimatedScrollHandler,
-    withTiming,
-    withSpring,
-} from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { PLAYER_SPRING, usePlayerExpansion } from '@/features/player/PlayerExpansion';
-import { settleFromPlayer } from '@/features/player/settle';
+import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated';
+import { GestureDetector } from 'react-native-gesture-handler';
+import { usePlayerExpansion } from '@/features/player/PlayerExpansion';
 import PlaylistList from '@/components/PlaylistList';
 import PlayingMain from './components/PlayingMain';
 import Controls from './components/Controls';
@@ -38,6 +30,8 @@ import AboutTheArtistCard from './components/AboutTheArtistCard';
 import SleepTimerCard from './components/SleepTimerCard';
 import PlaybackSpeedCard from './components/PlaybackSpeedCard';
 import VolumeCard from './components/VolumeCard';
+import { useDragToClose } from './useDragToClose';
+import { usePlayingTransitions, type PlayingViewMode } from './usePlayingTransitions';
 import { ChevronDown, Ellipsis } from 'lucide-react-native';
 import { useSheetRef } from '@/components/useSheetRef';
 import Touchable from '@/components/Touchable';
@@ -46,8 +40,6 @@ import { hitSlopFor, iconSize, onDark, spacing } from '@/constants/design';
 interface PlayingScreenProps {
     onClose: () => void;
 }
-
-type PlayingViewMode = "player" | "queue";
 
 // Isolated so the once-a-second progress tick only re-renders this small
 // card, not the whole PlayingScreen tree (header, PlayingMain, Controls,
@@ -70,49 +62,6 @@ const LyricsPreviewCardResolver: React.FC<{
     );
 };
 
-const MODE_FADE_MS = 300;
-
-const usePlayingTransitions = (
-    mode: PlayingViewMode,
-    coverVisibility: SharedValue<number>,
-) => {
-    const playerOpacity = useSharedValue(1);
-    const queueOpacity = useSharedValue(0);
-
-    useEffect(() => {
-        playerOpacity.value = withTiming(mode === "player" ? 1 : 0, { duration: MODE_FADE_MS });
-        queueOpacity.value = withTiming(mode === "queue" ? 1 : 0, { duration: MODE_FADE_MS });
-        // The cover art is not ours to fade — the host draws it above this
-        // screen so it can travel to and from the bar — so it is told to go
-        // with the player it belongs to. Without this it stayed put: a
-        // full-width square of artwork sitting on top of the queue.
-        coverVisibility.value = withTiming(mode === "player" ? 1 : 0, { duration: MODE_FADE_MS });
-    }, [mode, playerOpacity, queueOpacity, coverVisibility]);
-
-    const playerStyle = useAnimatedStyle(() => ({
-        opacity: playerOpacity.value,
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    }));
-
-    const queueStyle = useAnimatedStyle(() => ({
-        opacity: queueOpacity.value,
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    }));
-
-    return {
-        playerStyle,
-        queueStyle,
-    };
-};
-
 const PlayingScreen: React.FC<PlayingScreenProps> = ({
     onClose,
 }) => {
@@ -129,11 +78,6 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     const outputDeviceSheetRef = useSheetRef();
 
     const { expansion, scrollY, coverVisibility, isOpen } = usePlayerExpansion();
-
-    // Whether the pan below has actually moved the player, as opposed to being
-    // a scroll that its sibling gesture handled. A gesture that decided nothing
-    // must not settle as though it decided something — see `settle.ts`.
-    const dragMoved = useSharedValue(false);
 
     const handleScroll = useAnimatedScrollHandler(event => {
         scrollY.value = event.contentOffset.y;
@@ -173,44 +117,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     const contentWidth = isTablet ? 500 : width - 48;
     const playerMinHeight = height - insets.top - insets.bottom;
 
-    // Dragging the player down puts it back in the dock, but the same finger
-    // on the same surface also scrolls the cards below the fold. The list wins
-    // whenever it has somewhere to go: only a downward drag from the very top
-    // moves the player, which is the rule every music app's player follows and
-    // the one thumbs already expect.
-    const dragToClose = useMemo(
-        () =>
-            Gesture.Simultaneous(
-                Gesture.Pan()
-                    .onBegin(() => {
-                        dragMoved.value = false;
-                    })
-                    .onUpdate(event => {
-                        if (scrollY.value > 0 || event.translationY <= 0) return;
-                        dragMoved.value = true;
-                        expansion.value = Math.max(0, Math.min(1, 1 - event.translationY / height));
-                    })
-                    // `onFinalize`, not `onEnd`: a gesture that is cancelled or
-                    // interrupted — by the scroll view winning, by another
-                    // animation, by the touch being stolen — never reaches
-                    // `onEnd` at all, and that is the exit that used to leave
-                    // `expansion` parked at an intermediate value with the
-                    // playing bar faded to invisible (#211). `onFinalize` runs
-                    // for every ending, so there is exactly one way out and it
-                    // always names 0 or 1.
-                    .onFinalize(event => {
-                        const target = settleFromPlayer(expansion.value, event.velocityY, dragMoved.value);
-                        // A tap: the pressable already started the spring it meant.
-                        if (target === null) return;
-                        expansion.value = withSpring(target, PLAYER_SPRING);
-                    }),
-                // Hands the scroll view's own gesture to RNGH so the two are
-                // siblings that may both run, rather than the pan swallowing
-                // every touch before the list ever sees it.
-                Gesture.Native(),
-            ),
-        [dragMoved, expansion, height, scrollY],
-    );
+    const dragToClose = useDragToClose(expansion, scrollY, height);
 
     const showSleepTimer = useSelector(selectShowSleepTimer);
     const showPlaybackSpeed = useSelector(selectShowPlaybackSpeed);
