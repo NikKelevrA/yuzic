@@ -1,5 +1,5 @@
 // Ambient types for the surface of `react-native-udp` that
-// `src/hooks/useDlnaDiscovery.ts` actually uses (SSDP discovery over a raw
+// `src/features/player/useDlnaDiscovery.ts` actually uses (SSDP discovery over a raw
 // UDP4 socket). The package ships its own `.d.ts` under `lib/types`, but it
 // is not always resolved consistently across our toolchain, so we pin a
 // small, accurate surface here instead of `@ts-ignore`-ing the import.

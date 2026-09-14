@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router'
 import { useCallback } from 'react'
-import PlaylistView from "@/screens/playlist";
+import PlaylistView from "@/features/playlist/PlaylistScreen";
 import { useSync } from '@/features/library/useSync';
 
 export default function PlaylistScreen() {

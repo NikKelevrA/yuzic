@@ -11,12 +11,12 @@ import {
   getDeezerRelatedArtists,
   searchDeezerArtists,
   searchDeezerAlbums,
-} from '@/api/deezer'
+} from '@/providers/integration/deezer'
 import { selectDeezerExternalEnabled, selectMusicbrainzExternalEnabled } from '@/features/settings/search/state';
-import * as mb from '@/api/musicbrainz'
-import { mapAlbum as mapMbAlbum } from '@/api/musicbrainz/mapAlbum'
-import { mapArtist as mapMbArtist } from '@/api/musicbrainz/mapArtist'
-import { mapSong as mapMbSong } from '@/api/musicbrainz/mapSong'
+import * as mb from '@/providers/integration/musicbrainz'
+import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum'
+import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
+import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong'
 import type { Album } from '@/domain/entities/Album'
 import type { Artist } from '@/domain/entities/Artist'
 import type { Song } from '@/domain/entities/Song'

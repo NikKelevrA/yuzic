@@ -14,7 +14,7 @@ import {
   submitDirectListen,
   submitDirectNowPlaying,
 } from '@/state/redux/selectors/scrobbleRoutingSelectors';
-import { useApi } from '@/api';
+import { useApi } from '@/providers/registry/useApi';
 
 function passesScrobbleThreshold(listenedSeconds: number, durationSeconds: number): boolean {
   const duration = Number(durationSeconds) || 0;

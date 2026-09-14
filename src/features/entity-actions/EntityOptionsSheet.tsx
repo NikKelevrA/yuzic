@@ -1,7 +1,7 @@
 import React, { forwardRef, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import {
   OptionSheetDivider,

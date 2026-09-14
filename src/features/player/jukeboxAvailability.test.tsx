@@ -2,7 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 
 const mockApi: { jukebox?: { status: jest.Mock } } = {};
 
-jest.mock('@/api', () => ({ useApi: () => mockApi }));
+jest.mock('@/providers/registry/useApi', () => ({ useApi: () => mockApi }));
 
 import { useJukeboxAvailability } from './useJukeboxAvailability';
 

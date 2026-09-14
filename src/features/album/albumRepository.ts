@@ -14,7 +14,7 @@ import { firstOfferFor, type BrokerInput } from '@/providers/registry/capability
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import type { Album } from '@/domain/entities/Album';
 import type { AlbumDetail } from '@/domain/entities/Detail';
-import type { AlbumsApi } from '@/api/types';
+import type { AlbumsApi } from '@/providers/contracts/ServerAdapter';
 
 export type AlbumIdentity =
   | { kind: 'server'; nativeId: string }

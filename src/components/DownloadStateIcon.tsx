@@ -8,7 +8,7 @@ import Animated, {
 import { Check, Download } from 'lucide-react-native';
 import DownloadProgressRing from '@/components/DownloadProgressRing';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useReducedMotion } from '@/features/theme/useReducedMotion';
 import { iconSize } from '@/constants/design';
 
 type Props = {

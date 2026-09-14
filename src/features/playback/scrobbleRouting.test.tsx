@@ -12,7 +12,7 @@ import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices
 import listenbrainzReducer, { setUsername } from '@/state/redux/slices/listenbrainzSlice'
 import statsReducer from '@/state/redux/slices/statsSlice'
 import offlineMutationsReducer from '@/state/redux/slices/offlineMutationsSlice'
-import * as listenbrainz from '@/api/listenbrainz'
+import * as listenbrainz from '@/providers/integration/listenbrainz'
 import { listenBrainzCredentialScope } from '@/state/redux/selectors/listenbrainzSelectors'
 import { setCredential, clearCredentialCache } from '@/state/credentialCache'
 
@@ -28,11 +28,11 @@ const mockSongsApi = {
   scrobbleKind: 'scrobble' as const,
 }
 
-jest.mock('@/api', () => ({ useApi: () => ({ songs: mockSongsApi }) }))
+jest.mock('@/providers/registry/useApi', () => ({ useApi: () => ({ songs: mockSongsApi }) }))
 // Not under test, and its transitive expo-constants import doesn't transform
 // in this environment. ListenBrainz is a separate destination with its own
 // switch — see the note on queueScrobble.
-jest.mock('@/api/listenbrainz', () => ({
+jest.mock('@/providers/integration/listenbrainz', () => ({
   submitScrobble: jest.fn(async () => {}),
   submitNowPlaying: jest.fn(async () => {}),
 }))

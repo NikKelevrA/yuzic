@@ -8,7 +8,7 @@
  * the same factory anyway, because one provider id means one declaration,
  * not two.
  */
-import { getLBSimilarArtists, submitScrobble, testConnection as testListenBrainzConnection } from '@/api/listenbrainz';
+import { getLBSimilarArtists, submitScrobble, testConnection as testListenBrainzConnection } from '@/providers/integration/listenbrainz';
 import type { ListenBrainzConfig } from '@/types';
 import { sourceColor } from '@/constants/design';
 import { makeLocalId } from '@/domain/identity/LocalId';
@@ -30,7 +30,7 @@ export function createListenBrainzProvider(config: ListenBrainzConfig): Integrat
         const mbid = artist.externalIds.mbid;
         if (!mbid) return [];
         const raw = await getLBSimilarArtists(mbid, limit);
-        // Same mapping `src/hooks/artists/useLBSimilarArtists.ts` already
+        // Same mapping `src/features/artist/useLBSimilarArtists.ts` already
         // does — ListenBrainz's similar-artists graph is keyed entirely on
         // MBID, which doubles as `nativeId` here.
         return raw.map((candidate): Artist => ({

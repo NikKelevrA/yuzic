@@ -13,10 +13,10 @@
  * has to create the playlist and add songs on that same server. So the
  * factory takes both.
  */
-import { createAudiomuseClient, type AudiomuseConfig } from '@/api/audiomuse/client';
-import { getAudiomuseQueueExtension } from '@/api/audiomuse/similarity';
-import { testConnection as testAudiomuseConnection } from '@/api/audiomuse/ping';
-import type { ApiAdapter } from '@/api/types';
+import { createAudiomuseClient, type AudiomuseConfig } from '@/providers/integration/audiomuse/client';
+import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
+import { testConnection as testAudiomuseConnection } from '@/providers/integration/audiomuse/ping';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
 import { sourceColor } from '@/constants/design';
 import type { IntegrationProvider } from '../contracts/Provider';

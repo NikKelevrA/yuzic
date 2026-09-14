@@ -10,9 +10,9 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BottomTabBarHeightCallbackContext } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 
-import PlayingBar from '@/screens/playing/playingBar/PlayingBar';
+import PlayingBar from '@/features/player/playingBar/PlayingBar';
 import Touchable from '@/components/Touchable';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { selectThemeColor, selectTranslucentDock } from '@/features/settings/appearance/state';
 import { iconSize, spacing } from '@/constants/design';
 

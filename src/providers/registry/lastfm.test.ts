@@ -8,9 +8,9 @@
  * one fetch.
  */
 import { lastfmProvider } from './lastfm';
-import { fetchWithTimeout } from '@/api/fetchWithTimeout';
+import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 
-jest.mock('@/api/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
+jest.mock('@/providers/http/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
 jest.mock('@/constants/keys', () => ({ LASTFM_API_KEY: 'test-key' }));
 
 const mockedFetch = fetchWithTimeout as jest.Mock;

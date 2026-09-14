@@ -6,7 +6,7 @@
  * nothing else — no album endpoint — so only `acquisition.track` is
  * declared, matching `src/features/downloaders/registry.ts`'s own comment.
  */
-import { downloadTrack, testConnection as testSoulSyncConnection, SoulSyncError, type SoulSyncConfig } from '@/api/soulsync';
+import { downloadTrack, testConnection as testSoulSyncConnection, SoulSyncError, type SoulSyncConfig } from '@/providers/integration/soulsync';
 import type { IntegrationProvider } from '../contracts/Provider';
 
 export function createSoulSyncProvider(config: SoulSyncConfig): IntegrationProvider {

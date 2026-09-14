@@ -1,4 +1,4 @@
-import LyricsSettings from "@/screens/settings/lyrics";
+import LyricsSettings from "@/features/settings/lyrics";
 
 export default function LyricsSettingsScreen() {
   return <LyricsSettings />;

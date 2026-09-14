@@ -6,9 +6,9 @@
  * release-group lookup.
  */
 import { musicbrainzProvider } from './musicbrainz';
-import { fetchWithTimeout } from '@/api/fetchWithTimeout';
+import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 
-jest.mock('@/api/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
+jest.mock('@/providers/http/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
 
 const mockedFetch = fetchWithTimeout as jest.Mock;
 

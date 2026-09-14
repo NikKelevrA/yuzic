@@ -5,10 +5,10 @@ import { render } from '@testing-library/react-native';
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc', favorite: '#f00', placeholder: '#999', muted: '#333' }, isDarkMode: false }),
 }));
-jest.mock('@/hooks/useRadius', () => ({ useRadius: () => ({ lg: 16, card: 8 }) }));
+jest.mock('@/features/theme/useRadius', () => ({ useRadius: () => ({ lg: 16, card: 8 }) }));
 jest.mock('@/components/BottomSheetBackdrop', () => ({ renderBackdrop: () => null }));
 jest.mock('@/utils/useSheetRef', () => ({ useSheetRef: () => ({ current: null }) }));
 jest.mock('@/utils/haptics', () => ({
@@ -31,8 +31,8 @@ jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({ useIsAudiomuseC
 jest.mock('@/features/audiomuse/generatePlaylist', () => ({
   generateSimilarPlaylistForSong: jest.fn(), generateSimilarPlaylistForAlbum: jest.fn(), useCanGeneratePlaylist: () => false,
 }));
-jest.mock('@/api', () => ({ useApi: () => ({ shares: undefined }) }));
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/providers/registry/useApi', () => ({ useApi: () => ({ shares: undefined }) }));
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingState: () => ({ currentSong: null }),
   usePlayingActions: () => ({ addToQueue: jest.fn(), playNext: jest.fn(), playSimilar: jest.fn() }),
   usePlaying: () => ({
@@ -40,8 +40,8 @@ jest.mock('@/contexts/PlayingContext', () => ({
     getQueue: () => [], currentSong: null, playNext: jest.fn(),
   }),
 }));
-jest.mock('@/hooks/useIsOffline', () => ({ useIsOffline: () => false }));
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/connectivity/useIsOffline', () => ({ useIsOffline: () => false }));
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownload: () => ({
     downloadTrack: jest.fn(), deleteDownloadedTrack: jest.fn(), isTrackDownloaded: () => false, isTrackDownloading: () => false,
     downloadAlbumById: jest.fn(), getCollectionDownloadState: () => ({ isDownloaded: false, isDownloading: false }),
@@ -60,12 +60,12 @@ jest.mock('@/components/options/useLazyCollectionDetails', () => ({
 
 const mockStarSong = jest.fn().mockResolvedValue(undefined);
 const mockUnstarSong = jest.fn().mockResolvedValue(undefined);
-jest.mock('@/hooks/starred/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
-jest.mock('@/hooks/starred/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: mockStarSong }) }));
-jest.mock('@/hooks/starred/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: mockUnstarSong }) }));
-jest.mock('@/hooks/starred/useStarredAlbums', () => ({ useStarredAlbums: () => ({ albums: [] }) }));
-jest.mock('@/hooks/starred/useStarAlbum', () => ({ useStarAlbum: () => ({ mutateAsync: mockStarSong }) }));
-jest.mock('@/hooks/starred/useUnstarAlbum', () => ({ useUnstarAlbum: () => ({ mutateAsync: mockUnstarSong }) }));
+jest.mock('@/features/library/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
+jest.mock('@/features/library/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: mockStarSong }) }));
+jest.mock('@/features/library/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: mockUnstarSong }) }));
+jest.mock('@/features/library/useStarredAlbums', () => ({ useStarredAlbums: () => ({ albums: [] }) }));
+jest.mock('@/features/library/useStarAlbum', () => ({ useStarAlbum: () => ({ mutateAsync: mockStarSong }) }));
+jest.mock('@/features/library/useUnstarAlbum', () => ({ useUnstarAlbum: () => ({ mutateAsync: mockUnstarSong }) }));
 
 jest.mock('@/components/options/GetReviewSheet', () => 'GetReviewSheet');
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');

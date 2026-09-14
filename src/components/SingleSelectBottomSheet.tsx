@@ -5,8 +5,8 @@ import { useSelector } from 'react-redux';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { selectThemeColor } from '@/features/settings/appearance/state';
-import { useTheme } from '@/hooks/useTheme';
-import { useRadius } from '@/hooks/useRadius';
+import { useTheme } from '@/features/theme/useTheme';
+import { useRadius } from '@/features/theme/useRadius';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import Touchable from '@/components/Touchable';
 import { iconSize, spacing, typography } from '@/constants/design';

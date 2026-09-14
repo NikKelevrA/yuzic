@@ -1,3 +1,3 @@
-import AudiomuseView from '@/screens/settings/integrations/audiomuse';
+import AudiomuseView from '@/features/settings/integrations/audiomuse';
 
 export default AudiomuseView;

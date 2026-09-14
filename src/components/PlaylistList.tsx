@@ -27,20 +27,20 @@ import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import { QueryKeys } from '@/enums/queryKeys';
 import { MediaImage } from './MediaImage';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { usePlaylists } from '@/hooks/playlists/usePlaylists';
-import { useCreatePlaylist } from '@/hooks/playlists/useCreatePlaylist';
-import { useAddSongToPlaylist } from '@/hooks/playlists/useAddSongToPlaylist';
-import { useRemoveSongFromPlaylist } from '@/hooks/playlists/useRemoveSongFromPlaylist';
+import { usePlaylists } from '@/features/playlist/usePlaylists';
+import { useCreatePlaylist } from '@/features/playlist/useCreatePlaylist';
+import { useAddSongToPlaylist } from '@/features/playlist/useAddSongToPlaylist';
+import { useRemoveSongFromPlaylist } from '@/features/playlist/useRemoveSongFromPlaylist';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
-import { useIsOffline } from '@/hooks/useIsOffline';
-import { useApi } from '@/api';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
+import { useApi } from '@/providers/registry/useApi';
 import { staleTime } from '@/constants/staleTime';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 import { FAVORITES_ID } from '@/constants/favorites';
 
 type PlaylistListProps = {

@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux'
-import { useIsOffline } from '@/hooks/useIsOffline'
+import { useIsOffline } from '@/features/connectivity/useIsOffline'
 import { selectSearchSourceEnabled } from '@/features/settings/search/state';
 import { ALL_SOURCES, type SourceId } from '@/features/sources/registry'
 

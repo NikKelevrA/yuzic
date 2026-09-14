@@ -1,4 +1,4 @@
-import type { NetworkType } from '@/hooks/useNetworkType';
+import type { NetworkType } from '@/features/connectivity/useNetworkType';
 
 /**
  * Whether the download queue may run right now.

@@ -3,12 +3,12 @@ import { StyleSheet, Text } from 'react-native'
 import { Play } from 'lucide-react-native'
 import { useTranslation } from 'react-i18next'
 import MediaListRow from '@/components/MediaListRow'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/features/theme/useTheme'
 import { formatDuration, formatSongDuration } from '@/utils/formatDuration'
 import type { Song } from '@/domain/entities/Song'
 import Touchable from '@/components/Touchable'
 import { hitSlopFor, iconSize, typography } from '@/constants/design'
-import { useRadius } from '@/hooks/useRadius'
+import { useRadius } from '@/features/theme/useRadius'
 
 /** The preview affordance on an external top-track row, drawn small on purpose
  *  — it sits inside a row rather than beside one. `hitSlopFor` pads it out. */

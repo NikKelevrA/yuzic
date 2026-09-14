@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSelector } from 'react-redux';
 import { selectThemeColor } from '@/features/settings/appearance/state';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 
 const ThemedHeartCover = ({ size, rounded }: { size?: number; rounded?: number }) => {
     const themeColor = useSelector(selectThemeColor);

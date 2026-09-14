@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 
-import { useApi } from '@/api';
+import { useApi } from '@/providers/registry/useApi';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import { selectQueueSyncEnabled } from '@/features/settings/playback/state';
 

@@ -7,7 +7,7 @@ import {
   DownloaderId,
   PerServerDownloadersState,
 } from '@/state/redux/slices/downloadersSlice';
-import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/api/slskd';
+import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/providers/integration/slskd';
 import { getCredentials } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';
 import { selectCredentialsHydrated } from './serversSelectors';

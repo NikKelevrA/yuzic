@@ -18,7 +18,7 @@
  */
 import { matchArtistToLibrary } from '@/features/library/matchToLibrary';
 import type { Artist } from '@/domain/entities/Artist';
-import type { ArtistsApi } from '@/api/types';
+import type { ArtistsApi } from '@/providers/contracts/ServerAdapter';
 
 /** How to find one artist. `server` is the only origin the broker's
  *  `CapabilityMap` currently names for a bare artist fetch. */

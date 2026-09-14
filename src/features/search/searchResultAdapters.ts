@@ -163,7 +163,7 @@ export function entityToArtist(entity: SearchEntityEntry): Artist {
 }
 
 /** A playlist row's domain entity. Playlists have no external form today —
- *  `SearchEntityType` (src/contexts/SearchContext.tsx) only covers
+ *  `SearchEntityType` (src/features/search/SearchContext.tsx) only covers
  *  album/artist — so this is always local. */
 export function resultToPlaylist(result: SearchResult, activeServerId: string | undefined): Playlist {
   const provenance = serverProvenance(activeServerId ?? '');

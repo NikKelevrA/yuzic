@@ -1,2 +1,2 @@
-import MusicBrainzSettings from '@/screens/settings/integrations/musicbrainz';
+import MusicBrainzSettings from '@/features/settings/integrations/musicbrainz';
 export default MusicBrainzSettings;

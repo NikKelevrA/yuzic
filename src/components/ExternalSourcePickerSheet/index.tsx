@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/features/theme/useTheme'
 import { renderBackdrop } from '@/components/BottomSheetBackdrop'
 import { getSourceMeta } from '@/features/sources/registry'
 import { MediaImage } from '@/components/MediaImage'
@@ -16,7 +16,7 @@ import {
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { iconSize, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 
 export type PickerItemAlbum = SourceResolvedAlbum & { kind: 'album' }
 export type PickerItemArtist = SourceResolvedArtist & { kind: 'artist' }

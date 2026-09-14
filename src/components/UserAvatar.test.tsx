@@ -8,7 +8,7 @@ import { controlSize } from '@/constants/design';
 const mockAvatarUrl = jest.fn();
 let appStateHandler: ((state: AppStateStatus) => void) | undefined;
 
-jest.mock('@/api', () => ({
+jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({ user: { avatarUrl: mockAvatarUrl } }),
 }));
 

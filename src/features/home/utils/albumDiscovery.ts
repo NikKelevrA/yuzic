@@ -1,4 +1,4 @@
-import * as deezer from '@/api/deezer';
+import * as deezer from '@/providers/integration/deezer';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 

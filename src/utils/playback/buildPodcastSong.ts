@@ -1,4 +1,4 @@
-import type { PodcastChannel, PodcastEpisode } from '@/api/types';
+import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';

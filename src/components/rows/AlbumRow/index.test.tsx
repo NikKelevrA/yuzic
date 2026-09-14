@@ -9,11 +9,11 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666' } }),
 }));
 
-jest.mock('@/hooks/useRadius', () => ({
+jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ thumb: 8, pill: 999, pillFor: (n: number) => n / 2 }),
 }));
 

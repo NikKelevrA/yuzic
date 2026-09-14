@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-native';
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', muted: '#333', placeholder: '#999' }, isDarkMode: false }),
 }));
 jest.mock('@/utils/haptics', () => ({
@@ -27,8 +27,8 @@ jest.mock('@/features/audiomuse/generatePlaylist', () => ({
   generateSimilarPlaylistForSong: jest.fn(), generateSimilarPlaylistForAlbum: jest.fn(), generateSimilarPlaylistForArtist: jest.fn(),
   useCanGeneratePlaylist: () => false,
 }));
-jest.mock('@/api', () => ({ useApi: () => ({ shares: undefined }) }));
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/providers/registry/useApi', () => ({ useApi: () => ({ shares: undefined }) }));
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingState: () => ({ currentSong: null }),
   usePlayingActions: () => ({
     addToQueue: jest.fn(), playNext: jest.fn(), playSimilar: jest.fn(),
@@ -39,8 +39,8 @@ jest.mock('@/contexts/PlayingContext', () => ({
     getQueue: () => [], currentSong: null, playNext: jest.fn(),
   }),
 }));
-jest.mock('@/hooks/useIsOffline', () => ({ useIsOffline: () => false }));
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/connectivity/useIsOffline', () => ({ useIsOffline: () => false }));
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownload: () => ({
     downloadTrack: jest.fn(), deleteDownloadedTrack: jest.fn(), isTrackDownloaded: () => false, isTrackDownloading: () => false,
     downloadAlbumById: jest.fn(), downloadPlaylistById: jest.fn(), getCollectionDownloadState: () => ({ isDownloaded: false, isDownloading: false }),
@@ -53,20 +53,20 @@ jest.mock('@/features/downloaders/registry', () => ({
 }));
 jest.mock('@/features/sources/registry', () => ({ useEnabledExternalSources: () => [] }));
 jest.mock('@/features/downloaders/useExternalAlbumStatus', () => ({ useExternalAlbumStatus: () => ({ kind: 'none' }) }));
-jest.mock('@/hooks/artists/useArtistAlbums', () => ({ useArtistAlbums: () => [] }));
-jest.mock('@/hooks/playlists/useDeletePlaylist', () => ({ useDeletePlaylist: () => ({ mutateAsync: jest.fn(), isPending: false }) }));
-jest.mock('@/hooks/playlists/useRenamePlaylist', () => ({ useRenamePlaylist: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/artist/useArtistAlbums', () => ({ useArtistAlbums: () => [] }));
+jest.mock('@/features/playlist/useDeletePlaylist', () => ({ useDeletePlaylist: () => ({ mutateAsync: jest.fn(), isPending: false }) }));
+jest.mock('@/features/playlist/useRenamePlaylist', () => ({ useRenamePlaylist: () => ({ mutateAsync: jest.fn() }) }));
 jest.mock('@/components/options/useLazyCollectionDetails', () => ({
   useLazyAlbumDetail: () => ({ albumWithSongs: null, songs: [], songsLoading: false }),
   useLazyArtistSongs: () => ({ songs: [], songsLoading: false }),
   useLazyPlaylistDetail: () => ({ playlistWithSongs: null, songs: [], songsLoading: false }),
 }));
-jest.mock('@/hooks/starred/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
-jest.mock('@/hooks/starred/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: jest.fn() }) }));
-jest.mock('@/hooks/starred/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: jest.fn() }) }));
-jest.mock('@/hooks/starred/useStarredAlbums', () => ({ useStarredAlbums: () => ({ albums: [] }) }));
-jest.mock('@/hooks/starred/useStarAlbum', () => ({ useStarAlbum: () => ({ mutateAsync: jest.fn() }) }));
-jest.mock('@/hooks/starred/useUnstarAlbum', () => ({ useUnstarAlbum: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/library/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
+jest.mock('@/features/library/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/library/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/library/useStarredAlbums', () => ({ useStarredAlbums: () => ({ albums: [] }) }));
+jest.mock('@/features/library/useStarAlbum', () => ({ useStarAlbum: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/library/useUnstarAlbum', () => ({ useUnstarAlbum: () => ({ mutateAsync: jest.fn() }) }));
 
 import {
   useSongLibraryActions,

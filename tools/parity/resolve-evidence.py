@@ -24,15 +24,15 @@ os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 # ---------- adapter.<group>.<method> ----------
 # Each server adapter builds typed sub-APIs: `const albums: AlbumsApi = { ... }`.
 ADAPTERS = {
-    'navidrome': 'src/api/navidrome/index.ts',
-    'mediaBrowser': 'src/api/mediaBrowser/adapter.ts',
-    'plex': 'src/api/plex/index.ts',
-    'local': 'src/api/local/index.ts',
+    'navidrome': 'src/providers/server/navidrome/index.ts',
+    'mediaBrowser': 'src/providers/server/media-browser/adapter.ts',
+    'plex': 'src/providers/server/plex/index.ts',
+    'local': 'src/providers/server/local/index.ts',
 }
 
 # The ApiAdapter interface is the authority on group -> XxxApi, because some
 # adapters build their sub-APIs untyped (`const bookmarks = {`).
-_types = open('src/api/types.ts').read()
+_types = open('src/providers/contracts/ServerAdapter.ts').read()
 _iface = re.search(r'export interface ApiAdapter \{(.*?)\n\}', _types, re.S).group(1)
 GROUP_TO_API = dict(re.findall(r'^\s{2}(\w+)\??\s*:\s*(\w+Api)\s*;', _iface, re.M))
 
@@ -87,18 +87,18 @@ ADAPTER_DIVERGENCE = {
         'AuthApi has no credential accessors. The legacy adapter exposed password/'
         'username/serverUrl as readable properties; the rewrite passes them as '
         'arguments to AuthApi.connect(serverUrl, username, password) '
-        '(src/api/types.ts AuthApi.connect) and keeps the secret in the keystore '
+        '(src/providers/contracts/ServerAdapter.ts AuthApi.connect) and keeps the secret in the keystore '
         '(src/state/credentials.ts), never in Redux or on the adapter.'),
     'adapter.auth.username': None,   # same reason, filled below
     'adapter.auth.serverUrl': None,
     'adapter.search.albums': (
         'SearchApi is one call, not three: search(query) returns '
-        '{albums, artists, songs} (src/api/types.ts SearchApi.search), so the '
+        '{albums, artists, songs} (src/providers/contracts/ServerAdapter.ts SearchApi.search), so the '
         'per-kind methods became fields of a single result and one round trip.'),
     'adapter.search.artists': None,
     'adapter.search.songs': None,
     'adapter.starred.albums': (
-        'StarredApi.list() returns {songs, albums} (src/api/types.ts StarredApi.list), '
+        'StarredApi.list() returns {songs, albums} (src/providers/contracts/ServerAdapter.ts StarredApi.list), '
         'so the per-kind reads became fields of one result.'),
     'adapter.starred.songs': None,
 }

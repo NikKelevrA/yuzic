@@ -1,4 +1,4 @@
-import PlayerSettings from "@/screens/settings/player";
+import PlayerSettings from "@/features/settings/player";
 
 export default function PlayerSettingsScreen() {
   return <PlayerSettings />;

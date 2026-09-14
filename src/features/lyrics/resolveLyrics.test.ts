@@ -1,5 +1,5 @@
 import { resolveLyrics, resolveLyricsAttributed } from "./resolveLyrics";
-import type { LyricsResult } from "@/api/types";
+import type { LyricsResult } from "@/providers/contracts/ServerAdapter";
 import type { LyricsSongInfo, ResolveLyricsAttributedInput } from "./resolveLyrics";
 import type { Song } from "@/domain/entities/Song";
 import type { Provider } from "@/providers/contracts/Provider";

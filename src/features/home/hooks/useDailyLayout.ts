@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { useAlbums } from '@/hooks/albums/useAlbums';
-import { useArtists } from '@/hooks/artists/useArtists';
-import { useIsOffline } from '@/hooks/useIsOffline'
+import { useAlbums } from '@/features/album/useAlbums';
+import { useArtists } from '@/features/artist/useArtists';
+import { useIsOffline } from '@/features/connectivity/useIsOffline'
 import { selectArtistPlayCounts } from '@/state/redux/selectors/statsSelectors'
 import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
 import { presentableGenres } from '../genres'

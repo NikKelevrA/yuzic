@@ -35,7 +35,7 @@ function deriveRows(baseline) {
       rows.push({
         id: `adapter.${member.name}.${method}`,
         owner: 'providers/server',
-        legacyEvidence: `src/api/types.ts ${member.type}.${method}`,
+        legacyEvidence: `src/providers/contracts/ServerAdapter.ts ${member.type}.${method}`,
         replacementEvidence: '',
         platforms: 'na',
         optional: !member.required,

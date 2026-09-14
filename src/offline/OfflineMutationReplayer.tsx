@@ -4,12 +4,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { notify } from '@/components/toast';
 
-import { useApi } from '@/api';
-import * as listenbrainz from '@/api/listenbrainz';
+import { useApi } from '@/providers/registry/useApi';
+import * as listenbrainz from '@/providers/integration/listenbrainz';
 import { FAVORITES_ID } from '@/constants/favorites';
 import { QueryKeys } from '@/enums/queryKeys';
-import { useIsOffline } from '@/hooks/useIsOffline';
-import { usePollWhile } from '@/hooks/usePollWhile';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
+import { usePollWhile } from '@/state/query/usePollWhile';
 import i18n from '@/i18n';
 import {
   affectsLibraryQueries,

@@ -7,7 +7,7 @@ import { Ellipsis } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { Playlist } from '@/domain/entities/Playlist';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import IconActionButton from '@/components/IconActionButton';
 import MediaListRow from '@/components/MediaListRow';

@@ -1,3 +1,3 @@
-import DeezerSettings from '@/screens/settings/integrations/deezer';
+import DeezerSettings from '@/features/settings/integrations/deezer';
 
 export default DeezerSettings;

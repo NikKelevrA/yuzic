@@ -1,10 +1,10 @@
 import { useIsAudiomuseConfigured } from '@/state/redux/selectors/audiomuseSelectors';
-import type { ApiAdapter } from '@/api/types';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 import type { Artist } from '@/domain/entities/Artist';
-import { createAudiomuseClient, type AudiomuseConfig } from '@/api/audiomuse/client';
-import { getAudiomuseQueueExtension } from '@/api/audiomuse/similarity';
+import { createAudiomuseClient, type AudiomuseConfig } from '@/providers/integration/audiomuse/client';
+import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
 
 /**
  * "Make me a playlist like this" — the AudioMuse-backed gesture behind the

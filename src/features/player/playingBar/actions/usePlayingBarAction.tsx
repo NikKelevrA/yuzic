@@ -1,0 +1,153 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { SkipForward, Heart, Dices, Cast, PlusCircle } from 'lucide-react-native';
+import { usePlaying } from '@/features/playback/PlayingContext';
+import { useStarSong } from '@/features/library/useStarSong';
+import { useUnstarSong } from '@/features/library/useUnstarSong';
+import { useStarredSongs } from '@/features/library/useStarredSongs';
+import { PlayingBarAction } from '@/features/settings/appearance/state';
+import { notify } from '@/components/toast';
+import { useAlbums } from '@/features/album/useAlbums';
+import { useApi } from '@/providers/registry/useApi';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
+import { useTheme } from '@/features/theme/useTheme';
+import { iconSize } from '@/constants/design';
+
+export type PlayingBarActionConfig = {
+  id: PlayingBarAction;
+  icon: React.ReactNode;
+  /** What the control is called out loud. The dock draws it as a bare glyph,
+   *  so this is the only thing a screen reader has to go on. */
+  label: string;
+  /** Set where the glyph is a state as well as an action, so "Favorite" is
+   *  announced as on or off rather than as the same word either way. */
+  selected?: boolean;
+  onPress: () => void;
+};
+
+type UsePlayingBarActionOptions = {
+  presentAddToPlaylist?: () => void;
+  presentCast?: () => void;
+};
+
+export function usePlayingBarAction(
+  id: PlayingBarAction,
+  options?: UsePlayingBarActionOptions
+): PlayingBarActionConfig | null {
+  const { t } = useTranslation();
+  // The action used to sit on a filled accent circle, so its icon was always
+  // white. It is a plain secondary control on the dock now and takes the
+  // theme's muted colour like every other quiet glyph.
+  const { colors } = useTheme();
+  const iconColor = colors.subtext;
+  const { skipToNext, currentSong, playSongInCollection } = usePlaying();
+  const { albums } = useAlbums();
+  const api = useApi();
+  const isOffline = useIsOffline();
+
+  const { songs: starredSongs } = useStarredSongs();
+  const star = useStarSong();
+  const unstar = useUnstarSong();
+
+  const isFavorite =
+    !!currentSong &&
+    starredSongs.some(s => s.localId === currentSong.localId);
+
+  const label = (key: PlayingBarAction) =>
+    t(`settings.appearance.playingBarAction.actions.${key}`);
+
+  switch (id) {
+    case 'skip':
+      return {
+        id,
+        icon: <SkipForward size={iconSize.control} color={iconColor} />,
+        label: label('skip'),
+        onPress: skipToNext,
+      };
+
+    case 'favorite':
+      return {
+        id,
+        icon: <Heart size={iconSize.control} color={iconColor} fill={isFavorite ? iconColor : 'none'} />,
+        label: label('favorite'),
+        selected: isFavorite,
+        onPress: async () => {
+          if (!currentSong) return;
+
+          try {
+            if (isFavorite) {
+              await unstar.mutateAsync(currentSong.nativeId);
+              notify.success(
+                t(
+                  isOffline
+                    ? 'playing.actions.removedFromFavoritesOffline'
+                    : 'playing.actions.removedFromFavorites',
+                  { title: currentSong.title }
+                )
+              );
+            } else {
+              await star.mutateAsync(currentSong.nativeId);
+              notify.success(
+                t(
+                  isOffline
+                    ? 'playing.actions.addedToFavoritesOffline'
+                    : 'playing.actions.addedToFavorites',
+                  { title: currentSong.title }
+                )
+              );
+            }
+          } catch {
+            notify.error(t('playing.actions.updateFavoritesFailed'));
+          }
+        },
+      };
+
+    case 'randomAlbum':
+      return {
+        id,
+        icon: <Dices size={iconSize.control} color={iconColor} />,
+        label: label('randomAlbum'),
+        onPress: async () => {
+          if (!albums.length) return;
+          if (isOffline) {
+            notify.error(t('common.offline.notAvailable'));
+            return;
+          }
+
+          const base =
+            albums[Math.floor(Math.random() * albums.length)];
+
+          try {
+            const detail = await api.albums.get(base.nativeId);
+
+            if (!detail.songs.length) return;
+
+            playSongInCollection(detail.songs[0], detail, true);
+            notify.success(t('playing.actions.randomAlbum', { title: detail.album.title }));
+          } catch {
+            notify.error(t('playing.actions.loadAlbumFailed'));
+          }
+        },
+      };
+
+    case 'addToPlaylist':
+      return {
+        id,
+        icon: <PlusCircle size={iconSize.control} color={iconColor} />,
+        label: label('addToPlaylist'),
+        onPress: options?.presentAddToPlaylist ?? (() => {}),
+      };
+
+    case 'cast':
+      return {
+        id,
+        icon: <Cast size={iconSize.control} color={iconColor} />,
+        label: label('cast'),
+        onPress: options?.presentCast ?? (() => {}),
+      };
+
+    case 'none':
+    default:
+      return null;
+  }
+}

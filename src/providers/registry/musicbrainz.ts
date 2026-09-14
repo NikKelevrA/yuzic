@@ -2,14 +2,15 @@
  * MusicBrainz as an integration provider.
  *
  * Keyless public API, same as Deezer — a plain declaration, no factory. Every
- * capability calls into the existing `src/api/musicbrainz` functions and
+ * capability calls into the existing `src/providers/integration/musicbrainz`
+ * functions and
  * mappers, reusing the exact calls `src/features/sources/registry.ts`'s
  * `musicbrainzSource` already made for the same job.
  */
-import * as mb from '@/api/musicbrainz';
-import { mapAlbum as mapMbAlbum } from '@/api/musicbrainz/mapAlbum';
-import { mapArtist as mapMbArtist } from '@/api/musicbrainz/mapArtist';
-import { mapSong as mapMbSong } from '@/api/musicbrainz/mapSong';
+import * as mb from '@/providers/integration/musicbrainz';
+import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
+import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist';
+import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
 import { sourceColor } from '@/constants/design';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import type { IntegrationProvider } from '../contracts/Provider';

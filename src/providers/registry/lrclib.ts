@@ -5,7 +5,7 @@
  * `src/api/lrclib`'s own doc comment says. No client to inject, so this is a
  * plain declaration.
  */
-import { getLyrics } from '@/api/lrclib';
+import { getLyrics } from '@/providers/integration/lrclib';
 import type { IntegrationProvider } from '../contracts/Provider';
 
 export const lrclibProvider: IntegrationProvider = {

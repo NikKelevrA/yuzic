@@ -74,7 +74,8 @@ export const PROVIDER_NAMES = [
 
 /** Where naming a provider is part of the job rather than a leak. */
 const PROVIDER_HOMES = [
-  'src/api/',                            // the protocol implementations themselves
+  'src/providers/server/',               // the server protocol implementations themselves
+  'src/providers/integration/',          // the integration protocol implementations themselves
   'src/utils/servers/registry.ts',       // server provider declarations
   'src/features/downloaders/registry',   // downloader declarations
   'src/features/sources/registry',       // external source declarations

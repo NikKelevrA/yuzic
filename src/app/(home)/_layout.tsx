@@ -4,7 +4,7 @@ import { AppState } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { useSync } from '@/features/library/useSync';
-import { useIsOffline } from '@/hooks/useIsOffline';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { clearLibraryGenres } from '@/state/redux/slices/librarySlice';
 import { ExternalResolutionProvider } from '@/features/sources/ExternalResolutionProvider';
@@ -12,7 +12,7 @@ import { ServerReachabilityWatcher } from '@/features/connectivity/ServerReachab
 import { AutoDownloadWatcher } from '@/features/downloads/AutoDownloadWatcher';
 import { DownloadersQueueProvider } from '@/features/downloaders/DownloadersQueueContext';
 import { useWantArrivalWatcher } from '@/features/wants/useWantArrivalWatcher';
-import { AccountSheetProvider } from '@/contexts/AccountSheetContext';
+import { AccountSheetProvider } from '@/features/settings/AccountSheetContext';
 
 /**
  * The outer authenticated layout: providers, watchers, and the app-wide sync

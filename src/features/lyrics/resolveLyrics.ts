@@ -1,4 +1,4 @@
-import type { LyricsResult } from "@/api/types";
+import type { LyricsResult } from "@/providers/contracts/ServerAdapter";
 import { offersFor, type BrokerInput } from "@/providers/registry/capabilityBroker";
 import { resolved, type ResolvedField } from "@/domain/entities/ResolvedField";
 import { provenanceScope } from "@/domain/identity/Provenance";
@@ -75,7 +75,7 @@ export async function resolveLyrics(input: ResolveLyricsInput): Promise<LyricsRe
  * The Phase 5 (capability-broker, attributed) shape of lyrics resolution.
  *
  * `resolveLyrics` above stays exactly as it is: it is the contract
- * `src/screens/playing/index.tsx` calls today, fetcher-injected rather than
+ * `src/features/player/PlayingScreen.tsx` calls today, fetcher-injected rather than
  * broker-mediated, and that screen is out of this phase's file scope to
  * migrate — replacing its call site is not something this change can do
  * without breaking a shipping feature (gate 4). This function coexists

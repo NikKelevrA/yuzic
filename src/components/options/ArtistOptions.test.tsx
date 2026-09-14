@@ -11,7 +11,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc' }, isDarkMode: false }),
 }));
 
@@ -42,11 +42,11 @@ jest.mock('@/features/audiomuse/generatePlaylist', () => ({
   generateSimilarPlaylistForArtist: (...args: unknown[]) => mockGenerateForArtist(...args),
 }));
 
-jest.mock('@/api', () => ({
+jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({}),
 }));
 
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingActions: () => ({
     addCollectionToQueue: jest.fn(),
     shuffleCollectionToQueue: jest.fn(),
@@ -55,7 +55,7 @@ jest.mock('@/contexts/PlayingContext', () => ({
   }),
 }));
 
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownload: () => ({
     downloadAlbumById: jest.fn(),
     getCollectionDownloadState: () => ({ isDownloaded: false, isDownloading: false }),
@@ -70,7 +70,7 @@ jest.mock('@/features/sources/registry', () => ({
   useEnabledExternalSources: () => [],
 }));
 
-jest.mock('@/hooks/artists/useArtistAlbums', () => ({ useArtistAlbums: () => [] }));
+jest.mock('@/features/artist/useArtistAlbums', () => ({ useArtistAlbums: () => [] }));
 
 jest.mock('./useLazyCollectionDetails', () => ({
   useLazyArtistSongs: () => ({ songs: [], songsLoading: false }),

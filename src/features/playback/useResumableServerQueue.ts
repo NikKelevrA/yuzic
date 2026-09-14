@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { useApi } from '@/api';
-import type { ServerPlayQueue } from '@/api/types';
+import { useApi } from '@/providers/registry/useApi';
+import type { ServerPlayQueue } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
-import { useTracks } from '@/hooks/tracks/useTracks';
+import { useTracks } from '@/features/song/useTracks';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { selectQueueSyncEnabled } from '@/features/settings/playback/state';
 import { selectPersistedPlaybackQueue } from '@/state/redux/selectors/playbackSelectors';
-import { usePlayingActions, usePlayingState } from '@/contexts/PlayingContext';
+import { usePlayingActions, usePlayingState } from '@/features/playback/PlayingContext';
 
 /**
  * How stale a saved server queue can be before we stop offering it. Two days

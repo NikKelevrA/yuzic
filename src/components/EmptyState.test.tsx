@@ -6,11 +6,11 @@ import EmptyState from './EmptyState';
 
 let mockBottomOverlayHeight = 0;
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { subtext: '#666', border: '#333', text: '#fff' } }),
 }));
 
-jest.mock('@/hooks/useScrollClearance', () => ({
+jest.mock('@/features/theme/useScrollClearance', () => ({
   useBottomOverlayHeight: () => mockBottomOverlayHeight,
 }));
 

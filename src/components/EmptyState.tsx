@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { spacing, typography, radius } from '@/constants/design';
-import { useBottomOverlayHeight } from '@/hooks/useScrollClearance';
+import { useBottomOverlayHeight } from '@/features/theme/useScrollClearance';
 import Touchable from './Touchable';
 
 type Props = {

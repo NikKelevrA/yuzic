@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useApi } from '@/api';
+import { useApi } from '@/providers/registry/useApi';
 import { shareItem } from '@/utils/share';
 import haptics from '@/utils/haptics';
 import { notify } from '@/components/toast';

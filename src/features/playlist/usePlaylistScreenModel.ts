@@ -15,12 +15,12 @@ import { useSelector } from 'react-redux';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
-import { useApi } from '@/api';
+import { useApi } from '@/providers/registry/useApi';
 import { QueryKeys } from '@/enums/queryKeys';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import { hasValue, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
-import { usePlaylists } from '@/hooks/playlists/usePlaylists';
+import { hasValue, useOfflineFirstQuery } from '@/state/query/useOfflineFirstQuery';
+import { usePlaylists } from '@/features/playlist/usePlaylists';
 import { getPlaylist } from './playlistRepository';
 import { resolvePlaylistOrigin, type PlaylistOrigin } from './playlistOrigin';
 

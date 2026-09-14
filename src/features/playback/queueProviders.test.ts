@@ -1,8 +1,8 @@
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import type { ApiAdapter } from '@/api/types';
-import { getAudiomuseQueueExtension } from '@/api/audiomuse/similarity';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
+import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
 import {
   resolveQueueFillProvider,
   createNativeSimilarityQueueFillProvider,
@@ -10,10 +10,10 @@ import {
   type QueueFillProvider,
 } from './queueProviders';
 
-jest.mock('@/api/audiomuse/client', () => ({
+jest.mock('@/providers/integration/audiomuse/client', () => ({
   createAudiomuseClient: jest.fn(() => ({ request: jest.fn(), baseUrl: '' })),
 }));
-jest.mock('@/api/audiomuse/similarity', () => ({
+jest.mock('@/providers/integration/audiomuse/similarity', () => ({
   getAudiomuseQueueExtension: jest.fn(),
 }));
 

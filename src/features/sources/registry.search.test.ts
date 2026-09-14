@@ -8,14 +8,14 @@
  */
 const mockSearchDeezerArtists = jest.fn();
 const mockSearchDeezerAlbums = jest.fn();
-jest.mock('@/api/deezer', () => ({
+jest.mock('@/providers/integration/deezer', () => ({
   searchDeezerArtists: (...args: unknown[]) => mockSearchDeezerArtists(...args),
   searchDeezerAlbums: (...args: unknown[]) => mockSearchDeezerAlbums(...args),
 }));
 
 const mockSearchArtist = jest.fn();
 const mockSearchReleaseGroupByTitle = jest.fn();
-jest.mock('@/api/musicbrainz', () => ({
+jest.mock('@/providers/integration/musicbrainz', () => ({
   searchArtist: (...args: unknown[]) => mockSearchArtist(...args),
   searchReleaseGroupByTitle: (...args: unknown[]) => mockSearchReleaseGroupByTitle(...args),
 }));

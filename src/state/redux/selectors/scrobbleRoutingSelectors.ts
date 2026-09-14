@@ -6,7 +6,7 @@ import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { useListenBrainzConfig } from '@/state/redux/selectors/listenbrainzSelectors';
 import type { ScrobbleDestination } from '@/utils/offline/offlineMutations';
 import type { ListenBrainzConfig } from '@/types';
-import * as listenbrainz from '@/api/listenbrainz';
+import * as listenbrainz from '@/providers/integration/listenbrainz';
 
 /**
  * Per-destination route for the active server, derived with NO migration.

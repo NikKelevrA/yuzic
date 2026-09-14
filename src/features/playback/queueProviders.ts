@@ -1,9 +1,9 @@
 import type { Song } from '@/domain/entities/Song';
 import { parseLocalId, type LocalId } from '@/domain/identity/LocalId';
-import type { ApiAdapter } from '@/api/types';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import shuffleArray from '@/utils/shuffleArray';
-import { createAudiomuseClient, type AudiomuseConfig } from '@/api/audiomuse/client';
-import { getAudiomuseQueueExtension } from '@/api/audiomuse/similarity';
+import { createAudiomuseClient, type AudiomuseConfig } from '@/providers/integration/audiomuse/client';
+import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
 
 // Tiered source for Smart Shuffle's one-shot injection and Autoplay's
 // queue-end extension: AudioMuse-AI's acoustic-analysis-based extension when

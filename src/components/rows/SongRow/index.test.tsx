@@ -8,23 +8,23 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', favorite: '#f00' } }),
 }));
 
-jest.mock('@/hooks/useListDensity', () => ({
+jest.mock('@/features/theme/useListDensity', () => ({
   useListDensity: () => ({ rowPadding: 8, trackRowPadding: 8 }),
 }));
 
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingActions: () => ({ playSongInCollection: jest.fn() }),
 }));
 
-jest.mock('@/contexts/SongActionSheetContext', () => ({
+jest.mock('@/features/entity-actions/SongActionSheetContext', () => ({
   useSongActionSheets: () => ({ openSongOptions: jest.fn() }),
 }));
 
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
 

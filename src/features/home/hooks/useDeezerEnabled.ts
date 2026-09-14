@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux'
-import { useIsOffline } from '@/hooks/useIsOffline'
+import { useIsOffline } from '@/features/connectivity/useIsOffline'
 import { selectDeezerDiscoveryEnabled } from '@/features/settings/home/state';
 import { RootState } from '@/state/redux/store'
 

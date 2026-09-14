@@ -16,7 +16,7 @@
  * and Deezer id) and leaves the rest for Lidarr's existing by-name fallback.
  */
 import LidarrIcon from '@assets/images/lidarr.png';
-import { downloadAlbum, testConnection as testLidarrConnection } from '@/api/lidarr';
+import { downloadAlbum, testConnection as testLidarrConnection } from '@/providers/integration/lidarr';
 import type { LidarrConfig } from '@/types';
 import type { IntegrationProvider } from '../contracts/Provider';
 

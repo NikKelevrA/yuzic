@@ -8,7 +8,7 @@ import type { Artist } from '@/domain/entities/Artist';
 import ArtistOptions from '@/components/options/ArtistOptions';
 import IconActionButton from '@/components/IconActionButton';
 import MediaListRow from '@/components/MediaListRow';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { iconSize, spacing } from '@/constants/design';

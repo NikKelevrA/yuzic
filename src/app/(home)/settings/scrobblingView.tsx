@@ -1,4 +1,4 @@
-import ScrobblingSettings from "@/screens/settings/scrobbling";
+import ScrobblingSettings from "@/features/settings/scrobbling";
 
 export default function ScrobblingSettingsScreen() {
   return <ScrobblingSettings />;

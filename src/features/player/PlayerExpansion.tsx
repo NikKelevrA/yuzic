@@ -11,7 +11,7 @@ import {
   enterCoverSlideWhenTrackChanges,
   type CoverSlide,
   type CoverSlideDirection,
-} from '@/screens/playing/coverTransition';
+} from '@/features/player/coverTransition';
 import {
   useAnimatedReaction,
   useSharedValue,

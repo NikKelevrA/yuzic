@@ -7,7 +7,7 @@ import { useEnabledSearchSourceIds, useSearchSourceEnabled } from './useSearchSo
 import settingsSearchReducer, { setSearchSourceEnabled } from '@/features/settings/search/state';
 import settingsHomeReducer, { setDeezerDiscoveryEnabled } from '@/features/settings/home/state';
 
-jest.mock('@/hooks/useIsOffline', () => ({
+jest.mock('@/features/connectivity/useIsOffline', () => ({
   useIsOffline: () => mockIsOffline,
 }));
 

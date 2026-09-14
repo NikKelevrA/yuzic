@@ -6,20 +6,20 @@ import { configureStore } from '@reduxjs/toolkit';
 import { ALL_DOWNLOADERS, useDownloaderStates } from './registry';
 import downloadersReducer from '@/state/redux/slices/downloadersSlice';
 import serversReducer from '@/state/redux/slices/serversSlice';
-import * as lidarr from '@/api/lidarr';
-import * as slskd from '@/api/slskd';
-import * as soulsync from '@/api/soulsync';
+import * as lidarr from '@/providers/integration/lidarr';
+import * as slskd from '@/providers/integration/slskd';
+import * as soulsync from '@/providers/integration/soulsync';
 
-jest.mock('@/api/lidarr', () => ({
-  ...jest.requireActual('@/api/lidarr'),
+jest.mock('@/providers/integration/lidarr', () => ({
+  ...jest.requireActual('@/providers/integration/lidarr'),
   testConnection: jest.fn(),
 }));
-jest.mock('@/api/slskd', () => ({
-  ...jest.requireActual('@/api/slskd'),
+jest.mock('@/providers/integration/slskd', () => ({
+  ...jest.requireActual('@/providers/integration/slskd'),
   testConnection: jest.fn(),
 }));
-jest.mock('@/api/soulsync', () => ({
-  ...jest.requireActual('@/api/soulsync'),
+jest.mock('@/providers/integration/soulsync', () => ({
+  ...jest.requireActual('@/providers/integration/soulsync'),
   testConnection: jest.fn(),
 }));
 

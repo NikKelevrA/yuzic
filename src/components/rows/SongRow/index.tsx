@@ -1,6 +1,6 @@
 import { fontScaleCap, hitSlopFor, iconSize, motion, spacing, stateLayer, statusColor, typography } from '@/constants/design';
 import React, { memo, useCallback, useEffect } from 'react';
-import { useListDensity } from '@/hooks/useListDensity';
+import { useListDensity } from '@/features/theme/useListDensity';
 import {
   Text,
   View,
@@ -15,13 +15,13 @@ import { Heart, ArrowDownCircle, Ellipsis, PlayCircle } from 'lucide-react-nativ
 import { notify } from '@/components/toast';
 
 import type { Song } from '@/domain/entities/Song';
-import type { PlayableCollection } from '@/contexts/PlayingContext';
-import { usePlayingActions } from '@/contexts/PlayingContext';
-import { useSongActionSheets } from '@/contexts/SongActionSheetContext';
+import type { PlayableCollection } from '@/features/playback/PlayingContext';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
+import { useSongActionSheets } from '@/features/entity-actions/SongActionSheetContext';
 import MediaListRow from '@/components/MediaListRow';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { useTranslation } from 'react-i18next';
-import { useDownloadState } from '@/contexts/DownloadContext';
+import { useDownloadState } from '@/features/offline/DownloadContext';
 import { formatDuration } from '@/utils/formatDuration';
 import Touchable from '@/components/Touchable';
 import SongOptions from '@/components/options/SongOptions';

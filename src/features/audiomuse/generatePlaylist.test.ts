@@ -1,5 +1,5 @@
-import type { ApiAdapter } from '@/api/types';
-import type { AudiomuseConfig } from '@/api/audiomuse/client';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
+import type { AudiomuseConfig } from '@/providers/integration/audiomuse/client';
 import type { Song } from '@/domain/entities/Song';
 import type { Artist } from '@/domain/entities/Artist';
 import type { AlbumDetail } from '@/domain/entities/Detail';
@@ -12,10 +12,10 @@ import {
 } from './generatePlaylist';
 
 const mockGetExtension = jest.fn();
-jest.mock('@/api/audiomuse/client', () => ({
+jest.mock('@/providers/integration/audiomuse/client', () => ({
   createAudiomuseClient: jest.fn(() => ({ request: jest.fn(), baseUrl: '' })),
 }));
-jest.mock('@/api/audiomuse/similarity', () => ({
+jest.mock('@/providers/integration/audiomuse/similarity', () => ({
   getAudiomuseQueueExtension: (...args: unknown[]) => mockGetExtension(...args),
 }));
 

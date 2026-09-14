@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { useApi } from '@/api';
-import { fetchAlbumDetailsSettled, type FetchAlbumDetailsArgs } from '@/hooks/albums/fetchAlbumDetails';
+import { useApi } from '@/providers/registry/useApi';
+import { fetchAlbumDetailsSettled, type FetchAlbumDetailsArgs } from '@/features/album/fetchAlbumDetails';
 import { QueryKeys } from '@/enums/queryKeys';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';

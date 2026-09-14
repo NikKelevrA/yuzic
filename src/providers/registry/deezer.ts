@@ -4,7 +4,8 @@
  * Keyless public API (`auth: { tier: 'none' }`), same as the source registry
  * it replaces — no client to inject, so this is a plain declaration rather
  * than a factory. Every capability below calls straight into the existing
- * `src/api/deezer` functions; nothing here talks to the network itself.
+ * `src/providers/integration/deezer` functions; nothing here talks to the
+ * network itself.
  */
 import {
   searchDeezerArtists,
@@ -15,7 +16,7 @@ import {
   getDeezerRelatedArtists,
   resolveDeezerAlbum,
   resolveDeezerArtistByName,
-} from '@/api/deezer';
+} from '@/providers/integration/deezer';
 import { sourceColor } from '@/constants/design';
 import type { IntegrationProvider } from '../contracts/Provider';
 

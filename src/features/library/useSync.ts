@@ -19,7 +19,7 @@ import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import { selectLastSyncedAt, setLastSyncedAt } from '@/features/settings/sync/state';
 import { setLibraryGenres } from '@/state/redux/slices/librarySlice'
 import { setServerAlbumStats, setServerSongStats } from '@/state/redux/slices/statsSlice'
-import { useApi } from '@/api'
+import { useApi } from '@/providers/registry/useApi'
 import { catalogSyncKey } from '@/features/library/catalogQueries'
 import { runCatalogSync } from '@/features/library/catalogSync'
 import { useCatalogSyncStatus } from '@/features/library/useCatalogSyncStatus'

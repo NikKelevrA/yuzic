@@ -1,1 +1,1 @@
-export { default } from '@/screens/genre'
+export { default } from '@/features/genre/GenreScreen'

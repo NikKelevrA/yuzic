@@ -6,7 +6,7 @@ import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/utils
 import { CoverSource } from '@/types';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import {
   hasImageUrlFailed,
   IMAGE_CACHE_POLICY,

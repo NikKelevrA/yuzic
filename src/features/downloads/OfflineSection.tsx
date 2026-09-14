@@ -1,0 +1,281 @@
+import { hitSlopFor, iconSize, spacing, stateLayer, typography } from '@/constants/design';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Text, View, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { Trash2 } from 'lucide-react-native';
+import { useTheme } from '@/features/theme/useTheme';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { useAlbums } from '@/features/album/useAlbums';
+import { usePlaylists } from '@/features/playlist/usePlaylists';
+import { useTracks } from '@/features/song/useTracks';
+import { MediaImage } from '@/components/MediaImage';
+import { useDownload } from '@/features/offline/DownloadContext';
+import { DownloadRow } from '@/features/settings/library/downloadsInfo/types';
+import { buildDownloadRows } from '@/features/settings/library/downloadsInfo/buildRows';
+import { Paths } from 'expo-file-system';
+import { formatBytes } from '@/utils/downloads/downloadStore';
+import Touchable from '@/components/Touchable';
+import { useRadius } from '@/features/theme/useRadius';
+
+/**
+ * The OFFLINE section of the unified Downloads screen: on-device storage
+ * stats plus every downloaded track/collection, sourced entirely from
+ * `useDownload()` (DownloadContext). Extracted from the former standalone
+ * settings-only offline-downloads screen so this rendering lives in
+ * exactly one place — the unified screen embeds it directly rather than
+ * duplicating the rows.
+ */
+const OfflineSection: React.FC = () => {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const rad = useRadius();
+  const activeServer = useSelector(selectActiveServer);
+  const {
+    removeDownloadByCollectionId,
+    clearDownloadsForProvider,
+    downloadStateVersion,
+    getAllDownloadedTracks,
+    getAllDownloadedCollections,
+    totalDownloadedBytes,
+  } = useDownload();
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [freeBytes, setFreeBytes] = useState<number | null>(null);
+  const { albums = [] } = useAlbums();
+  const { playlists = [] } = usePlaylists();
+  const { tracks = [] } = useTracks();
+
+  useEffect(() => {
+    setFreeBytes(Paths.availableDiskSpace);
+  }, [downloadStateVersion]);
+
+  const downloadedTracks = useMemo(() => getAllDownloadedTracks(), [getAllDownloadedTracks]);
+  const downloadedCollections = useMemo(() => getAllDownloadedCollections(), [getAllDownloadedCollections]);
+
+  const formattedSize = formatBytes(totalDownloadedBytes);
+  const formattedAvailable = freeBytes != null ? formatBytes(freeBytes) : '—';
+
+  const rows = useMemo(
+    () => buildDownloadRows({ albums, tracks, playlists, downloadedTracks, downloadedCollections, t }),
+    [albums, tracks, playlists, downloadedTracks, downloadedCollections, t]
+  );
+
+  const confirmRemove = useCallback((row: DownloadRow) => {
+    Alert.alert(
+      t('settings.library.downloads.removeTitle'),
+      t('settings.library.downloads.removeBody', { title: row.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setRemovingId(row.id);
+              await removeDownloadByCollectionId(row.collectionId, row.trackIds, {
+                serverId: row.serverId,
+                serverType: row.provider === 'unknown' ? null : row.provider,
+              });
+            } catch {
+              Alert.alert(t('settings.library.downloads.removeFailedTitle'), t('settings.library.downloads.removeFailedBody'));
+            } finally {
+              setRemovingId(null);
+            }
+          },
+        },
+      ]
+    );
+  }, [t, removeDownloadByCollectionId]);
+
+  const confirmClearProvider = useCallback((row: DownloadRow) => {
+    const providerLabel =
+      row.provider === 'navidrome' ? t('settings.library.downloads.provider.navidrome') :
+      row.provider === 'jellyfin' ? t('settings.library.downloads.provider.jellyfin') :
+      row.provider === 'emby' ? t('settings.library.downloads.provider.emby') :
+      t('settings.library.downloads.provider.unknown');
+
+    Alert.alert(
+      t('settings.library.downloads.clearTitle'),
+      t('settings.library.downloads.clearBodyProviderNamed', { provider: providerLabel }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearDownloadsForProvider({
+                serverId: row.serverId ?? (row.provider === activeServer?.type ? activeServer?.id : null),
+                serverType: row.provider === 'unknown' ? null : row.provider,
+              });
+            } catch {
+              Alert.alert(t('settings.library.downloads.clearFailedTitle'), t('settings.library.downloads.clearFailedBody'));
+            }
+          },
+        },
+      ]
+    );
+  }, [t, clearDownloadsForProvider, activeServer?.type, activeServer?.id]);
+
+  return (
+    <View testID="offline-section">
+      <Text style={[styles.summaryLine, { color: colors.subtext }]}>
+        {t('downloads.offlineSummary', { size: formattedSize, available: formattedAvailable })}
+      </Text>
+      <Text style={[styles.locationNote, { color: colors.subtext }]}>
+        {t('settings.library.downloads.locationNote')}
+      </Text>
+
+      {rows.length === 0 ? (
+        <Text style={[styles.emptyText, { color: colors.subtext }]}>
+          {t('settings.library.downloads.table.empty')}
+        </Text>
+      ) : (
+        rows.map((item, index) => {
+          const prev = index > 0 ? rows[index - 1] : null;
+          const showSectionHeader = !prev || prev.provider !== item.provider;
+          const sectionTitle =
+            item.provider === 'navidrome' ? t('settings.library.downloads.provider.navidrome') :
+            item.provider === 'jellyfin' ? t('settings.library.downloads.provider.jellyfin') :
+            item.provider === 'emby' ? t('settings.library.downloads.provider.emby') :
+            t('settings.library.downloads.provider.unknown');
+
+          return (
+            <View key={item.id}>
+              {showSectionHeader && (
+                <View style={styles.providerHeader}>
+                  <Text style={[styles.providerTitle, { color: colors.secondary }]}>{sectionTitle}</Text>
+                  <Touchable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('a11y.settings.clearProviderDownloads', { provider: sectionTitle })}
+                    onPress={() => confirmClearProvider(item)}
+                    style={styles.providerDelete}
+                  >
+                    <Trash2 size={iconSize.inline} color={colors.subtext} />
+                  </Touchable>
+                </View>
+              )}
+              <View testID="download-info-row" style={[styles.row, { backgroundColor: colors.card, borderRadius: rad.md }]}>
+                <View style={styles.coverCell}>
+                  <MediaImage cover={item.cover} size="thumb" style={[styles.cover, { borderRadius: rad.md }]} />
+                </View>
+                <View style={styles.trackCell}>
+                  <View style={styles.titleLine}>
+                    <Text numberOfLines={1} style={[styles.title, { color: colors.secondary }]}>{item.title}</Text>
+                    <Text numberOfLines={1} style={[styles.sizeText, { color: colors.subtext }]}>{item.size}</Text>
+                  </View>
+                  <View style={styles.metaLine}>
+                    <Text numberOfLines={1} style={[styles.meta, { color: colors.subtext }]}>{item.subtitle}</Text>
+                    <Text style={[styles.metaDot, { color: colors.subtext }]}>·</Text>
+                    <Text numberOfLines={1} style={[styles.meta, { color: colors.subtext }]}>
+                      {item.trackCount} {item.trackCount === 1 ? t('common.song') : t('common.songs')}
+                    </Text>
+                    <Text style={[styles.metaDot, { color: colors.subtext }]}>·</Text>
+                    <Text numberOfLines={1} style={[styles.meta, styles.shrink, { color: colors.subtext }]}>{item.downloaded}</Text>
+                  </View>
+                </View>
+                <Touchable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('a11y.settings.removeDownload', { title: item.title })}
+                  style={[styles.removeButton, removingId === item.id && styles.disabled]}
+                  hitSlop={hitSlopFor(32)}
+                  onPress={() => confirmRemove(item)}
+                  disabled={removingId === item.id}
+                >
+                  <Trash2 size={iconSize.inline} color={colors.subtext} />
+                </Touchable>
+              </View>
+            </View>
+          );
+        })
+      )}
+    </View>
+  );
+};
+
+export default OfflineSection;
+
+const styles = StyleSheet.create({
+  summaryLine: {
+    ...typography.caption,
+    paddingHorizontal: spacing.xs,
+    paddingBottom: spacing.xs,
+  },
+  emptyText: {
+    ...typography.caption,
+    paddingTop: spacing.roomy,
+    textAlign: 'center',
+  },
+  locationNote: {
+    ...typography.caption,
+    paddingTop: spacing.controlGap,
+    paddingHorizontal: spacing.xs,
+  },
+  providerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.roomy,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xxs,
+  },
+  providerTitle: {
+    ...typography.button,
+  },
+  providerDelete: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  coverCell: {
+    width: 44,
+    marginRight: spacing.md,
+  },
+  cover: {
+    width: 44,
+    height: 44,
+    overflow: 'hidden',
+  },
+  trackCell: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: spacing.sm,
+  },
+  titleLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  title: {
+    ...typography.compactRowTitle,
+    flex: 1,
+  },
+  sizeText: {
+    ...typography.caption,
+  },
+  metaLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  meta: { ...typography.caption },
+  metaDot: {
+    ...typography.caption,
+    marginHorizontal: spacing.xs,
+  },
+  shrink: { flexShrink: 1 },
+  removeButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabled: { opacity: stateLayer.disabledOpacity },
+});

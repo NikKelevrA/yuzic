@@ -1,4 +1,4 @@
-import LibrarySettings from "@/screens/settings/library";
+import LibrarySettings from "@/features/settings/library";
 
 export default function LibrarySettingsScreen() {
   return <LibrarySettings />;

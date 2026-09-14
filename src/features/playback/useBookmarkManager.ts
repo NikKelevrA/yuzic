@@ -2,7 +2,7 @@ import type { LocalId } from '@/domain/identity/LocalId';
 import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useApi } from '@/api';
+import { useApi } from '@/providers/registry/useApi';
 import type { Song } from '@/domain/entities/Song';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { selectResumeLongTracksEnabled } from '@/features/settings/playback/state';

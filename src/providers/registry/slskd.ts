@@ -6,7 +6,7 @@
  * does both units — `acquisition.album` and `acquisition.track`.
  */
 import SlskdIcon from '@assets/images/slskd.png';
-import { downloadAlbum, downloadTrack, testConnection as testSlskdConnection, type SlskdConfig } from '@/api/slskd';
+import { downloadAlbum, downloadTrack, testConnection as testSlskdConnection, type SlskdConfig } from '@/providers/integration/slskd';
 import type { IntegrationProvider } from '../contracts/Provider';
 
 export function createSlskdProvider(config: SlskdConfig): IntegrationProvider {

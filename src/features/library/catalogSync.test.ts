@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import type { ApiAdapter } from '@/api/types';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';

@@ -11,14 +11,14 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({
     colors: { secondary: '#000', subtext: '#666', border: '#ccc', background: '#fff', placeholder: '#999' },
     isDarkMode: false,
   }),
 }));
 
-jest.mock('@/hooks/useRadius', () => ({
+jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ lg: 16, card: 8, pill: 999, pillFor: (n: number) => n / 2 }),
 }));
 
@@ -99,7 +99,7 @@ const mockGetQualityProfiles = jest.fn(async (..._args: unknown[]) => [
   { id: 1, name: 'Standard' },
   { id: 4, name: 'Lossless' },
 ]);
-jest.mock('@/api/lidarr', () => ({
+jest.mock('@/providers/integration/lidarr', () => ({
   getQualityProfiles: (...args: unknown[]) => mockGetQualityProfiles(...args),
 }));
 

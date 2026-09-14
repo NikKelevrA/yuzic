@@ -1,1 +1,1 @@
-export { default } from '@/screens/onboarding/libraries';
+export { default } from '@/features/onboarding/libraries';

@@ -1,13 +1,13 @@
 import { iconSize, radius, spacing, stateLayer, typography } from '@/constants/design';
 import React from 'react';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 import {
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { MediaImage } from '@/components/MediaImage';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import type { CoverSource } from '@/types';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';

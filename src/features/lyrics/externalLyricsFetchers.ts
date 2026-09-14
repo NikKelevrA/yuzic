@@ -1,4 +1,4 @@
-import { getLyrics as getLrclibLyrics } from "@/api/lrclib";
+import { getLyrics as getLrclibLyrics } from "@/providers/integration/lrclib";
 import type { ExternalLyricsFetchers } from "./resolveLyrics";
 
 /** The real (network-backed) fetcher for every external lyrics source the

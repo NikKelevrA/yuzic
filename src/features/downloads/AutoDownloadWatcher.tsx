@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
-import { useDownloadActions, useDownloadState } from '@/contexts/DownloadContext';
+import { useDownloadActions, useDownloadState } from '@/features/offline/DownloadContext';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { selectAutoDownloadNewSongs } from '@/features/settings/downloads/state';
-import { useTracks } from '@/hooks/tracks/useTracks';
+import { useTracks } from '@/features/song/useTracks';
 
 /**
  * Watches the synced library track list and auto-downloads additions when the

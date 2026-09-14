@@ -5,7 +5,7 @@
  * so these tests prove the wiring — a capability really does call its own
  * provider's implementation — without making a real network request.
  */
-import type { ApiAdapter } from '@/api/types';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Album } from '@/domain/entities/Album';
@@ -18,7 +18,7 @@ import type { Provider } from '../contracts/Provider';
 // modules' import chains reach `expo-constants`, which Jest cannot parse
 // outside the app's own transform pipeline. Same pattern as
 // `src/hooks/scrobbleRouting.test.tsx`.
-jest.mock('@/api/deezer', () => ({
+jest.mock('@/providers/integration/deezer', () => ({
   resolveDeezerArtistByName: jest.fn(),
   getDeezerArtist: jest.fn(),
   resolveDeezerAlbum: jest.fn(),
@@ -26,29 +26,29 @@ jest.mock('@/api/deezer', () => ({
   getDeezerChartAlbums: jest.fn(),
   getDeezerAlbum: jest.fn(),
 }));
-jest.mock('@/api/musicbrainz', () => ({
+jest.mock('@/providers/integration/musicbrainz', () => ({
   searchArtist: jest.fn(),
   searchReleaseGroup: jest.fn(),
   getReleaseGroup: jest.fn(),
   getTracksForReleaseGroup: jest.fn(),
 }));
-jest.mock('@/api/musicbrainz/mapAlbum', () => ({ mapAlbum: jest.fn() }));
-jest.mock('@/api/musicbrainz/mapSong', () => ({ mapSong: jest.fn() }));
-jest.mock('@/api/lastfm', () => ({
+jest.mock('@/providers/integration/musicbrainz/mapAlbum', () => ({ mapAlbum: jest.fn() }));
+jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({ mapSong: jest.fn() }));
+jest.mock('@/providers/integration/lastfm', () => ({
   getLastFmArtistInfo: jest.fn(),
   getLastFmSimilarArtists: jest.fn(),
 }));
-jest.mock('@/api/listenbrainz', () => ({
+jest.mock('@/providers/integration/listenbrainz', () => ({
   getLBSimilarArtists: jest.fn(),
   submitScrobble: jest.fn(),
   testConnection: jest.fn(),
 }));
-jest.mock('@/api/lrclib', () => ({ getLyrics: jest.fn() }));
-jest.mock('@/api/audiomuse/client', () => ({ createAudiomuseClient: jest.fn() }));
-jest.mock('@/api/audiomuse/similarity', () => ({ getAudiomuseQueueExtension: jest.fn() }));
-jest.mock('@/api/audiomuse/ping', () => ({ testConnection: jest.fn() }));
-jest.mock('@/api/lidarr', () => ({ downloadAlbum: jest.fn(), testConnection: jest.fn() }));
-jest.mock('@/api/slskd', () => ({ downloadAlbum: jest.fn(), downloadTrack: jest.fn(), testConnection: jest.fn() }));
+jest.mock('@/providers/integration/lrclib', () => ({ getLyrics: jest.fn() }));
+jest.mock('@/providers/integration/audiomuse/client', () => ({ createAudiomuseClient: jest.fn() }));
+jest.mock('@/providers/integration/audiomuse/similarity', () => ({ getAudiomuseQueueExtension: jest.fn() }));
+jest.mock('@/providers/integration/audiomuse/ping', () => ({ testConnection: jest.fn() }));
+jest.mock('@/providers/integration/lidarr', () => ({ downloadAlbum: jest.fn(), testConnection: jest.fn() }));
+jest.mock('@/providers/integration/slskd', () => ({ downloadAlbum: jest.fn(), downloadTrack: jest.fn(), testConnection: jest.fn() }));
 class MockSoulSyncError extends Error {
   code?: string;
   constructor(message: string, code?: string) {
@@ -56,7 +56,7 @@ class MockSoulSyncError extends Error {
     this.code = code;
   }
 }
-jest.mock('@/api/soulsync', () => ({
+jest.mock('@/providers/integration/soulsync', () => ({
   downloadTrack: jest.fn(),
   testConnection: jest.fn(),
   SoulSyncError: MockSoulSyncError,
@@ -242,7 +242,7 @@ describe('server providers', () => {
 // --- deezer ----------------------------------------------------------------
 
 import { deezerProvider } from './providers';
-import * as deezerApi from '@/api/deezer';
+import * as deezerApi from '@/providers/integration/deezer';
 
 describe('deezer provider', () => {
   it('calls its own api module for every declared capability', async () => {
@@ -278,9 +278,9 @@ describe('deezer provider', () => {
 // --- musicbrainz -------------------------------------------------------------
 
 import { musicbrainzProvider } from './providers';
-import * as mbApi from '@/api/musicbrainz';
-import { mapAlbum as mapMbAlbum } from '@/api/musicbrainz/mapAlbum';
-import { mapSong as mapMbSong } from '@/api/musicbrainz/mapSong';
+import * as mbApi from '@/providers/integration/musicbrainz';
+import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
+import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
 
 describe('musicbrainz provider', () => {
   it('calls its own api module for every declared capability', async () => {
@@ -306,7 +306,7 @@ describe('musicbrainz provider', () => {
 // --- lastfm ------------------------------------------------------------------
 
 import { lastfmProvider } from './providers';
-import * as lastfmApi from '@/api/lastfm';
+import * as lastfmApi from '@/providers/integration/lastfm';
 
 describe('lastfm provider', () => {
   it('calls its own api module for every declared capability', async () => {
@@ -327,7 +327,7 @@ describe('lastfm provider', () => {
 // --- listenbrainz ------------------------------------------------------------
 
 import { createListenBrainzProvider } from './providers';
-import * as lbApi from '@/api/listenbrainz';
+import * as lbApi from '@/providers/integration/listenbrainz';
 
 describe('listenbrainz provider', () => {
   const config = { username: 'u', token: 't' };
@@ -367,7 +367,7 @@ describe('listenbrainz provider', () => {
 // --- lrclib --------------------------------------------------------------
 
 import { lrclibProvider } from './providers';
-import * as lrclibApi from '@/api/lrclib';
+import * as lrclibApi from '@/providers/integration/lrclib';
 
 describe('lrclib provider', () => {
   it('calls its own api module for lyrics', async () => {
@@ -386,9 +386,9 @@ describe('lrclib provider', () => {
 // --- audiomuse -----------------------------------------------------------
 
 import { createAudiomuseProvider, type AudiomuseProviderDeps } from './providers';
-import { createAudiomuseClient } from '@/api/audiomuse/client';
-import { getAudiomuseQueueExtension } from '@/api/audiomuse/similarity';
-import { testConnection as testAudiomuseConnection } from '@/api/audiomuse/ping';
+import { createAudiomuseClient } from '@/providers/integration/audiomuse/client';
+import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
+import { testConnection as testAudiomuseConnection } from '@/providers/integration/audiomuse/ping';
 
 describe('audiomuse provider', () => {
   const config: AudiomuseProviderDeps['config'] = { serverUrl: 'https://audiomuse', apiToken: 'tok' };
@@ -436,11 +436,11 @@ describe('audiomuse provider', () => {
 // --- downloaders -----------------------------------------------------------
 
 import { createLidarrProvider } from './providers';
-import * as lidarrApi from '@/api/lidarr';
+import * as lidarrApi from '@/providers/integration/lidarr';
 import { createSlskdProvider } from './providers';
-import * as slskdApi from '@/api/slskd';
+import * as slskdApi from '@/providers/integration/slskd';
 import { createSoulSyncProvider } from './providers';
-import * as soulsyncApi from '@/api/soulsync';
+import * as soulsyncApi from '@/providers/integration/soulsync';
 
 describe('lidarr provider', () => {
   const config = { serverUrl: 'https://lidarr', apiKey: 'k' };

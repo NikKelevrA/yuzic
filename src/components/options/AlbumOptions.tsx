@@ -2,7 +2,7 @@ import React, { forwardRef, useMemo, useState } from 'react';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import type { Album } from '@/domain/entities/Album';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { useSheetRef } from '@/utils/useSheetRef';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import GetReviewSheet from '@/components/options/GetReviewSheet';

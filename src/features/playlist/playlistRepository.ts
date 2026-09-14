@@ -12,7 +12,7 @@
 import { findMatch } from '@/domain/identity/matching';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
-import type { PlaylistsApi } from '@/api/types';
+import type { PlaylistsApi } from '@/providers/contracts/ServerAdapter';
 
 export type PlaylistIdentity = {
   kind: 'server';

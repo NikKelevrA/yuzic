@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/features/theme/useTheme'
 import { stateLayer } from '@/constants/design'
 
 /**

@@ -10,8 +10,8 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
-import { useTheme } from '@/hooks/useTheme';
-import { useRadius } from '@/hooks/useRadius';
+import { useTheme } from '@/features/theme/useTheme';
+import { useRadius } from '@/features/theme/useRadius';
 import { useTranslation } from 'react-i18next';
 import {
   downloadErrorKey,
@@ -19,8 +19,8 @@ import {
   type DownloaderId,
   type DownloaderState,
 } from '@/features/downloaders/registry';
-import * as lidarr from '@/api/lidarr';
-import type { LidarrQualityProfile } from '@/api/lidarr';
+import * as lidarr from '@/providers/integration/lidarr';
+import type { LidarrQualityProfile } from '@/providers/integration/lidarr';
 import { setDefaultProvider, setLidarrDefaultQualityProfileId } from '@/state/redux/slices/downloadersSlice';
 import {
   selectDefaultProviderForActiveServer,

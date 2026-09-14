@@ -3,13 +3,13 @@
  *
  * The correction this locks in: Deezer may supply artist image/details
  * (cover + externalIds) — it is a legitimate artist-image provider, unlike
- * Cover Art Archive (see `src/api/musicbrainz/index.test.ts` and
+ * Cover Art Archive (see `src/providers/integration/musicbrainz/index.test.ts` and
  * `enrichmentFetchers.test.ts` for that half of the correction).
  */
 import { deezerProvider } from './deezer';
-import { fetchWithTimeout } from '@/api/fetchWithTimeout';
+import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 
-jest.mock('@/api/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
+jest.mock('@/providers/http/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
 
 const mockedFetch = fetchWithTimeout as jest.Mock;
 

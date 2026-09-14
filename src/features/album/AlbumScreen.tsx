@@ -11,12 +11,12 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CloudOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import NotFoundView from '@/components/NotFoundView';
 import StatusBanner from '@/components/StatusBanner';
 
-import AlbumContent from '@/screens/album/components/Content';
-import LoadingAlbumContent from '@/screens/album/components/Content/Loading';
+import AlbumContent from '@/features/album/components/Content';
+import LoadingAlbumContent from '@/features/album/components/Content/Loading';
 import { DETAIL_BAR_HEIGHT } from '@/components/DetailHeader';
 import { iconSize, spacing } from '@/constants/design';
 import { useAlbumScreenModel, type AlbumRouteParams } from './useAlbumScreenModel';

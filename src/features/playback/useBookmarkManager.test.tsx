@@ -19,7 +19,7 @@ const mockCreate = jest.fn<Promise<void>, [{ songId: string; positionMs: number 
 const mockRemove = jest.fn<Promise<void>, [string]>()
 const mockBookmarksSupported = { current: true }
 
-jest.mock('@/api', () => ({
+jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({
     bookmarks: mockBookmarksSupported.current
       ? { list: mockList, create: mockCreate, remove: mockRemove }

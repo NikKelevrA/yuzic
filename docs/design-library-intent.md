@@ -136,7 +136,7 @@ MatchKey    = derived matching signal (artist/title[/album][/±duration]) — us
 ## 4. Capability slots — the integration architecture
 
 `ApiAdapter` already got this right for servers: optional fields, callers
-presence-check the capability, never the type (`src/api/types.ts`,
+presence-check the capability, never the type (`src/providers/contracts/ServerAdapter.ts`,
 architecture.md §1). We promote that from a server-adapter pattern to the
 app-wide contract.
 

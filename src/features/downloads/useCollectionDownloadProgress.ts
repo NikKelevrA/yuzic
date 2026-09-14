@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useDownloadProgress, useDownloadState } from '@/contexts/DownloadContext';
+import { useDownloadProgress, useDownloadState } from '@/features/offline/DownloadContext';
 
 /**
  * Aggregate download progress for a set of tracks in [0, 1]: completed tracks

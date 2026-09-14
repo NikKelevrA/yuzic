@@ -5,7 +5,7 @@
  * Owns the debounced query, the Library-XOR-Other-sources scope, the Filters
  * sheet selections, and the handlers that record/replay/navigate to a
  * result. Delegates *what* gets searched to `useSearch()`
- * (`src/contexts/SearchContext.tsx`) and *what gets recorded* to
+ * (`src/features/search/SearchContext.tsx`) and *what gets recorded* to
  * `useSearchHistory` (`./searchHistory.ts`); this hook is the glue between
  * them and the screen.
  */
@@ -16,22 +16,22 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
-import { type SearchResult, useSearch, type SearchEntityType } from '@/contexts/SearchContext';
+import { type SearchResult, useSearch, type SearchEntityType } from '@/features/search/SearchContext';
 import type { SearchResultScope } from '@/features/search/searchLegs';
 import { ALL_SEARCH_ENTITY_TYPES } from '@/features/search/searchPolicy';
 import { useSearchHistory } from '@/features/search/searchHistory';
 import { entityToAlbum, entityToArtist } from '@/features/search/searchResultAdapters';
-import { usePlayingActions } from '@/contexts/PlayingContext';
-import { useSongActionSheets } from '@/contexts/SongActionSheetContext';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
+import { useSongActionSheets } from '@/features/entity-actions/SongActionSheetContext';
 import { notify } from '@/components/toast';
-import { usePrefetchCovers } from '@/hooks/usePrefetchCovers';
-import { usePlayableSongResolver } from '@/hooks/songs/usePlayableSongResolver';
+import { usePrefetchCovers } from '@/features/library/usePrefetchCovers';
+import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { selectActiveServer, selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import type { SearchEntityEntry } from '@/state/redux/slices/searchHistorySlice';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useEnabledSearchSourceIds } from '@/features/sources/useSearchSourcesEnabled';
-import { useAccountSheet } from '@/contexts/AccountSheetContext';
+import { useAccountSheet } from '@/features/settings/AccountSheetContext';
 
 export function useSearchScreenModel() {
   const { t } = useTranslation();

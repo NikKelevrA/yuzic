@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSelector } from 'react-redux';
 
-import { useApi } from '@/api';
-import { useAppActive } from '@/hooks/useAppActive';
+import { useApi } from '@/providers/registry/useApi';
+import { useAppActive } from '@/features/connectivity/useAppActive';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { selectThemeColor } from '@/features/settings/appearance/state';
 /**

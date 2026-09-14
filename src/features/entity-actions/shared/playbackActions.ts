@@ -1,5 +1,5 @@
 import type { Song } from '@/domain/entities/Song';
-import type { PlayableCollection } from '@/contexts/PlayingContext';
+import type { PlayableCollection } from '@/features/playback/PlayingContext';
 
 /**
  * The one "play a collection" implementation, shared by albums, artists and

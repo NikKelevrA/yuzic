@@ -12,7 +12,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string, opts?: Record<string, unknown>) => (opts?.title ? `${key}:${opts.title}` : key) }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc' }, isDarkMode: false }),
 }));
 
@@ -28,22 +28,22 @@ jest.mock('@/utils/haptics', () => ({
   selection: jest.fn(),
 }));
 
-jest.mock('@/api', () => ({ useApi: () => ({ shares: undefined }) }));
+jest.mock('@/providers/registry/useApi', () => ({ useApi: () => ({ shares: undefined }) }));
 
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingActions: () => ({
     playSongInCollection: jest.fn(), addCollectionToQueue: jest.fn(), shuffleCollectionToQueue: jest.fn(), getQueue: () => [], playNext: jest.fn(),
   }),
 }));
 
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownload: () => ({ downloadPlaylistById: jest.fn(), getCollectionDownloadState: () => ({ isDownloaded: false, isDownloading: false }) }),
 }));
 
 const mockDeleteMutateAsync = jest.fn().mockResolvedValue(undefined);
 const mockRenameMutateAsync = jest.fn().mockResolvedValue(undefined);
-jest.mock('@/hooks/playlists/useDeletePlaylist', () => ({ useDeletePlaylist: () => ({ mutateAsync: mockDeleteMutateAsync, isPending: false }) }));
-jest.mock('@/hooks/playlists/useRenamePlaylist', () => ({ useRenamePlaylist: () => ({ mutateAsync: mockRenameMutateAsync }) }));
+jest.mock('@/features/playlist/useDeletePlaylist', () => ({ useDeletePlaylist: () => ({ mutateAsync: mockDeleteMutateAsync, isPending: false }) }));
+jest.mock('@/features/playlist/useRenamePlaylist', () => ({ useRenamePlaylist: () => ({ mutateAsync: mockRenameMutateAsync }) }));
 
 jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: jest.fn() }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));

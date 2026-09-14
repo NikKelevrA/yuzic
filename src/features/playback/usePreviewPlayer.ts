@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { usePlaying } from '@/contexts/PlayingContext';
+import { usePlaying } from '@/features/playback/PlayingContext';
 import type { Song } from '@/domain/entities/Song';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
 import { makeLocalId } from '@/domain/identity/LocalId';

@@ -1,6 +1,6 @@
 import type { Server } from '@/types/Server';
 import type { Provenance } from '@/domain/identity/Provenance';
-import { plexBasicAuthHeader } from '@/api/plex/client';
+import { plexBasicAuthHeader } from '@/providers/server/plex/client';
 
 /**
  * The ephemeral request headers a track needs to be fetched, kept off the URL

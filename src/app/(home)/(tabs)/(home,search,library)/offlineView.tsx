@@ -1,4 +1,4 @@
-import OfflineScreen from '@/screens/downloads/OfflineScreen';
+import OfflineScreen from '@/features/downloads/OfflineScreen';
 
 export default function OfflineView() {
   return <OfflineScreen />;

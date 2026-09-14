@@ -3,8 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
 
-import { useAlbums } from '@/hooks/albums/useAlbums';
-import { useTracks } from '@/hooks/tracks/useTracks';
+import { useAlbums } from '@/features/album/useAlbums';
+import { useTracks } from '@/features/song/useTracks';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { selectWantsForActiveServer } from '@/state/redux/selectors/wantsSelectors';
 import { removeWant } from '@/state/redux/slices/wantsSlice';

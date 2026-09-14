@@ -10,7 +10,7 @@ one of these trunks.
 ## 1. `ApiAdapter` — optional feature capabilities
 
 Every server yuzic supports (Navidrome, Jellyfin, Emby, Plex, and local files)
-implements one `ApiAdapter` from `src/api/types.ts`. The base surface (auth,
+implements one `ApiAdapter` from `src/providers/contracts/ServerAdapter.ts`. The base surface (auth,
 albums, artists, genres, playlists, starred, songs, tracks, similar, lyrics,
 search) is required.
 Anything a provider-specific feature reaches for is an **optional** field:
@@ -88,7 +88,7 @@ Jellyfin/Emby bookmarks are dressed up as Subsonic-style `Bookmark[]`.
 
 ### Local files are a provider, not an offline special case
 
-`local` is a normal `ServerType` and `src/api/local/` returns a normal adapter.
+`local` is a normal `ServerType` and `src/providers/server/local/` returns a normal adapter.
 Onboarding creates one local server record with the display-only URL
 `local://device`, then the import screen uses the platform document picker and
 copies approved files into Yuzic's private documents directory. The index keeps
@@ -337,7 +337,7 @@ bodies' worth of divergence.
 - **`LocalId`** (`types/EntityId.ts`) — a stable, on-device identity built by
   `makeLocalId()` from *origin* ids (server+item, or externalSource+nativeId),
   **never** from display metadata. Identity is deliberately separate from
-  *matching* (`hooks/libraryMatch.ts`, which is mbid-first then normalized
+  *matching* (`features/library/matchToLibrary.ts`, which is mbid-first then normalized
   title/artist): a server-originated and an external-originated record for the
   same album have **different** `LocalId`s and are related by matching, not by
   identity. `localId`/`externalIds`/`libraryState` are additive-optional on the
@@ -397,7 +397,7 @@ can do*, never *which product it is*.
   `useSlotProviders(slot)` answers "who fills this right now?" across the active
   server **and** connected modules — read-only availability; blend/select/
   fallback policy stays with the calling feature.
-- **One Connections screen** (`screens/settings/connections/`) is generated from
+- **One Connections screen** (`features/settings/connections/`) is generated from
   the provider list and replaced the two separate Integrations/Downloaders hubs.
   Per-provider detail screens and their deep-link routes are unchanged.
 
@@ -428,7 +428,7 @@ acquiring. The two are deliberately different code paths.
   `DownloadersQueueContext` poll still runs untouched — it *causes* the rescan
   that makes arrival observable; only the completion *signal* moved off
   queue-disappearance. There is no "Arrived" collection; Recently Added serves it.
-- **One Downloads screen** (`screens/downloads/`) shows on-device **Offline** and
+- **One Downloads screen** (`features/downloads/`) shows on-device **Offline** and
   server-side **Downloaders** as distinct sections (never conflated), the latter
   surfacing all activity a provider reports including jobs started outside yuzic,
   reading the single shared `useDownloadersQueue` poll.
@@ -436,12 +436,12 @@ acquiring. The two are deliberately different code paths.
 ## 9. Feature-oriented settings — configure the goal, not the provider
 
 Settings pages are organized by what the user wants yuzic to *do*, not by which
-integration supplies it. `screens/settings/home/` set the precedent (pulling
+integration supplies it. `features/settings/home/` set the precedent (pulling
 Home-affecting toggles out of the per-integration screens); Scrobbling, Lyrics,
 Metadata, and Search follow it. Each reuses the `SettingsScreen` shell and is a
 route leaf registered in `settings/_layout.tsx` with a row on the settings root.
 
-- **Scrobbling** (`screens/settings/scrobbling/`) — exactly one route *per
+- **Scrobbling** (`features/settings/scrobbling/`) — exactly one route *per
   destination, per server*: `disabled | through-server | direct`, stored in
   `settingsSlice.scrobbleRoutes[serverId]`. The single enum per destination makes
   "at most one route" structural (no double-scrobble). Defaults are *derived at
@@ -450,20 +450,20 @@ route leaf registered in `settings/_layout.tsx` with a row on the settings root.
   (direct needs a signed session — sequenced out). `useScrobbling` routes by the
   enum; a duplicate-risk note shows on `through-server` (yuzic can't verify
   server forwarding).
-- **Lyrics** (`screens/settings/lyrics/`, `features/lyrics/resolveLyrics.ts`) —
+- **Lyrics** (`features/settings/lyrics/`, `features/lyrics/resolveLyrics.ts`) —
   server-embedded first, then user-ordered external sources; `resolveLyrics`
   returns the first non-empty result. **LRCLIB** (`api/lrclib/`) is the launch
   external source: `none`-tier, no key, *one* source that prefers synced and
   falls back to plain internally. Off by default → server-only behaviour is
   unchanged until a user enables it.
-- **Metadata** (`screens/settings/metadata/`, `features/metadata/`) — independent
+- **Metadata** (`features/settings/metadata/`, `providers/registry/enrichmentBroker.ts`) — independent
   **Artist-information** and **Artwork** controls, each its own ordered
   enabled-source chain (`resolveArtistInfo`, `resolveArtwork`). **Display-only and
   gaps-only**: the resolvers never write to any server and only fill a field the
   server left empty, so disabling instantly restores the server view. Launch
   sources: Last.fm `artist.getInfo`; Deezer artist images + Cover Art Archive
   covers. A small "via X" line, never per-item badges.
-- **Search** (`screens/settings/search/`, `features/search/searchLegs.ts`) — a segmented
+- **Search** (`features/settings/search/`, `features/search/searchLegs.ts`) — a segmented
   **Your Library** (default, no external calls) / **Other sources** scope with a
   Filters sheet for search-enabled sources and entity types. `planSearchLegs`
   picks library **XOR** external by scope, so results are never mixed by default;
@@ -484,7 +484,7 @@ resume → library → source-group hierarchy. `homeShelfLength` uses bounded
 compact/standard/generous choices, and `sleepTimerPresets` stores bounded quick
 add durations; both are surfaced in Home settings and read through defaults.
 
-- **Local-first mix** (`screens/home/components/LocalMixSection`) seeds from
+- **Local-first mix** (`features/home/components/LocalMixSection`) seeds from
   on-device play-stats/genres (a deterministic daily seed via the existing
   `getDailySeed`/`seededShuffle` — **no new recommendation algorithm**) and
   expands through the server adapter's `api.similar.getSimilarSongs` (server-
@@ -505,7 +505,7 @@ add durations; both are surfaced in Home settings and read through defaults.
   the server** (no yuzic-local playlist store). The gesture is gated on
   `useCanGeneratePlaylist`/`useSlotFilled('playlist.generate')` and hidden when
   no provider fills the slot. Track/entity-seeded only (mood-centroid deferred).
-- **Onboarding asks once** (`screens/onboarding/discovery`): a single transparent
+- **Onboarding asks once** (`features/onboarding/discovery`): a single transparent
   opt-in for external discovery (Deezer/ListenBrainz, no accounts, exactly what
   gets sent), guarded by `onboardingDiscoveryPrompted` so it shows once and only
   inside the onboarding flow — existing users never see it.
@@ -513,65 +513,80 @@ add durations; both are surfaced in Home settings and read through defaults.
 ## Where things live
 
 ```
-src/api/                — providers + shared surfaces
-  types.ts              — the ApiAdapter contract and every optional shape
-  navidrome/            — Subsonic client + endpoints
-  mediaBrowser/         — shared Jellyfin/Emby endpoints (both adapters
-                          re-export these; only auth + brand differ)
-  mediaBrowser/adapter.ts — the adapter both brands share
-  jellyfin/, emby/      — brand bindings over that adapter (3 lines each)
-  plex/                 — Plex JSON adapter, PIN sign-in, direct-part streaming
-  local/                — private-file importer, MMKV index, local adapter
-  audiomuse/            — the acoustic-similarity service client
-  listenbrainz/         — read-only recs client (scrobble is separate)
-  lastfm/               — bundled-key read-only client (similar-artists)
-  musicbrainz/          — canonical metadata client
-  deezer/               — external catalog client (discovery, samples)
-  lidarr/, slskd/       — downloader clients
+src/app/                — Expo route files only; each renders a feature's screen
+src/domain/             — entities, identity, library state, playback kinds
 
-src/contexts/PlayingContext.tsx  — the player. Consumes ApiAdapter,
-                                    dispatches into playbackSlice, checks
-                                    contentKind before every player-shape
-                                    decision. Talks to PlayerBackend, never
-                                    to a player package directly.
+src/providers/
+  contracts/            — ServerAdapter.ts (the adapter every server
+                          implements, and every optional shape), Capabilities,
+                          Provider
+  registry/             — provider declarations, the capability and
+                          enrichment brokers, useApi (the active server's
+                          adapter)
+  http/                 — fetchWithTimeout, coalesceRequest
+  server/
+    navidrome/          — Subsonic client + endpoints, jukebox client
+    media-browser/      — the Jellyfin/Emby protocol and the adapter both
+                          brands share; jellyfin/ and emby/ are the brand
+                          bindings over it
+    plex/               — Plex JSON adapter, PIN sign-in, direct-part streaming
+    local/              — private-file importer, MMKV index, local adapter
+  integration/
+    deezer/             — external catalog client (discovery, samples)
+    musicbrainz/        — canonical metadata client
+    lastfm/             — bundled-key read-only client (similar-artists)
+    listenbrainz/       — scrobbling and read-only recommendations
+    lrclib/             — synced lyrics
+    audiomuse/          — the acoustic-similarity service client
+    lidarr/, slskd/, soulsync/ — downloader clients
 
-src/features/player/
-  backend.ts            — PlayerBackend: the surface the app uses (§ above)
-  createEngineBackend.ts— yuzic-engine behind it, plus the shadow that lets
-                          a bridged engine answer synchronous getters
-  activeBackend.ts      — builds it, hands it out, one per launch
-  mediaItem.ts          — the app's own playable-item type, formerly the
-                          player package's
-  audioSettings.ts      — crossfade and equalizer shapes, bands and presets
-  usePlayerState.ts     — the reactive half: progress, playing, active item
-  playbackSink.ts       — where the audio comes out (§ above), a separate
-                          question from which player produces it
-
-src/hooks/
-  useSync.ts            — the catalog pipeline (§4)
-  useScrobbling.ts      — scrobble + now-playing (server-forwarded to
+src/features/           — one directory per feature: its screen, components,
+                          hooks and logic together
+  playback/
+    PlayingContext.tsx  — the player. Consumes the server adapter,
+                          dispatches into playbackSlice, checks contentKind
+                          before every player-shape decision. Talks to
+                          PlayerBackend, never to a player package directly.
+    useScrobbling.ts    — scrobble + now-playing (server-forwarded to
                           Last.fm/LB on Navidrome, session events on
                           Jellyfin/Emby)
-  useBookmarkManager.ts — local bookmark map + server mirror
-  useQueueSync.ts       — server-mirror for the playback queue
-  usePlaybackPersistence.ts — the bridge between PlayingContext and
+    useBookmarkManager.ts — local bookmark map + server mirror
+    useQueueSync.ts     — server-mirror for the playback queue
+    usePlaybackPersistence.ts — the bridge between PlayingContext and
                           playbackSlice
+    queueProviders.ts   — autoplay queue fill (server similar songs, AudioMuse)
+  player/
+    backend.ts          — PlayerBackend: the surface the app uses (§ above)
+    createEngineBackend.ts — yuzic-engine behind it, plus the shadow that lets
+                          a bridged engine answer synchronous getters
+    activeBackend.ts    — builds it, hands it out, one per launch
+    mediaItem.ts        — the app's own playable-item type, formerly the
+                          player package's
+    audioSettings.ts    — crossfade and equalizer shapes, bands and presets
+    usePlayerState.ts   — the reactive half: progress, playing, active item
+    playbackSink.ts     — where the audio comes out (§ above), a separate
+                          question from which player produces it
+    PlaybackSinkContext.tsx — which output is selected, and where transport
+                          commands go
+    DlnaContext.tsx, useDlnaDiscovery.ts — the DLNA output
+    PlayingScreen.tsx, playingBar/ — the player UI
+  library/
+    useSync.ts          — the catalog pipeline (§4)
+  album/, artist/, song/, playlist/, genre/ — entity screens, repositories
+                          and query hooks
+  home/, search/, library/, downloads/, wants/, onboarding/, settings/,
+  podcasts/, radio/, shares/ — the remaining screens with what they own
+  downloaders/          — Lidarr + slskd + SoulSync registry and queue
+  offline/              — download policies, filesystem, DownloadContext
+  sources/              — external catalog registry (Deezer, MB)
+  theme/                — useTheme, useRadius, useListDensity, cover accent
+  connectivity/         — offline and server-reachability state
 
-src/contexts/PlaybackSinkContext.tsx — which output is selected, and where
-                                    transport commands go
-
-src/features/           — feature-scoped modules that span providers
-  player/playbackSink   — the sink types and `ownsPlayback`
-  downloaders/          — Lidarr + slskd registry + the queue provider
-  downloads/            — Auto-download watcher
-  sources/              — External catalog registry (Deezer, MB)
-  home/                 — Home layout (§ the day-key + tiers)
-  audiomuse/            — Playlist generation from acoustic seed
-
-src/screens/            — one directory per top-level route
 src/state/              — app state
   credentials.ts        — keystore-backed secrets, never in Redux
   redux/                — slices + selectors + store setup
+  query/                — useOfflineFirstQuery, usePollWhile
+src/components/         — shared visual primitives
 src/utils/playback/     — contentKind + Song-synthesis helpers
 ```
 

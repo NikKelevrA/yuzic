@@ -14,7 +14,7 @@ import {
 // expo-constants import doesn't transform in this jest environment. Not
 // under test here; see the same note in hooks/scrobbleRouting.test.tsx. Jest
 // hoists this above the imports above regardless of its position here.
-jest.mock('@/api/listenbrainz', () => ({
+jest.mock('@/providers/integration/listenbrainz', () => ({
   submitScrobble: jest.fn(async () => {}),
   submitNowPlaying: jest.fn(async () => {}),
 }))

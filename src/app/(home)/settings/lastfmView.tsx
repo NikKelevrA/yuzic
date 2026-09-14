@@ -1,2 +1,2 @@
-import LastfmSettings from '@/screens/settings/integrations/lastfm';
+import LastfmSettings from '@/features/settings/integrations/lastfm';
 export default LastfmSettings;

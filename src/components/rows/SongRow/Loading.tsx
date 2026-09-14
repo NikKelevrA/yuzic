@@ -4,7 +4,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Skeleton } from 'moti/skeleton';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { spacing } from '@/constants/design';
 
 const LoadingSongRow: React.FC = () => {

@@ -11,11 +11,11 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc', favorite: '#f00', placeholder: '#999' }, isDarkMode: false }),
 }));
 
-jest.mock('@/hooks/useRadius', () => ({
+jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ lg: 16, card: 8 }),
 }));
 
@@ -72,20 +72,20 @@ jest.mock('@/features/audiomuse/generatePlaylist', () => ({
   generateSimilarPlaylistForSong: (...args: unknown[]) => mockGenerateSimilarPlaylist(...args),
 }));
 
-jest.mock('@/api', () => ({
+jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({}),
 }));
 
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingState: () => ({ currentSong: null }),
   usePlayingActions: () => ({ addToQueue: jest.fn(), playNext: jest.fn(), playSimilar: jest.fn() }),
 }));
 
-jest.mock('@/hooks/useIsOffline', () => ({
+jest.mock('@/features/connectivity/useIsOffline', () => ({
   useIsOffline: () => false,
 }));
 
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownload: () => ({
     downloadTrack: jest.fn(),
     deleteDownloadedTrack: jest.fn(),
@@ -98,9 +98,9 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
-jest.mock('@/hooks/starred/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
-jest.mock('@/hooks/starred/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: jest.fn() }) }));
-jest.mock('@/hooks/starred/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/library/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
+jest.mock('@/features/library/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/library/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: jest.fn() }) }));
 
 jest.mock('@/features/downloaders/registry', () => ({
   useAnyDownloaderConnected: jest.fn(() => false),

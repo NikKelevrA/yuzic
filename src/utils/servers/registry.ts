@@ -4,36 +4,36 @@ import EmbyIcon from '@assets/images/emby.png';
 import PlexIcon from '@assets/images/plex.png';
 import LocalFilesIcon from '@assets/images/local-files.png';
 
-import { createNavidromeClient, buildTokenParams } from '@/api/navidrome/client';
-import { ping as pingNavidrome } from '@/api/navidrome/auth/ping';
-import { connect as connectNavidrome } from '@/api/navidrome/auth/connect';
-import { createNavidromeAdapter } from '@/api/navidrome';
+import { createNavidromeClient, buildTokenParams } from '@/providers/server/navidrome/client';
+import { ping as pingNavidrome } from '@/providers/server/navidrome/auth/ping';
+import { connect as connectNavidrome } from '@/providers/server/navidrome/auth/connect';
+import { createNavidromeAdapter } from '@/providers/server/navidrome';
 
-import { createJellyfinClient } from '@/api/jellyfin/client';
-import { createJellyfinAdapter } from '@/api/jellyfin';
+import { createJellyfinClient } from '@/providers/server/media-browser/jellyfin/client';
+import { createJellyfinAdapter } from '@/providers/server/media-browser/jellyfin';
 import {
   initiateQuickConnect,
   pollQuickConnect,
   authenticateWithQuickConnect,
-} from '@/api/jellyfin/auth/quickConnect';
+} from '@/providers/server/media-browser/jellyfin/auth/quickConnect';
 
-import { createEmbyClient } from '@/api/emby/client';
-import { createEmbyAdapter } from '@/api/emby';
+import { createEmbyClient } from '@/providers/server/media-browser/emby/client';
+import { createEmbyAdapter } from '@/providers/server/media-browser/emby';
 
-import { createPlexClient } from '@/api/plex/client';
-import { createPlexAdapter } from '@/api/plex';
-import { beginPlexPin, pollPlexPin } from '@/api/plex/auth/pin';
-import { createLocalAdapter } from '@/api/local';
+import { createPlexClient } from '@/providers/server/plex/client';
+import { createPlexAdapter } from '@/providers/server/plex';
+import { beginPlexPin, pollPlexPin } from '@/providers/server/plex/auth/pin';
+import { createLocalAdapter } from '@/providers/server/local';
 
-import { getMusicFolders } from '@/api/navidrome/auth/getMusicFolders';
-import { getMusicLibraries } from '@/api/mediaBrowser/auth/getMusicLibraries';
+import { getMusicFolders } from '@/providers/server/navidrome/auth/getMusicFolders';
+import { getMusicLibraries } from '@/providers/server/media-browser/auth/getMusicLibraries';
 
-import { ping as pingMediaBrowser } from '@/api/mediaBrowser/auth/ping';
-import { connect as connectMediaBrowser } from '@/api/mediaBrowser/auth/connect';
-import { JELLYFIN_BRAND, EMBY_BRAND } from '@/api/mediaBrowser/brand';
+import { ping as pingMediaBrowser } from '@/providers/server/media-browser/auth/ping';
+import { connect as connectMediaBrowser } from '@/providers/server/media-browser/auth/connect';
+import { JELLYFIN_BRAND, EMBY_BRAND } from '@/providers/server/media-browser/brand';
 
 import { ServerType, Server, CoverSource, BasicAuth } from '@/types';
-import type { Library, ApiAdapter } from '@/api/types';
+import type { Library, ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import i18n from '@/i18n';
 import { getCredentials, setCredential, forgetCredentials, type CredentialBundle } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';

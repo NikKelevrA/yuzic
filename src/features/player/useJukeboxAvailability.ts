@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useApi } from '@/api';
+import { useApi } from '@/providers/registry/useApi';
 
 /**
  * Whether this user may actually drive the server's jukebox.

@@ -32,9 +32,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MediaImage } from '@/components/MediaImage';
 import { useCoverAccent } from '@/features/theme/useCoverAccent';
 import { ACCENT_WASH_LOCATIONS, accentWashColors } from '@/features/theme/coverAccent';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { controlSize, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 import type { CoverSource } from '@/types';
 import Touchable from '@/components/Touchable';
 

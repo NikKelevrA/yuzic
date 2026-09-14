@@ -8,7 +8,7 @@
  * fixed at build time. Every capability guards on the key being present the
  * same way `src/api/lastfm`'s own functions do.
  */
-import { getLastFmArtistInfo, getLastFmSimilarArtists } from '@/api/lastfm';
+import { getLastFmArtistInfo, getLastFmSimilarArtists } from '@/providers/integration/lastfm';
 import { LASTFM_API_KEY } from '@/constants/keys';
 import { sourceColor } from '@/constants/design';
 import { makeLocalId } from '@/domain/identity/LocalId';
@@ -36,7 +36,7 @@ export const lastfmProvider: IntegrationProvider = {
       const raw = await getLastFmSimilarArtists(LASTFM_API_KEY, artist.name, limit);
       // Last.fm names no artist id of its own on this endpoint — its mbid
       // where present, else the artist's name, is all there is to key on.
-      // Same mapping `src/hooks/artists/useSimilarArtists.ts` already does.
+      // Same mapping `src/features/artist/useSimilarArtists.ts` already does.
       return raw.map((candidate): Artist => {
         const nativeId = candidate.mbid ?? candidate.name;
         return {

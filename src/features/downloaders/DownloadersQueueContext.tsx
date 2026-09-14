@@ -9,10 +9,10 @@ import React, {
   useState,
 } from 'react';
 
-import { useApi } from '@/api';
-import { useAppActive } from '@/hooks/useAppActive';
-import { useIsOffline } from '@/hooks/useIsOffline';
-import { usePollWhile } from '@/hooks/usePollWhile';
+import { useApi } from '@/providers/registry/useApi';
+import { useAppActive } from '@/features/connectivity/useAppActive';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
+import { usePollWhile } from '@/state/query/usePollWhile';
 import { useSync } from '@/features/library/useSync';
 import { useDownloaderStates, type DownloaderState } from './registry';
 import { finishedSince, type DownloaderQueueItem } from './queueItem';

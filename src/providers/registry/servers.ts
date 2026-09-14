@@ -13,7 +13,7 @@
  *
  * - `lyrics` and `similarity.songs` come from `ApiAdapter.lyrics` and
  *   `ApiAdapter.similar.getSimilarSongs`, both required members of the
- *   adapter shape (`src/api/types.ts`) — every server has them, even where
+ *   adapter shape (`src/providers/contracts/ServerAdapter.ts`) — every server has them, even where
  *   the implementation always answers empty/null (Plex, Local).
  * - `scrobble` comes from the required `ApiAdapter.songs.scrobble`.
  * - `similarity.artists` comes from the *optional*
@@ -32,7 +32,7 @@ import EmbyIcon from '@assets/images/emby.png';
 import PlexIcon from '@assets/images/plex.png';
 import LocalFilesIcon from '@assets/images/local-files.png';
 
-import type { ApiAdapter } from '@/api/types';
+import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import type { Capabilities } from '../contracts/Capabilities';
 import type { ServerProvider } from '../contracts/Provider';
 
