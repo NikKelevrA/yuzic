@@ -15,6 +15,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import shuffleArray from '@/features/playback/shuffleArray';
 import type { SourceUseId } from './sources';
+import { withArtistArtwork } from './artistArtwork';
 
 /** The switch each of these reads. */
 export const PREVIEWS_USE: SourceUseId = 'deezer.previews';
@@ -73,7 +74,8 @@ export async function fetchAlbumPreviews(album: Album, songs: Song[]): Promise<R
 export async function fetchSimilarArtistsFromScrobbles(
   name: string,
   excludeName: string | undefined,
-  limit: number
+  limit: number,
+  options: { withArtwork?: boolean } = {}
 ): Promise<Artist[]> {
   const candidates = await getLastFmSimilarArtists(LASTFM_API_KEY, name, limit * 3);
   if (!candidates.length) return [];
@@ -82,7 +84,7 @@ export async function fetchSimilarArtistsFromScrobbles(
   const seen = new Set<string>();
   const provenance = integrationProvenance('lastfm');
 
-  return candidates
+  const artists = candidates
     .filter(c => {
       const key = c.name.trim().toLowerCase();
       if (!key || seen.has(key)) return false;
@@ -107,6 +109,8 @@ export async function fetchSimilarArtistsFromScrobbles(
         albumIds: [],
       };
     });
+  // Scrobblers' similar artists carry no pictures of their own.
+  return options.withArtwork ? withArtistArtwork(artists) : artists;
 }
 
 /** An artist's MusicBrainz id, looked up by name, or null when nothing matches. */
