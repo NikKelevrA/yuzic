@@ -1,6 +1,6 @@
 import type { AudioQuality } from '@/domain/playback/AudioFormat';
 import { qualityToStreamParams } from '@/utils/audio/streamQuality';
-import { tryWithFailover, orderedUrls } from '@/utils/servers/urlFailover';
+import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverProvenance, type Provenance } from '@/domain/identity/Provenance';
 import { MediaBrowserBrand } from './brand';
 import { mediaBrowserClientHeader } from './clientHeader';

@@ -5,7 +5,7 @@
  * A server is required core (exactly one is active), so unlike an
  * integration it is not declared as a static object — it is built from the
  * `ApiAdapter` already constructed for the active `Server` (see
- * `src/utils/servers/registry.ts#createAdapter`). That adapter is the
+ * `src/providers/registry/serverConnections.ts#createAdapter`). That adapter is the
  * "client" every capability here needs, so each factory takes it as its one
  * dependency rather than reaching into a React store.
  *
@@ -75,7 +75,7 @@ function serverProvider(
     id,
     presentation: { nameKey, icon },
     // Every server authenticates with the credentials already resolved into
-    // `api` by `createAdapter` (see `src/utils/servers/registry.ts`); this
+    // `api` by `createAdapter` (see `src/providers/registry/serverConnections.ts`); this
     // declaration answers "what can it do", not "how do I log in" — that
     // stays the onboarding flow's job. Local files need no account at all.
     auth: { tier: authTier },

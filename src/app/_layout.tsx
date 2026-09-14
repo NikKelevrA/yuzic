@@ -41,7 +41,7 @@ import { useClientCertificate } from '@/features/mtls/useClientCertificate';
 import { hydrateAll } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';
 import { setCredentialsHydrated } from '@/state/redux/slices/serversSlice';
-import { serverCredentialScope } from '@/utils/servers/registry';
+import { serverCredentialScope } from '@/providers/registry/serverConnections';
 import { listenBrainzCredentialScope } from '@/state/redux/selectors/listenbrainzSelectors';
 import { audiomuseCredentialScope } from '@/state/redux/selectors/audiomuseSelectors';
 import { downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors';

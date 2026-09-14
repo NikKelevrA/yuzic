@@ -81,11 +81,9 @@ export const PROVIDER_NAMES = [
 const PROVIDER_HOMES = [
   'src/providers/server/',               // the server protocol implementations themselves
   'src/providers/integration/',          // the integration protocol implementations themselves
-  'src/utils/servers/registry.ts',       // server provider declarations
+  'src/providers/registry/',             // where a provider declares itself
   'src/features/downloaders/registry',   // downloader declarations
   'src/features/sources/registry',       // external source declarations
-  'src/providers/registry/',             // where a provider declares itself
-  'src/features/integrations/',          // the capability contract and registry
   'src/app/',                            // route files named after a provider's settings screen
   'src/locales/',                        // product names are user-facing copy
 ];

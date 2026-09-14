@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { useCodeAuth } from './useCodeAuth';
-import type { CodeAuthApi } from '@/utils/servers/registry';
+import type { CodeAuthApi } from '@/providers/registry/serverConnections';
 import type { BasicAuth } from '@/types';
 
 /**

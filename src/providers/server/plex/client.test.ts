@@ -9,7 +9,7 @@ jest.mock('@/utils/installationId', () => ({
   getInstallationId: () => 'install-1',
 }));
 
-import { _resetCache } from '@/utils/servers/urlFailover';
+import { _resetCache } from '@/providers/http/urlFailover';
 import { createPlexClient } from './client';
 
 beforeEach(() => {

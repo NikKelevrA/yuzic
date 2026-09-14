@@ -1,6 +1,6 @@
 import type { BasicAuth } from '@/types';
 import { getInstallationId } from '@/utils/installationId';
-import { tryWithFailover, orderedUrls } from '@/utils/servers/urlFailover';
+import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
 import type { PlexResponse } from './types';
 

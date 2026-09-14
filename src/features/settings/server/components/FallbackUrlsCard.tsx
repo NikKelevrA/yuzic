@@ -7,7 +7,7 @@ import { Plus, X } from 'lucide-react-native';
 
 import { useTheme } from '@/features/theme/useTheme';
 import { updateServer } from '@/state/redux/slices/serversSlice';
-import { forgetReachable } from '@/utils/servers/urlFailover';
+import { forgetReachable } from '@/providers/http/urlFailover';
 import { useRadius } from '@/features/theme/useRadius';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsCardHeader from '../../components/SettingsCardHeader';

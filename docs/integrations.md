@@ -31,7 +31,7 @@ server also carries optional **fallback URLs** (tried in order when the primary
 is unreachable — e.g. a Tailscale address away from home) and optional HTTP
 basic auth in front of the server.
 
-Provider registry: `src/utils/servers/registry.ts` — which also holds the
+Provider registry: `src/providers/registry/serverConnections.ts` — which also holds the
 per-provider facts that aren't API calls (demo credentials, cover URLs, and
 which `auth` key stores the chosen libraries). Adapters: `src/providers/server/navidrome/`
 for Subsonic, and `src/providers/server/media-browser/adapter.ts` for both Jellyfin and Emby,

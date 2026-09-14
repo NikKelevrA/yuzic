@@ -541,8 +541,6 @@ export const getServerProvider = (type: ServerType) => {
   return provider;
 };
 
-  Object.values(SERVER_PROVIDERS);
-
 export const supportsDemo = (type: ServerType) =>
   SERVER_PROVIDERS[type]?.capabilities.supportsDemo ?? false;
 

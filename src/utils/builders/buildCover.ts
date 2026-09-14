@@ -1,7 +1,7 @@
 import { COVER_PX, CoverSource } from '@/types';
 import store from '@/state/redux/store';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import { SERVER_PROVIDERS, withServerCredentials } from '@/utils/servers/registry';
+import { SERVER_PROVIDERS, withServerCredentials } from '@/providers/registry/serverConnections';
 import { normalizeImageUrlForSize } from '@/utils/images/normalizeImageUrl';
 
 export function buildCoverArtArchiveUrl(

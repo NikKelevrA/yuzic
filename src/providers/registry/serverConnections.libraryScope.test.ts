@@ -1,5 +1,5 @@
 import type { Server } from '@/types';
-import { selectedLibraryIds, libraryScopePatch } from './registry';
+import { selectedLibraryIds, libraryScopePatch } from './serverConnections';
 
 function serverOf(type: Server['type'], auth: Server['auth']): Server {
   return {

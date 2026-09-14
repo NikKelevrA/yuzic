@@ -12,7 +12,7 @@
     "src/features/player/PlayingScreen.tsx",
     "src/features/player/playingBar/PlayingBarBase.tsx",
     "src/providers/integration/lidarr/albums/index.ts",
-    "src/utils/servers/registry.ts"
+    "src/providers/registry/serverConnections.ts"
   ],
   "provider-branches": [
     "src/components/options/GetReviewSheet.tsx lidarr",
@@ -551,12 +551,12 @@
     "src/utils/offline/offlineMutations.ts - ScrobbleDetails (used in module)",
     "src/utils/playback/contentKind.ts - isLiveStream (used in module)",
     "src/utils/playback/speedProfile.ts - DEFAULT_SPEEDS (used in module)",
-    "src/utils/servers/registry.ts - ConnectResult (used in module)",
-    "src/utils/servers/registry.ts - DemoResult (used in module)",
-    "src/utils/servers/registry.ts - LibraryScope (used in module)",
-    "src/utils/servers/registry.ts - ServerCapabilities (used in module)",
-    "src/utils/servers/registry.ts - ServerProviderConfig (used in module)",
-    "src/utils/servers/registry.ts - supportsDemo (used in module)",
-    "src/utils/servers/urlFailover.ts - ServerUrlHint (used in module)"
+    "src/providers/registry/serverConnections.ts - ConnectResult (used in module)",
+    "src/providers/registry/serverConnections.ts - DemoResult (used in module)",
+    "src/providers/registry/serverConnections.ts - LibraryScope (used in module)",
+    "src/providers/registry/serverConnections.ts - ServerCapabilities (used in module)",
+    "src/providers/registry/serverConnections.ts - ServerProviderConfig (used in module)",
+    "src/providers/registry/serverConnections.ts - supportsDemo (used in module)",
+    "src/providers/http/urlFailover.ts - ServerUrlHint (used in module)"
   ]
 }

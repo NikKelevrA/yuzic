@@ -20,7 +20,7 @@ import { useDlnaDiscovery, type DiscoveredDevice } from '@/features/player/useDl
 import { usePlaybackSink } from '@/features/player/PlaybackSinkContext';
 import { useJukeboxAvailability } from '@/features/player/useJukeboxAvailability';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import { getServerProvider } from '@/utils/servers/registry';
+import { getServerProvider } from '@/providers/registry/serverConnections';
 import Touchable from '@/components/Touchable';
 import { iconSize, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';

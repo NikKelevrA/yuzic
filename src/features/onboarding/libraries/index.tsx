@@ -16,7 +16,7 @@ import {
   listServerLibraries,
   libraryScopePatch,
   type Library,
-} from '@/utils/servers/registry';
+} from '@/providers/registry/serverConnections';
 import type { RootState } from '@/state/redux/store';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';

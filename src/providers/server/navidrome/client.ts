@@ -1,6 +1,6 @@
 import type { AudioQuality } from '@/domain/playback/AudioFormat';
 import { qualityToStreamParams } from '@/utils/audio/streamQuality';
-import { tryWithFailover, orderedUrls } from '@/utils/servers/urlFailover';
+import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
 
 // md5 does not ship TypeScript declarations in this project.

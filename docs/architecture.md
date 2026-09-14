@@ -606,7 +606,7 @@ which filed the app's state under miscellany.
 - **Optional method + presence check, not provider switch.** Every time a
   feature landed as `if (activeServer.type === 'navidrome')` in a review,
   it got rewritten as `if (api.<feature>)` before merging. What the adapter
-  can't express, `utils/servers/registry.ts` does: it holds the per-provider
+  can't express, `providers/registry/serverConnections.ts` does: it holds the per-provider
   facts that aren't API calls — the demo, cover URLs, and `libraryScope`, the
   `auth` key each provider stores its chosen libraries under. `activeServer.type`
   is for naming a server to the user and tagging data with its origin; it is not

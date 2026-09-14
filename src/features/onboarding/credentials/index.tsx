@@ -13,7 +13,7 @@ import { useDispatch } from 'react-redux';
 import { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import { notify } from '@/components/toast';
 import { nanoid } from '@reduxjs/toolkit';
-import { ProviderAuth, SERVER_PROVIDERS, saveServerCredentials } from '@/utils/servers/registry';
+import { ProviderAuth, SERVER_PROVIDERS, saveServerCredentials } from '@/providers/registry/serverConnections';
 import { ServerType, BasicAuth } from '@/types';
 import { useTranslation } from 'react-i18next';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';

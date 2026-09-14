@@ -8,7 +8,7 @@ import {
   selectedLibraryIds,
   libraryScopePatch,
   type Library,
-} from '@/utils/servers/registry';
+} from '@/providers/registry/serverConnections';
 import { useSync } from '@/features/library/useSync';
 import SettingsSelectCard from '../../components/SettingsSelectCard';
 

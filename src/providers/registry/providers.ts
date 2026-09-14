@@ -3,7 +3,7 @@
  *
  * A server provider is required core — exactly one is active — and is built
  * from that server's already-constructed `ApiAdapter`
- * (`src/utils/servers/registry.ts#createAdapter`). An integration provider
+ * (`src/providers/registry/serverConnections.ts#createAdapter`). An integration provider
  * is optional and any number may be connected; the keyless ones (Deezer,
  * MusicBrainz, Last.fm, LRCLIB) are plain declarations, and the ones that
  * need the user's own credentials or a client (ListenBrainz, AudioMuse,
