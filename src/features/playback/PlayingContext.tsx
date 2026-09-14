@@ -63,7 +63,7 @@ import {
   createNativeSimilarityQueueFillProvider,
   createAudiomuseQueueFillProvider,
 } from '@/features/playback/queueProviders';
-import { buildRestoredQueue } from '@/features/playback/restoreQueue';
+import { buildRestoredQueue, decideRestore } from '@/features/playback/restoreQueue';
 import { hasReissuableUrl } from '@/domain/playback/ContentKind';
 import { clampSpeed, speedFor, speedProfileFor } from '@/utils/playback/speedProfile';
 import { useBookmarkManager } from '@/features/playback/useBookmarkManager';
@@ -411,33 +411,31 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   // separate Redux mirror to read instead.
   const { tracks: libraryTracks } = useTracks();
   const hasAutoRestoredRef = useRef(false);
+  // The last skip reason already logged, so a reason that holds across many
+  // state changes is reported once rather than on each of them.
+  const reportedRestoreSkipRef = useRef<string | null>(null);
   useEffect(() => {
     if (hasAutoRestoredRef.current) return;
 
-    // Why the restore did not happen, said out loud. Every one of these was a
-    // bare `return`, so a queue that was displayed but never handed to the
-    // player looked identical from the outside to one that had been restored
-    // properly — the app showed the track and play did nothing, with nothing
-    // anywhere to say which guard had stopped it.
-    //
-    // Split by whether a restore was *wanted*. "No active server" and "nothing
-    // persisted" mean there was nothing to restore, which is most launches and
-    // is silent. The other three mean something should have come back and did
-    // not, which is what someone reporting "my queue disappeared" is
-    // describing — so those say so, once, where a support log will find them.
-    const nothingToRestore =
-      !currentServerId ? 'no active server'
-      : persistedQueueIds.length === 0 ? 'nothing persisted'
-      : null;
-    if (nothingToRestore) return;
-
-    const blocked =
-      persistedServerIdForPlayback !== currentServerId ? `queue belongs to another server (${persistedServerIdForPlayback})`
-      : queueRef.current.length > 0 ? 'a queue is already loaded'
-      : libraryTracks.length === 0 ? 'library not hydrated yet'
-      : null;
-    if (blocked) {
-      console.warn(`[player] not restoring the persisted queue: ${blocked}`);
+    // Why the restore did not happen, said out loud — see `decideRestore` for
+    // which reasons are worth a log line and which end the attempt. The
+    // warning used to fire on every state change while its reason held, so
+    // starting a track logged "a queue is already loaded" once per persisted
+    // write; now it says each reason once, and a queue the listener started
+    // ends the attempt rather than being retried until something replaces it.
+    const decision = decideRestore({
+      activeServerId: currentServerId,
+      persistedCount: persistedQueueIds.length,
+      persistedServerId: persistedServerIdForPlayback,
+      queueLoaded: queueRef.current.length > 0,
+      libraryHydrated: libraryTracks.length > 0,
+    });
+    if (decision.kind === 'skip') {
+      if (decision.final) hasAutoRestoredRef.current = true;
+      if (decision.report && reportedRestoreSkipRef.current !== decision.reason) {
+        reportedRestoreSkipRef.current = decision.reason;
+        console.warn(`[player] not restoring the persisted queue: ${decision.reason}`);
+      }
       return;
     }
 

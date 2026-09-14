@@ -3,7 +3,7 @@ import { serverProvenance } from '@/domain/identity/Provenance';
 import type { Song } from '@/domain/entities/Song';
 import type { PlayableResource } from '@/features/playback/playableResource';
 
-import { buildRestoredQueue } from './restoreQueue';
+import { buildRestoredQueue, decideRestore } from './restoreQueue';
 
 const provenance = serverProvenance('srv-1');
 const localIdOf = (nativeId: string) => makeLocalId('song', provenance, nativeId);
@@ -114,5 +114,54 @@ describe('buildRestoredQueue', () => {
     });
 
     expect(index).toBeLessThan(queue.length);
+  });
+});
+
+describe('decideRestore', () => {
+  const ready = {
+    activeServerId: 'srv-1',
+    persistedCount: 3,
+    persistedServerId: 'srv-1',
+    queueLoaded: false,
+    libraryHydrated: true,
+  };
+
+  it('restores when a persisted queue belongs to the active server and nothing is playing', () => {
+    expect(decideRestore(ready)).toEqual({ kind: 'restore' });
+  });
+
+  it('says nothing when there was nothing to restore', () => {
+    // Most launches: no server yet, or no queue from last time. Neither is a
+    // queue that went missing, so neither is worth a log line.
+    expect(decideRestore({ ...ready, activeServerId: null })).toMatchObject({ kind: 'skip', report: false, final: false });
+    expect(decideRestore({ ...ready, persistedCount: 0 })).toMatchObject({ kind: 'skip', report: false, final: false });
+  });
+
+  it('ends the attempt once the listener has started a queue of their own', () => {
+    // This was retried on every state change: starting a track logged "a queue
+    // is already loaded" once per persisted write, and a restore that finally
+    // got through would have replaced what the listener chose.
+    expect(decideRestore({ ...ready, queueLoaded: true })).toEqual({
+      kind: 'skip', reason: 'a queue is already loaded', final: true, report: true,
+    });
+  });
+
+  it('keeps waiting for the library, and says why', () => {
+    const decision = decideRestore({ ...ready, libraryHydrated: false });
+    expect(decision).toEqual({ kind: 'skip', reason: 'library not hydrated yet', final: false, report: true });
+    // Hydration landing is exactly what should let it through.
+    expect(decideRestore({ ...ready, libraryHydrated: true })).toEqual({ kind: 'restore' });
+  });
+
+  it('does not restore another server’s queue, but can once that server is active again', () => {
+    expect(decideRestore({ ...ready, activeServerId: 'srv-2' })).toEqual({
+      kind: 'skip', reason: 'queue belongs to another server (srv-1)', final: false, report: true,
+    });
+  });
+
+  it('prefers the server mismatch over a loaded queue, which is not what stopped it', () => {
+    expect(decideRestore({ ...ready, activeServerId: 'srv-2', queueLoaded: true })).toMatchObject({
+      reason: 'queue belongs to another server (srv-1)',
+    });
   });
 });

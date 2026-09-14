@@ -3,6 +3,50 @@ import type { PlayableResource } from '@/features/playback/playableResource';
 import { playableOnly } from '@/features/playback/playableResource';
 
 /**
+ * Whether the persisted queue should be restored now, and if not, what that
+ * means for the attempt.
+ *
+ * Two questions ride on every skip, and they have different answers per
+ * reason:
+ *
+ * - `final`: is it worth asking again? A library that has not hydrated yet
+ *   will, so the restore waits for it. A queue the listener has already
+ *   started is the opposite — restoring later would replace what they chose —
+ *   so the attempt is over.
+ * - `report`: was a restore wanted? "No active server" and "nothing persisted"
+ *   are most launches and say nothing. The rest describe a queue that should
+ *   have come back, which is what "my queue disappeared" is reporting, so they
+ *   are worth a log line — once, not on every state change while the reason
+ *   holds.
+ */
+type RestoreDecision =
+  | { kind: 'restore' }
+  | { kind: 'skip'; reason: string; final: boolean; report: boolean };
+
+export function decideRestore(state: {
+  activeServerId: string | null | undefined;
+  persistedCount: number;
+  persistedServerId: string | null | undefined;
+  queueLoaded: boolean;
+  libraryHydrated: boolean;
+}): RestoreDecision {
+  if (!state.activeServerId) return { kind: 'skip', reason: 'no active server', final: false, report: false };
+  if (state.persistedCount === 0) return { kind: 'skip', reason: 'nothing persisted', final: false, report: false };
+  if (state.persistedServerId !== state.activeServerId) {
+    return {
+      kind: 'skip',
+      reason: `queue belongs to another server (${state.persistedServerId})`,
+      // Switching back to that server makes it restorable again.
+      final: false,
+      report: true,
+    };
+  }
+  if (state.queueLoaded) return { kind: 'skip', reason: 'a queue is already loaded', final: true, report: true };
+  if (!state.libraryHydrated) return { kind: 'skip', reason: 'library not hydrated yet', final: false, report: true };
+  return { kind: 'restore' };
+}
+
+/**
  * Rebuild a playable queue from the ids the last session persisted.
  *
  * Only ids are stored, so this has to find each song in the library again and
