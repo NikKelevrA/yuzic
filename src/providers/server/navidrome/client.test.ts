@@ -1,4 +1,5 @@
 import { createNavidromeClient, SubsonicRequestError } from './client';
+import { ServerFeatureUnavailableError } from '@/providers/contracts/ServerAdapter';
 
 const mockServerFetch = jest.fn();
 jest.mock('@/features/mtls/serverFetch', () => ({
@@ -50,6 +51,13 @@ describe('request', () => {
     mockServerFetch.mockReturnValueOnce(respond(body));
 
     await expect(client().request('getAlbumList.view')).resolves.toEqual(body);
+  });
+
+  it('reports an endpoint the server has not implemented as a feature it lacks', async () => {
+    // What Navidrome answers to getPodcasts, and to getShares with sharing off.
+    mockServerFetch.mockReturnValueOnce(respond('This endpoint is not implemented, but may be in future releases', 501));
+
+    await expect(client().request('getPodcasts.view')).rejects.toBeInstanceOf(ServerFeatureUnavailableError);
   });
 
   it('still rejects a non-2xx response', async () => {

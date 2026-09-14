@@ -775,6 +775,7 @@
     },
     "collection": {
       "empty": "Nothing here yet.",
+      "downloadedEmpty": "Nothing downloaded yet. Download an album or playlist from its options to play it without a connection.",
       "playFailed": "Couldn't start playback."
     },
     "recentlyAdded": "Recently added",
@@ -1339,6 +1340,7 @@
       "feedUrl": "Feed URL"
     },
     "empty": "No podcasts yet. Add one to start listening.",
+    "unavailable": "Your server doesn’t support podcasts.",
     "add": "Add podcast",
     "addTitle": "Subscribe to a podcast",
     "addHelp": "Paste the RSS feed URL for the show.",
@@ -1356,6 +1358,7 @@
   "shares": {
     "title": "Shared links",
     "empty": "You haven’t shared anything yet. Use the Share option on an album or playlist to create a link.",
+    "unavailable": "Your server doesn’t offer shared links. On some servers, sharing has to be turned on first.",
     "linkCopied": "Link copied",
     "copy": "Copy link",
     "share": "Share",
@@ -1467,7 +1470,8 @@
   },
   "downloads": {
     "title": "Downloads",
-    "noDownloaders": "No downloaders connected. Add one in Settings.",
+    "noDownloaders": "No downloader connected yet.",
+    "setUpDownloader": "Set up a downloader",
     "jobFailed": "Couldn't finish downloading “{{title}}”. It stays queued and will retry.",
     "offlineSummary": "{{size}} used · {{available}} free",
     "section": {

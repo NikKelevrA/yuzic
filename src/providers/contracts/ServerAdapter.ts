@@ -279,6 +279,18 @@ export type Share = {
   visitCount?: number;
 };
 
+/**
+ * The server does not offer this at all — as opposed to a request that failed.
+ * A screen says "your server doesn't do that" for this one, and "check your
+ * connection" only for everything else.
+ */
+export class ServerFeatureUnavailableError extends Error {
+  constructor(message = 'This server does not offer this feature') {
+    super(message);
+    this.name = 'ServerFeatureUnavailableError';
+  }
+}
+
 interface SharesApi {
   list(): Promise<Share[]>;
   /** Creates a public share URL for an album/playlist/track id and returns
