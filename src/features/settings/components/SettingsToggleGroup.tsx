@@ -2,7 +2,7 @@ import { onDark, spacing, typography } from '@/constants/design';
 import React, { memo } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { useTheme } from '@/features/theme/useTheme';
-export type ToggleItem = {
+type ToggleItem = {
   label: string;
   subtext: string;
   value: boolean;

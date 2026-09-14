@@ -1035,11 +1035,14 @@ This follows the contract's own rule that a capability is added with its first c
 ### 8.4 Settings (Tasks 10.2–10.4)
 
 - **Connections** is drawn from declared integrations (`77c66aff`).
-- **One place for every outside service.** Settings › Online sources (`e73bd1d4`) has a card per service (Deezer, ListenBrainz, Last.fm, MusicBrainz, Cover Art Archive), with a switch per use and what that service is sent. It replaces the Metadata and Search settings screens and the orphaned Deezer, Last.fm and MusicBrainz routes.
-- **One Last.fm switch** now covers bios, similar artists and playlist seeds; persist version 1 migrates the old bios entry.
-- **Home settings** marks an outside tier as off and links to its card.
-- **The Search filter sheet** turns sources on inline.
-- **The Metadata fallback order** is no longer user-reorderable; sources resolve in the order they were turned on.
+- **Outside sources are organised by what the data is for, not by company.** A page per company (Online sources, `e73bd1d4`) left people who arrived wanting "artist photos" or "more on Home" with nowhere obvious to look, and it hid dependencies: ListenBrainz discovery was on but its shelves could not appear. It is replaced by:
+  - `providers/registry/sources.ts`, where each source declares its uses (`<source>.<purpose>`) and what it is sent, in a fixed try-order per purpose.
+  - One `settingsSources` slice, one switch per use. There is no separate "allowed" flag: a source is in use while any use is on, and "Stop using" turns every use off. The first read imports the old switches from the Home, Search, Metadata and Lyrics records (`legacySourceSettings.ts`), so whatever was on stays on; the Metadata and Lyrics slices are gone.
+  - Screens: **Metadata** (artist info, artwork, lyrics — replaces the Lyrics page), **Pages** (similar artists, popular tracks, previews, recommendations), **Search** (where the library is searched, moved out of Server, and which outside sources are searched), and each outside tier's switch at the head of its shelves in **Home**. Settings rows show what is on.
+  - Switches in Settings take effect at once; asking again in a sheet was a step with no information in it. Every row's ⓘ opens the source's details: what it is sent, every use, and "Stop using".
+  - Home settings says when ListenBrainz's made-for-you shelves need an account, and links to connecting one.
+- **No user-set order.** No purpose has two sources competing except album covers, where Cover Art Archive (exact release match) goes before Deezer (name match).
+- **The Search filter sheet** turns search sources on inline.
 - **Route reachability** is tested by `features/settings/settingsRoutes.test.ts`.
 
 ### 8.5 AsyncStorage (Phase 4)
@@ -1054,5 +1057,5 @@ These remain as the overview found them. Each blocks cutover unless it is separa
 
 - the Phase 12 device and provider matrix
 - Android verification of these changes
-- 382 allowlisted unused exports
-- behaviour-level tests for every visible setting
+- provider-name references outside provider homes (92 allowlisted)
+- behaviour-level tests for Library and Equalizer settings, which only compose other components (unused exports are now at 0, and the other settings screens have behaviour tests)

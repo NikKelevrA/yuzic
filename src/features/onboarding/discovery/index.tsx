@@ -9,7 +9,8 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { setDeezerDiscoveryEnabled, setListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
+import { setSourceUses } from '@/features/settings/sources/state';
+import { DISCOVERY_USES } from '@/providers/registry/sources';
 import { setOnboardingDiscoveryPrompted } from '@/features/settings/onboarding/state';
 import Touchable from '@/components/Touchable';
 import { onDark, spacing, typography } from '@/constants/design';
@@ -33,8 +34,7 @@ export default function Discovery() {
   };
 
   const handleEnable = () => {
-    dispatch(setDeezerDiscoveryEnabled(true));
-    dispatch(setListenbrainzDiscoveryEnabled(true));
+    dispatch(setSourceUses({ uses: DISCOVERY_USES, enabled: true }));
     dispatch(setOnboardingDiscoveryPrompted(true));
     finish();
   };

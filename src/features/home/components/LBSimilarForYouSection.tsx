@@ -11,7 +11,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useArtistMbid } from '@/features/artist/useArtistMbid';
 import { useArtists } from '@/features/artist/useArtists';
-import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
+import { selectSourceUse } from '@/features/settings/sources/state';
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
@@ -49,7 +49,7 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
   const { width: screenWidth } = useWindowDimensions();
   const { navigateToArtist } = useMatchedNavigation();
   const { artists: libraryArtists } = useArtists();
-  const discoveryEnabled = useSelector(selectListenbrainzDiscoveryEnabled);
+  const discoveryEnabled = useSelector(selectSourceUse('listenbrainz.homeShelves'));
 
   const seed = useMemo(
     () => libraryArtists.find((a) => a.name === artistName) ?? null,

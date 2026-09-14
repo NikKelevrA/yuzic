@@ -38,20 +38,17 @@ import { musicbrainzProvider } from './musicbrainz';
 import type { BrokerInput } from './capabilityBroker';
 import type { CapabilityName } from '../contracts/Capabilities';
 import type { Provider, ProviderId } from '../contracts/Provider';
-import {
-  selectLastfmEnabled,
-  selectMetadataArtistInfoOrder,
-  selectMetadataArtworkOrder,
-  selectMetadataArtworkSourceEnabled,
-} from '@/features/settings/metadata/state';
+import { selectSourceUse } from '@/features/settings/sources/state';
 
 const PROVIDERS: readonly Provider[] = [lastfmProvider, deezerProvider, musicbrainzProvider];
 
-/** The old artwork chain's `coverartarchive` source id names Cover Art
- *  Archive, which this registry exposes through the MusicBrainz provider's
- *  `album.enrich` — not a provider of its own. */
-const artworkSourceToProviderId = (sourceId: string): ProviderId =>
-  sourceId === 'coverartarchive' ? musicbrainzProvider.id : sourceId;
+/**
+ * The fixed try-order, strongest first, following `SOURCE_USES`: Last.fm for
+ * artist info, then Cover Art Archive (served through MusicBrainz's
+ * `album.enrich` — not a provider of its own) before Deezer for covers, since
+ * an exact release match beats a match by name.
+ */
+const ORDER: readonly ProviderId[] = [lastfmProvider.id, musicbrainzProvider.id, deezerProvider.id];
 
 /**
  * One ordered, policy-gated broker over Last.fm/Deezer/MusicBrainz, for
@@ -61,11 +58,9 @@ const artworkSourceToProviderId = (sourceId: string): ProviderId =>
  * credential (e.g. Last.fm's bundled key) inside its capability.
  */
 export function useMetadataEnrichmentBroker(): BrokerInput {
-  const artistInfoOrder = useSelector(selectMetadataArtistInfoOrder);
-  const artworkOrder = useSelector(selectMetadataArtworkOrder);
-  const bioSourceEnabled = useSelector(selectLastfmEnabled);
-  const artworkIntegrationEnabled = useSelector(selectMetadataArtworkSourceEnabled(deezerProvider.id));
-  const coverArtArchiveEnabled = useSelector(selectMetadataArtworkSourceEnabled('coverartarchive'));
+  const bioSourceEnabled = useSelector(selectSourceUse('lastfm.artistInfo'));
+  const artworkIntegrationEnabled = useSelector(selectSourceUse('deezer.artwork'));
+  const coverArtArchiveEnabled = useSelector(selectSourceUse('coverartarchive.artwork'));
 
   return useMemo<BrokerInput>(() => {
     const isAllowed = (id: ProviderId, capability: CapabilityName): boolean => {
@@ -82,17 +77,13 @@ export function useMetadataEnrichmentBroker(): BrokerInput {
       return false;
     };
 
-    const order = Array.from(
-      new Set([...artistInfoOrder, ...artworkOrder.map(artworkSourceToProviderId)])
-    );
-
     return {
       providers: PROVIDERS,
       isConnected: () => true,
       isAllowed,
-      order,
+      order: ORDER,
     };
-  }, [artistInfoOrder, artworkOrder, bioSourceEnabled, artworkIntegrationEnabled, coverArtArchiveEnabled]);
+  }, [bioSourceEnabled, artworkIntegrationEnabled, coverArtArchiveEnabled]);
 }
 
 /**

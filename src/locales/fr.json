@@ -52,13 +52,6 @@
       "username": "Nom d'utilisateur",
       "notSet": "Non défini",
       "connectivity": "Connectivité",
-      "searchScopeHelp": "Choisissez la source des résultats de recherche",
-      "searchScope": {
-        "client": "Sur l'appareil",
-        "clientDescription": "Rechercher uniquement dans la bibliothèque locale",
-        "server": "Serveur",
-        "serverDescription": "Utiliser la recherche du serveur à la place"
-      },
       "fallbackUrls": {
         "title": "URL de secours",
         "subtext": "URL de secours si l'adresse principale est injoignable.",
@@ -183,14 +176,6 @@
       "homeSourcesListenbrainzSubtext": "Afficher les rayons d'artistes similaires de ListenBrainz.",
       "homeSourcesDeezer": "Deezer",
       "homeSourcesDeezerSubtext": "Charts Deezer, top titres et artistes similaires."
-    },
-    "lyrics": {
-      "title": "Paroles",
-      "sources": "Sources de paroles",
-      "serverEmbedded": "Intégrées au serveur",
-      "serverEmbeddedSubtext": "Vérifiées en premier — les paroles du serveur.",
-      "lrclib": "LRCLIB",
-      "lrclibSubtext": "Recherche de paroles gratuite et anonyme."
     },
     "library": {
       "title": "Bibliothèque",
@@ -512,48 +497,97 @@
         "lbCreatedForWeeklyExploration": "Weekly exploration",
         "topArtists": "Top artists",
         "charts": "Charts"
-      }
+      },
+      "connectListenBrainz": "Connectez ListenBrainz pour des playlists faites pour vous"
     },
     "sources": {
-      "title": "Sources en ligne",
-      "explanation": "Services que Yuzic peut interroger sur votre musique. Tous désactivés au départ : votre bibliothèque et votre serveur fonctionnent sans eux.",
-      "offline": "Vous êtes hors ligne : ils reprendront à la reconnexion.",
-      "offRow": "{{name}} est désactivé",
-      "enableDeezerToPreview": "Activez Deezer dans Réglages › Sources en ligne pour écouter les extraits",
+      "enableDeezerToPreview": "Activez les extraits dans Réglages › Pages pour les écouter",
       "deezer": {
         "name": "Deezer",
-        "sends": "Envoie des noms d'artistes, d'albums et de titres, et vos recherches.",
-        "pages": "Accueil et pages",
-        "pagesSubtext": "Classements, artistes similaires, extraits et recommandations.",
-        "search": "Recherche",
-        "searchSubtext": "Rechercher sur Deezer et ouvrir ses albums et artistes.",
-        "artwork": "Images d'artistes",
-        "artworkSubtext": "Complète les photos d'artistes absentes du serveur."
+        "sends": "Envoie des noms d'artistes, d'albums et de titres, et vos recherches."
       },
       "listenbrainz": {
         "name": "ListenBrainz",
-        "sends": "Envoie des noms d'artistes à MusicBrainz pour trouver leurs identifiants, ces identifiants à ListenBrainz, et votre nom d'utilisateur ListenBrainz si vous en avez connecté un.",
-        "discovery": "Découverte",
-        "discoverySubtext": "Artistes similaires, et playlists faites pour vous une fois votre compte ListenBrainz connecté."
+        "sends": "Envoie des noms d'artistes à MusicBrainz pour trouver leurs identifiants, ces identifiants à ListenBrainz, et votre nom d'utilisateur ListenBrainz si vous en avez connecté un."
       },
       "lastfm": {
         "name": "Last.fm",
-        "sends": "Envoie des noms d'artistes. Aucun compte requis.",
-        "artistInfo": "Infos d'artiste",
-        "artistInfoSubtext": "Bios, tags, artistes similaires et recommandations de playlists."
+        "sends": "Envoie des noms d'artistes. Aucun compte requis."
       },
       "musicbrainz": {
         "name": "MusicBrainz",
-        "sends": "Envoie vos recherches, et des noms d'artistes pour trouver leurs identifiants.",
-        "search": "Recherche",
-        "searchSubtext": "Rechercher sur MusicBrainz et ouvrir ses albums et artistes."
+        "sends": "Envoie vos recherches, et des noms d'artistes pour trouver leurs identifiants."
       },
       "coverartarchive": {
         "name": "Cover Art Archive",
-        "sends": "Envoie des noms d'albums et d'artistes pour trouver les pochettes.",
-        "covers": "Pochettes d'albums",
-        "coversSubtext": "Complète les pochettes absentes du serveur."
+        "sends": "Envoie des noms d'albums et d'artistes pour trouver les pochettes."
+      },
+      "lrclib": {
+        "name": "LRCLIB",
+        "sends": "Envoie les titres et noms d'artistes pour trouver les paroles. Aucun compte requis."
+      },
+      "usedFor": "Utilisé pour",
+      "stopUsing": "Ne plus utiliser {{name}}",
+      "off": "Désactivé"
+    },
+    "sourceUses": {
+      "lastfm": {
+        "artistInfo": "Biographies et tags des artistes.",
+        "similarArtists": "Artistes similaires selon les auditeurs Last.fm.",
+        "recommendations": "Trouve des artistes proches de ceux d'une playlist."
+      },
+      "coverartarchive": {
+        "artwork": "Pochettes, associées à la sortie exacte."
+      },
+      "deezer": {
+        "artwork": "Photos d'artistes, et pochettes absentes de votre serveur.",
+        "similarArtists": "Artistes associés sur Deezer.",
+        "popularTracks": "Les titres les plus populaires d'un artiste.",
+        "previews": "Extraits de 30 secondes des titres que vous ne possédez pas.",
+        "recommendations": "Albums et titres pour accompagner un album ou une playlist.",
+        "homeShelves": "Classements, artistes populaires et sélections par genre.",
+        "search": "Rechercher sur Deezer, et ouvrir ses albums et artistes."
+      },
+      "lrclib": {
+        "lyrics": "Paroles synchronisées quand votre serveur n'en a pas."
+      },
+      "listenbrainz": {
+        "similarArtists": "Artistes similaires d'après ce que les gens écoutent.",
+        "homeShelves": "Artistes similaires, et playlists faites pour vous une fois votre compte connecté."
+      },
+      "musicbrainz": {
+        "search": "Rechercher sur MusicBrainz, et ouvrir ses albums et artistes."
       }
+    },
+    "sourcePurposes": {
+      "artistInfo": "Infos artiste",
+      "artwork": "Illustrations",
+      "lyrics": "Paroles",
+      "similarArtists": "Artistes similaires",
+      "popularTracks": "Titres populaires",
+      "previews": "Extraits",
+      "recommendations": "Recommandations",
+      "homeShelves": "Étagères de l'accueil",
+      "search": "Recherche"
+    },
+    "metadata": {
+      "title": "Métadonnées",
+      "explanation": "Complète ce qui manque à votre serveur. Votre serveur est toujours consulté en premier."
+    },
+    "pages": {
+      "title": "Pages",
+      "explanation": "La musique au-delà de votre bibliothèque, sur les pages d'artiste, d'album et de playlist."
+    },
+    "search": {
+      "title": "Recherche",
+      "scopeTitle": "Où votre bibliothèque est recherchée",
+      "scope": {
+        "client": "Sur l'appareil",
+        "clientDescription": "Rechercher uniquement dans la bibliothèque locale",
+        "server": "Serveur",
+        "serverDescription": "Utiliser la recherche du serveur à la place"
+      },
+      "otherSources": "Autres sources"
     }
   },
   "common": {
@@ -843,7 +877,7 @@
       "sources": "Sources",
       "entityTypes": "Inclure",
       "sendsQuery": "Envoie votre saisie à {{name}}",
-      "alsoInSettings": "Aussi dans Réglages › Sources en ligne."
+      "alsoInSettings": "Aussi dans Réglages › Recherche."
     },
     "entityTypes": {
       "song": "Titre",
@@ -1409,7 +1443,8 @@
       "themeColor": "Couleur du thème {{color}}",
       "clearProviderDownloads": "Supprimer tous les téléchargements {{provider}}",
       "removeDownload": "Supprimer le téléchargement {{title}}",
-      "reorderSource": "Réorganiser {{name}}"
+      "reorderSource": "Réorganiser {{name}}",
+      "sourceDetails": "À propos de {{name}}"
     },
     "onboarding": {
       "serverOptions": "Options pour {{url}}"

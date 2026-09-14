@@ -7,14 +7,12 @@ import SettingsScreen from '../components/SettingsScreen';
 import SettingsCard from '../components/SettingsCard';
 import SettingsDivider from '../components/SettingsDivider';
 import SettingsInfoRow from '../components/SettingsInfoRow';
-import SettingsSelectCard from '../components/SettingsSelectCard';
 import SettingsToggleGroup from '../components/SettingsToggleGroup';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import ConnectivityIndicator from '../components/ConnectivityIndicator';
 import FallbackUrlsCard from './components/FallbackUrlsCard';
 import ClientCertificateCard from './components/ClientCertificateCard';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import { selectSearchScope, setSearchScope, type SearchScope } from '@/features/settings/search/state';
 import { selectQueueSyncEnabled, setQueueSyncEnabled } from '@/features/settings/playback/state';
 import { selectServerNowPlayingShelfEnabled, setServerNowPlayingShelfEnabled } from '@/features/settings/home/state';
 import Touchable from '@/components/Touchable';
@@ -25,7 +23,6 @@ const ServerSettings: React.FC = () => {
   const api = useApi();
   const dispatch = useDispatch();
 
-  const searchScope = useSelector(selectSearchScope);
   const activeServer = useSelector(selectActiveServer);
   const queueSyncEnabled = useSelector(selectQueueSyncEnabled);
   const nowPlayingShelfEnabled = useSelector(selectServerNowPlayingShelfEnabled);
@@ -142,16 +139,6 @@ const ServerSettings: React.FC = () => {
       <FallbackUrlsCard server={activeServer} />
 
       <ClientCertificateCard server={activeServer} />
-
-      <SettingsSelectCard
-        title={t('settings.server.searchScopeHelp')}
-        items={[
-          { key: 'client', label: t('settings.server.searchScope.client') },
-          { key: 'server', label: t('settings.server.searchScope.server') },
-        ]}
-        isSelected={key => searchScope === key}
-        onSelect={key => dispatch(setSearchScope(key as SearchScope))}
-      />
 
       {privacyItems.length > 0 && (
         <>

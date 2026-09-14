@@ -3,9 +3,7 @@ import { act, renderHook } from '@testing-library/react-native'
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
 
-import settingsMetadataReducer, { setLastfmEnabled } from '@/features/settings/metadata/state'
-import settingsHomeReducer, { setListenbrainzDiscoveryEnabled } from '@/features/settings/home/state'
-import settingsSearchReducer, { setSearchSourceEnabled } from '@/features/settings/search/state'
+import settingsSourcesReducer, { setSourceUse } from '@/features/settings/sources/state'
 
 /**
  * A stand-in for react-query that does the one thing under test: run the
@@ -43,9 +41,7 @@ import { useSimilarArtists } from './useSimilarArtists'
 function makeStore() {
   return configureStore({
     reducer: combineReducers({
-      settingsMetadata: settingsMetadataReducer,
-      settingsHome: settingsHomeReducer,
-      settingsSearch: settingsSearchReducer,
+      settingsSources: settingsSourcesReducer,
     }),
     middleware: (getDefault) => getDefault({ serializableCheck: false }),
   })
@@ -80,7 +76,7 @@ describe('external metadata gating', () => {
     // rather than sitting on a spinner that will never resolve.
     expect(result.current.isResolving).toBe(false)
 
-    await act(async () => { store.dispatch(setSearchSourceEnabled({ sourceId: 'musicbrainz', enabled: true })) })
+    await act(async () => { store.dispatch(setSourceUse({ use: 'musicbrainz.search', enabled: true })) })
     await renderHook(
       () => useArtistMbid('Boards of Canada', null),
       { wrapper: wrapperFor(store) }
@@ -133,7 +129,7 @@ describe('external metadata gating', () => {
     )
     expect(getLBSimilarArtists).not.toHaveBeenCalled()
 
-    await act(async () => { store.dispatch(setListenbrainzDiscoveryEnabled(true)) })
+    await act(async () => { store.dispatch(setSourceUse({ use: 'listenbrainz.similarArtists', enabled: true })) })
     await renderHook(
       () => useLBSimilarArtists({ mbid: 'mbid-1', excludeName: 'Boards of Canada' }, 8),
       { wrapper: wrapperFor(store) }
@@ -151,7 +147,7 @@ describe('external metadata gating', () => {
     )
     expect(getLastFmSimilarArtists).not.toHaveBeenCalled()
 
-    await act(async () => { store.dispatch(setLastfmEnabled(true)) })
+    await act(async () => { store.dispatch(setSourceUse({ use: 'lastfm.similarArtists', enabled: true })) })
     await renderHook(
       () => useSimilarArtists({ name: 'Boards of Canada', limit: 8 }),
       { wrapper: wrapperFor(store) }

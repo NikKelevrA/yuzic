@@ -9,7 +9,7 @@ import { prefetchCovers } from '@/features/artwork/imageCache'
 import { getDeezerChartAlbums } from '@/providers/integration/deezer'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
+import { useSourceUse } from '@/features/settings/sources/useSourceUse'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import {
   SECTION_H_PADDING as H_PADDING,
@@ -31,7 +31,7 @@ export default function DeezerChartsSection({ refreshKey = 0 }: Props) {
   const rad = useRadius()
   const { width: screenWidth } = useWindowDimensions()
   const dayKey = getDayKey()
-  const isEnabled = useDeezerDiscoveryEnabled()
+  const isEnabled = useSourceUse('deezer.homeShelves')
   const { navigateToAlbum } = useMatchedNavigation()
 
   const gridItemWidth = useMemo(

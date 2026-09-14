@@ -8,13 +8,14 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Server, Library, Volume2, Palette, Puzzle, CloudDownload, Github, Globe, ShieldCheck, ScrollText, House as HomeIcon, Mic2, Disc3 } from 'lucide-react-native';
+import { Server, Library, Volume2, Palette, Puzzle, CloudDownload, Github, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { useAnyDownloaderConnected } from '@/features/downloaders/registry';
+import { useSourceScreenSummary } from '../sources/useSourceScreenSummary';
 import { useTheme } from '@/features/theme/useTheme';
 import Header from '../components/Header';
 import SettingsCard from '../components/SettingsCard';
@@ -34,6 +35,9 @@ export default function Settings() {
     // the row led to "No downloaders connected. Add one in Settings", from
     // Settings, one row below the place that adds one.
     const hasDownloader = useAnyDownloaderConnected();
+    const metadataSummary = useSourceScreenSummary('metadata');
+    const pagesSummary = useSourceScreenSummary('pages');
+    const searchSummary = useSourceScreenSummary('search');
 
     const { colors } = useTheme();
     const rad = useRadius();
@@ -138,9 +142,11 @@ export default function Settings() {
                     />
                     <SettingsDivider />
                     <SettingsRow
-                        label={t('settings.lyrics.title')}
-                        leftIcon={<Mic2 size={iconSize.secondary} color={colors.secondary} />}
-                        onPress={() => router.push('/settings/lyricsView')}
+                        testID="settings-row-metadata"
+                        label={t('settings.metadata.title')}
+                        rightText={metadataSummary}
+                        leftIcon={<Tags size={iconSize.secondary} color={colors.secondary} />}
+                        onPress={() => router.push('/settings/metadataView')}
                     />
                 </SettingsCard>
 
@@ -149,16 +155,25 @@ export default function Settings() {
                 </Text>
                 <SettingsCard>
                     <SettingsRow
-                        testID="settings-row-sources"
-                        label={t('settings.sources.title')}
-                        leftIcon={<Globe size={iconSize.secondary} color={colors.secondary} />}
-                        onPress={() => router.push('/settings/sourcesView')}
-                    />
-                    <SettingsDivider />
-                    <SettingsRow
                         label={t('settings.home.title')}
                         leftIcon={<HomeIcon size={iconSize.secondary} color={colors.secondary} />}
                         onPress={() => router.push('/settings/homeView')}
+                    />
+                    <SettingsDivider />
+                    <SettingsRow
+                        testID="settings-row-pages"
+                        label={t('settings.pages.title')}
+                        rightText={pagesSummary}
+                        leftIcon={<FileText size={iconSize.secondary} color={colors.secondary} />}
+                        onPress={() => router.push('/settings/pagesView')}
+                    />
+                    <SettingsDivider />
+                    <SettingsRow
+                        testID="settings-row-search"
+                        label={t('settings.search.title')}
+                        rightText={searchSummary}
+                        leftIcon={<Search size={iconSize.secondary} color={colors.secondary} />}
+                        onPress={() => router.push('/settings/searchView')}
                     />
                     <SettingsDivider />
                     <SettingsRow

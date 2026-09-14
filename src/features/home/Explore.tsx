@@ -8,9 +8,9 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/features/theme/useTheme'
 import { useDailyLayout } from '@/features/home/hooks/useDailyLayout'
 import { customizeHomeSections } from '@/features/home/homeLayout'
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
+import { useSourceUse } from '@/features/settings/sources/useSourceUse'
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
-import { selectHomeServerSectionsEnabled, selectListenbrainzDiscoveryEnabled, selectHomeShelfVisibilityMap, selectHomeShelfOrder } from '@/features/settings/home/state';
+import { selectHomeServerSectionsEnabled, selectHomeShelfVisibilityMap, selectHomeShelfOrder } from '@/features/settings/home/state';
 
 import QuickPicksSection from './components/QuickPicksSection'
 import RecentlyPlayed from './components/RecentlyPlayed'
@@ -83,10 +83,10 @@ export default function Home() {
   const rad = useRadius()
   const [refreshKey, setRefreshKey] = useState(0)
   const { resume, library, server, listenbrainz, deezer } = useDailyLayout(refreshKey)
-  const deezerEnabled = useDeezerDiscoveryEnabled()
+  const deezerEnabled = useSourceUse('deezer.homeShelves')
   const showSourceHeaders = useSelector(selectShowSourceHeaders)
   const homeServerEnabled = useSelector(selectHomeServerSectionsEnabled)
-  const listenbrainzDiscoveryEnabled = useSelector(selectListenbrainzDiscoveryEnabled)
+  const listenbrainzDiscoveryEnabled = useSourceUse('listenbrainz.homeShelves')
   const homeVisibility = useSelector(selectHomeShelfVisibilityMap)
   const resumeSections = useSelector(selectHomeShelfOrder('resume', resume.map(s => s.key)))
   const librarySections = useSelector(selectHomeShelfOrder('library', library.map(s => s.key)))

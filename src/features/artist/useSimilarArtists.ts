@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import { getLastFmSimilarArtists } from '@/providers/integration/lastfm/getSimilarArtists'
 import { LASTFM_API_KEY } from '@/constants/keys'
 import { QueryKeys } from '@/state/query/queryKeys'
-import { selectLastfmEnabled } from '@/features/settings/metadata/state';
+import { selectSourceUse } from '@/features/settings/sources/state';
 import type { Artist } from '@/domain/entities/Artist'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { integrationProvenance } from '@/domain/identity/Provenance'
@@ -58,7 +58,7 @@ async function fetchLastFmSimilarArtists(
 }
 
 export function useSimilarArtists(input: SimilarArtistsInput) {
-  const lastfmEnabled = useSelector(selectLastfmEnabled)
+  const lastfmEnabled = useSelector(selectSourceUse('lastfm.similarArtists'))
   const queryKey = useMemo(
     () => [QueryKeys.ExploreSimilarArtists, input.mbid ?? input.name ?? '', input.limit ?? 8],
     [input.limit, input.mbid, input.name]

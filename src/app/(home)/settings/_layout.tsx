@@ -27,9 +27,10 @@ export default function SettingsLayout() {
             <Stack.Screen name='soulsyncView' options={{ headerShown: false, title: "SoulSync" }} />
             <Stack.Screen name='listenbrainzView' options={{ headerShown: false, title: "ListenBrainz" }} />
             <Stack.Screen name='scrobblingView' options={{ headerShown: false, title: "Scrobbling" }} />
-            <Stack.Screen name='sourcesView' options={{ headerShown: false, title: "Online sources" }} />
+            <Stack.Screen name='pagesView' options={{ headerShown: false, title: "Pages" }} />
+            <Stack.Screen name='searchView' options={{ headerShown: false, title: "Search" }} />
             <Stack.Screen name='audiomuseView' options={{ headerShown: false, title: "AudioMuse-AI" }} />
-            <Stack.Screen name='lyricsView' options={{ headerShown: false, title: "Lyrics" }} />
+            <Stack.Screen name='metadataView' options={{ headerShown: false, title: "Metadata" }} />
         </Stack>
     );
 }

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 
 import { searchArtist } from '@/providers/integration/musicbrainz'
 import { QueryKeys } from '@/state/query/queryKeys'
-import { selectSearchSourceEnabled } from '@/features/settings/search/state';
+import { selectSourceUse } from '@/features/settings/sources/state';
 
 /**
  * The MusicBrainz id for an artist, from the library if the server knows it
@@ -35,7 +35,7 @@ export function useArtistMbid(
   localMbid?: string | null,
   options: { enabled?: boolean; allowLookup?: boolean } = {}
 ): { mbid: string | null; isResolving: boolean } {
-  const musicbrainzEnabled = useSelector(selectSearchSourceEnabled('musicbrainz'))
+  const musicbrainzEnabled = useSelector(selectSourceUse('musicbrainz.search'))
   const lookupAllowed = options.allowLookup ?? musicbrainzEnabled
   const trimmed = artistName?.trim() ?? ''
   const known = localMbid?.trim() || null

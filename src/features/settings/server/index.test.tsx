@@ -110,14 +110,4 @@ describe('ServerSettings', () => {
     expect(store.getState().settingsPlayback.queueSyncEnabled).toBe(false);
     expect(store.getState().settingsHome.serverNowPlayingShelfEnabled).toBe(false);
   });
-
-  it('writes the chosen search scope', async () => {
-    const store = makeStore();
-    expect(store.getState().settingsSearch.searchScope).toBe('server');
-    const view = await renderScreen(store);
-
-    await fireEvent.press(view.getByText('settings.server.searchScope.client'));
-
-    expect(store.getState().settingsSearch.searchScope).toBe('client');
-  });
 });

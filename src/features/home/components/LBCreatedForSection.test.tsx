@@ -34,8 +34,8 @@ jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
 
-jest.mock('@/features/home/hooks/useDeezerEnabled', () => ({
-  useDeezerDiscoveryEnabled: () => false,
+jest.mock('@/features/settings/sources/useSourceUse', () => ({
+  useSourceUse: () => false,
 }));
 
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');
@@ -92,7 +92,7 @@ function renderWithStore(
 ) {
   const store = configureStore({
     reducer: {
-      settingsHome: (state = { listenbrainzDiscoveryEnabled: discoveryEnabled }) => state,
+      settingsSources: (state = { uses: { "listenbrainz.homeShelves": discoveryEnabled } }) => state,
       listenbrainz: (state = { byServer: { s1: { username, token: 't' } } }) => state,
       servers: (state = { activeServerId: 's1' }) => state,
     },

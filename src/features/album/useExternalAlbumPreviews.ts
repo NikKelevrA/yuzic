@@ -3,7 +3,7 @@ import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { fetchPreviewsForExternalAlbum } from './previewUtils';
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
+import { useSourceUse } from '@/features/settings/sources/useSourceUse';
 
 /**
  * Clip URLs for an album's tracks, keyed by each track's `nativeId`.
@@ -16,7 +16,7 @@ export function useExternalAlbumPreviews(
   album: Album | null,
   songs: Song[]
 ): Record<string, string> {
-  const samplesEnabled = useDeezerDiscoveryEnabled();
+  const samplesEnabled = useSourceUse('deezer.previews');
   const { data } = useQuery({
     // Scoped by identity: the same release browsed from two catalogues is two
     // different sets of clips.

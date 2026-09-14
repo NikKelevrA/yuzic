@@ -7,9 +7,9 @@ import downloadersReducer from './slices/downloadersSlice';
 import audiomuseReducer from './slices/audiomuseSlice';
 import settingsAppearanceReducer from '@/features/settings/appearance/state';
 import settingsHomeReducer from '@/features/settings/home/state';
-import settingsSearchReducer, { migrateSearchSettings } from '@/features/settings/search/state';
-import settingsMetadataReducer, { migrateMetadataSettings } from '@/features/settings/metadata/state';
-import settingsLyricsReducer from '@/features/settings/lyrics/state';
+import settingsSearchReducer from '@/features/settings/search/state';
+import settingsSourcesReducer from '@/features/settings/sources/state';
+import { importLegacySourceSettings } from '@/providers/registry/legacySourceSettings';
 import settingsScrobblingReducer from '@/features/settings/scrobbling/state';
 import settingsPlaybackReducer from '@/features/settings/playback/state';
 import settingsDownloadsReducer from '@/features/settings/downloads/state';
@@ -56,20 +56,23 @@ const audiomusePersistConfig = { key: 'audiomuse', storage };
 // version bump here — a fresh install and an upgrading one look the same.
 const settingsAppearancePersistConfig = { key: 'settingsAppearance', storage };
 const settingsHomePersistConfig = { key: 'settingsHome', storage };
-// v1 folded the per-source external-data flags into the source switch.
-const settingsSearchPersistConfig = {
-  key: 'settingsSearch',
+const settingsSearchPersistConfig = { key: 'settingsSearch', storage, version: 1 };
+// Every outside-source switch, by use. The first read, with nothing stored
+// yet, imports the switches that used to live in Home, Search, Metadata and
+// Lyrics. Those records are only read, never rewritten here: stripping the
+// old fields in their own migrations would race this read at startup, and a
+// stale field nothing reads costs nothing. The Metadata and Lyrics slices are
+// gone entirely.
+const settingsSourcesPersistConfig = {
+  key: 'settingsSources',
   storage,
   version: 1,
-  migrate: (state: any): Promise<any> => Promise.resolve(migrateSearchSettings(state)),
+  migrate: async (state: any): Promise<any> => {
+    if (state) return state;
+    const uses = await importLegacySourceSettings(storage);
+    return { uses, _persist: { version: 1, rehydrated: false } };
+  },
 };
-const settingsMetadataPersistConfig = {
-  key: 'settingsMetadata',
-  storage,
-  version: 1,
-  migrate: (state: any): Promise<any> => Promise.resolve(migrateMetadataSettings(state)),
-};
-const settingsLyricsPersistConfig = { key: 'settingsLyrics', storage };
 const settingsScrobblingPersistConfig = { key: 'settingsScrobbling', storage };
 const settingsPlaybackPersistConfig = { key: 'settingsPlayback', storage };
 const settingsDownloadsPersistConfig = { key: 'settingsDownloads', storage };
@@ -138,8 +141,7 @@ export const rootReducer = combineReducers({
     settingsAppearance: settingsAppearanceReducer,
     settingsHome: settingsHomeReducer,
     settingsSearch: settingsSearchReducer,
-    settingsMetadata: settingsMetadataReducer,
-    settingsLyrics: settingsLyricsReducer,
+    settingsSources: settingsSourcesReducer,
     settingsScrobbling: settingsScrobblingReducer,
     settingsPlayback: settingsPlaybackReducer,
     settingsDownloads: settingsDownloadsReducer,
@@ -160,8 +162,7 @@ const persistedReducer = combineReducers({
     settingsAppearance: persistReducer(settingsAppearancePersistConfig, settingsAppearanceReducer),
     settingsHome: persistReducer(settingsHomePersistConfig, settingsHomeReducer),
     settingsSearch: persistReducer(settingsSearchPersistConfig, settingsSearchReducer),
-    settingsMetadata: persistReducer(settingsMetadataPersistConfig, settingsMetadataReducer),
-    settingsLyrics: persistReducer(settingsLyricsPersistConfig, settingsLyricsReducer),
+    settingsSources: persistReducer(settingsSourcesPersistConfig, settingsSourcesReducer),
     settingsScrobbling: persistReducer(settingsScrobblingPersistConfig, settingsScrobblingReducer),
     settingsPlayback: persistReducer(settingsPlaybackPersistConfig, settingsPlaybackReducer),
     settingsDownloads: persistReducer(settingsDownloadsPersistConfig, settingsDownloadsReducer),

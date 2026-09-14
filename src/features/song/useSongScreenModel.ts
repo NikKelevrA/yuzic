@@ -19,7 +19,7 @@ import { useAlbum } from '@/features/album/useAlbum';
 import type { Song } from '@/domain/entities/Song';
 import type { Album } from '@/domain/entities/Album';
 import type { LyricsResult } from '@/providers/contracts/ServerAdapter';
-import { selectEnabledLyricsExternalSourcesInOrder } from '@/features/settings/lyrics/state';
+import { selectEnabledSourcesFor } from '@/features/settings/sources/state';
 import {
   resolveLyrics,
   ALL_EXTERNAL_LYRICS_SOURCES,
@@ -45,7 +45,7 @@ export function useSongScreenModel(song: Song | null): SongScreenModel {
   const { album } = useAlbum(song?.album.nativeId ?? '');
   const artistId = song?.artist.nativeId ?? album?.artist?.nativeId ?? null;
 
-  const enabledExternalLyricsSourceIds = useSelector(selectEnabledLyricsExternalSourcesInOrder);
+  const enabledExternalLyricsSourceIds = useSelector(selectEnabledSourcesFor('lyrics'));
   // The redux slice stores plain strings so it never has to know about this
   // union; narrow to the ids the resolver actually recognises here, at the
   // one place that reads it.

@@ -5,7 +5,7 @@ import type { Artist } from '@/domain/entities/Artist';
 import { useArtistTopTracks } from '@/features/artist/useArtistTopTracks';
 import { useLBSimilarArtists } from '@/features/artist/useLBSimilarArtists';
 import { useSimilarArtists } from '@/features/artist/useSimilarArtists';
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
+import { useSourceUse } from '@/features/settings/sources/useSourceUse';
 
 /** The letter-in-a-disc that says which service a section came from. */
 export type SourceBadge = { letter: string; color: string };
@@ -23,8 +23,14 @@ export const ARTIST_CATALOGUE = {
   popularTracksTitleKey: 'artist.sections.popularOnDeezer',
 };
 
-/** Whether the catalogue may be asked about artists right now. */
-export const useArtistCatalogueEnabled = useDeezerDiscoveryEnabled;
+/**
+ * Whether the catalogue's popular tracks may be fetched right now. The
+ * artist record that fills a missing biography arrives in the same lookup,
+ * so it follows the same switch rather than a second one for the same request.
+ */
+export function useArtistCatalogueEnabled(): boolean {
+  return useSourceUse('deezer.popularTracks');
+}
 
 type ExternalSimilarRow = { id: string; badge: SourceBadge; artists: Artist[] };
 
@@ -34,9 +40,11 @@ type ExternalSimilarRow = { id: string; badge: SourceBadge; artists: Artist[] };
  * Each service's own setting gates its request; this only orders the answers.
  */
 export function useExternalSimilarArtistRows(artist: Artist): ExternalSimilarRow[] {
-  const catalogueEnabled = useArtistCatalogueEnabled();
+  const catalogueEnabled = useSourceUse('deezer.similarArtists');
   const mbid = artist.externalIds.mbid;
 
+  // The catalogue's similar artists arrive with its popular tracks, in one
+  // lookup shared by query key with the popular-tracks section.
   const { similarArtists: catalogueSimilar } = useArtistTopTracks({
     name: artist.name,
     mbid,

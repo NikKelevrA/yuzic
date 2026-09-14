@@ -10,7 +10,7 @@ import { useTheme } from '@/features/theme/useTheme'
 import { useArtists } from '@/features/artist/useArtists';
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
 import { prefetchCovers } from '@/features/artwork/imageCache'
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
+import { useSourceUse } from '@/features/settings/sources/useSourceUse'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import {
   SECTION_H_PADDING as H_PADDING,
@@ -60,7 +60,7 @@ export default function BecauseYouListenedSection({ artistName, refreshKey = 0 }
   const sheetRef = useRef<BottomSheetModal>(null)
   const dayKey = getDayKey()
   const itemCount = useSelector(selectHomeShelfItemCount)
-  const isEnabled = useDeezerDiscoveryEnabled()
+  const isEnabled = useSourceUse('deezer.homeShelves')
 
   const [selectedArtist, setSelectedArtist] = React.useState<string>(artistName)
 

@@ -10,11 +10,9 @@ const HOME_SHELF_LENGTHS: Record<HomeShelfLength, number> = {
 const DEFAULT_SLEEP_TIMER_PRESETS = [5, 15, 30] as const;
 
 interface HomeSettingsState {
-  /* Home discovery source visibility. The server tier gets its own toggle
-   * because nothing else governs it; the two external families are steered by
-   * the integration settings that decide whether we may call them at all
-   * (deezerDiscoveryEnabled, listenbrainzDiscoveryEnabled) rather than by a
-   * second switch that could sit on while the first one is off. */
+  /* The server tier gets its own toggle because nothing else governs it. The
+   * outside tiers are each source's Home-shelves use in `settingsSources`,
+   * which decides whether that source may be asked at all. */
   homeServerSectionsEnabled: boolean;
   /** Per-shelf opt-outs. Missing keys read as visible for additive persistence. */
   homeShelfVisibility: Record<string, boolean>;
@@ -25,19 +23,6 @@ interface HomeSettingsState {
   /** Quick-add sleep timer durations, in minutes. */
   sleepTimerPresets: number[];
   serverNowPlayingShelfEnabled: boolean;
-  /**
-   * ListenBrainz's public similar-artist graph (Home shelf, artist page).
-   * Needs no account, but it is still a third-party service being told which
-   * artists this user listens to, so it waits to be asked for like every
-   * other external source rather than being on because it happens to be free.
-   */
-  listenbrainzDiscoveryEnabled: boolean;
-  /* Deezer has three distinct dimensions (Home shelves, search results,
-   * external browse); everything else that used to be a sub-toggle (top
-   * tracks, similar artists, album recs, samples, playlist recs) follows
-   * deezerDiscoveryEnabled since they're all "should we ask Deezer to fill a
-   * discovery surface". */
-  deezerDiscoveryEnabled: boolean;
 }
 
 const initialState: HomeSettingsState = {
@@ -49,8 +34,6 @@ const initialState: HomeSettingsState = {
   // Default-on: cross-device continuity is what the user asked for by
   // opening the app on another device and expecting to see what's playing.
   serverNowPlayingShelfEnabled: true,
-  listenbrainzDiscoveryEnabled: false,
-  deezerDiscoveryEnabled: false,
 };
 
 const homeSlice = createSlice({
@@ -77,12 +60,6 @@ const homeSlice = createSlice({
     setServerNowPlayingShelfEnabled(state, action: PayloadAction<boolean>) {
       state.serverNowPlayingShelfEnabled = action.payload;
     },
-    setListenbrainzDiscoveryEnabled(state, action: PayloadAction<boolean>) {
-      state.listenbrainzDiscoveryEnabled = action.payload;
-    },
-    setDeezerDiscoveryEnabled(state, action: PayloadAction<boolean>) {
-      state.deezerDiscoveryEnabled = action.payload;
-    },
   },
 });
 
@@ -92,8 +69,6 @@ export const {
   setHomeShelfLength,
   setSleepTimerPresets,
   setServerNowPlayingShelfEnabled,
-  setListenbrainzDiscoveryEnabled,
-  setDeezerDiscoveryEnabled,
 } = homeSlice.actions;
 
 export default homeSlice.reducer;
@@ -129,10 +104,3 @@ export const selectHomeShelfOrder = (tier: HomeShelfTier, defaults: string[]) =>
 
 export const selectServerNowPlayingShelfEnabled = (state: HomeRootState): boolean =>
   state.settingsHome.serverNowPlayingShelfEnabled;
-
-/** Off until asked for: see the note on the field above. */
-export const selectListenbrainzDiscoveryEnabled = (state: HomeRootState): boolean =>
-  state.settingsHome.listenbrainzDiscoveryEnabled;
-
-export const selectDeezerDiscoveryEnabled = (state: HomeRootState): boolean =>
-  state.settingsHome.deezerDiscoveryEnabled;

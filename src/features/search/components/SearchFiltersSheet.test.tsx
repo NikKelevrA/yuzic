@@ -33,6 +33,7 @@ jest.mock('@/components/options/OptionSheetPrimitives', () => {
   };
 });
 jest.mock('@/features/sources/registry', () => ({
+  ALL_SOURCES: [{ id: 'deezer' }, { id: 'musicbrainz' }],
   getSourceMeta: (id: string) => ({ label: id === 'deezer' ? 'Deezer' : 'MusicBrainz', color: '#000' }),
 }));
 
@@ -76,7 +77,7 @@ describe('SearchFiltersSheet sources', () => {
     fireEvent(view.getByTestId('search-filters-enable-switch-deezer'), 'valueChange', true);
 
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-      payload: { sourceId: 'deezer', enabled: true },
+      payload: { use: 'deezer.search', enabled: true },
     }));
     expect(onToggleSource).toHaveBeenCalledWith('deezer');
   });

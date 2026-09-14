@@ -52,13 +52,6 @@
       "username": "ユーザー名",
       "notSet": "未設定",
       "connectivity": "接続状況",
-      "searchScopeHelp": "検索結果の取得元を選択",
-      "searchScope": {
-        "client": "デバイス上",
-        "clientDescription": "ローカルライブラリのみを検索",
-        "server": "サーバー",
-        "serverDescription": "サーバーの検索を使用する"
-      },
       "fallbackUrls": {
         "title": "フォールバックURL",
         "subtext": "主アドレスに接続できない時に試す予備URL。",
@@ -183,14 +176,6 @@
       "homeSourcesListenbrainzSubtext": "ListenBrainz の類似アーティストの棚を表示します。",
       "homeSourcesDeezer": "Deezer",
       "homeSourcesDeezerSubtext": "Deezerのチャート・人気曲・類似アーティスト。"
-    },
-    "lyrics": {
-      "title": "歌詞",
-      "sources": "歌詞ソース",
-      "serverEmbedded": "サーバー内蔵",
-      "serverEmbeddedSubtext": "最初に確認 — サーバーの歌詞。",
-      "lrclib": "LRCLIB",
-      "lrclibSubtext": "無料・匿名の歌詞検索。"
     },
     "library": {
       "title": "ライブラリ",
@@ -511,48 +496,97 @@
         "lbCreatedForWeeklyExploration": "Weekly exploration",
         "topArtists": "Top artists",
         "charts": "Charts"
-      }
+      },
+      "connectListenBrainz": "ListenBrainzを接続して、あなた向けのプレイリストを表示"
     },
     "sources": {
-      "title": "オンラインソース",
-      "explanation": "Yuzicが音楽について問い合わせできるサービス。すべて初期状態はオフで、ライブラリとサーバーはこれらなしで動作します。",
-      "offline": "オフラインのため、再接続まで停止しています。",
-      "offRow": "{{name}}はオフです",
-      "enableDeezerToPreview": "プレビューを聴くには、設定 › オンラインソースでDeezerをオンにしてください",
+      "enableDeezerToPreview": "サンプルを聴くには、設定 › ページでプレビューをオンにしてください",
       "deezer": {
         "name": "Deezer",
-        "sends": "アーティスト名・アルバム名・曲名と、検索した内容を送信します。",
-        "pages": "ホームと各ページ",
-        "pagesSubtext": "チャート、似たアーティスト、サンプル、おすすめ。",
-        "search": "検索",
-        "searchSubtext": "Deezerを検索し、そのアルバムやアーティストを開きます。",
-        "artwork": "アーティスト画像",
-        "artworkSubtext": "サーバーにないアーティスト写真を補います。"
+        "sends": "アーティスト名・アルバム名・曲名と、検索した内容を送信します。"
       },
       "listenbrainz": {
         "name": "ListenBrainz",
-        "sends": "IDを調べるためにアーティスト名をMusicBrainzへ、そのIDをListenBrainzへ送信します。接続している場合はListenBrainzのユーザー名も送信します。",
-        "discovery": "ディスカバリー",
-        "discoverySubtext": "似たアーティスト。ListenBrainzアカウントを接続すると、あなた向けのプレイリストも表示されます。"
+        "sends": "IDを調べるためにアーティスト名をMusicBrainzへ、そのIDをListenBrainzへ送信します。接続している場合はListenBrainzのユーザー名も送信します。"
       },
       "lastfm": {
         "name": "Last.fm",
-        "sends": "アーティスト名を送信します。アカウントは不要です。",
-        "artistInfo": "アーティスト情報",
-        "artistInfoSubtext": "経歴、タグ、似たアーティスト、プレイリストのおすすめ。"
+        "sends": "アーティスト名を送信します。アカウントは不要です。"
       },
       "musicbrainz": {
         "name": "MusicBrainz",
-        "sends": "検索した内容と、IDを調べるためのアーティスト名を送信します。",
-        "search": "検索",
-        "searchSubtext": "MusicBrainzを検索し、そのアルバムやアーティストを開きます。"
+        "sends": "検索した内容と、IDを調べるためのアーティスト名を送信します。"
       },
       "coverartarchive": {
         "name": "Cover Art Archive",
-        "sends": "ジャケットを探すためにアルバム名とアーティスト名を送信します。",
-        "covers": "アルバムジャケット",
-        "coversSubtext": "サーバーにないアルバムジャケットを補います。"
+        "sends": "ジャケットを探すためにアルバム名とアーティスト名を送信します。"
+      },
+      "lrclib": {
+        "name": "LRCLIB",
+        "sends": "歌詞を探すために曲名とアーティスト名を送信します。アカウントは不要です。"
+      },
+      "usedFor": "用途",
+      "stopUsing": "{{name}}の使用をやめる",
+      "off": "オフ"
+    },
+    "sourceUses": {
+      "lastfm": {
+        "artistInfo": "アーティストの経歴とタグ。",
+        "similarArtists": "Last.fmのリスナーによる似たアーティスト。",
+        "recommendations": "プレイリストのアーティストに似たアーティストを探します。"
+      },
+      "coverartarchive": {
+        "artwork": "リリースに正確に一致するアルバムアート。"
+      },
+      "deezer": {
+        "artwork": "アーティスト写真と、サーバーにないアルバムアート。",
+        "similarArtists": "Deezerの関連アーティスト。",
+        "popularTracks": "アーティストの人気曲。",
+        "previews": "持っていない曲の30秒サンプル。",
+        "recommendations": "アルバムやプレイリストに合うアルバムと曲。",
+        "homeShelves": "チャート、人気アーティスト、ジャンル別のおすすめ。",
+        "search": "Deezerを検索し、そのアルバムとアーティストを開きます。"
+      },
+      "lrclib": {
+        "lyrics": "サーバーに歌詞がないときの同期歌詞。"
+      },
+      "listenbrainz": {
+        "similarArtists": "みんなが聴いている音楽から見つけた似たアーティスト。",
+        "homeShelves": "似たアーティスト。アカウントを接続すると、あなた向けのプレイリストも。"
+      },
+      "musicbrainz": {
+        "search": "MusicBrainzを検索し、そのアルバムとアーティストを開きます。"
       }
+    },
+    "sourcePurposes": {
+      "artistInfo": "アーティスト情報",
+      "artwork": "アートワーク",
+      "lyrics": "歌詞",
+      "similarArtists": "似たアーティスト",
+      "popularTracks": "人気曲",
+      "previews": "プレビュー",
+      "recommendations": "おすすめ",
+      "homeShelves": "ホームの棚",
+      "search": "検索"
+    },
+    "metadata": {
+      "title": "メタデータ",
+      "explanation": "サーバーに足りない情報を補います。常にサーバーが最初に確認されます。"
+    },
+    "pages": {
+      "title": "ページ",
+      "explanation": "ライブラリの外の音楽 — アーティスト、アルバム、プレイリストのページで。"
+    },
+    "search": {
+      "title": "検索",
+      "scopeTitle": "ライブラリを検索する場所",
+      "scope": {
+        "client": "デバイス上",
+        "clientDescription": "ローカルライブラリのみを検索",
+        "server": "サーバー",
+        "serverDescription": "サーバーの検索を使用する"
+      },
+      "otherSources": "その他のソース"
     }
   },
   "common": {
@@ -840,7 +874,7 @@
       "sources": "ソース",
       "entityTypes": "対象",
       "sendsQuery": "入力内容を{{name}}に送信します",
-      "alsoInSettings": "設定 › オンラインソースでも変更できます。"
+      "alsoInSettings": "設定 › 検索にもあります。"
     },
     "entityTypes": {
       "song": "曲",
@@ -1405,7 +1439,8 @@
       "themeColor": "テーマカラー {{color}}",
       "clearProviderDownloads": "{{provider}}のダウンロードをすべて削除",
       "removeDownload": "ダウンロード{{title}}を削除",
-      "reorderSource": "{{name}}を並べ替え"
+      "reorderSource": "{{name}}を並べ替え",
+      "sourceDetails": "{{name}}について"
     },
     "onboarding": {
       "serverOptions": "{{url}}のオプション"

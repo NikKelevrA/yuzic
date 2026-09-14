@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { getLBSimilarArtists } from '@/providers/integration/listenbrainz';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
+import { selectSourceUse } from '@/features/settings/sources/state';
 import type { Artist } from '@/domain/entities/Artist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
@@ -19,7 +19,7 @@ export function useLBSimilarArtists(
   seed: { mbid?: string | null; excludeName?: string } | null,
   limit = 12
 ) {
-  const discoveryEnabled = useSelector(selectListenbrainzDiscoveryEnabled);
+  const discoveryEnabled = useSelector(selectSourceUse('listenbrainz.similarArtists'));
   const mbid = seed?.mbid ?? null;
   const excludeName = seed?.excludeName?.trim().toLowerCase();
 

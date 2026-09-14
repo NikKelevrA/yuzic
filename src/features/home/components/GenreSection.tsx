@@ -11,7 +11,7 @@ import { useAlbums } from '@/features/album/useAlbums';
 import { useArtists } from '@/features/artist/useArtists';
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
 import { prefetchCovers } from '@/features/artwork/imageCache'
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
+import { useSourceUse } from '@/features/settings/sources/useSourceUse'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { useGenres } from '@/features/genre/useGenres'
 import {
@@ -134,7 +134,7 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
   const sheetRef = useRef<BottomSheetModal>(null)
   const dayKey = getDayKey()
   const itemCount = useSelector(selectHomeShelfItemCount)
-  const isEnabled = useDeezerDiscoveryEnabled()
+  const isEnabled = useSourceUse('deezer.homeShelves')
 
   const [selectedGenre, setSelectedGenre] = React.useState<string>(genre)
 

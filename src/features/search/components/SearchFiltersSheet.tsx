@@ -13,8 +13,9 @@ import {
   optionSheetStyles,
   useOptionSheetBackground,
 } from '@/components/options/OptionSheetPrimitives';
-import { getSourceMeta, type SourceId } from '@/features/sources/registry';
-import { SEARCH_SOURCE_IDS, setSearchSourceEnabled } from '@/features/settings/search/state';
+import { ALL_SOURCES, getSourceMeta, type SourceId } from '@/features/sources/registry';
+import { setSourceUse } from '@/features/settings/sources/state';
+import { searchUseOf } from '@/providers/registry/sources';
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import type { SearchEntityType } from '@/features/search/SearchContext';
 import type { SearchResultScope } from '@/features/search/searchLegs';
@@ -44,8 +45,8 @@ const ENTITY_TYPE_ORDER: SearchEntityType[] = ['album', 'artist'];
  *
  * A source that is on is a check: in play for *this* search or not. A source
  * that is off is a switch, saying what turning it on sends — the same setting
- * as Settings › Online sources, offered where the decision comes up instead of
- * as a pointer to go and find it.
+ * as Settings › Search, offered where the decision comes up instead of as a
+ * pointer to go and find it.
  */
 const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
   ({ resultScope, onChangeScope, availableSourceIds, selectedSourceIds, onToggleSource, selectedEntityTypes, onToggleEntityType }, ref) => {
@@ -55,9 +56,9 @@ const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
     const sheetBg = useOptionSheetBackground();
 
     const entityTypeLabel = (entityType: SearchEntityType) => t(`search.entityTypes.${entityType}`);
-    const offSourceIds = SEARCH_SOURCE_IDS.filter(id => !availableSourceIds.includes(id));
+    const offSourceIds = ALL_SOURCES.map(source => source.id).filter(id => !availableSourceIds.includes(id));
     const enableSource = (sourceId: SourceId) => {
-      dispatch(setSearchSourceEnabled({ sourceId, enabled: true }));
+      dispatch(setSourceUse({ use: searchUseOf(sourceId), enabled: true }));
       // Turned on from here, it's wanted for this search too.
       if (!selectedSourceIds.includes(sourceId)) onToggleSource(sourceId);
     };

@@ -39,8 +39,8 @@ jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
 
-jest.mock('@/features/home/hooks/useDeezerEnabled', () => ({
-  useDeezerDiscoveryEnabled: () => false,
+jest.mock('@/features/settings/sources/useSourceUse', () => ({
+  useSourceUse: () => false,
 }));
 
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');

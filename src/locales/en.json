@@ -52,13 +52,6 @@
       "username": "Username",
       "notSet": "Not Set",
       "connectivity": "Connectivity",
-      "searchScopeHelp": "Choose where search results come from",
-      "searchScope": {
-        "client": "On Device",
-        "clientDescription": "Search your local library only",
-        "server": "Server",
-        "serverDescription": "Use your server’s search instead"
-      },
       "fallbackUrls": {
         "title": "Fallback URLs",
         "subtext": "Backup URLs to try if the primary is unreachable.",
@@ -183,14 +176,6 @@
       "homeSourcesListenbrainzSubtext": "Show ListenBrainz similar-artist shelves.",
       "homeSourcesDeezer": "Deezer",
       "homeSourcesDeezerSubtext": "Deezer charts, top tracks, and similar artists."
-    },
-    "lyrics": {
-      "title": "Lyrics",
-      "sources": "Lyrics sources",
-      "serverEmbedded": "Server-embedded",
-      "serverEmbeddedSubtext": "Checked first — your server's own lyrics.",
-      "lrclib": "LRCLIB",
-      "lrclibSubtext": "Free, anonymous lyrics lookup."
     },
     "library": {
       "title": "Library",
@@ -512,48 +497,97 @@
         "lbCreatedForWeeklyExploration": "Weekly exploration",
         "topArtists": "Top artists",
         "charts": "Charts"
-      }
+      },
+      "connectListenBrainz": "Connect ListenBrainz for playlists made for you"
     },
     "sources": {
-      "title": "Online sources",
-      "explanation": "Services Yuzic can ask about your music. All start off — your library and server work without them.",
-      "offline": "You're offline, so these are paused until you reconnect.",
-      "offRow": "{{name}} is off",
-      "enableDeezerToPreview": "Turn on Deezer in Settings › Online sources to hear previews",
+      "enableDeezerToPreview": "Turn on previews in Settings › Pages to hear samples",
       "deezer": {
         "name": "Deezer",
-        "sends": "Sends artist, album and track names, and what you search.",
-        "pages": "Home and pages",
-        "pagesSubtext": "Charts, similar artists, samples and recommendations.",
-        "search": "Search",
-        "searchSubtext": "Search Deezer, and open its albums and artists.",
-        "artwork": "Artist images",
-        "artworkSubtext": "Fill artist photos your server is missing."
+        "sends": "Sends artist, album and track names, and what you search."
       },
       "listenbrainz": {
         "name": "ListenBrainz",
-        "sends": "Sends artist names to MusicBrainz to find their IDs, those IDs to ListenBrainz, and your ListenBrainz username if you've connected one.",
-        "discovery": "Discovery",
-        "discoverySubtext": "Similar artists, plus playlists made for you once your ListenBrainz account is connected."
+        "sends": "Sends artist names to MusicBrainz to find their IDs, those IDs to ListenBrainz, and your ListenBrainz username if you've connected one."
       },
       "lastfm": {
         "name": "Last.fm",
-        "sends": "Sends artist names. No account needed.",
-        "artistInfo": "Artist info",
-        "artistInfoSubtext": "Bios, tags, similar artists and playlist recommendations."
+        "sends": "Sends artist names. No account needed."
       },
       "musicbrainz": {
         "name": "MusicBrainz",
-        "sends": "Sends what you search, and artist names to look up their IDs.",
-        "search": "Search",
-        "searchSubtext": "Search MusicBrainz, and open its albums and artists."
+        "sends": "Sends what you search, and artist names to look up their IDs."
       },
       "coverartarchive": {
         "name": "Cover Art Archive",
-        "sends": "Sends album and artist names to find covers.",
-        "covers": "Album covers",
-        "coversSubtext": "Fill album covers your server is missing."
+        "sends": "Sends album and artist names to find covers."
+      },
+      "lrclib": {
+        "name": "LRCLIB",
+        "sends": "Sends song titles and artist names to find lyrics. No account needed."
+      },
+      "usedFor": "Used for",
+      "stopUsing": "Stop using {{name}}",
+      "off": "Off"
+    },
+    "sourceUses": {
+      "lastfm": {
+        "artistInfo": "Bios and tags for artists.",
+        "similarArtists": "Similar artists from Last.fm listeners.",
+        "recommendations": "Finds artists like the ones in a playlist."
+      },
+      "coverartarchive": {
+        "artwork": "Album covers, matched to the exact release."
+      },
+      "deezer": {
+        "artwork": "Artist photos, and album covers your server is missing.",
+        "similarArtists": "Related artists from Deezer.",
+        "popularTracks": "An artist's most popular tracks.",
+        "previews": "30-second samples of tracks you don't own.",
+        "recommendations": "Albums and tracks to go with an album or playlist.",
+        "homeShelves": "Charts, top artists and genre picks.",
+        "search": "Search Deezer, and open its albums and artists."
+      },
+      "lrclib": {
+        "lyrics": "Synced lyrics when your server has none."
+      },
+      "listenbrainz": {
+        "similarArtists": "Similar artists from what people listen to.",
+        "homeShelves": "Similar artists, plus playlists made for you once your account is connected."
+      },
+      "musicbrainz": {
+        "search": "Search MusicBrainz, and open its albums and artists."
       }
+    },
+    "sourcePurposes": {
+      "artistInfo": "Artist info",
+      "artwork": "Artwork",
+      "lyrics": "Lyrics",
+      "similarArtists": "Similar artists",
+      "popularTracks": "Popular tracks",
+      "previews": "Previews",
+      "recommendations": "Recommendations",
+      "homeShelves": "Home shelves",
+      "search": "Search"
+    },
+    "metadata": {
+      "title": "Metadata",
+      "explanation": "Fills in what your server is missing. Your server is always checked first."
+    },
+    "pages": {
+      "title": "Pages",
+      "explanation": "Music beyond your library, on artist, album and playlist pages."
+    },
+    "search": {
+      "title": "Search",
+      "scopeTitle": "Where your library is searched",
+      "scope": {
+        "client": "On Device",
+        "clientDescription": "Search your local library only",
+        "server": "Server",
+        "serverDescription": "Use your server’s search instead"
+      },
+      "otherSources": "Other sources"
     }
   },
   "common": {
@@ -843,7 +877,7 @@
       "sources": "Sources",
       "entityTypes": "Include",
       "sendsQuery": "Sends what you type to {{name}}",
-      "alsoInSettings": "Also in Settings › Online sources."
+      "alsoInSettings": "Also in Settings › Search."
     },
     "entityTypes": {
       "song": "Song",
@@ -1399,7 +1433,8 @@
       "themeColor": "Theme colour {{color}}",
       "clearProviderDownloads": "Delete all {{provider}} downloads",
       "removeDownload": "Remove download {{title}}",
-      "reorderSource": "Reorder {{name}}"
+      "reorderSource": "Reorder {{name}}",
+      "sourceDetails": "About {{name}}"
     },
     "onboarding": {
       "serverOptions": "Options for {{url}}"

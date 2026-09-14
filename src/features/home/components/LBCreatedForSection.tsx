@@ -8,7 +8,7 @@ import { getCreatedForPlaylists } from '@/providers/integration/listenbrainz';
 import type { CreatedForMixType } from '@/providers/integration/listenbrainz';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { selectListenBrainzUsername } from '@/state/redux/selectors/listenbrainzSelectors';
-import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
+import { selectSourceUse } from '@/features/settings/sources/state';
 import SectionShelfHeader from './SectionShelfHeader';
 import SongRow from '@/components/rows/SongRow';
 import SkeletonListRow from '@/components/SkeletonListRow';
@@ -50,7 +50,7 @@ const MAX_TRACKS = 10;
  */
 export default function LBCreatedForSection({ sectionKey, mixType, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
-  const discoveryEnabled = useSelector(selectListenbrainzDiscoveryEnabled);
+  const discoveryEnabled = useSelector(selectSourceUse('listenbrainz.homeShelves'));
   const username = useSelector(selectListenBrainzUsername);
 
   const enabled = discoveryEnabled && Boolean(username);

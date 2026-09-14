@@ -12,7 +12,7 @@ export const lrclibProvider: IntegrationProvider = {
   kind: 'integration',
   id: 'lrclib',
   // No dedicated icon asset exists for LRCLIB today — see the file report.
-  presentation: { nameKey: 'settings.lyrics.lrclib', icon: 0 },
+  presentation: { nameKey: 'settings.sources.lrclib.name', icon: 0 },
   auth: { tier: 'none' },
   capabilities: {
     lyrics: async song => {

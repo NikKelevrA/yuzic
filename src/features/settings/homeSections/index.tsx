@@ -9,8 +9,11 @@ import SettingsToggleGroup from '../components/SettingsToggleGroup';
 import SettingsCard from '../components/SettingsCard';
 import SettingsSourceList from '../components/SettingsSourceList';
 import SettingsRow from '../components/SettingsRow';
-import type { OnlineSourceId } from '@/providers/registry/onlineSources';
-import { selectDeezerDiscoveryEnabled, selectHomeShelfVisibilityMap, selectHomeShelfLength, selectHomeShelfOrder, selectListenbrainzDiscoveryEnabled, selectSleepTimerPresets, setHomeShelfVisibility, setHomeShelfOrder, setHomeShelfLength, setSleepTimerPresets, type HomeShelfLength, type HomeShelfTier } from '@/features/settings/home/state';
+import SourceUseList from '../sources/SourceUseList';
+import { selectSourceUses } from '../sources/state';
+import type { SourceId } from '@/providers/registry/sources';
+import { selectListenBrainzUsername } from '@/state/redux/selectors/listenbrainzSelectors';
+import { selectHomeShelfVisibilityMap, selectHomeShelfLength, selectHomeShelfOrder, selectSleepTimerPresets, setHomeShelfVisibility, setHomeShelfOrder, setHomeShelfLength, setSleepTimerPresets, type HomeShelfLength, type HomeShelfTier } from '@/features/settings/home/state';
 
 const TIERS: { tier: HomeShelfTier; ids: string[] }[] = [
   { tier: 'resume', ids: ['quickPicks', 'continuePlaying', 'recentlyPlayed'] },
@@ -19,8 +22,10 @@ const TIERS: { tier: HomeShelfTier; ids: string[] }[] = [
   { tier: 'listenbrainz', ids: ['lbSimilarArtistsForYou', 'lbCreatedForDailyJams', 'lbCreatedForWeeklyJams', 'lbCreatedForWeeklyExploration'] },
   { tier: 'deezer', ids: ['topArtists', 'charts'] },
 ];
-/** Tiers an outside service fills, and which service. */
-const TIER_SOURCE: Partial<Record<HomeShelfTier, OnlineSourceId>> = { listenbrainz: 'listenbrainz', deezer: 'deezer' };
+/** Tiers an outside source fills, and which source. */
+const TIER_SOURCE: Partial<Record<HomeShelfTier, SourceId>> = { listenbrainz: 'listenbrainz', deezer: 'deezer' };
+/** Shelves that need a connected account on top of the source being on. */
+const ACCOUNT_SHELVES = new Set(['lbCreatedForDailyJams', 'lbCreatedForWeeklyJams', 'lbCreatedForWeeklyExploration']);
 const SLEEP_OPTIONS = [5, 10, 15, 20, 30, 45, 60];
 const LENGTHS: HomeShelfLength[] = ['compact', 'standard', 'generous'];
 
@@ -29,9 +34,8 @@ const HomeSettings: React.FC = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const visibility = useSelector(selectHomeShelfVisibilityMap);
-  const deezerOn = useSelector(selectDeezerDiscoveryEnabled);
-  const listenbrainzOn = useSelector(selectListenbrainzDiscoveryEnabled);
-  const sourceOn: Partial<Record<OnlineSourceId, boolean>> = { deezer: deezerOn, listenbrainz: listenbrainzOn };
+  const sourceUses = useSelector(selectSourceUses);
+  const listenBrainzUsername = useSelector(selectListenBrainzUsername);
   const presets = useSelector(selectSleepTimerPresets);
   const length = useSelector(selectHomeShelfLength);
   const resumeOrder = useSelector(selectHomeShelfOrder('resume', TIERS[0].ids));
@@ -58,21 +62,22 @@ const HomeSettings: React.FC = () => {
       </SettingsCard>
       {TIERS.map(({ tier, ids }) => {
         const source = TIER_SOURCE[tier];
-        // Home is local-first: a tier an outside service fills says so while
-        // that service is off, and its shelves read as off with it. The switch
-        // itself lives only in Online sources.
-        const sourceOff = source !== undefined && !sourceOn[source];
+        // Home is local-first: a tier an outside source fills has that
+        // source's switch at its head, and its shelves read as off with it.
+        const sourceOff = source !== undefined && !sourceUses?.[`${source}.homeShelves`];
+        // The made-for-you shelves need an account as well as the switch.
+        // Said here, beside them, rather than leaving them silently empty.
+        const needsAccount = source === 'listenbrainz' && !sourceOff && !listenBrainzUsername;
         return (
           <React.Fragment key={tier}>
             <SettingsCardHeader subtle title={t(`settings.home.tier.${tier}`)} />
-            {sourceOff && (
+            {source && <SourceUseList purpose="homeShelves" source={source} />}
+            {needsAccount && (
               <SettingsCard>
                 <SettingsRow
-                  testID={`home-tier-off-${tier}`}
-                  label={t('settings.sources.offRow', { name: t(`settings.sources.${source}.name`) })}
-                  rightText={t('settings.sources.title')}
-                  status="disabled"
-                  onPress={() => router.push({ pathname: '/settings/sourcesView', params: { source } })}
+                  testID="home-listenbrainz-connect"
+                  label={t('settings.home.connectListenBrainz')}
+                  onPress={() => router.push('/settings/listenbrainzView')}
                 />
               </SettingsCard>
             )}
@@ -88,7 +93,7 @@ const HomeSettings: React.FC = () => {
                   sources={ids.map(id => ({
                     id,
                     label: t(`settings.home.shelves.${id}`),
-                    enabled: visibility[id] ?? true,
+                    enabled: (visibility[id] ?? true) && !(needsAccount && ACCOUNT_SHELVES.has(id)),
                     onEnabledChange: visible => dispatch(setHomeShelfVisibility({ key: id, visible })),
                   }))}
                   sourceOrder={orders[tier]}

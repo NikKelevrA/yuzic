@@ -34,15 +34,17 @@ describe('Settings home', () => {
 
     expect(view.getByText('settings.sections.general')).toBeTruthy();
     expect(view.getByText('settings.sections.discovery')).toBeTruthy();
-    expect(view.getByText('settings.sources.title')).toBeTruthy();
+    expect(view.getByText('settings.metadata.title')).toBeTruthy();
     expect(view.getByText('settings.home.title')).toBeTruthy();
+    expect(view.getByText('settings.pages.title')).toBeTruthy();
+    expect(view.getByText('settings.search.title')).toBeTruthy();
     expect(view.getByText('settings.scrobbling.title')).toBeTruthy();
   });
 
-  it('keeps every outside-service switch behind Online sources, not per-feature pages', async () => {
+  it('organises outside sources by purpose, with no page per company and no separate Lyrics page', async () => {
     const view = await render(<Settings />);
 
-    expect(view.queryByText('settings.metadata.title')).toBeNull();
-    expect(view.queryByText('settings.search.title')).toBeNull();
+    expect(view.queryByText('settings.sources.title')).toBeNull();
+    expect(view.queryByText('settings.lyrics.title')).toBeNull();
   });
 });

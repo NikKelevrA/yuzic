@@ -26,7 +26,7 @@ import { formatDuration } from '@/components/formatDuration';
 import Touchable from '@/components/Touchable';
 import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
+import { useSourceUse } from '@/features/settings/sources/useSourceUse';
 
 type SongRowSong = Song;
 
@@ -64,7 +64,7 @@ const ExternalSongRowView: React.FC<{
 }> = ({ song, albumTitle, albumArtist, previewUrl, onPress }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const samplesEnabled = useDeezerDiscoveryEnabled();
+  const samplesEnabled = useSourceUse('deezer.previews');
   const density = useListDensity();
   const hasPreview = !!previewUrl;
   const optionsSheetRef = useSheetRef();

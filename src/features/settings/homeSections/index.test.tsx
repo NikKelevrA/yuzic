@@ -5,7 +5,8 @@ import HomeSettings from './';
 
 const mockDispatch = jest.fn();
 const mockPush = jest.fn();
-let mockSources = { deezerDiscoveryEnabled: false, listenbrainzDiscoveryEnabled: false };
+let mockUses: Record<string, boolean> = {};
+let mockListenBrainzUsername = '';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string, options?: { count?: number }) => options?.count ? `${key}.${options.count}` : key }),
@@ -19,10 +20,22 @@ jest.mock('react-redux', () => ({
       homeShelfOrder: { resume: ['recentlyPlayed', 'quickPicks'] },
       homeShelfLength: 'standard',
       sleepTimerPresets: [5, 15],
-      ...mockSources,
     },
+    settingsSources: { uses: mockUses },
   }),
 }));
+jest.mock('@/state/redux/selectors/listenbrainzSelectors', () => ({
+  selectListenBrainzUsername: () => mockListenBrainzUsername,
+}));
+// Its own test covers asking, allowing and stopping; here it only has to be
+// where a source's switch goes.
+jest.mock('../sources/SourceUseList', () => {
+  const { Text } = require('react-native');
+  function MockSourceUseList({ purpose, source }: any) {
+    return <Text testID={`source-use-list-${purpose}-${source}`}>{source}</Text>;
+  }
+  return MockSourceUseList;
+});
 jest.mock('../components/SettingsScreen', () => {
   const { View } = require('react-native');
   function MockSettingsScreen({ children }: any) {
@@ -72,6 +85,7 @@ jest.mock('../components/SettingsSourceList', () => {
           <Text
             key={source.id}
             testID={`source-toggle-${source.id}`}
+            accessibilityState={{ checked: source.enabled }}
             onPress={() => source.onEnabledChange(!source.enabled)}
           >
             {source.label}
@@ -90,35 +104,51 @@ describe('Home settings shelf editor', () => {
   beforeEach(() => {
     mockDispatch.mockClear();
     mockPush.mockClear();
-    mockSources = { deezerDiscoveryEnabled: false, listenbrainzDiscoveryEnabled: false };
+    mockUses = {};
+    mockListenBrainzUsername = '';
   });
 
-  it('says an outside tier is off while its service is, and points to that service', async () => {
+  it("puts each outside tier's source switch at its head, and dims its shelves while that source is off", async () => {
     const view = await render(<HomeSettings />);
 
     // Home is local-first: nothing from your own library or server is gated.
     for (const tier of ['resume', 'library', 'server']) {
-      expect(view.queryByTestId(`home-tier-off-${tier}`)).toBeNull();
+      expect(view.queryByTestId(`source-use-list-homeShelves-${tier}`)).toBeNull();
       expect(view.getByTestId(`home-tier-${tier}`).props.pointerEvents).toBe('auto');
     }
     for (const tier of ['listenbrainz', 'deezer']) {
-      expect(view.getByTestId(`home-tier-off-${tier}`)).toBeTruthy();
-      // Hidden from screen readers as well as touch while its service is off.
+      expect(view.getByTestId(`source-use-list-homeShelves-${tier}`)).toBeTruthy();
+      // Hidden from screen readers as well as touch while its source is off.
       expect(view.queryByTestId(`home-tier-${tier}`)).toBeNull();
       expect(view.getByTestId(`home-tier-${tier}`, { includeHiddenElements: true }).props.pointerEvents).toBe('none');
     }
-
-    await fireEvent.press(view.getByTestId('home-tier-off-deezer'));
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/settings/sourcesView', params: { source: 'deezer' } });
   });
 
-  it('shows an outside tier as an ordinary shelf list once its service is on', async () => {
-    mockSources = { deezerDiscoveryEnabled: true, listenbrainzDiscoveryEnabled: false };
+  it("opens a tier's shelves once its source's Home use is on", async () => {
+    mockUses = { 'deezer.homeShelves': true };
     const view = await render(<HomeSettings />);
 
-    expect(view.queryByTestId('home-tier-off-deezer')).toBeNull();
     expect(view.getByTestId('home-tier-deezer').props.pointerEvents).toBe('auto');
-    expect(view.getByTestId('home-tier-off-listenbrainz')).toBeTruthy();
+    expect(view.getByTestId('home-tier-listenbrainz', { includeHiddenElements: true }).props.pointerEvents).toBe('none');
+  });
+
+  it('says the made-for-you shelves need an account, and leads to connecting one, instead of leaving them empty', async () => {
+    mockUses = { 'listenbrainz.homeShelves': true };
+    const view = await render(<HomeSettings />);
+
+    expect(view.getByTestId('source-toggle-lbCreatedForDailyJams').props.accessibilityState).toEqual({ checked: false });
+    expect(view.getByTestId('source-toggle-lbSimilarArtistsForYou').props.accessibilityState).toEqual({ checked: true });
+    await fireEvent.press(view.getByTestId('home-listenbrainz-connect'));
+    expect(mockPush).toHaveBeenCalledWith('/settings/listenbrainzView');
+  });
+
+  it('says nothing about an account once one is connected', async () => {
+    mockUses = { 'listenbrainz.homeShelves': true };
+    mockListenBrainzUsername = 'listener';
+    const view = await render(<HomeSettings />);
+
+    expect(view.queryByTestId('home-listenbrainz-connect')).toBeNull();
+    expect(view.getByTestId('source-toggle-lbCreatedForDailyJams').props.accessibilityState).toEqual({ checked: true });
   });
 
   it('groups each tier with one persisted reorder-and-visibility list', async () => {

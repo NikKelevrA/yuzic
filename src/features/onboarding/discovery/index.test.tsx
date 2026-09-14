@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 
 import Discovery from './';
+import { DISCOVERY_USES } from '@/providers/registry/sources';
 
 const mockReplace = jest.fn();
 const mockDispatch = jest.fn();
@@ -26,9 +27,8 @@ jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc', card: '#111', themeColor: '#0f0', background: '#fff', muted: '#eee' } }),
 }));
 
-jest.mock('@/features/settings/home/state', () => ({
-  setDeezerDiscoveryEnabled: (payload: boolean) => ({ type: 'setDeezerDiscoveryEnabled', payload }),
-  setListenbrainzDiscoveryEnabled: (payload: boolean) => ({ type: 'setListenbrainzDiscoveryEnabled', payload }),
+jest.mock('@/features/settings/sources/state', () => ({
+  setSourceUses: (payload: unknown) => ({ type: 'setSourceUses', payload }),
 }));
 
 jest.mock('@/features/settings/onboarding/state', () => ({
@@ -51,13 +51,12 @@ describe('Discovery onboarding step', () => {
     expect(view.getByText('onboarding.discovery.notNow')).toBeTruthy();
   });
 
-  it('Enable dispatches both discovery-enable actions and marks prompted', async () => {
+  it('Enable turns on every discovery use and marks prompted', async () => {
     const view = await render(<Discovery />);
 
     fireEvent.press(view.getByText('onboarding.discovery.enable'));
 
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'setDeezerDiscoveryEnabled', payload: true });
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'setListenbrainzDiscoveryEnabled', payload: true });
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'setSourceUses', payload: { uses: DISCOVERY_USES, enabled: true } });
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setOnboardingDiscoveryPrompted', payload: true });
     expect(mockReplace).toHaveBeenCalledWith('/(home)/(tabs)/(home)');
   });
@@ -67,8 +66,7 @@ describe('Discovery onboarding step', () => {
 
     fireEvent.press(view.getByText('onboarding.discovery.notNow'));
 
-    expect(mockDispatch).not.toHaveBeenCalledWith({ type: 'setDeezerDiscoveryEnabled', payload: true });
-    expect(mockDispatch).not.toHaveBeenCalledWith({ type: 'setListenbrainzDiscoveryEnabled', payload: true });
+    expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'setSourceUses' }));
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setOnboardingDiscoveryPrompted', payload: true });
     expect(mockReplace).toHaveBeenCalledWith('/(home)/(tabs)/(home)');
   });

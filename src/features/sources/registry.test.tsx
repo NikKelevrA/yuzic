@@ -4,13 +4,12 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ALL_SOURCES, getSourceMeta, useEnabledExternalSources } from './registry';
-import settingsSearchReducer, { setSearchSourceEnabled } from '@/features/settings/search/state';
+import settingsSourcesReducer, { setSourceUse } from '@/features/settings/sources/state';
 
 function makeStore(overrides: Partial<{ deezer: boolean; musicbrainz: boolean }> = {}) {
-  const store = configureStore({ reducer: { settingsSearch: settingsSearchReducer } });
-  for (const [sourceId, enabled] of Object.entries(overrides)) {
-    if (enabled !== undefined) store.dispatch(setSearchSourceEnabled({ sourceId, enabled }));
-  }
+  const store = configureStore({ reducer: { settingsSources: settingsSourcesReducer } });
+  if (overrides.deezer !== undefined) store.dispatch(setSourceUse({ use: 'deezer.search', enabled: overrides.deezer }));
+  if (overrides.musicbrainz !== undefined) store.dispatch(setSourceUse({ use: 'musicbrainz.search', enabled: overrides.musicbrainz }));
   return store;
 }
 
