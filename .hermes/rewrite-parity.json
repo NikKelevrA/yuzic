@@ -6,88 +6,96 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AlbumsApi.get",
       "replacementEvidence": "AlbumsApi.get implemented by navidrome:src/api/navidrome/index.ts:178, mediaBrowser:src/api/mediaBrowser/adapter.ts:129, plex:src/api/plex/index.ts:136, local:src/api/local/index.ts:65",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/albums/getAlbum.ts); plex(src/api/plex/index.ts); local(src/api/local/index.ts, src/api/local/mapAlbum.ts, src/api/local/mapSong.ts); nothing covered on mediaBrowser"
     },
     {
       "id": "adapter.albums.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AlbumsApi.list",
       "replacementEvidence": "AlbumsApi.list implemented by navidrome:src/api/navidrome/index.ts:154, mediaBrowser:src/api/mediaBrowser/adapter.ts:128, plex:src/api/plex/index.ts:135, local:src/api/local/index.ts:64",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/albums/getAlbum.ts, src/api/navidrome/albums/getAlbumList.ts, src/api/navidrome/index.ts); mediaBrowser(src/api/mediaBrowser/adapter.ts, src/api/mediaBrowser/albums/getAlbums.ts); plex(src/api/plex/index.ts, src/api/plex/mapAlbum.ts); local(src/api/local/index.ts, src/api/local/mapAlbum.ts, src/api/local/mapSong.ts)"
     },
     {
       "id": "adapter.albums.listWithSongs",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AlbumsApi.listWithSongs",
       "replacementEvidence": "AlbumsApi.listWithSongs implemented by navidrome:src/api/navidrome/index.ts:184, mediaBrowser:src/api/mediaBrowser/adapter.ts:134, plex:src/api/plex/index.ts:141, local:src/api/local/index.ts:72",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/albums/getAlbumsWithSongs.ts, src/api/navidrome/index.ts); mediaBrowser(src/api/mediaBrowser/adapter.ts, src/api/mediaBrowser/albums/getAlbumsWithSongs.ts); plex(src/api/plex/index.ts); local(src/api/local/index.ts)"
     },
     {
       "id": "adapter.artists.get",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts ArtistsApi.get",
       "replacementEvidence": "ArtistsApi.get implemented by navidrome:src/api/navidrome/index.ts:190, mediaBrowser:src/api/mediaBrowser/adapter.ts:139, plex:src/api/plex/index.ts:149, local:src/api/local/index.ts:77",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/artists/getArtist.ts); plex(src/api/plex/index.ts, src/api/plex/mapArtist.ts); local(src/api/local/index.ts, src/api/local/mapArtist.ts); nothing covered on mediaBrowser"
     },
     {
       "id": "adapter.artists.getTopSongs",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts ArtistsApi.getTopSongs",
       "replacementEvidence": "ArtistsApi.getTopSongs implemented by navidrome:src/api/navidrome/index.ts:195",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.artists.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts ArtistsApi.list",
       "replacementEvidence": "ArtistsApi.list implemented by navidrome:src/api/navidrome/index.ts:189, mediaBrowser:src/api/mediaBrowser/adapter.ts:138, plex:src/api/plex/index.ts:148, local:src/api/local/index.ts:76",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/artists/getArtist.ts, src/api/navidrome/index.ts); mediaBrowser(src/api/mediaBrowser/adapter.ts, src/api/mediaBrowser/artists/getArtists.ts); plex(src/api/plex/index.ts, src/api/plex/mapArtist.ts); local(src/api/local/index.ts, src/api/local/mapArtist.ts)"
     },
     {
       "id": "adapter.auth.connect",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AuthApi.connect",
       "replacementEvidence": "AuthApi.connect implemented by navidrome:src/api/navidrome/index.ts:145, mediaBrowser:src/api/mediaBrowser/adapter.ts:115, plex:src/api/plex/index.ts:116, local:src/api/local/index.ts:41",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); nothing covered on navidrome, mediaBrowser, local"
     },
     {
       "id": "adapter.auth.disconnect",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AuthApi.disconnect",
       "replacementEvidence": "AuthApi.disconnect implemented by navidrome:src/api/navidrome/index.ts:150, mediaBrowser:src/api/mediaBrowser/adapter.ts:124, plex:src/api/plex/index.ts:131",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome, mediaBrowser, plex)"
     },
     {
       "id": "adapter.auth.password",
@@ -106,11 +114,12 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AuthApi.ping",
       "replacementEvidence": "AuthApi.ping implemented by navidrome:src/api/navidrome/index.ts:147, mediaBrowser:src/api/mediaBrowser/adapter.ts:118, plex:src/api/plex/index.ts:117",
-      "unit": "pending",
+      "unit": "pass",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "adapter method executed by unit tests: plex; cold on navidrome, mediaBrowser"
     },
     {
       "id": "adapter.auth.serverUrl",
@@ -129,22 +138,24 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AuthApi.startScan",
       "replacementEvidence": "AuthApi.startScan implemented by navidrome:src/api/navidrome/index.ts:149, mediaBrowser:src/api/mediaBrowser/adapter.ts:123, plex:src/api/plex/index.ts:130, local:src/api/local/index.ts:42",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome, mediaBrowser, plex, local)"
     },
     {
       "id": "adapter.auth.testUrl",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts AuthApi.testUrl",
       "replacementEvidence": "AuthApi.testUrl implemented by navidrome:src/api/navidrome/index.ts:148, mediaBrowser:src/api/mediaBrowser/adapter.ts:122, plex:src/api/plex/index.ts:123",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); nothing covered on navidrome, mediaBrowser"
     },
     {
       "id": "adapter.auth.username",
@@ -163,399 +174,433 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts BookmarksApi.create",
       "replacementEvidence": "BookmarksApi.create implemented by navidrome:src/api/navidrome/index.ts:316, mediaBrowser:src/api/mediaBrowser/adapter.ts:263",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on mediaBrowser(src/api/mediaBrowser/playback/report.ts); nothing covered on navidrome"
     },
     {
       "id": "adapter.bookmarks.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts BookmarksApi.list",
       "replacementEvidence": "BookmarksApi.list implemented by navidrome:src/api/navidrome/index.ts:315, mediaBrowser:src/api/mediaBrowser/adapter.ts:262",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on mediaBrowser(src/api/mediaBrowser/bookmarks/bookmarks.ts); nothing covered on navidrome"
     },
     {
       "id": "adapter.bookmarks.remove",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts BookmarksApi.remove",
       "replacementEvidence": "BookmarksApi.remove implemented by navidrome:src/api/navidrome/index.ts:318, mediaBrowser:src/api/mediaBrowser/adapter.ts:265",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on mediaBrowser(src/api/mediaBrowser/playback/report.ts); nothing covered on navidrome"
     },
     {
       "id": "adapter.discovery.getNowPlaying",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts DiscoveryApi.getNowPlaying",
       "replacementEvidence": "DiscoveryApi.getNowPlaying implemented by navidrome:src/api/navidrome/index.ts:330",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.discovery.getRandomSongs",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts DiscoveryApi.getRandomSongs",
       "replacementEvidence": "DiscoveryApi.getRandomSongs implemented by navidrome:src/api/navidrome/index.ts:328",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.genres.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts GenresApi.list",
       "replacementEvidence": "GenresApi.list implemented by navidrome:src/api/navidrome/index.ts:199, mediaBrowser:src/api/mediaBrowser/adapter.ts:147, plex:src/api/plex/index.ts:164",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/index.ts); nothing covered on navidrome, mediaBrowser"
     },
     {
       "id": "adapter.jukebox.clear",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts JukeboxApi.clear",
       "replacementEvidence": "JukeboxApi.clear implemented by navidrome:src/api/navidrome/index.ts:344",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/index.ts, src/api/navidrome/jukebox/index.ts)"
     },
     {
       "id": "adapter.jukebox.setGain",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts JukeboxApi.setGain",
       "replacementEvidence": "JukeboxApi.setGain implemented by navidrome:src/api/navidrome/index.ts:345",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/index.ts)"
     },
     {
       "id": "adapter.jukebox.setPlaylist",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts JukeboxApi.setPlaylist",
       "replacementEvidence": "JukeboxApi.setPlaylist implemented by navidrome:src/api/navidrome/index.ts:339",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/index.ts, src/api/navidrome/jukebox/index.ts)"
     },
     {
       "id": "adapter.jukebox.skip",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts JukeboxApi.skip",
       "replacementEvidence": "JukeboxApi.skip implemented by navidrome:src/api/navidrome/index.ts:342",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/index.ts)"
     },
     {
       "id": "adapter.jukebox.start",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts JukeboxApi.start",
       "replacementEvidence": "JukeboxApi.start implemented by navidrome:src/api/navidrome/index.ts:340",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/index.ts, src/api/navidrome/jukebox/index.ts)"
     },
     {
       "id": "adapter.jukebox.status",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts JukeboxApi.status",
       "replacementEvidence": "JukeboxApi.status implemented by navidrome:src/api/navidrome/index.ts:338",
-      "unit": "pending",
+      "unit": "pass",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "adapter method executed by unit tests: navidrome"
     },
     {
       "id": "adapter.jukebox.stop",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts JukeboxApi.stop",
       "replacementEvidence": "JukeboxApi.stop implemented by navidrome:src/api/navidrome/index.ts:341",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/index.ts)"
     },
     {
       "id": "adapter.lyrics.getBySongId",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts LyricsApi.getBySongId",
       "replacementEvidence": "LyricsApi.getBySongId implemented by navidrome:src/api/navidrome/index.ts:289, mediaBrowser:src/api/mediaBrowser/adapter.ts:248",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/lyrics/getLyricsBySongId.ts); mediaBrowser(src/api/mediaBrowser/lyrics/getLyricsBySongId.ts)"
     },
     {
       "id": "adapter.playlists.addSong",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PlaylistsApi.addSong",
       "replacementEvidence": "PlaylistsApi.addSong implemented by navidrome:src/api/navidrome/index.ts:228, mediaBrowser:src/api/mediaBrowser/adapter.ts:182, plex:src/api/plex/index.ts:212, local:src/api/local/index.ts:115",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on local(src/api/local/store.ts); nothing covered on navidrome, mediaBrowser, plex"
     },
     {
       "id": "adapter.playlists.create",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PlaylistsApi.create",
       "replacementEvidence": "PlaylistsApi.create implemented by navidrome:src/api/navidrome/index.ts:222, mediaBrowser:src/api/mediaBrowser/adapter.ts:176, plex:src/api/plex/index.ts:210, local:src/api/local/index.ts:113",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on local(src/api/local/store.ts); nothing covered on navidrome, mediaBrowser, plex"
     },
     {
       "id": "adapter.playlists.delete",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PlaylistsApi.delete",
       "replacementEvidence": "PlaylistsApi.delete implemented by navidrome:src/api/navidrome/index.ts:255, mediaBrowser:src/api/mediaBrowser/adapter.ts:209, plex:src/api/plex/index.ts:214, local:src/api/local/index.ts:129",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on local(src/api/local/store.ts); nothing covered on navidrome, mediaBrowser, plex"
     },
     {
       "id": "adapter.playlists.get",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PlaylistsApi.get",
       "replacementEvidence": "PlaylistsApi.get implemented by navidrome:src/api/navidrome/index.ts:212, mediaBrowser:src/api/mediaBrowser/adapter.ts:165, plex:src/api/plex/index.ts:202, local:src/api/local/index.ts:102",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/jukebox/index.ts); mediaBrowser(src/api/mediaBrowser/client.ts, src/api/mediaBrowser/starred/getStarredItems.ts); plex(src/api/plex/index.ts, src/api/plex/mapPlaylist.ts); local(src/api/local/mapPlaylist.ts, src/api/local/mapSong.ts, src/api/local/store.ts)"
     },
     {
       "id": "adapter.playlists.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PlaylistsApi.list",
       "replacementEvidence": "PlaylistsApi.list implemented by navidrome:src/api/navidrome/index.ts:203, mediaBrowser:src/api/mediaBrowser/adapter.ts:156, plex:src/api/plex/index.ts:201, local:src/api/local/index.ts:101",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on mediaBrowser(src/api/mediaBrowser/client.ts, src/api/mediaBrowser/starred/getStarredItems.ts); plex(src/api/plex/index.ts, src/api/plex/mapPlaylist.ts); local(src/api/local/mapPlaylist.ts, src/api/local/mapSong.ts, src/api/local/store.ts); nothing covered on navidrome"
     },
     {
       "id": "adapter.playlists.removeSong",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PlaylistsApi.removeSong",
       "replacementEvidence": "PlaylistsApi.removeSong implemented by navidrome:src/api/navidrome/index.ts:236, mediaBrowser:src/api/mediaBrowser/adapter.ts:191, plex:src/api/plex/index.ts:213, local:src/api/local/index.ts:121",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/jukebox/index.ts); local(src/api/local/store.ts); nothing covered on mediaBrowser, plex"
     },
     {
       "id": "adapter.playlists.rename",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PlaylistsApi.rename",
       "replacementEvidence": "PlaylistsApi.rename implemented by navidrome:src/api/navidrome/index.ts:248, mediaBrowser:src/api/mediaBrowser/adapter.ts:202, plex:src/api/plex/index.ts:211, local:src/api/local/index.ts:114",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on local(src/api/local/store.ts); nothing covered on navidrome, mediaBrowser, plex"
     },
     {
       "id": "adapter.podcasts.deleteEpisode",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PodcastsApi.deleteEpisode",
       "replacementEvidence": "PodcastsApi.deleteEpisode implemented by navidrome:src/api/navidrome/index.ts:353",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.podcasts.downloadEpisode",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PodcastsApi.downloadEpisode",
       "replacementEvidence": "PodcastsApi.downloadEpisode implemented by navidrome:src/api/navidrome/index.ts:354",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.podcasts.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PodcastsApi.list",
       "replacementEvidence": "PodcastsApi.list implemented by navidrome:src/api/navidrome/index.ts:349",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.podcasts.newestEpisodes",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PodcastsApi.newestEpisodes",
       "replacementEvidence": "PodcastsApi.newestEpisodes implemented by navidrome:src/api/navidrome/index.ts:350",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.podcasts.refreshAll",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PodcastsApi.refreshAll",
       "replacementEvidence": "PodcastsApi.refreshAll implemented by navidrome:src/api/navidrome/index.ts:355",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.podcasts.subscribe",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PodcastsApi.subscribe",
       "replacementEvidence": "PodcastsApi.subscribe implemented by navidrome:src/api/navidrome/index.ts:351",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.podcasts.unsubscribe",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts PodcastsApi.unsubscribe",
       "replacementEvidence": "PodcastsApi.unsubscribe implemented by navidrome:src/api/navidrome/index.ts:352",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.queue.get",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts QueueApi.get",
       "replacementEvidence": "QueueApi.get implemented by navidrome:src/api/navidrome/index.ts:322",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.queue.save",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts QueueApi.save",
       "replacementEvidence": "QueueApi.save implemented by navidrome:src/api/navidrome/index.ts:323",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.radio.create",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts RadioApi.create",
       "replacementEvidence": "RadioApi.create implemented by navidrome:src/api/navidrome/index.ts:298",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/radio/getInternetRadioStations.ts)"
     },
     {
       "id": "adapter.radio.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts RadioApi.list",
       "replacementEvidence": "RadioApi.list implemented by navidrome:src/api/navidrome/index.ts:297",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/radio/getInternetRadioStations.ts)"
     },
     {
       "id": "adapter.radio.remove",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts RadioApi.remove",
       "replacementEvidence": "RadioApi.remove implemented by navidrome:src/api/navidrome/index.ts:302",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/radio/getInternetRadioStations.ts)"
     },
     {
       "id": "adapter.radio.update",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts RadioApi.update",
       "replacementEvidence": "RadioApi.update implemented by navidrome:src/api/navidrome/index.ts:300",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/radio/getInternetRadioStations.ts)"
     },
     {
       "id": "adapter.search.albums",
@@ -586,11 +631,12 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SearchApi.search",
       "replacementEvidence": "SearchApi.search implemented by navidrome:src/api/navidrome/index.ts:293, mediaBrowser:src/api/mediaBrowser/adapter.ts:252, plex:src/api/plex/index.ts:220, local:src/api/local/index.ts:136",
-      "unit": "pending",
+      "unit": "pass",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "adapter method executed by unit tests: plex; cold on navidrome, mediaBrowser, local"
     },
     {
       "id": "adapter.search.songs",
@@ -609,191 +655,208 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SharesApi.create",
       "replacementEvidence": "SharesApi.create implemented by navidrome:src/api/navidrome/index.ts:307",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.shares.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SharesApi.list",
       "replacementEvidence": "SharesApi.list implemented by navidrome:src/api/navidrome/index.ts:306",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.shares.remove",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SharesApi.remove",
       "replacementEvidence": "SharesApi.remove implemented by navidrome:src/api/navidrome/index.ts:311",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.shares.update",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SharesApi.update",
       "replacementEvidence": "SharesApi.update implemented by navidrome:src/api/navidrome/index.ts:309",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome)"
     },
     {
       "id": "adapter.similar.getSimilarAlbums",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SimilarApi.getSimilarAlbums",
       "replacementEvidence": "SimilarApi.getSimilarAlbums implemented by mediaBrowser:src/api/mediaBrowser/adapter.ts:244",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (mediaBrowser)"
     },
     {
       "id": "adapter.similar.getSimilarArtists",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SimilarApi.getSimilarArtists",
       "replacementEvidence": "SimilarApi.getSimilarArtists implemented by navidrome:src/api/navidrome/index.ts:285, mediaBrowser:src/api/mediaBrowser/adapter.ts:243",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/similar/getSimilarArtists.ts); nothing covered on mediaBrowser"
     },
     {
       "id": "adapter.similar.getSimilarSongs",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SimilarApi.getSimilarSongs",
       "replacementEvidence": "SimilarApi.getSimilarSongs implemented by navidrome:src/api/navidrome/index.ts:284, mediaBrowser:src/api/mediaBrowser/adapter.ts:242",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/similar/getSimilarArtists.ts); nothing covered on mediaBrowser"
     },
     {
       "id": "adapter.songs.buildStreamUrl",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.buildStreamUrl",
       "replacementEvidence": "SongsApi.buildStreamUrl implemented by navidrome:src/api/navidrome/index.ts:273, mediaBrowser:src/api/mediaBrowser/adapter.ts:227, plex:src/api/plex/index.ts:177, local:src/api/local/index.ts:58",
-      "unit": "pending",
+      "unit": "pass",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "adapter method executed by unit tests: mediaBrowser; cold on navidrome, plex, local"
     },
     {
       "id": "adapter.songs.get",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.get",
       "replacementEvidence": "SongsApi.get implemented by navidrome:src/api/navidrome/index.ts:270, mediaBrowser:src/api/mediaBrowser/adapter.ts:224, plex:src/api/plex/index.ts:176, local:src/api/local/index.ts:54",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); nothing covered on navidrome, mediaBrowser, local"
     },
     {
       "id": "adapter.songs.reportNowPlaying",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.reportNowPlaying",
       "replacementEvidence": "SongsApi.reportNowPlaying implemented by navidrome:src/api/navidrome/index.ts:272, mediaBrowser:src/api/mediaBrowser/adapter.ts:226, plex:src/api/plex/index.ts:183",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/client.ts); mediaBrowser(src/api/mediaBrowser/client.ts, src/api/mediaBrowser/playback/report.ts); plex(src/api/plex/client.ts)"
     },
     {
       "id": "adapter.songs.reportPlaybackProgress",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.reportPlaybackProgress",
       "replacementEvidence": "SongsApi.reportPlaybackProgress implemented by mediaBrowser:src/api/mediaBrowser/adapter.ts:231, plex:src/api/plex/index.ts:185",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); nothing covered on mediaBrowser"
     },
     {
       "id": "adapter.songs.reportPlaybackStart",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.reportPlaybackStart",
       "replacementEvidence": "SongsApi.reportPlaybackStart implemented by mediaBrowser:src/api/mediaBrowser/adapter.ts:230, plex:src/api/plex/index.ts:184",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); nothing covered on mediaBrowser"
     },
     {
       "id": "adapter.songs.reportPlaybackStop",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.reportPlaybackStop",
       "replacementEvidence": "SongsApi.reportPlaybackStop implemented by mediaBrowser:src/api/mediaBrowser/adapter.ts:233, plex:src/api/plex/index.ts:186",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); nothing covered on mediaBrowser"
     },
     {
       "id": "adapter.songs.scrobble",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.scrobble",
       "replacementEvidence": "SongsApi.scrobble implemented by navidrome:src/api/navidrome/index.ts:271, mediaBrowser:src/api/mediaBrowser/adapter.ts:225, plex:src/api/plex/index.ts:182, local:src/api/local/index.ts:55",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on mediaBrowser(src/api/mediaBrowser/playback/report.ts); plex(src/api/plex/client.ts); nothing covered on navidrome, local"
     },
     {
       "id": "adapter.songs.scrobbleKind",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.scrobbleKind",
       "replacementEvidence": "SongsApi.scrobbleKind implemented by navidrome:src/api/navidrome/index.ts:274, mediaBrowser:src/api/mediaBrowser/adapter.ts:228, plex:src/api/plex/index.ts:180, local:src/api/local/index.ts:59",
-      "unit": "pending",
+      "unit": "gap",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "neither the adapter method nor anything it delegates to is executed by a unit test (navidrome, mediaBrowser, plex, local)"
     },
     {
       "id": "adapter.songs.streamableCodecs",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts SongsApi.streamableCodecs",
       "replacementEvidence": "SongsApi.streamableCodecs implemented by navidrome:src/api/navidrome/index.ts:275, mediaBrowser:src/api/mediaBrowser/adapter.ts:229, plex:src/api/plex/index.ts:181, local:src/api/local/index.ts:60",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on mediaBrowser(src/api/mediaBrowser/playback/report.ts); plex(src/api/plex/client.ts); nothing covered on navidrome, local"
     },
     {
       "id": "adapter.starred.add",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts StarredApi.add",
       "replacementEvidence": "StarredApi.add implemented by navidrome:src/api/navidrome/index.ts:265, mediaBrowser:src/api/mediaBrowser/adapter.ts:219, plex:src/api/plex/index.ts:196, local:src/api/local/index.ts:96",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); local(src/api/local/store.ts); nothing covered on navidrome, mediaBrowser"
     },
     {
       "id": "adapter.starred.albums",
@@ -812,22 +875,24 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts StarredApi.list",
       "replacementEvidence": "StarredApi.list implemented by navidrome:src/api/navidrome/index.ts:264, mediaBrowser:src/api/mediaBrowser/adapter.ts:218, plex:src/api/plex/index.ts:190, local:src/api/local/index.ts:87",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on mediaBrowser(src/api/mediaBrowser/starred/getStarredItems.ts); plex(src/api/plex/index.ts, src/api/plex/mapAlbum.ts); local(src/api/local/index.ts, src/api/local/mapAlbum.ts, src/api/local/mapSong.ts, src/api/local/store.ts); nothing covered on navidrome"
     },
     {
       "id": "adapter.starred.remove",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts StarredApi.remove",
       "replacementEvidence": "StarredApi.remove implemented by navidrome:src/api/navidrome/index.ts:266, mediaBrowser:src/api/mediaBrowser/adapter.ts:220, plex:src/api/plex/index.ts:197, local:src/api/local/index.ts:97",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/client.ts); local(src/api/local/store.ts); nothing covered on navidrome, mediaBrowser"
     },
     {
       "id": "adapter.starred.songs",
@@ -846,34 +911,37 @@
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts TracksApi.get",
       "replacementEvidence": "TracksApi.get implemented by navidrome:src/api/navidrome/index.ts:280, mediaBrowser:src/api/mediaBrowser/adapter.ts:238, plex:src/api/plex/index.ts:169, local:src/api/local/index.ts:47",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on plex(src/api/plex/index.ts, src/api/plex/mapSong.ts); local(src/api/local/mapSong.ts, src/api/local/store.ts); nothing covered on navidrome, mediaBrowser"
     },
     {
       "id": "adapter.tracks.list",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts TracksApi.list",
       "replacementEvidence": "TracksApi.list implemented by navidrome:src/api/navidrome/index.ts:279, mediaBrowser:src/api/mediaBrowser/adapter.ts:237, plex:src/api/plex/index.ts:168, local:src/api/local/index.ts:46",
-      "unit": "pending",
+      "unit": "pass",
       "integration": "pending",
       "ios": "na",
       "android": "na",
-      "negativeControl": "pending"
+      "negativeControl": "pending",
+      "unitEvidence": "adapter method executed by unit tests: plex"
     },
     {
       "id": "adapter.user.avatarUrl",
       "owner": "providers/server",
       "legacyEvidence": "src/api/types.ts UserApi.avatarUrl",
       "replacementEvidence": "UserApi.avatarUrl implemented by navidrome:src/api/navidrome/index.ts:364, mediaBrowser:src/api/mediaBrowser/adapter.ts:269",
-      "unit": "pending",
+      "unit": "indirect",
       "integration": "pending",
       "ios": "na",
       "android": "na",
       "negativeControl": "pending",
-      "optional": true
+      "optional": true,
+      "unitEvidence": "no test executes the adapter method; its delegated implementation is covered on navidrome(src/api/navidrome/client.ts); mediaBrowser(src/api/mediaBrowser/client.ts)"
     },
     {
       "id": "capability.acquisition.album",
