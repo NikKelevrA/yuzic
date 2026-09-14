@@ -50,7 +50,7 @@ const HomeSettings: React.FC = () => {
   const setLength = useCallback((next: HomeShelfLength) => dispatch(setHomeShelfLength(next)), [dispatch]);
 
   return (
-    <SettingsScreen title={t('settings.home.title')}>
+    <SettingsScreen title={t('settings.home.title')} nestableDrag>
       <SettingsCardHeader subtle title={t('settings.home.shelfLength')} />
       <SettingsCard>
         {LENGTHS.map(option => (

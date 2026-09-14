@@ -22,7 +22,7 @@ jest.mock('react-native-draggable-flatlist', () => {
       <View testID="complete-source-reorder" onTouchEnd={() => onDragEnd({ data: [...data].reverse() })} />
     </View>
   );
-  return MockDraggableList;
+  return { NestableDraggableFlatList: MockDraggableList };
 });
 
 describe('SettingsSourceList', () => {

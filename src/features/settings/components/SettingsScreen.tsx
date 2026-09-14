@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Platform, ViewStyle } from 'react-native';
+import { NestableScrollContainer } from 'react-native-draggable-flatlist';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/features/theme/useTheme';
 import Header from './Header';
@@ -14,6 +15,12 @@ type Props = {
   scrollContentStyle?: ViewStyle;
   /** For a screen that scrolls itself, e.g. to a section it was opened for. */
   scrollRef?: React.Ref<ScrollView>;
+  /**
+   * The screen holds reorderable lists (`SettingsSourceList`). A plain
+   * ScrollView loses every vertical swipe that starts on one of them to the
+   * list's drag gesture, so the page only scrolled from the gaps between.
+   */
+  nestableDrag?: boolean;
 };
 
 const SettingsScreen: React.FC<Props> = ({
@@ -23,6 +30,7 @@ const SettingsScreen: React.FC<Props> = ({
   rightAction,
   scrollContentStyle,
   scrollRef,
+  nestableDrag = false,
 }) => {
   const { colors } = useTheme();
   const scrollClearance = useScrollClearance();
@@ -42,16 +50,22 @@ const SettingsScreen: React.FC<Props> = ({
       ]}
     >
       <Header title={title} onBackPress={onBackPress} rightAction={rightAction} />
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: scrollClearance },
-          scrollContentStyle,
-        ]}
-      >
-        {children}
-      </ScrollView>
+      {nestableDrag ? (
+        <NestableScrollContainer contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollClearance }, scrollContentStyle]}>
+          {children}
+        </NestableScrollContainer>
+      ) : (
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: scrollClearance },
+            scrollContentStyle,
+          ]}
+        >
+          {children}
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
