@@ -1,4 +1,3 @@
-/* eslint-disable import/first -- Jest mocks must be registered before imports. */
 const mockAccountFetch = jest.fn();
 const mockServerRequest = jest.fn();
 

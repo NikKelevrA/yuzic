@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
 
 import { useApi } from '@/providers/registry/useApi';

@@ -55,6 +55,18 @@ module.exports = defineConfig([
   {
     ignores: ["dist/*"],
   },
+  // Manual mocks are loaded by jest, which provides `jest` as a global there.
+  {
+    files: ["__mocks__/**/*.js"],
+    languageOptions: { globals: { jest: "readonly" } },
+  },
+  // `jest.mock` has to be written before the imports it replaces are read by a
+  // human, even though babel hoists it: the mock is the setup of the test.
+  // import/first counted every such file — 39 warnings saying nothing.
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: { "import/first": "off" },
+  },
   {
     files: SCALED_FILES,
     // The scale file is where the numbers live, and its test has to write a

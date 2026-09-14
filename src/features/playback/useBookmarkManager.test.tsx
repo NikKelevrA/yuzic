@@ -14,7 +14,7 @@ import type { Song } from '@/domain/entities/Song'
 // what the test needs. `useApi` is imported by useBookmarkManager. Variables
 // referenced from inside jest.mock() are prefixed with `mock` per the
 // Jest hoisting rules.
-const mockList = jest.fn<Promise<Array<{ songId: string; positionMs: number }>>, []>()
+const mockList = jest.fn<Promise<{ songId: string; positionMs: number }[]>, []>()
 const mockCreate = jest.fn<Promise<void>, [{ songId: string; positionMs: number }]>()
 const mockRemove = jest.fn<Promise<void>, [string]>()
 const mockBookmarksSupported = { current: true }

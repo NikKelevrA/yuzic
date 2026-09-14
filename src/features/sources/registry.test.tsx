@@ -65,7 +65,6 @@ describe('useEnabledExternalSources', () => {
  * work) and `discovery.shelf` (it feeds Home's external discovery shelves).
  */
 describe('sources as providers', () => {
-  const by = (id: string) => ALL_SOURCES.find((s) => s.id === id)!;
 
   it('declares none auth for every source', () => {
     for (const def of ALL_SOURCES) {

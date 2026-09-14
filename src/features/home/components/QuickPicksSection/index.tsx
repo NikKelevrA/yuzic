@@ -26,7 +26,6 @@ import { seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import type { Song } from '@/domain/entities/Song';
 import {
   QUICK_PICKS_PAGE_SIZE,
-  QUICK_PICKS_TOTAL,
   QUICK_PICKS_CANDIDATE_POOL,
   QUICK_PICKS_DECAY_MS,
   QUICK_PICKS_PEEK,

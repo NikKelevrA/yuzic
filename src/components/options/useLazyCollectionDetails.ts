@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
 import { fetchAlbumDetailsSettled, type FetchAlbumDetailsArgs } from '@/features/album/fetchAlbumDetails';

@@ -5,10 +5,8 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import wantsReducer, { addWant } from '@/state/redux/slices/wantsSlice';
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
-import { makeLocalId } from '@/domain/identity/LocalId';
-import { integrationProvenance } from '@/domain/identity/Provenance';
-import { makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';
-import { serverProvenance } from '@/domain/identity/Provenance';
+import { makeLocalId , makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance , serverProvenance } from '@/domain/identity/Provenance';
 import type { Server } from '@/providers/contracts/Server';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';

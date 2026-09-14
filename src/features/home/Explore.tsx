@@ -1,4 +1,4 @@
-import { onDark } from '@/constants/design';
+import { onDark , sourceColor, spacing, typography } from '@/constants/design';
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { StyleSheet, ScrollView, View, Text, RefreshControl } from 'react-native'
 import { useIsFetching } from '@tanstack/react-query'
@@ -31,7 +31,6 @@ import { ResumeQueueBanner } from './components/ResumeQueueBanner'
 import { DownloadsInProgressBanner } from './components/DownloadsInProgressBanner'
 import { useApi } from '@/providers/registry/useApi'
 import type { SectionConfig } from '@/features/home/homeLayout'
-import { sourceColor, spacing, typography } from '@/constants/design'
 import { useRadius } from '@/features/theme/useRadius'
 import { useScrollClearance } from '@/features/theme/useScrollClearance'
 

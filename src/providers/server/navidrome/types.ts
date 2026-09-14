@@ -134,41 +134,41 @@ export interface SubsonicResponseBody {
   similarSongs?: { song?: SubsonicSong[] };
   topSongs?: { song?: SubsonicSong[] };
   internetRadioStations?: {
-    internetRadioStation?: Array<{
+    internetRadioStation?: {
       id?: string;
       name?: string;
       streamUrl?: string;
       homepageUrl?: string;
-    }>;
+    }[];
   };
   shares?: {
-    share?: Array<{
+    share?: {
       id?: string;
       url?: string;
       description?: string;
       created?: string;
       expires?: string;
       visitCount?: number;
-    }>;
+    }[];
   };
   bookmarks?: {
-    bookmark?: Array<{
+    bookmark?: {
       position?: number;
       comment?: string;
       changed?: string;
       entry?: { id?: string };
-    }>;
+    }[];
   };
   playQueue?: {
     current?: string;
     position?: number;
     changed?: string;
     changedBy?: string;
-    entry?: Array<{ id?: string }>;
+    entry?: { id?: string }[];
   };
   randomSongs?: { song?: SubsonicSong[] };
   podcasts?: {
-    channel?: Array<{
+    channel?: {
       id?: string;
       url?: string;
       title?: string;
@@ -177,7 +177,7 @@ export interface SubsonicResponseBody {
       originalImageUrl?: string;
       status?: string;
       errorMessage?: string;
-      episode?: Array<{
+      episode?: {
         id?: string;
         streamId?: string;
         channelId?: string;
@@ -190,11 +190,11 @@ export interface SubsonicResponseBody {
         contentType?: string;
         bitRate?: number;
         path?: string;
-      }>;
-    }>;
+      }[];
+    }[];
   };
   newestPodcasts?: {
-    episode?: Array<{
+    episode?: {
       id?: string;
       streamId?: string;
       channelId?: string;
@@ -204,23 +204,21 @@ export interface SubsonicResponseBody {
       status?: string;
       duration?: number;
       coverArt?: string;
-    }>;
+    }[];
   };
   nowPlaying?: {
-    entry?: Array<
-      SubsonicSong & { username?: string; minutesAgo?: number }
-    >;
+    entry?: (SubsonicSong & { username?: string; minutesAgo?: number })[];
   };
   artistInfo2?: {
     biography?: string;
     musicBrainzId?: string;
     lastFmUrl?: string;
-    similarArtist?: Array<{
+    similarArtist?: {
       id?: string;
       name?: string;
       coverArt?: string;
       albumCount?: number;
-    }>;
+    }[];
   };
   searchResult3?: {
     album?: SubsonicSearchAlbumEntry[];

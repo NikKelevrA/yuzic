@@ -1,4 +1,3 @@
-/* eslint-disable import/first -- Jest mocks must be registered before these imports. */
 jest.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///documents/',
   getInfoAsync: jest.fn(async () => ({ exists: true })),

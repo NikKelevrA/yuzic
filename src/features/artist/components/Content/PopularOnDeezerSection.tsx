@@ -1,4 +1,4 @@
-import { onDark } from '@/constants/design';
+import { onDark , controlSize, sourceColor, spacing, typography } from '@/constants/design';
 import React, { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { useSelector } from 'react-redux'
@@ -9,7 +9,6 @@ import { usePreviewPlayer } from '@/features/playback/usePreviewPlayer'
 import TopTrackRow from '@/components/rows/TopTrackRow'
 import type { Song } from '@/domain/entities/Song'
 import Touchable from '@/components/Touchable'
-import { controlSize, sourceColor, spacing, typography } from '@/constants/design'
 import { useRadius } from '@/features/theme/useRadius'
 
 type Props = {

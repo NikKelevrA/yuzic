@@ -1,5 +1,4 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import SettingsScreen from '../components/SettingsScreen';
@@ -10,7 +9,6 @@ import {
   useDownloaderConnection,
   type DownloaderConfig,
 } from './useDownloaderConnection';
-import { radius, spacing, typography } from '@/constants/design';
 
 type Props = {
   id: DownloaderId;

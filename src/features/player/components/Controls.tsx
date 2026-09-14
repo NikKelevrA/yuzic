@@ -1,4 +1,4 @@
-import { cappedTypography, controlSize, fontScaleCap, hitSlopFor, iconSize, motion, onDark, spacing, typography } from '@/constants/design';
+import { cappedTypography, controlSize, fontScaleCap, hitSlopFor, iconSize, motion, onDark, spacing } from '@/constants/design';
 import React, { useCallback } from 'react';
 import {
   Pressable,

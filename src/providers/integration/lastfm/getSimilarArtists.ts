@@ -18,12 +18,12 @@ export async function getLastFmSimilarArtists(
   try {
     const data = await lastfmRequest<{
       similarartists?: {
-        artist?: Array<{
+        artist?: {
           name?: string
           mbid?: string
           match?: string
-          image?: Array<{ '#text'?: string; size?: string }>
-        }>
+          image?: { '#text'?: string; size?: string }[]
+        }[]
       }
     }>(
       {

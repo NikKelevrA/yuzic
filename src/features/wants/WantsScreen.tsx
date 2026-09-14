@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
@@ -12,7 +12,7 @@ import EmptyState from '@/components/EmptyState';
 import Touchable from '@/components/Touchable';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
-import { hitSlopFor, iconSize, spacing } from '@/constants/design';
+import { hitSlopFor, iconSize } from '@/constants/design';
 import { selectWantsForActiveServer } from '@/state/redux/selectors/wantsSelectors';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { removeWant, type Want } from '@/state/redux/slices/wantsSlice';

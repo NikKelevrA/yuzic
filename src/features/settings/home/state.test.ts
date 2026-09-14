@@ -1,5 +1,4 @@
-import reducer, { setHomeShelfVisibility, setHomeShelfLength, setSleepTimerPresets } from './state';
-import { selectHomeShelfItemCount, selectHomeShelfVisibilityMap, selectSleepTimerPresets } from './state';
+import reducer, { setHomeShelfVisibility, setHomeShelfLength, setSleepTimerPresets , selectHomeShelfItemCount, selectHomeShelfVisibilityMap, selectSleepTimerPresets } from './state';
 
 const state = (settingsHome: unknown) => ({ settingsHome } as any);
 

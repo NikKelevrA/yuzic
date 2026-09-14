@@ -1,4 +1,3 @@
-/* eslint-disable import/first -- Jest mocks must be registered before imports. */
 const mockServerFetch = jest.fn();
 
 jest.mock('@/features/mtls/serverFetch', () => ({

@@ -14,10 +14,6 @@ import {
 } from "@/providers/contracts/ServerAdapter";
 
 import { Server } from "@/providers/contracts/Server";
-import type { Playlist } from "@/domain/entities/Playlist";
-import type { PlaylistDetail } from "@/domain/entities/Detail";
-import { makeLocalId } from "@/domain/identity/LocalId";
-import i18n from "@/i18n";
 
 import { MediaBrowserBrand } from "./brand";
 import { createMediaBrowserClient, requireProvenance, MediaBrowserClient } from "./client";
