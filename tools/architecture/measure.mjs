@@ -67,7 +67,7 @@ const measureRoutes = files => files
  * from what adapters must actually implement.
  */
 function measureAdapterSurface() {
-  const src = readFileSync(join(SRC, 'api/types.ts'), 'utf8');
+  const src = readFileSync(join(SRC, 'providers/contracts/ServerAdapter.ts'), 'utf8');
 
   /** Method names declared directly on an interface or type-alias body. */
   const methodsOf = name => {
@@ -107,16 +107,23 @@ function measureCapabilities() {
   if (!block) return [];
   const names = [];
   for (const line of block[1].split('\n')) {
-    // Quoted keys ('artist.enrich') and bare ones (lyrics) alike.
-    const match = line.match(/^\s*'([^']+)'\s*:/) ?? line.match(/^\s*(\w+)\s*:/);
+    // Quoted keys ('artist.enrich') and bare ones (lyrics) alike, at the map's
+    // own indent only: a capability's multi-line parameter list sits deeper,
+    // and its parameter names are not capabilities.
+    const match = line.match(/^ {2}'([^']+)'\s*:/) ?? line.match(/^ {2}(\w+)\s*:/);
     if (match) names.push(match[1]);
   }
   return names.sort();
 }
 
-/** Protocol implementations present under src/api. */
-const measureProviderImplementations = () => readdirSync(join(SRC, 'api'))
-  .filter(name => statSync(join(SRC, 'api', name)).isDirectory())
+/** Protocol implementations: servers and integrations, each under its own folder. */
+const measureProviderImplementations = () => ['server', 'integration']
+  .flatMap(kind => {
+    const dir = join(SRC, 'providers', kind);
+    return readdirSync(dir)
+      .filter(name => statSync(join(dir, name)).isDirectory())
+      .map(name => `${kind}/${name}`);
+  })
   .sort();
 
 // --- tests ------------------------------------------------------------------

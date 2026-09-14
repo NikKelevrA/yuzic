@@ -397,6 +397,8 @@ The registry returns a discriminated union of server and integration providers. 
 
 Test positive and negative controls: connected+enabled appears, disconnected or disabled does not, and reading an entity triggers zero provider calls.
 
+> **Amended (2026-09-14).** The broker shipped narrower than written here. See §8.1.
+
 ### Task 3.3: Move all providers into the registry
 
 Represent Navidrome, Jellyfin, Emby, Plex, Local, Deezer, MusicBrainz, Last.fm, ListenBrainz, LRCLIB, AudioMuse, Lidarr, slskd, and SoulSync through provider declarations. Reuse the shared MediaBrowser protocol implementation for Jellyfin/Emby.
@@ -653,6 +655,8 @@ The coordinator subscribes to engine events and dispatches store/actions. React 
 
 Target provider under 200 lines; each controller has one responsibility and pure tests where possible.
 
+> **Amended (2026-09-14).** Done with a different file layout. See §8.2.
+
 ### Task 7.6: Move scrobbling provider mechanics out of playback UI
 
 `useScrobbling` becomes a session policy/coordinator. Server adapters implement their required start/progress/stop/forwarding semantics. The player emits neutral playback events. Preserve per-destination exclusivity and offline replay.
@@ -730,6 +734,8 @@ Move jobs, resumables, collections, progress, Wi-Fi gating, and file resolution 
 
 Test crash/restart resume, cancellation, deletion+engine eviction, Wi-Fi gating, and corrupt partial cleanup.
 
+> **Amended (2026-09-14).** Done as a store with its own persistence rather than a Redux slice. See §8.3.
+
 ### Task 9.4: Preserve local files as a server provider
 
 Local import remains synchronous/private and does not enter acquisition arrival or server sync machinery. Test repeat import, duplicate handling, and playback resource creation through the same domain/player contracts.
@@ -771,6 +777,8 @@ Required tests include:
 - Crossfade/EQ settings either invoke a supported engine method or are absent.
 - Home shelf visibility/order changes the computed layout.
 - Every enabled/disabled case has a negative control.
+
+> **Amended (2026-09-14).** Metadata and Search no longer have settings screens of their own. See §8.4.
 
 ### Task 10.4: Delete old settings infrastructure
 
@@ -976,3 +984,75 @@ The rewrite is complete only when all are true:
 - Full lint/typecheck/Jest/coverage/architecture/Maestro gates pass.
 - Real-service positive and negative controls pass.
 - Zack has reviewed the visible result before the final app PR is merged.
+
+## 8. Amendments
+
+Where the work that shipped differs from the tasks above. Each entry says what changed and why, so the difference is a decision on record rather than something only an allowlist knows about.
+
+### 8.1 The capability broker serves five capabilities (Tasks 3.2–3.4)
+
+`595ace68` removed seven provider declarations that only a test imported. Each re-implemented a job a feature already did at runtime, in a thinner form. It also cut `CapabilityMap` to the capabilities that have both a provider and a caller: `artist.enrich`, `album.enrich`, `lyrics`, `catalogue.album` and `catalogue.search`.
+
+- Acquisition stays in `features/downloaders/registry.ts`.
+- Scrobbling stays in the scrobble routing and the offline mutation queue.
+- Queue fill and similarity stay in `features/playback/queueProviders.ts`. The choice of fill source is declared in `providers/registry/queueFillProviders.ts`.
+- There is no `providers.ts` union of server and integration providers. The broker serves integrations, and the active server is reached through its adapter.
+
+This follows the contract's own rule that a capability is added with its first consumer. The Definition of Done item "one typed callable capability system" is met in that narrower sense.
+
+### 8.2 PlayingContext (Task 7.5)
+
+`50847640`. `PlayingContext.tsx` is about 100 lines and composes focused hooks. The plan named a `PlaybackProvider.tsx` and a `bookmarkCoordinator.ts`. Instead:
+
+- **One owner for playback facts.** `playbackSession.ts` holds the queue, segments, shuffle snapshot, pointer and modes. React reads it through `useSyncExternalStore`, which removes the React-state copies and the refs that mirrored them.
+- **Hooks for everything else:**
+  - `usePlayerSetup`
+  - `usePlaybackResources`
+  - `usePlaybackServices`
+  - `usePlaybackEngine` (engine events, track changes, autoplay)
+  - `usePlayingCommands`
+  - `useRestorePersistedQueue`
+  - `usePlaybackPersistenceSync`
+- **Controllers unchanged.** The existing controllers keep their tests: queue, transport, shuffle, playback events, autoplay, playback coordinator and starters.
+- **Bookmarks** stay in `useBookmarkManager`.
+- **The provider name stays `PlayingContext`,** so its ~40 consumers and the test mocks are unchanged.
+- **Where the facts live.** Playback facts live in the session, not in Redux. Redux persists only resume state.
+- **Removed:** the queue-reconciliation fallback to a library map that nothing populated.
+- **Verification:** on device for restore, play, skip and pause.
+
+### 8.3 Offline downloads (Task 9.3)
+
+`ea16b5cf`. `DownloadContext.tsx` composes `offlineStore.ts`, `offlineDownloader.ts`, `downloadProgress.ts`, `useOfflineCommands.ts` and `useOfflineLifecycle.ts`.
+
+- **Not a Redux slice.** `offlineStore` is the single owner of tracks, collections, jobs and resumables. It persists to its own `downloads.*.v1` keys, which already sit in the rewrite's `yuzic-v2` namespace, so existing download indexes carry over without a migration.
+- **Deleted:** `localDownloadStore.ts` and the React-state copy of the job list.
+- **Already gone before this task:** `LEGACY_TEMP_DOWNLOAD_DIR` and its cleanup.
+- **Names kept:** the provider is still `DownloadContext`, since there are ~20 consumers. `filesystem.ts`, `jobQueue.ts` (the job runner) and `networkPolicy.ts` already existed.
+- **Tracks are named by `localId` throughout.** Several paths used the server id against a `localId` index. Downloaded songs streamed instead of playing from the device. A finished album reported failure. Loose downloads never showed in Library › Downloaded. Search never showed an album as fully downloaded.
+- **Tests:** the store, the progress feed and the downloader have their own tests. Resume, removal and cleanup are covered by the existing tests for `resumeState`, `removal`, `restore` and `jobQueue`.
+- **Verification:** on device, one download plus the restore of existing downloads.
+
+### 8.4 Settings (Tasks 10.2–10.4)
+
+- **Connections** is drawn from declared integrations (`77c66aff`).
+- **One place for every outside service.** Settings › Online sources (`e73bd1d4`) has a card per service (Deezer, ListenBrainz, Last.fm, MusicBrainz, Cover Art Archive), with a switch per use and what that service is sent. It replaces the Metadata and Search settings screens and the orphaned Deezer, Last.fm and MusicBrainz routes.
+- **One Last.fm switch** now covers bios, similar artists and playlist seeds; persist version 1 migrates the old bios entry.
+- **Home settings** marks an outside tier as off and links to its card.
+- **The Search filter sheet** turns sources on inline.
+- **The Metadata fallback order** is no longer user-reorderable; sources resolve in the order they were turned on.
+- **Route reachability** is tested by `features/settings/settingsRoutes.test.ts`.
+
+### 8.5 AsyncStorage (Phase 4)
+
+"Drop the unused AsyncStorage dependency" removes `@react-native-async-storage/async-storage`, which nothing imported. The query cache already persists to MMKV through TanStack's storage-agnostic persister. That commit also refreshes `ios/Podfile.lock`: `RNCAsyncStorage` is gone, and `YuzicEngine` moves from a stale 1.0.8 to the pinned 1.0.10.
+
+CI runs `pod install` on Ruby 3.3 and is unaffected. On a machine using Homebrew's Ruby 4, `pod install` fails with "unknown keyword: quirks_mode". Ruby 4 bundles json 3, and ActiveSupport still passes that option. Run CocoaPods with json 2 activated first; no repo change is needed.
+
+### 8.6 Still open
+
+These remain as the overview found them. Each blocks cutover unless it is separately amended:
+
+- the Phase 12 device and provider matrix
+- Android verification of these changes
+- 382 allowlisted unused exports
+- behaviour-level tests for every visible setting
