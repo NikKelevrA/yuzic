@@ -147,7 +147,10 @@ appId: com.arinora.rawarr
 
 - tapOn:
     id: "playing-close"
+# Closing the player returns to the screen it was opened over: the Tracks
+# collection, which has had its own screen since "Give every library entity its
+# own screen" (it used to be a filter on library-screen).
 - extendedWaitUntil:
     visible:
-      id: "library-screen"
+      id: "library-collection-screen"
     timeout: 10000
