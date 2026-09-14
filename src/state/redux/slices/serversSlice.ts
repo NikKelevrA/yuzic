@@ -5,13 +5,11 @@ interface ServersState {
   servers: Server[];
   activeServerId: string | null;
   /**
-   * Whether the one-time startup read of the keystore (`hydrateAll` in
-   * `src/app/_layout.tsx`) has landed in `credentialCache`. Not a secret
-   * itself — just a clock tick — but it is what lets every secret-dependent
-   * selector (`useApi`, the ListenBrainz/AudioMuse/downloader config hooks)
-   * know to re-read the cache and re-render once real credentials are in it,
-   * rather than staying stuck on the empty-bundle "not signed in" state they
-   * render before hydration completes.
+   * Whether the one-time startup read of the keystore (`CredentialsGate`)
+   * has landed in `credentialCache`. Not a secret itself — just a clock tick.
+   * The gate renders nothing until it is true, so no secret-dependent hook
+   * (`useApi`, the ListenBrainz/AudioMuse/downloader config hooks) ever runs
+   * against the empty bundle `getCredentials` returns before the read.
    */
   credentialsHydrated: boolean;
 }

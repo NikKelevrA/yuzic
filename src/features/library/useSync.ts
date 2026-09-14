@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDispatch, useSelector } from 'react-redux'
 import { QueryKeys } from '@/state/query/queryKeys'
-import { selectActiveServer, selectCredentialsHydrated } from '@/state/redux/selectors/serversSelectors'
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import { selectLastSyncedAt, setLastSyncedAt } from '@/features/settings/sync/state';
 import { setLibraryGenres } from '@/state/redux/slices/librarySlice'
 import { setServerAlbumStats, setServerSongStats } from '@/state/redux/slices/statsSlice'
@@ -34,12 +34,8 @@ export function useSync() {
   const lastSyncedAt = useSelector(selectLastSyncedAt)
   const lastSyncedAtRef = useRef(lastSyncedAt)
 
-  const credentialsHydrated = useSelector(selectCredentialsHydrated)
-
   const serverId = activeServer?.id
-  // Not connected until the keystore read lands: a sync before then is a
-  // request with an empty password (see `useOfflineFirstQuery`).
-  const isConnected = !!serverId && !!activeServer?.isAuthenticated && credentialsHydrated
+  const isConnected = !!serverId && !!activeServer?.isAuthenticated
   const { isSyncing } = useCatalogSyncStatus(serverId)
 
   useEffect(() => {

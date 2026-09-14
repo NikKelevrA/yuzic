@@ -16,7 +16,7 @@ import { PlaybackSinkProvider } from '@/features/player/PlaybackSinkContext';
 import { SongActionSheetProvider } from '@/features/entity-actions/SongActionSheetContext';
 import { DownloadProvider } from '@/features/offline/DownloadContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Provider, useSelector, useDispatch } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import store, { persistor } from '@/state/redux/store';
 import { Alert, AppState } from 'react-native';
@@ -38,14 +38,7 @@ import { isLikelyNetworkError, setServerUnreachable } from '@/features/connectiv
 import { QueryKeys } from '@/state/query/queryKeys';
 import { clearImageMemoryCache, runImageCacheMigration } from '@/features/artwork/imageCache';
 import { useClientCertificate } from '@/features/mtls/useClientCertificate';
-import { hydrateAll } from '@/state/credentialCache';
-import type { CredentialScope } from '@/state/credentials';
-import { setCredentialsHydrated } from '@/state/redux/slices/serversSlice';
-import { serverCredentialScope } from '@/providers/registry/serverConnections';
-import { listenBrainzCredentialScope } from '@/state/redux/selectors/listenbrainzSelectors';
-import { audiomuseCredentialScope } from '@/state/redux/selectors/audiomuseSelectors';
-import { downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors';
-import { DOWNLOADER_IDS } from '@/state/redux/slices/downloadersSlice';
+import { CredentialsGate } from '@/features/servers/CredentialsGate';
 
 
 const LIBRARY_LOAD_FAILED_TOAST_ID = 'library-load-failed';
@@ -189,42 +182,10 @@ function useImageMemoryCleanup() {
   }, []);
 }
 
-/**
- * The one-time startup read of the keystore into `credentialCache` (Task
- * 4.4) — every server's own secrets, plus its per-integration ones
- * (ListenBrainz, AudioMuse, each downloader), so `useApi` and the various
- * `use*Config` hooks have real values on their very first render after this
- * resolves. Runs once, after `PersistGate` has already rehydrated
- * `state.servers.servers` from MMKV (see `RootLayout` below), which is what
- * makes the server id list here reliable at the moment this reads it.
- *
- * Dispatches `setCredentialsHydrated(true)` when done, purely so the
- * secret-dependent selectors — which cannot themselves subscribe to
- * `credentialCache`, since it isn't part of the Redux store — have a Redux
- * value to key their re-render off. Before this resolves, `getCredentials`
- * returns `{}` for every scope; that reads exactly like "not signed in", so
- * `useApi`'s adapter fails its ping and the app renders the same
- * disconnected state it would for a server with no credentials at all.
- */
-function useCredentialHydration() {
-  const dispatch = useDispatch();
-  useEffect(() => {
-    const servers = store.getState().servers.servers;
-    const scopes: CredentialScope[] = servers.flatMap(server => [
-      serverCredentialScope(server.id),
-      listenBrainzCredentialScope(server.id),
-      audiomuseCredentialScope(server.id),
-      ...DOWNLOADER_IDS.map(id => downloaderCredentialScope(id, server.id)),
-    ]);
-    hydrateAll(scopes).finally(() => dispatch(setCredentialsHydrated(true)));
-  }, [dispatch]);
-}
-
 function AppShell() {
   const { resolved, isDarkMode } = useTheme();
   const language = useSelector(selectLanguage);
   useImageMemoryCleanup();
-  useCredentialHydration();
   // Mounted here, not on the settings screen that owns the import UI: the
   // certificate has to be applied at startup and re-applied on every change of
   // active server, both of which happen with Settings closed. Mounted only
@@ -313,12 +274,7 @@ export default function RootLayout() {
     setNativeExceptionHandler(() => { }, false, true);
   }, []);
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
+  // The splash comes down in `CredentialsGate`, once the app can render.
   if (!loaded) return null;
 
   return (
@@ -331,8 +287,10 @@ export default function RootLayout() {
     >
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <OfflineMutationReplayer />
-          <AppShell />
+          <CredentialsGate>
+            <OfflineMutationReplayer />
+            <AppShell />
+          </CredentialsGate>
         </PersistGate>
       </Provider>
     </PersistQueryClientProvider>
