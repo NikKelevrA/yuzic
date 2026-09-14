@@ -295,6 +295,6 @@ because both halves of each pair look reasonable in isolation.
   resume first and unlabelled, then your own library, then external discovery
   behind its source header. A new section belongs to exactly one tier, and the
   library tier stays short: it carries what changes on its own, not everything
-  that could be shown. Discovery is off by default (`deezerDiscoveryEnabled`)
+  that could be shown. Discovery is off by default (each source's `homeShelves` use in `settingsSources`)
   and absent offline, so the local tiers are all a fresh install has — Home
   cannot be emptied out on the assumption that discovery will fill it.

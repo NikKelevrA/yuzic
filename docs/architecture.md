@@ -391,10 +391,11 @@ answer that, and which one a job uses depends on how many providers can do it.
   options and error codes, plus `fetchQueue` normalised to
   `DownloaderQueueItem[]` so nothing downstream branches on which downloader a
   transfer came from, and `cancelQueueItem`). Autoplay and Smart Shuffle fill
-  come from `features/playback/queueProviders.ts` (AudioMuse first, the server's
-  own similar songs as the fallback). Scrobbling routes through
+  come from `features/playback/queueProviders.ts` (the similarity service —
+  AudioMuse, declared in `providers/registry/similarityService.ts` — first, the
+  server's own similar songs as the fallback). Scrobbling routes through
   `state/redux/selectors/scrobbleRoutingSelectors.ts` and the offline mutation
-  queue. Playlist generation is `features/audiomuse/generatePlaylist.ts`.
+  queue. Playlist generation is `features/playlist/generateSimilarPlaylist.ts`.
   External-source name resolution is `features/sources/registry.ts`.
 - **Why the second kind is not a capability.** Similarity, discovery,
   playlist generation, scrobbling and acquisition were declared as
@@ -511,7 +512,7 @@ add durations; both are surfaced in Home settings and read through defaults.
   yuzic fetches and renders it (no mix-generator; the raw CF endpoint is
   deliberately not built). Off by default; unowned tracks get Want/Get for free
   through the shared `SongRow`.
-- **Make a playlist from this** (`features/audiomuse/generatePlaylist`)
+- **Make a playlist from this** (`features/playlist/generateSimilarPlaylist`)
   derives a seed from a track, album, or artist and asks AudioMuse for similar
   tracks; **AudioMuse's results become a playlist on the server** (no
   yuzic-local playlist store). The gesture is gated on `useCanGeneratePlaylist`,

@@ -169,14 +169,14 @@ Two independent things behind one row:
 
 ### AudioMuse-AI
 
-`src/providers/integration/audiomuse/`, `src/features/audiomuse/` · **Settings → Integrations → AudioMuse-AI**
+`src/providers/integration/audiomuse/`, `src/providers/registry/similarityService.ts` · **Settings → Integrations → AudioMuse-AI**
 
 A self-hosted service you point at the same music server. Needs a server URL
 and API token. When connected and enabled, it becomes the queue-fill provider
 for autoplay — extending the queue with sonically similar tracks ranked by
 acoustic analysis, instead of the server's own similar-songs endpoint
 (`src/features/playback/queueProviders.ts`). It also backs playlist generation from a
-seed track (`src/features/audiomuse/generatePlaylist.ts`).
+seed track (`src/features/playlist/generateSimilarPlaylist.ts`).
 
 ---
 
