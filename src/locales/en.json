@@ -878,7 +878,7 @@
       "title": "Filters",
       "sources": "Sources",
       "entityTypes": "Include",
-      "sendsQuery": "Sends what you type to {{name}}",
+      "sourceOff": "Off · sends what you type to {{name}}",
       "alsoInSettings": "Also in Settings › Search."
     },
     "entityTypes": {

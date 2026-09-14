@@ -875,7 +875,7 @@
       "title": "フィルター",
       "sources": "ソース",
       "entityTypes": "対象",
-      "sendsQuery": "入力内容を{{name}}に送信します",
+      "sourceOff": "オフ · 入力内容を{{name}}に送信します",
       "alsoInSettings": "設定 › 検索にもあります。"
     },
     "entityTypes": {
