@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Skeleton } from 'moti/skeleton';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { controlSize, spacing } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
-import { useListDensity } from '@/hooks/useListDensity';
+import { useRadius } from '@/features/theme/useRadius';
+import { useListDensity } from '@/features/theme/useListDensity';
 
 type Props = {
   /** Art size of the rows this stands in for. Defaults to the shared media row;

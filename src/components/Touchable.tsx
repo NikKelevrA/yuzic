@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/features/theme/useTheme'
 import { stateLayer } from '@/constants/design'
 
 /**
@@ -18,9 +18,9 @@ import { stateLayer } from '@/constants/design'
  * whose touch target is larger than the glyph. `none` is for a wrapper that
  * handles a press on behalf of something else that already shows the feedback.
  */
-export type TouchableFeedback = 'row' | 'control' | 'none'
+type TouchableFeedback = 'row' | 'control' | 'none'
 
-export type TouchableProps = Omit<PressableProps, 'style' | 'android_ripple'> & {
+type TouchableProps = Omit<PressableProps, 'style' | 'android_ripple'> & {
   style?: StyleProp<ViewStyle>
   feedback?: TouchableFeedback
   /** Reach of a `control` ripple, in points. Defaults to a typical icon target. */
@@ -39,7 +39,7 @@ export function dimsOnPress(platform: typeof Platform.OS): boolean {
   return platform !== 'android'
 }
 
-export type Ripple = {
+type Ripple = {
   color: string
   borderless: boolean
   radius?: number

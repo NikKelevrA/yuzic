@@ -1,7 +1,0 @@
-export { testConnection } from './auth/testConnection'
-export { submitScrobble } from './scrobble'
-export { submitNowPlaying } from './nowPlaying'
-export { getLBSimilarArtists } from './recommendations/getSimilarArtists'
-export type { LBSimilarArtist } from './recommendations/getSimilarArtists'
-export { getCreatedForPlaylists, CREATED_FOR_MIX_TYPES } from './recommendations/getCreatedForPlaylists'
-export type { LBCreatedForMix, CreatedForMixType } from './recommendations/getCreatedForPlaylists'

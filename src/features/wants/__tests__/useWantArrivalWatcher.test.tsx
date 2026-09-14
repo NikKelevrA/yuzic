@@ -3,15 +3,17 @@ import { renderHook } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
-import wantsReducer, { addWant } from '@/utils/redux/slices/wantsSlice';
-import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
-import { makeLocalId } from '@/types/EntityId';
-import type { Server } from '@/types/Server';
-import type { AlbumBase } from '@/types';
+import wantsReducer, { addWant } from '@/state/redux/slices/wantsSlice';
+import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
+import { makeLocalId , makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance , serverProvenance } from '@/domain/identity/Provenance';
+import type { Server } from '@/providers/contracts/Server';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
 import { useWantArrivalWatcher } from '../useWantArrivalWatcher';
 
-const WANT_1_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'w-1' });
-const WANT_2_LOCAL_ID = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'w-2' });
+const WANT_1_LOCAL_ID = makeLocalId('album', integrationProvenance('deezer'), 'w-1');
+const WANT_2_LOCAL_ID = makeLocalId('album', integrationProvenance('deezer'), 'w-2');
 
 const mockToastSuccess = jest.fn();
 jest.mock('@/components/toast', () => ({
@@ -19,14 +21,15 @@ jest.mock('@/components/toast', () => ({
 }));
 
 // Library membership is driven directly through this mock so tests can move
-// an album "into" the library between renders without a real sync/redux path.
-// jest.mock calls are hoisted above all imports by Babel, so this takes
-// effect for `useWantArrivalWatcher`'s own import of LibraryContext above.
-let mockAlbums: AlbumBase[] = [];
-let mockTracks: AlbumBase[] = [];
-jest.mock('@/contexts/LibraryContext', () => ({
-  useLibrary: () => ({ albums: mockAlbums, tracks: mockTracks }),
-}));
+// an album "into" the library between renders without a real synced-query
+// cache. jest.mock calls are hoisted above all imports by Babel, so this
+// takes effect for `useWantArrivalWatcher`'s own imports of these hooks
+// above — the persisted TanStack Query cache is the real source now (see
+// `useAlbums`/`useTracks`), but this unit test only needs their shape.
+let mockAlbums: Album[] = [];
+let mockTracks: Song[] = [];
+jest.mock('@/features/album/useAlbums', () => ({ useAlbums: () => ({ albums: mockAlbums }) }));
+jest.mock('@/features/song/useTracks', () => ({ useTracks: () => ({ tracks: mockTracks }) }));
 
 const SERVER_ID = 'server-1';
 
@@ -40,16 +43,28 @@ function testServer(): Server {
   };
 }
 
-function libraryAlbum(): AlbumBase {
+const PROVENANCE = serverProvenance(SERVER_ID);
+
+function libraryAlbum(): Album {
   return {
-    id: 'lib-album-1',
+    localId: makeDomainLocalId('album', PROVENANCE, 'lib-album-1'),
+    nativeId: 'lib-album-1',
+    provenance: PROVENANCE,
+    externalIds: {},
+    libraryState: 'in-library',
     title: 'Some Album',
     cover: { kind: 'none' },
-    subtext: 'Some Artist',
-    artist: { id: 'artist-1', name: 'Some Artist', cover: { kind: 'none' }, subtext: '' },
+    artist: {
+      localId: makeDomainLocalId('artist', PROVENANCE, 'artist-1'),
+      nativeId: 'artist-1',
+      externalIds: {},
+      name: 'Some Artist',
+      cover: { kind: 'none' },
+    },
     year: 2020,
+    releaseType: 'album',
     genres: [],
-    created: new Date(),
+    songIds: [],
   };
 }
 

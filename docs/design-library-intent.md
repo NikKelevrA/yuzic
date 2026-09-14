@@ -136,9 +136,19 @@ MatchKey    = derived matching signal (artist/title[/album][/±duration]) — us
 ## 4. Capability slots — the integration architecture
 
 `ApiAdapter` already got this right for servers: optional fields, callers
-presence-check the capability, never the type (`src/api/types.ts`,
+presence-check the capability, never the type (`src/providers/contracts/ServerAdapter.ts`,
 architecture.md §1). We promote that from a server-adapter pattern to the
 app-wide contract.
+
+> **Status (2026-09, architecture rewrite).** This section is the design as
+> proposed. What shipped is narrower, and `docs/architecture.md` §7 is the
+> source of truth: `artist.enrich`, `album.enrich`, `lyrics`,
+> `catalogue.album` and `catalogue.search` are typed capabilities served by the
+> capability broker. Acquisition, similarity, discovery shelves, playlist
+> generation and scrobbling each have one provider today and are owned by the
+> feature that does the job, not by a slot — they were declared as slots once,
+> never consumed, and removed. A slot comes back when a second provider for the
+> same job does.
 
 An **integration module** declares which slots it fills:
 

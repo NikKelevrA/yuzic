@@ -1,12 +1,8 @@
-import type { LyricsResult } from "@/api/types";
+import type { LyricsResult } from "@/providers/contracts/ServerAdapter";
+import type { SourceId } from "@/providers/registry/sources";
 
-/**
- * The one external source available today. A plain string union (rather than
- * an enum) keeps the redux slice's persisted value a plain JSON string.
- */
-export type ExternalLyricsSourceId = "lrclib";
-
-export const ALL_EXTERNAL_LYRICS_SOURCES: readonly ExternalLyricsSourceId[] = ["lrclib"];
+/** An outside source that can provide lyrics, as `providers/registry/sources` declares it. */
+export type ExternalLyricsSourceId = SourceId;
 
 /** Enough about the current song for an external source to look itself up. */
 export type LyricsSongInfo = {
@@ -18,14 +14,14 @@ export type LyricsSongInfo = {
   durationSec?: number;
 };
 
-export type ExternalLyricsFetcher = (song: LyricsSongInfo) => Promise<LyricsResult | null>;
+type ExternalLyricsFetcher = (song: LyricsSongInfo) => Promise<LyricsResult | null>;
 
-/** One fetcher per source id. Extending the fallback chain with a second
- *  external source only means adding an entry here and to
- *  `ALL_EXTERNAL_LYRICS_SOURCES` — nothing else in this file changes. */
+/** One fetcher per source id. A second lyrics source is an entry in
+ *  `providers/registry/lyricsFetchers` and a use in `providers/registry/sources`
+ *  — nothing in this file changes. */
 export type ExternalLyricsFetchers = Partial<Record<ExternalLyricsSourceId, ExternalLyricsFetcher>>;
 
-export type ResolveLyricsInput = {
+type ResolveLyricsInput = {
   song: LyricsSongInfo;
   /** The server-embedded lookup — always tried first, unconditionally. */
   getServerLyrics: (songId: string) => Promise<LyricsResult | null>;

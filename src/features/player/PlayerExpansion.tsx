@@ -6,12 +6,12 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import {
   enterCoverSlideWhenTrackChanges,
   type CoverSlide,
   type CoverSlideDirection,
-} from '@/screens/playing/coverTransition';
+} from '@/features/player/coverTransition';
 import {
   useAnimatedReaction,
   useSharedValue,
@@ -32,9 +32,9 @@ import {
  */
 
 /** A square of cover art, in window coordinates. */
-export type CoverRect = { x: number; y: number; size: number };
+type CoverRect = { x: number; y: number; size: number };
 
-export const EMPTY_COVER_RECT: CoverRect = { x: 0, y: 0, size: 0 };
+const EMPTY_COVER_RECT: CoverRect = { x: 0, y: 0, size: 0 };
 
 /**
  * Snappy enough to feel like it is following the finger that let go, soft
@@ -51,7 +51,7 @@ export const PLAYER_SPRING: WithSpringConfig = {
 /** Below this the player counts as closed: the bar owns its own cover again
  *  and the host stops taking touches. Not exactly zero, so a spring settling
  *  through 0.0001 doesn't flicker the handover. */
-export const CLOSED_EPSILON = 0.001;
+const CLOSED_EPSILON = 0.001;
 
 /**
  * Whether the host has taken the cover over from the bar.
@@ -133,6 +133,13 @@ export const usePlayerExpansion = (): PlayerExpansionValue => {
   if (!ctx) throw new Error('usePlayerExpansion must be used within PlayerExpansionProvider');
   return ctx;
 };
+
+/**
+ * Whether the full player is open, for surfaces that can render outside the
+ * provider as well as inside it (the toast host is mounted within it in the
+ * app, alone in its tests). False with no provider, where no player exists.
+ */
+export const usePlayerIsOpen = (): boolean => useContext(PlayerExpansionContext)?.isOpen ?? false;
 
 export const PlayerExpansionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const expansion = useSharedValue(0);

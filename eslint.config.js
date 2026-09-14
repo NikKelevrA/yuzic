@@ -55,11 +55,26 @@ module.exports = defineConfig([
   {
     ignores: ["dist/*"],
   },
+  // Manual mocks are loaded by jest, which provides `jest` as a global there.
+  {
+    files: ["__mocks__/**/*.js"],
+    languageOptions: { globals: { jest: "readonly" } },
+  },
+  // `jest.mock` has to be written before the imports it replaces are read by a
+  // human, even though babel hoists it: the mock is the setup of the test.
+  // import/first counted every such file — 39 warnings saying nothing.
+  // A `jest.mock` factory is hoisted above every import, so a module it needs
+  // can only be reached with `require` inside it — the one place the rule
+  // against `require` has nothing better to offer.
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: { "import/first": "off", "@typescript-eslint/no-require-imports": "off" },
+  },
   {
     files: SCALED_FILES,
     // The scale file is where the numbers live, and its test has to write a
     // fixture scale to check the scaling with.
-    ignores: ["src/constants/design.ts", "src/constants/design.test.ts", "**/*.test.ts", "**/*.test.tsx"],
+    ignores: ["src/constants/design.ts", "src/constants/typography.ts", "src/constants/design.test.ts", "**/*.test.ts", "**/*.test.tsx"],
     plugins: { yuzic },
     rules: {
       "no-restricted-syntax": [

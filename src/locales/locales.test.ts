@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-import { DOWNLOADER_IDS } from '@/utils/redux/slices/downloadersSlice'
+import { DOWNLOADER_IDS } from '@/state/redux/slices/downloadersSlice'
 import { ALL_DOWNLOADERS } from '@/features/downloaders/registry'
 
 import en from './en.json'

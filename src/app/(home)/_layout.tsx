@@ -1,19 +1,17 @@
 import { Stack } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 
-import { useSync } from '@/hooks/useSync';
-import { useIsOffline } from '@/hooks/useIsOffline';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { clearLibrary } from '@/utils/redux/slices/librarySlice';
-import { clearLibraryStarred } from '@/utils/redux/slices/libraryStarredSlice';
+import { useSync } from '@/features/library/useSync';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { ExternalResolutionProvider } from '@/features/sources/ExternalResolutionProvider';
 import { ServerReachabilityWatcher } from '@/features/connectivity/ServerReachabilityWatcher';
 import { AutoDownloadWatcher } from '@/features/downloads/AutoDownloadWatcher';
 import { DownloadersQueueProvider } from '@/features/downloaders/DownloadersQueueContext';
 import { useWantArrivalWatcher } from '@/features/wants/useWantArrivalWatcher';
-import { AccountSheetProvider } from '@/contexts/AccountSheetContext';
+import { AccountSheetProvider } from '@/features/settings/AccountSheetContext';
 
 /**
  * The outer authenticated layout: providers, watchers, and the app-wide sync
@@ -45,7 +43,6 @@ import { AccountSheetProvider } from '@/contexts/AccountSheetContext';
  */
 export default function HomeLayout() {
   const { sync } = useSync();
-  const dispatch = useDispatch();
   const isOffline = useIsOffline();
   const isOfflineRef = useRef(isOffline);
   const appState = useRef(AppState.currentState);
@@ -72,18 +69,22 @@ export default function HomeLayout() {
     return () => sub.remove();
   }, [sync]);
 
-  // Clear stale library data and re-sync when switching between two real servers.
+  // Re-sync when switching between two real servers. The catalog itself
+  // needs no explicit clear any more: every catalog query key is scoped by
+  // `serverId` (`[Albums, serverId]`, ...), so the previous server's
+  // persisted cache entries simply go unused rather than leaking into the
+  // new server's screens — they age out under the query cache's own
+  // `gcTime`/`maxAge` like anything else — genres included, now that they are
+  // a query too.
   // Both values must be non-null to avoid triggering during persist rehydration
   // (null → real-id on cold start would otherwise be treated as a server switch).
   useEffect(() => {
     const prev = prevServerIdRef.current;
     prevServerIdRef.current = activeServerId;
     if (prev && activeServerId && prev !== activeServerId) {
-      clearLibrary(dispatch);
-      dispatch(clearLibraryStarred());
       if (!isOfflineRef.current) sync();
     }
-  }, [activeServerId, dispatch, sync]);
+  }, [activeServerId, sync]);
 
   return (
     <ExternalResolutionProvider>

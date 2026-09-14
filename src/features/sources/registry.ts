@@ -1,4 +1,6 @@
 import { useSelector } from 'react-redux'
+import { useQuery } from '@tanstack/react-query'
+import { QueryKeys } from '@/state/query/queryKeys'
 import {
   resolveDeezerAlbum,
   resolveDeezerArtistByName,
@@ -7,15 +9,24 @@ import {
   getDeezerArtistAlbums,
   getDeezerArtistTopTracks,
   getDeezerRelatedArtists,
-} from '@/api/deezer'
-import {
-  selectDeezerExternalEnabled,
-  selectMusicbrainzExternalEnabled,
-} from '@/utils/redux/selectors/settingsSelectors'
-import * as mb from '@/api/musicbrainz'
-import type { CoverSource, ExternalAlbum, ExternalAlbumBase, ExternalArtist } from '@/types'
+  searchDeezerArtists,
+  searchDeezerAlbums,
+} from '@/providers/integration/deezer'
+import { selectEnabledSourcesFor } from '@/features/settings/sources/state';
+import * as mb from '@/providers/integration/musicbrainz'
+import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum'
+import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
+import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong'
+import type { Album } from '@/domain/entities/Album'
+import type { ExternalIds } from '@/domain/identity/ExternalIds'
+import type { Artist } from '@/domain/entities/Artist'
+import type { Song } from '@/domain/entities/Song'
+import type { AlbumDetail } from '@/domain/entities/Detail'
+import { makeLocalId } from '@/domain/identity/LocalId'
+import { integrationProvenance } from '@/domain/identity/Provenance'
+import type { CoverSource } from '@/domain/entities/Cover'
 import { sourceColor } from '@/constants/design'
-import type { IntegrationModule, Health } from '@/features/integrations/types'
+import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
 
 export type SourceId = 'deezer' | 'musicbrainz'
 
@@ -34,28 +45,88 @@ export type SourceResolvedAlbum = {
   coverUrl?: string
 }
 
-export type SourceDefinition = IntegrationModule & {
-  // Narrows `IntegrationModule.id: string` back to the closed source-id
+/** Which entity kinds a free-text search should ask a source for. */
+type SourceSearchWants = {
+  artists: boolean
+  albums: boolean
+}
+
+/**
+ * One source's contribution to a free-text search, already provenance-tagged
+ * (`source`) so a caller never has to know which source it came from to
+ * label it. `subtitle` is deliberately generic rather than "artist name" —
+ * Deezer's is the album's artist, MusicBrainz's is a release year, and
+ * neither is meaningful to the other.
+ */
+type SourceSearchArtist = {
+  source: SourceId
+  id: string
+  name: string
+  subtitle: string
+  cover: CoverSource
+  externalIds?: { deezerId?: string; mbid?: string }
+}
+
+type SourceSearchAlbum = {
+  source: SourceId
+  id: string
+  title: string
+  subtitle: string
+  cover: CoverSource
+  externalIds?: { deezerId?: string; artistDeezerId?: string; mbid?: string; upc?: string }
+}
+
+type SourceSearchResults = {
+  artists: SourceSearchArtist[]
+  albums: SourceSearchAlbum[]
+}
+
+/**
+ * The bundle `fetchArtist` returns: the artist entity plus everything an
+ * artist screen wants alongside it. Not a domain type — `Artist` itself
+ * carries no `topTracks`/`similarArtists` fields, because those are
+ * relations a caller asks for, not properties of the entity — so this is a
+ * source-layer aggregate, the same shape as `AlbumDetail` plays for albums.
+ */
+type SourceArtistDetail = {
+  artist: Artist
+  topTracks: Song[]
+  albums: Album[]
+  singles: Album[]
+  similarArtists: Artist[]
+}
+
+type SourceDefinition = {
+  label: string
+  auth: AuthDescriptor
+  testConnection(config: unknown): Promise<Health>
+  // Narrows the id back to the closed source-id
   // union so every existing consumer keyed on `SourceId` still compiles.
   id: SourceId
   color: string
   /**
-   * Kept as their own top-level fields (not read off `slots`) because every
-   * existing consumer (ExternalResolutionProvider, useMatchedNavigation, the
-   * Home/Search source headers) calls them directly; `slots['resolution']`
-   * / `slots['discovery.shelf']` are an additional capability-view over the
-   * same methods, kept in sync below, not a replacement for them.
+   * Resolution is this registry's own job, not a broker capability:
+   * ExternalResolutionProvider, useMatchedNavigation and the Home/Search
+   * source headers call these directly, and nothing else resolves names.
    */
   resolveArtist(name: string): Promise<SourceResolvedArtist | null>
+  /** The id this source knows an artist by, from the ids a record carries. */
+  artistIdOf(ids: ExternalIds): string | undefined
   resolveAlbum(artist: string, title: string): Promise<SourceResolvedAlbum | null>
-  fetchAlbum(id: string): Promise<ExternalAlbum | null>
-  fetchArtist(id: string, mbid?: string | null): Promise<ExternalArtist | null>
-  fetchArtistAlbums(artistId: string, limit: number, artistName?: string): Promise<ExternalAlbumBase[]>
+  fetchAlbum(id: string): Promise<AlbumDetail | null>
+  fetchArtist(id: string, mbid?: string | null): Promise<SourceArtistDetail | null>
+  fetchArtistAlbums(artistId: string, limit: number, artistName?: string): Promise<Album[]>
+  /**
+   * Free-text search, for Search's "Other sources" scope. The only place a
+   * search feature should ever name a source: it iterates `ALL_SOURCES` and
+   * calls this generically, rather than branching on which source it is.
+   */
+  search(query: string, wants: SourceSearchWants): Promise<SourceSearchResults>
 }
 
 /**
  * Both sources are keyless public APIs — no credentials, no server URL, no
- * account. `'none'` still leaks query contents to the provider (§7 rule 1),
+ * account. `'none'` still leaks query contents to the provider,
  * so it isn't "no auth model", just the weakest tier.
  */
 const noAuth = { tier: 'none' as const }
@@ -63,7 +134,7 @@ const noAuth = { tier: 'none' as const }
 /**
  * There is nothing to authenticate for a keyless public source — it is
  * reachable by construction. "Enabled" is a plain user setting
- * (`selectDeezerExternalEnabled` / `selectMusicbrainzExternalEnabled`), not a
+ * (the source's search switch in `settingsSources`), not a
  * connection, so this deliberately does not perform a network ping.
  */
 const trivialTestConnection = async (): Promise<Health> => ({ ok: true })
@@ -73,31 +144,49 @@ function urlFromCover(cover: CoverSource): string | undefined {
   return cover.kind === 'url' ? cover.url : undefined
 }
 
+/**
+ * A stand-in `Artist` for `getDeezerArtistAlbums`' fallback parameter, built
+ * from just the id/name a caller already has (an artist screen navigated to
+ * before the full artist has been fetched). Only ever used to fill in an
+ * album's artist reference when Deezer's albums-by-artist endpoint omits the
+ * embedded artist object — never returned to a caller as a real artist.
+ */
+function stubDeezerArtist(artistId: string, artistName: string): Artist {
+  const provenance = integrationProvenance('deezer')
+  return {
+    localId: makeLocalId('artist', provenance, artistId),
+    nativeId: artistId,
+    provenance,
+    externalIds: artistId ? { deezerId: artistId } : {},
+    libraryState: 'external',
+    name: artistName,
+    cover: { kind: 'none' },
+    tags: [],
+    albumIds: [],
+  }
+}
+
 const deezerSource: SourceDefinition = {
   id: 'deezer',
+  artistIdOf: ids => ids.deezerId,
   label: 'Deezer',
   color: sourceColor.deezer,
   auth: noAuth,
   testConnection: trivialTestConnection,
-  // Deezer fills identity/metadata resolution (resolveArtist/resolveAlbum)
-  // and feeds Home's external discovery shelves — hence
-  // `useEnabledExternalSources` existing at all. Values are markers onto the
-  // existing resolve/fetch methods (`SlotImpl` is `unknown`), not a new API.
-  slots: {
-    resolution: resolveDeezerArtistByName,
-    'discovery.shelf': getDeezerArtistAlbums,
-  },
+  // Deezer resolves names to its own ids (resolveArtist/resolveAlbum) and
+  // backs browsing things the library doesn't have: external album and artist
+  // screens and search results. Home's Deezer shelves fetch on their own.
 
   async resolveArtist(name) {
     const artist = await resolveDeezerArtistByName(name)
-    if (!artist?.id) return null
-    return { source: 'deezer', id: artist.id, name: artist.name, coverUrl: urlFromCover(artist.cover) }
+    if (!artist) return null
+    return { source: 'deezer', id: artist.nativeId, name: artist.name, coverUrl: urlFromCover(artist.cover) }
   },
 
   async resolveAlbum(artist, title) {
     const album = await resolveDeezerAlbum(artist, title)
     if (!album) return null
-    return { source: 'deezer', id: album.id, title: album.title, artist: album.artist, coverUrl: urlFromCover(album.cover) }
+    return { source: 'deezer', id: album.nativeId, title: album.title, artist: album.artist.name, coverUrl: urlFromCover(album.cover) }
   },
 
   async fetchAlbum(id) {
@@ -105,9 +194,7 @@ const deezerSource: SourceDefinition = {
   },
 
   async fetchArtistAlbums(artistId, limit, artistName) {
-    const fallback = artistName
-      ? { id: artistId, name: artistName, subtext: '', cover: { kind: 'none' as const }, externalSource: 'deezer' as const, externalIds: { deezerId: artistId } }
-      : null
+    const fallback = artistName ? stubDeezerArtist(artistId, artistName) : null
     return getDeezerArtistAlbums(artistId, limit, fallback)
   },
 
@@ -119,74 +206,81 @@ const deezerSource: SourceDefinition = {
       getDeezerArtistTopTracks(id, 10),
       getDeezerRelatedArtists(id, 8),
     ])
+    const resolvedMbid = mbid ?? base.externalIds.mbid
     return {
-      ...base,
-      externalIds: { ...base.externalIds, mbid: mbid ?? base.externalIds?.mbid ?? null },
+      artist: {
+        ...base,
+        externalIds: resolvedMbid ? { ...base.externalIds, mbid: resolvedMbid } : base.externalIds,
+      },
       topTracks,
       albums: albums.filter(a => a.releaseType !== 'single'),
       singles: albums.filter(a => a.releaseType === 'single'),
       similarArtists,
     }
   },
+
+  async search(query, wants) {
+    const [artists, albums] = await Promise.all([
+      wants.artists ? searchDeezerArtists(query, 4) : Promise.resolve([]),
+      wants.albums ? searchDeezerAlbums(query, 6) : Promise.resolve([]),
+    ])
+    return {
+      artists: artists.map(artist => ({
+        source: 'deezer',
+        id: artist.nativeId,
+        name: artist.name,
+        subtitle: '',
+        cover: artist.cover,
+        externalIds: { deezerId: artist.externalIds.deezerId },
+      })),
+      albums: albums.map(album => ({
+        source: 'deezer',
+        id: album.nativeId,
+        title: album.title,
+        subtitle: album.artist.name,
+        cover: album.cover,
+        externalIds: {
+          deezerId: album.externalIds.deezerId,
+          artistDeezerId: album.artist.externalIds.deezerId,
+          upc: album.externalIds.upc,
+        },
+      })),
+    }
+  },
 }
 
-function releaseGroupToCover(rg: mb.MbReleaseGroup): CoverSource {
-  return { kind: 'coverartarchive', mbid: rg.id, mbidType: 'release-group' }
-}
-
-function releaseGroupToAlbumBase(
-  rg: mb.MbReleaseGroup,
-  fallbackArtist: string,
-  fallbackArtistMbid?: string
-): ExternalAlbumBase {
-  const artistName = rg['artist-credit']?.[0]?.artist.name ?? fallbackArtist
-  const artistMbid = rg['artist-credit']?.[0]?.artist.id ?? fallbackArtistMbid ?? null
-  return {
-    id: rg.id,
-    title: rg.title,
-    artist: artistName,
-    artistMbid,
-    cover: releaseGroupToCover(rg),
-    subtext: rg['first-release-date']?.slice(0, 4) ?? '',
-    releaseDate: rg['first-release-date'] ?? undefined,
-    releaseType: rg['primary-type']?.toLowerCase() === 'single' ? 'single' : 'album',
-    externalSource: 'musicbrainz',
-    externalIds: { mbid: rg.id, artistMbid },
-  }
-}
+const MB_PROVENANCE = integrationProvenance('musicbrainz')
 
 const musicbrainzSource: SourceDefinition = {
   id: 'musicbrainz',
+  artistIdOf: ids => ids.mbid,
   label: 'MusicBrainz',
   color: sourceColor.musicbrainz,
   auth: noAuth,
   testConnection: trivialTestConnection,
-  // MusicBrainz fills identity/metadata resolution (resolveArtist/
-  // resolveAlbum) and feeds Home's external discovery shelves — hence
-  // `useEnabledExternalSources` existing at all. Values are markers onto the
-  // existing resolve/fetch methods (`SlotImpl` is `unknown`), not a new API.
-  slots: {
-    resolution: mb.searchArtist,
-    'discovery.shelf': mb.getArtistWithReleases,
-  },
+  // MusicBrainz resolves names to canonical ids (resolveArtist/resolveAlbum)
+  // and backs browsing things the library doesn't have: external album and
+  // artist screens and search results. It has no Home shelf.
 
   async resolveArtist(name) {
     const results = await mb.searchArtist(name, 5)
     const best = results[0]
     if (!best) return null
-    return { source: 'musicbrainz', id: best.id, name: best.name }
+    const artist = mapMbArtist(best, MB_PROVENANCE)
+    return { source: 'musicbrainz', id: artist.nativeId, name: artist.name }
   },
 
   async resolveAlbum(artist, title) {
     const results = await mb.searchReleaseGroup(artist, title, 5)
     const best = results[0]
     if (!best) return null
+    const album = mapMbAlbum(best, { provenance: MB_PROVENANCE })
     return {
       source: 'musicbrainz',
-      id: best.id,
-      title: best.title,
+      id: album.nativeId,
+      title: album.title,
       artist,
-      coverUrl: mb.coverArtArchiveUrl(best.id),
+      coverUrl: mb.coverArtArchiveUrl(album.nativeId),
     }
   },
 
@@ -195,61 +289,56 @@ const musicbrainzSource: SourceDefinition = {
       mb.getReleaseGroup(id),
       mb.getTracksForReleaseGroup(id),
     ])
-    const artistName = rg['artist-credit']?.[0]?.artist.name ?? ''
-    const artistMbid = rg['artist-credit']?.[0]?.artist.id ?? null
-    const songs = tracks.map(track => ({
-      id: track.recording?.id ?? track.id,
-      title: track.title,
-      artist: track['artist-credit']?.[0]?.artist.name ?? artistName,
-      cover: { kind: 'none' as const },
-      duration: track.length ? String(Math.round(track.length / 1000)) : '0',
-      albumId: id,
-      externalSource: 'musicbrainz' as const,
-    }))
-    return {
-      id: rg.id,
-      title: rg.title,
-      artist: artistName,
-      artistMbid,
-      cover: releaseGroupToCover(rg),
-      subtext: rg['first-release-date']?.slice(0, 4) ?? '',
-      releaseDate: rg['first-release-date'] ?? undefined,
-      releaseType: rg['primary-type']?.toLowerCase() === 'single' ? 'single' : 'album',
-      externalSource: 'musicbrainz',
-      externalIds: { mbid: rg.id, artistMbid },
-      songs,
-    }
+    const songs = tracks.map(track => mapMbSong(track, { provenance: MB_PROVENANCE, releaseGroup: rg }))
+    const album = mapMbAlbum(rg, { provenance: MB_PROVENANCE, songIds: songs.map(s => s.localId) })
+    return { album, songs }
   },
 
   async fetchArtistAlbums(artistId, limit) {
     const artist = await mb.getArtistWithReleases(artistId)
     const rgs = artist['release-groups'] ?? []
-    return rgs
-      .slice(0, limit)
-      .map(rg => releaseGroupToAlbumBase(rg, artist.name, artist.id))
+    return rgs.slice(0, limit).map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
   },
 
   async fetchArtist(id) {
-    const artist = await mb.getArtistWithReleases(id)
-    const rgs = artist['release-groups'] ?? []
+    const dto = await mb.getArtistWithReleases(id)
+    const rgs = dto['release-groups'] ?? []
     const albums = rgs
       .filter(rg => !rg['primary-type'] || rg['primary-type'] === 'Album')
-      .map(rg => releaseGroupToAlbumBase(rg, artist.name, artist.id))
+      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
     const singles = rgs
       .filter(rg => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP')
-      .map(rg => releaseGroupToAlbumBase(rg, artist.name, artist.id))
+      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
     return {
-      id: artist.id,
-      name: artist.name,
-      cover: { kind: 'none' },
-      subtext: '',
-      biography: artist.annotation ?? undefined,
-      externalSource: 'musicbrainz',
-      externalIds: { mbid: artist.id },
+      artist: mapMbArtist(dto, MB_PROVENANCE),
       topTracks: [],
       albums,
       singles,
       similarArtists: [],
+    }
+  },
+
+  async search(query, wants) {
+    const [artists, releaseGroups] = await Promise.all([
+      wants.artists ? mb.searchArtist(query, 4) : Promise.resolve([]),
+      wants.albums ? mb.searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
+    ])
+    return {
+      artists: artists.map(artist => ({
+        source: 'musicbrainz',
+        id: artist.id,
+        name: artist.name,
+        subtitle: '',
+        cover: { kind: 'none' },
+      })),
+      albums: releaseGroups.map(rg => ({
+        source: 'musicbrainz',
+        id: rg.id,
+        title: rg.title,
+        subtitle: rg['first-release-date']?.slice(0, 4) ?? '',
+        cover: { kind: 'coverartarchive', mbid: rg.id, mbidType: 'release-group' },
+        externalIds: { mbid: rg.id },
+      })),
     }
   },
 }
@@ -261,11 +350,44 @@ export function getSourceMeta(id: string): Pick<SourceDefinition, 'label' | 'col
 }
 
 export function useEnabledExternalSources(): SourceDefinition[] {
-  const deezerEnabled = useSelector(selectDeezerExternalEnabled)
-  const musicbrainzEnabled = useSelector(selectMusicbrainzExternalEnabled)
-  return ALL_SOURCES.filter(s => {
-    if (s.id === 'deezer') return deezerEnabled
-    if (s.id === 'musicbrainz') return musicbrainzEnabled
-    return false
+  const enabled = useSelector(selectEnabledSourcesFor('search'))
+  return ALL_SOURCES.filter(s => enabled.includes(s.id))
+}
+
+type ExternalArtistLookupInput = { enabled: boolean; source?: string; artistId: string | null; mbid: string | null; name: string | null }
+
+/** Resolves one external artist: direct source+id, then mbid (MusicBrainz,
+ *  if enabled), then a name search (Deezer, if enabled) — the artist
+ *  screen's identity fallback chain, kept here so naming a source by id
+ *  stays inside this registry. */
+export function useExternalArtistLookup(input: ExternalArtistLookupInput) {
+  const { enabled, source, artistId, mbid, name } = input
+  const enabledSearch = useSelector(selectEnabledSourcesFor('search'))
+  const musicbrainzEnabled = enabledSearch.includes('musicbrainz')
+  const deezerEnabled = enabledSearch.includes('deezer')
+
+  return useQuery({
+    queryKey: [QueryKeys.ExternalArtist, source ?? 'unknown', artistId ?? mbid ?? name ?? ''],
+    enabled,
+    staleTime: 1000 * 60 * 60 * 24,
+    queryFn: async (): Promise<SourceArtistDetail | null> => {
+      const sourceDef = ALL_SOURCES.find(s => s.id === source)
+      if (sourceDef && artistId) return sourceDef.fetchArtist(artistId, mbid)
+
+      if (mbid && musicbrainzEnabled) {
+        const mb = ALL_SOURCES.find(s => s.id === 'musicbrainz')
+        if (mb) return mb.fetchArtist(mbid, mbid)
+      }
+
+      if (name && deezerEnabled) {
+        const deezer = ALL_SOURCES.find(s => s.id === 'deezer')
+        if (deezer) {
+          const resolved = await deezer.resolveArtist(name)
+          if (resolved) return deezer.fetchArtist(resolved.id, mbid)
+        }
+      }
+
+      throw new Error(`Unable to resolve artist "${name ?? artistId ?? 'unknown'}"`)
+    },
   })
 }

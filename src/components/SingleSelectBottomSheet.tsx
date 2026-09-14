@@ -4,9 +4,9 @@ import { Check } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 
-import { selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
-import { useTheme } from '@/hooks/useTheme';
-import { useRadius } from '@/hooks/useRadius';
+import { selectThemeColor } from '@/features/settings/appearance/state';
+import { useTheme } from '@/features/theme/useTheme';
+import { useRadius } from '@/features/theme/useRadius';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import Touchable from '@/components/Touchable';
 import { iconSize, spacing, typography } from '@/constants/design';

@@ -8,7 +8,7 @@ import { controlSize } from '@/constants/design';
 const mockAvatarUrl = jest.fn();
 let appStateHandler: ((state: AppStateStatus) => void) | undefined;
 
-jest.mock('@/api', () => ({
+jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({ user: { avatarUrl: mockAvatarUrl } }),
 }));
 
@@ -16,11 +16,11 @@ jest.mock('react-redux', () => ({
   useSelector: (selector: string) => selector === 'themeColor' ? '#123456' : 'server-1',
 }));
 
-jest.mock('@/utils/redux/selectors/settingsSelectors', () => ({
+jest.mock('@/features/settings/appearance/state', () => ({
   selectThemeColor: 'themeColor',
 }));
 
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServerId: 'activeServerId',
 }));
 

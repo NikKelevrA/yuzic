@@ -11,11 +11,11 @@ import {
 } from '@gorhom/bottom-sheet'
 import { Dices } from 'lucide-react-native'
 import { useTranslation } from 'react-i18next'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/features/theme/useTheme'
 import { renderBackdrop } from '@/components/BottomSheetBackdrop'
 import Touchable from '@/components/Touchable'
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design'
-import { useRadius } from '@/hooks/useRadius'
+import { useRadius } from '@/features/theme/useRadius'
 
 type Props = {
   items: string[]

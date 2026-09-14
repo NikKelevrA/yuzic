@@ -41,3 +41,10 @@ jobs:
 
       - name: Test
         run: npx jest --ci
+
+      # Structural gates. Each one ratchets against
+      # tools/architecture/allowlist.json: a new violation fails, and an
+      # allowlisted entry that no longer violates also fails, so the list can
+      # only ever shrink. See tools/architecture/allowlist.mjs.
+      - name: Architecture gates
+        run: npm run architecture:check

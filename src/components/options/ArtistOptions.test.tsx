@@ -2,16 +2,15 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import ArtistOptions from './ArtistOptions';
-import type { Artist } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc' }, isDarkMode: false }),
 }));
 
@@ -27,26 +26,26 @@ jest.mock('react-redux', () => ({
   useSelector: (selector: any) => selector({}),
 }));
 
-jest.mock('@/utils/redux/selectors/statsSelectors', () => ({
+jest.mock('@/state/redux/selectors/statsSelectors', () => ({
   selectArtistPlayCount: () => () => 0,
 }));
 
-jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
-  selectAudiomuseConfig: () => ({}),
+jest.mock('@/providers/registry/similarityService', () => ({
+  useSimilarityService: () => ({ similarTrackIds: async () => [] }),
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);
 const mockGenerateForArtist = jest.fn();
-jest.mock('@/features/audiomuse/generateFromEntity', () => ({
+jest.mock('@/features/playlist/generateSimilarPlaylist', () => ({
   useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
-  generateForArtist: (...args: unknown[]) => mockGenerateForArtist(...args),
+  generateSimilarPlaylistForArtist: (...args: unknown[]) => mockGenerateForArtist(...args),
 }));
 
-jest.mock('@/api', () => ({
+jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({}),
 }));
 
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingActions: () => ({
     addCollectionToQueue: jest.fn(),
     shuffleCollectionToQueue: jest.fn(),
@@ -55,7 +54,7 @@ jest.mock('@/contexts/PlayingContext', () => ({
   }),
 }));
 
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownload: () => ({
     downloadAlbumById: jest.fn(),
     getCollectionDownloadState: () => ({ isDownloaded: false, isDownloading: false }),
@@ -70,9 +69,7 @@ jest.mock('@/features/sources/registry', () => ({
   useEnabledExternalSources: () => [],
 }));
 
-jest.mock('@/hooks/artists', () => ({
-  useArtistAlbums: () => [],
-}));
+jest.mock('@/features/artist/useArtistAlbums', () => ({ useArtistAlbums: () => [] }));
 
 jest.mock('./useLazyCollectionDetails', () => ({
   useLazyArtistSongs: () => ({ songs: [], songsLoading: false }),
@@ -81,7 +78,6 @@ jest.mock('./useLazyCollectionDetails', () => ({
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
 
 jest.mock('@/components/options/OptionSheetPrimitives', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   return {
     OptionSheetHeader: ({ title, subtitle }: any) => (
@@ -100,10 +96,14 @@ jest.mock('@/components/options/OptionSheetPrimitives', () => {
 });
 
 const artist: Artist = {
-  id: 'ar1',
+  localId: 'local:artist:srv:server1:ar1' as Artist['localId'],
+  nativeId: 'ar1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   cover: { kind: 'none' },
   name: 'Some Artist',
-  subtext: '',
+  tags: [],
   albumIds: [],
 };
 

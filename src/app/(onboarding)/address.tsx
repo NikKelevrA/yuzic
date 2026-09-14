@@ -1,4 +1,4 @@
-import Address from "@/screens/onboarding/address";
+import Address from "@/features/onboarding/address";
 
 export default function AddressScreen() {
   return <Address />;

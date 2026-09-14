@@ -70,6 +70,12 @@ export interface PlayerBackend {
   // is not index 0 — the app already distinguishes them, falling back to
   // finding the track by id when the player has no opinion yet.
   getProgress(): { position: number; duration: number; buffered: number };
+  /**
+   * Progress of the track that was active until the last track change — how
+   * far a listener got into the song the player just left. `getProgress` has
+   * already moved on to the new track by the time anyone hears about a change.
+   */
+  getOutgoingProgress(): { position: number; duration: number; buffered: number };
   getQueue(): MediaItem[];
   getActiveMediaItemIndex(): number | null;
   getActiveMediaItem(): MediaItem | null;
@@ -80,6 +86,18 @@ export interface PlayerBackend {
 
   // Cache
   clearCache(): void;
+
+  /**
+   * Drop one track's cached audio, by the same id the queue keys tracks on
+   * (`MediaItem['mediaId']` / `Track['id']`).
+   *
+   * Distinct from `clearCache()`: deleting one downloaded track must not
+   * evict everything the engine has cached for the rest of the library, and
+   * without this the app has no way to tell the engine a download is gone —
+   * the deleted track's audio can still be served out of the engine's own
+   * disk cache after the app has thrown its copy away.
+   */
+  evict(mediaId: string): void;
 
   /**
    * Publish the tree the car surfaces browse.
@@ -120,4 +138,13 @@ export type BackendEvent =
        */
       playing?: boolean;
     }
-  | { type: 'trackChange'; index: number };
+  | { type: 'trackChange'; index: number }
+  /**
+   * The engine's queue changed, and the backend has already re-read it — so a
+   * listener's next `getQueue()` is the engine's answer, not a prediction.
+   *
+   * Carries no payload on purpose. Anything put here would be a second copy of
+   * what `getQueue()` and `getActiveMediaItemIndex()` already say, and a second
+   * copy is what this event exists to stop the app from keeping.
+   */
+  | { type: 'queueChange' };

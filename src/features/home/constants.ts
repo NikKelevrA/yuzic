@@ -19,3 +19,17 @@ export const SECTION_VISIBLE_ITEMS = 2.5
  */
 export const STALE_DEEZER_CHARTS = 1000 * 60 * 60 * 6    // 6h
 export const STALE_DEEZER_DISCOVERY = 1000 * 60 * 60 * 12 // 12h
+
+/** How many related artists Home asks for, and from how many seeds. */
+export const HOME_RELATED_ARTIST_LIMIT = 40
+export const HOME_SEED_ARTISTS = 4
+export const HOME_RELATED_PER_SEED = 12
+export const HOME_GENRE_ARTIST_LIMIT = 40
+
+/** Quick picks: pages of four, three pages, drawn from a pool twice that size, decaying over a week. */
+export const QUICK_PICKS_PAGE_SIZE = 4
+const QUICK_PICKS_TOTAL_PAGES = 3
+const QUICK_PICKS_TOTAL = QUICK_PICKS_PAGE_SIZE * QUICK_PICKS_TOTAL_PAGES
+export const QUICK_PICKS_CANDIDATE_POOL = QUICK_PICKS_TOTAL * 2
+export const QUICK_PICKS_DECAY_MS = 7 * 24 * 60 * 60 * 1000
+export const QUICK_PICKS_PEEK = 28

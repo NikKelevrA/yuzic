@@ -153,10 +153,10 @@ every file it will now send — not only the ones being added.
 
 ## Native/player notes
 
-- Audio playback goes through **`PlayerBackend`** (`src/features/player/backend.ts`), not through a player package directly. yuzic-engine implements it; `@rntp/player` was removed. Exactly one method has no Android implementation — `configureCache` — and it is deliberately *absent* rather than stubbed, so it rejects by name at the bridge. Derive that gap rather than trusting this sentence: it has been wrong before. `docs/architecture.md` explains the seam and the three non-obvious things about it; read that before changing playback.
+- Audio playback goes through **`PlayerBackend`** (`src/features/player/backend.ts`), not through a player package directly. yuzic-engine implements it; `@rntp/player` was removed. Two differences between the platforms are declared in the engine's `Tools/parity.py`: `configureCache` has no Android implementation (deliberately *absent* rather than stubbed, so it rejects by name at the bridge), and `BrowseNode.artworkHeaders` is carried on the bridge but unusable on Android, where Media3 fetches a browse row's cover itself with no hook for a request header. Derive those from `parity.py` rather than trusting this sentence: it has been wrong before. `docs/architecture.md` explains the seam and the three non-obvious things about it; read that before changing playback.
 - Adding a player call means adding it to `PlayerBackend` **and to both platforms of the engine**. A method implemented on iOS and not on Android is the failure this seam exists to surface — it has already happened. Ask `Tools/parity.py` in the engine repo how many are outstanding rather than reading a count here: this file has carried a stale one twice, and the tool compares signatures as well as names. They reject by name (`setSpeed() is not implemented on android`) rather than throwing `is not a function`, so the gap is legible from a log; that is not the same as being fixed.
 - `@rntp/player` used to be the player and has been removed entirely. Do not reintroduce it, and do not read its source: it is the npm-scoped continuation of `react-native-track-player` and went to a commercial, non-compete licence at v5, which is a probable GPL-3 conflict for yuzic and a definite F-Droid blocker — and which is part of why the engine exists. react-native-track-player **v4** is Apache-2.0 and may be referenced with attribution.
-- `src/contexts/PlayingContext.tsx` is the central playback state/controls context — most player-related work touches this file.
+- `src/features/playback/PlayingContext.tsx` is the central playback state/controls context — most player-related work touches this file.
 - The engine lives in its own repo (github.com/yuzicapp/yuzic-engine) and is consumed as a pinned git dependency. **The pin drifts.** Bumping it once and then making further engine commits leaves the app building an engine older than the one you are reading, and it has caused two wrong conclusions already. Check `package.json` against the engine's HEAD before trusting that a fix is in the build.
 
 ## UI conventions
@@ -261,7 +261,7 @@ because both halves of each pair look reasonable in isolation.
   neither is; both live in the sort sheet, and the changing view of each is
   the Home shelf.
 - **Library navigation**: the library tab is an index, each row opening its own
-  screen (`screens/library/LibraryCollectionScreen`) — nothing else lives on it.
+  screen (`features/library/LibraryCollectionScreen`) — nothing else lives on it.
   It used to be a row of filter pills, which could only ever show the types it
   had room for — that is why genres had no way in for so long. Adding a way to
   browse means adding an entry row, not a pill and not a section. Deep pushes
@@ -270,7 +270,7 @@ because both halves of each pair look reasonable in isolation.
   visited and holds it until you visit another, so the icon does not jump to
   Home the moment you leave `/library`.
 - **Library gutter**: horizontal insets in the library come from
-  `screens/library/layout`, never from a literal. A list row and a grid cell
+  `features/library/layout`, never from a literal. A list row and a grid cell
   each carry an inset of their own, so the list's padding is the difference
   that lands artwork exactly `spacing.page` from the screen edge in both modes.
   Anything drawn above the items — a header, the sort row — cancels that
@@ -278,7 +278,7 @@ because both halves of each pair look reasonable in isolation.
   up on one edge.
 - **Collection actions**: a screen led by artwork uses `DetailHeader`'s centred
   circle-and-pill pair. A screen without artwork uses
-  `screens/library/CollectionActions` — two square-shouldered halves of the
+  `features/library/CollectionActions` — two square-shouldered halves of the
   content width, which have to carry the top of the screen on their own.
 - **Translations**: every key added to `locales/en.json` is added to all four
   locales in the same change; `locales/locales.test.ts` fails otherwise. A
@@ -295,6 +295,6 @@ because both halves of each pair look reasonable in isolation.
   resume first and unlabelled, then your own library, then external discovery
   behind its source header. A new section belongs to exactly one tier, and the
   library tier stays short: it carries what changes on its own, not everything
-  that could be shown. Discovery is off by default (`deezerDiscoveryEnabled`)
+  that could be shown. Discovery is off by default (each source's `homeShelves` use in `settingsSources`)
   and absent offline, so the local tiers are all a fresh install has — Home
   cannot be emptied out on the assumption that discovery will fill it.

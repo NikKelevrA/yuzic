@@ -52,13 +52,6 @@
       "username": "用户名",
       "notSet": "未设置",
       "connectivity": "连接状态",
-      "searchScopeHelp": "选择搜索结果的来源",
-      "searchScope": {
-        "client": "本地",
-        "clientDescription": "仅搜索本地音乐库",
-        "server": "服务器",
-        "serverDescription": "使用服务器搜索"
-      },
       "fallbackUrls": {
         "title": "备用URL",
         "subtext": "主地址无法连接时尝试的备用 URL。",
@@ -183,35 +176,6 @@
       "homeSourcesListenbrainzSubtext": "显示 ListenBrainz 的相似艺人栏目。",
       "homeSourcesDeezer": "Deezer",
       "homeSourcesDeezerSubtext": "Deezer 榜单、热门曲和相似艺人。"
-    },
-    "lyrics": {
-      "title": "歌词",
-      "sources": "歌词来源",
-      "serverEmbedded": "服务器内嵌",
-      "serverEmbeddedSubtext": "优先检查——服务器自带歌词。",
-      "lrclib": "LRCLIB",
-      "lrclibSubtext": "免费、匿名的歌词查询。"
-    },
-    "search": {
-      "title": "搜索",
-      "sourcesSection": "搜索来源",
-      "explanation": "“其他来源”可搜索的来源。与主页独立。",
-      "deezer": "Deezer",
-      "deezerSubtext": "搜索 Deezer 专辑和艺人。",
-      "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "搜索 MusicBrainz 专辑和艺人。"
-    },
-    "metadata": {
-      "title": "元数据",
-      "explanation": "补全服务器缺失的信息，绝不修改服务器。",
-      "artistInfoSection": "艺术家信息",
-      "artworkSection": "封面",
-      "lastfm": "Last.fm",
-      "lastfmSubtext": "简介和标签",
-      "deezerArtwork": "Deezer",
-      "deezerArtworkSubtext": "艺人图片",
-      "coverArtArchive": "Cover Art Archive",
-      "coverArtArchiveSubtext": "专辑封面"
     },
     "library": {
       "title": "媒体库",
@@ -362,7 +326,7 @@
       "showVolumeSlider": "音量滑块",
       "showVolumeSliderSubtext": "播放器中显示音量滑块。",
       "autoplay": "自动播放",
-      "autoplaySubtextAudiomuse": "用 AudioMuse-AI 续播相似曲目。",
+      "autoplaySubtextSimilarity": "用 AudioMuse-AI 续播相似曲目。",
       "autoplaySubtextNative": "从服务器续播相似曲目。",
       "resumeLongTracks": "继续播放长音轨",
       "resumeLongTracksSubtext": "续播有声书、DJ 混音和播客。",
@@ -467,36 +431,6 @@
         "disconnected": "已断开与 SoulSync 的连接。"
       }
     },
-    "musicbrainz": {
-      "external": "外部艺术家和专辑数据",
-      "externalDescription": "用 MusicBrainz 补全页面，无需账号。"
-    },
-    "lastfm": {
-      "enable": "艺术家与推荐数据",
-      "enableDescription": "相似艺人和歌单种子。无需账号，发送艺人名查询。"
-    },
-    "deezer": {
-      "discovery": "发现",
-      "discoveryDescription": "探索页显示 Deezer 榜单和推荐。",
-      "search": "搜索",
-      "searchDescription": "在搜索中包含 Deezer 结果。",
-      "external": "外部艺术家和专辑数据",
-      "externalDescription": "用 Deezer 补全专辑和艺人页面。",
-      "topTracks": "热门歌曲",
-      "topTracksDescription": "在艺术家页面显示 Deezer 热门歌曲。",
-      "similarArtists": "相似艺术家",
-      "similarArtistsDescription": "在艺术家页面显示 Deezer 相似艺术家。",
-      "albumRecommendations": "推荐",
-      "albumRecommendationsDescription": "在专辑页显示推荐专辑。",
-      "samples": "试听片段",
-      "samplesDescription": "为外部专辑获取 30 秒试听。",
-      "enableSamplesToPreview": "请在设置中启用试听片段以收听预览",
-      "playlistRecommendations": "推荐",
-      "playlistRecommendationsDescription": "显示 Deezer 推荐的播放列表。",
-      "artistSection": "艺术家",
-      "albumSection": "专辑",
-      "playlistSection": "播放列表"
-    },
     "audiomuse": {
       "title": "AudioMuse-AI",
       "credentialsHelper": "用于 Smart Shuffle 的自托管 AudioMuse-AI 实例。",
@@ -531,11 +465,8 @@
     "home": {
       "title": "主页",
       "shelfLength": "Shelf size",
-      "shelvesTitle": "Home shelves",
-      "orderTitle": "Shelf order",
       "sleepPresets": "Sleep timer quick-adds",
       "sleepPresetsSubtext": "Show this duration as a quick-add button.",
-      "shelfSubtext": "Show this shelf on Home.",
       "selected": "Selected",
       "minutes": "{{count}} minutes",
       "length": {
@@ -565,7 +496,99 @@
         "lbCreatedForWeeklyExploration": "Weekly exploration",
         "topArtists": "Top artists",
         "charts": "Charts"
+      },
+      "connectListenBrainz": "连接 ListenBrainz 以获取为你打造的歌单"
+    },
+    "sources": {
+      "deezer": {
+        "name": "Deezer",
+        "sends": "发送艺人、专辑和曲目名称，以及你的搜索内容。"
+      },
+      "listenbrainz": {
+        "name": "ListenBrainz",
+        "sends": "将艺人名发送至 MusicBrainz 以查找其 ID，再将 ID 发送至 ListenBrainz；如已连接，还会发送你的 ListenBrainz 用户名。"
+      },
+      "lastfm": {
+        "name": "Last.fm",
+        "sends": "发送艺人名称。无需账户。"
+      },
+      "musicbrainz": {
+        "name": "MusicBrainz",
+        "sends": "发送你的搜索内容，以及用于查找 ID 的艺人名称。"
+      },
+      "coverartarchive": {
+        "name": "Cover Art Archive",
+        "sends": "发送专辑和艺人名称以查找封面。"
+      },
+      "lrclib": {
+        "name": "LRCLIB",
+        "sends": "发送歌曲名和艺人名以查找歌词。无需账户。"
+      },
+      "usedFor": "用于",
+      "stopUsing": "停止使用 {{name}}",
+      "off": "关闭",
+      "promptTitle": "开启来自 {{name}} 的{{use}}？",
+      "turnOn": "开启",
+      "notNow": "暂不"
+    },
+    "sourceUses": {
+      "lastfm": {
+        "artistInfo": "艺人简介和标签。",
+        "similarArtists": "来自 Last.fm 听众的相似艺人。",
+        "recommendations": "查找与歌单中艺人相似的艺人。"
+      },
+      "coverartarchive": {
+        "artwork": "与具体发行版精确匹配的专辑封面。"
+      },
+      "deezer": {
+        "artwork": "艺人照片，以及服务器缺少的专辑封面。",
+        "similarArtists": "Deezer 上的相关艺人。",
+        "popularTracks": "艺人最受欢迎的歌曲。",
+        "previews": "你未拥有歌曲的 30 秒片段。",
+        "recommendations": "与专辑或歌单相配的专辑和歌曲。",
+        "homeShelves": "排行榜、热门艺人和按流派推荐。",
+        "search": "搜索 Deezer，并打开其专辑和艺人。"
+      },
+      "lrclib": {
+        "lyrics": "服务器没有歌词时提供同步歌词。"
+      },
+      "listenbrainz": {
+        "similarArtists": "根据大家收听内容得出的相似艺人。",
+        "homeShelves": "相似艺人；连接账户后，还有为你打造的歌单。"
+      },
+      "musicbrainz": {
+        "search": "搜索 MusicBrainz，并打开其专辑和艺人。"
       }
+    },
+    "sourcePurposes": {
+      "artistInfo": "艺人信息",
+      "artwork": "封面图",
+      "lyrics": "歌词",
+      "similarArtists": "相似艺人",
+      "popularTracks": "热门歌曲",
+      "previews": "试听",
+      "recommendations": "推荐",
+      "homeShelves": "首页栏目",
+      "search": "搜索"
+    },
+    "metadata": {
+      "title": "元数据",
+      "explanation": "补全服务器缺少的信息。始终优先查看你的服务器。"
+    },
+    "pages": {
+      "title": "页面",
+      "explanation": "资料库之外的音乐——在艺人、专辑和歌单页面中。"
+    },
+    "search": {
+      "title": "搜索",
+      "scopeTitle": "在哪里搜索你的资料库",
+      "scope": {
+        "client": "本地",
+        "clientDescription": "仅搜索本地音乐库",
+        "server": "服务器",
+        "serverDescription": "使用服务器搜索"
+      },
+      "otherSources": "其他来源"
     }
   },
   "common": {
@@ -728,7 +751,7 @@
       "title": "下载"
     },
     "downloaded": {
-      "title": "离线"
+      "clear": "清空"
     },
     "wants": {
       "title": "想要列表"
@@ -737,6 +760,7 @@
       "switchToList": "切换到列表视图",
       "switchToGrid": "切换到网格视图"
     },
+    "albumTypeLabel": "专辑 • {{artist}}",
     "genres": {
       "title": "流派",
       "albumCount_one": "{{count}} 张专辑",
@@ -851,7 +875,8 @@
       "title": "筛选",
       "sources": "来源",
       "entityTypes": "包含",
-      "noSourcesEnabled": "尚未启用任何搜索来源。请在 设置 › 搜索 中启用一个。"
+      "sendsQuery": "将你输入的内容发送到 {{name}}",
+      "alsoInSettings": "也可在“设置 › 搜索”中找到。"
     },
     "entityTypes": {
       "song": "歌曲",
@@ -975,11 +1000,13 @@
     "subtext": "播放列表 • {{count}} 首曲目",
     "subtext_other": "播放列表 • {{count}} 首曲目",
     "empty": "此播放列表暂无歌曲。",
+    "originShared": "共享",
+    "originExternal": "来自 {{provider}}",
     "recommended": {
       "title": "推荐",
       "local": "来自您的音乐库",
       "external": "发现",
-      "deezerTitle": "来自 Deezer",
+      "catalogueTitle": "来自 Deezer",
       "added": "已添加到播放列表",
       "addFailed": "添加歌曲失败",
       "externalEmpty": "暂无可发现的内容",
@@ -1414,7 +1441,8 @@
       "themeColor": "主题色 {{color}}",
       "clearProviderDownloads": "删除所有 {{provider}} 下载",
       "removeDownload": "移除下载 {{title}}",
-      "reorderSource": "重新排序 {{name}}"
+      "reorderSource": "重新排序 {{name}}",
+      "sourceDetails": "关于 {{name}}"
     },
     "onboarding": {
       "serverOptions": "{{url}}的选项"

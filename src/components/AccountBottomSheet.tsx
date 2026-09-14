@@ -3,20 +3,21 @@ import { View, Text, StyleSheet } from 'react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Settings, RefreshCw, LogOut } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { usePlayingActions } from '@/contexts/PlayingContext';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useRouter } from 'expo-router';
-import { useApi } from '@/api';
-import { disconnect } from '@/utils/redux/slices/serversSlice';
+import { useApi } from '@/providers/registry/useApi';
+import { disconnect } from '@/state/redux/slices/serversSlice';
 import { notify } from '@/components/toast';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { useTheme } from '@/hooks/useTheme';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { useTheme } from '@/features/theme/useTheme';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import Touchable from '@/components/Touchable';
 import UserAvatar from '@/components/UserAvatar';
 import { controlSize, iconSize, radius, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
+import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 
 type Props = {
   onDismiss?: () => void;
@@ -41,7 +42,7 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
   const { pauseSong, resetQueue } = usePlayingActions();
 
   const cleanUrl = serverUrl?.replace(/^https?:\/\//, '');
-  const close = () => (ref as any)?.current?.dismiss();
+  const close = () => dismissSheetRef(ref);
 
   const handleSettings = () => {
     close();

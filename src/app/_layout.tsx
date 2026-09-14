@@ -4,41 +4,43 @@ import { useFonts } from 'expo-font';
 
 import { QueryClient, QueryCache, onlineManager } from '@tanstack/react-query';
 import { ToastHost, notify } from '@/components/toast';
+import SourceUsePromptHost from '@/features/settings/sources/SourceUsePromptHost';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { enableFreeze } from 'react-native-screens';
-import { PlayingProvider } from '@/contexts/PlayingContext';
-import { DlnaProvider } from '@/contexts/DlnaContext';
-import { PlaybackSinkProvider } from '@/contexts/PlaybackSinkContext';
-import { LibraryProvider } from '@/contexts/LibraryContext';
-import { SongActionSheetProvider } from '@/contexts/SongActionSheetContext';
-import { DownloadProvider } from '@/contexts/DownloadContext';
+import { PlayingProvider } from '@/features/playback/PlayingContext';
+import { DlnaProvider } from '@/features/player/DlnaContext';
+import { PlaybackSinkProvider } from '@/features/player/PlaybackSinkContext';
+import { SongActionSheetProvider } from '@/features/entity-actions/SongActionSheetContext';
+import { DownloadProvider } from '@/features/offline/DownloadContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import store, { persistor } from '@/utils/redux/store';
+import store from '@/state/redux/store';
+import { persistor } from '@/state/redux/persistor';
 import { Alert, AppState } from 'react-native';
 import { setJSExceptionHandler, setNativeExceptionHandler } from 'react-native-exception-handler';
 import RNRestart from 'react-native-restart';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PlayerExpansionProvider } from '@/features/player/PlayerExpansion';
 import PlayerHost from '@/features/player/PlayerHost';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { selectLanguage } from '@/utils/redux/selectors/settingsSelectors';
+import { selectLanguage } from '@/features/settings/appearance/state';
 import i18n from '@/i18n';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { queryStorage } from '@/utils/mmkvStorage';
+import { queryCacheStorage } from '@/state/mmkvStorage';
 import NetInfo from '@react-native-community/netinfo';
-import OfflineMutationReplayer from '@/offline/OfflineMutationReplayer';
+import OfflineMutationReplayer from '@/features/offline/OfflineMutationReplayer';
 import { isLikelyNetworkError, setServerUnreachable } from '@/features/connectivity/serverReachability';
-import { QueryKeys } from '@/enums/queryKeys';
-import { clearImageMemoryCache, runImageCacheMigration } from '@/utils/images/imageCache';
+import { QueryKeys } from '@/state/query/queryKeys';
+import { clearImageMemoryCache, runImageCacheMigration } from '@/features/artwork/imageCache';
 import { useClientCertificate } from '@/features/mtls/useClientCertificate';
+import { CredentialsGate } from '@/features/servers/CredentialsGate';
 
 
 const LIBRARY_LOAD_FAILED_TOAST_ID = 'library-load-failed';
@@ -155,8 +157,10 @@ const queryClient = new QueryClient({
 
 const QUERY_CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 30;
 
-const asyncStoragePersister = createAsyncStoragePersister({
-  storage: queryStorage,
+// Named for what it persists, not for AsyncStorage — the storage behind it
+// is MMKV, in the query cache's own namespace.
+const queryPersister = createAsyncStoragePersister({
+  storage: queryCacheStorage,
 })
 
 const OFFLINE_TOAST_ID = 'offline-banner';
@@ -234,6 +238,9 @@ function AppShell() {
 
                 <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
+                {/* Asks to turn a source use on from wherever it was needed. */}
+                <SourceUsePromptHost />
+
                 <ToastHost />
                 </PlayerExpansionProvider>
                 </SongActionSheetProvider>
@@ -272,28 +279,23 @@ export default function RootLayout() {
     setNativeExceptionHandler(() => { }, false, true);
   }, []);
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
+  // The splash comes down in `CredentialsGate`, once the app can render.
   if (!loaded) return null;
 
   return (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        persister: asyncStoragePersister,
+        persister: queryPersister,
         maxAge: QUERY_CACHE_MAX_AGE,
       }}
     >
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <LibraryProvider>
+          <CredentialsGate>
             <OfflineMutationReplayer />
             <AppShell />
-          </LibraryProvider>
+          </CredentialsGate>
         </PersistGate>
       </Provider>
     </PersistQueryClientProvider>

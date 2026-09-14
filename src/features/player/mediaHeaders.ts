@@ -1,5 +1,6 @@
-import type { Server, Song } from '@/types';
-import { plexBasicAuthHeader } from '@/api/plex/client';
+import type { Server } from '@/providers/contracts/Server';
+import type { Provenance } from '@/domain/identity/Provenance';
+import { SERVER_PROVIDERS } from '@/providers/registry/serverConnections';
 
 /**
  * The ephemeral request headers a track needs to be fetched, kept off the URL
@@ -29,15 +30,27 @@ const EMPTY: RequestHeaders = {};
  * it is skipped even on a Basic-auth Plex server. A song that names a different
  * provider than the active server (a mixed queue) is likewise skipped — its
  * credentials are not the ones we hold.
+ *
+ * A mixed queue is detected by the track's origin *server id*, not its server
+ * type. That is strictly more precise: two Plex servers share a type, and the
+ * credentials we hold for one are not the other's. The track's provenance says
+ * which server it came from, so nothing has to be duplicated onto it.
  */
 export function mediaHeadersForSong(
   server: Server | null | undefined,
-  song: Pick<Song, 'sourceServerType' | 'streamUrl'>
+  resource: { song?: { provenance?: Provenance }; streamUrl?: string }
 ): RequestHeaders {
-  if (song.streamUrl?.startsWith('file:')) return EMPTY;
-  const kind = song.sourceServerType ?? server?.type;
-  if (kind !== 'plex') return EMPTY;
-  const auth = plexBasicAuthHeader(server?.basicAuth);
+  if (resource.streamUrl?.startsWith('file:')) return EMPTY;
+  const provenance = resource.song?.provenance;
+  // A track from a different origin than the active server carries none of
+  // our credentials; one with no stated origin is assumed to be the active
+  // server's, which is what every caller passing a bare URL means.
+  if (provenance && (provenance.origin !== 'server' || provenance.serverId !== server?.id)) {
+    return EMPTY;
+  }
+  if (!server) return EMPTY;
+  // Only a server type that declares media auth headers adds any.
+  const auth = SERVER_PROVIDERS[server.type]?.mediaAuthHeaders?.(server);
   if (!auth) return EMPTY;
   return { headers: auth, artworkHeaders: auth };
 }

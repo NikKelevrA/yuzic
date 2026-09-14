@@ -1,47 +1,42 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { useLibrary } from '@/contexts/LibraryContext';
-import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
-import type { ExternalAlbumBase } from '@/types';
-import type { LibraryState } from '@/types/LibraryState';
-import {
-  selectLidarrAuthenticated,
-  selectSlskdAuthenticated,
-} from '@/utils/redux/selectors/downloadersSelectors';
-import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
-import { resolveLibraryState } from './resolveLibraryState';
+import { useAlbums } from '@/features/album/useAlbums';
+import { matchAlbumToLibrary } from './matchToLibrary';
+import type { Album } from '@/domain/entities/Album';
+import { resolveLibraryState, type LibraryState } from '@/domain/library/LibraryState';
+import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
+import { selectIsWanted } from '@/state/redux/selectors/wantsSelectors';
 
 /**
- * Thin React wrapper around `resolveLibraryState`: assembles
- * `LibraryStateFacts` for a given external album from redux/context state,
- * then hands off to the pure resolver. All state-source decisions live
- * here; precedence logic stays in the pure function.
+ * Thin React wrapper around the domain `resolveLibraryState`: assembles
+ * `LibraryFacts` for a given browsed album from redux/context state, then
+ * hands off to the pure resolver. All state-source decisions live here;
+ * precedence logic stays in the domain function.
  */
-export function useLibraryState(album: ExternalAlbumBase | null): LibraryState {
-  const { albums: libraryAlbums } = useLibrary();
-  const isLidarrConnected = useSelector(selectLidarrAuthenticated);
-  const isSlskdConnected = useSelector(selectSlskdAuthenticated);
+export function useLibraryState(album: Album | null): LibraryState {
+  const { albums: libraryAlbums } = useAlbums();
+  // Acquirable means something connected can fetch a whole album.
+  const isAcquirable = useAnyAlbumDownloaderConnected();
   const isWanted = useSelector(
     album?.localId ? selectIsWanted(album.localId) : () => false
   );
 
   const isInLibrary = useMemo(() => {
     if (!album) return false;
-    return matchAlbumToLibrary(album, libraryAlbums) !== null;
+    return matchAlbumToLibrary(
+      { externalIds: album.externalIds, title: album.title, artistName: album.artist.name },
+      libraryAlbums
+    ) !== null;
   }, [album, libraryAlbums]);
-
-  const hasAcquisitionProvider = isLidarrConnected || isSlskdConnected;
-  const isExternalOrigin = !!album?.externalSource;
 
   return useMemo(
     () =>
       resolveLibraryState({
-        isInLibrary,
+        isPresent: isInLibrary,
         isWanted,
-        hasAcquisitionProvider,
-        isExternalOrigin,
+        isAcquirable,
       }),
-    [isInLibrary, isWanted, hasAcquisitionProvider, isExternalOrigin]
+    [isInLibrary, isWanted, isAcquirable]
   );
 }

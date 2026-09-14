@@ -1,0 +1,1 @@
+export { testConnection } from './ping';

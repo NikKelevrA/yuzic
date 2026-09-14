@@ -1,0 +1,270 @@
+import { iconSize, spacing, typography } from '@/constants/design'
+import React, { useCallback, useMemo, useState } from 'react'
+import { useRadius } from '@/features/theme/useRadius'
+import { StyleSheet, Text, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { useNavigation } from '@react-navigation/native'
+import { Ellipsis, Globe } from 'lucide-react-native'
+import type { Album } from '@/domain/entities/Album'
+import AlbumRow from '@/components/rows/AlbumRow'
+import Header, { ArtistHeaderBar } from '../Header'
+import { DetailScreen } from '@/components/DetailHeader'
+import { useTheme } from '@/features/theme/useTheme'
+import { useTranslation } from 'react-i18next'
+import { releaseYearLabel } from '@/features/artist/discography'
+import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel'
+import MostPlayedSection from './MostPlayedSection'
+import PopularTracksSection from './PopularTracksSection'
+import LocalPopularTracksSection from './LocalPopularTracksSection'
+import ArtistBio from './ArtistBio'
+import TopSongsSection from './TopSongsSection'
+import { ExternalSimilarArtistsSection, LocalSimilarArtistsSection } from './SimilarArtistsSection'
+import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
+import Touchable from '@/components/Touchable'
+import { useScrollClearance } from '@/features/theme/useScrollClearance'
+
+type Props = {
+  model: ArtistScreenModel
+}
+
+type ArtistContentItem =
+  | { kind: 'mostPlayed'; id: string }
+  | { kind: 'topSongs'; id: string }
+  | { kind: 'popularTracks'; id: string }
+  | { kind: 'section'; id: string; title: string }
+  | { kind: 'localAlbum'; id: string; album: Album }
+  | { kind: 'externalAlbum'; id: string; album: Album }
+  | { kind: 'showMore'; id: string; target: 'albums' | 'singles'; remaining: number }
+  | { kind: 'showUnowned'; id: string; target: 'albums' | 'singles'; count: number }
+  | { kind: 'similar'; id: string }
+  | { kind: 'bio'; id: string }
+
+const INITIAL_RELEASE_ROWS = 3
+
+export default function ArtistContent({ model }: Props) {
+  const scrollClearance = useScrollClearance()
+  const navigation = useNavigation<any>()
+  const { navigateToAlbum } = useMatchedNavigation()
+  const { colors } = useTheme()
+  const rad = useRadius()
+  const { t } = useTranslation()
+  const [visibleAlbumsCount, setVisibleAlbumsCount] = useState(INITIAL_RELEASE_ROWS)
+  const [visibleSinglesCount, setVisibleSinglesCount] = useState(INITIAL_RELEASE_ROWS)
+  const [showUnownedAlbums, setShowUnownedAlbums] = useState(false)
+  const [showUnownedSingles, setShowUnownedSingles] = useState(false)
+
+  const { artist, isLocal, discography } = model
+  const { ownedAlbums, ownedSingles, unownedAlbums, unownedSingles } = discography
+
+  const items = useMemo<ArtistContentItem[]>(() => {
+    const rows: ArtistContentItem[] = []
+    if (!artist) return rows
+
+    if (isLocal) {
+      rows.push({ kind: 'mostPlayed', id: 'most-played' })
+      rows.push({ kind: 'topSongs', id: 'server-top-songs' })
+      rows.push({ kind: 'popularTracks', id: 'popular-tracks' })
+
+      const ownedAlbumItems: ArtistContentItem[] = ownedAlbums.map(album => ({ kind: 'localAlbum' as const, id: `album-${album.localId}`, album }))
+      const ownedSingleItems: ArtistContentItem[] = ownedSingles.map(album => ({ kind: 'localAlbum' as const, id: `single-${album.localId}`, album }))
+      const unownedAlbumItems: ArtistContentItem[] = unownedAlbums.map(album => ({ kind: 'externalAlbum' as const, id: `album-ext-${album.localId}`, album }))
+      const unownedSingleItems: ArtistContentItem[] = unownedSingles.map(album => ({ kind: 'externalAlbum' as const, id: `single-ext-${album.localId}`, album }))
+
+      // Owned and unowned releases are kept in separate groups rather than
+      // merged chronologically — unowned releases stay behind a "show
+      // unowned" tile until the user opts in, so scanning what you actually
+      // own isn't interrupted by releases you don't have.
+      if (ownedAlbumItems.length > 0 || unownedAlbumItems.length > 0) {
+        rows.push({ kind: 'section', id: 'albums-section', title: t('artist.sections.albums') })
+        rows.push(...ownedAlbumItems.slice(0, visibleAlbumsCount))
+        if (visibleAlbumsCount < ownedAlbumItems.length) {
+          rows.push({ kind: 'showMore', id: 'show-more-albums', target: 'albums', remaining: ownedAlbumItems.length - visibleAlbumsCount })
+        } else if (unownedAlbumItems.length > 0) {
+          if (showUnownedAlbums) {
+            rows.push(...unownedAlbumItems)
+          } else {
+            rows.push({ kind: 'showUnowned', id: 'show-unowned-albums', target: 'albums', count: unownedAlbumItems.length })
+          }
+        }
+      }
+
+      if (ownedSingleItems.length > 0 || unownedSingleItems.length > 0) {
+        rows.push({ kind: 'section', id: 'singles-section', title: t('artist.sections.singles') })
+        rows.push(...ownedSingleItems.slice(0, visibleSinglesCount))
+        if (visibleSinglesCount < ownedSingleItems.length) {
+          rows.push({ kind: 'showMore', id: 'show-more-singles', target: 'singles', remaining: ownedSingleItems.length - visibleSinglesCount })
+        } else if (unownedSingleItems.length > 0) {
+          if (showUnownedSingles) {
+            rows.push(...unownedSingleItems)
+          } else {
+            rows.push({ kind: 'showUnowned', id: 'show-unowned-singles', target: 'singles', count: unownedSingleItems.length })
+          }
+        }
+      }
+
+      rows.push({ kind: 'similar', id: 'similar-artists' })
+      rows.push({ kind: 'bio', id: 'bio' })
+    } else {
+      rows.push({ kind: 'popularTracks', id: 'popular-tracks' })
+
+      const visibleAlbums = unownedAlbums.slice(0, visibleAlbumsCount)
+      if (unownedAlbums.length > 0) {
+        rows.push({ kind: 'section', id: 'albums-section', title: t('artist.sections.albums') })
+        rows.push(...visibleAlbums.map(album => ({ kind: 'externalAlbum' as const, id: `album-${album.localId}`, album })))
+        if (visibleAlbumsCount < unownedAlbums.length) {
+          rows.push({ kind: 'showMore', id: 'show-more-albums', target: 'albums', remaining: unownedAlbums.length - visibleAlbumsCount })
+        }
+      }
+
+      if (unownedSingles.length > 0) {
+        rows.push({ kind: 'section', id: 'singles-section', title: t('artist.sections.singles') })
+        const visibleSingles = unownedSingles.slice(0, visibleSinglesCount)
+        rows.push(...visibleSingles.map(album => ({ kind: 'externalAlbum' as const, id: `single-${album.localId}`, album })))
+        if (visibleSinglesCount < unownedSingles.length) {
+          rows.push({ kind: 'showMore', id: 'show-more-singles', target: 'singles', remaining: unownedSingles.length - visibleSinglesCount })
+        }
+      }
+
+      if (model.similarArtists.length > 0) {
+        rows.push({ kind: 'similar', id: 'similar-artists' })
+      }
+      rows.push({ kind: 'bio', id: 'bio' })
+    }
+
+    return rows
+  }, [artist, isLocal, ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, model.similarArtists, visibleAlbumsCount, visibleSinglesCount, showUnownedAlbums, showUnownedSingles, t])
+
+  const renderItem = useCallback(({ item }: { item: ArtistContentItem }) => {
+    if (item.kind === 'mostPlayed') {
+      return artist ? <MostPlayedSection artist={artist} /> : null
+    }
+
+    if (item.kind === 'topSongs') {
+      return artist ? <TopSongsSection artist={artist} /> : null
+    }
+
+    if (item.kind === 'popularTracks') {
+      if (!artist) return null
+      return isLocal
+        ? <LocalPopularTracksSection artist={artist} />
+        : <PopularTracksSection topTracks={model.topTracks} artistId={artist.nativeId} artistName={artist.name} />
+    }
+
+    if (item.kind === 'bio') {
+      return <ArtistBio model={model} />
+    }
+
+    if (item.kind === 'section') {
+      return (
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.secondary }]}>
+            {item.title}
+          </Text>
+        </View>
+      )
+    }
+
+    if (item.kind === 'similar') {
+      return isLocal && artist
+        ? <LocalSimilarArtistsSection artist={artist} />
+        : <ExternalSimilarArtistsSection similarArtists={model.similarArtists} />
+    }
+
+    // Same tile-row look for both: "keep reading the list" (showMore) and
+    // "opt into releases you don't own" (showUnowned) are both progressive
+    // disclosure of more rows, just with different icon/copy/trigger.
+    if (item.kind === 'showMore' || item.kind === 'showUnowned') {
+      const isUnowned = item.kind === 'showUnowned'
+      return (
+        <Touchable
+          style={styles.showMoreRow}
+          onPress={() => {
+            if (isUnowned) {
+              if (item.target === 'albums') setShowUnownedAlbums(true)
+              else setShowUnownedSingles(true)
+            } else if (item.target === 'albums') {
+              setVisibleAlbumsCount(c => c + 5)
+            } else {
+              setVisibleSinglesCount(c => c + 5)
+            }
+          }}
+        >
+          <View style={[styles.showMoreIcon, { backgroundColor: colors.card, borderRadius: rad.thumb }]}>
+            {isUnowned
+              ? <Globe size={iconSize.row} color={colors.secondary} />
+              : <Ellipsis size={iconSize.row} color={colors.secondary} />
+            }
+          </View>
+          <Text style={[styles.showMoreText, { color: colors.secondary }]}>
+            {isUnowned ? t('artist.showUnowned', { count: item.count }) : t('artist.showMore', { count: item.remaining })}
+          </Text>
+        </Touchable>
+      )
+    }
+
+    if (item.kind === 'localAlbum') {
+      return (
+        <AlbumRow
+          album={item.album}
+          onPress={() => navigation.push('albumView', { id: item.album.nativeId })}
+          subtextOverride={releaseYearLabel(item.album) ?? undefined}
+        />
+      )
+    }
+
+    return (
+      <AlbumRow
+        album={item.album}
+        onPress={(album) => navigateToAlbum(album)}
+        subtextOverride={releaseYearLabel(item.album) ?? undefined}
+      />
+    )
+  }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, setVisibleAlbumsCount, setVisibleSinglesCount, setShowUnownedAlbums, setShowUnownedSingles, t])
+
+  return (
+    <DetailScreen bar={<ArtistHeaderBar model={model} />}>
+      {scroll => (
+      <FlashList
+        data={items}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={<Header model={model} showNavigation={false} />}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: scrollClearance,
+          backgroundColor: colors.background,
+        }}
+        {...scroll}
+      />
+      )}
+    </DetailScreen>
+  )
+}
+
+const styles = StyleSheet.create({
+  sectionHeader: {
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.controlGap,
+  },
+  sectionTitle: {
+    ...typography.navigationTitle,
+    paddingHorizontal: spacing.lg,
+  },
+  showMoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  showMoreIcon: {
+    width: 64,
+    height: 64,
+    marginRight: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showMoreText: {
+    ...typography.button,
+  },
+})

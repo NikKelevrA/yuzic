@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import Touchable from '@/components/Touchable';
 import UserAvatar from '@/components/UserAvatar';
 import { controlSize, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 
 /** Header shared by the Home, Library and Search tabs: screen title plus the
  * account avatar. */

@@ -1,5 +1,5 @@
-import Search from "@/screens/search";
-import { SearchProvider } from "@/contexts/SearchContext";
+import Search from "@/features/search/SearchScreen";
+import { SearchProvider } from "@/features/search/SearchContext";
 
 export default function SearchScreen() {
   return (

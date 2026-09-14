@@ -1,24 +1,26 @@
-import { normalize } from '@/utils/normalize';
-import { matchAlbumToLibrary } from '@/hooks/libraryMatch';
-import type { Want } from '@/utils/redux/slices/wantsSlice';
-import type { AlbumBase, ExternalAlbumBase, SongBase } from '@/types';
+import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
+import { normalizeExternalIds } from '@/domain/identity/ExternalIds';
+import { normalizeName } from '@/domain/identity/matching';
+import type { Want } from '@/state/redux/slices/wantsSlice';
+import type { Album } from '@/domain/entities/Album';
+import type { Song } from '@/domain/entities/Song';
 
 /**
  * The minimal library snapshot arrival detection needs: albums are matched
  * via the shared `matchAlbumToLibrary` matcher, tracks (when supplied) via
- * normalized title+artist — same normalization used everywhere else in the
- * repo (`@/utils/normalize`), no new fuzzy algorithm.
+ * normalized title+artist — the same `normalizeName` the domain matcher uses,
+ * no new fuzzy algorithm.
  */
-export interface ArrivalLibrary {
-  albums: AlbumBase[];
-  tracks?: SongBase[];
+interface ArrivalLibrary {
+  albums: Album[];
+  tracks?: Song[];
 }
 
-function trackArrived(want: Want, tracks: SongBase[]): boolean {
-  const normTitle = normalize(want.title);
-  const normArtist = normalize(want.artist);
+function trackArrived(want: Want, tracks: Song[]): boolean {
+  const normTitle = normalizeName(want.title);
+  const normArtist = normalizeName(want.artist);
   return tracks.some(
-    (track) => normalize(track.title) === normTitle && normalize(track.artist) === normArtist
+    (track) => normalizeName(track.title) === normTitle && normalizeName(track.artist.name) === normArtist
   );
 }
 
@@ -37,15 +39,10 @@ export function findArrivedWants(wants: Want[], library: ArrivalLibrary): Want[]
   const tracks = library.tracks ?? [];
   return wants.filter((want) => {
     if (want.unit === 'album') {
-      const asExternalAlbum: ExternalAlbumBase = {
-        id: want.localId,
-        title: want.title,
-        artist: want.artist,
-        cover: { kind: 'none' },
-        subtext: want.artist,
-        externalIds: want.externalIds,
-      };
-      return matchAlbumToLibrary(asExternalAlbum, library.albums) !== null;
+      return matchAlbumToLibrary(
+        { externalIds: normalizeExternalIds(want.externalIds), title: want.title, artistName: want.artist },
+        library.albums
+      ) !== null;
     }
     return trackArrived(want, tracks);
   });

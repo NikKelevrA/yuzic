@@ -2,23 +2,22 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import GetReviewSheet from './GetReviewSheet';
-import type { ExternalAlbumBase } from '@/types';
+import type { Album } from '@/domain/entities/Album';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({
     colors: { secondary: '#000', subtext: '#666', border: '#ccc', background: '#fff', placeholder: '#999' },
     isDarkMode: false,
   }),
 }));
 
-jest.mock('@/hooks/useRadius', () => ({
+jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ lg: 16, card: 8, pill: 999, pillFor: (n: number) => n / 2 }),
 }));
 
@@ -33,7 +32,6 @@ jest.mock('@/components/toast', () => ({
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
 
 jest.mock('@/components/options/OptionSheetPrimitives', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   return {
     OptionSheetHeader: ({ title, subtitle }: any) => (
@@ -67,30 +65,30 @@ jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
 }));
 
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServer: (state: any) => state.servers?.activeServer ?? null,
   selectActiveServerId: (state: any) => state.servers?.activeServerId ?? null,
 }));
 
 const mockIsWanted = jest.fn(() => false);
-jest.mock('@/utils/redux/selectors/wantsSelectors', () => ({
+jest.mock('@/state/redux/selectors/wantsSelectors', () => ({
   selectIsWanted: (_localId: string) => () => mockIsWanted(),
 }));
 
-jest.mock('@/utils/redux/slices/wantsSlice', () => ({
+jest.mock('@/state/redux/slices/wantsSlice', () => ({
   setWantJobRef: (payload: any) => ({ type: 'wants/setWantJobRef', payload }),
 }));
 
-jest.mock('@/utils/redux/selectors/downloadersSelectors', () => ({
+jest.mock('@/state/redux/selectors/downloadersSelectors', () => ({
   selectDefaultProviderForActiveServer: (state: any) => state.downloaders?.defaultsByServer?.['server-1'] ?? {},
-  selectLidarrDefaultQualityProfileId: (state: any) =>
+  selectDefaultQualityProfileId: (state: any) =>
     state.downloaders?.defaultsByServer?.['server-1']?.lidarrDefaultQualityProfileId,
 }));
 
-jest.mock('@/utils/redux/slices/downloadersSlice', () => ({
+jest.mock('@/state/redux/slices/downloadersSlice', () => ({
   setDefaultProvider: (payload: any) => ({ type: 'downloaders/setDefaultProvider', payload }),
-  setLidarrDefaultQualityProfileId: (payload: any) => ({
-    type: 'downloaders/setLidarrDefaultQualityProfileId',
+  setDefaultQualityProfileId: (payload: any) => ({
+    type: 'downloaders/setDefaultQualityProfileId',
     payload,
   }),
 }));
@@ -99,9 +97,6 @@ const mockGetQualityProfiles = jest.fn(async (..._args: unknown[]) => [
   { id: 1, name: 'Standard' },
   { id: 4, name: 'Lossless' },
 ]);
-jest.mock('@/api/lidarr', () => ({
-  getQualityProfiles: (...args: unknown[]) => mockGetQualityProfiles(...args),
-}));
 
 const mockDownloaderStates = jest.fn();
 jest.mock('@/features/downloaders/registry', () => ({
@@ -109,13 +104,24 @@ jest.mock('@/features/downloaders/registry', () => ({
   useDownloaderStates: () => mockDownloaderStates(),
 }));
 
-const externalAlbum: ExternalAlbumBase = {
-  id: 'ext1',
+const externalAlbum: Album = {
+  localId: 'local:album:ext:deezer:ext1' as Album['localId'],
+  nativeId: 'ext1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
-  artist: 'External Artist',
-  subtext: 'External Artist',
-  localId: 'local:album:ext:deezer:ext1' as ExternalAlbumBase['localId'],
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Album['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  releaseType: 'album',
+  genres: [],
+  songIds: [],
 };
 
 const lidarrDownloadAlbum = jest.fn(async () => ({ success: true as const }));
@@ -130,6 +136,7 @@ function makeDownloaderStates() {
         descriptionKey: 'externalAlbum.download.lidarrDesc',
         albumAddedKey: 'externalAlbum.download.addedToLidarr',
         downloadAlbum: lidarrDownloadAlbum,
+        getQualityProfiles: (...args: unknown[]) => mockGetQualityProfiles(...args),
       },
       config: { serverUrl: 'http://lidarr', apiKey: 'k1' },
       isConnected: true,
@@ -273,7 +280,7 @@ describe('GetReviewSheet', () => {
     );
   });
 
-  it('shows the quality-profile selector only when Lidarr is selected for an album Get', async () => {
+  it('shows the quality-profile selector only when a downloader with profiles is selected for an album Get', async () => {
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
 
     // Nothing selected yet — no quality-profile section.
@@ -319,7 +326,7 @@ describe('GetReviewSheet', () => {
       { qualityProfileId: 4 }
     );
     expect(mockDispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'downloaders/setLidarrDefaultQualityProfileId' })
+      expect.objectContaining({ type: 'downloaders/setDefaultQualityProfileId' })
     );
   });
 
@@ -334,7 +341,7 @@ describe('GetReviewSheet', () => {
     await flush();
 
     expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'downloaders/setLidarrDefaultQualityProfileId',
+      type: 'downloaders/setDefaultQualityProfileId',
       payload: { serverId: 'server-1', qualityProfileId: 4 },
     });
   });

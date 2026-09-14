@@ -1,6 +1,6 @@
 import { fontScaleCap, hitSlopFor, iconSize, motion, spacing, stateLayer, statusColor, typography } from '@/constants/design';
 import React, { memo, useCallback, useEffect } from 'react';
-import { useListDensity } from '@/hooks/useListDensity';
+import { useListDensity } from '@/features/theme/useListDensity';
 import {
   Text,
   View,
@@ -12,37 +12,38 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Heart, ArrowDownCircle, Ellipsis, PlayCircle } from 'lucide-react-native';
-import { notify } from '@/components/toast';
 
-import { ExternalSong, Song } from '@/types';
-import { usePlayingActions } from '@/contexts/PlayingContext';
-import { useSongActionSheets } from '@/contexts/SongActionSheetContext';
+import type { Song } from '@/domain/entities/Song';
+import type { PlayableCollection } from '@/features/playback/playingTypes';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
+import { useSongActionSheets } from '@/features/entity-actions/SongActionSheetContext';
 import MediaListRow from '@/components/MediaListRow';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { useTranslation } from 'react-i18next';
-import { useDownloadState } from '@/contexts/DownloadContext';
-import { formatSongDuration } from '@/utils/formatDuration';
+import { useDownloadState } from '@/features/offline/DownloadContext';
+import { formatDuration } from '@/components/formatDuration';
 import Touchable from '@/components/Touchable';
 import SongOptions from '@/components/options/SongOptions';
-import { useSheetRef } from '@/utils/useSheetRef';
-import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
+import { useSheetRef } from '@/components/useSheetRef';
+import { useSourceUse } from '@/features/settings/sources/useSourceUse';
+import { promptSourceUse } from '@/features/settings/sources/sourceUsePrompt';
+import { PREVIEWS_USE } from '@/providers/registry/pageSources';
 
-export type SongRowSong = Song | ExternalSong;
+type SongRowSong = Song;
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than
- * the user's library. `Song.streamUrl` is required on every library song and
- * absent on `ExternalSong` — that difference is guaranteed by the type
- * definitions, so it doubles as the discriminator without needing a new
- * field on either type.
+ * the user's library — read off `provenance`, the one place that
+ * distinction lives now that there is a single `Song` type. Mirrors
+ * `isExternalSongOrigin` in `components/options/SongOptions`.
  */
-export function isExternalSong(song: SongRowSong): song is ExternalSong {
-  return !('streamUrl' in song);
+export function isExternalSong(song: SongRowSong): boolean {
+  return song.provenance.origin === 'integration';
 }
 
 type Props = {
   song: SongRowSong;
-  collection?: any;
+  collection?: PlayableCollection;
   onPress?: () => void;
   variant?: 'default' | 'albumCompact';
   showDownloadedDot?: boolean;
@@ -56,7 +57,7 @@ type Props = {
 };
 
 const ExternalSongRowView: React.FC<{
-  song: ExternalSong;
+  song: Song;
   albumTitle: string;
   albumArtist: string;
   previewUrl?: string;
@@ -64,7 +65,7 @@ const ExternalSongRowView: React.FC<{
 }> = ({ song, albumTitle, albumArtist, previewUrl, onPress }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const samplesEnabled = useDeezerDiscoveryEnabled();
+  const samplesEnabled = useSourceUse(PREVIEWS_USE);
   const density = useListDensity();
   const hasPreview = !!previewUrl;
   const optionsSheetRef = useSheetRef();
@@ -73,15 +74,17 @@ const ExternalSongRowView: React.FC<{
     if (onPress) {
       onPress();
     } else if (!samplesEnabled) {
-      notify.info(t('settings.deezer.enableSamplesToPreview'));
+      // Ask here, beside the song that was tapped, rather than sending
+      // anyone to Settings to find the switch.
+      promptSourceUse(PREVIEWS_USE);
     }
-  }, [onPress, samplesEnabled, t]);
+  }, [onPress, samplesEnabled]);
 
   return (
     <>
       <MediaListRow
         title={song.title}
-        subtitle={song.artist || albumArtist}
+        subtitle={song.artist.name || albumArtist}
         cover={song.cover}
         onPress={handlePress}
         showCover={false}
@@ -138,7 +141,7 @@ const SongRow: React.FC<Props> = ({
   // library-only bits (download state, favorite animation) still run for an
   // external song — same as they were simply absent for it before the merge,
   // just now computed and discarded rather than never mounted.
-  const downloaded = !isExternalSong(song) && isTrackDownloaded(song.id);
+  const downloaded = !isExternalSong(song) && isTrackDownloaded(song.localId);
 
   /**
    * The track's position on the record.
@@ -191,7 +194,7 @@ const SongRow: React.FC<Props> = ({
       <MediaListRow
         title={song.title}
         testID="song-row"
-        subtitle={`${song.artist || t('songOptions.unknownArtist')}${!isAlbumCompact ? ` • ${formatSongDuration(song.duration)}` : ''}`}
+        subtitle={`${song.artist.name || t('songOptions.unknownArtist')}${!isAlbumCompact ? ` • ${formatDuration(song.durationSeconds)}` : ''}`}
         cover={song.cover}
         onPress={handlePress}
         disabled={!onPress && !collection}

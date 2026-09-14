@@ -3,19 +3,30 @@ import { StyleSheet, Text } from 'react-native'
 import { Play } from 'lucide-react-native'
 import { useTranslation } from 'react-i18next'
 import MediaListRow from '@/components/MediaListRow'
-import { useTheme } from '@/hooks/useTheme'
-import { formatSongDuration } from '@/utils/formatDuration'
-import type { ExternalSong } from '@/types'
+import { useTheme } from '@/features/theme/useTheme'
+import { formatDuration, formatSongDuration } from '@/components/formatDuration'
+import type { Song } from '@/domain/entities/Song'
 import Touchable from '@/components/Touchable'
 import { hitSlopFor, iconSize, typography } from '@/constants/design'
-import { useRadius } from '@/hooks/useRadius'
+import { useRadius } from '@/features/theme/useRadius'
 
 /** The preview affordance on an external top-track row, drawn small on purpose
  *  — it sits inside a row rather than beside one. `hitSlopFor` pads it out. */
 const PREVIEW_BUTTON_SIZE = 28
 
+type TopTrackRowSong = Song
+
+/**
+ * True when `song` came from an external catalog (Deezer/etc) rather than
+ * the user's library — read off `provenance`, same discriminator as
+ * `SongRow`/`SongOptions`.
+ */
+function isExternalTrack(song: TopTrackRowSong): boolean {
+  return song.provenance.origin === 'integration'
+}
+
 type Props = {
-  song: ExternalSong
+  song: TopTrackRowSong
   index: number
   artistName: string
   onPress?: () => void
@@ -25,7 +36,18 @@ function TopTrackRow({ song, index, artistName, onPress }: Props) {
   const { t } = useTranslation()
   const { colors } = useTheme()
   const rad = useRadius()
-  const duration = formatSongDuration(song.duration)
+  const external = isExternalTrack(song)
+  // `formatSongDuration` hides a zero/unknown duration entirely rather than
+  // showing "0:00" — correct for a preview track (`durationSeconds` doc:
+  // "Zero for content with no known duration"), which is what every
+  // external track here is. A library song always has a real duration, so
+  // it keeps the plain formatter.
+  const duration = external ? formatSongDuration(song.durationSeconds) : formatDuration(song.durationSeconds)
+  // Only an external (preview) track carries a 30s clip URL, attached onto
+  // `streamId` once resolved — see `Song.streamId` and `usePreviewPlayer`'s
+  // `attachPreviewUrl`. A library song is already fully playable, so it has
+  // nothing to preview and no button.
+  const previewUrl = external ? song.streamId : undefined
 
   return (
     <MediaListRow
@@ -40,7 +62,7 @@ function TopTrackRow({ song, index, artistName, onPress }: Props) {
         </Text>
       }
       trailing={
-        song.previewUrl ? (
+        previewUrl ? (
           <Touchable
             accessibilityRole="button"
             accessibilityLabel={t('a11y.topTrack.playPreview', { title: song.title })}

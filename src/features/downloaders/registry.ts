@@ -1,14 +1,18 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import type { Href } from 'expo-router'
-import * as lidarr from '@/api/lidarr'
-import * as slskd from '@/api/slskd'
-import * as soulsync from '@/api/soulsync'
-import type { SlskdSearchPreferences } from '@/api/slskd'
-import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice'
-import type { ExternalAlbumBase, LidarrConfig } from '@/types'
-import { selectDownloadersForActiveServer } from '@/utils/redux/selectors/downloadersSelectors'
-import type { IntegrationModule, Health } from '@/features/integrations/types'
+import * as lidarr from '@/providers/integration/lidarr'
+import * as slskd from '@/providers/integration/slskd'
+import * as soulsync from '@/providers/integration/soulsync'
+import type { SlskdSearchPreferences } from '@/providers/integration/slskd'
+import type { DownloaderId } from '@/state/redux/slices/downloadersSlice'
+import type { LidarrConfig } from '@/providers/integration/lidarr/config'
+import type { Album } from '@/domain/entities/Album'
+import { selectDownloadersForActiveServer, downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors'
+import { selectActiveServerId, selectCredentialsHydrated } from '@/state/redux/selectors/serversSelectors'
+import { getCredentials } from '@/state/credentialCache'
+import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
+import type { DownloaderQueueItem } from './queueItem'
 
 export { downloadErrorKey } from './errorKeys'
 
@@ -20,13 +24,13 @@ export type { DownloaderId }
  * downloaders ignore it. Kept untyped at this layer so a new downloader with
  * its own preferences shape doesn't have to widen this file.
  */
-export type DownloaderConfig = {
+type DownloaderConfig = {
   serverUrl: string
   apiKey: string
   preferences?: Record<string, unknown>
 }
 
-export type DownloadResult =
+type DownloadResult =
   | { success: true }
   | { success: false; code?: string; message: string }
 
@@ -35,26 +39,35 @@ export type DownloadResult =
  * saved default. Only Lidarr album downloads currently read
  * `qualityProfileId` — every other downloader ignores this bag entirely.
  */
-export type DownloadOptions = {
+type DownloadOptions = {
   qualityProfileId?: number
 }
 
+/** One of a downloader's named quality settings, chosen by id per Get. */
+export type QualityProfile = { id: number; name: string }
+
 /**
- * The whole external album, not just its title and artist: Lidarr resolves the
+ * The whole browsed album, not just its title and artist: Lidarr resolves the
  * release by MBID/Deezer id where available, and collapsing it to two strings
  * here would put it back on fuzzy name matching.
  */
-export type AlbumDownloadRequest = ExternalAlbumBase
-export type TrackDownloadRequest = { title: string; artist: string }
+type AlbumDownloadRequest = Album
+type TrackDownloadRequest = { title: string; artist: string }
 
 /**
- * Downloaders converge on the `IntegrationModule` contract (auth, slots,
- * testConnection) while keeping their own operational fields — settings
- * route, toast keys, and queue polling — that aren't product capabilities
- * and so have no `CapabilitySlot` of their own.
+ * What a downloader is and what it can do — the one place either is declared.
+ *
+ * Acquisition is not a broker capability. It was declared as one once, as a
+ * thinner copy of the methods below that nothing called: it could carry no
+ * per-call options (Lidarr's quality profile), no error codes, and no queue.
+ * Every download flow — the Get sheet, the auto-downloader, batch requests —
+ * calls these definitions directly.
  */
-export type DownloaderDefinition = IntegrationModule & {
-  // Narrows `IntegrationModule.id: string` back to the closed downloader-id
+type DownloaderDefinition = {
+  label: string
+  auth: AuthDescriptor
+  testConnection(config: unknown): Promise<Health>
+  // Narrows the id back to the closed downloader-id
   // union so every existing consumer keyed on `DownloaderId` still compiles.
   id: DownloaderId
   descriptionKey: string
@@ -68,29 +81,43 @@ export type DownloaderDefinition = IntegrationModule & {
    * both. Callers presence-check the unit they need rather than assuming an
    * album is always on offer — `downloadAlbum` used to be required, which was
    * Lidarr's shape written into the contract for everyone.
-   *
-   * These stay as their own top-level fields (not read off `slots`) because
-   * every existing consumer calls them directly; `slots['acquisition.album']`
-   * / `slots['acquisition.track']` are an additional capability-view over the
-   * same methods, kept in sync below, not a replacement for them.
    */
   downloadAlbum?(config: DownloaderConfig, req: AlbumDownloadRequest, options?: DownloadOptions): Promise<DownloadResult>
   downloadTrack?(config: DownloaderConfig, req: TrackDownloadRequest): Promise<DownloadResult>
   /**
-   * Reads the transfer queue and reports which items disappeared since the
-   * previous read — the global completion watcher uses these disappearances to
-   * kick a server rescan so downloaded music appears without a manual pull.
-   * Typed loosely because each downloader has its own record shape and the
-   * watcher only needs the count of finished items.
-   *
-   * Downloader-operational, not a product capability: it's how a downloader
-   * reports progress on units it already fills, not a unit of its own — so it
-   * deliberately does not map to a `CapabilitySlot`.
+   * The quality profiles an album Get can pick from, passed back as
+   * `options.qualityProfileId`. Absent where a downloader has no such setting,
+   * which is how the Get sheet knows not to offer one.
    */
-  fetchQueueWithDiff<T extends { id: string }>(
-    config: DownloaderConfig,
-    previous: T[]
-  ): Promise<{ currentQueue: T[]; finishedItems: T[] }>
+  getQualityProfiles?(config: DownloaderConfig): Promise<QualityProfile[]>
+  /**
+   * Read the transfer queue, in the one shape every surface understands.
+   *
+   * Normalising here rather than at each reader is the point. This used to
+   * returned the downloader's own records, typed
+   * `T extends { id: string }` and reached through two `as any` casts — so
+   * everything downstream either knew all three record shapes or knew none of
+   * them, and the surfaces that needed detail chose the former.
+   *
+   * Diffing moved out with the types: comparing two reads by id needs nothing
+   * downloader-specific, and it was being done three times, once per record
+   * shape. See `finishedSince`.
+   *
+   * Downloader-operational, not a product capability: it is how a downloader
+   * reports progress on units it already fills, not a unit of its own — nobody
+   * asks "who can poll a queue".
+   */
+  fetchQueue(config: DownloaderConfig): Promise<DownloaderQueueItem[]>
+  /**
+   * Stop a queued transfer. Absent where the downloader offers no way to.
+   *
+   * Takes the normalised item rather than the downloader's own record, and
+   * reads `transferIds` and `peer` back out of it — which is all any of the
+   * three needed. Before this, cancelling was wired up at the screen, inside a
+   * three-way `if (id === ...)` that also chose the fetch and the row renderer;
+   * a fourth downloader meant a fourth branch in a file about layout.
+   */
+  cancelQueueItem?(config: DownloaderConfig, item: DownloaderQueueItem): Promise<void>
 }
 
 /** All three downloaders authenticate the same way: a server URL plus an API key. */
@@ -116,12 +143,28 @@ const lidarrDownloader: DownloaderDefinition = {
   albumAddedKey: 'externalAlbum.download.addedToLidarr',
   settingsRoute: '/settings/lidarrView',
   auth: apiKeyAuth,
-  // Lidarr is album-only — no `acquisition.track` slot.
-  slots: {
-    'acquisition.album': lidarrDownloadAlbum,
-  },
+  // Lidarr is album-only — no `downloadTrack`.
   downloadAlbum: lidarrDownloadAlbum,
-  fetchQueueWithDiff: lidarr.fetchQueueWithDiff as DownloaderDefinition['fetchQueueWithDiff'],
+  getQualityProfiles: (config) => lidarr.getQualityProfiles(lidarrConfigOf(config)),
+  fetchQueue: async (config) => (await lidarr.fetchQueue(lidarrConfigOf(config))).map(record => ({
+    id: record.id,
+    percentComplete: record.percentComplete,
+    title: record.albumTitle,
+    artistName: record.artistName,
+    trackCount: record.trackCount,
+    warnings: record.statusMessages?.map(message => message.title),
+    // One row is an album's worth of Lidarr queue entries, and cancelling the
+    // row means cancelling all of them.
+    transferIds: record.rawIds.map(String),
+    // Lidarr keeps a finished import in the queue while it moves the files,
+    // and `trackedDownloadState` is what says so — `status` alone stays
+    // "completed" through the import that has not happened yet.
+    active: (record.trackedDownloadState ?? '').toLowerCase() !== 'imported',
+    // It resolved the album by MBID or id before it ever queued anything.
+    identity: 'exact' as const,
+  })),
+  cancelQueueItem: (config, item) =>
+    lidarr.cancelQueueItem(lidarrConfigOf(config), { rawIds: item.transferIds.map(Number) }),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await lidarr.testConnection(lidarrConfigOf(config as DownloaderConfig))
     return { ok: Boolean(ok) }
@@ -143,10 +186,10 @@ function slskdConfigOf(config: DownloaderConfig): slskd.SlskdConfig {
 const slskdDownloadAlbum = (config: DownloaderConfig, album: AlbumDownloadRequest) =>
   slskd.downloadAlbum(slskdConfigOf(config), {
     title: album.title,
-    artist: album.artist,
+    artist: album.artist.name,
     // Preserve any MBID the resolver captured — the slskd side uses it to
     // pull canonical strings from MusicBrainz before searching Soulseek.
-    mbid: album.externalIds?.mbid ?? null,
+    mbid: album.externalIds.mbid ?? null,
   })
 
 const slskdDownloadTrack = (config: DownloaderConfig, req: TrackDownloadRequest) =>
@@ -164,14 +207,27 @@ const slskdDownloader: DownloaderDefinition = {
   settingsRoute: '/settings/slskdView',
   auth: apiKeyAuth,
   // slskd does both units.
-  slots: {
-    'acquisition.album': slskdDownloadAlbum,
-    'acquisition.track': slskdDownloadTrack,
-  },
   downloadAlbum: slskdDownloadAlbum,
   downloadTrack: slskdDownloadTrack,
-  fetchQueueWithDiff: ((config: DownloaderConfig, previous: { id: string }[]) =>
-    slskd.fetchQueueWithDiff(slskdConfigOf(config), previous as any)) as DownloaderDefinition['fetchQueueWithDiff'],
+  fetchQueue: async (config) => (await slskd.fetchQueue(slskdConfigOf(config))).map(record => ({
+    id: record.id,
+    percentComplete: record.percentComplete,
+    title: record.title,
+    artistName: record.artistName,
+    fileCount: record.fileCount,
+    sizeBytes: record.size,
+    speedBytesPerSec: record.averageSpeed,
+    peer: record.username,
+    transferIds: record.fileIds,
+    active: record.state.toLowerCase() !== 'completed',
+    // Soulseek has no album identity — the title came off a remote path.
+    identity: 'loose' as const,
+  })),
+  cancelQueueItem: (config, item) =>
+    slskd.cancelQueueItem(slskdConfigOf(config), {
+      username: item.peer ?? '',
+      fileIds: item.transferIds,
+    }),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await slskd.testConnection(slskdConfigOf(config as DownloaderConfig))
     return { ok }
@@ -202,13 +258,27 @@ const soulsyncDownloader: DownloaderDefinition = {
   trackAddedKey: 'externalAlbum.download.addedTrackToSoulsync',
   settingsRoute: '/settings/soulsyncView',
   auth: apiKeyAuth,
-  // SoulSync is track-only — no `acquisition.album` slot.
-  slots: {
-    'acquisition.track': soulsyncDownloadTrack,
-  },
+  // SoulSync is track-only — no `downloadAlbum`.
   downloadTrack: soulsyncDownloadTrack,
-  fetchQueueWithDiff: ((config: DownloaderConfig, previous: { id: string }[]) =>
-    soulsync.fetchQueueWithDiff(soulsyncConfigOf(config), previous as any)) as DownloaderDefinition['fetchQueueWithDiff'],
+  fetchQueue: async (config) => (await soulsync.fetchQueue(soulsyncConfigOf(config))).map(record => ({
+    id: record.id,
+    percentComplete: record.progress,
+    // The album, not the track: this is matched against an album the listener
+    // is looking at, and a single track's name would never match one.
+    title: record.album || record.title,
+    artistName: record.artist,
+    albumTitle: record.album || undefined,
+    peer: record.username,
+    transferIds: [record.id],
+    active: record.status.toLowerCase() !== 'completed',
+    // SoulSync searches by name, so what it found is a best effort too.
+    identity: 'loose' as const,
+  })),
+  cancelQueueItem: (config, item) =>
+    soulsync.cancelDownload(soulsyncConfigOf(config), {
+      id: item.id,
+      username: item.peer ?? '',
+    }),
   testConnection: async (config: unknown): Promise<Health> => {
     const ok = await soulsync.testConnection(soulsyncConfigOf(config as DownloaderConfig))
     return { ok }
@@ -229,16 +299,22 @@ export type DownloaderState = {
 
 export function useDownloaderStates(): DownloaderState[] {
   const entry = useSelector(selectDownloadersForActiveServer)
+  const serverId = useSelector(selectActiveServerId)
+  // Not read directly — see `ServersState.credentialsHydrated`. Its only job
+  // is to be a dependency that changes once the startup keystore read lands,
+  // so `config.apiKey` (below) is recomputed from real values.
+  const credentialsHydrated = useSelector(selectCredentialsHydrated)
   // Memoized on `entry`: callers use the returned array as an effect
   // dependency, and a fresh array every render turns those effects into
   // render loops.
   return useMemo(() => ALL_DOWNLOADERS.map((def) => {
     const connection = entry[def.id]
+    const apiKey = serverId ? getCredentials(downloaderCredentialScope(def.id, serverId)).apiKey ?? '' : ''
     return {
       def,
       config: {
         serverUrl: connection?.serverUrl ?? '',
-        apiKey: connection?.apiKey ?? '',
+        apiKey,
         // Bundling preferences into the config here means every download-time
         // call site — the sheet, the auto-downloader, batch flows — carries
         // them without having to know they exist.
@@ -246,7 +322,8 @@ export function useDownloaderStates(): DownloaderState[] {
       },
       isConnected: connection?.isAuthenticated === true,
     }
-  }), [entry])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- credentialsHydrated is the recompute trigger described above, not a value read here
+  }), [entry, serverId, credentialsHydrated])
 }
 
 export function useAnyDownloaderConnected(): boolean {

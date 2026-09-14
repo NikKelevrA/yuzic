@@ -2,20 +2,19 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import SongOptions from './SongOptions';
-import type { ExternalSong, Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', border: '#ccc', favorite: '#f00', placeholder: '#999' }, isDarkMode: false }),
 }));
 
-jest.mock('@/hooks/useRadius', () => ({
+jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ lg: 16, card: 8 }),
 }));
 
@@ -23,11 +22,11 @@ jest.mock('@/components/BottomSheetBackdrop', () => ({
   renderBackdrop: () => null,
 }));
 
-jest.mock('@/utils/useSheetRef', () => ({
+jest.mock('@/components/useSheetRef', () => ({
   useSheetRef: () => ({ current: null }),
 }));
 
-jest.mock('@/utils/haptics', () => ({
+jest.mock('@/components/haptics', () => ({
   __esModule: true,
   default: { selection: jest.fn(), tap: jest.fn(), primary: jest.fn(), heavy: jest.fn(), success: jest.fn(), warning: jest.fn(), error: jest.fn() },
   selection: jest.fn(),
@@ -44,48 +43,45 @@ jest.mock('react-redux', () => ({
   useDispatch: () => mockDispatch,
 }));
 
-jest.mock('@/utils/redux/selectors/statsSelectors', () => ({
+jest.mock('@/state/redux/selectors/statsSelectors', () => ({
   selectSongPlayCount: () => () => 0,
 }));
 
-jest.mock('@/utils/redux/selectors/serversSelectors', () => ({
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
   selectActiveServerId: () => 'server-1',
 }));
 
 const mockIsWanted = jest.fn(() => false);
-jest.mock('@/utils/redux/selectors/wantsSelectors', () => ({
+jest.mock('@/state/redux/selectors/wantsSelectors', () => ({
   selectIsWanted: (_localId: string) => () => mockIsWanted(),
 }));
 
-jest.mock('@/utils/redux/slices/wantsSlice', () => ({
+jest.mock('@/state/redux/slices/wantsSlice', () => ({
   addWant: (payload: any) => ({ type: 'wants/addWant', payload }),
   removeWant: (payload: any) => ({ type: 'wants/removeWant', payload }),
 }));
 
-jest.mock('@/utils/redux/selectors/audiomuseSelectors', () => ({
-  selectIsAudiomuseConfigured: () => false,
-  selectAudiomuseConfig: () => ({}),
-}));
+jest.mock('@/providers/registry/similarityService', () => ({ useSimilarityService: () => null }));
 
 const mockGenerateSimilarPlaylist = jest.fn();
-jest.mock('@/features/audiomuse/generatePlaylist', () => ({
-  generateSimilarPlaylist: (...args: unknown[]) => mockGenerateSimilarPlaylist(...args),
+jest.mock('@/features/playlist/generateSimilarPlaylist', () => ({
+  generateSimilarPlaylistForSong: (...args: unknown[]) => mockGenerateSimilarPlaylist(...args),
 }));
 
-jest.mock('@/api', () => ({
+jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({}),
 }));
 
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingState: () => ({ currentSong: null }),
   usePlayingActions: () => ({ addToQueue: jest.fn(), playNext: jest.fn(), playSimilar: jest.fn() }),
 }));
 
-jest.mock('@/hooks/useIsOffline', () => ({
+jest.mock('@/features/connectivity/useIsOffline', () => ({
   useIsOffline: () => false,
 }));
 
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownload: () => ({
     downloadTrack: jest.fn(),
     deleteDownloadedTrack: jest.fn(),
@@ -98,11 +94,9 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
-jest.mock('@/hooks/starred', () => ({
-  useStarredSongs: () => ({ songs: [] }),
-  useStarSong: () => ({ mutateAsync: jest.fn() }),
-  useUnstarSong: () => ({ mutateAsync: jest.fn() }),
-}));
+jest.mock('@/features/library/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
+jest.mock('@/features/library/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/features/library/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: jest.fn() }) }));
 
 jest.mock('@/features/downloaders/registry', () => ({
   useAnyDownloaderConnected: jest.fn(() => false),
@@ -111,8 +105,9 @@ jest.mock('@/features/downloaders/registry', () => ({
 
 jest.mock('@/components/options/GetReviewSheet', () => 'GetReviewSheet');
 
+jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
+
 jest.mock('@/components/options/OptionSheetPrimitives', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   return {
     OptionSheetHeader: ({ title, subtitle }: any) => (
@@ -139,24 +134,57 @@ const { useAnyDownloaderConnected, useAnyTrackDownloaderConnected } = jest.requi
 };
 
 const librarySong: Song = {
-  id: 's1',
+  localId: 'local:song:srv:server1:s1' as Song['localId'],
+  nativeId: 's1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Local Song',
-  artist: 'Some Artist',
-  artistId: 'ar1',
+  artist: {
+    localId: 'local:artist:srv:server1:ar1' as Song['artist']['localId'],
+    nativeId: 'ar1',
+    name: 'Some Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:srv:server1:al1' as Song['album']['localId'],
+    nativeId: 'al1',
+    title: 'Local Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'al1',
-  streamUrl: 'https://example.com/stream',
+  durationSeconds: 180,
+  contentKind: 'song',
+  genres: [],
 };
 
-const externalSong: ExternalSong = {
-  id: 'ext-s1',
+const externalSong: Song = {
+  localId: 'local:song:ext:deezer:ext-s1' as Song['localId'],
+  nativeId: 'ext-s1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Song',
-  artist: 'External Artist',
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Song['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:ext:deezer:ext-al1' as Song['album']['localId'],
+    nativeId: 'ext-al1',
+    title: 'External Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'ext-al1',
-  externalSource: 'deezer',
+  durationSeconds: 180,
+  contentKind: 'preview',
+  genres: [],
 };
 
 describe('SongOptions', () => {
@@ -253,17 +281,9 @@ describe('SongOptions', () => {
     expect(mockDispatch.mock.calls[0][0].type).toBe('wants/removeWant');
   });
 
-  it('hides the Want row when the song has no externalSource (no stable localId)', async () => {
-    const noSourceSong: ExternalSong = { ...externalSong, externalSource: undefined };
-    const view = await render(
-      <SongOptions
-        ref={null as any}
-        selectedSong={noSourceSong}
-        albumTitle="External Album"
-        albumArtist="External Artist"
-      />
-    );
-    expect(view.queryByText('externalAlbum.menu.want')).toBeNull();
-    expect(view.queryByText('externalAlbum.menu.wanted')).toBeNull();
-  });
+  // The "no externalSource / no stable localId" case this used to cover is
+  // no longer representable: every domain `Song` carries a required
+  // `provenance` and `localId` (`EntityCore`), not fields added partway
+  // through the pre-rewrite migration, so there is no longer a real song
+  // value with them absent to construct.
 });

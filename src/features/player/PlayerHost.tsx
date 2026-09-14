@@ -11,21 +11,20 @@ import Animated, {
 import ImageColors from 'react-native-image-colors';
 import { useSelector } from 'react-redux';
 
-import { createAccentCache, pickAccent, toWashAccent } from '@/features/theme/coverAccent';
-import { PLAYING_GRADIENT_CACHE_MAX } from '@/constants/features';
-import { usePlayingState } from '@/contexts/PlayingContext';
+import { ACCENT_CACHE_MAX, createAccentCache, pickAccent, toWashAccent } from '@/features/theme/coverAccent';
+import { usePlayingState } from '@/features/playback/PlayingContext';
 import { MediaImage } from '@/components/MediaImage';
-import { buildCover } from '@/utils/builders/buildCover';
-import { selectCoverAccentEnabled } from '@/utils/redux/selectors/settingsSelectors';
-import PlayingScreen from '@/screens/playing';
-import PlayingBackground from '@/screens/playing/components/PlayingBackground';
-import { useRadius } from '@/hooks/useRadius';
+import { buildCover } from '@/providers/registry/covers';
+import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
+import PlayingScreen from '@/features/player/PlayingScreen';
+import PlayingBackground from '@/features/player/components/PlayingBackground';
+import { useRadius } from '@/features/theme/useRadius';
 
-import { coverSlideOffset } from '@/screens/playing/coverTransition';
+import { coverSlideOffset } from '@/features/player/coverTransition';
 
 import { coverHandedOver, usePlayerExpansion } from './PlayerExpansion';
 
-const gradientCache = createAccentCache<[string, string]>(PLAYING_GRADIENT_CACHE_MAX);
+const gradientCache = createAccentCache<[string, string]>(ACCENT_CACHE_MAX);
 
 /** What the player fades to with no accent to show — extraction failed, or the
  *  user turned cover tinting off. */
@@ -67,18 +66,18 @@ export default function PlayerHost() {
   useEffect(() => {
     if (
       !coverSlide || coverSlide.phase !== 'exiting' ||
-      !currentSong?.id || currentSong.id === coverSlide.outgoingSongId
+      !currentSong?.localId || currentSong.localId === coverSlide.outgoingSongId
     ) return;
 
     coverSwipeX.value = coverSlideOffset(coverSlide.direction, 'entering', width);
-    enterCoverSlide(currentSong.id);
+    enterCoverSlide(currentSong.localId);
     const frame = requestAnimationFrame(() => {
       coverSwipeX.value = withTiming(0, { duration: motion.swipe }, finished => {
         if (finished) runOnJS(finishCoverSlide)();
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [coverSlide, coverSwipeX, currentSong?.id, enterCoverSlide, finishCoverSlide, width]);
+  }, [coverSlide, coverSwipeX, currentSong?.localId, enterCoverSlide, finishCoverSlide, width]);
 
   const extractColors = useCallback(async (uri: string) => {
     const cached = gradientCache.get(uri);
@@ -117,7 +116,7 @@ export default function PlayerHost() {
       buildCover(currentSong.cover, 'grid') ??
       buildCover({ kind: 'none' }, 'grid');
     if (uri) extractColors(uri);
-  }, [coverAccentEnabled, currentSong?.cover, currentSong?.id, extractColors]);
+  }, [coverAccentEnabled, currentSong?.cover, currentSong?.localId, extractColors]);
 
   const handleFadeComplete = useCallback(() => {
     setCurrentGradient(nextGradient);

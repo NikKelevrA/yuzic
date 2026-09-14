@@ -4,23 +4,22 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ALL_DOWNLOADERS, useDownloaderStates } from './registry';
-import { describeModule, moduleFillsSlot } from '@/features/integrations/types';
-import downloadersReducer from '@/utils/redux/slices/downloadersSlice';
-import serversReducer from '@/utils/redux/slices/serversSlice';
-import * as lidarr from '@/api/lidarr';
-import * as slskd from '@/api/slskd';
-import * as soulsync from '@/api/soulsync';
+import downloadersReducer from '@/state/redux/slices/downloadersSlice';
+import serversReducer from '@/state/redux/slices/serversSlice';
+import * as lidarr from '@/providers/integration/lidarr';
+import * as slskd from '@/providers/integration/slskd';
+import * as soulsync from '@/providers/integration/soulsync';
 
-jest.mock('@/api/lidarr', () => ({
-  ...jest.requireActual('@/api/lidarr'),
+jest.mock('@/providers/integration/lidarr', () => ({
+  ...jest.requireActual('@/providers/integration/lidarr'),
   testConnection: jest.fn(),
 }));
-jest.mock('@/api/slskd', () => ({
-  ...jest.requireActual('@/api/slskd'),
+jest.mock('@/providers/integration/slskd', () => ({
+  ...jest.requireActual('@/providers/integration/slskd'),
   testConnection: jest.fn(),
 }));
-jest.mock('@/api/soulsync', () => ({
-  ...jest.requireActual('@/api/soulsync'),
+jest.mock('@/providers/integration/soulsync', () => ({
+  ...jest.requireActual('@/providers/integration/soulsync'),
   testConnection: jest.fn(),
 }));
 
@@ -90,7 +89,7 @@ describe('downloader units', () => {
   it('gives every downloader at least one unit and a way to read its queue', () => {
     for (const def of ALL_DOWNLOADERS) {
       expect(Boolean(def.downloadAlbum || def.downloadTrack)).toBe(true);
-      expect(typeof def.fetchQueueWithDiff).toBe('function');
+      expect(typeof def.fetchQueue).toBe('function');
       // The success toast is looked up by these keys, so a downloader that
       // handles a unit has to name the string for it.
       if (def.downloadAlbum) expect(def.albumAddedKey).toBeTruthy();
@@ -100,13 +99,13 @@ describe('downloader units', () => {
 });
 
 /**
- * Each downloader is also an `IntegrationModule`: it authenticates the same
+ * Each downloader authenticates the same
  * way (an apiKey tier), wires `testConnection` to its existing per-provider
  * function, and declares an `acquisition.*` slot for exactly the units it
- * implements above. `fetchQueueWithDiff` stays downloader-operational and is
+ * implements above. `fetchQueue` stays downloader-operational and is
  * deliberately absent from `slots` — it isn't a product capability.
  */
-describe('downloaders as IntegrationModules', () => {
+describe('downloaders as providers', () => {
   const by = (id: string) => ALL_DOWNLOADERS.find(d => d.id === id)!;
 
   afterEach(() => {
@@ -117,24 +116,6 @@ describe('downloaders as IntegrationModules', () => {
     for (const def of ALL_DOWNLOADERS) {
       expect(def.auth.tier).toBe('apiKey');
       expect(def.auth.configKeys).toEqual(expect.arrayContaining(['serverUrl', 'apiKey']));
-    }
-  });
-
-  it('declares slots matching each downloader\'s units', () => {
-    expect(describeModule(by('lidarr')).slots.sort()).toEqual(['acquisition.album']);
-    expect(describeModule(by('slskd')).slots.sort()).toEqual(['acquisition.album', 'acquisition.track'].sort());
-    expect(describeModule(by('soulsync')).slots.sort()).toEqual(['acquisition.track']);
-
-    expect(moduleFillsSlot(by('lidarr'), 'acquisition.album')).toBe(true);
-    expect(moduleFillsSlot(by('lidarr'), 'acquisition.track')).toBe(false);
-    expect(moduleFillsSlot(by('soulsync'), 'acquisition.track')).toBe(true);
-    expect(moduleFillsSlot(by('soulsync'), 'acquisition.album')).toBe(false);
-  });
-
-  it('does not map fetchQueueWithDiff to any capability slot', () => {
-    for (const def of ALL_DOWNLOADERS) {
-      const slotValues = Object.values(def.slots);
-      expect(slotValues).not.toContain(def.fetchQueueWithDiff);
     }
   });
 

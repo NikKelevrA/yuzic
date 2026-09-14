@@ -35,6 +35,18 @@ appId: com.arinora.rawarr
     timeout: 15000
 - tapOn: "Use Navidrome demo"
 
+# Opt-in for Deezer/ListenBrainz discovery, shown once after connecting
+# (added after this flow was written). "Not now" keeps the run offline-first
+# and leaves nothing enabled that the other suites don't expect.
+# Always shown on a fresh install, which this flow requires; waited for rather
+# than checked with `when`, since it appears only once the demo connects.
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-discovery-not-now"
+    timeout: 30000
+- tapOn:
+    id: "onboarding-discovery-not-now"
+
 - extendedWaitUntil:
     visible:
       id: "library-tab"

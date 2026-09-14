@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useTranslation } from 'react-i18next'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/features/theme/useTheme'
 import Touchable from '@/components/Touchable'
 import { iconSize, spacing, typography } from '@/constants/design'
 

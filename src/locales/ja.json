@@ -52,13 +52,6 @@
       "username": "ユーザー名",
       "notSet": "未設定",
       "connectivity": "接続状況",
-      "searchScopeHelp": "検索結果の取得元を選択",
-      "searchScope": {
-        "client": "デバイス上",
-        "clientDescription": "ローカルライブラリのみを検索",
-        "server": "サーバー",
-        "serverDescription": "サーバーの検索を使用する"
-      },
       "fallbackUrls": {
         "title": "フォールバックURL",
         "subtext": "主アドレスに接続できない時に試す予備URL。",
@@ -183,35 +176,6 @@
       "homeSourcesListenbrainzSubtext": "ListenBrainz の類似アーティストの棚を表示します。",
       "homeSourcesDeezer": "Deezer",
       "homeSourcesDeezerSubtext": "Deezerのチャート・人気曲・類似アーティスト。"
-    },
-    "lyrics": {
-      "title": "歌詞",
-      "sources": "歌詞ソース",
-      "serverEmbedded": "サーバー内蔵",
-      "serverEmbeddedSubtext": "最初に確認 — サーバーの歌詞。",
-      "lrclib": "LRCLIB",
-      "lrclibSubtext": "無料・匿名の歌詞検索。"
-    },
-    "search": {
-      "title": "検索",
-      "sourcesSection": "検索ソース",
-      "explanation": "「その他のソース」が検索する対象。ホームとは別。",
-      "deezer": "Deezer",
-      "deezerSubtext": "Deezerのアルバム・アーティストを検索。",
-      "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "MusicBrainzのアルバム・アーティストを検索。"
-    },
-    "metadata": {
-      "title": "メタデータ",
-      "explanation": "サーバーにない情報を補完します。サーバーは変更しません。",
-      "artistInfoSection": "アーティスト情報",
-      "artworkSection": "アートワーク",
-      "lastfm": "Last.fm",
-      "lastfmSubtext": "経歴とタグ",
-      "deezerArtwork": "Deezer",
-      "deezerArtworkSubtext": "アーティスト画像",
-      "coverArtArchive": "Cover Art Archive",
-      "coverArtArchiveSubtext": "アルバムのジャケット"
     },
     "library": {
       "title": "ライブラリ",
@@ -362,7 +326,7 @@
       "showVolumeSlider": "音量スライダー",
       "showVolumeSliderSubtext": "プレーヤーに音量スライダー。",
       "autoplay": "自動再生",
-      "autoplaySubtextAudiomuse": "AudioMuse-AIで類似曲を続けて再生。",
+      "autoplaySubtextSimilarity": "AudioMuse-AIで類似曲を続けて再生。",
       "autoplaySubtextNative": "サーバーの類似曲を続けて再生。",
       "resumeLongTracks": "長いトラックを再開",
       "resumeLongTracksSubtext": "オーディオブックやDJセット、ポッドキャストを再開。",
@@ -467,36 +431,6 @@
         "disconnected": "SoulSync から切断しました。"
       }
     },
-    "musicbrainz": {
-      "external": "外部アーティスト・アルバムデータ",
-      "externalDescription": "MusicBrainzでページを補完。アカウント不要。"
-    },
-    "lastfm": {
-      "enable": "アーティスト・おすすめデータ",
-      "enableDescription": "類似アーティストとプレイリストの種。アカウント不要。名前を送信。"
-    },
-    "deezer": {
-      "discovery": "ディスカバリー",
-      "discoveryDescription": "探索画面にDeezerのチャートと推薦。",
-      "search": "検索",
-      "searchDescription": "検索に Deezer の結果を含める。",
-      "external": "外部アーティスト・アルバムデータ",
-      "externalDescription": "Deezerでアルバム・アーティストのページを補完。",
-      "topTracks": "人気曲",
-      "topTracksDescription": "アーティストページに Deezer の人気曲を表示。",
-      "similarArtists": "類似アーティスト",
-      "similarArtistsDescription": "アーティストページに Deezer の類似アーティストを表示。",
-      "albumRecommendations": "おすすめ",
-      "albumRecommendationsDescription": "アルバムページに推薦アルバム。",
-      "samples": "サンプル",
-      "samplesDescription": "外部アルバムに30秒の試聴。",
-      "enableSamplesToPreview": "プレビューを聴くには設定でサンプルを有効にしてください",
-      "playlistRecommendations": "おすすめ",
-      "playlistRecommendationsDescription": "Deezer のおすすめプレイリストを表示。",
-      "artistSection": "アーティスト",
-      "albumSection": "アルバム",
-      "playlistSection": "プレイリスト"
-    },
     "audiomuse": {
       "title": "AudioMuse-AI",
       "credentialsHelper": "Smart Shuffle用の自己ホスト型AudioMuse-AI。",
@@ -531,11 +465,8 @@
     "home": {
       "title": "ホーム",
       "shelfLength": "Shelf size",
-      "shelvesTitle": "Home shelves",
-      "orderTitle": "Shelf order",
       "sleepPresets": "Sleep timer quick-adds",
       "sleepPresetsSubtext": "Show this duration as a quick-add button.",
-      "shelfSubtext": "Show this shelf on Home.",
       "selected": "Selected",
       "minutes": "{{count}} minutes",
       "length": {
@@ -565,7 +496,99 @@
         "lbCreatedForWeeklyExploration": "Weekly exploration",
         "topArtists": "Top artists",
         "charts": "Charts"
+      },
+      "connectListenBrainz": "ListenBrainzを接続して、あなた向けのプレイリストを表示"
+    },
+    "sources": {
+      "deezer": {
+        "name": "Deezer",
+        "sends": "アーティスト名・アルバム名・曲名と、検索した内容を送信します。"
+      },
+      "listenbrainz": {
+        "name": "ListenBrainz",
+        "sends": "IDを調べるためにアーティスト名をMusicBrainzへ、そのIDをListenBrainzへ送信します。接続している場合はListenBrainzのユーザー名も送信します。"
+      },
+      "lastfm": {
+        "name": "Last.fm",
+        "sends": "アーティスト名を送信します。アカウントは不要です。"
+      },
+      "musicbrainz": {
+        "name": "MusicBrainz",
+        "sends": "検索した内容と、IDを調べるためのアーティスト名を送信します。"
+      },
+      "coverartarchive": {
+        "name": "Cover Art Archive",
+        "sends": "ジャケットを探すためにアルバム名とアーティスト名を送信します。"
+      },
+      "lrclib": {
+        "name": "LRCLIB",
+        "sends": "歌詞を探すために曲名とアーティスト名を送信します。アカウントは不要です。"
+      },
+      "usedFor": "用途",
+      "stopUsing": "{{name}}の使用をやめる",
+      "off": "オフ",
+      "promptTitle": "{{name}}の{{use}}をオンにしますか？",
+      "turnOn": "オンにする",
+      "notNow": "今はしない"
+    },
+    "sourceUses": {
+      "lastfm": {
+        "artistInfo": "アーティストの経歴とタグ。",
+        "similarArtists": "Last.fmのリスナーによる似たアーティスト。",
+        "recommendations": "プレイリストのアーティストに似たアーティストを探します。"
+      },
+      "coverartarchive": {
+        "artwork": "リリースに正確に一致するアルバムアート。"
+      },
+      "deezer": {
+        "artwork": "アーティスト写真と、サーバーにないアルバムアート。",
+        "similarArtists": "Deezerの関連アーティスト。",
+        "popularTracks": "アーティストの人気曲。",
+        "previews": "持っていない曲の30秒サンプル。",
+        "recommendations": "アルバムやプレイリストに合うアルバムと曲。",
+        "homeShelves": "チャート、人気アーティスト、ジャンル別のおすすめ。",
+        "search": "Deezerを検索し、そのアルバムとアーティストを開きます。"
+      },
+      "lrclib": {
+        "lyrics": "サーバーに歌詞がないときの同期歌詞。"
+      },
+      "listenbrainz": {
+        "similarArtists": "みんなが聴いている音楽から見つけた似たアーティスト。",
+        "homeShelves": "似たアーティスト。アカウントを接続すると、あなた向けのプレイリストも。"
+      },
+      "musicbrainz": {
+        "search": "MusicBrainzを検索し、そのアルバムとアーティストを開きます。"
       }
+    },
+    "sourcePurposes": {
+      "artistInfo": "アーティスト情報",
+      "artwork": "アートワーク",
+      "lyrics": "歌詞",
+      "similarArtists": "似たアーティスト",
+      "popularTracks": "人気曲",
+      "previews": "プレビュー",
+      "recommendations": "おすすめ",
+      "homeShelves": "ホームの棚",
+      "search": "検索"
+    },
+    "metadata": {
+      "title": "メタデータ",
+      "explanation": "サーバーに足りない情報を補います。常にサーバーが最初に確認されます。"
+    },
+    "pages": {
+      "title": "ページ",
+      "explanation": "ライブラリの外の音楽 — アーティスト、アルバム、プレイリストのページで。"
+    },
+    "search": {
+      "title": "検索",
+      "scopeTitle": "ライブラリを検索する場所",
+      "scope": {
+        "client": "デバイス上",
+        "clientDescription": "ローカルライブラリのみを検索",
+        "server": "サーバー",
+        "serverDescription": "サーバーの検索を使用する"
+      },
+      "otherSources": "その他のソース"
     }
   },
   "common": {
@@ -728,7 +751,7 @@
       "title": "ダウンロード"
     },
     "downloaded": {
-      "title": "オフライン"
+      "clear": "削除"
     },
     "wants": {
       "title": "ウォンツ"
@@ -737,6 +760,7 @@
       "switchToList": "リスト表示に切り替え",
       "switchToGrid": "グリッド表示に切り替え"
     },
+    "albumTypeLabel": "アルバム • {{artist}}",
     "genres": {
       "title": "ジャンル",
       "albumCount_one": "{{count}} 枚のアルバム",
@@ -851,7 +875,8 @@
       "title": "フィルター",
       "sources": "ソース",
       "entityTypes": "対象",
-      "noSourcesEnabled": "検索ソースが有効になっていません。設定 › 検索 で有効にしてください。"
+      "sendsQuery": "入力内容を{{name}}に送信します",
+      "alsoInSettings": "設定 › 検索にもあります。"
     },
     "entityTypes": {
       "song": "曲",
@@ -975,11 +1000,13 @@
     "subtext": "プレイリスト・{{count}}曲",
     "subtext_other": "プレイリスト・{{count}}曲",
     "empty": "このプレイリストにはまだ曲がありません。",
+    "originShared": "共有",
+    "originExternal": "{{provider}}から",
     "recommended": {
       "title": "おすすめ",
       "local": "ライブラリから",
       "external": "ディスカバー",
-      "deezerTitle": "Deezerより",
+      "catalogueTitle": "Deezerより",
       "added": "プレイリストに追加しました",
       "addFailed": "曲の追加に失敗しました",
       "externalEmpty": "まだ発見するものがありません",
@@ -1414,7 +1441,8 @@
       "themeColor": "テーマカラー {{color}}",
       "clearProviderDownloads": "{{provider}}のダウンロードをすべて削除",
       "removeDownload": "ダウンロード{{title}}を削除",
-      "reorderSource": "{{name}}を並べ替え"
+      "reorderSource": "{{name}}を並べ替え",
+      "sourceDetails": "{{name}}について"
     },
     "onboarding": {
       "serverOptions": "{{url}}のオプション"

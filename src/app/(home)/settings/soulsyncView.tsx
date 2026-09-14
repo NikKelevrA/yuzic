@@ -1,4 +1,4 @@
-import SoulSyncView from '@/screens/settings/downloaders/SoulSync';
+import SoulSyncView from '@/features/settings/downloaders/SoulSync';
 
 export default function SoulSyncSettingsView() {
   return <SoulSyncView />;

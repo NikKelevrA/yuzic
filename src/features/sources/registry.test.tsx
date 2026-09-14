@@ -4,20 +4,12 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ALL_SOURCES, getSourceMeta, useEnabledExternalSources } from './registry';
-import { describeModule, moduleFillsSlot } from '@/features/integrations/types';
-import settingsReducer, {
-  setDeezerExternalEnabled,
-  setMusicbrainzExternalEnabled,
-} from '@/utils/redux/slices/settingsSlice';
+import settingsSourcesReducer, { setSourceUse } from '@/features/settings/sources/state';
 
-function makeStore(overrides: Partial<{ deezerExternalEnabled: boolean; musicbrainzExternalEnabled: boolean }> = {}) {
-  const store = configureStore({ reducer: { settings: settingsReducer } });
-  if (overrides.deezerExternalEnabled !== undefined) {
-    store.dispatch(setDeezerExternalEnabled(overrides.deezerExternalEnabled));
-  }
-  if (overrides.musicbrainzExternalEnabled !== undefined) {
-    store.dispatch(setMusicbrainzExternalEnabled(overrides.musicbrainzExternalEnabled));
-  }
+function makeStore(overrides: Partial<{ deezer: boolean; musicbrainz: boolean }> = {}) {
+  const store = configureStore({ reducer: { settingsSources: settingsSourcesReducer } });
+  if (overrides.deezer !== undefined) store.dispatch(setSourceUse({ use: 'deezer.search', enabled: overrides.deezer }));
+  if (overrides.musicbrainz !== undefined) store.dispatch(setSourceUse({ use: 'musicbrainz.search', enabled: overrides.musicbrainz }));
   return store;
 }
 
@@ -44,14 +36,14 @@ describe('useEnabledExternalSources', () => {
     expect(result.current).toEqual([]);
   });
 
-  it('includes only the sources whose settings flag is enabled', async () => {
-    const store = makeStore({ deezerExternalEnabled: true, musicbrainzExternalEnabled: false });
+  it('includes only the sources switched on — the same switch Search uses', async () => {
+    const store = makeStore({ deezer: true, musicbrainz: false });
     const { result } = await renderHook(() => useEnabledExternalSources(), { wrapper: wrapper(store) });
     expect(result.current.map((s) => s.id)).toEqual(['deezer']);
   });
 
-  it('includes both sources when both flags are enabled', async () => {
-    const store = makeStore({ deezerExternalEnabled: true, musicbrainzExternalEnabled: true });
+  it('includes both sources when both are switched on', async () => {
+    const store = makeStore({ deezer: true, musicbrainz: true });
     const { result } = await renderHook(() => useEnabledExternalSources(), { wrapper: wrapper(store) });
     expect(result.current.map((s) => s.id).sort()).toEqual(['deezer', 'musicbrainz']);
   });
@@ -59,14 +51,13 @@ describe('useEnabledExternalSources', () => {
 
 /**
  * Both sources are keyless public APIs — no credentials, no server URL, no
- * account — so they converge on the `IntegrationModule` contract with a
+ * account — so they declare a
  * `'none'` auth tier and a trivial `testConnection` (nothing to authenticate;
  * "enabled" is a plain user setting, not a connection). Each declares both
  * `resolution` (its resolveArtist/resolveAlbum/fetchAlbum identity/metadata
  * work) and `discovery.shelf` (it feeds Home's external discovery shelves).
  */
-describe('sources as IntegrationModules', () => {
-  const by = (id: string) => ALL_SOURCES.find((s) => s.id === id)!;
+describe('sources as providers', () => {
 
   it('declares none auth for every source', () => {
     for (const def of ALL_SOURCES) {
@@ -81,18 +72,6 @@ describe('sources as IntegrationModules', () => {
     }
   });
 
-  it('declares resolution and discovery.shelf slots for both sources', () => {
-    expect(describeModule(by('deezer')).slots.sort()).toEqual(['discovery.shelf', 'resolution'].sort());
-    expect(describeModule(by('musicbrainz')).slots.sort()).toEqual(['discovery.shelf', 'resolution'].sort());
-
-    expect(moduleFillsSlot(by('deezer'), 'resolution')).toBe(true);
-    expect(moduleFillsSlot(by('deezer'), 'discovery.shelf')).toBe(true);
-    expect(moduleFillsSlot(by('musicbrainz'), 'resolution')).toBe(true);
-    expect(moduleFillsSlot(by('musicbrainz'), 'discovery.shelf')).toBe(true);
-
-    // Not every capability slot is filled — sources don't do acquisition.
-    expect(moduleFillsSlot(by('deezer'), 'acquisition.album')).toBe(false);
-  });
 
   it('keeps the resolve/fetch methods callable independent of slots', () => {
     for (const def of ALL_SOURCES) {

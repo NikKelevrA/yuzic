@@ -1,13 +1,13 @@
-import type { BrowseNode } from 'yuzic-engine';
-import type { BrowseCategory, BrowseItem } from './browse';
 import { isFlat } from './audioSettings';
 import type { MediaItem } from './mediaItem';
 import type { PlayerBackend, BackendEvent } from './backend';
 import {
   applyEvent,
   createShadow,
+  reconcileQueue,
+  toBrowseNode,
   toEngineTrack,
-  toRntpProgress,
+  toPlaybackProgress,
   type Shadow,
 } from './engineBackend';
 
@@ -32,34 +32,6 @@ import {
 function requireEngine() {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return (require('yuzic-engine') as typeof import('yuzic-engine')).YuzicEngine;
-}
-
-/**
- * One browse row, as the engine wants it.
- *
- * A row with a `url` becomes playable; one without becomes a folder and its
- * children are converted the same way. The app produces both, and which one a
- * row is cannot be told from its position in the tree — an album row and the
- * track rows beneath it sit at different depths in different categories.
- */
-function toBrowseNode(item: BrowseItem): BrowseNode {
-  return {
-    id: item.mediaId,
-    title: item.title,
-    subtitle: item.artist,
-    children: item.children?.map(toBrowseNode),
-    playable: item.url
-      ? {
-          id: item.mediaId,
-          uri: item.url,
-          title: item.title,
-          artist: item.artist,
-          durationSec: item.duration,
-          ...(item.headers ? { headers: item.headers } : {}),
-          ...(item.artworkHeaders ? { artworkHeaders: item.artworkHeaders } : {}),
-        }
-      : undefined,
-  };
 }
 
 export function createEngineBackend(): PlayerBackend {
@@ -174,6 +146,38 @@ export function createEngineBackend(): PlayerBackend {
     shadow = { ...shadow, queue: next, activeIndex };
   }
 
+  /**
+   * Take the queue back from the engine, then tell the app it moved.
+   *
+   * The shadow's edits above are predictions of calls already made, and a
+   * prediction is only good until the engine says otherwise. `queueChange` is
+   * it saying otherwise — and it is also the only way the app hears about a
+   * change it did not make: a remote command from the lock screen or the car,
+   * a track the engine dropped because it could not be opened, a queue
+   * restored into a fresh JavaScript context.
+   *
+   * The event is emitted *after* the shadow has been replaced, so a listener
+   * that reacts by calling `getQueue()` gets the engine's answer rather than
+   * the stale prediction it was sent to correct. Emitting first would make
+   * this event actively misleading.
+   *
+   * Failure is silence rather than an error. The queue the app is showing is
+   * the one it last set, which is wrong only if the engine has since changed
+   * it — and a reconciliation that could not read the engine has nothing
+   * better to offer, while a thrown error here would surface as a playback
+   * failure the listener's music never actually had.
+   */
+  async function reconcileWithEngine(): Promise<void> {
+    try {
+      const api = load();
+      const [tracks, activeIndex] = await Promise.all([api.getQueue(), api.getActiveIndex()]);
+      shadow = reconcileQueue(shadow, tracks.map(track => track.id), activeIndex);
+    } catch {
+      return;
+    }
+    emit({ type: 'queueChange' });
+  }
+
   return {
     setup() {
       // The gate already exists — see `ready` above. All this has to do is
@@ -207,6 +211,9 @@ export function createEngineBackend(): PlayerBackend {
             }
             if (event.type === 'error') {
               emit({ type: 'error', code: event.code, message: event.message });
+            }
+            if (event.type === 'queueChange') {
+              void reconcileWithEngine();
             }
           });
         }
@@ -282,7 +289,8 @@ export function createEngineBackend(): PlayerBackend {
       fire('setRepeatMode', async () => load().setRepeatMode(engineMode));
     },
 
-    getProgress() { return toRntpProgress(shadow.progress); },
+    getProgress() { return toPlaybackProgress(shadow.progress); },
+    getOutgoingProgress() { return toPlaybackProgress(shadow.outgoingProgress); },
     getQueue() { return shadow.queue; },
     // Null on an empty queue, matching rntp: "nothing is active" and "the
     // first track" are different answers, and the app branches on it.
@@ -313,6 +321,7 @@ export function createEngineBackend(): PlayerBackend {
     },
 
     clearCache() { fire('clearCache', async () => load().clearCache()); },
+    evict(mediaId) { fire('evict', async () => load().evict(mediaId)); },
 
     /**
      * Flat categories in, a tree out.

@@ -1,4 +1,4 @@
-import SharesScreen from '@/screens/shares/SharesScreen';
+import SharesScreen from '@/features/shares/SharesScreen';
 
 export default function SharesRoute() {
   return <SharesScreen />;

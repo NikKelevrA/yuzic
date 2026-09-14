@@ -10,26 +10,25 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
-import { useTheme } from '@/hooks/useTheme';
-import { useRadius } from '@/hooks/useRadius';
+import { useTheme } from '@/features/theme/useTheme';
+import { useRadius } from '@/features/theme/useRadius';
 import { useTranslation } from 'react-i18next';
 import {
   downloadErrorKey,
   useDownloaderStates,
   type DownloaderId,
   type DownloaderState,
+  type QualityProfile,
 } from '@/features/downloaders/registry';
-import * as lidarr from '@/api/lidarr';
-import type { LidarrQualityProfile } from '@/api/lidarr';
-import { setDefaultProvider, setLidarrDefaultQualityProfileId } from '@/utils/redux/slices/downloadersSlice';
+import { setDefaultProvider, setDefaultQualityProfileId } from '@/state/redux/slices/downloadersSlice';
 import {
   selectDefaultProviderForActiveServer,
-  selectLidarrDefaultQualityProfileId,
-} from '@/utils/redux/selectors/downloadersSelectors';
-import { selectActiveServer, selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectIsWanted } from '@/utils/redux/selectors/wantsSelectors';
-import { setWantJobRef } from '@/utils/redux/slices/wantsSlice';
-import type { ExternalAlbumBase } from '@/types';
+  selectDefaultQualityProfileId,
+} from '@/state/redux/selectors/downloadersSelectors';
+import { selectActiveServer, selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { selectIsWanted } from '@/state/redux/selectors/wantsSelectors';
+import { setWantJobRef } from '@/state/redux/slices/wantsSlice';
+import type { Album } from '@/domain/entities/Album';
 import {
   OptionSheetDivider,
   OptionSheetHeader,
@@ -39,13 +38,14 @@ import {
   optionSheetStyles,
   useOptionSheetBackground,
 } from './OptionSheetPrimitives';
+import RadioMark from './RadioMark';
 import Touchable from '@/components/Touchable';
 
 interface Props {
-  album: ExternalAlbumBase;
+  album: Album;
   /** When set, the sheet requests this single track instead of the whole album. */
   track?: { title: string; artist: string };
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
 }
 
 /**
@@ -67,7 +67,7 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
   const activeServerId = useSelector(selectActiveServerId);
   const savedDefaults = useSelector(selectDefaultProviderForActiveServer);
   const savedDefaultId = unit === 'album' ? savedDefaults.defaultAlbumProvider : savedDefaults.defaultTrackProvider;
-  const savedDefaultQualityProfileId = useSelector(selectLidarrDefaultQualityProfileId);
+  const savedDefaultQualityProfileId = useSelector(selectDefaultQualityProfileId);
 
   const downloaders = useDownloaderStates();
   // A downloader appears only if it takes the unit being asked for: Lidarr has
@@ -99,26 +99,26 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
 
   const selected = available.find((d) => d.def.id === selectedId) ?? null;
 
-  // Lidarr's one quality-relevant knob — album-only, since slskd/soulsync
-  // have no quality-profile concept. Fetched lazily only once Lidarr is the
-  // chosen provider for an album Get, and pre-filled from the saved default;
-  // changing it here is request-only unless "save as default" is checked.
-  const showQualityProfile = unit === 'album' && selected?.def.id === 'lidarr';
-  const [qualityProfiles, setQualityProfiles] = useState<LidarrQualityProfile[]>([]);
+  // A quality profile is offered only for an album Get, and only by a
+  // downloader that declares profiles. Fetched lazily once that downloader is
+  // chosen and pre-filled from the saved default; changing it here is
+  // request-only unless "save as default" is checked.
+  const showQualityProfile = unit === 'album' && !!selected?.def.getQualityProfiles;
+  const [qualityProfiles, setQualityProfiles] = useState<QualityProfile[]>([]);
   const [qualityProfilesLoading, setQualityProfilesLoading] = useState(false);
   const [selectedQualityProfileId, setSelectedQualityProfileId] = useState<number | undefined>(
     savedDefaultQualityProfileId
   );
 
   useEffect(() => {
-    if (!showQualityProfile || !selected) {
+    const getQualityProfiles = selected?.def.getQualityProfiles;
+    if (!showQualityProfile || !selected || !getQualityProfiles) {
       return;
     }
     setSelectedQualityProfileId(savedDefaultQualityProfileId);
     let cancelled = false;
     setQualityProfilesLoading(true);
-    lidarr
-      .getQualityProfiles(selected.config)
+    getQualityProfiles(selected.config)
       .then((profiles) => {
         if (!cancelled) setQualityProfiles(profiles);
       })
@@ -156,12 +156,12 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
         // explicitly asked for that — a request-only override never writes here.
         if (saveAsDefault) {
           dispatch(setDefaultProvider({ serverId: activeServerId ?? '', unit, provider: def.id }));
-          // Lidarr's quality profile follows the same explicit toggle — a
+          // The quality profile follows the same explicit toggle — a
           // bumped-for-this-Get profile only becomes the new default when the
           // user asked to keep it, same as the provider itself.
           if (showQualityProfile && activeServerId) {
             dispatch(
-              setLidarrDefaultQualityProfileId({
+              setDefaultQualityProfileId({
                 serverId: activeServerId,
                 qualityProfileId: selectedQualityProfileId,
               })
@@ -183,10 +183,10 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
   };
 
   const headerTitle = track ? track.title : album.title;
-  const headerSubtext = track ? track.artist : album.artist;
+  const headerSubtext = track ? track.artist : album.artist.name;
   const requestingQuery = track
     ? `${track.title} — ${track.artist}`
-    : `${album.title} — ${album.artist}${album.externalIds?.mbid ? ` (mbid: ${album.externalIds.mbid})` : ''}`;
+    : `${album.title} — ${album.artist.name}${album.externalIds?.mbid ? ` (mbid: ${album.externalIds.mbid})` : ''}`;
 
   return (
     <BottomSheetModal
@@ -223,31 +223,15 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
               disabled={loading}
               dimRow={loading}
               labelColor={isSelected ? colors.secondary : undefined}
-              trailing={
-                <View
-                  style={[
-                    styles.radioOuter,
-                    { borderColor: isSelected ? colors.secondary : colors.border, borderRadius: rad.pill },
-                  ]}
-                >
-                  {isSelected && (
-                    <View
-                      style={[
-                        styles.radioInner,
-                        { backgroundColor: colors.secondary, borderRadius: rad.pill },
-                      ]}
-                    />
-                  )}
-                </View>
-              }
+              trailing={<RadioMark selected={isSelected} />}
             />
           );
         })}
 
         {/*
-         * Lidarr quality-profile override slot — request-only unless "save
-         * as default" is checked below. Only rendered for an album Get with
-         * Lidarr selected; slskd/soulsync have no quality-profile concept.
+         * Quality-profile override slot — request-only unless "save as
+         * default" is checked below. Only rendered for an album Get with a
+         * downloader that declares quality profiles.
          */}
         {showQualityProfile && (
           <>
@@ -267,23 +251,7 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
                     disabled={loading}
                     dimRow={loading}
                     labelColor={isProfileSelected ? colors.secondary : undefined}
-                    trailing={
-                      <View
-                        style={[
-                          styles.radioOuter,
-                          { borderColor: isProfileSelected ? colors.secondary : colors.border, borderRadius: rad.pill },
-                        ]}
-                      >
-                        {isProfileSelected && (
-                          <View
-                            style={[
-                              styles.radioInner,
-                              { backgroundColor: colors.secondary, borderRadius: rad.pill },
-                            ]}
-                          />
-                        )}
-                      </View>
-                    }
+                    trailing={<RadioMark selected={isProfileSelected} />}
                   />
                 );
               })
@@ -351,17 +319,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.generous,
-  },
-  radioOuter: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
   },
   qualityLoading: {
     paddingVertical: spacing.roomy,

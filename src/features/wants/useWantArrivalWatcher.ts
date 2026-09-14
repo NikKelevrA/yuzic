@@ -3,10 +3,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
 
-import { useLibrary } from '@/contexts/LibraryContext';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { selectWantsForActiveServer } from '@/utils/redux/selectors/wantsSelectors';
-import { removeWant } from '@/utils/redux/slices/wantsSlice';
+import { useAlbums } from '@/features/album/useAlbums';
+import { useTracks } from '@/features/song/useTracks';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { selectWantsForActiveServer } from '@/state/redux/selectors/wantsSelectors';
+import { removeWant } from '@/state/redux/slices/wantsSlice';
 import { findArrivedWants } from './arrival';
 
 /**
@@ -30,7 +31,8 @@ export function useWantArrivalWatcher(): void {
   const dispatch = useDispatch();
   const activeServerId = useSelector(selectActiveServerId);
   const wants = useSelector(selectWantsForActiveServer);
-  const { albums, tracks } = useLibrary();
+  const { albums } = useAlbums();
+  const { tracks } = useTracks();
 
   // Guards against re-firing the toast/removal for a want already resolved
   // in this session — `removeWant` is itself idempotent-safe, but without

@@ -2,39 +2,39 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import SongRow, { isExternalSong } from './index';
-import type { ExternalSong, Song } from '@/types';
+import type { Song } from '@/domain/entities/Song';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', favorite: '#f00' } }),
 }));
 
-jest.mock('@/hooks/useListDensity', () => ({
+jest.mock('@/features/theme/useListDensity', () => ({
   useListDensity: () => ({ rowPadding: 8, trackRowPadding: 8 }),
 }));
 
-jest.mock('@/contexts/PlayingContext', () => ({
+jest.mock('@/features/playback/PlayingContext', () => ({
   usePlayingActions: () => ({ playSongInCollection: jest.fn() }),
 }));
 
-jest.mock('@/contexts/SongActionSheetContext', () => ({
+jest.mock('@/features/entity-actions/SongActionSheetContext', () => ({
   useSongActionSheets: () => ({ openSongOptions: jest.fn() }),
 }));
 
-jest.mock('@/contexts/DownloadContext', () => ({
+jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
 
-jest.mock('@/features/home/hooks/useDeezerEnabled', () => ({
-  useDeezerDiscoveryEnabled: () => false,
+jest.mock('@/features/settings/sources/useSourceUse', () => ({
+  useSourceUse: () => false,
 }));
 
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');
 
-jest.mock('@/utils/useSheetRef', () => ({
+jest.mock('@/components/useSheetRef', () => ({
   useSheetRef: () => ({ current: null }),
 }));
 
@@ -43,7 +43,6 @@ jest.mock('@/components/toast', () => ({
 }));
 
 jest.mock('@/components/MediaListRow', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   function MockMediaListRow({ title }: any) {
     return (
@@ -59,7 +58,6 @@ jest.mock('@/components/MediaListRow', () => {
 // module's own jest mock is ESM and isn't covered by the project's
 // transformIgnorePatterns, so a minimal inline stub is used instead.
 jest.mock('react-native-reanimated', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const RN = require('react-native');
   return {
     __esModule: true,
@@ -71,27 +69,61 @@ jest.mock('react-native-reanimated', () => {
 });
 
 const librarySong: Song = {
-  id: 's1',
+  localId: 'local:song:srv:server1:s1' as Song['localId'],
+  nativeId: 's1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Local Song',
-  artist: 'Some Artist',
-  artistId: 'ar1',
+  artist: {
+    localId: 'local:artist:srv:server1:ar1' as Song['artist']['localId'],
+    nativeId: 'ar1',
+    name: 'Some Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:srv:server1:al1' as Song['album']['localId'],
+    nativeId: 'al1',
+    title: 'Local Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'al1',
-  streamUrl: 'https://example.com/stream',
+  durationSeconds: 180,
+  contentKind: 'song',
+  genres: [],
 };
 
-const externalSong: ExternalSong = {
-  id: 'ext-s1',
+const externalSong: Song = {
+  localId: 'local:song:ext:deezer:ext-s1' as Song['localId'],
+  nativeId: 'ext-s1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Song',
-  artist: 'External Artist',
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Song['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  album: {
+    localId: 'local:album:ext:deezer:ext-al1' as Song['album']['localId'],
+    nativeId: 'ext-al1',
+    title: 'External Album',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   cover: { kind: 'none' },
-  duration: '180',
-  albumId: 'ext-al1',
+  durationSeconds: 180,
+  contentKind: 'preview',
+  genres: [],
 };
 
 describe('SongRow', () => {
-  it('detects external-origin songs via the missing streamUrl field', () => {
+  it('detects external-origin songs via provenance', () => {
     expect(isExternalSong(librarySong)).toBe(false);
     expect(isExternalSong(externalSong)).toBe(true);
   });

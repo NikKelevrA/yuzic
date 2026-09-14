@@ -2,28 +2,27 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 
 import AlbumRow, { isExternalAlbum } from './index';
-import type { AlbumBase, ExternalAlbumBase } from '@/types';
-import { useExternalAlbumStatus } from '@/hooks/useExternalAlbumStatus';
+import type { Album } from '@/domain/entities/Album';
+import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666' } }),
 }));
 
-jest.mock('@/hooks/useRadius', () => ({
+jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ thumb: 8, pill: 999, pillFor: (n: number) => n / 2 }),
 }));
 
-jest.mock('@/utils/useSheetRef', () => ({
+jest.mock('@/components/useSheetRef', () => ({
   useSheetRef: () => ({ current: null }),
 }));
 
 jest.mock('@/components/options/AlbumOptions', () => 'AlbumOptions');
 jest.mock('@/components/MediaListRow', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   function MockMediaListRow({ title, subtitleTrailing, trailing }: any) {
     return (
@@ -37,7 +36,7 @@ jest.mock('@/components/MediaListRow', () => {
   return MockMediaListRow;
 });
 
-jest.mock('@/hooks/useExternalAlbumStatus', () => ({
+jest.mock('@/features/downloaders/useExternalAlbumStatus', () => ({
   useExternalAlbumStatus: jest.fn(),
 }));
 
@@ -46,7 +45,6 @@ jest.mock('@/hooks/useExternalAlbumStatus', () => ({
 // covered by the project's transformIgnorePatterns, so a minimal inline
 // stub is used instead of `react-native-reanimated/mock`.
 jest.mock('react-native-reanimated', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const RN = require('react-native');
   return {
     __esModule: true,
@@ -62,23 +60,45 @@ jest.mock('react-native-reanimated', () => {
 
 const mockedUseExternalAlbumStatus = useExternalAlbumStatus as jest.Mock;
 
-const libraryAlbum: AlbumBase = {
-  id: 'a1',
+const libraryAlbum: Album = {
+  localId: 'local:album:srv:server1:a1' as Album['localId'],
+  nativeId: 'a1',
+  provenance: { origin: 'server', serverId: 'server1' },
+  externalIds: {},
+  libraryState: 'in-library',
   title: 'Local Album',
   cover: { kind: 'none' },
-  subtext: 'Some Artist',
-  artist: { id: 'ar1', name: 'Some Artist', subtext: '', cover: { kind: 'none' } },
+  artist: {
+    localId: 'local:artist:srv:server1:ar1' as Album['artist']['localId'],
+    nativeId: 'ar1',
+    name: 'Some Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
   year: 2020,
+  releaseType: 'album',
   genres: [],
-  created: new Date(0),
+  songIds: [],
 };
 
-const externalAlbum: ExternalAlbumBase = {
-  id: 'ext1',
+const externalAlbum: Album = {
+  localId: 'local:album:ext:deezer:ext1' as Album['localId'],
+  nativeId: 'ext1',
+  provenance: { origin: 'integration', providerId: 'deezer' },
+  externalIds: {},
+  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
-  artist: 'External Artist',
-  subtext: 'External Artist',
+  artist: {
+    localId: 'local:artist:ext:deezer:extArtist1' as Album['artist']['localId'],
+    nativeId: 'extArtist1',
+    name: 'External Artist',
+    cover: { kind: 'none' },
+    externalIds: {},
+  },
+  releaseType: 'album',
+  genres: [],
+  songIds: [],
 };
 
 describe('AlbumRow', () => {
@@ -86,7 +106,7 @@ describe('AlbumRow', () => {
     mockedUseExternalAlbumStatus.mockReset().mockReturnValue({ kind: 'none' });
   });
 
-  it('detects external-origin albums via the artist shape (string vs ArtistRef)', () => {
+  it('detects external-origin albums via provenance', () => {
     expect(isExternalAlbum(libraryAlbum)).toBe(false);
     expect(isExternalAlbum(externalAlbum)).toBe(true);
   });

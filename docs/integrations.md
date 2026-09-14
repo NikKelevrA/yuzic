@@ -31,14 +31,14 @@ server also carries optional **fallback URLs** (tried in order when the primary
 is unreachable — e.g. a Tailscale address away from home) and optional HTTP
 basic auth in front of the server.
 
-Provider registry: `src/utils/servers/registry.ts` — which also holds the
+Provider registry: `src/providers/registry/serverConnections.ts` — which also holds the
 per-provider facts that aren't API calls (demo credentials, cover URLs, and
-which `auth` key stores the chosen libraries). Adapters: `src/api/navidrome/`
-for Subsonic, and `src/api/mediaBrowser/adapter.ts` for both Jellyfin and Emby,
-which speak the same API and differ only by brand — `src/api/jellyfin/` and
-`src/api/emby/` are thin bindings over it. Plex is a separate JSON API in
-`src/api/plex/`; it direct-plays the selected media part and reports its own
-timeline events. Local files live in `src/api/local/`: Yuzic copies files chosen
+which `auth` key stores the chosen libraries). Adapters: `src/providers/server/navidrome/`
+for Subsonic, and `src/providers/server/media-browser/adapter.ts` for both Jellyfin and Emby,
+which speak the same API and differ only by brand — `src/providers/server/media-browser/jellyfin/` and
+`src/providers/server/media-browser/emby/` are thin bindings over it. Plex is a separate JSON API in
+`src/providers/server/plex/`; it direct-plays the selected media part and reports its own
+timeline events. Local files live in `src/providers/server/local/`: Yuzic copies files chosen
 through the document picker into private app storage and indexes supported MP3,
 FLAC, M4A, and MP4 tags. It does not scan the device or ask for broad media
 permissions.
@@ -62,7 +62,7 @@ UI shows them only when the active server's adapter provides them:
 
 A Jellyfin user never sees a Radio row rather than seeing one that goes
 nowhere — the Library index builds its rows from what the adapter offers
-(`src/screens/library/LibraryEntryRows.tsx`).
+(`src/features/library/LibraryEntryRows.tsx`).
 
 ### Client certificates (mTLS)
 
@@ -121,7 +121,7 @@ the app's own scrobble/now-playing switches live.
 
 ### Deezer
 
-`src/api/deezer/` · **Settings → Integrations → Deezer**
+`src/providers/integration/deezer/` · **Settings → Integrations → Deezer**
 
 Read-only, unauthenticated public API. Three switches, one per place the data
 shows up:
@@ -135,14 +135,14 @@ shows up:
 
 There used to be a per-surface switch for each of those last four. They were
 retired into the switch above them and the persisted keys are stripped by a
-store migration (`src/utils/redux/store.ts`) — don't reintroduce them.
+store migration (`src/state/redux/store.ts`) — don't reintroduce them.
 
 Deezer is also one of the two external **sources** (with MusicBrainz) behind
 artist/album resolution — see `src/features/sources/registry.ts`.
 
 ### MusicBrainz
 
-`src/api/musicbrainz/` · **Settings → Integrations → MusicBrainz**
+`src/providers/integration/musicbrainz/` · **Settings → Integrations → MusicBrainz**
 
 Read-only, no account. Fills in artist and album pages with canonical metadata
 when the entity isn't in your library, and supplies MBIDs that the downloaders
@@ -150,7 +150,7 @@ use to resolve a release precisely instead of by fuzzy name match.
 
 ### Last.fm
 
-`src/api/lastfm/` · **Settings → Integrations → Last.fm**
+`src/providers/integration/lastfm/` · **Settings → Integrations → Last.fm**
 
 Read-only with a bundled API key — no account, no signing, no session. Used for
 similar artists and to seed playlist recommendations. Artist names are sent to
@@ -158,7 +158,7 @@ Last.fm to look them up, which is why it's a switch rather than always-on.
 
 ### ListenBrainz
 
-`src/api/listenbrainz/` · **Settings → Integrations → ListenBrainz**
+`src/providers/integration/listenbrainz/` · **Settings → Integrations → ListenBrainz**
 
 Two independent things behind one row:
 
@@ -169,14 +169,14 @@ Two independent things behind one row:
 
 ### AudioMuse-AI
 
-`src/api/audiomuse/`, `src/features/audiomuse/` · **Settings → Integrations → AudioMuse-AI**
+`src/providers/integration/audiomuse/`, `src/providers/registry/similarityService.ts` · **Settings → Integrations → AudioMuse-AI**
 
 A self-hosted service you point at the same music server. Needs a server URL
 and API token. When connected and enabled, it becomes the queue-fill provider
 for autoplay — extending the queue with sonically similar tracks ranked by
 acoustic analysis, instead of the server's own similar-songs endpoint
-(`src/contexts/queueProviders.ts`). It also backs playlist generation from a
-seed track (`src/features/audiomuse/generatePlaylist.ts`).
+(`src/features/playback/queueProviders.ts`). It also backs playlist generation from a
+seed track (`src/features/playlist/generateSimilarPlaylist.ts`).
 
 ---
 
@@ -213,15 +213,15 @@ configured makes **no** requests to any of these hosts.
 ### How a request is handled
 
 - **Timeout.** Every integration request goes through `fetchWithTimeout`
-  (`src/api/fetchWithTimeout.ts`) with a 30s ceiling, and a timeout is raised
+  (`src/providers/http/fetchWithTimeout.ts`) with a 30s ceiling, and a timeout is raised
   as `RequestTimeoutError` so a caller can tell it apart from an abort. The
   integrations had no ceiling at all once, which left a spinner up forever on a
   black-holed connection.
 - **Caching.** Deezer keeps its own in-memory TTL cache with per-endpoint
   lifetimes and a 500-entry cap, and coalesces identical in-flight requests
-  (`src/api/deezer/catalog.ts`). Everything else caches at the react-query
+  (`src/providers/integration/deezer/catalog.ts`). Everything else caches at the react-query
   layer in the hook that calls it. slskd searches are coalesced through
-  `src/api/coalesceRequest.ts` — a double tap otherwise starts a second
+  `src/providers/http/coalesceRequest.ts` — a double tap otherwise starts a second
   45-second Soulseek search and queues the files twice.
 - **Failure.** A metadata read that fails degrades to nothing — an empty list,
   a section that doesn't render — rather than an error state, because none of
@@ -267,7 +267,7 @@ the system picker source cannot break the imported copy.
 
 ### Deezer — `https://api.deezer.com`
 
-No auth. `src/api/deezer/`.
+No auth. `src/providers/integration/deezer/`.
 
 | Endpoint | Used for | Cache |
 | --- | --- | --- |
@@ -286,7 +286,7 @@ No auth. `src/api/deezer/`.
 
 ### MusicBrainz — `https://musicbrainz.org/ws/2`
 
-No auth, `User-Agent` identifies the app. `src/api/musicbrainz/index.ts`.
+No auth, `User-Agent` identifies the app. `src/providers/integration/musicbrainz/index.ts`.
 
 | Endpoint | Used for |
 | --- | --- |
@@ -301,7 +301,7 @@ built as a URL rather than requested by us.
 
 ### Last.fm — `https://ws.audioscrobbler.com/2.0/`
 
-Bundled `api_key`, no signing, no session. `src/api/lastfm/`.
+Bundled `api_key`, no signing, no session. `src/providers/integration/lastfm/`.
 
 | Endpoint | Used for |
 | --- | --- |
@@ -312,7 +312,7 @@ Nothing else on the Last.fm API is called — see
 
 ### ListenBrainz — `https://api.listenbrainz.org/1`
 
-`Authorization: Token <user token>`, except where noted. `src/api/listenbrainz/`.
+`Authorization: Token <user token>`, except where noted. `src/providers/integration/listenbrainz/`.
 
 | Endpoint | Used for |
 | --- | --- |
@@ -323,7 +323,7 @@ Nothing else on the Last.fm API is called — see
 
 ### AudioMuse-AI — your instance
 
-`Authorization: Bearer <api token>`. `src/api/audiomuse/`.
+`Authorization: Bearer <api token>`. `src/providers/integration/audiomuse/`.
 
 | Endpoint | Used for |
 | --- | --- |
@@ -332,7 +332,7 @@ Nothing else on the Last.fm API is called — see
 
 ### Lidarr — your instance, `/api/v1`
 
-`X-Api-Key`. `src/api/lidarr/`.
+`X-Api-Key`. `src/providers/integration/lidarr/`.
 
 | Endpoint | Used for |
 | --- | --- |
@@ -347,7 +347,7 @@ Nothing else on the Last.fm API is called — see
 
 ### slskd — your instance, `/api/v0`
 
-`X-API-Key`. `src/api/slskd/`.
+`X-API-Key`. `src/providers/integration/slskd/`.
 
 | Endpoint | Used for |
 | --- | --- |
@@ -360,13 +360,13 @@ Nothing else on the Last.fm API is called — see
 | `GET /transfers/downloads/` | The in-app transfer queue, and spotting finished items |
 | `DELETE /transfers/downloads/{username}/{fileId}?remove=false` then `?remove=true` | Cancelling — the first call is allowed to fail, since a file that already finished can't be cancelled |
 
-slskd downloads also reach MusicBrainz (`src/api/slskd/mb/canonicalize.ts`) to
+slskd downloads also reach MusicBrainz (`src/providers/integration/slskd/mb/canonicalize.ts`) to
 turn an MBID into a canonical artist/album/track list before matching filenames
 against it.
 
 ### SoulSync — your instance, `/api/v1`
 
-`Authorization: Bearer`. `src/api/soulsync/`. The query-param form (`?api_key=`)
+`Authorization: Bearer`. `src/providers/integration/soulsync/`. The query-param form (`?api_key=`)
 is also accepted, but a key in a URL ends up in logs and history, so the header
 is the one used.
 
@@ -412,7 +412,8 @@ feature off, and grants it per user once on, so the app probes it rather than
 offering a row that would error when tapped. A server with it disabled answers
 with prose rather than a Subsonic error, which is a second reason not to guess.
 
-Code: `src/contexts/PlaybackSinkContext.tsx` routes transport to whichever
+Code: `src/features/player/PlaybackSinkContext.tsx` routes transport to whichever
 output is selected; `src/features/player/playbackSink.ts` holds the types;
-`src/contexts/CastContext.tsx` and `src/hooks/useDlnaDiscovery.ts` are the DLNA
-half; `src/api/navidrome/jukebox/` is the Subsonic jukebox client.
+`src/features/player/DlnaContext.tsx` and `src/features/player/useDlnaDiscovery.ts`
+are the DLNA half; `src/providers/server/navidrome/jukebox/` is the Subsonic
+jukebox client.

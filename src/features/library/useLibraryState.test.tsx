@@ -4,16 +4,15 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { useLibraryState } from './useLibraryState';
-import { makeLocalId } from '@/types/EntityId';
-import type { ExternalAlbumBase } from '@/types';
-import wantsReducer, { addWant } from '@/utils/redux/slices/wantsSlice';
-import serversReducer, { addServer, setActiveServer } from '@/utils/redux/slices/serversSlice';
-import downloadersReducer from '@/utils/redux/slices/downloadersSlice';
-import type { Server } from '@/types/Server';
+import { makeLocalId } from '@/domain/identity/LocalId';
+import { integrationProvenance } from '@/domain/identity/Provenance';
+import type { Album } from '@/domain/entities/Album';
+import wantsReducer, { addWant } from '@/state/redux/slices/wantsSlice';
+import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
+import downloadersReducer from '@/state/redux/slices/downloadersSlice';
+import type { Server } from '@/providers/contracts/Server';
 
-jest.mock('@/contexts/LibraryContext', () => ({
-  useLibrary: () => ({ albums: [] }),
-}));
+jest.mock('@/features/album/useAlbums', () => ({ useAlbums: () => ({ albums: [] }) }));
 
 function makeStore() {
   return configureStore({
@@ -34,6 +33,7 @@ function wrapper(store: ReturnType<typeof makeStore>) {
 }
 
 const SERVER_ID = 'server-1';
+const PROVENANCE = integrationProvenance('deezer');
 
 function testServer(): Server {
   return {
@@ -45,16 +45,26 @@ function testServer(): Server {
   };
 }
 
-function externalAlbum(localId?: string): ExternalAlbumBase {
+function externalAlbum(nativeId = 'ext-1'): Album {
   return {
-    id: 'ext-1',
+    localId: makeLocalId('album', PROVENANCE, nativeId),
+    nativeId,
+    provenance: PROVENANCE,
+    externalIds: {},
+    libraryState: 'external',
     title: 'Some Album',
-    artist: 'Some Artist',
     cover: { kind: 'none' },
-    subtext: 'Some Artist',
-    externalSource: 'deezer',
-    ...(localId ? { localId: localId as ExternalAlbumBase['localId'] } : {}),
-  } as ExternalAlbumBase;
+    artist: {
+      localId: makeLocalId('artist', PROVENANCE, 'artist-1'),
+      nativeId: 'artist-1',
+      externalIds: {},
+      name: 'Some Artist',
+      cover: { kind: 'none' },
+    },
+    releaseType: 'album',
+    genres: [],
+    songIds: [],
+  };
 }
 
 describe('useLibraryState', () => {
@@ -63,8 +73,8 @@ describe('useLibraryState', () => {
     store.dispatch(addServer(testServer()));
     store.dispatch(setActiveServer(SERVER_ID));
 
-    const localId = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'ext-1' });
-    const { result } = await renderHook(() => useLibraryState(externalAlbum(localId)), {
+    const album = externalAlbum();
+    const { result } = await renderHook(() => useLibraryState(album), {
       wrapper: wrapper(store),
     });
 
@@ -76,25 +86,26 @@ describe('useLibraryState', () => {
     store.dispatch(addServer(testServer()));
     store.dispatch(setActiveServer(SERVER_ID));
 
-    const localId = makeLocalId({ kind: 'album', externalSource: 'deezer', externalNativeId: 'ext-1' });
+    const album = externalAlbum();
     store.dispatch(addWant({
       serverId: SERVER_ID,
-      want: { localId, unit: 'album', title: 'Some Album', artist: 'Some Artist', origin: 'search' },
+      want: { localId: album.localId, unit: 'album', title: 'Some Album', artist: 'Some Artist', origin: 'search' },
     }));
 
-    const { result } = await renderHook(() => useLibraryState(externalAlbum(localId)), {
+    const { result } = await renderHook(() => useLibraryState(album), {
       wrapper: wrapper(store),
     });
 
     expect(result.current).toBe('wanted');
   });
 
-  it('is never wanted when the album has no localId', async () => {
+  it('is never wanted when the album has a different localId than any want', async () => {
     const store = makeStore();
     store.dispatch(addServer(testServer()));
     store.dispatch(setActiveServer(SERVER_ID));
 
-    const { result } = await renderHook(() => useLibraryState(externalAlbum()), {
+    const album = externalAlbum('unrelated');
+    const { result } = await renderHook(() => useLibraryState(album), {
       wrapper: wrapper(store),
     });
 

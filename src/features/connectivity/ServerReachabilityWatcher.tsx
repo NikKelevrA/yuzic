@@ -3,9 +3,9 @@ import { AppState } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { useApi } from '@/api';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { usePollWhile } from '@/hooks/usePollWhile';
+import { useApi } from '@/providers/registry/useApi';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { usePollWhile } from '@/state/query/usePollWhile';
 import { setServerUnreachable, useServerUnreachable } from './serverReachability';
 
 const PING_TIMEOUT_MS = 5_000;

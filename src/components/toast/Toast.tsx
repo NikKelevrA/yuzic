@@ -1,4 +1,4 @@
-import { iconSize, motion, shadow, spacing, typography } from '@/constants/design';
+import { iconSize, shadow, spacing, typography } from '@/constants/design';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -12,9 +12,9 @@ import { AlertCircle, Check, Info } from 'lucide-react-native';
 
 import Touchable from '@/components/Touchable';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
-import { useRadius } from '@/hooks/useRadius';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { useTheme } from '@/hooks/useTheme';
+import { useRadius } from '@/features/theme/useRadius';
+import { useReducedMotion } from '@/features/theme/useReducedMotion';
+import { useTheme } from '@/features/theme/useTheme';
 import type { Toast as ToastModel, ToastVariant } from './notify';
 
 type Props = {

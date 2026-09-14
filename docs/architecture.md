@@ -10,7 +10,7 @@ one of these trunks.
 ## 1. `ApiAdapter` — optional feature capabilities
 
 Every server yuzic supports (Navidrome, Jellyfin, Emby, Plex, and local files)
-implements one `ApiAdapter` from `src/api/types.ts`. The base surface (auth,
+implements one `ApiAdapter` from `src/providers/contracts/ServerAdapter.ts`. The base surface (auth,
 albums, artists, genres, playlists, starred, songs, tracks, similar, lyrics,
 search) is required.
 Anything a provider-specific feature reaches for is an **optional** field:
@@ -88,7 +88,7 @@ Jellyfin/Emby bookmarks are dressed up as Subsonic-style `Bookmark[]`.
 
 ### Local files are a provider, not an offline special case
 
-`local` is a normal `ServerType` and `src/api/local/` returns a normal adapter.
+`local` is a normal `ServerType` and `src/providers/server/local/` returns a normal adapter.
 Onboarding creates one local server record with the display-only URL
 `local://device`, then the import screen uses the platform document picker and
 copies approved files into Yuzic's private documents directory. The index keeps
@@ -108,14 +108,14 @@ Provider configuration may expose an optional `codeAuth` lifecycle
 whether that capability exists; Jellyfin Quick Connect and Plex PIN sign-in are
 provider implementations, not `ServerType` branches in the UI.
 
-`utils/installationId.ts` persists one random ID under
+`providers/server/installationId.ts` persists one random ID under
 `app.installationId.v1`. It is used for MediaBrowser's client identity and
 Plex's `X-Plex-Client-Identifier`; it must remain stable across launches and
 must never be the old shared literal `yuzic-device`.
 
 ## 2. `playbackSlice` — the source of truth for playback state
 
-`src/utils/redux/slices/playbackSlice.ts` is what makes "the app remembers what
+`src/state/redux/slices/playbackSlice.ts` is what makes "the app remembers what
 I was doing" true on every provider, not just Navidrome. It carries:
 
 - `queueSongIds[]`, `currentIndex`, `positionMs`
@@ -201,10 +201,25 @@ Three things about it are not obvious:
 proprietary from v5 (non-commercial, with a non-compete clause), which is a
 probable GPL-3 conflict for yuzic and a definite F-Droid blocker.
 
-The engine is complete on iOS. On Android it is missing nine of the methods
-the app calls; they reject by name rather than throwing `is not a function`,
-and `setCrossfade` there is a stub that records its options and schedules no
-overlap, so crossfade is an iOS feature today.
+The engine implements the same surface on both platforms. `Tools/parity.py` in
+the engine repo compares the two native modules by signature — not by name —
+and fails on any difference not declared in it with a reason. Read that rather
+than this paragraph: the count here was wrong for months, claiming nine
+missing Android methods and a stubbed `setCrossfade` long after both had been
+implemented.
+
+Two differences are declared there today:
+
+- `configureCache` is absent on Android — deliberately absent rather than
+  stubbed, so it rejects by name at the bridge. Media3 takes the cache limit as
+  a constructor argument to its evictor, so changing it needs a second
+  `SimpleCache` over one directory (documented as corrupting the index) or
+  releasing the live one mid-track.
+- `BrowseNode.artworkHeaders` is carried on the bridge and unusable on Android:
+  a browse row's cover goes through Media3, which takes a URI on
+  `MediaMetadata` and fetches it itself with no hook for a request header. So
+  car thumbnails render for an ordinary server and not for a
+  header-authenticated one.
 
 `PlaybackSinkContext` owns which sink is selected and routes transport to it.
 This replaced four copies of `if (activeDevice) castX()` in the player and a
@@ -239,14 +254,18 @@ gates.
 
 ### Adding a new content kind
 
-Widen the `ContentKind` union in `types/Song.ts`. Add whichever gates it needs
-in `utils/playback/contentKind.ts` — the pattern is one function per player
-behavior it flips, named for the intent. Callsites read
-`if (canScrobble(song))`, not `if (song.contentKind === 'song')`.
+Widen the `ContentKind` union in `domain/playback/ContentKind.ts` and give the
+new kind a row in its behaviour table — duration, scrobbleable, seekable,
+autoplay seed, reissuable URL. The player reads those through `hasDuration`,
+`isScrobbleable`, `isSeekable`, `isAutoplaySeed` and `hasReissuableUrl`, so a
+kind declared there needs no branch anywhere else: callsites read
+`isScrobbleable(song.contentKind)`, never `song.contentKind === 'song'`. A rule
+that belongs to one control rather than to the kind (the 15-second jump buttons
+hide on a preview, which is still seekable) lives beside that control.
 
 ## 4. `useSync` — the catalog pipeline
 
-`src/hooks/useSync.ts` is the single library-sync path. It fetches lists
+`src/features/library/useSync.ts` is the single library-sync path. It fetches lists
 (albums, artists, playlists, tracks, starred, genres) from the active server,
 pushes them into a mix of react-query and redux (library slice + libraryStarred
 slice), and stamps `lastSyncedAt` when successful. Every "the library is out of
@@ -296,7 +315,7 @@ Three shapes of consumer:
    the server can't be asked, and returns `degraded` so the screen can say the
    data is local rather than fresh.
 2. **Has a local equivalent but isn't a query** — search. See
-   `contexts/searchLegs.ts`: the legs are decided before any fetch, and a
+   `features/search/searchLegs.ts`: the legs are decided before any fetch, and a
    *server* scope falls back to the local index rather than to nothing.
 3. **Has no local equivalent** (radio, podcasts, shares, the server-backed Home
    shelves) — gate `enabled` on `useServerReachable()` and render an offline
@@ -322,7 +341,7 @@ bodies' worth of divergence.
 - **`LocalId`** (`types/EntityId.ts`) — a stable, on-device identity built by
   `makeLocalId()` from *origin* ids (server+item, or externalSource+nativeId),
   **never** from display metadata. Identity is deliberately separate from
-  *matching* (`hooks/libraryMatch.ts`, which is mbid-first then normalized
+  *matching* (`features/library/matchToLibrary.ts`, which is mbid-first then normalized
   title/artist): a server-originated and an external-originated record for the
   same album have **different** `LocalId`s and are related by matching, not by
   identity. `localId`/`externalIds`/`libraryState` are additive-optional on the
@@ -333,11 +352,14 @@ bodies' worth of divergence.
   is the *pure* single source of truth for the state — precedence
   in-library > wanted > acquirable > external, fallthrough to `external` (never
   silently claims ownership). `useLibraryState()` assembles the facts.
-  `isWanted` is stubbed until the Wants system exists.
+  `isWanted` reads `selectIsWanted` — the Wants system exists
+  (`features/wants/`, and `want` is its own action in the entity-action
+  registry, distinct from `get`).
 - **`useExternalAlbumStatus` still exists on purpose.** `resolveLibraryState`
-  answers *which* state; `useExternalAlbumStatus` additionally polls the
-  downloader queues for in-flight **download progress %**, which the state enum
-  does not carry. The shared rows call it only for external-origin entities
+  answers *which* state; `useExternalAlbumStatus` additionally reports in-flight
+  **download progress %**, which the state enum does not carry. It reads the
+  shared `DownloadersQueueContext` rather than polling — there is exactly one
+  poll per downloader in the app, and this is one of its readers. The shared rows call it only for external-origin entities
   (it no-ops on a null album), so a plain library row makes no queue calls.
   This is a deliberate split of concerns, not leftover duplication.
 - **Two album bodies remain** (`LocalAlbumBody` vs `ExternalAlbumBody`) even
@@ -346,38 +368,49 @@ bodies' worth of divergence.
   difference the row layer already encodes but the list bodies keep explicit.
   Converging them is a deferred, higher-risk option, not an accident.
 
-## 7. Integration modules — one capability-slot contract
+## 7. Providers and capabilities
 
-Providers (downloaders, external sources) converge on one `IntegrationModule`
-contract (`features/integrations/types.ts`) so a feature asks *what a provider
-can do*, never *which product it is*.
+A feature asks *what can do this*, never *which product it is*. Two mechanisms
+answer that, and which one a job uses depends on how many providers can do it.
 
-- **`CapabilitySlot`** — the vocabulary of things a provider can fill
-  (`acquisition.track/album`, `resolution`, `similarity.songs/artists`,
-  `discovery.shelf`, `playlist.generate`, `lyrics`, `scrobble`,
-  `metadata.enrich`, `preview`). **`IntegrationModule`** = `{ id, label, auth,
-  slots: Partial<Record<CapabilitySlot, SlotImpl>>, options?, testConnection }`.
-  `slots` is partial for the same reason `ApiAdapter` fields are optional —
-  callers presence-check the capability, never the provider name.
-- **`SlotImpl` is intentionally `unknown`** for now: typing every slot's method
-  signature would couple the contract to providers that don't exist yet. Each
-  slot gains a concrete impl type when it's actually built.
-- **Existing registries were extended, not rewritten.** `DownloaderDefinition`
-  and `SourceDefinition` are now `IntegrationModule & { …operational fields }`
-  (their `id` re-narrowed to the closed union). Downloaders are `apiKey`-tier and
-  fill `acquisition.*`; sources are `none`-tier (keyless public APIs; a trivial
-  `{ok:true}` testConnection — enablement is a user setting, not a connection)
-  and fill `resolution` + `discovery.shelf`. A downloader's `fetchQueueWithDiff`
-  deliberately maps to **no** slot — it's operational progress reporting, not a
-  product capability.
-- **Server adapters stay their own concern.** An `ApiAdapter` is required core,
-  not an optional integration, so it does **not** become an `IntegrationModule`.
-  Instead `serverAdapterSlots()` (`features/integrations/capabilityRegistry.ts`)
-  surfaces its capabilities into the same slot vocabulary, and
-  `useSlotProviders(slot)` answers "who fills this right now?" across the active
-  server **and** connected modules — read-only availability; blend/select/
-  fallback policy stays with the calling feature.
-- **One Connections screen** (`screens/settings/connections/`) is generated from
+- **Typed capabilities, served by a broker**, for jobs more than one provider
+  can do. `providers/contracts/Capabilities.ts` is a map of capability name to
+  the function a provider supplies — `artist.enrich`, `album.enrich`, `lyrics`,
+  `catalogue.album`, `catalogue.search`. A provider
+  (`providers/contracts/Provider.ts`) declares `Partial<CapabilityMap>` plus
+  its presentation, auth tier and `testConnection`. `providers/registry/capabilityBroker.ts`
+  answers "who can serve this, in what order": a provider must declare the
+  capability, be reachable, and be allowed by the user's policy for that
+  feature, and enumeration never invokes one. The declared providers today are
+  the keyless integrations in `providers/registry/keyless.ts` (Deezer,
+  MusicBrainz, Last.fm, LRCLIB); `enrichmentBroker.ts` orders them for artist
+  and album enrichment.
+- **Feature-owned registries**, for jobs with one provider each and behaviour
+  no shared contract carries. Downloads are `features/downloaders/registry.ts`
+  (`DownloaderDefinition`: `downloadAlbum`/`downloadTrack` with per-call
+  options and error codes, plus `fetchQueue` normalised to
+  `DownloaderQueueItem[]` so nothing downstream branches on which downloader a
+  transfer came from, and `cancelQueueItem`). Autoplay and Smart Shuffle fill
+  come from `features/playback/queueProviders.ts` (the similarity service —
+  AudioMuse, declared in `providers/registry/similarityService.ts` — first, the
+  server's own similar songs as the fallback). Scrobbling routes through
+  `state/redux/selectors/scrobbleRoutingSelectors.ts` and the offline mutation
+  queue. Playlist generation is `features/playlist/generateSimilarPlaylist.ts`.
+  External-source name resolution is `features/sources/registry.ts`.
+- **Why the second kind is not a capability.** Similarity, discovery,
+  playlist generation, scrobbling and acquisition were declared as
+  capabilities once, beside the features above, and nothing ever asked the
+  broker for them. The declarations were thinner copies — no queue
+  over-sampling, no downloader options or error codes, no offline replay — so
+  they were removed rather than wired in. A capability is added when its
+  first consumer exists; when a job gains a second provider, it becomes one,
+  shaped by both.
+- **Server adapters stay their own concern.** The active server's `ApiAdapter`
+  (`providers/contracts/ServerAdapter.ts`) is required core, not an optional
+  integration, and features call it through `useApi`. How each server connects,
+  signs in, lists libraries and builds cover URLs is declared in
+  `providers/registry/serverConnections.ts`.
+- **One Connections screen** (`features/settings/connections/`) is generated from
   the provider list and replaced the two separate Integrations/Downloaders hubs.
   Per-provider detail screens and their deep-link routes are unchanged.
 
@@ -386,7 +419,7 @@ can do*, never *which product it is*.
 A **want** is a save-only declaration of intent; **Get** is the separate act of
 acquiring. The two are deliberately different code paths.
 
-- **`wantsSlice`** (`utils/redux/slices/wantsSlice.ts`) is per-server, persisted,
+- **`wantsSlice`** (`state/redux/slices/wantsSlice.ts`) is per-server, persisted,
   and **pure/save-only** — no reducer performs or triggers acquisition, so a
   wishlist works with zero providers connected. A want carries `localId`,
   `title`/`artist` (so it renders with no lookup), `externalIds`, `unit`,
@@ -402,13 +435,13 @@ acquiring. The two are deliberately different code paths.
   when the user ticks "save as default"; a per-request override is request-only.
 - **Arrival is presence-based, not queue-based.** `findArrivedWants`
   (`features/wants/arrival.ts`) matches wants against the *synced library index*
-  (reusing `libraryMatch`), and `useWantArrivalWatcher` removes a fulfilled want
+  (reusing `features/library/matchToLibrary.ts`), and `useWantArrivalWatcher` removes a fulfilled want
   + toasts once when its entity appears **by any route** (a Get, a manual copy, a
   Bandcamp purchase). It is not gated on `jobRef`. The
   `DownloadersQueueContext` poll still runs untouched — it *causes* the rescan
   that makes arrival observable; only the completion *signal* moved off
   queue-disappearance. There is no "Arrived" collection; Recently Added serves it.
-- **One Downloads screen** (`screens/downloads/`) shows on-device **Offline** and
+- **One Downloads screen** (`features/downloads/`) shows on-device **Offline** and
   server-side **Downloaders** as distinct sections (never conflated), the latter
   surfacing all activity a provider reports including jobs started outside yuzic,
   reading the single shared `useDownloadersQueue` poll.
@@ -416,12 +449,12 @@ acquiring. The two are deliberately different code paths.
 ## 9. Feature-oriented settings — configure the goal, not the provider
 
 Settings pages are organized by what the user wants yuzic to *do*, not by which
-integration supplies it. `screens/settings/home/` set the precedent (pulling
+integration supplies it. `features/settings/home/` set the precedent (pulling
 Home-affecting toggles out of the per-integration screens); Scrobbling, Lyrics,
 Metadata, and Search follow it. Each reuses the `SettingsScreen` shell and is a
 route leaf registered in `settings/_layout.tsx` with a row on the settings root.
 
-- **Scrobbling** (`screens/settings/scrobbling/`) — exactly one route *per
+- **Scrobbling** (`features/settings/scrobbling/`) — exactly one route *per
   destination, per server*: `disabled | through-server | direct`, stored in
   `settingsSlice.scrobbleRoutes[serverId]`. The single enum per destination makes
   "at most one route" structural (no double-scrobble). Defaults are *derived at
@@ -430,20 +463,20 @@ route leaf registered in `settings/_layout.tsx` with a row on the settings root.
   (direct needs a signed session — sequenced out). `useScrobbling` routes by the
   enum; a duplicate-risk note shows on `through-server` (yuzic can't verify
   server forwarding).
-- **Lyrics** (`screens/settings/lyrics/`, `features/lyrics/resolveLyrics.ts`) —
+- **Lyrics** (`features/settings/lyrics/`, `features/lyrics/resolveLyrics.ts`) —
   server-embedded first, then user-ordered external sources; `resolveLyrics`
   returns the first non-empty result. **LRCLIB** (`api/lrclib/`) is the launch
   external source: `none`-tier, no key, *one* source that prefers synced and
   falls back to plain internally. Off by default → server-only behaviour is
   unchanged until a user enables it.
-- **Metadata** (`screens/settings/metadata/`, `features/metadata/`) — independent
+- **Metadata** (`features/settings/metadata/`, `providers/registry/enrichmentBroker.ts`) — independent
   **Artist-information** and **Artwork** controls, each its own ordered
   enabled-source chain (`resolveArtistInfo`, `resolveArtwork`). **Display-only and
   gaps-only**: the resolvers never write to any server and only fill a field the
   server left empty, so disabling instantly restores the server view. Launch
   sources: Last.fm `artist.getInfo`; Deezer artist images + Cover Art Archive
   covers. A small "via X" line, never per-item badges.
-- **Search** (`screens/settings/search/`, `contexts/searchLegs.ts`) — a segmented
+- **Search** (`features/settings/search/`, `features/search/searchLegs.ts`) — a segmented
   **Your Library** (default, no external calls) / **Other sources** scope with a
   Filters sheet for search-enabled sources and entity types. `planSearchLegs`
   picks library **XOR** external by scope, so results are never mixed by default;
@@ -464,7 +497,7 @@ resume → library → source-group hierarchy. `homeShelfLength` uses bounded
 compact/standard/generous choices, and `sleepTimerPresets` stores bounded quick
 add durations; both are surfaced in Home settings and read through defaults.
 
-- **Local-first mix** (`screens/home/components/LocalMixSection`) seeds from
+- **Local-first mix** (`features/home/components/LocalMixSection`) seeds from
   on-device play-stats/genres (a deterministic daily seed via the existing
   `getDailySeed`/`seededShuffle` — **no new recommendation algorithm**) and
   expands through the server adapter's `api.similar.getSimilarSongs` (server-
@@ -472,20 +505,21 @@ add durations; both are surfaced in Home settings and read through defaults.
   calls** and is *not* gated behind the external-discovery toggles — it lives in
   the local/server tier, presence-checked on play history + server similarity.
 - **ListenBrainz `createdfor` shelves**
-  (`api/listenbrainz/recommendations/getCreatedForPlaylists`,
+  (`providers/integration/listenbrainz/recommendations/getCreatedForPlaylists`,
   `LBCreatedForSection`) fetch the user's daily-jams / weekly-jams /
   weekly-exploration mixes (public endpoint) and render **one standalone shelf
   each** under the compact ListenBrainz `SourceGroup` header — LB built the mix,
-  yuzic fetches and renders it (no mix-generator, no new slot; the raw CF
-  endpoint is deliberately not built). Off by default; unowned tracks get
-  Want/Get for free through the shared `SongRow`.
-- **`playlist.generate`** — the "Make a playlist from this" gesture
-  (`features/audiomuse/generateFromEntity`) derives a seed from a track, album,
-  or artist and calls the existing generator; **AudioMuse builds the playlist on
-  the server** (no yuzic-local playlist store). The gesture is gated on
-  `useCanGeneratePlaylist`/`useSlotFilled('playlist.generate')` and hidden when
-  no provider fills the slot. Track/entity-seeded only (mood-centroid deferred).
-- **Onboarding asks once** (`screens/onboarding/discovery`): a single transparent
+  yuzic fetches and renders it (no mix-generator; the raw CF endpoint is
+  deliberately not built). Off by default; unowned tracks get Want/Get for free
+  through the shared `SongRow`.
+- **Make a playlist from this** (`features/playlist/generateSimilarPlaylist`)
+  derives a seed from a track, album, or artist and asks AudioMuse for similar
+  tracks; **AudioMuse's results become a playlist on the server** (no
+  yuzic-local playlist store). The gesture is gated on `useCanGeneratePlaylist`,
+  which asks whether AudioMuse is configured — it is the only generator, so
+  there is no capability for it (§7). Track/entity-seeded only (mood-centroid
+  deferred).
+- **Onboarding asks once** (`features/onboarding/discovery`): a single transparent
   opt-in for external discovery (Deezer/ListenBrainz, no accounts, exactly what
   gets sent), guarded by `onboardingDiscoveryPrompted` so it shows once and only
   inside the onboarding flow — existing users never see it.
@@ -493,72 +527,107 @@ add durations; both are surfaced in Home settings and read through defaults.
 ## Where things live
 
 ```
-src/api/                — providers + shared surfaces
-  types.ts              — the ApiAdapter contract and every optional shape
-  navidrome/            — Subsonic client + endpoints
-  mediaBrowser/         — shared Jellyfin/Emby endpoints (both adapters
-                          re-export these; only auth + brand differ)
-  mediaBrowser/adapter.ts — the adapter both brands share
-  jellyfin/, emby/      — brand bindings over that adapter (3 lines each)
-  plex/                 — Plex JSON adapter, PIN sign-in, direct-part streaming
-  local/                — private-file importer, MMKV index, local adapter
-  audiomuse/            — the acoustic-similarity service client
-  listenbrainz/         — read-only recs client (scrobble is separate)
-  lastfm/               — bundled-key read-only client (similar-artists)
-  musicbrainz/          — canonical metadata client
-  deezer/               — external catalog client (discovery, samples)
-  lidarr/, slskd/       — downloader clients
+src/app/                — Expo route files only; each renders a feature's screen
+src/domain/             — entities, identity, library state, playback kinds
 
-src/contexts/PlayingContext.tsx  — the player. Consumes ApiAdapter,
-                                    dispatches into playbackSlice, checks
-                                    contentKind before every player-shape
-                                    decision. Talks to PlayerBackend, never
-                                    to a player package directly.
+src/providers/
+  contracts/            — ServerAdapter.ts (the adapter every server
+                          implements, and every optional shape), Capabilities,
+                          Provider
+  registry/             — provider declarations, the capability and
+                          enrichment brokers, useApi (the active server's
+                          adapter)
+  http/                 — fetchWithTimeout, coalesceRequest
+  server/
+    navidrome/          — Subsonic client + endpoints, jukebox client
+    media-browser/      — the Jellyfin/Emby protocol and the adapter both
+                          brands share; jellyfin/ and emby/ are the brand
+                          bindings over it
+    plex/               — Plex JSON adapter, PIN sign-in, direct-part streaming
+    local/              — private-file importer, MMKV index, local adapter
+  integration/
+    deezer/             — external catalog client (discovery, samples)
+    musicbrainz/        — canonical metadata client
+    lastfm/             — bundled-key read-only client (similar-artists)
+    listenbrainz/       — scrobbling and read-only recommendations
+    lrclib/             — synced lyrics
+    audiomuse/          — the acoustic-similarity service client
+    lidarr/, slskd/, soulsync/ — downloader clients
 
-src/features/player/
-  backend.ts            — PlayerBackend: the surface the app uses (§ above)
-  createEngineBackend.ts— yuzic-engine behind it, plus the shadow that lets
-                          a bridged engine answer synchronous getters
-  activeBackend.ts      — builds it, hands it out, one per launch
-  mediaItem.ts          — the app's own playable-item type, formerly the
-                          player package's
-  audioSettings.ts      — crossfade and equalizer shapes, bands and presets
-  usePlayerState.ts     — the reactive half: progress, playing, active item
-  playbackSink.ts       — where the audio comes out (§ above), a separate
-                          question from which player produces it
-
-src/hooks/
-  useSync.ts            — the catalog pipeline (§4)
-  useScrobbling.ts      — scrobble + now-playing (server-forwarded to
+src/features/           — one directory per feature: its screen, components,
+                          hooks and logic together
+  playback/
+    PlayingContext.tsx  — the player. Consumes the server adapter,
+                          dispatches into playbackSlice, checks contentKind
+                          before every player-shape decision. Talks to
+                          PlayerBackend, never to a player package directly.
+    useScrobbling.ts    — scrobble + now-playing (server-forwarded to
                           Last.fm/LB on Navidrome, session events on
                           Jellyfin/Emby)
-  useBookmarkManager.ts — local bookmark map + server mirror
-  useQueueSync.ts       — server-mirror for the playback queue
-  usePlaybackPersistence.ts — the bridge between PlayingContext and
+    useBookmarkManager.ts — local bookmark map + server mirror
+    useQueueSync.ts     — server-mirror for the playback queue
+    usePlaybackPersistence.ts — the bridge between PlayingContext and
                           playbackSlice
+    queueProviders.ts   — autoplay queue fill (server similar songs, AudioMuse)
+  player/
+    backend.ts          — PlayerBackend: the surface the app uses (§ above)
+    createEngineBackend.ts — yuzic-engine behind it, plus the shadow that lets
+                          a bridged engine answer synchronous getters
+    activeBackend.ts    — builds it, hands it out, one per launch
+    mediaItem.ts        — the app's own playable-item type, formerly the
+                          player package's
+    audioSettings.ts    — crossfade and equalizer shapes, bands and presets
+    usePlayerState.ts   — the reactive half: progress, playing, active item
+    playbackSink.ts     — where the audio comes out (§ above), a separate
+                          question from which player produces it
+    PlaybackSinkContext.tsx — which output is selected, and where transport
+                          commands go
+    DlnaContext.tsx, useDlnaDiscovery.ts — the DLNA output
+    PlayingScreen.tsx, playingBar/ — the player UI
+  library/
+    useSync.ts          — the catalog pipeline (§4)
+  album/, artist/, song/, playlist/, genre/ — entity screens, repositories
+                          and query hooks
+  home/, search/, library/, downloads/, wants/, onboarding/, settings/,
+  podcasts/, radio/, shares/ — the remaining screens with what they own
+  downloaders/          — Lidarr + slskd + SoulSync registry and queue
+  offline/              — downloads: policies, filesystem, the job queue,
+                          DownloadContext, and the offline mutation queue that
+                          replays scrobbles and edits made without a connection
+  sources/              — external catalog registry (Deezer, MB)
+  theme/                — useTheme, useRadius, useListDensity, cover accent
+  connectivity/         — offline and server-reachability state
+  artwork/              — cover URLs for every provider, and the image cache
 
-src/contexts/PlaybackSinkContext.tsx — which output is selected, and where
-                                    transport commands go
-
-src/features/           — feature-scoped modules that span providers
-  player/playbackSink   — the sink types and `ownsPlayback`
-  downloaders/          — Lidarr + slskd registry + the queue provider
-  downloads/            — Auto-download watcher
-  sources/              — External catalog registry (Deezer, MB)
-  home/                 — Home layout (§ the day-key + tiers)
-  audiomuse/            — Playlist generation from acoustic seed
-
-src/screens/            — one directory per top-level route
-src/utils/redux/        — slices + selectors + store setup
-src/utils/playback/     — contentKind + Song-synthesis helpers
+src/state/              — app state
+  credentials.ts        — keystore-backed secrets, never in Redux
+  redux/                — slices + selectors + store setup
+  query/                — queryKeys, staleTime, useOfflineFirstQuery, usePollWhile
+  mmkvStorage.ts        — the non-Redux key-value store
+src/components/         — shared visual primitives, and the interaction helpers
+                          they share (haptics, useSheetRef, formatDuration)
+src/constants/          — app-wide values only: design tokens, public keys, the
+                          app version, the favorites playlist id
+src/types/              — ambient declarations for packages without types
 ```
+
+Redux lives under `src/state/` rather than inside the features that read
+it, and that is deliberate rather than unfinished. Most of these slices are
+not feature-local: `serversSlice` is imported from roughly forty
+directories, `statsSlice` from eleven. Moving a slice into a feature would
+make every one of those directories reach through that feature's internals
+to read state it co-owns. The two that genuinely are feature-shaped
+(`searchHistorySlice`, `playbackSlice`) are not worth splitting out to
+leave the rest behind — one whole state layer is easier to follow than a
+half-moved one. What was wrong was the old address, `src/utils/redux`,
+which filed the app's state under miscellany.
 
 ## The four small unforced rules
 
 - **Optional method + presence check, not provider switch.** Every time a
   feature landed as `if (activeServer.type === 'navidrome')` in a review,
   it got rewritten as `if (api.<feature>)` before merging. What the adapter
-  can't express, `utils/servers/registry.ts` does: it holds the per-provider
+  can't express, `providers/registry/serverConnections.ts` does: it holds the per-provider
   facts that aren't API calls — the demo, cover URLs, and `libraryScope`, the
   `auth` key each provider stores its chosen libraries under. `activeServer.type`
   is for naming a server to the user and tagging data with its origin; it is not

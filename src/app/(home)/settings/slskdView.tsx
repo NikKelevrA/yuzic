@@ -1,4 +1,4 @@
-import SlskdView from '@/screens/settings/downloaders/Slskd';
+import SlskdView from '@/features/settings/downloaders/Slskd';
 
 export default function SlskdSettingsView() {
   return <SlskdView />;
