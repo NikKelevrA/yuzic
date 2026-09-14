@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 
 import DownloadsScreen from './DownloadsScreen';
 
@@ -8,8 +8,12 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, back: jest.fn() }),
 }));
+
+/* eslint-disable no-var -- hoisted for the jest.mock factory above */
+var mockPush = jest.fn();
+/* eslint-enable no-var */
 
 jest.mock('react-redux', () => ({
   useSelector: (selector: any) => selector({}),
@@ -100,10 +104,12 @@ describe('DownloadsScreen', () => {
     expect(mockUseDownloadersQueue).toHaveBeenCalled();
   });
 
-  it('shows the empty state when nothing is connected', async () => {
+  it('shows the empty state when nothing is connected, with the way to connect one', async () => {
     mockUseDownloaderStates.mockReturnValue([]);
     const view = await render(<DownloadsScreen />);
 
     expect(view.getByText('downloads.noDownloaders')).toBeTruthy();
+    await fireEvent.press(view.getByText('downloads.setUpDownloader'));
+    expect(mockPush).toHaveBeenCalledWith('/settings/connectionsView');
   });
 });

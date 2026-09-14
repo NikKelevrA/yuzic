@@ -19,6 +19,7 @@ import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { shareItem } from '@/features/shares/share';
+import { isUnavailableOnServer } from '@/features/library/useServerSurface';
 
 function formatDate(value: string | undefined): string {
   if (!value) return '';
@@ -54,6 +55,8 @@ export default function SharesScreen() {
     queryFn: async () => (await api.shares?.list()) ?? [],
     enabled: Boolean(api.shares) && serverReachable,
     staleTime: 1000 * 60 * 5,
+    // Sharing switched off on the server stays off however often it is asked.
+    retry: (failures, error) => !isUnavailableOnServer(error) && failures < 1,
   });
 
   const shareCount = sharesQuery.data?.length ?? 0;
@@ -160,6 +163,11 @@ export default function SharesScreen() {
         <View style={styles.listContent}>
           {[...Array(6)].map((_, i) => <SkeletonListRow key={i} />)}
         </View>
+      ) : sharesQuery.isError && isUnavailableOnServer(sharesQuery.error) ? (
+        <EmptyState
+          icon={<Link2 size={iconSize.emptyState} color={colors.subtext} />}
+          message={t('shares.unavailable')}
+        />
       ) : sharesQuery.isError ? (
         <EmptyState
           icon={<Link2 size={iconSize.emptyState} color={colors.subtext} />}

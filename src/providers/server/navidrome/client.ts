@@ -25,6 +25,8 @@ const CLIENT_NAME = "Yuzic";
 
 export type NavidromeClient = ReturnType<typeof createNavidromeClient>;
 
+import { ServerFeatureUnavailableError } from '@/providers/contracts/ServerAdapter';
+
 /** A request the server answered and refused — `status: "failed"` in a 200 body. */
 export class SubsonicRequestError extends Error {
   constructor(readonly code: number | undefined, message: string | undefined) {
@@ -91,6 +93,12 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
           headers: proxyHeader,
           signal: controller.signal,
         });
+        // 501 is Navidrome's answer for an endpoint it has not implemented
+        // (podcasts) or has switched off in its config (sharing): not a
+        // failure to retry, but a feature this server does not have.
+        if (res.status === 501) {
+          throw new ServerFeatureUnavailableError(await res.text());
+        }
         if (!res.ok) {
           throw new Error(`Navidrome API error (${res.status}): ${await res.text()}`);
         }

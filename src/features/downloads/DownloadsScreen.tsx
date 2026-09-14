@@ -2,6 +2,8 @@ import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
+import { Download } from 'lucide-react-native';
 
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import EmptyState from '@/components/EmptyState';
@@ -9,6 +11,7 @@ import { useDownloaderStates } from '@/features/downloaders/registry';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useTheme } from '@/features/theme/useTheme';
+import { iconSize } from '@/constants/design';
 import DownloaderQueueSection from './DownloaderQueueSection';
 
 /**
@@ -30,6 +33,7 @@ import DownloaderQueueSection from './DownloaderQueueSection';
 const DownloadsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const router = useRouter();
   const scrollClearance = useScrollClearance();
   const states = useDownloaderStates();
   const connected = states.filter(state => state.isConnected);
@@ -43,7 +47,12 @@ const DownloadsScreen: React.FC = () => {
     >
       <DetailHeaderBar title={t('downloads.title')} />
       {connected.length === 0 ? (
-        <EmptyState message={t('downloads.noDownloaders')} />
+        <EmptyState
+          icon={<Download size={iconSize.emptyState} color={colors.subtext} />}
+          message={t('downloads.noDownloaders')}
+          // Where downloaders are connected, rather than a sentence pointing there.
+          action={{ label: t('downloads.setUpDownloader'), onPress: () => router.push('/settings/connectionsView') }}
+        />
       ) : (
         <ScrollView contentContainerStyle={{ paddingBottom: scrollClearance }}>
           {connected.map(state => {

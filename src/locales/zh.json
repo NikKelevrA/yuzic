@@ -774,6 +774,7 @@
     },
     "collection": {
       "empty": "这里还没有内容。",
+      "downloadedEmpty": "还没有下载内容。在专辑或播放列表的选项中下载后，即可离线播放。",
       "playFailed": "无法开始播放。"
     },
     "recentlyAdded": "最近添加",
@@ -1328,6 +1329,7 @@
   "shares": {
     "title": "共享链接",
     "empty": "你还没有共享任何内容。在专辑或播放列表上使用“共享”即可创建链接。",
+    "unavailable": "你的服务器未提供共享链接。部分服务器需要先开启共享功能。",
     "linkCopied": "链接已复制",
     "copy": "复制链接",
     "share": "共享",
@@ -1360,6 +1362,7 @@
       "feedUrl": "订阅源地址"
     },
     "empty": "还没有播客。添加一个即可开始收听。",
+    "unavailable": "你的服务器不支持播客。",
     "add": "添加播客",
     "addTitle": "订阅播客",
     "addHelp": "粘贴该节目的 RSS 订阅源地址。",
@@ -1473,7 +1476,8 @@
   },
   "downloads": {
     "title": "下载",
-    "noDownloaders": "未连接下载器。请在设置中添加。",
+    "noDownloaders": "尚未连接下载器。",
+    "setUpDownloader": "设置下载器",
     "jobFailed": "无法完成“{{title}}”的下载。它仍在队列中，将重试。",
     "offlineSummary": "已用 {{size}} · 可用 {{available}}",
     "section": {

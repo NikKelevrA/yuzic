@@ -4,12 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRoute } from '@react-navigation/native'
 import { useTranslation } from 'react-i18next'
 import { notify } from '@/components/toast';
+import { ArrowDownToLine, Disc3, ListMusic, Music2, Users } from 'lucide-react-native'
 
 import { DetailHeaderBar } from '@/components/DetailHeader'
 import EmptyState from '@/components/EmptyState'
 import { usePlayingActions } from '@/features/playback/PlayingContext'
 import { useTheme } from '@/features/theme/useTheme'
-import { spacing } from '@/constants/design'
+import { iconSize, spacing } from '@/constants/design'
 import CollectionActions from './CollectionActions'
 import DownloadedHeader from '@/features/downloads/DownloadedHeader'
 import LibraryList from './LibraryList'
@@ -33,6 +34,15 @@ const TITLE_KEY: Record<LibraryCollectionType, string> = {
   artists: 'home.filters.artists',
   tracks: 'home.filters.tracks',
   downloaded: 'home.filters.downloaded',
+}
+
+/** The same icon each collection's row carries in the library index. */
+const EMPTY_ICON: Record<LibraryCollectionType, React.ComponentType<{ size?: number; color?: string }>> = {
+  playlists: ListMusic,
+  albums: Disc3,
+  artists: Users,
+  tracks: Music2,
+  downloaded: ArrowDownToLine,
 }
 
 const COUNT_KEY: Record<LibraryCollectionType, string> = {
@@ -125,7 +135,11 @@ const LibraryCollectionScreen: React.FC = () => {
       {isLoading && items.length === 0 ? (
         <LoadingLibraryList collection={type ?? null} />
       ) : items.length === 0 ? (
-        <EmptyState message={t('library.collection.empty')} />
+        <EmptyState
+          icon={React.createElement(type ? EMPTY_ICON[type] : Music2, { size: iconSize.emptyState, color: colors.subtext })}
+          // "Nothing here yet" says nothing about how Downloaded fills up.
+          message={t(type === 'downloaded' ? 'library.collection.downloadedEmpty' : 'library.collection.empty')}
+        />
       ) : (
         <LibraryList
           items={items}

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react-native'
 
 import { useApi } from '@/providers/registry/useApi'
+import { useServerSurface } from './useServerSurface'
 import { useTheme } from '@/features/theme/useTheme'
 import { iconSize, spacing, typography } from '@/constants/design'
 import CoverMosaic from './CoverMosaic'
@@ -68,6 +69,8 @@ const LibraryEntryRows: React.FC = () => {
   const { colors } = useTheme()
   const summary = useLibrarySummary()
   const api = useApi()
+  const podcastsOffered = useServerSurface('podcasts')
+  const sharesOffered = useServerSurface('shares')
 
   const openCollection = (type: LibraryCollectionType) =>
     navigation.push('libraryCollectionView', { type })
@@ -77,6 +80,8 @@ const LibraryEntryRows: React.FC = () => {
 
   // Provider-only surfaces stay out of the list on servers that can't back
   // them — a Jellyfin user should never see a Radio row that goes nowhere.
+  // Podcasts and shares also wait for the server to confirm it has them: a
+  // protocol can declare endpoints a given server never implemented.
   const browseEntries: Entry[] = [
     {
       key: 'genres',
@@ -114,7 +119,7 @@ const LibraryEntryRows: React.FC = () => {
       onPress: () => navigation.push('radio'),
     })
   }
-  if (api.podcasts) {
+  if (podcastsOffered) {
     browseEntries.push({
       key: 'podcasts',
       labelKey: 'library.podcasts.title',
@@ -122,7 +127,7 @@ const LibraryEntryRows: React.FC = () => {
       onPress: () => navigation.push('podcasts'),
     })
   }
-  if (api.shares) {
+  if (sharesOffered) {
     browseEntries.push({
       key: 'shares',
       labelKey: 'library.shares.title',

@@ -775,6 +775,7 @@
     },
     "collection": {
       "empty": "Rien ici pour l'instant.",
+      "downloadedEmpty": "Rien de téléchargé pour l’instant. Téléchargez un album ou une playlist depuis ses options pour l’écouter sans connexion.",
       "playFailed": "Impossible de lancer la lecture."
     },
     "recentlyAdded": "Ajouts récents",
@@ -1332,6 +1333,7 @@
   "shares": {
     "title": "Liens partagés",
     "empty": "Vous n’avez encore rien partagé. Utilisez l’option Partager sur un album ou une playlist pour créer un lien.",
+    "unavailable": "Votre serveur ne propose pas de liens partagés. Sur certains serveurs, le partage doit d’abord être activé.",
     "linkCopied": "Lien copié",
     "copy": "Copier le lien",
     "share": "Partager",
@@ -1364,6 +1366,7 @@
       "feedUrl": "URL du flux"
     },
     "empty": "Aucun podcast pour l’instant. Ajoutez-en un pour commencer à écouter.",
+    "unavailable": "Votre serveur ne prend pas en charge les podcasts.",
     "add": "Ajouter un podcast",
     "addTitle": "S’abonner à un podcast",
     "addHelp": "Collez l’URL du flux RSS de l’émission.",
@@ -1477,7 +1480,8 @@
   },
   "downloads": {
     "title": "Téléchargements",
-    "noDownloaders": "Aucun téléchargeur connecté. Ajoutez-en un dans les Réglages.",
+    "noDownloaders": "Aucun téléchargeur connecté pour l’instant.",
+    "setUpDownloader": "Configurer un téléchargeur",
     "jobFailed": "Impossible de terminer le téléchargement de « {{title}} ». Il reste en file d'attente et sera réessayé.",
     "offlineSummary": "{{size}} utilisés · {{available}} libres",
     "section": {

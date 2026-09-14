@@ -27,6 +27,7 @@ import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { hitSlopFor, iconSize, spacing, statusColor } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
+import { isUnavailableOnServer } from '@/features/library/useServerSurface';
 
 export default function PodcastsScreen() {
   const { t } = useTranslation();
@@ -44,6 +45,8 @@ export default function PodcastsScreen() {
     queryFn: async () => (await api.podcasts?.list(false)) ?? [],
     enabled: Boolean(api.podcasts) && serverReachable,
     staleTime: 1000 * 60 * 15,
+    // Asking again won't give the server podcasts.
+    retry: (failures, error) => !isUnavailableOnServer(error) && failures < 1,
   });
 
   // The requery below is scheduled, not awaited, so leaving the screen
@@ -178,6 +181,11 @@ export default function PodcastsScreen() {
         <View style={styles.listContent}>
           {[...Array(8)].map((_, i) => <SkeletonListRow key={i} />)}
         </View>
+      ) : channelsQuery.isError && isUnavailableOnServer(channelsQuery.error) ? (
+        <EmptyState
+          icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
+          message={t('podcasts.unavailable')}
+        />
       ) : channelsQuery.isError ? (
         <EmptyState
           icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
