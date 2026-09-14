@@ -48,8 +48,11 @@ export function useArtistMbid(
     enabled: shouldLookUp,
     staleTime: 1000 * 60 * 60 * 24,
     gcTime: 1000 * 60 * 60 * 24,
-    // A failed lookup is not worth retrying on a shelf nobody asked for.
-    retry: false,
+    // MusicBrainz answers 503 to anything faster than one request a second,
+    // which means "ask again shortly", not "no such artist". Anything else
+    // that fails is not worth retrying on a shelf nobody asked for.
+    retry: (failures, error) => failures < 2 && String(error).includes('MusicBrainz 503'),
+    retryDelay: 1500,
     networkMode: 'online',
   })
 
