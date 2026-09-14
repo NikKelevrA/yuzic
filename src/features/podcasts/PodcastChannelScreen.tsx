@@ -5,7 +5,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
-import { ArrowDownCircle, CheckCircle, Play } from 'lucide-react-native';
+import { ArrowDownCircle, CheckCircle, Play, Podcast as PodcastIcon } from 'lucide-react-native';
 
 import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
@@ -161,13 +161,20 @@ export default function PodcastChannelScreen() {
         </View>
       ) : channelsQuery.isError ? (
         <EmptyState
+          icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
           message={t('common.loadFailed')}
           action={{ label: t('common.retry'), onPress: () => channelsQuery.refetch() }}
         />
       ) : !channel ? (
-        <EmptyState message={t('podcasts.notFound')} />
+        <EmptyState
+          icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
+          message={t('podcasts.notFound')}
+        />
       ) : channel.episodes.length === 0 ? (
-        <EmptyState message={t('podcasts.channelEmpty')} />
+        <EmptyState
+          icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
+          message={t('podcasts.channelEmpty')}
+        />
       ) : (
         <FlatList
           data={channel.episodes}

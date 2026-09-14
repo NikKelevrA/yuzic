@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { FlashList } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight } from 'lucide-react-native'
+import { ChevronRight, Tags } from 'lucide-react-native'
 
 import { DetailHeaderBar } from '@/components/DetailHeader'
 import EmptyState from '@/components/EmptyState'
@@ -66,7 +66,10 @@ const GenresScreen: React.FC = () => {
         // exactly like a library with no genres.
         <LoadingGenreList />
       ) : rows.length === 0 ? (
-        <EmptyState message={t('library.genres.empty')} />
+        <EmptyState
+          icon={<Tags size={iconSize.emptyState} color={colors.subtext} />}
+          message={t('library.genres.empty')}
+        />
       ) : (
         <FlashList<GenreRow>
           data={rows}

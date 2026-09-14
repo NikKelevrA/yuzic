@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
+import { ListMusic } from 'lucide-react-native';
 
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import EmptyState from '@/components/EmptyState';
@@ -11,7 +12,7 @@ import SongRow from '@/components/rows/SongRow';
 import LoadingSongRow from '@/components/rows/SongRow/Loading';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useTheme } from '@/features/theme/useTheme';
-import { spacing } from '@/constants/design';
+import { iconSize, spacing } from '@/constants/design';
 import CollectionActions from '@/features/library/CollectionActions';
 import { useLocalMix } from './hooks/useLocalMix';
 
@@ -54,7 +55,10 @@ export default function LocalMixScreen() {
           {songs.map(song => <SongRow key={song.localId} song={song} />)}
         </ScrollView>
       ) : (
-        <EmptyState message={t('library.collection.empty')} />
+        <EmptyState
+          icon={<ListMusic size={iconSize.emptyState} color={colors.subtext} />}
+          message={t('library.collection.empty')}
+        />
       )}
     </SafeAreaView>
   );
