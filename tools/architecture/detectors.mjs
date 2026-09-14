@@ -46,9 +46,14 @@ export function cycles() {
  * Production exports nothing imports. Test files are excluded: their exports
  * are fixtures the runner reaches in a way ts-prune cannot see, and they are
  * not production surface either way.
+ *
+ * Reads its own tsconfig, not the app's: see tsconfig.prune.json. Against the
+ * app's, every `@/` import of a directory was unresolved, and exports reached
+ * only that way were reported unused — false positives the allowlist had been
+ * carrying since the gate went in.
  */
 export function unusedExports() {
-  const out = run('npx', ['--no-install', 'ts-prune', '-p', 'tsconfig.json']);
+  const out = run('npx', ['--no-install', 'ts-prune', '-p', 'tools/architecture/tsconfig.prune.json']);
   return [...new Set(
     out
       .split('\n')
