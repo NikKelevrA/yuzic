@@ -105,16 +105,22 @@ export function useOfflineFirstQuery<T>({
   // screen got to render. The first one is kept.
   const emptyRef = useRef(emptyValue);
 
-  // `select` builds a new value each time it runs, so it runs again only when a
-  // source's cached data actually changes.
+  // `select` builds a new value each time it runs, so it runs again only when
+  // what it reads changes: a source's cached data, or which entity this hook is
+  // for. The second matters because the sources are usually lists whose keys
+  // carry no id — `useArtist(id)` falls back to the whole artists list — so a
+  // new id with the same list would otherwise keep the previous entity.
   const fallbackDatas = fallbackQueries.map(q => q.data);
-  const fallbackMemo = useRef<{ datas: unknown[]; value: T | undefined } | null>(null);
+  const queryIdentity = JSON.stringify(queryKey);
+  const fallbackMemo = useRef<{ identity: string; datas: unknown[]; value: T | undefined } | null>(null);
   if (
     !fallbackMemo.current ||
+    fallbackMemo.current.identity !== queryIdentity ||
     fallbackMemo.current.datas.length !== fallbackDatas.length ||
     fallbackMemo.current.datas.some((cached, i) => cached !== fallbackDatas[i])
   ) {
     fallbackMemo.current = {
+      identity: queryIdentity,
       datas: fallbackDatas,
       value: fallback ? fallback.select(fallbackDatas) : undefined,
     };
