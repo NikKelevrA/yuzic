@@ -64,7 +64,7 @@ function renderSection(config: SectionConfig, refreshKey: number) {
     case 'localMix':
       return <LocalMixSection key={config.key} sectionKey={config.key} refreshKey={refreshKey} />
     case 'lbSimilarArtistsForYou':
-      return <LBSimilarForYouSection key={config.key} sectionKey={config.key} artistName={config.artistName!} refreshKey={refreshKey} />
+      return <LBSimilarForYouSection key={config.key} sectionKey={config.key} artistNames={config.artistNames ?? [config.artistName!]} refreshKey={refreshKey} />
     case 'lbCreatedFor':
       return <LBCreatedForSection key={config.key} sectionKey={config.key} mixType={config.mixType!} refreshKey={refreshKey} />
     default:

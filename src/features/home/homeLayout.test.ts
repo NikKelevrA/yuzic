@@ -10,6 +10,7 @@ const seeds = (overrides: Partial<Parameters<typeof buildCatalogueSections>[0]> 
   isOffline: false,
   hasLibrary: true,
   becauseSeeds: ['Radiohead'],
+  similarSeeds: ['Radiohead'],
   topGenres: ['Jazz'],
   ...overrides,
 })
@@ -65,15 +66,24 @@ describe('buildListenerSections', () => {
   })
 
   it('seeds similar artists from the first library seed, and always offers the made-for-you mixes', () => {
-    const sections = buildListenerSections(seeds({ becauseSeeds: ['Radiohead', 'Bowie'] }))
+    const sections = buildListenerSections(seeds({ similarSeeds: ['Radiohead', 'Bowie'] }))
 
-    expect(sections[0]).toEqual({ key: 'lbSimilarArtistsForYou', type: 'lbSimilarArtistsForYou', artistName: 'Radiohead' })
+    expect(sections[0]).toEqual({
+      key: 'lbSimilarArtistsForYou',
+      type: 'lbSimilarArtistsForYou',
+      artistName: 'Radiohead',
+      artistNames: ['Radiohead', 'Bowie'],
+    })
     expect(sections.filter(s => s.type === 'lbCreatedFor').map(s => s.mixType))
       .toEqual(['daily-jams', 'weekly-jams', 'weekly-exploration'])
   })
 
   it('drops similar artists without a library to seed from', () => {
     expect(buildListenerSections(seeds({ hasLibrary: false })).map(s => s.type)).not.toContain('lbSimilarArtistsForYou')
+  })
+
+  it('drops similar artists when there are no seeds to try', () => {
+    expect(buildListenerSections(seeds({ similarSeeds: [] })).map(s => s.type)).not.toContain('lbSimilarArtistsForYou')
   })
 })
 

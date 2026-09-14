@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useSelector } from 'react-redux';
@@ -23,31 +23,51 @@ import { useSourceSectionPresence } from './SourceGroup';
 import type { Artist } from '@/domain/entities/Artist';
 import { spacing, typography } from '@/constants/design';
 
+/**
+ * How long to wait before trying the next seed. Each seed can cost a
+ * MusicBrainz lookup, and MusicBrainz takes one request a second.
+ */
+export const NEXT_SEED_DELAY_MS = 1100;
+
 type Props = {
   /** This shelf's key in the home layout, so the source group above it knows
    * which of its sections has just gone quiet. */
   sectionKey: string;
-  artistName: string;
+  /** Library artists to seed from, in order. */
+  artistNames: string[];
   refreshKey?: number;
 };
 
 /**
  * "Artists similar to <one you love>" from ListenBrainz's public graph —
  * MBID-keyed, no auth required, so what turns it on is the ListenBrainz
- * discovery setting rather than a connected account. Cheap: one round-trip,
- * and the seed comes from the local library.
+ * discovery setting rather than a connected account. The seed comes from the
+ * local library.
+ *
+ * ListenBrainz has no listeners on record for plenty of smaller artists, and
+ * with a single seed the shelf simply vanished for a library full of them. So
+ * it works down its seeds one at a time and shows the first that has any; the
+ * rest are never asked about.
  *
  * Home already withholds the whole ListenBrainz group when that setting is
  * off; the check is repeated here so the shelf cannot call out from anywhere
  * else it gets mounted.
  */
-export default function LBSimilarForYouSection({ sectionKey, artistName, refreshKey = 0 }: Props) {
+export default function LBSimilarForYouSection({ sectionKey, artistNames, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const { navigateToArtist } = useMatchedNavigation();
   const { artists: libraryArtists } = useArtists();
   const discoveryEnabled = useSelector(selectSourceUse(LISTENERS_HOME_USE));
+
+  // Which seed is being tried. A new set of seeds or a refresh starts again at
+  // the first, without an effect to reset it.
+  const seedsKey = artistNames.join('\n');
+  const [attempt, setAttempt] = useState({ seedsKey, refreshKey, index: 0 });
+  const index = attempt.seedsKey === seedsKey && attempt.refreshKey === refreshKey ? attempt.index : 0;
+  const artistName = artistNames[index] ?? '';
+  const hasNextSeed = index < artistNames.length - 1;
 
   const seed = useMemo(
     () => libraryArtists.find((a) => a.name === artistName) ?? null,
@@ -82,8 +102,26 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
   });
 
   const data = query.data ?? [];
+  // Nothing to be had from this seed: no MusicBrainz artist matched its name,
+  // or ListenBrainz answered with nobody. A failed request is not the same
+  // answer, and moving on from one would only repeat the failure.
+  const seedHasNothing =
+    discoveryEnabled &&
+    !isResolving &&
+    (!seedMbid || (query.isSuccess && !query.isFetching && data.length === 0));
+
+  useEffect(() => {
+    if (!seedHasNothing || !hasNextSeed) return;
+    const timer = setTimeout(
+      () => setAttempt({ seedsKey, refreshKey, index: index + 1 }),
+      NEXT_SEED_DELAY_MS
+    );
+    return () => clearTimeout(timer);
+  }, [seedHasNothing, hasNextSeed, seedsKey, refreshKey, index]);
+
   const isLoading =
-    discoveryEnabled && (isResolving || (Boolean(seedMbid) && query.isLoading));
+    discoveryEnabled &&
+    (isResolving || (Boolean(seedMbid) && query.isLoading) || (seedHasNothing && hasNextSeed));
   const hasContent = isLoading || data.length > 0;
 
   useSourceSectionPresence(sectionKey, hasContent);

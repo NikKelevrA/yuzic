@@ -16,6 +16,8 @@ import {
 
 const BECAUSE_SEED_COUNT = 1
 const BECAUSE_SEED_POOL_SIZE = 20
+/** How many seeds the similar-artists shelf may try before it gives up. */
+const SIMILAR_SEED_COUNT = 4
 const GENRE_COUNT = 1
 
 export function getDayKey(date = new Date()): string {
@@ -82,6 +84,12 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
     [artistSeedPool]
   )
 
+  // Same pool, same order, so the first seed matches the "More like" shelf's.
+  const similarSeeds = useMemo(
+    () => artistSeedPool.slice(0, SIMILAR_SEED_COUNT).map(a => a.name),
+    [artistSeedPool]
+  )
+
   const availableGenres = useMemo(() => {
     const genres: string[] = [...libraryGenres]
     // Supplement from album tags, but cap at 500 albums — scanning all 9000 for
@@ -126,14 +134,14 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
   // Every outside tier builds its shelves from the same seeds; a catalogue
   // tier is reshuffled daily so its feed changes.
   const sources = useMemo(() => {
-    const seeds = { isOffline, hasLibrary: libraryArtists.length > 0, becauseSeeds, topGenres }
+    const seeds = { isOffline, hasLibrary: libraryArtists.length > 0, becauseSeeds, similarSeeds, topGenres }
     const bySource: Partial<Record<SourceId, SectionConfig[]>> = {}
     for (const tier of HOME_SOURCE_TIERS) {
       const shelves = tier.build(seeds)
       bySource[tier.source] = tier.shuffleDaily ? seededShuffle(shelves, dailySeed) : shelves
     }
     return bySource
-  }, [dailySeed, isOffline, libraryArtists.length, becauseSeeds, topGenres])
+  }, [dailySeed, isOffline, libraryArtists.length, becauseSeeds, similarSeeds, topGenres])
 
   return useMemo(
     () => ({ resume, library, server, sources, isOffline }),
