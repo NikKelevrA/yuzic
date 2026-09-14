@@ -7,8 +7,8 @@ import { useApi } from '@/providers/registry/useApi';
 import { notify } from '@/components/toast';
 import { selectSongPlayCount } from '@/state/redux/selectors/statsSelectors';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
-import { useIsAudiomuseConfigured, useAudiomuseConfig } from '@/state/redux/selectors/audiomuseSelectors';
-import { generateSimilarPlaylistForSong } from '@/features/audiomuse/generatePlaylist';
+import { useSimilarityService } from '@/providers/registry/similarityService';
+import { generateSimilarPlaylistForSong } from '@/features/playlist/generateSimilarPlaylist';
 import { usePlayingState, usePlayingActions } from '@/features/playback/PlayingContext';
 import { useStarredSongs } from '@/features/library/useStarredSongs';
 import { useStarSong } from '@/features/library/useStarSong';
@@ -33,8 +33,8 @@ export function useSongLibraryActions(
   const isOffline = useIsOffline();
   const router = useRouter();
   const api = useApi();
-  const similarPlaylistAvailable = useIsAudiomuseConfigured();
-  const audiomuseConfig = useAudiomuseConfig();
+  const similarity = useSimilarityService();
+  const similarPlaylistAvailable = similarity !== null;
   const { currentSong } = usePlayingState();
   const { addToQueue, playNext, playSimilar } = usePlayingActions();
   const instantMixInFlightRef = useRef(false);
@@ -50,7 +50,10 @@ export function useSongLibraryActions(
   const playCount = useSelector(selectSongPlayCount(song.nativeId));
 
   const { isGenerating: isGeneratingPlaylist, generate: generatePlaylist } = useGeneratePlaylistAction({
-    run: () => generateSimilarPlaylistForSong(api, audiomuseConfig, song, { size: 25 }),
+    run: () => {
+      if (!similarity) throw new Error('no similarity service connected');
+      return generateSimilarPlaylistForSong(api, similarity, song, { size: 25 });
+    },
     t, generatedKey: 'songOptions.toasts.playlistGenerated', failedKey: 'songOptions.toasts.playlistGenerationFailed',
     close: opts.close,
   });

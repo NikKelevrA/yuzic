@@ -2,20 +2,15 @@ import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
-import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
 import {
   resolveQueueFillProvider,
   createNativeSimilarityQueueFillProvider,
-  createAudiomuseQueueFillProvider,
+  createSimilarityServiceQueueFillProvider,
   type QueueFillProvider,
 } from './queueProviders';
 
-jest.mock('@/providers/integration/audiomuse/client', () => ({
-  createAudiomuseClient: jest.fn(() => ({ request: jest.fn(), baseUrl: '' })),
-}));
-jest.mock('@/providers/integration/audiomuse/similarity', () => ({
-  getAudiomuseQueueExtension: jest.fn(),
-}));
+/** A similarity service that answers with these item ids. */
+const similarityReturning = (itemIds: string[]) => ({ similarTrackIds: jest.fn(async () => itemIds) });
 
 const provenance = serverProvenance('srv-1');
 
@@ -74,19 +69,19 @@ describe('resolveQueueFillProvider', () => {
   });
 
   it('returns the first available provider in priority order', () => {
-    const audiomuse = provider('audiomuse', true);
+    const similarity = provider('similarity-service', true);
     const native = provider('native-similarity', true);
-    expect(resolveQueueFillProvider([audiomuse, native])).toBe(audiomuse);
+    expect(resolveQueueFillProvider([similarity, native])).toBe(similarity);
   });
 
   it('skips unavailable providers', () => {
-    const audiomuse = provider('audiomuse', false);
+    const similarity = provider('similarity-service', false);
     const native = provider('native-similarity', true);
-    expect(resolveQueueFillProvider([audiomuse, native])).toBe(native);
+    expect(resolveQueueFillProvider([similarity, native])).toBe(native);
   });
 
   it('returns null when no provider is available', () => {
-    expect(resolveQueueFillProvider([provider('audiomuse', false)])).toBeNull();
+    expect(resolveQueueFillProvider([provider('similarity-service', false)])).toBeNull();
   });
 });
 
@@ -128,24 +123,16 @@ describe('createNativeSimilarityQueueFillProvider', () => {
   });
 });
 
-describe('createAudiomuseQueueFillProvider', () => {
-  const config = { serverUrl: 'http://audiomuse:8000', apiToken: 'token' };
-
-  it('is available only when both serverUrl and apiToken are set', () => {
-    expect(createAudiomuseQueueFillProvider(config, fakeApi()).isAvailable()).toBe(true);
-    expect(createAudiomuseQueueFillProvider({ serverUrl: '', apiToken: 'token' }, fakeApi()).isAvailable()).toBe(false);
-    expect(createAudiomuseQueueFillProvider({ serverUrl: config.serverUrl, apiToken: '' }, fakeApi()).isAvailable()).toBe(false);
+describe('createSimilarityServiceQueueFillProvider', () => {
+  it('is available whenever a service was handed to it', () => {
+    expect(createSimilarityServiceQueueFillProvider(similarityReturning([]), fakeApi()).isAvailable()).toBe(true);
   });
 
   it('resolves similarity refs to library songs, dropping unresolvable and excluded ones', async () => {
-    (getAudiomuseQueueExtension as jest.Mock).mockResolvedValue([
-      { itemId: 'a' },
-      { itemId: 'b' },
-      { itemId: 'missing' },
-    ]);
+    const similarity = similarityReturning(['a', 'b', 'missing']);
     const get = jest.fn(async (id: string) => (id === 'missing' ? null : song(id)));
     const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const } });
-    const provider = createAudiomuseQueueFillProvider(config, api);
+    const provider = createSimilarityServiceQueueFillProvider(similarity, api);
 
     const result = await provider.fetchExtension({
       recentSongs: [song('seed')],
@@ -156,14 +143,14 @@ describe('createAudiomuseQueueFillProvider', () => {
     expect(result.map(s => s.nativeId)).toEqual(['a']);
   });
 
-  it('sends AudioMuse native item ids to exclude, not on-device identities', async () => {
-    // AudioMuse only knows the media server's own item ids. Passing the
+  it('sends the service native item ids to exclude, not on-device identities', async () => {
+    // The service only knows the media server's own item ids. Passing the
     // identity strings straight through would exclude nothing, because none of
     // them would match anything it holds.
-    (getAudiomuseQueueExtension as jest.Mock).mockResolvedValue([{ itemId: 'a' }]);
+    const similarity = similarityReturning(['a']);
     const get = jest.fn(async (id: string) => song(id));
     const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const } });
-    const provider = createAudiomuseQueueFillProvider(config, api);
+    const provider = createSimilarityServiceQueueFillProvider(similarity, api);
 
     await provider.fetchExtension({
       recentSongs: [song('seed')],
@@ -171,18 +158,16 @@ describe('createAudiomuseQueueFillProvider', () => {
       count: 10,
     });
 
-    expect(getAudiomuseQueueExtension).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(similarity.similarTrackIds).toHaveBeenCalledWith(
       expect.objectContaining({ seedItemIds: ['seed'], excludeItemIds: ['b', 'c'] })
     );
   });
 
   it('requests a larger candidate pool than count and samples down, so repeat plays of the same seed vary', async () => {
-    const refs = ['a', 'b', 'c', 'd', 'e'].map(id => ({ itemId: id }));
-    (getAudiomuseQueueExtension as jest.Mock).mockResolvedValue(refs);
+    const similarity = similarityReturning(['a', 'b', 'c', 'd', 'e']);
     const get = jest.fn(async (id: string) => song(id));
     const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const } });
-    const provider = createAudiomuseQueueFillProvider(config, api);
+    const provider = createSimilarityServiceQueueFillProvider(similarity, api);
 
     const result = await provider.fetchExtension({
       recentSongs: [song('seed')],
@@ -190,7 +175,7 @@ describe('createAudiomuseQueueFillProvider', () => {
       count: 3,
     });
 
-    const [, opts] = (getAudiomuseQueueExtension as jest.Mock).mock.calls[0];
+    const [opts] = similarity.similarTrackIds.mock.calls[0] as unknown as [{ limit: number }];
     expect(opts.limit).toBeGreaterThan(3);
     expect(result.length).toBe(3);
   });

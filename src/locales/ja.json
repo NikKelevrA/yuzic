@@ -326,7 +326,7 @@
       "showVolumeSlider": "音量スライダー",
       "showVolumeSliderSubtext": "プレーヤーに音量スライダー。",
       "autoplay": "自動再生",
-      "autoplaySubtextAudiomuse": "AudioMuse-AIで類似曲を続けて再生。",
+      "autoplaySubtextSimilarity": "AudioMuse-AIで類似曲を続けて再生。",
       "autoplaySubtextNative": "サーバーの類似曲を続けて再生。",
       "resumeLongTracks": "長いトラックを再開",
       "resumeLongTracksSubtext": "オーディオブックやDJセット、ポッドキャストを再開。",

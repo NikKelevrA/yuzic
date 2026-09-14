@@ -75,7 +75,7 @@ function harness(over: Partial<{
   let bumps = 0;
 
   const provider: QueueFillProvider = {
-    id: 'audiomuse',
+    id: 'similarity-service',
     isAvailable: () => true,
     fetchExtension: async ({ recentSongs, excludeIds, count }) => {
       providerCalls.push({

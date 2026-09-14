@@ -327,7 +327,7 @@
       "showVolumeSlider": "Volume Slider",
       "showVolumeSliderSubtext": "In-app volume slider on the player.",
       "autoplay": "Autoplay",
-      "autoplaySubtextAudiomuse": "Keep playing similar tracks via AudioMuse-AI.",
+      "autoplaySubtextSimilarity": "Keep playing similar tracks via AudioMuse-AI.",
       "autoplaySubtextNative": "Keep playing similar tracks from your server.",
       "resumeLongTracks": "Resume long tracks",
       "resumeLongTracksSubtext": "Resume audiobooks, DJ sets, and podcasts.",

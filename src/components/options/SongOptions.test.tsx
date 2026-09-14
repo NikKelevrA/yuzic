@@ -61,13 +61,10 @@ jest.mock('@/state/redux/slices/wantsSlice', () => ({
   removeWant: (payload: any) => ({ type: 'wants/removeWant', payload }),
 }));
 
-jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
-  useIsAudiomuseConfigured: () => false,
-  useAudiomuseConfig: () => ({}),
-}));
+jest.mock('@/providers/registry/similarityService', () => ({ useSimilarityService: () => null }));
 
 const mockGenerateSimilarPlaylist = jest.fn();
-jest.mock('@/features/audiomuse/generatePlaylist', () => ({
+jest.mock('@/features/playlist/generateSimilarPlaylist', () => ({
   generateSimilarPlaylistForSong: (...args: unknown[]) => mockGenerateSimilarPlaylist(...args),
 }));
 

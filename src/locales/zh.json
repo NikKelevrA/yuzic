@@ -326,7 +326,7 @@
       "showVolumeSlider": "音量滑块",
       "showVolumeSliderSubtext": "播放器中显示音量滑块。",
       "autoplay": "自动播放",
-      "autoplaySubtextAudiomuse": "用 AudioMuse-AI 续播相似曲目。",
+      "autoplaySubtextSimilarity": "用 AudioMuse-AI 续播相似曲目。",
       "autoplaySubtextNative": "从服务器续播相似曲目。",
       "resumeLongTracks": "继续播放长音轨",
       "resumeLongTracksSubtext": "续播有声书、DJ 混音和播客。",

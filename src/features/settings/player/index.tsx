@@ -14,7 +14,7 @@ import SettingsRow from '../components/SettingsRow';
 import StreamingQuality from './components/StreamingQuality';
 import Crossfade from './components/Crossfade';
 import { selectPreferredCodec, selectAutoplayEnabled, selectResumeLongTracksEnabled, setPreferredCodec, setAutoplayEnabled, setResumeLongTracksEnabled } from '@/features/settings/playback/state';
-import { useIsAudiomuseConfigured } from '@/state/redux/selectors/audiomuseSelectors';
+import { useSimilarityService } from '@/providers/registry/similarityService';
 
 const PlayerSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -24,7 +24,7 @@ const PlayerSettings: React.FC = () => {
   const preferredCodec = useSelector(selectPreferredCodec);
   const autoplayEnabled = useSelector(selectAutoplayEnabled);
   const resumeLongTracks = useSelector(selectResumeLongTracksEnabled);
-  const isAudiomuseConfigured = useIsAudiomuseConfigured();
+  const hasSimilarityService = useSimilarityService() !== null;
   // Presence, not provider: a server whose adapter declares Opus gets the
   // switch, whichever server it is.
   const supportsOpus = api.songs.streamableCodecs.includes('opus');
@@ -40,8 +40,8 @@ const PlayerSettings: React.FC = () => {
   const autoplayItems = useMemo(() => [
     {
       label: t('settings.player.autoplay'),
-      subtext: isAudiomuseConfigured
-        ? t('settings.player.autoplaySubtextAudiomuse')
+      subtext: hasSimilarityService
+        ? t('settings.player.autoplaySubtextSimilarity')
         : t('settings.player.autoplaySubtextNative'),
       value: autoplayEnabled,
       onValueChange: (v: boolean) => dispatch(setAutoplayEnabled(v)),
@@ -55,7 +55,7 @@ const PlayerSettings: React.FC = () => {
       value: resumeLongTracks,
       onValueChange: (v: boolean) => dispatch(setResumeLongTracksEnabled(v)),
     },
-  ], [t, isAudiomuseConfigured, autoplayEnabled, resumeLongTracks, dispatch]);
+  ], [t, hasSimilarityService, autoplayEnabled, resumeLongTracks, dispatch]);
 
   // The stream cache is the player's own, and separate from downloads: it
   // fills itself as you listen so a re-listen doesn't refetch, and evicts

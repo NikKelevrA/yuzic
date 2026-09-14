@@ -7,12 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/features/theme/useTheme';
 import IconActionButton from '@/components/IconActionButton';
 import SectionHeader from '@/components/SectionHeader';
-import { createAudiomuseQueueFillProvider } from '@/features/playback/queueProviders';
+import { createSimilarityServiceQueueFillProvider } from '@/features/playback/queueProviders';
 import { useApi } from '@/providers/registry/useApi';
-import {
-  useIsAudiomuseConfigured,
-  useAudiomuseConfig,
-} from '@/state/redux/selectors/audiomuseSelectors';
+import { useSimilarityService } from '@/providers/registry/similarityService';
 import { useTracks } from '@/features/song/useTracks';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { QueryKeys } from '@/state/query/queryKeys';
@@ -35,7 +32,7 @@ type Props = {
 };
 
 /**
- * Local-library recommendations: AudioMuse-AI similarity when configured,
+ * Local-library recommendations: the similarity service when one is connected,
  * falling back to a same-artist shuffle of the library — see
  * `recommendedSongs.ts` for the pure selection rules this builds from.
  */
@@ -45,14 +42,13 @@ export const LocalRecommendedSection: React.FC<Props> = ({ playlist, songs, loca
   const { tracks } = useTracks();
   const api = useApi();
   const isOffline = useIsOffline();
-  const isAudiomuseConfigured = useIsAudiomuseConfigured();
-  const audiomuseConfig = useAudiomuseConfig();
+  const similarity = useSimilarityService();
 
   const playlistSongIds = useMemo(() => new Set(songs.map(s => s.localId)), [songs]);
   const playlistArtistNames = useMemo(() => computePlaylistArtistNames(songs), [songs]);
 
-  // Same-artist shuffle from the local library — used whenever AudioMuse-AI
-  // isn't configured, and as a safety net if its similarity call fails.
+  // Same-artist shuffle from the local library — used whenever no similarity
+  // service is connected, and as a safety net if its similarity call fails.
   const fallbackLocalSongs = useMemo<Song[]>(
     () => pickFallbackLocalSongs(tracks, playlistSongIds, playlistArtistNames, localSeed, LOCAL_RECOMMENDED_COUNT),
     [tracks, playlistSongIds, playlistArtistNames, localSeed]
@@ -60,29 +56,29 @@ export const LocalRecommendedSection: React.FC<Props> = ({ playlist, songs, loca
 
   // Reseed a handful of playlist tracks each refresh so acoustic similarity
   // results vary too, matching the fallback's shuffled feel.
-  const audiomuseSeeds = useMemo(
+  const similaritySeeds = useMemo(
     () => seededShuffle(songs, localSeed).slice(0, 5),
     [songs, localSeed]
   );
 
-  const audiomuseQuery = useQuery({
+  const similarityQuery = useQuery({
     queryKey: [
       QueryKeys.RecommendedLocalSongs,
-      'audiomuse',
+      'similarityService',
       playlist.nativeId,
-      audiomuseSeeds.map(s => s.nativeId).join(','),
+      similaritySeeds.map(s => s.nativeId).join(','),
     ],
-    queryFn: () => createAudiomuseQueueFillProvider(audiomuseConfig, api).fetchExtension({
-      recentSongs: audiomuseSeeds,
+    queryFn: () => createSimilarityServiceQueueFillProvider(similarity!, api).fetchExtension({
+      recentSongs: similaritySeeds,
       excludeIds: playlistSongIds,
       count: LOCAL_RECOMMENDED_COUNT,
     }),
-    enabled: isAudiomuseConfigured && !isOffline && audiomuseSeeds.length > 0,
+    enabled: similarity !== null && !isOffline && similaritySeeds.length > 0,
     staleTime: 1000 * 60 * 30,
     networkMode: 'online',
   });
 
-  const localSongs: Song[] = audiomuseQuery.data?.length ? audiomuseQuery.data : fallbackLocalSongs;
+  const localSongs: Song[] = similarityQuery.data?.length ? similarityQuery.data : fallbackLocalSongs;
 
   if (localSongs.length === 0) return null;
 

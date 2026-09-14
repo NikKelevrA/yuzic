@@ -11,7 +11,7 @@ import { notify } from '@/components/toast';
  * duplicated three times and now live once.
  *
  * Preserved as-is: the *gate* deciding whether this row shows at all differs
- * per kind (song gates on "is Audiomuse configured"; album/artist gate on
+ * per kind (song gates on "is a similarity service connected"; album/artist gate on
  * "can generate playlist", which additionally folds in whether songs have
  * loaded) — that stays in each kind's own `visible` predicate, not here.
  */

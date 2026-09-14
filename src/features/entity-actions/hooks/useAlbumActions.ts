@@ -5,8 +5,8 @@ import { useSelector } from 'react-redux';
 import { useTheme } from '@/features/theme/useTheme';
 import { useApi } from '@/providers/registry/useApi';
 import { notify } from '@/components/toast';
-import { useAudiomuseConfig } from '@/state/redux/selectors/audiomuseSelectors';
-import { useCanGeneratePlaylist, generateSimilarPlaylistForAlbum } from '@/features/audiomuse/generatePlaylist';
+import { useSimilarityService } from '@/providers/registry/similarityService';
+import { useCanGeneratePlaylist, generateSimilarPlaylistForAlbum } from '@/features/playlist/generateSimilarPlaylist';
 import { selectAlbumPlayCount } from '@/state/redux/selectors/statsSelectors';
 import { usePlaying } from '@/features/playback/PlayingContext';
 import { useDownload } from '@/features/offline/DownloadContext';
@@ -41,7 +41,7 @@ export function useAlbumLibraryActions(
   const starAlbum = useStarAlbum();
   const unstarAlbum = useUnstarAlbum();
   const isStarred = starredAlbums.some(a => a.localId === album?.localId);
-  const audiomuseConfig = useAudiomuseConfig();
+  const similarity = useSimilarityService();
   const canGeneratePlaylist = useCanGeneratePlaylist();
   const playCount = useSelector(selectAlbumPlayCount(album?.nativeId ?? ''));
 
@@ -58,7 +58,8 @@ export function useAlbumLibraryActions(
   const { isGenerating: isGeneratingPlaylist, generate: generatePlaylist } = useGeneratePlaylistAction({
     run: async () => {
       if (!albumWithSongs) throw new Error('album detail not loaded');
-      return generateSimilarPlaylistForAlbum(api, audiomuseConfig, albumWithSongs, { size: 25 });
+      if (!similarity) throw new Error('no similarity service connected');
+      return generateSimilarPlaylistForAlbum(api, similarity, albumWithSongs, { size: 25 });
     },
     t, generatedKey: 'albumOptions.toasts.playlistGenerated', failedKey: 'albumOptions.toasts.playlistGenerationFailed', close: opts.close,
   });

@@ -28,7 +28,7 @@ import { resolveQueueFillProvider, type QueueFillProvider } from './queueProvide
  */
 export interface AutoplayDeps {
   backend: () => PlayerBackend;
-  /** Ordered by preference: AudioMuse when configured, native similarity otherwise. */
+  /** Ordered by preference: the similarity service when connected, native similarity otherwise. */
   providers: () => QueueFillProvider[];
   queue: () => PlayableResource[];
   setQueue: (resources: PlayableResource[]) => void;

@@ -327,7 +327,7 @@
       "showVolumeSlider": "Contrôle du volume",
       "showVolumeSliderSubtext": "Curseur de volume dans le lecteur.",
       "autoplay": "Lecture automatique",
-      "autoplaySubtextAudiomuse": "Continuer avec des titres similaires via AudioMuse-AI.",
+      "autoplaySubtextSimilarity": "Continuer avec des titres similaires via AudioMuse-AI.",
       "autoplaySubtextNative": "Continuer avec des titres similaires du serveur.",
       "resumeLongTracks": "Reprendre les pistes longues",
       "resumeLongTracksSubtext": "Reprendre livres audio, sets DJ et podcasts.",

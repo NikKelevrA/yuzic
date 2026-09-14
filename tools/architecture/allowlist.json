@@ -13,15 +13,8 @@
     "src/features/artwork/buildCover.ts jellyfin",
     "src/features/artwork/buildCover.ts musicbrainz",
     "src/features/artwork/buildCover.ts navidrome",
-    "src/features/audiomuse/generatePlaylist.ts audiomuse",
-    "src/features/entity-actions/hooks/useAlbumActions.ts audiomuse",
-    "src/features/entity-actions/hooks/useArtistActions.ts audiomuse",
-    "src/features/entity-actions/hooks/useSongActions.ts audiomuse",
-    "src/features/playback/queueProviders.ts audiomuse",
-    "src/features/playlist/components/RecommendedSection/LocalRecommendedSection.tsx audiomuse",
     "src/features/podcasts/PodcastsScreen.tsx navidrome",
-    "src/features/podcasts/buildPodcastSong.ts navidrome",
-    "src/features/settings/player/index.tsx audiomuse"
+    "src/features/podcasts/buildPodcastSong.ts navidrome"
   ],
   "shims": [],
   "unsafe": [],

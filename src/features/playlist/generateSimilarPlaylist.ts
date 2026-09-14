@@ -1,32 +1,29 @@
-import { useIsAudiomuseConfigured } from '@/state/redux/selectors/audiomuseSelectors';
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
+import { useSimilarityService, type SimilarityService } from '@/providers/registry/similarityService';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 import type { Artist } from '@/domain/entities/Artist';
-import { createAudiomuseClient, type AudiomuseConfig } from '@/providers/integration/audiomuse/client';
-import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
 
 /**
- * "Make me a playlist like this" — the AudioMuse-backed gesture behind the
+ * "Make me a playlist like this" — the similarity-service gesture behind the
  * album, artist and song options sheets.
  *
- * Three round trips, in this order: ask AudioMuse for tracks similar to the
+ * Three round trips, in this order: ask the service for tracks similar to the
  * seed, create the playlist, then add tracks one at a time. The last part is
- * deliberate rather than a batch — AudioMuse indexes the server's own library
- * but can return a track the user's library no longer has, and a batch add
- * would fail the whole playlist over one such row. Each add is allowed to
- * fail on its own, and the seed leads the playlist it generated.
+ * deliberate rather than a batch — the service indexes the server's own
+ * library but can return a track the user's library no longer has, and a
+ * batch add would fail the whole playlist over one such row. Each add is
+ * allowed to fail on its own, and the seed leads the playlist it generated.
  */
 export async function generateSimilarPlaylistForSong(
   api: ApiAdapter,
-  audiomuse: AudiomuseConfig,
+  similarity: SimilarityService,
   seed: Song,
   opts: { size?: number; name?: string } = {}
 ): Promise<{ playlistId: string; trackCount: number }> {
   const size = Math.max(1, opts.size ?? 25);
-  const client = createAudiomuseClient(audiomuse);
 
-  const similar = await getAudiomuseQueueExtension(client, {
+  const similar = await similarity.similarTrackIds({
     seedItemIds: [seed.nativeId],
     excludeItemIds: [seed.nativeId],
     limit: size,
@@ -34,7 +31,7 @@ export async function generateSimilarPlaylistForSong(
 
   const trackIds = [
     seed.nativeId,
-    ...similar.map(t => t.itemId).filter(id => id && id !== seed.nativeId),
+    ...similar.filter(id => id && id !== seed.nativeId),
   ];
 
   const name = opts.name ?? `Similar to ${seed.title}`;
@@ -44,8 +41,8 @@ export async function generateSimilarPlaylistForSong(
     try {
       await api.playlists.addSong(playlistId, id);
     } catch {
-      // Missing library entry / non-navidrome id — skip. A track AudioMuse
-      // knows about might not be in the user's own library, and that's OK.
+      // A track the service knows about might not be in the user's own
+      // library any more, and that's OK — skip it.
     }
   }
 
@@ -55,7 +52,7 @@ export async function generateSimilarPlaylistForSong(
 /** Derives a seed track from `album` and generates a playlist "Similar to <album>". */
 export async function generateSimilarPlaylistForAlbum(
   api: ApiAdapter,
-  audiomuse: AudiomuseConfig,
+  similarity: SimilarityService,
   album: AlbumDetail,
   opts: { size?: number } = {}
 ): Promise<{ playlistId: string; trackCount: number }> {
@@ -63,7 +60,7 @@ export async function generateSimilarPlaylistForAlbum(
   if (!seed) {
     throw new Error('Album has no tracks to seed a playlist from');
   }
-  return generateSimilarPlaylistForSong(api, audiomuse, seed, {
+  return generateSimilarPlaylistForSong(api, similarity, seed, {
     size: opts.size,
     name: `Similar to ${album.album.title}`,
   });
@@ -76,7 +73,7 @@ export async function generateSimilarPlaylistForAlbum(
  */
 export async function generateSimilarPlaylistForArtist(
   api: ApiAdapter,
-  audiomuse: AudiomuseConfig,
+  similarity: SimilarityService,
   artist: Artist,
   songs: Song[],
   opts: { size?: number } = {}
@@ -85,7 +82,7 @@ export async function generateSimilarPlaylistForArtist(
   if (!seed) {
     throw new Error('Artist has no tracks to seed a playlist from');
   }
-  return generateSimilarPlaylistForSong(api, audiomuse, seed, {
+  return generateSimilarPlaylistForSong(api, similarity, seed, {
     size: opts.size,
     name: `Similar to ${artist.name}`,
   });
@@ -94,12 +91,12 @@ export async function generateSimilarPlaylistForArtist(
 /**
  * Whether the "make a playlist from this" gesture should be offered.
  *
- * AudioMuse is the only thing that can generate a playlist, so this asks
- * whether it is configured. There is no `playlist.generate` capability: one
- * was declared once, beside this file, and never asked for (see
+ * A similarity service is the only thing that can generate a playlist, so
+ * this asks whether one is connected. There is no `playlist.generate`
+ * capability: one was declared once and never asked for (see
  * `providers/contracts/Capabilities.ts`). If a second generator arrives, that
  * is when the capability is worth having.
  */
 export function useCanGeneratePlaylist(): boolean {
-  return useIsAudiomuseConfigured();
+  return useSimilarityService() !== null;
 }

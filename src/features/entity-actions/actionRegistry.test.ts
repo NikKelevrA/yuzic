@@ -70,7 +70,7 @@ describe('songLibraryActions', () => {
     expect(ids).not.toContain('goToArtist');
   });
 
-  it('shows generatePlaylist only when Audiomuse is configured (song\'s own gate)', () => {
+  it('shows generatePlaylist only when a similarity service is connected (song\'s own gate)', () => {
     expect(resolveActions(songLibraryActions, songLibraryCtx({ similarPlaylistAvailable: false })).map(a => a.id))
       .not.toContain('generatePlaylist');
     expect(resolveActions(songLibraryActions, songLibraryCtx({ similarPlaylistAvailable: true })).map(a => a.id))

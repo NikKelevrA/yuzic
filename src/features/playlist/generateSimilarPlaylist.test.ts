@@ -1,5 +1,5 @@
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
-import type { AudiomuseConfig } from '@/providers/integration/audiomuse/client';
+import type { SimilarityService } from '@/providers/registry/similarityService';
 import type { Song } from '@/domain/entities/Song';
 import type { Artist } from '@/domain/entities/Artist';
 import type { AlbumDetail } from '@/domain/entities/Detail';
@@ -9,18 +9,13 @@ import {
   generateSimilarPlaylistForAlbum,
   generateSimilarPlaylistForArtist,
   generateSimilarPlaylistForSong,
-} from './generatePlaylist';
+} from './generateSimilarPlaylist';
 
 const mockGetExtension = jest.fn();
-jest.mock('@/providers/integration/audiomuse/client', () => ({
-  createAudiomuseClient: jest.fn(() => ({ request: jest.fn(), baseUrl: '' })),
-}));
-jest.mock('@/providers/integration/audiomuse/similarity', () => ({
-  getAudiomuseQueueExtension: (...args: unknown[]) => mockGetExtension(...args),
-}));
+jest.mock('@/providers/registry/similarityService', () => ({ useSimilarityService: () => null }));
 
 const provenance = serverProvenance('srv-1');
-const audiomuse: AudiomuseConfig = { serverUrl: 'https://am.example', apiToken: 'tok' };
+const similarity: SimilarityService = { similarTrackIds: (...args) => mockGetExtension(...args) };
 
 function song(nativeId: string, title: string): Song {
   const ref = (kind: 'artist' | 'album', id: string, label: string) => ({
@@ -69,26 +64,25 @@ function makeApi(): ApiAdapter {
 
 beforeEach(() => {
   mockGetExtension.mockReset();
-  mockGetExtension.mockResolvedValue([{ itemId: 't1' }, { itemId: 't2' }]);
+  mockGetExtension.mockResolvedValue(['t1', 't2']);
 });
 
 describe('generateSimilarPlaylistForSong', () => {
-  it('seeds AudioMuse with the origin id, not on-device identity', async () => {
-    await generateSimilarPlaylistForSong(makeApi(), audiomuse, song('s1', 'Track One'), { size: 25 });
+  it('seeds the service with the origin id, not on-device identity', async () => {
+    await generateSimilarPlaylistForSong(makeApi(), similarity, song('s1', 'Track One'), { size: 25 });
 
     expect(mockGetExtension).toHaveBeenCalledWith(
-      expect.anything(),
       expect.objectContaining({ seedItemIds: ['s1'] })
     );
   });
 
-  it('adds tracks one at a time, so a track AudioMuse knows and the library does not is skipped', async () => {
+  it('adds tracks one at a time, so a track the service knows and the library does not is skipped', async () => {
     const api = makeApi();
     (api.playlists.addSong as jest.Mock)
       .mockResolvedValueOnce({ success: true })
       .mockRejectedValueOnce(new Error('not in library'));
 
-    const result = await generateSimilarPlaylistForSong(api, audiomuse, song('s1', 'Track One'));
+    const result = await generateSimilarPlaylistForSong(api, similarity, song('s1', 'Track One'));
 
     expect(api.playlists.create).toHaveBeenCalledTimes(1);
     // The seed leads its own playlist, followed by the two similar tracks.
@@ -125,10 +119,9 @@ describe('generateSimilarPlaylistForAlbum', () => {
 
   it('seeds from the album first track and names the playlist after the album', async () => {
     const api = makeApi();
-    await generateSimilarPlaylistForAlbum(api, audiomuse, album);
+    await generateSimilarPlaylistForAlbum(api, similarity, album);
 
     expect(mockGetExtension).toHaveBeenCalledWith(
-      expect.anything(),
       expect.objectContaining({ seedItemIds: ['s1'] })
     );
     expect(api.playlists.create).toHaveBeenCalledWith('Similar to My Album');
@@ -136,7 +129,7 @@ describe('generateSimilarPlaylistForAlbum', () => {
 
   it('refuses an album with no tracks rather than creating an empty playlist', async () => {
     await expect(
-      generateSimilarPlaylistForAlbum(makeApi(), audiomuse, { ...album, songs: [] })
+      generateSimilarPlaylistForAlbum(makeApi(), similarity, { ...album, songs: [] })
     ).rejects.toThrow('no tracks');
   });
 });
@@ -144,10 +137,9 @@ describe('generateSimilarPlaylistForAlbum', () => {
 describe('generateSimilarPlaylistForArtist', () => {
   it('seeds from the supplied tracks and names the playlist after the artist', async () => {
     const api = makeApi();
-    await generateSimilarPlaylistForArtist(api, audiomuse, artist, [song('s9', 'Track Nine')]);
+    await generateSimilarPlaylistForArtist(api, similarity, artist, [song('s9', 'Track Nine')]);
 
     expect(mockGetExtension).toHaveBeenCalledWith(
-      expect.anything(),
       expect.objectContaining({ seedItemIds: ['s9'] })
     );
     expect(api.playlists.create).toHaveBeenCalledWith('Similar to Some Artist');
@@ -155,7 +147,7 @@ describe('generateSimilarPlaylistForArtist', () => {
 
   it('refuses an artist with no known tracks', async () => {
     await expect(
-      generateSimilarPlaylistForArtist(makeApi(), audiomuse, artist, [])
+      generateSimilarPlaylistForArtist(makeApi(), similarity, artist, [])
     ).rejects.toThrow('no tracks');
   });
 });

@@ -5,8 +5,8 @@ import { useSelector } from 'react-redux';
 import { useTheme } from '@/features/theme/useTheme';
 import { useApi } from '@/providers/registry/useApi';
 import { notify } from '@/components/toast';
-import { useAudiomuseConfig } from '@/state/redux/selectors/audiomuseSelectors';
-import { useCanGeneratePlaylist, generateSimilarPlaylistForArtist } from '@/features/audiomuse/generatePlaylist';
+import { useSimilarityService } from '@/providers/registry/similarityService';
+import { useCanGeneratePlaylist, generateSimilarPlaylistForArtist } from '@/features/playlist/generateSimilarPlaylist';
 import { selectArtistPlayCount } from '@/state/redux/selectors/statsSelectors';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useDownload } from '@/features/offline/DownloadContext';
@@ -33,7 +33,7 @@ export function useArtistOptionsActions(
   const { downloadAlbumById, getCollectionDownloadState } = useDownload();
   const enabledSources = useEnabledExternalSources();
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
-  const audiomuseConfig = useAudiomuseConfig();
+  const similarity = useSimilarityService();
   const canGeneratePlaylist = useCanGeneratePlaylist();
   const playCount = useSelector(selectArtistPlayCount(artist?.nativeId ?? ''));
 
@@ -60,7 +60,8 @@ export function useArtistOptionsActions(
   const { isGenerating: isGeneratingPlaylist, generate: generatePlaylist } = useGeneratePlaylistAction({
     run: () => {
       if (!artist) throw new Error('artist not loaded');
-      return generateSimilarPlaylistForArtist(api, audiomuseConfig, artist, artistSongs, { size: 25 });
+      if (!similarity) throw new Error('no similarity service connected');
+      return generateSimilarPlaylistForArtist(api, similarity, artist, artistSongs, { size: 25 });
     },
     t, generatedKey: 'artistOptions.toasts.playlistGenerated', failedKey: 'artistOptions.toasts.playlistGenerationFailed', close: opts.close,
   });

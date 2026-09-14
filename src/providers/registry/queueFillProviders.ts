@@ -2,26 +2,25 @@ import { useMemo } from 'react';
 
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import {
-  createAudiomuseQueueFillProvider,
+  createSimilarityServiceQueueFillProvider,
   createNativeSimilarityQueueFillProvider,
   type QueueFillProvider,
 } from '@/features/playback/queueProviders';
-import { useAudiomuseConfig, useIsAudiomuseConfigured } from '@/state/redux/selectors/audiomuseSelectors';
+import { useSimilarityService } from './similarityService';
 
 /**
  * Where Autoplay, Smart Shuffle and Play Similar look for tracks nobody
- * chose, strongest first: AudioMuse-AI's acoustic similarity when it is set
- * up, the server's own similar-songs otherwise.
+ * chose, strongest first: the similarity service's acoustic matches when one
+ * is connected, the server's own similar-songs otherwise.
  *
  * Declared here with the other provider declarations, so playback asks for
  * "the fill sources" without naming any of them.
  */
 export function useQueueFillProviders(api: ApiAdapter): QueueFillProvider[] {
-  const isAudiomuseConfigured = useIsAudiomuseConfigured();
-  const audiomuseConfig = useAudiomuseConfig();
+  const similarity = useSimilarityService();
 
   return useMemo(() => [
-    ...(isAudiomuseConfigured ? [createAudiomuseQueueFillProvider(audiomuseConfig, api)] : []),
+    ...(similarity ? [createSimilarityServiceQueueFillProvider(similarity, api)] : []),
     createNativeSimilarityQueueFillProvider(api),
-  ], [api, audiomuseConfig, isAudiomuseConfigured]);
+  ], [api, similarity]);
 }

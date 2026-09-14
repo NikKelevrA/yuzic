@@ -69,13 +69,13 @@ jest.mock('@/providers/registry/useApi', () => ({
   useApi: () => ({ shares: undefined }),
 }));
 
-jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
-  useAudiomuseConfig: () => ({}),
+jest.mock('@/providers/registry/similarityService', () => ({
+  useSimilarityService: () => ({ similarTrackIds: async () => [] }),
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);
 const mockGenerateForAlbum = jest.fn();
-jest.mock('@/features/audiomuse/generatePlaylist', () => ({
+jest.mock('@/features/playlist/generateSimilarPlaylist', () => ({
   useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
   generateSimilarPlaylistForAlbum: (...args: unknown[]) => mockGenerateForAlbum(...args),
 }));

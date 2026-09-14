@@ -30,13 +30,13 @@ jest.mock('@/state/redux/selectors/statsSelectors', () => ({
   selectArtistPlayCount: () => () => 0,
 }));
 
-jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
-  useAudiomuseConfig: () => ({}),
+jest.mock('@/providers/registry/similarityService', () => ({
+  useSimilarityService: () => ({ similarTrackIds: async () => [] }),
 }));
 
 const mockCanGeneratePlaylist = jest.fn(() => false);
 const mockGenerateForArtist = jest.fn();
-jest.mock('@/features/audiomuse/generatePlaylist', () => ({
+jest.mock('@/features/playlist/generateSimilarPlaylist', () => ({
   useCanGeneratePlaylist: () => mockCanGeneratePlaylist(),
   generateSimilarPlaylistForArtist: (...args: unknown[]) => mockGenerateForArtist(...args),
 }));
