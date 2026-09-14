@@ -1,12 +1,8 @@
 {
   "cycles": [],
   "file-shape": [
-    "src/components/DetailHeader.tsx",
     "src/components/PlaylistList.tsx",
     "src/components/options/GetReviewSheet.tsx",
-    "src/constants/design.ts",
-    "src/features/artist/components/Content/index.tsx",
-    "src/features/artist/components/Header/index.tsx",
     "src/features/player/PlayingScreen.tsx",
     "src/features/player/playingBar/PlayingBarBase.tsx"
   ],
@@ -29,10 +25,6 @@
     "src/features/album/components/AlbumRecommendedSection.tsx deezer",
     "src/features/album/previewUtils.ts deezer",
     "src/features/album/useExternalAlbumPreviews.ts deezer",
-    "src/features/artist/components/Content/PopularOnDeezerSection.tsx deezer",
-    "src/features/artist/components/Content/index.tsx deezer",
-    "src/features/artist/components/Content/index.tsx lastfm",
-    "src/features/artist/components/Content/index.tsx listenbrainz",
     "src/features/artist/useArtistMbid.ts musicbrainz",
     "src/features/artist/useLBSimilarArtists.ts listenbrainz",
     "src/features/artist/useSimilarArtists.ts lastfm",

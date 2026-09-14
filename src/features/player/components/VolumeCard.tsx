@@ -8,7 +8,7 @@ import { selectThemeColor } from '@/features/settings/appearance/state';
 import { usePlayingActions, usePlayingState } from '@/features/playback/PlayingContext';
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
-import haptics from '@/components/haptics';
+import { selection } from '@/components/haptics';
 
 type Props = { contentWidth: number };
 
@@ -29,7 +29,7 @@ export default function VolumeCard({ contentWidth }: Props) {
   }, [setVolume]);
 
   const handleSlidingComplete = useCallback(() => {
-    haptics.selection();
+    selection();
   }, []);
 
   const Icon = volume <= 0.01 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;

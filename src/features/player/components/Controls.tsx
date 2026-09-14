@@ -22,7 +22,7 @@ import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { useReducedMotion } from '@/features/theme/useReducedMotion';
-import haptics from '@/components/haptics';
+import haptics, { selection } from '@/components/haptics';
 
 const JUMP_SECONDS = 15;
 
@@ -171,8 +171,8 @@ const Controls: React.FC = () => {
 
   const handleSkipNext = useCallback(() => { haptics.tap(); skipToNext(); }, [skipToNext]);
   const handleSkipPrev = useCallback(() => { haptics.tap(); skipToPrevious(); }, [skipToPrevious]);
-  const handleShuffle = useCallback(() => { haptics.selection(); cycleShuffleMode(); }, [cycleShuffleMode]);
-  const handleRepeat = useCallback(() => { haptics.selection(); toggleRepeat(); }, [toggleRepeat]);
+  const handleShuffle = useCallback(() => { selection(); cycleShuffleMode(); }, [cycleShuffleMode]);
+  const handleRepeat = useCallback(() => { selection(); toggleRepeat(); }, [toggleRepeat]);
   const handleJumpBack = useCallback(() => { haptics.tap(); jumpBy(-JUMP_SECONDS); }, [jumpBy]);
   const handleJumpForward = useCallback(() => { haptics.tap(); jumpBy(JUMP_SECONDS); }, [jumpBy]);
 

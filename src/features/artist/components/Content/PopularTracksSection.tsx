@@ -1,4 +1,4 @@
-import { onDark , controlSize, sourceColor, spacing, typography } from '@/constants/design';
+import { onDark , controlSize, spacing, typography } from '@/constants/design';
 import React, { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { useSelector } from 'react-redux'
@@ -10,6 +10,7 @@ import TopTrackRow from '@/components/rows/TopTrackRow'
 import type { Song } from '@/domain/entities/Song'
 import Touchable from '@/components/Touchable'
 import { useRadius } from '@/features/theme/useRadius'
+import { ARTIST_CATALOGUE } from '@/providers/registry/artistSources'
 
 type Props = {
   topTracks: Song[]
@@ -17,10 +18,10 @@ type Props = {
   artistName: string
 }
 
-// Deezer's chart popularity for this artist — a different claim from
+// The catalogue's chart popularity for this artist — a different claim from
 // MostPlayedSection's personal listening history, so they're separate,
 // separately-labeled sections rather than merged sub-groups.
-export default function PopularOnDeezerSection({ topTracks, artistId, artistName }: Props) {
+export default function PopularTracksSection({ topTracks, artistId, artistName }: Props) {
   const { colors } = useTheme()
   const { t } = useTranslation()
   const rad = useRadius()
@@ -41,12 +42,12 @@ export default function PopularOnDeezerSection({ topTracks, artistId, artistName
     <View>
       <View style={styles.sectionHeader}>
         {showSourceHeaders && (
-          <View style={[styles.badge, { backgroundColor: sourceColor.deezer, borderRadius: rad.pill }]}>
-            <Text style={styles.badgeLetter}>D</Text>
+          <View style={[styles.badge, { backgroundColor: ARTIST_CATALOGUE.badge.color, borderRadius: rad.pill }]}>
+            <Text style={styles.badgeLetter}>{ARTIST_CATALOGUE.badge.letter}</Text>
           </View>
         )}
         <Text style={[styles.sectionTitle, { color: colors.secondary }]}>
-          {t('artist.sections.popularOnDeezer')}
+          {t(ARTIST_CATALOGUE.popularTracksTitleKey)}
         </Text>
       </View>
       {visible.map((song, index) => (

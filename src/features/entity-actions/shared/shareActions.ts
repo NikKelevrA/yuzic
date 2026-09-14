@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApi } from '@/providers/registry/useApi';
 import { shareItem } from '@/features/shares/share';
-import haptics from '@/components/haptics';
+import { selection } from '@/components/haptics';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
 
@@ -24,7 +24,7 @@ export function useShareAction(opts: {
 
   const share = async () => {
     if (!opts.itemId || !api.shares || isSharing) return;
-    haptics.selection();
+    selection();
     setIsSharing(true);
     try {
       const created = await api.shares.create({ itemId: opts.itemId, description: opts.title });

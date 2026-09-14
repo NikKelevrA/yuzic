@@ -18,7 +18,7 @@ type Props = {
 }
 
 // Your own listening history for this artist — a different claim from
-// PopularOnDeezerSection's chart data, so it's a separate, separately-labeled
+// PopularTracksSection's chart data, so it's a separate, separately-labeled
 // section rather than a merged sub-group.
 export default function MostPlayedSection({ artist }: Props) {
   const { colors } = useTheme()

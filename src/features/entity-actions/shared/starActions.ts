@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import haptics from '@/components/haptics';
+import { selection } from '@/components/haptics';
 import { notify } from '@/components/toast';
 
 /**
@@ -29,7 +29,7 @@ export async function toggleFavorite(opts: {
   removedOfflineKey?: string;
   close: () => void;
 }): Promise<void> {
-  haptics.selection();
+  selection();
   try {
     if (opts.isStarred) {
       await opts.unstar();
