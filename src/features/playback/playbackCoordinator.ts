@@ -37,11 +37,6 @@ export interface PlaybackCoordinatorDeps {
   currentResource: () => PlayableResource | null;
   /** Point the provider's index and current-song state at this track. */
   setActive: (index: number, resource: PlayableResource) => void;
-  /**
-   * Resources the app knows about but that are not in the queue. The last
-   * place looked before rebuilding a track from the player's own item.
-   */
-  library: () => Map<string, PlayableResource>;
   bumpQueue: () => void;
 
   /** Clear the "already retried once" state — this track is genuinely playing. */
@@ -92,27 +87,21 @@ export function createPlaybackCoordinator(
   const locate = (
     item: MediaItem,
     mediaId: string
-  ): { index: number; resource: PlayableResource; fromLibrary: boolean } | null => {
+  ): { index: number; resource: PlayableResource; queued: boolean } | null => {
     const nativeIndex = deps.backend().getActiveMediaItemIndex();
     const index = typeof nativeIndex === 'number' && nativeIndex >= 0
       ? nativeIndex
       : deps.queue().findIndex(entry => entry.song.localId === mediaId);
 
     const queued = index >= 0 ? deps.queue()[index] : undefined;
-    if (queued) return { index, resource: queued, fromLibrary: false };
+    if (queued) return { index, resource: queued, queued: true };
 
-    // Not in the queue. The library is the next place to look, and a track
-    // found there is one the queue does not contain at all — which is why the
-    // caller replaces the queue with it rather than pointing an index at a
-    // position that holds something else.
-    const known = index < 0 ? deps.library().get(mediaId) : undefined;
-    if (known) return { index, resource: known, fromLibrary: true };
-
-    // Nothing knows this track, so rebuild it from what the player echoed —
-    // the media id carries provenance and the origin's own id. Reached when a
-    // queue survives into a fresh JavaScript context that has lost it.
+    // The queue does not hold this track, so rebuild it from what the player
+    // echoed — the media id carries provenance and the origin's own id.
+    // Reached when a queue survives into a fresh JavaScript context that has
+    // lost it.
     const rebuilt = item.url ? resourceFromMediaItem(item) : null;
-    return rebuilt ? { index: 0, resource: rebuilt, fromLibrary: false } : null;
+    return rebuilt ? { index: 0, resource: rebuilt, queued: false } : null;
   };
 
   return {
@@ -141,11 +130,7 @@ export function createPlaybackCoordinator(
 
       // The engine owns membership and order; this is the app catching up to
       // whatever it did — including the edits the app never made.
-      const reconciled = resourcesFromPlayerQueue(
-        deps.backend().getQueue(),
-        deps.queue(),
-        deps.library()
-      );
+      const reconciled = resourcesFromPlayerQueue(deps.backend().getQueue(), deps.queue());
       if (reconciled.length && !sameQueue(deps.queue(), reconciled)) {
         deps.setQueue(reconciled);
         deps.bumpQueue();
@@ -159,7 +144,7 @@ export function createPlaybackCoordinator(
       // A track that is playing but is in no queue becomes the queue of one.
       // Leaving the old queue in place would point the active index at a
       // position holding a different song entirely.
-      if (located.fromLibrary) {
+      if (!located.queued) {
         deps.setQueue([resource]);
         index = 0;
         deps.bumpQueue();

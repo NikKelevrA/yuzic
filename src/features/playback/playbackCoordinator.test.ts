@@ -52,7 +52,6 @@ const itemFor = (nativeId: string): MediaItem => ({
 function harness(over: Partial<{
   queue: PlayableResource[];
   current: PlayableResource | null;
-  library: Map<string, PlayableResource>;
   nativeIndex: number | null;
   nativeQueue: MediaItem[];
   position: number;
@@ -94,7 +93,6 @@ function harness(over: Partial<{
       active.push({ index, id: r.song.nativeId });
       events.push(`setActive:${index}:${r.song.nativeId}`);
     },
-    library: () => over.library ?? new Map(),
     bumpQueue: () => {},
 
     onTrackStarted: () => { events.push('onTrackStarted'); },
@@ -228,12 +226,12 @@ describe('finding the track that started', () => {
 
   it('makes a queue of one for a track no queue contains', () => {
     // Pointing an index at the old queue would select a different song
-    // entirely.
-    const known = resource('99');
+    // entirely. The player's own queue must not hold it either, or the
+    // reconciliation before this would have put it in.
     const h = harness({
       nativeIndex: -1,
       current: null,
-      library: new Map([[known.song.localId, known]]),
+      nativeQueue: [itemFor('1'), itemFor('2')],
     });
 
     h.coordinator.onActiveTrackChanged(itemFor('99'));

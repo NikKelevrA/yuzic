@@ -15,7 +15,7 @@ import { Heart, ArrowDownCircle, Ellipsis, PlayCircle } from 'lucide-react-nativ
 import { notify } from '@/components/toast';
 
 import type { Song } from '@/domain/entities/Song';
-import type { PlayableCollection } from '@/features/playback/PlayingContext';
+import type { PlayableCollection } from '@/features/playback/playingTypes';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useSongActionSheets } from '@/features/entity-actions/SongActionSheetContext';
 import MediaListRow from '@/components/MediaListRow';

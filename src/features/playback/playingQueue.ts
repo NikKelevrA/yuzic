@@ -224,8 +224,7 @@ export function findNextBoundaryIndex(segments: QueueSegment[], fromIndex: numbe
  */
 export function resourcesFromPlayerQueue(
   items: MediaItem[],
-  inMemory: PlayableResource[],
-  library: Map<string, PlayableResource>
+  inMemory: PlayableResource[]
 ): PlayableResource[] {
   const byId = new Map<string, PlayableResource>();
   for (const resource of inMemory) {
@@ -235,7 +234,7 @@ export function resourcesFromPlayerQueue(
   return items
     .map(item => {
       const id = getMediaItemId(item);
-      return byId.get(id) ?? library.get(id) ?? resourceFromMediaItem(item);
+      return byId.get(id) ?? resourceFromMediaItem(item);
     })
     .filter((resource): resource is PlayableResource => Boolean(resource));
 }

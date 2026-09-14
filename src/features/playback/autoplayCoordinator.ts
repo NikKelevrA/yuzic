@@ -48,7 +48,7 @@ export interface AutoplayDeps {
   logWarning: (message: string, error: unknown) => void;
 }
 
-export interface AutoplayCoordinator {
+interface AutoplayCoordinator {
   /** Top the queue up if it is running low. Safe to call on every track change. */
   fillQueueIfLow: () => Promise<void>;
   /**

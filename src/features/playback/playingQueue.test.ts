@@ -280,8 +280,7 @@ describe('resourcesFromPlayerQueue', () => {
 
     const next = resourcesFromPlayerQueue(
       [playerItem('3'), playerItem('1'), playerItem('2')],
-      inMemory,
-      new Map()
+      inMemory
     );
 
     expect(next.map(r => r.song.nativeId)).toEqual(['3', '1', '2']);
@@ -293,25 +292,16 @@ describe('resourcesFromPlayerQueue', () => {
     // set, which is exactly the one that expires.
     const fresh = resourceFor('1', 'https://server.test/stream/1?token=fresh');
 
-    const next = resourcesFromPlayerQueue([playerItem('1')], [fresh], new Map());
+    const next = resourcesFromPlayerQueue([playerItem('1')], [fresh]);
 
     expect(next[0]).toBe(fresh);
-  });
-
-  it('falls back to the library when the queue has lost the track', () => {
-    const known = resourceFor('1', 'https://server.test/stream/1');
-    const library = new Map([[known.song.localId, known]]);
-
-    const next = resourcesFromPlayerQueue([playerItem('1')], [], library);
-
-    expect(next[0]).toBe(known);
   });
 
   it('rebuilds from the player item when nothing else knows the track', () => {
     // Reachable after a restore into a fresh JavaScript context: the player
     // still holds the queue and the app holds nothing, and the media id is
     // enough to recover provenance and the origin's own id.
-    const next = resourcesFromPlayerQueue([playerItem('1')], [], new Map());
+    const next = resourcesFromPlayerQueue([playerItem('1')], []);
 
     expect(next).toHaveLength(1);
     expect(next[0].song.nativeId).toBe('1');
@@ -323,8 +313,7 @@ describe('resourcesFromPlayerQueue', () => {
 
     const next = resourcesFromPlayerQueue(
       [playerItem('1'), { url: '', title: 'nothing' }],
-      [known],
-      new Map()
+      [known]
     );
 
     expect(next.map(r => r.song.nativeId)).toEqual(['1']);
