@@ -24,7 +24,7 @@ import { offersFor, type BrokerInput } from '@/providers/registry/capabilityBrok
 import { resolved, type ResolvedField } from '@/domain/entities/ResolvedField';
 import { provenanceScope } from '@/domain/identity/Provenance';
 import type { Album } from '@/domain/entities/Album';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 
 export interface ResolvedAlbum {
   entity: Album;

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectDownloadQuality, setDownloadQuality, AudioQuality } from '@/features/settings/playback/state';
 import SettingsSelectCard from '../../components/SettingsSelectCard';
 import { useTheme } from '@/features/theme/useTheme';
-import { DOWNLOAD_QUALITY_OPTIONS } from '@/constants/settings';
+import { DOWNLOAD_QUALITY_OPTIONS } from '@/features/settings/constants';
 import { spacing, typography } from '@/constants/design';
 
 const DownloadQuality: React.FC = () => {

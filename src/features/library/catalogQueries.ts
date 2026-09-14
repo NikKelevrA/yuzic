@@ -8,8 +8,8 @@
  * have done, performed early.
  */
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
-import { QueryKeys } from '@/enums/queryKeys';
-import { staleTime } from '@/constants/staleTime';
+import { QueryKeys } from '@/state/query/queryKeys';
+import { staleTime } from '@/state/query/staleTime';
 import type { QueryKey } from '@tanstack/react-query';
 
 export interface CatalogResource {

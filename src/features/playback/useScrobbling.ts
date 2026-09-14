@@ -5,7 +5,7 @@ import { incrementPlay } from '@/state/redux/slices/statsSlice';
 import {
   buildScrobbleMutation,
   type ScrobbleDestination,
-} from '@/utils/offline/offlineMutations';
+} from '@/features/offline/offlineMutations';
 import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
 import { isScrobbleable } from '@/domain/playback/ContentKind';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';

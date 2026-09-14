@@ -11,7 +11,7 @@ import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
 import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
-import { podcastEpisodeToSong } from '@/utils/playback/buildPodcastSong';
+import { podcastEpisodeToSong } from '@/features/podcasts/buildPodcastSong';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { DetailHeaderBar } from '@/components/DetailHeader';
@@ -23,7 +23,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useListDensity } from '@/features/theme/useListDensity';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 
 function formatDate(publishDate: string | undefined): string {

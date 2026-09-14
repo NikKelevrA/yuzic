@@ -8,7 +8,7 @@ import { useSelector } from 'react-redux';
 
 import { useApi } from '@/providers/registry/useApi';
 import { useTheme } from '@/features/theme/useTheme';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { selectServerNowPlayingShelfEnabled } from '@/features/settings/home/state';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';

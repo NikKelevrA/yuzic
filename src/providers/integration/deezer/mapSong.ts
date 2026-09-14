@@ -28,7 +28,7 @@ import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import { albumRef, artistRef } from './mapRefs';
 import type { DeezerAlbum, DeezerTrack, DeezerPreviewTrack } from './types';
 

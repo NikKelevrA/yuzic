@@ -4,7 +4,7 @@ import type { PlayableResource } from '@/features/playback/playableResource';
 import type { Song } from '@/domain/entities/Song';
 import type { ShuffleMode } from '@/domain/playback/PlaybackModes';
 import { assertPlayable, isPlayable, playableOnly } from '@/features/playback/playableResource';
-import shuffleArray from '@/utils/shuffleArray';
+import shuffleArray from '@/features/playback/shuffleArray';
 import { clampStartIndex, trimQueueAroundIndex } from './adhocQueue';
 import { tagSegment, type QueueSegment, type QueueSegmentSource } from './playingQueue';
 

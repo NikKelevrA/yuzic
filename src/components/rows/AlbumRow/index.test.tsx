@@ -17,7 +17,7 @@ jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ thumb: 8, pill: 999, pillFor: (n: number) => n / 2 }),
 }));
 
-jest.mock('@/utils/useSheetRef', () => ({
+jest.mock('@/components/useSheetRef', () => ({
   useSheetRef: () => ({ current: null }),
 }));
 

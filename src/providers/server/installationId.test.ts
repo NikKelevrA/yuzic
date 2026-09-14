@@ -1,5 +1,5 @@
 import { getInstallationId } from './installationId';
-import { mmkv } from './mmkvStorage';
+import { mmkv } from '@/state/mmkvStorage';
 
 describe('getInstallationId', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { fetchPreviewsForExternalAlbum } from './previewUtils';
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
 

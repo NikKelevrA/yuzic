@@ -32,8 +32,8 @@ import { ping as pingMediaBrowser } from '@/providers/server/media-browser/auth/
 import { connect as connectMediaBrowser } from '@/providers/server/media-browser/auth/connect';
 import { JELLYFIN_BRAND, EMBY_BRAND } from '@/providers/server/media-browser/brand';
 
-import { ServerType, Server, BasicAuth, type ProviderAuth } from '@/types/Server';
-import { CoverSource } from '@/types/Cover';
+import { ServerType, Server, BasicAuth, type ProviderAuth } from '@/providers/contracts/Server';
+import { CoverSource } from '@/domain/entities/Cover';
 import type { Library, ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import i18n from '@/i18n';
 import { getCredentials, setCredential, forgetCredentials, type CredentialBundle } from '@/state/credentialCache';

@@ -11,7 +11,7 @@ import { usePreviewPlayer } from '@/features/playback/usePreviewPlayer';
 import { useAddSongToPlaylist } from '@/features/playlist/useAddSongToPlaylist';
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
 import Touchable from '@/components/Touchable';
-import { formatDuration } from '@/utils/formatDuration';
+import { formatDuration } from '@/components/formatDuration';
 import { hitSlopFor, iconSize, spacing } from '@/constants/design';
 import type { Song } from '@/domain/entities/Song';
 

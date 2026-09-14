@@ -5,7 +5,7 @@ jest.mock('@/features/mtls/serverFetch', () => ({
   serverFetch: (...args: unknown[]) => mockServerFetch(...args),
 }));
 
-jest.mock('@/utils/installationId', () => ({
+jest.mock('@/providers/server/installationId', () => ({
   getInstallationId: () => 'install-1',
 }));
 

@@ -2,13 +2,12 @@ import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import ImageColors from 'react-native-image-colors'
 
-import { buildCover } from '@/utils/builders/buildCover'
-import { PLAYING_GRADIENT_CACHE_MAX } from '@/constants/features'
+import { buildCover } from '@/features/artwork/buildCover'
 import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
-import type { CoverSource } from '@/types/Cover';
-import { createAccentCache, pickAccent, toWashAccent } from './coverAccent'
+import type { CoverSource } from '@/domain/entities/Cover';
+import { ACCENT_CACHE_MAX, createAccentCache, pickAccent, toWashAccent } from './coverAccent'
 
-const accents = createAccentCache<string>(PLAYING_GRADIENT_CACHE_MAX)
+const accents = createAccentCache<string>(ACCENT_CACHE_MAX)
 
 /**
  * A cover's accent, made fit to sit behind text, or null until there is one.

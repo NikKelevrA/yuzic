@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { prefetchCovers } from '@/utils/images/imageCache';
-import type { CoverSource } from '@/types/Cover';
+import { prefetchCovers } from '@/features/artwork/imageCache';
+import type { CoverSource } from '@/domain/entities/Cover';
 
 export function usePrefetchCovers(
   covers: readonly (CoverSource | null | undefined)[],

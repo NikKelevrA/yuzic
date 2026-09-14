@@ -6,10 +6,14 @@ import type { Song } from '@/domain/entities/Song';
 import { useTranslation } from "react-i18next";
 import { notify } from '@/components/toast';
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
-import { FULL_TRACK_FETCH_TIMEOUT_MS, TRACK_PRESS_COOLDOWN_MS } from '@/constants/playback';
-import { formatDuration } from '@/utils/formatDuration';
-import haptics from '@/utils/haptics';
+import { formatDuration } from '@/components/formatDuration';
+import haptics from '@/components/haptics';
 import LibraryItem from './LibraryItem';
+
+/** A second tap inside this window is the same tap. */
+const TRACK_PRESS_COOLDOWN_MS = 700;
+/** How long a tap waits for the full track before giving up. */
+const FULL_TRACK_FETCH_TIMEOUT_MS = 3000;
 
 type Props = {
   song: Song;

@@ -30,8 +30,8 @@ import {
   QUICK_PICKS_CANDIDATE_POOL,
   QUICK_PICKS_DECAY_MS,
   QUICK_PICKS_PEEK,
-} from '@/constants/home';
-import { SECTION_H_PADDING } from '@/features/home/constants';
+  SECTION_H_PADDING,
+} from '@/features/home/constants';
 import { iconSize, spacing, typography } from '@/constants/design';
 
 function useQuickPicks(refreshKey: number, itemCount: number): Song[] {

@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { Song } from '@/domain/entities/Song';
 import type { LocalId } from '@/domain/identity/LocalId';
-import { resourceFromBookmarkSnapshot } from '@/utils/playback/bookmarkSnapshot';
+import { resourceFromBookmarkSnapshot } from '@/features/playback/bookmarkSnapshot';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';

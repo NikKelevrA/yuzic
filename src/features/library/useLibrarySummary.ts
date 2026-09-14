@@ -8,8 +8,8 @@ import { useTracks } from '@/features/song/useTracks'
 import { useDownload } from '@/features/offline/DownloadContext'
 import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
 import { selectWantCountForActiveServer } from '@/state/redux/selectors/wantsSelectors'
-import { buildGenreRows } from '@/utils/library/genreList'
-import type { CoverSource } from '@/types/Cover'
+import { buildGenreRows } from '@/features/genre/genreList'
+import type { CoverSource } from '@/domain/entities/Cover'
 
 export type LibraryEntryKey =
   | 'playlists'

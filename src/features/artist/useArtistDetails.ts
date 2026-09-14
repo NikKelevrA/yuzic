@@ -7,7 +7,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { resolveArtistDetails, type ResolvedArtist } from './resolveArtistDetails';
 import { useMetadataEnrichmentBroker } from '@/providers/registry/enrichmentBroker';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import type { Artist } from '@/domain/entities/Artist';
 
 /** `null` while there is no artist to resolve yet, or its resolution hasn't

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { clampSpeed, type SpeedProfile } from '@/utils/playback/speedProfile';
+import { clampSpeed, type SpeedProfile } from '@/features/playback/speedProfile';
 
 import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat';
 

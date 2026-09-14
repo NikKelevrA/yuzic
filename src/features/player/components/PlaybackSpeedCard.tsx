@@ -6,16 +6,13 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { selectThemeColor } from '@/features/settings/appearance/state';
 import { usePlayingActions, usePlayingState } from '@/features/playback/PlayingContext';
-import { speedProfileFor } from '@/utils/playback/speedProfile';
-import {
-  PLAYBACK_DEFAULT_SPEED,
-  PLAYBACK_MAX_SPEED,
-  PLAYBACK_MIN_SPEED,
-  PLAYBACK_SPEED_STEP,
-} from '@/constants/playback';
+import { DEFAULT_SPEEDS, MAX_SPEED, MIN_SPEED, speedProfileFor } from '@/features/playback/speedProfile';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { withAlpha } from '@/features/theme/coverAccent';
+
+/** One press moves the rate a quarter. */
+const SPEED_STEP = 0.25;
 
 type Props = { contentWidth: number };
 
@@ -31,21 +28,21 @@ export default function PlaybackSpeedCard({ contentWidth }: Props) {
   const isSpoken = speedProfileFor(currentSong) === 'spoken';
 
   const decrease = useCallback(() => {
-    const next = Math.round((playbackSpeed - PLAYBACK_SPEED_STEP) * 100) / 100;
-    if (next >= PLAYBACK_MIN_SPEED) setPlaybackSpeed(next);
+    const next = Math.round((playbackSpeed - SPEED_STEP) * 100) / 100;
+    if (next >= MIN_SPEED) setPlaybackSpeed(next);
   }, [playbackSpeed, setPlaybackSpeed]);
 
   const increase = useCallback(() => {
-    const next = Math.round((playbackSpeed + PLAYBACK_SPEED_STEP) * 100) / 100;
-    if (next <= PLAYBACK_MAX_SPEED) setPlaybackSpeed(next);
+    const next = Math.round((playbackSpeed + SPEED_STEP) * 100) / 100;
+    if (next <= MAX_SPEED) setPlaybackSpeed(next);
   }, [playbackSpeed, setPlaybackSpeed]);
 
   const reset = useCallback(() => {
-    setPlaybackSpeed(PLAYBACK_DEFAULT_SPEED);
-  }, [setPlaybackSpeed]);
+    setPlaybackSpeed(DEFAULT_SPEEDS[isSpoken ? 'spoken' : 'music']);
+  }, [isSpoken, setPlaybackSpeed]);
 
-  const canDecrease = playbackSpeed > PLAYBACK_MIN_SPEED;
-  const canIncrease = playbackSpeed < PLAYBACK_MAX_SPEED;
+  const canDecrease = playbackSpeed > MIN_SPEED;
+  const canIncrease = playbackSpeed < MAX_SPEED;
 
   return (
     <View

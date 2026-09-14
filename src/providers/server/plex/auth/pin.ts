@@ -1,7 +1,7 @@
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 import { createPlexClient, plexHeaders } from '../client';
 import type { PlexPinResponse } from '../types';
-import type { BasicAuth } from '@/types/Server';
+import type { BasicAuth } from '@/providers/contracts/Server';
 
 const PLEX_ACCOUNT = 'https://plex.tv';
 

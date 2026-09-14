@@ -1,5 +1,5 @@
 import { ApiAdapter } from "@/providers/contracts/ServerAdapter";
-import { Server } from "@/types/Server";
+import { Server } from "@/providers/contracts/Server";
 
 import { EMBY_BRAND } from "../brand";
 import { createMediaBrowserAdapter } from "../adapter";

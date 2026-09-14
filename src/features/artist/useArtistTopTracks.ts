@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { ALL_SOURCES } from '@/features/sources/registry'
 import type { Song } from '@/domain/entities/Song'
 import type { Artist } from '@/domain/entities/Artist'

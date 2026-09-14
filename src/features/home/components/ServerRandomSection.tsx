@@ -9,7 +9,7 @@ import { useApi } from '@/providers/registry/useApi';
 import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import { presentableGenres } from '@/features/home/genres';

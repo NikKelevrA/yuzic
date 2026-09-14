@@ -9,7 +9,7 @@ import { selectHomeShelfItemCount } from '@/features/settings/home/state';
 import { useTheme } from '@/features/theme/useTheme'
 import { useArtists } from '@/features/artist/useArtists';
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
-import { prefetchCovers } from '@/utils/images/imageCache'
+import { prefetchCovers } from '@/features/artwork/imageCache'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import {
@@ -17,16 +17,16 @@ import {
   SECTION_GRID_GAP,
   SECTION_VISIBLE_ITEMS,
   STALE_DEEZER_DISCOVERY,
+  HOME_RELATED_ARTIST_LIMIT,
 } from '@/features/home/constants'
 import * as deezer from '@/providers/integration/deezer'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
 import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDiscovery'
 import SelectionBottomSheet from '@/components/SelectionBottomSheet'
 import MediaTile from './MediaTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
 import type { Album } from '@/domain/entities/Album';
-import { HOME_RELATED_ARTIST_LIMIT } from '@/constants/home';
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';

@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDispatch, useSelector } from 'react-redux'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import { selectLastSyncedAt, setLastSyncedAt } from '@/features/settings/sync/state';
 import { setLibraryGenres } from '@/state/redux/slices/librarySlice'

@@ -13,7 +13,7 @@
  * files a provider name leaks into.
  */
 import type { Song } from '@/domain/entities/Song';
-import seededShuffle from '@/utils/seededShuffle';
+import seededShuffle from '@/features/playlist/seededShuffle';
 
 export const LOCAL_RECOMMENDED_COUNT = 8;
 const MAX_SEED_ARTISTS = 3;

@@ -8,7 +8,7 @@ import { segmentAt } from './playingQueue';
 import type { QueueFillProvider } from './queueProviders';
 import { createAutoplayCoordinator, type AutoplayDeps } from './autoplayCoordinator';
 
-jest.mock('@/utils/shuffleArray', () => ({
+jest.mock('@/features/playback/shuffleArray', () => ({
   // Identity, so the tests can assert on *which* tracks ended up where
   // without pinning a random order. What is shuffled is covered by
   // shuffleArray's own tests.

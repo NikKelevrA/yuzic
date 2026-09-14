@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react-native'
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
 
-import type { Server } from '@/types/Server'
+import type { Server } from '@/providers/contracts/Server'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { serverProvenance } from '@/domain/identity/Provenance'
 import type { Song } from '@/domain/entities/Song'

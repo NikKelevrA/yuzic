@@ -5,18 +5,18 @@ import { useTranslation } from 'react-i18next'
 import { useNavigation } from '@react-navigation/native'
 
 import { useApi } from '@/providers/registry/useApi'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { useTheme } from '@/features/theme/useTheme'
 import { useRadius } from '@/features/theme/useRadius'
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
-import { prefetchCovers } from '@/utils/images/imageCache'
+import { prefetchCovers } from '@/features/artwork/imageCache'
 import MediaTile from '@/features/home/components/MediaTile'
 import type { Album } from '@/domain/entities/Album'
 import {
   ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
   ALBUM_RECOMMENDATION_TILE_GAP,
   ALBUM_RECOMMENDATION_VISIBLE_TILES,
-} from '@/constants/album'
+} from '@/features/album/constants'
 import { spacing, typography } from '@/constants/design'
 
 const SIMILAR_ALBUM_LIMIT = 10

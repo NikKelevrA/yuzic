@@ -1,4 +1,4 @@
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { ContentKind } from '../playback/ContentKind';
 import type { EntityCore } from './EntityCore';
 import type { AlbumRef, ArtistRef } from './EntityRef';

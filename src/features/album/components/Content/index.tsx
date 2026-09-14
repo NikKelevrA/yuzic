@@ -25,8 +25,8 @@ import {
   ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
   ALBUM_RECOMMENDATION_TILE_GAP,
   ALBUM_RECOMMENDATION_VISIBLE_TILES,
-} from '@/constants/album';
-import { formatDuration } from '@/utils/formatDuration';
+} from '@/features/album/constants';
+import { formatDuration } from '@/components/formatDuration';
 import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { DetailScreen } from '@/components/DetailHeader';

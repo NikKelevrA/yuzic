@@ -22,10 +22,10 @@ import MediaListRow from '@/components/MediaListRow';
 import { useTheme } from '@/features/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import { useDownloadState } from '@/features/offline/DownloadContext';
-import { formatDuration } from '@/utils/formatDuration';
+import { formatDuration } from '@/components/formatDuration';
 import Touchable from '@/components/Touchable';
 import SongOptions from '@/components/options/SongOptions';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { useSheetRef } from '@/components/useSheetRef';
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
 
 export type SongRowSong = Song;

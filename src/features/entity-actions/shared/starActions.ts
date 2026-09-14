@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import haptics from '@/utils/haptics';
+import haptics from '@/components/haptics';
 import { notify } from '@/components/toast';
 
 /**

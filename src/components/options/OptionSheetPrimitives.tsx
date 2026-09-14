@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { MediaImage } from '@/components/MediaImage';
 import { useTheme } from '@/features/theme/useTheme';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 

@@ -24,7 +24,7 @@ import type { Artist } from '@/domain/entities/Artist';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 
 /** Fields an integration can contribute to an artist it recognises. */
 export interface ArtistEnrichment {

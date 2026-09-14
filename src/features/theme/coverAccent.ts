@@ -1,3 +1,6 @@
+/** How many covers' extracted colours are kept before the oldest is dropped. */
+export const ACCENT_CACHE_MAX = 150;
+
 
 /**
  * What `react-native-image-colors` returns, narrowed to the fields used here.

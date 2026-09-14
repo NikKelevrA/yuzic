@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 
 import Touchable from '@/components/Touchable';
-import { SETTINGS_STATUS_COLORS } from '@/constants/features';
+import { SETTINGS_STATUS_COLORS } from '@/features/settings/constants';
 import { iconSize, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { useTheme } from '@/features/theme/useTheme';

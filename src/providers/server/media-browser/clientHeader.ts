@@ -1,4 +1,4 @@
-import { getInstallationId } from '@/utils/installationId';
+import { getInstallationId } from '@/providers/server/installationId';
 
 /**
  * The `X-Emby-Authorization` header value MediaBrowser servers expect.

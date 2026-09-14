@@ -14,7 +14,7 @@ import type { Album, ReleaseType } from '@/domain/entities/Album';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import { artistRef } from './mapRefs';
 import type { MbReleaseGroup } from './';
 

@@ -14,7 +14,7 @@
  * carries the same loose id/title/cover fields but isn't a `SearchResult`.
  */
 import type { SearchResult } from '@/features/search/searchRanking';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';

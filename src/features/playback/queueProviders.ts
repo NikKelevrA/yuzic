@@ -1,7 +1,7 @@
 import type { Song } from '@/domain/entities/Song';
 import { parseLocalId, type LocalId } from '@/domain/identity/LocalId';
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
-import shuffleArray from '@/utils/shuffleArray';
+import shuffleArray from '@/features/playback/shuffleArray';
 import { createAudiomuseClient, type AudiomuseConfig } from '@/providers/integration/audiomuse/client';
 import { getAudiomuseQueueExtension } from '@/providers/integration/audiomuse/similarity';
 

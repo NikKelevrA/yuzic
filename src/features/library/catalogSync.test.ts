@@ -4,7 +4,7 @@ import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { runCatalogSync } from './catalogSync';
 
 const SERVER = 'srv-1';

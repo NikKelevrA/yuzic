@@ -13,7 +13,7 @@ import {
   SearchApi
 } from "@/providers/contracts/ServerAdapter";
 
-import { Server } from "@/types/Server";
+import { Server } from "@/providers/contracts/Server";
 import type { Playlist } from "@/domain/entities/Playlist";
 import type { PlaylistDetail } from "@/domain/entities/Detail";
 import { makeLocalId } from "@/domain/identity/LocalId";
@@ -42,7 +42,7 @@ import { star } from "./starred/star";
 import { unstar } from "./starred/unstar";
 import { getArtist } from "./artists/getArtist";
 import { getGenres } from "./genres/getGenres";
-import { buildFavoritesPlaylist } from '@/utils/builders/buildFavoritesPlaylist';
+import { buildFavoritesPlaylist } from '@/providers/server/buildFavoritesPlaylist';
 import { FAVORITES_ID } from "@/constants/favorites";
 import { getLyricsBySongId } from "./lyrics/getLyricsBySongId";
 import { getSong } from "./songs/getSong";

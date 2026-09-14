@@ -7,7 +7,7 @@ import reducer, {
   retryOfflineMutationsForServer,
   clearOfflineMutationsForServer,
 } from './offlineMutationsSlice'
-import { OfflineMutation } from '@/utils/offline/offlineMutations'
+import { OfflineMutation } from '@/features/offline/offlineMutations'
 
 const provenance = serverProvenance('server-1')
 

@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
 import { getLBSimilarArtists } from '@/providers/integration/listenbrainz';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useTheme } from '@/features/theme/useTheme';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useArtistMbid } from '@/features/artist/useArtistMbid';

@@ -9,7 +9,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import { makeLocalId as makeDomainLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import type { Server } from '@/types/Server';
+import type { Server } from '@/providers/contracts/Server';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { useWantArrivalWatcher } from '../useWantArrivalWatcher';

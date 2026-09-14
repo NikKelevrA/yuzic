@@ -1,4 +1,4 @@
-import { firstResolvableCover } from '@/types/Cover';
+import { firstResolvableCover } from '@/domain/entities/Cover';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -39,7 +39,7 @@ import SleepTimerCard from './components/SleepTimerCard';
 import PlaybackSpeedCard from './components/PlaybackSpeedCard';
 import VolumeCard from './components/VolumeCard';
 import { ChevronDown, Ellipsis } from 'lucide-react-native';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { useSheetRef } from '@/components/useSheetRef';
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize, onDark, spacing } from '@/constants/design';
 

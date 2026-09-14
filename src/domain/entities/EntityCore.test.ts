@@ -3,7 +3,7 @@ import type { ExternalIds } from '../identity/ExternalIds';
 import type { LocalId } from '../identity/LocalId';
 import type { Provenance } from '../identity/Provenance';
 import type { LibraryState } from '../library/LibraryState';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { ArtistRef, AlbumRef } from './EntityRef';
 import type { Artist } from './Artist';
 import type { Album } from './Album';

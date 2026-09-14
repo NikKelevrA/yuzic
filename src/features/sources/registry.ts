@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 import { useQuery } from '@tanstack/react-query'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import {
   resolveDeezerAlbum,
   resolveDeezerArtistByName,
@@ -23,7 +23,7 @@ import type { Song } from '@/domain/entities/Song'
 import type { AlbumDetail } from '@/domain/entities/Detail'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { integrationProvenance } from '@/domain/identity/Provenance'
-import type { CoverSource } from '@/types/Cover'
+import type { CoverSource } from '@/domain/entities/Cover'
 import { sourceColor } from '@/constants/design'
 import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
 

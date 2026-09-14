@@ -1,5 +1,5 @@
 import type { ApiAdapter, AlbumsApi, ArtistsApi, AuthApi, GenresApi, LyricsApi, PlaylistsApi, SearchApi, SimilarApi, SongsApi, StarredApi, TracksApi } from '@/providers/contracts/ServerAdapter';
-import type { Server } from '@/types/Server';
+import type { Server } from '@/providers/contracts/Server';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { addLocalPlaylist, readLocalLibrary, removeLocalPlaylist, setLocalStarred, updateLocalPlaylist } from './store';

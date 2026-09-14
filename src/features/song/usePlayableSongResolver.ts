@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useDownloadActions } from '@/features/offline/DownloadContext';
 import { useSongsById } from '@/features/song/useSongsById';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';

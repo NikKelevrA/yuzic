@@ -9,7 +9,7 @@ jest.mock('expo-file-system/legacy', () => ({
 
 import * as FileSystem from 'expo-file-system/legacy';
 import { getAudioMetadata } from '@missingcore/audio-metadata';
-import { mmkv } from '@/utils/mmkvStorage';
+import { mmkv } from '@/state/mmkvStorage';
 import { importLocalFiles, readLocalLibrary, setLocalStarred } from './store';
 
 describe('local-library import', () => {

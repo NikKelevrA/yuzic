@@ -3,14 +3,14 @@ import { serverProvenance } from '@/domain/identity/Provenance';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { FAVORITES_ID } from '@/constants/favorites';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
-import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
+import { createOfflineMutationId } from '@/features/offline/offlineMutations';
 
 export function useUnstarSong() {
   const api = useApi();

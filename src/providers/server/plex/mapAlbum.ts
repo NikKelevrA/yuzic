@@ -6,7 +6,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import { artistRef } from './mapRefs';
 import { mbidOf } from './externalIds';
 import type { PlexMetadata } from './types';

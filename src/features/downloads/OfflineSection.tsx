@@ -14,7 +14,7 @@ import { useDownload } from '@/features/offline/DownloadContext';
 import { DownloadRow } from '@/features/settings/library/downloadsInfo/types';
 import { buildDownloadRows } from '@/features/settings/library/downloadsInfo/buildRows';
 import { Paths } from 'expo-file-system';
-import { formatBytes } from '@/utils/downloads/downloadStore';
+import { formatBytes } from '@/features/offline/downloadStore';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 

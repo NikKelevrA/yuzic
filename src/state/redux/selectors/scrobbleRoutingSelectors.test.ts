@@ -2,7 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import settingsScrobblingReducer, { setScrobbleRoute } from '@/features/settings/scrobbling/state'
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice'
 import listenbrainzReducer, { setScrobbleEnabled } from '@/state/redux/slices/listenbrainzSlice'
-import type { Server } from '@/types/Server'
+import type { Server } from '@/providers/contracts/Server'
 import {
   deriveScrobbleRoute,
   selectLastfmScrobbleRoute,

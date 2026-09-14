@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   enqueueOfflineMutation,
   OfflineMutation,
-} from '@/utils/offline/offlineMutations';
+} from '@/features/offline/offlineMutations';
 
 interface OfflineMutationsState {
   queue: OfflineMutation[];

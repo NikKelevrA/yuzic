@@ -1,5 +1,5 @@
 import type { AudioQuality } from '@/domain/playback/AudioFormat';
-import { qualityToStreamParams } from '@/utils/audio/streamQuality';
+import { qualityToStreamParams } from '@/providers/server/streamQuality';
 import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
 

@@ -31,7 +31,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { selectPlayingBarAction, selectThemeColor } from '@/features/settings/appearance/state';
 
 import { usePlayingBarAction } from './actions/usePlayingBarAction';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { useSheetRef } from '@/components/useSheetRef';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 type Variant = 'ios' | 'android';

@@ -1,4 +1,4 @@
-import { CoverSource } from "@/types/Cover";
+import { CoverSource } from "@/domain/entities/Cover";
 
 /**
  * Jellyfin and Emby speak the same MediaBrowser-derived API and differ only

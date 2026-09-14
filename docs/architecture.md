@@ -108,7 +108,7 @@ Provider configuration may expose an optional `codeAuth` lifecycle
 whether that capability exists; Jellyfin Quick Connect and Plex PIN sign-in are
 provider implementations, not `ServerType` branches in the UI.
 
-`utils/installationId.ts` persists one random ID under
+`providers/server/installationId.ts` persists one random ID under
 `app.installationId.v1`. It is used for MediaBrowser's client identity and
 Plex's `X-Plex-Client-Identifier`; it must remain stable across launches and
 must never be the old shared literal `yuzic-device`.
@@ -254,10 +254,14 @@ gates.
 
 ### Adding a new content kind
 
-Widen the `ContentKind` union in `types/Song.ts`. Add whichever gates it needs
-in `utils/playback/contentKind.ts` — the pattern is one function per player
-behavior it flips, named for the intent. Callsites read
-`if (canScrobble(song))`, not `if (song.contentKind === 'song')`.
+Widen the `ContentKind` union in `domain/playback/ContentKind.ts` and give the
+new kind a row in its behaviour table — duration, scrobbleable, seekable,
+autoplay seed, reissuable URL. The player reads those through `hasDuration`,
+`isScrobbleable`, `isSeekable`, `isAutoplaySeed` and `hasReissuableUrl`, so a
+kind declared there needs no branch anywhere else: callsites read
+`isScrobbleable(song.contentKind)`, never `song.contentKind === 'song'`. A rule
+that belongs to one control rather than to the kind (the 15-second jump buttons
+hide on a preview, which is still seekable) lives beside that control.
 
 ## 4. `useSync` — the catalog pipeline
 
@@ -586,17 +590,24 @@ src/features/           — one directory per feature: its screen, components,
   home/, search/, library/, downloads/, wants/, onboarding/, settings/,
   podcasts/, radio/, shares/ — the remaining screens with what they own
   downloaders/          — Lidarr + slskd + SoulSync registry and queue
-  offline/              — download policies, filesystem, DownloadContext
+  offline/              — downloads: policies, filesystem, the job queue,
+                          DownloadContext, and the offline mutation queue that
+                          replays scrobbles and edits made without a connection
   sources/              — external catalog registry (Deezer, MB)
   theme/                — useTheme, useRadius, useListDensity, cover accent
   connectivity/         — offline and server-reachability state
+  artwork/              — cover URLs for every provider, and the image cache
 
 src/state/              — app state
   credentials.ts        — keystore-backed secrets, never in Redux
   redux/                — slices + selectors + store setup
-  query/                — useOfflineFirstQuery, usePollWhile
-src/components/         — shared visual primitives
-src/utils/playback/     — contentKind + Song-synthesis helpers
+  query/                — queryKeys, staleTime, useOfflineFirstQuery, usePollWhile
+  mmkvStorage.ts        — the non-Redux key-value store
+src/components/         — shared visual primitives, and the interaction helpers
+                          they share (haptics, useSheetRef, formatDuration)
+src/constants/          — app-wide values only: design tokens, public keys, the
+                          app version, the favorites playlist id
+src/types/              — ambient declarations for packages without types
 ```
 
 Redux lives under `src/state/` rather than inside the features that read

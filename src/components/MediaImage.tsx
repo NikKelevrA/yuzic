@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Image } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
-import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/utils/builders/buildCover';
-import { CoverSource } from '@/types/Cover';
+import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/features/artwork/buildCover';
+import { CoverSource } from '@/domain/entities/Cover';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { useTheme } from '@/features/theme/useTheme';
@@ -12,7 +12,7 @@ import {
   IMAGE_CACHE_POLICY,
   markImageUrlFailed,
   markImageUrlSucceeded,
-} from '@/utils/images/imageCache';
+} from '@/features/artwork/imageCache';
 
 const placeholder = require('@assets/images/placeholder.png');
 

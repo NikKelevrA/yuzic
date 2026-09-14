@@ -1,6 +1,6 @@
 import { nanoid } from '@reduxjs/toolkit';
 
-import { mmkv } from '@/utils/mmkvStorage';
+import { mmkv } from '@/state/mmkvStorage';
 
 const KEY = 'app.installationId.v1';
 

@@ -15,7 +15,7 @@ import {
 import { FAVORITES_ID } from "@/constants/favorites";
 import { serverProvenance } from "@/domain/identity/Provenance";
 
-import { Server } from "@/types/Server";
+import { Server } from "@/providers/contracts/Server";
 
 import { createNavidromeClient } from "./client";
 import { connect } from "./auth/connect";
@@ -32,7 +32,7 @@ import { getArtists } from "./artists/getArtists";
 
 import { getPlaylists } from "./playlists/getPlaylists";
 import { getPlaylist } from "./playlists/getPlaylist";
-import { buildFavoritesPlaylist } from "@/utils/builders/buildFavoritesPlaylist";
+import { buildFavoritesPlaylist } from "@/providers/server/buildFavoritesPlaylist";
 import { createPlaylist } from "./playlists/createPlaylist";
 import { deletePlaylist } from "./playlists/deletePlaylist";
 import { renamePlaylist } from "./playlists/renamePlaylist";

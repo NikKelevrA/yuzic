@@ -3,7 +3,7 @@ import type { PlayableResource } from '@/features/playback/playableResource';
 import { makeLocalId, parseLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { BookmarkSnapshot } from '@/state/redux/slices/playbackSlice';
-import { PODCAST_EPISODE_ID_PREFIX } from './buildPodcastSong';
+import { PODCAST_EPISODE_ID_PREFIX } from '../podcasts/buildPodcastSong';
 
 /**
  * Whether a resume position needs a stored snapshot to be renderable later.

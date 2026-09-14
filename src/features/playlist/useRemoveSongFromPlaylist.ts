@@ -3,13 +3,13 @@ import { serverProvenance } from '@/domain/identity/Provenance';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
-import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
+import { createOfflineMutationId } from '@/features/offline/offlineMutations';
 
 type RemoveSongArgs = {
   playlistId: string;

@@ -22,7 +22,7 @@
  */
 import { offersFor } from '@/providers/registry/capabilityBroker';
 import { KEYLESS_INTEGRATIONS } from '@/providers/registry/keyless';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';

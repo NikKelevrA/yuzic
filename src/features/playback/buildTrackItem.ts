@@ -1,5 +1,5 @@
-import type { MediaItem } from '../../features/player/mediaItem';
-import type { RequestHeaders } from '../../features/player/mediaHeaders';
+import type { MediaItem } from '../player/mediaItem';
+import type { RequestHeaders } from '../player/mediaHeaders';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import { toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
 

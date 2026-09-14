@@ -2,8 +2,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { getAudioMetadata } from '@missingcore/audio-metadata';
 import { nanoid } from '@reduxjs/toolkit';
 
-import type { CoverSource } from '@/types/Cover';
-import { mmkv } from '@/utils/mmkvStorage';
+import type { CoverSource } from '@/domain/entities/Cover';
+import { mmkv } from '@/state/mmkvStorage';
 
 const KEY = 'local-library.v1';
 const DIRECTORY = `${FileSystem.documentDirectory ?? ''}local-library/`;

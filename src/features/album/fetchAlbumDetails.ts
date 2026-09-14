@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { QueryKeys } from '@/enums/queryKeys';
-import { staleTime } from '@/constants/staleTime';
+import { QueryKeys } from '@/state/query/queryKeys';
+import { staleTime } from '@/state/query/staleTime';
 import type { Album } from '@/domain/entities/Album';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 

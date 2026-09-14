@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatBytes } from '@/utils/downloads/downloadStore';
+import { formatBytes } from '@/features/offline/downloadStore';
 import type { DownloaderQueueItem } from '@/features/downloaders/queueItem';
 
 /**

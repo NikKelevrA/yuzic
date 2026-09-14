@@ -14,7 +14,7 @@ import { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import { notify } from '@/components/toast';
 import { nanoid } from '@reduxjs/toolkit';
 import { SERVER_PROVIDERS, saveServerCredentials } from '@/providers/registry/serverConnections';
-import { ServerType, BasicAuth, type ProviderAuth } from '@/types/Server';
+import { ServerType, BasicAuth, type ProviderAuth } from '@/providers/contracts/Server';
 import { useTranslation } from 'react-i18next';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';

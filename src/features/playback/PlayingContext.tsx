@@ -33,9 +33,9 @@ import {
   sameQueue,
   type PlayableResource,
 } from '@/features/playback/playableResource';
-import shuffleArray from '@/utils/shuffleArray';
+import shuffleArray from '@/features/playback/shuffleArray';
 import { useApi } from '@/providers/registry/useApi';
-import { buildTrackItem } from '@/utils/builders/buildTrackItem';
+import { buildTrackItem } from '@/features/playback/buildTrackItem';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next';
@@ -57,7 +57,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectPreferredCodec, selectAutoplayEnabled, selectCrossfadeSeconds, selectCrossfadeAlways, selectEqualizerGains, selectPlaybackSpeeds, setPlaybackSpeedForProfile } from '@/features/settings/playback/state';
 import { useIsAudiomuseConfigured, useAudiomuseConfig } from '@/state/redux/selectors/audiomuseSelectors';
 import { useStreamQuality } from '@/features/playback/useStreamQuality';
-import { playableQuality } from '@/utils/audio/playableFormat';
+import { playableQuality } from '@/features/playback/playableFormat';
 import {
   QueueFillProvider,
   createNativeSimilarityQueueFillProvider,
@@ -65,7 +65,7 @@ import {
 } from '@/features/playback/queueProviders';
 import { buildRestoredQueue, decideRestore } from '@/features/playback/restoreQueue';
 import { hasReissuableUrl } from '@/domain/playback/ContentKind';
-import { clampSpeed, speedFor, speedProfileFor } from '@/utils/playback/speedProfile';
+import { clampSpeed, speedFor, speedProfileFor } from '@/features/playback/speedProfile';
 import { useBookmarkManager } from '@/features/playback/useBookmarkManager';
 import { useQueueSync } from '@/features/playback/useQueueSync';
 import { usePlaybackPersistence } from '@/features/playback/usePlaybackPersistence';

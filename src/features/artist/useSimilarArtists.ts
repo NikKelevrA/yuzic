@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux'
 
 import { getLastFmSimilarArtists } from '@/providers/integration/lastfm/getSimilarArtists'
 import { LASTFM_API_KEY } from '@/constants/keys'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { selectLastfmEnabled } from '@/features/settings/metadata/state';
 import type { Artist } from '@/domain/entities/Artist'
 import { makeLocalId } from '@/domain/identity/LocalId'

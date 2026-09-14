@@ -8,12 +8,12 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { persistQueryClientRestore, persistQueryClientSave } from '@tanstack/react-query-persist-client';
 
 import { useAlbums } from '@/features/album/useAlbums';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { rootReducer } from '@/state/redux/store';
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import type { Server } from '@/types/Server';
+import type { Server } from '@/providers/contracts/Server';
 import type { Album } from '@/domain/entities/Album';
 
 // This device never reaches the network in this test — offline for the

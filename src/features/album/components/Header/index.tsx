@@ -21,8 +21,8 @@ import { useCollectionDownloadProgress } from '@/features/downloads/useCollectio
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useDownload } from '@/features/offline/DownloadContext';
 import { useTheme } from '@/features/theme/useTheme';
-import { useSheetRef } from '@/utils/useSheetRef';
-import { formatDuration } from '@/utils/formatDuration';
+import { useSheetRef } from '@/components/useSheetRef';
+import { formatDuration } from '@/components/formatDuration';
 import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { playableSongs } from '@/features/album/trackPlayability';

@@ -25,9 +25,9 @@ import SkeletonListRow from '@/components/SkeletonListRow';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { hitSlopFor, iconSize, spacing, statusColor } from '@/constants/design';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 
 export default function PodcastsScreen() {
   const { t } = useTranslation();

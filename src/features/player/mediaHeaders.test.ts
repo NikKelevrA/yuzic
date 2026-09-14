@@ -1,4 +1,4 @@
-import type { Server } from '@/types/Server';
+import type { Server } from '@/providers/contracts/Server';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { mediaHeadersForSong } from './mediaHeaders';
 

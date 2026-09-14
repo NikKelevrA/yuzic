@@ -3,7 +3,7 @@ import type { Artist } from "@/domain/entities/Artist";
 import type { Playlist } from "@/domain/entities/Playlist";
 import type { Song } from "@/domain/entities/Song";
 import type { AlbumDetail, PlaylistDetail } from "@/domain/entities/Detail";
-import type { CoverSource } from "@/types/Cover";
+import type { CoverSource } from "@/domain/entities/Cover";
 import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat';
 
 /** What a server answers when a song is added to one of its playlists. */

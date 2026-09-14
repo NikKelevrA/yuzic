@@ -10,7 +10,7 @@ import type { Album } from '@/domain/entities/Album';
 import wantsReducer, { addWant } from '@/state/redux/slices/wantsSlice';
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import downloadersReducer from '@/state/redux/slices/downloadersSlice';
-import type { Server } from '@/types/Server';
+import type { Server } from '@/providers/contracts/Server';
 
 jest.mock('@/features/album/useAlbums', () => ({ useAlbums: () => ({ albums: [] }) }));
 

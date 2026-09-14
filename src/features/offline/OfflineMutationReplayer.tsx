@@ -7,7 +7,7 @@ import { notify } from '@/components/toast';
 import { useApi } from '@/providers/registry/useApi';
 import * as listenbrainz from '@/providers/integration/listenbrainz';
 import { FAVORITES_ID } from '@/constants/favorites';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { usePollWhile } from '@/state/query/usePollWhile';
 import i18n from '@/i18n';
@@ -16,7 +16,7 @@ import {
   shouldDropMutation,
   type OfflineMutation,
   type ScrobbleDestination,
-} from '@/utils/offline/offlineMutations';
+} from '@/features/offline/offlineMutations';
 import { useListenBrainzConfig } from '@/state/redux/selectors/listenbrainzSelectors';
 import { selectOfflineMutationQueue } from '@/state/redux/selectors/offlineMutationsSelectors';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';

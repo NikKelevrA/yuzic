@@ -31,12 +31,12 @@ import { selectLanguage } from '@/features/settings/appearance/state';
 import i18n from '@/i18n';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { queryCacheStorage } from '@/utils/mmkvStorage';
+import { queryCacheStorage } from '@/state/mmkvStorage';
 import NetInfo from '@react-native-community/netinfo';
-import OfflineMutationReplayer from '@/offline/OfflineMutationReplayer';
+import OfflineMutationReplayer from '@/features/offline/OfflineMutationReplayer';
 import { isLikelyNetworkError, setServerUnreachable } from '@/features/connectivity/serverReachability';
-import { QueryKeys } from '@/enums/queryKeys';
-import { clearImageMemoryCache, runImageCacheMigration } from '@/utils/images/imageCache';
+import { QueryKeys } from '@/state/query/queryKeys';
+import { clearImageMemoryCache, runImageCacheMigration } from '@/features/artwork/imageCache';
 import { useClientCertificate } from '@/features/mtls/useClientCertificate';
 import { hydrateAll } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';

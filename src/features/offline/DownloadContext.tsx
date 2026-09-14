@@ -15,11 +15,11 @@ import { notify } from '@/components/toast';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
 import type { Song } from '@/domain/entities/Song';
-import { DownloadProviderScope } from '@/utils/downloads/provider';
+import { DownloadProviderScope } from '@/features/offline/downloadProvider';
 import {
   DownloadedCollectionEntry,
   DownloadedTrackEntry,
-} from '@/utils/downloads/downloadStore';
+} from '@/features/offline/downloadStore';
 import {
   readDownloadsSnapshot,
   readResumables,
@@ -29,17 +29,17 @@ import {
   writeDownloadJobs,
   writeDownloadedTracks,
   writeResumables,
-} from '@/utils/downloads/localDownloadStore';
+} from '@/features/offline/localDownloadStore';
 import {
   expiredResumables,
   findUsableResumable,
   removeResumable,
   stagingPathsToKeep,
   upsertResumable,
-} from '@/utils/downloads/resumeState';
+} from '@/features/offline/resumeState';
 import {
   createDownloadJobRunner,
-} from '@/utils/downloads/jobQueue';
+} from '@/features/offline/jobQueue';
 import {
   collectionsWithoutTracks,
   jobMatchesCollectionId,
@@ -51,7 +51,7 @@ import {
   tracksInCollectionRemoval,
   tracksInScope,
   tracksWithout,
-} from '@/utils/downloads/removal';
+} from '@/features/offline/removal';
 import {
   DOWNLOAD_SCHEMA_VERSION,
   extensionFromContentType,
@@ -60,13 +60,13 @@ import {
   restoreDownloadState,
   sanitizeFileName,
   type LocalDownloadedTrackEntry,
-} from '@/utils/downloads/restore';
+} from '@/features/offline/restore';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { selectDownloadOnWifiOnly } from '@/features/settings/downloads/state';
 import { selectDownloadQuality } from '@/features/settings/playback/state';
 import { useNetworkType } from '@/features/connectivity/useNetworkType';
-import { streamSourceId } from '@/utils/playback/streamId';
+import { streamSourceId } from '@/features/offline/streamId';
 import {
   BACKGROUND_FILE_OPTIONS,
   DOWNLOAD_DIR,

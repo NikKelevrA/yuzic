@@ -10,7 +10,7 @@
 import type { AlbumRef, ArtistRef } from '@/domain/entities/EntityRef';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { DeezerAlbum, DeezerArtist } from './types';
 
 /** Deezer's largest-first artist picture, as a plain hosted URL. */

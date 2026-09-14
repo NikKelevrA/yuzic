@@ -22,7 +22,7 @@ import { useDownload } from '@/features/offline/DownloadContext';
 import {
   buildDownloadedTrackIdSet,
   getFullyDownloadedAlbumIds,
-} from '@/utils/downloads/collectionState';
+} from '@/features/offline/collectionState';
 
 import { dedupeAndSort, type SearchResult } from '@/features/search/searchRanking';
 import { planSearchLegs, type SearchResultScope } from '@/features/search/searchLegs';

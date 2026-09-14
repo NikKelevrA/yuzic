@@ -16,9 +16,9 @@ import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useListDensity } from '@/features/theme/useListDensity';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
-import { shareItem } from '@/utils/share';
+import { shareItem } from '@/features/shares/share';
 
 function formatDate(value: string | undefined): string {
   if (!value) return '';

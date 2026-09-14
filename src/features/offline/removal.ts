@@ -3,7 +3,7 @@ import type { PersistedDownloadJob } from './localDownloadStore';
 import {
   doesTrackMatchProviderScope,
   type DownloadProviderScope,
-} from './provider';
+} from './downloadProvider';
 import type { LocalDownloadedTrackEntry } from './restore';
 
 /**

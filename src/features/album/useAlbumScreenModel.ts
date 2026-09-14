@@ -21,7 +21,7 @@ import { useExternalAlbumPreviews } from '@/features/album/useExternalAlbumPrevi
 import { useExternalAlbumStatus, type ExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { ALL_SOURCES, useEnabledExternalSources } from '@/features/sources/registry';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useAlbumDetails } from './useAlbumDetails';
 
 export type AlbumRouteParams = {

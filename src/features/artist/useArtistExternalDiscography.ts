@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useEnabledExternalSources } from '@/features/sources/registry';
 import type { Album } from '@/domain/entities/Album';
 

@@ -3,9 +3,9 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { Album } from '@/domain/entities/Album';
 import AlbumOptions from '@/components/options/AlbumOptions';
-import { useSheetRef } from '@/utils/useSheetRef';
-import { prefetchCovers } from '@/utils/images/imageCache';
-import haptics from '@/utils/haptics';
+import { useSheetRef } from '@/components/useSheetRef';
+import { prefetchCovers } from '@/features/artwork/imageCache';
+import haptics from '@/components/haptics';
 import LibraryItem from './LibraryItem';
 
 interface ItemProps {

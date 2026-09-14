@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
 
 import { useApi } from '@/providers/registry/useApi';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import { selectSongPlayCounts } from '@/state/redux/selectors/statsSelectors';

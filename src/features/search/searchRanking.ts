@@ -1,5 +1,5 @@
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { Song } from '@/domain/entities/Song';
 
 /**

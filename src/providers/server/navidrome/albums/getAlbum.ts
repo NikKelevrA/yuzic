@@ -1,6 +1,6 @@
 import type { AlbumDetail } from "@/domain/entities/Detail";
 import type { Provenance } from "@/domain/identity/Provenance";
-import type { CoverSource } from "@/types/Cover";
+import type { CoverSource } from "@/domain/entities/Cover";
 import type { NavidromeClient } from "../client";
 import { getAlbumInfo } from "./getAlbumInfo";
 import { getArtist } from "../artists/getArtist";

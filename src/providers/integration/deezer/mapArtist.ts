@@ -9,7 +9,7 @@
 import type { Artist } from '@/domain/entities/Artist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { DeezerArtist } from './types';
 
 function coverOf(dto: DeezerArtist): CoverSource {

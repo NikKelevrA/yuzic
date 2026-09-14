@@ -3,7 +3,7 @@ import React from 'react';
 import type { SearchResult } from '@/features/search/SearchContext';
 import PlaylistRow from '@/components/rows/PlaylistRow';
 import { resultToPlaylist } from '@/features/search/searchResultAdapters';
-import { prefetchCovers } from '@/utils/images/imageCache';
+import { prefetchCovers } from '@/features/artwork/imageCache';
 
 type Props = {
   result: SearchResult;

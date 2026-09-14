@@ -1,4 +1,4 @@
-import { Server } from '@/types/Server';
+import { Server } from '@/providers/contracts/Server';
 import { buildTokenParams } from '../client';
 import { SubsonicResponse } from '../types';
 import { serverFetch } from '@/features/mtls/serverFetch';

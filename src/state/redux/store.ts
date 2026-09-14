@@ -1,6 +1,6 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
-import { reduxStorage as storage } from '@/utils/mmkvStorage';
+import { reduxStorage as storage } from '@/state/mmkvStorage';
 
 import serversReducer from './slices/serversSlice';
 import downloadersReducer from './slices/downloadersSlice';

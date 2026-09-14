@@ -7,16 +7,16 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { buildCover } from '@/utils/builders/buildCover';
-import { CoverSource } from '@/types/Cover';
-import {
-  PLAYING_ARTIST_CARD_HEIGHT,
-  PLAYING_ARTIST_TEXT_MIN_HEIGHT,
-  PLAYING_ARTIST_CARD_PADDING,
-} from '@/constants/features';
+import { buildCover } from '@/features/artwork/buildCover';
+import { CoverSource } from '@/domain/entities/Cover';
 import Touchable from '@/components/Touchable';
 import { onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
+/** The card is a fixed height; the name and text below the image keep at least this much of it. */
+const CARD_HEIGHT = 280;
+const TEXT_MIN_HEIGHT = 70;
+const CARD_PADDING = 16;
+
 type Props = {
   artistName: string;
   artistCover: CoverSource | null;
@@ -34,14 +34,14 @@ export default function AboutTheArtistCard({
 }: Props) {
   const { t } = useTranslation();
   const rad = useRadius();
-  const imageHeight = PLAYING_ARTIST_CARD_HEIGHT - PLAYING_ARTIST_TEXT_MIN_HEIGHT;
+  const imageHeight = CARD_HEIGHT - TEXT_MIN_HEIGHT;
   const imageUri = artistCover
     ? buildCover(artistCover, 'detail')
     : null;
 
   const card = (
     <View
-      style={[styles.card, { width: contentWidth, height: PLAYING_ARTIST_CARD_HEIGHT, borderRadius: rad.panel }]}
+      style={[styles.card, { width: contentWidth, height: CARD_HEIGHT, borderRadius: rad.panel }]}
     >
       <View style={[styles.imageContainer, { height: imageHeight }]}>
         <Image
@@ -112,9 +112,9 @@ const styles = StyleSheet.create({
   header: {
     ...typography.label,
     position: 'absolute',
-    top: PLAYING_ARTIST_CARD_PADDING,
-    left: PLAYING_ARTIST_CARD_PADDING,
-    right: PLAYING_ARTIST_CARD_PADDING,
+    top: CARD_PADDING,
+    left: CARD_PADDING,
+    right: CARD_PADDING,
     color: onDark.text,
     textAlign: 'left',
   },
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     justifyContent: 'center',
-    minHeight: PLAYING_ARTIST_TEXT_MIN_HEIGHT,
-    paddingHorizontal: PLAYING_ARTIST_CARD_PADDING,
+    minHeight: TEXT_MIN_HEIGHT,
+    paddingHorizontal: CARD_PADDING,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },

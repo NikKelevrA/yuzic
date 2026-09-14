@@ -9,7 +9,7 @@
 import type { Artist } from '@/domain/entities/Artist';
 import type { Provenance } from '@/domain/identity/Provenance';
 import { makeLocalId } from '@/domain/identity/LocalId';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { SubsonicArtist } from './types';
 
 export function mapArtist(dto: SubsonicArtist, provenance: Provenance): Artist {

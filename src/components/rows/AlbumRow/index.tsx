@@ -12,7 +12,7 @@ import AlbumOptions from '@/components/options/AlbumOptions';
 import IconActionButton from '@/components/IconActionButton';
 import MediaListRow from '@/components/MediaListRow';
 import { useTheme } from '@/features/theme/useTheme';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { useSheetRef } from '@/components/useSheetRef';
 import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 import { iconSize, spacing, statusColor, typography } from '@/constants/design';
 

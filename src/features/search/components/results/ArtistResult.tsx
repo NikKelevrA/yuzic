@@ -4,7 +4,7 @@ import type { SearchResult } from '@/features/search/SearchContext';
 import type { Artist } from '@/domain/entities/Artist';
 import ArtistRow from '@/components/rows/ArtistRow';
 import { resultToArtist, isExternalArtist } from '@/features/search/searchResultAdapters';
-import { prefetchCovers } from '@/utils/images/imageCache';
+import { prefetchCovers } from '@/features/artwork/imageCache';
 
 type Props = {
   result: SearchResult;

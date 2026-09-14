@@ -10,7 +10,7 @@ import { CloudOff, Pencil, Plus, Radio as RadioIcon, Trash2 } from 'lucide-react
 import { useApi } from '@/providers/registry/useApi';
 import type { InternetRadioStation } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
-import { stationToSong } from '@/utils/playback/buildStationSong';
+import { stationToSong } from '@/features/radio/buildStationSong';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { DetailHeaderBar, DetailHeaderIconButton } from '@/components/DetailHeader';
@@ -20,13 +20,13 @@ import Touchable from '@/components/Touchable';
 import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { controlSize, hitSlopFor, iconSize, spacing } from '@/constants/design';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { useRadius } from '@/features/theme/useRadius';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useTheme } from '@/features/theme/useTheme';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
-import haptics from '@/utils/haptics';
+import haptics from '@/components/haptics';
 
 type Editing =
   | { mode: 'add' }

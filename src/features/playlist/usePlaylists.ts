@@ -1,8 +1,8 @@
 import { useSelector } from 'react-redux';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { useApi } from '@/providers/registry/useApi';
-import { staleTime } from '@/constants/staleTime';
+import { staleTime } from '@/state/query/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasArrayData, useOfflineFirstQuery } from '@/state/query/useOfflineFirstQuery';
 

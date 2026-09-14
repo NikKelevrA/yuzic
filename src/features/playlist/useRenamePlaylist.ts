@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { PlaylistDetail } from '@/domain/entities/Detail';

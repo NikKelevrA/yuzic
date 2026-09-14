@@ -56,7 +56,7 @@ jest.mock('@/components/MediaImage', () => {
   }
 })
 
-jest.mock('@/utils/builders/buildCover', () => ({
+jest.mock('@/features/artwork/buildCover', () => ({
   buildCover: (cover: { kind: string; url?: string }) => (cover.kind === 'url' ? cover.url : null),
   buildCoverArtArchiveUrl: jest.fn(),
   buildCoverCacheKey: jest.fn(),
@@ -65,7 +65,7 @@ jest.mock('react-native-turbo-image', () => 'TurboImage')
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }))
 jest.mock('@/components/Touchable', () => 'Touchable')
 jest.mock('@/components/options/ArtistOptions', () => 'ArtistOptions')
-jest.mock('@/utils/useSheetRef', () => ({ useSheetRef: () => ({ current: null }) }))
+jest.mock('@/components/useSheetRef', () => ({ useSheetRef: () => ({ current: null }) }))
 jest.mock('@/features/playback/PlayingContext', () => ({ usePlayingActions: () => ({ playSongInCollection: jest.fn() }) }))
 jest.mock('@/features/offline/DownloadContext', () => ({ useDownload: () => ({ downloadAlbumById: jest.fn(), getCollectionDownloadState: () => ({ isDownloaded: false, isDownloading: false }) }) }))
 jest.mock('@/features/downloads/useCollectionDownloadProgress', () => ({ useCollectionDownloadProgress: () => 0 }))

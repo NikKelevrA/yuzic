@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectLanguage, setLanguage } from '@/features/settings/appearance/state';
-import { getLanguageByCode } from '@/constants/languages';
+import { getLanguageByCode } from '@/features/settings/appearance/languages';
 import { useTranslation } from 'react-i18next';
 import LanguageBottomSheet from './LanguageBottomSheet';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { useSheetRef } from '@/components/useSheetRef';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsRow from '../../components/SettingsRow';
 

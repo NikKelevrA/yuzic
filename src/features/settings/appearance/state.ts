@@ -1,11 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DEFAULT_LANGUAGE } from '@/constants/languages';
+import { DEFAULT_LANGUAGE } from '@/features/settings/appearance/languages';
 import type { ListDensity, RadiusPreset } from '@/constants/design';
 
 /**
  * The collections that remember their own grid/list choice.
  *
- * Mirrors `LibraryCollectionType` in screens/library/librarySort, kept here as
+ * Mirrors `LibraryCollectionType` in features/library/librarySort, kept here as
  * its own type so this slice doesn't reach up into a screen for it.
  */
 export type LibraryViewKey =
@@ -84,9 +84,12 @@ export interface AppearanceSettingsState {
   respectReducedMotion: boolean;
 }
 
+/** The accent a fresh install starts with, and the first of the presets offered. */
+export const THEME_DEFAULT_COLOR = '#ff7f7f';
+
 const initialState: AppearanceSettingsState = {
   themeMode: 'system',
-  themeColor: '#ff7f7f',
+  themeColor: THEME_DEFAULT_COLOR,
   radiusPreset: 'default',
   listDensity: 'default',
   coverAccentEnabled: true,

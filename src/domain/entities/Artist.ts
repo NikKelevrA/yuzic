@@ -1,4 +1,4 @@
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { LocalId } from '../identity/LocalId';
 import type { EntityCore } from './EntityCore';
 

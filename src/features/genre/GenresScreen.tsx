@@ -13,7 +13,7 @@ import { useTheme } from '@/features/theme/useTheme'
 import { iconSize, spacing, typography } from '@/constants/design'
 import { useAlbums } from '@/features/album/useAlbums';
 import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
-import { buildGenreRows, type GenreRow } from '@/utils/library/genreList'
+import { buildGenreRows, type GenreRow } from '@/features/genre/genreList'
 import LoadingGenreList from './GenresLoading'
 import Touchable from '@/components/Touchable'
 import { useScrollClearance } from '@/features/theme/useScrollClearance'

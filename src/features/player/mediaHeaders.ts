@@ -1,4 +1,4 @@
-import type { Server } from '@/types/Server';
+import type { Server } from '@/providers/contracts/Server';
 import type { Provenance } from '@/domain/identity/Provenance';
 import { plexBasicAuthHeader } from '@/providers/server/plex/client';
 

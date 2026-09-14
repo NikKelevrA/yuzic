@@ -1,4 +1,4 @@
-import type { Server } from '@/types/Server';
+import type { Server } from '@/providers/contracts/Server';
 
 /* eslint-disable import/first -- Jest mock must be registered before the adapter import. */
 const mockRequest = jest.fn();

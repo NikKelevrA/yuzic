@@ -23,11 +23,11 @@ jest.mock('@/components/BottomSheetBackdrop', () => ({
   renderBackdrop: () => null,
 }));
 
-jest.mock('@/utils/useSheetRef', () => ({
+jest.mock('@/components/useSheetRef', () => ({
   useSheetRef: () => ({ current: null }),
 }));
 
-jest.mock('@/utils/haptics', () => ({
+jest.mock('@/components/haptics', () => ({
   __esModule: true,
   default: { selection: jest.fn(), tap: jest.fn(), primary: jest.fn(), heavy: jest.fn(), success: jest.fn(), warning: jest.fn(), error: jest.fn() },
   selection: jest.fn(),
@@ -37,7 +37,7 @@ jest.mock('@/components/toast', () => ({
   notify: Object.assign(jest.fn(), { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() }),
 }));
 
-jest.mock('@/utils/share', () => ({
+jest.mock('@/features/shares/share', () => ({
   shareItem: jest.fn(),
 }));
 

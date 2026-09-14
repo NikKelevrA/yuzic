@@ -7,7 +7,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { resolveAlbumDetails, type ResolvedAlbum } from './resolveAlbumDetails';
 import { useMetadataEnrichmentBroker } from '@/providers/registry/enrichmentBroker';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import type { Album } from '@/domain/entities/Album';
 
 /** `null` while there is no album to resolve yet, or its resolution hasn't

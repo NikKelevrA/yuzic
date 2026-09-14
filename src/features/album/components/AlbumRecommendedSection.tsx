@@ -10,10 +10,10 @@ import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnable
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
-import { prefetchCovers } from '@/utils/images/imageCache'
+import { prefetchCovers } from '@/features/artwork/imageCache'
 import * as deezer from '@/providers/integration/deezer'
 import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDiscovery'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { STALE_DEEZER_DISCOVERY } from '@/features/home/constants'
 import MediaTile from '@/features/home/components/MediaTile'
 import type { Album } from '@/domain/entities/Album'
@@ -23,7 +23,7 @@ import {
   ALBUM_RECOMMENDATION_VISIBLE_TILES,
   ALBUM_RECOMMENDATION_RELATED_LIMIT,
   ALBUM_RECOMMENDATION_TARGET_ALBUMS,
-} from '@/constants/album';
+} from '@/features/album/constants';
 import { useRadius } from '@/features/theme/useRadius';
 
 type Props = {

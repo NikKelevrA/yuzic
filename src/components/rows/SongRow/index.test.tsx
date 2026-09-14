@@ -34,7 +34,7 @@ jest.mock('@/features/home/hooks/useDeezerEnabled', () => ({
 
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');
 
-jest.mock('@/utils/useSheetRef', () => ({
+jest.mock('@/components/useSheetRef', () => ({
   useSheetRef: () => ({ current: null }),
 }));
 

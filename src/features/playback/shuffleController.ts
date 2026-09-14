@@ -1,7 +1,7 @@
 import type { PlayerBackend } from '@/features/player/backend';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import type { ShuffleMode } from '@/domain/playback/PlaybackModes';
-import shuffleArray from '@/utils/shuffleArray';
+import shuffleArray from '@/features/playback/shuffleArray';
 import { reconcileUnshuffledQueue, type QueueSegment } from './playingQueue';
 
 /**

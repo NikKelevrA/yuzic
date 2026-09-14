@@ -5,7 +5,7 @@ import {
   inferServerTypeFromCoverKind,
   normalizeServerId,
   normalizeServerType,
-} from './provider';
+} from './downloadProvider';
 
 describe('download provider helpers', () => {
   it('normalizes only supported server types and non-empty server ids', () => {

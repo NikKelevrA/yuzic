@@ -3,8 +3,8 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { Song } from '@/domain/entities/Song';
 import type { Album } from '@/domain/entities/Album';
 import { useTranslation } from 'react-i18next';
-import { formatDuration } from '@/utils/formatDuration';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { formatDuration } from '@/components/formatDuration';
+import { useSheetRef } from '@/components/useSheetRef';
 import GetReviewSheet from '@/components/options/GetReviewSheet';
 import {
   OptionSheetChipsRow,

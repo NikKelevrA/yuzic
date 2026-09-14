@@ -49,7 +49,7 @@ jest.mock('@/features/song/useSongsById', () => ({
 }));
 jest.mock('@/components/SkeletonListRow', () => 'SkeletonListRow');
 
-jest.mock('@/utils/useSheetRef', () => ({
+jest.mock('@/components/useSheetRef', () => ({
   useSheetRef: () => ({ current: null }),
 }));
 

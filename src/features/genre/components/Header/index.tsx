@@ -19,12 +19,12 @@ import type { Album } from '@/domain/entities/Album'
 import type { Song } from '@/domain/entities/Song'
 import { useApi } from '@/providers/registry/useApi'
 import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails'
-import { buildCover } from '@/utils/builders/buildCover'
+import { buildCover } from '@/features/artwork/buildCover'
 import { useTheme } from '@/features/theme/useTheme'
 import { useTracks } from '@/features/song/useTracks';
 import { usePlayingActions } from '@/features/playback/PlayingContext'
 import { useDownload } from '@/features/offline/DownloadContext'
-import { useSheetRef } from '@/utils/useSheetRef'
+import { useSheetRef } from '@/components/useSheetRef'
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import {
   DetailActionRow,

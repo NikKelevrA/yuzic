@@ -7,7 +7,7 @@ import { serverProvenance } from '@/domain/identity/Provenance';
 import type { QueueSegment } from './playingQueue';
 import { createShuffleController, type ShuffleControllerDeps } from './shuffleController';
 
-jest.mock('@/utils/shuffleArray', () => ({
+jest.mock('@/features/playback/shuffleArray', () => ({
   // Reversed, so a test can tell "was shuffled" from "was left alone" without
   // pinning a random order.
   __esModule: true,

@@ -4,7 +4,7 @@ import type { SearchResult } from '@/features/search/SearchContext';
 import type { Album } from '@/domain/entities/Album';
 import AlbumRow, { isExternalAlbum } from '@/components/rows/AlbumRow';
 import { resultToAlbum } from '@/features/search/searchResultAdapters';
-import { prefetchCovers } from '@/utils/images/imageCache';
+import { prefetchCovers } from '@/features/artwork/imageCache';
 
 type Props = {
   result: SearchResult;

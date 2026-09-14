@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Check, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/features/theme/useTheme';
-import { SETTINGS_STATUS_COLORS } from '@/constants/features';
+import { SETTINGS_STATUS_COLORS } from '@/features/settings/constants';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 

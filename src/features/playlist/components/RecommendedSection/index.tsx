@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { spacing } from '@/constants/design';
 import { playlistArtistNames as computePlaylistArtistNames } from '@/features/playlist/recommendedSongs';
 import type { Playlist } from '@/domain/entities/Playlist';

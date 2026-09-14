@@ -11,7 +11,7 @@ import {
   type StartableCollection,
 } from './playbackStarters';
 
-jest.mock('@/utils/shuffleArray', () => ({
+jest.mock('@/features/playback/shuffleArray', () => ({
   // Reversed rather than randomised: a test can then tell "was shuffled" from
   // "was left alone" without pinning a random order.
   __esModule: true,

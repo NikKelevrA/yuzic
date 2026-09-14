@@ -5,13 +5,21 @@ import ColorPicker, { Panel1, HueSlider } from 'reanimated-color-picker';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectThemeColor, setThemeColor } from '@/features/settings/appearance/state';
+import { selectThemeColor, setThemeColor, THEME_DEFAULT_COLOR } from '@/features/settings/appearance/state';
 import { useTheme } from '@/features/theme/useTheme';
 import SettingsCardHeader from '../../components/SettingsCardHeader';
 import SettingsCard from '../../components/SettingsCard';
-import { THEME_PRESET_COLORS } from '@/constants/settings';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
+
+const THEME_PRESET_COLORS = [
+  THEME_DEFAULT_COLOR,
+  '#ff9f43',
+  '#ffd32a',
+  '#0be881',
+  '#54a0ff',
+  '#5f27cd',
+] as const;
 
 export const ThemeColor: React.FC = () => {
   const { t } = useTranslation();

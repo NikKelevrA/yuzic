@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import type { Song } from '@/domain/entities/Song';
-import { STAGING_SUFFIX, sanitizeFileName } from '@/utils/downloads/restore';
+import { STAGING_SUFFIX, sanitizeFileName } from '@/features/offline/restore';
 
 /**
  * Where a saved track lives, and how it gets there.

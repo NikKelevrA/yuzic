@@ -1,4 +1,4 @@
-import { mmkv } from '@/utils/mmkvStorage';
+import { mmkv } from '@/state/mmkvStorage';
 import type { Song } from '@/domain/entities/Song';
 import type { DownloadedCollectionEntry, DownloadedTrackEntry } from './downloadStore';
 

@@ -4,7 +4,7 @@ import type { PlayableResource } from '@/features/playback/playableResource';
 import type { Song } from '@/domain/entities/Song';
 import type { LocalId } from '@/domain/identity/LocalId';
 import { playableOnly } from '@/features/playback/playableResource';
-import shuffleArray from '@/utils/shuffleArray';
+import shuffleArray from '@/features/playback/shuffleArray';
 import { buildFillRequest } from './autoplayFill';
 import { tagSegment, type QueueSegment } from './playingQueue';
 import { resolveQueueFillProvider, type QueueFillProvider } from './queueProviders';

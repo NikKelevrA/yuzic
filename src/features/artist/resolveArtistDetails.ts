@@ -27,7 +27,7 @@ import { offersFor, type BrokerInput } from '@/providers/registry/capabilityBrok
 import { resolved, type ResolvedField } from '@/domain/entities/ResolvedField';
 import { provenanceScope } from '@/domain/identity/Provenance';
 import type { Artist } from '@/domain/entities/Artist';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 
 export interface ResolvedArtist {
   entity: Artist;

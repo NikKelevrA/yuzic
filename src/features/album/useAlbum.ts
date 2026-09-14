@@ -1,10 +1,10 @@
 import { useSelector } from 'react-redux';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 import { useApi } from '@/providers/registry/useApi';
-import { staleTime } from '@/constants/staleTime';
+import { staleTime } from '@/state/query/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasValue, useOfflineFirstQuery } from '@/state/query/useOfflineFirstQuery';
 import { buildFallbackAlbumSongs } from './fallbackSongs';

@@ -11,7 +11,7 @@
  * deliberately carries no `libraryState`: whether the user owns the referenced
  * artist is a question about that artist, answered by loading it.
  */
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import type { ExternalIds } from '../identity/ExternalIds';
 import type { LocalId } from '../identity/LocalId';
 

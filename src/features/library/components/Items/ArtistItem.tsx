@@ -3,8 +3,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { Artist } from '@/domain/entities/Artist';
 import ArtistOptions from '@/components/options/ArtistOptions';
-import { useSheetRef } from '@/utils/useSheetRef';
-import { prefetchCovers } from '@/utils/images/imageCache';
+import { useSheetRef } from '@/components/useSheetRef';
+import { prefetchCovers } from '@/features/artwork/imageCache';
 import LibraryItem from './LibraryItem';
 
 interface ItemProps {

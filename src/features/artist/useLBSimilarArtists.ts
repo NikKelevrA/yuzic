@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 
 import { getLBSimilarArtists } from '@/providers/integration/listenbrainz';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { selectListenbrainzDiscoveryEnabled } from '@/features/settings/home/state';
 import type { Artist } from '@/domain/entities/Artist';
 import { makeLocalId } from '@/domain/identity/LocalId';

@@ -4,7 +4,7 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) =>
 jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', muted: '#333', placeholder: '#999' }, isDarkMode: false }),
 }));
-jest.mock('@/utils/haptics', () => ({
+jest.mock('@/components/haptics', () => ({
   __esModule: true,
   default: { selection: jest.fn(), tap: jest.fn(), primary: jest.fn(), heavy: jest.fn(), success: jest.fn(), warning: jest.fn(), error: jest.fn() },
   selection: jest.fn(),

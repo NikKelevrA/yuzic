@@ -10,8 +10,8 @@ import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useDownload } from '@/features/offline/DownloadContext';
 import { useTheme } from '@/features/theme/useTheme';
 import { useTranslation } from 'react-i18next';
-import { useSheetRef } from '@/utils/useSheetRef';
-import { formatDuration } from '@/utils/formatDuration';
+import { useSheetRef } from '@/components/useSheetRef';
+import { formatDuration } from '@/components/formatDuration';
 import DownloadStateIcon from '@/components/DownloadStateIcon';
 import { useCollectionDownloadProgress } from '@/features/downloads/useCollectionDownloadProgress';
 import {

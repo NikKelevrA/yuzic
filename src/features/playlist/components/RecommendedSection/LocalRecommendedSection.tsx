@@ -15,9 +15,9 @@ import {
 } from '@/state/redux/selectors/audiomuseSelectors';
 import { useTracks } from '@/features/song/useTracks';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { iconSize, spacing } from '@/constants/design';
-import seededShuffle from '@/utils/seededShuffle';
+import seededShuffle from '@/features/playlist/seededShuffle';
 import {
   LOCAL_RECOMMENDED_COUNT,
   pickFallbackLocalSongs,

@@ -8,7 +8,7 @@ import { selectThemeColor } from '@/features/settings/appearance/state';
 import { usePlayingActions, usePlayingState } from '@/features/playback/PlayingContext';
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
-import haptics from '@/utils/haptics';
+import haptics from '@/components/haptics';
 
 type Props = { contentWidth: number };
 

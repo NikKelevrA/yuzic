@@ -4,11 +4,11 @@ import {
   getDownloadedTrackServerId,
   getDownloadedTrackServerType,
   inferServerTypeFromCoverKind,
-} from '@/utils/downloads/provider';
+} from '@/features/offline/downloadProvider';
 import {
   buildDownloadedTrackIdSet,
-} from '@/utils/downloads/collectionState';
-import { DownloadedCollectionEntry } from '@/utils/downloads/downloadStore';
+} from '@/features/offline/collectionState';
+import { DownloadedCollectionEntry } from '@/features/offline/downloadStore';
 import type { DownloadedTrack } from '@/features/offline/DownloadContext';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';

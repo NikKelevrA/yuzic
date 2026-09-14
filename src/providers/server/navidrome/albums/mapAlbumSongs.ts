@@ -8,7 +8,7 @@
  */
 import type { Song } from '@/domain/entities/Song';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 import { mapSong } from '../mapSong';
 import type { SubsonicAlbum } from '../types';
 

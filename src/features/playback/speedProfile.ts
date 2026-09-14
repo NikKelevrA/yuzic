@@ -31,9 +31,13 @@ export const DEFAULT_SPEEDS: Record<SpeedProfile, number> = {
  * The engine accepts a wide range, but the useful span for listening is
  * narrower — and a rate the time-pitch unit cannot hold cleanly sounds broken
  * rather than fast.
+ *
+ * The player's speed control offers exactly this range. It used to stop at 2×
+ * against a clamp here of 3×: two ranges for one setting, and the clamp
+ * allowed a speed the control could never set.
  */
 export const MIN_SPEED = 0.5;
-export const MAX_SPEED = 3.0;
+export const MAX_SPEED = 2.0;
 
 export function clampSpeed(speed: number): number {
   if (!Number.isFinite(speed)) return 1.0;

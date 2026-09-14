@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 
 import { useApi } from '@/providers/registry/useApi';
-import { QueryKeys } from '@/enums/queryKeys';
+import { QueryKeys } from '@/state/query/queryKeys';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import type { Artist } from '@/domain/entities/Artist';
 

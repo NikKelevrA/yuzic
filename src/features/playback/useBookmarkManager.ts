@@ -11,7 +11,7 @@ import {
   seedPlaybackBookmarks,
   setPlaybackBookmark,
 } from '@/state/redux/slices/playbackSlice';
-import { needsSnapshot, toBookmarkSnapshot } from '@/utils/playback/bookmarkSnapshot';
+import { needsSnapshot, toBookmarkSnapshot } from '@/features/playback/bookmarkSnapshot';
 
 /**
  * Bookmarks in yuzic:

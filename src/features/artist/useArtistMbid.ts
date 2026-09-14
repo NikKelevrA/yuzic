@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSelector } from 'react-redux'
 
 import { searchArtist } from '@/providers/integration/musicbrainz'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { selectMusicbrainzExternalEnabled } from '@/features/settings/search/state';
 
 /**

@@ -1,6 +1,6 @@
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 
 export type SearchEntityType = 'song' | 'album' | 'artist' | 'playlist';
 

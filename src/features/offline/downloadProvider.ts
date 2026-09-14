@@ -1,4 +1,4 @@
-import { ServerType } from '@/types/Server';
+import { ServerType } from '@/providers/contracts/Server';
 
 export type DownloadProviderType = ServerType | 'unknown';
 export type DownloadProviderScope = {

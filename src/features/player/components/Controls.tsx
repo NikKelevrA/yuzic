@@ -22,7 +22,7 @@ import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { useReducedMotion } from '@/features/theme/useReducedMotion';
-import haptics from '@/utils/haptics';
+import haptics from '@/components/haptics';
 
 const JUMP_SECONDS = 15;
 

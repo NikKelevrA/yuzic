@@ -7,14 +7,14 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { selectThemeColor } from '@/features/settings/appearance/state';
 import { selectSleepTimerPresets } from '@/features/settings/home/state';
-import { mmkv } from '@/utils/mmkvStorage';
-import {
-  SLEEP_TIMER_STORAGE_KEY,
-  SLEEP_TIMER_MAX_SECONDS,
-} from '@/constants/features';
+import { mmkv } from '@/state/mmkvStorage';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { withAlpha } from '@/features/theme/coverAccent';
+
+/** Where a running timer's target survives a restart, and the longest it can run. */
+const SLEEP_TIMER_STORAGE_KEY = 'sleep_timer_target_ms';
+const SLEEP_TIMER_MAX_SECONDS = 120 * 60;
 
 function formatCountdown(seconds: number): string {
   const m = Math.floor(seconds / 60);

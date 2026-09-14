@@ -1,6 +1,6 @@
 import type { Album } from '@/domain/entities/Album';
 import type { LocalId } from '@/domain/identity/LocalId';
-import type { CoverSource } from '@/types/Cover';
+import type { CoverSource } from '@/domain/entities/Cover';
 
 type LocalArtistSummary = {
   /** On-device identity — used for React keys and dedup against other shelves. */

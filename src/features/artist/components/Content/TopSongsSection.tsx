@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { notify } from '@/components/toast';
 
 import { useApi } from '@/providers/registry/useApi'
-import { QueryKeys } from '@/enums/queryKeys'
+import { QueryKeys } from '@/state/query/queryKeys'
 import { useTheme } from '@/features/theme/useTheme'
 import { usePlayingActions } from '@/features/playback/PlayingContext'
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';

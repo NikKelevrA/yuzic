@@ -14,7 +14,7 @@ import type { Album } from '@/domain/entities/Album';
 import type { Playlist } from '@/domain/entities/Playlist';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { useSheetRef } from '@/components/useSheetRef';
 import { spacing } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 
