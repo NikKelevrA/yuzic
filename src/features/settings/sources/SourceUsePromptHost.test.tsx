@@ -62,6 +62,27 @@ describe('SourceUsePromptHost', () => {
     expect(view.queryByTestId('source-use-prompt-turn-on')).toBeNull();
   });
 
+  it('finishes what the asker wanted once the use is on, and only then', async () => {
+    const view = await renderHost(makeStore());
+    const onTurnOn = jest.fn();
+
+    await act(async () => promptSourceUse('deezer.previews', { onTurnOn }));
+    expect(onTurnOn).not.toHaveBeenCalled();
+    await fireEvent.press(view.getByTestId('source-use-prompt-turn-on'));
+
+    expect(onTurnOn).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not run it when the answer is not now', async () => {
+    const view = await renderHost(makeStore());
+    const onTurnOn = jest.fn();
+
+    await act(async () => promptSourceUse('deezer.previews', { onTurnOn }));
+    await fireEvent.press(view.getByTestId('source-use-prompt-not-now'));
+
+    expect(onTurnOn).not.toHaveBeenCalled();
+  });
+
   it('changes nothing when the answer is not now', async () => {
     const store = makeStore();
     const view = await renderHost(store);

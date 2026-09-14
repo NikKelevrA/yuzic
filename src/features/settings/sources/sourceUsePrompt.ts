@@ -13,6 +13,7 @@ import type { SourceUseId } from '@/providers/registry/sources';
  */
 
 let pending: SourceUseId | null = null;
+let pendingTurnOn: (() => void) | undefined;
 const listeners = new Set<() => void>();
 
 const emit = () => {
@@ -28,16 +29,29 @@ const subscribe = (listener: () => void) => {
 
 const getSnapshot = () => pending;
 
-/** Asks whether to turn this use on. A second ask replaces the first. */
-export function promptSourceUse(use: SourceUseId): void {
+/**
+ * Asks whether to turn this use on. A second ask replaces the first.
+ * `onTurnOn` runs once the user says yes — finishing what they tapped, so it
+ * does not take a second tap.
+ */
+export function promptSourceUse(use: SourceUseId, options: { onTurnOn?: () => void } = {}): void {
   pending = use;
+  pendingTurnOn = options.onTurnOn;
   emit();
 }
 
 export function dismissSourceUsePrompt(): void {
+  pendingTurnOn = undefined;
   if (pending === null) return;
   pending = null;
   emit();
+}
+
+/** The host, once the use is on: runs what the asker wanted next, then closes. */
+export function completeSourceUsePrompt(): void {
+  const then = pendingTurnOn;
+  dismissSourceUsePrompt();
+  then?.();
 }
 
 /** The use being asked about, for the host. */
