@@ -88,16 +88,19 @@ export function buildLibrarySections(hasLibrary: boolean): SectionConfig[] {
   ]
 }
 
-/**
- * Music you don't own yet. Sits last behind its own source header, and is
- * absent offline — every section here needs the network.
- */
-export function buildDiscoverySections(options: {
+/** What the library offers an outside tier to seed its shelves from. */
+export type HomeShelfSeeds = {
   isOffline: boolean
   hasLibrary: boolean
   becauseSeeds: string[]
   topGenres: string[]
-}): SectionConfig[] {
+}
+
+/**
+ * Music from a catalogue you don't own yet. Sits last behind its own source
+ * header, and is absent offline — every section here needs the network.
+ */
+export function buildCatalogueSections(options: HomeShelfSeeds): SectionConfig[] {
   if (options.isOffline) return []
 
   const pool: SectionConfig[] = [
@@ -117,4 +120,25 @@ export function buildDiscoverySections(options: {
   }
 
   return pool
+}
+
+/**
+ * What listeners play. Similar artists are seeded from the library — the
+ * seed's MBID comes from the server where it carries one and from MusicBrainz
+ * where it doesn't. The made-for-you mixes are the account's own, so they wait
+ * on nothing but the network; each shelf withholds itself without an account
+ * or a matching mix.
+ */
+export function buildListenerSections(options: HomeShelfSeeds): SectionConfig[] {
+  if (options.isOffline) return []
+  const sections: SectionConfig[] = []
+  if (options.hasLibrary && options.becauseSeeds.length > 0) {
+    sections.push({ key: 'lbSimilarArtistsForYou', type: 'lbSimilarArtistsForYou', artistName: options.becauseSeeds[0] })
+  }
+  sections.push(
+    { key: 'lbCreatedForDailyJams', type: 'lbCreatedFor', mixType: 'daily-jams' },
+    { key: 'lbCreatedForWeeklyJams', type: 'lbCreatedFor', mixType: 'weekly-jams' },
+    { key: 'lbCreatedForWeeklyExploration', type: 'lbCreatedFor', mixType: 'weekly-exploration' },
+  )
+  return sections
 }

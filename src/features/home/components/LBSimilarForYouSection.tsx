@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
-import { getLBSimilarArtists } from '@/providers/integration/listenbrainz';
+import { fetchSimilarArtistsFromListeners, LISTENERS_HOME_USE } from '@/providers/registry/homeDiscovery';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useTheme } from '@/features/theme/useTheme';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
@@ -21,8 +21,6 @@ import MediaTile from './MediaTile';
 import SkeletonTiles from '@/components/SkeletonTiles';
 import { useSourceSectionPresence } from './SourceGroup';
 import type { Artist } from '@/domain/entities/Artist';
-import { makeLocalId } from '@/domain/identity/LocalId';
-import { integrationProvenance } from '@/domain/identity/Provenance';
 import { spacing, typography } from '@/constants/design';
 
 type Props = {
@@ -49,7 +47,7 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
   const { width: screenWidth } = useWindowDimensions();
   const { navigateToArtist } = useMatchedNavigation();
   const { artists: libraryArtists } = useArtists();
-  const discoveryEnabled = useSelector(selectSourceUse('listenbrainz.homeShelves'));
+  const discoveryEnabled = useSelector(selectSourceUse(LISTENERS_HOME_USE));
 
   const seed = useMemo(
     () => libraryArtists.find((a) => a.name === artistName) ?? null,
@@ -76,19 +74,7 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
     queryKey: [QueryKeys.LbSimilarForYou, seedMbid ?? '', refreshKey],
     queryFn: async () => {
       if (!seedMbid) return [];
-      const raw = await getLBSimilarArtists(seedMbid, 10);
-      const provenance = integrationProvenance('listenbrainz');
-      return raw.map((a): Artist => ({
-        localId: makeLocalId('artist', provenance, a.artistMbid),
-        nativeId: a.artistMbid,
-        provenance,
-        externalIds: { mbid: a.artistMbid },
-        libraryState: 'external',
-        name: a.name,
-        cover: { kind: 'none' as const },
-        tags: [],
-        albumIds: [],
-      }));
+      return fetchSimilarArtistsFromListeners(seedMbid, 10);
     },
     enabled: discoveryEnabled && Boolean(seedMbid),
     staleTime: 1000 * 60 * 60 * 24,

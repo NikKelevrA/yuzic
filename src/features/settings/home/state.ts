@@ -1,7 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import type { SourceId } from '@/providers/registry/sources';
+
 export type HomeShelfLength = 'compact' | 'standard' | 'generous';
-export type HomeShelfTier = 'resume' | 'library' | 'server' | 'listenbrainz' | 'deezer';
+/** Your own tiers, then one per outside source that fills a Home tier. */
+export type HomeShelfTier = 'resume' | 'library' | 'server' | SourceId;
 const HOME_SHELF_LENGTHS: Record<HomeShelfLength, number> = {
   compact: 6,
   standard: 10,
@@ -94,13 +97,16 @@ export const selectSleepTimerPresets = (state: HomeRootState): number[] => {
   return Array.isArray(presets) && presets.length > 0 ? presets : [...DEFAULT_SLEEP_TIMER_PRESETS];
 };
 
-export const selectHomeShelfOrder = (tier: HomeShelfTier, defaults: string[]) =>
-  (state: HomeRootState): string[] => {
-    const configured = state.settingsHome.homeShelfOrder?.[tier];
-    if (!configured?.length) return defaults;
-    const known = new Set(defaults);
-    return [...configured.filter(key => known.has(key)), ...defaults.filter(key => !configured.includes(key))];
-  };
+/** A tier's saved order, keeping only shelves that still exist and adding new ones after. */
+export function resolveHomeShelfOrder(configured: string[] | undefined, defaults: string[]): string[] {
+  if (!configured?.length) return defaults;
+  const known = new Set(defaults);
+  return [...configured.filter(key => known.has(key)), ...defaults.filter(key => !configured.includes(key))];
+}
+
+/** Every tier's saved order — for screens that list tiers they don't name. */
+export const selectHomeShelfOrders = (state: HomeRootState): Partial<Record<HomeShelfTier, string[]>> =>
+  state.settingsHome.homeShelfOrder;
 
 export const selectServerNowPlayingShelfEnabled = (state: HomeRootState): boolean =>
   state.settingsHome.serverNowPlayingShelfEnabled;

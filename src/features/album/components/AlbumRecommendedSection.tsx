@@ -1,4 +1,4 @@
-import { onDark, sourceColor, spacing, typography } from '@/constants/design';
+import { onDark, spacing, typography } from '@/constants/design';
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from 'react-native'
 import { useSelector } from 'react-redux'
@@ -11,8 +11,8 @@ import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
 import { prefetchCovers } from '@/features/artwork/imageCache'
-import * as deezer from '@/providers/integration/deezer'
-import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDiscovery'
+import { CATALOGUE_RECOMMENDATIONS_USE, fetchAlbumsLikeArtist } from '@/providers/registry/homeDiscovery'
+import { ARTIST_CATALOGUE } from '@/providers/registry/artistSources'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { STALE_DEEZER_DISCOVERY } from '@/features/home/constants'
 import MediaTile from '@/features/home/components/MediaTile'
@@ -31,23 +31,12 @@ type Props = {
   excludeAlbumId: string
 }
 
-async function fetchRelatedAlbums(
-  artistName: string,
-  libraryArtistNames: Set<string>
-): Promise<Album[]> {
-  const seed = await deezer.resolveDeezerArtistByName(artistName)
-  if (!seed) return []
-  const related = await deezer.getDeezerRelatedArtists(seed.nativeId, ALBUM_RECOMMENDATION_RELATED_LIMIT)
-  const fresh = related.filter(a => !libraryArtistNames.has(a.name.toLowerCase()))
-  return collectCoveredAlbumsForArtists(fresh, { targetAlbums: ALBUM_RECOMMENDATION_TARGET_ALBUMS })
-}
-
 export default function AlbumRecommendedSection({ artistName, excludeAlbumId }: Props) {
   const { t } = useTranslation()
   const { colors } = useTheme()
   const rad = useRadius()
   const { width: screenWidth } = useWindowDimensions()
-  const enabled = useSourceUse('deezer.recommendations')
+  const enabled = useSourceUse(CATALOGUE_RECOMMENDATIONS_USE)
   const showSourceHeaders = useSelector(selectShowSourceHeaders)
   const { artists } = useArtists()
   const { navigateToAlbum } = useMatchedNavigation()
@@ -61,7 +50,10 @@ export default function AlbumRecommendedSection({ artistName, excludeAlbumId }: 
 
   const { data: albums = [] } = useQuery<Album[]>({
     queryKey: [QueryKeys.ExploreBecauseYouListened, 'album-rec', artistName],
-    queryFn: () => fetchRelatedAlbums(artistName, libraryArtistNames),
+    queryFn: () => fetchAlbumsLikeArtist(artistName, libraryArtistNames, {
+      relatedLimit: ALBUM_RECOMMENDATION_RELATED_LIMIT,
+      targetAlbums: ALBUM_RECOMMENDATION_TARGET_ALBUMS,
+    }),
     enabled: enabled && !!artistName,
     staleTime: STALE_DEEZER_DISCOVERY,
     networkMode: 'online',
@@ -77,8 +69,8 @@ export default function AlbumRecommendedSection({ artistName, excludeAlbumId }: 
     <View style={styles.container}>
       <View style={styles.titleRow}>
         {showSourceHeaders && (
-          <View style={[styles.badge, { backgroundColor: sourceColor.deezer, borderRadius: rad.pill }]}>
-            <Text style={styles.badgeLetter}>D</Text>
+          <View style={[styles.badge, { backgroundColor: ARTIST_CATALOGUE.badge.color, borderRadius: rad.pill }]}>
+            <Text style={styles.badgeLetter}>{ARTIST_CATALOGUE.badge.letter}</Text>
           </View>
         )}
         <Text style={[styles.title, { color: colors.secondary }]}>{t('album.mightAlsoLike')}</Text>

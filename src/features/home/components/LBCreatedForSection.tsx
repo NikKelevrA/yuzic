@@ -4,8 +4,7 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
-import { getCreatedForPlaylists } from '@/providers/integration/listenbrainz';
-import type { CreatedForMixType } from '@/providers/integration/listenbrainz';
+import { fetchMadeForYouMix, LISTENERS_HOME_USE, type CreatedForMixType } from '@/providers/registry/homeDiscovery';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { selectListenBrainzUsername } from '@/state/redux/selectors/listenbrainzSelectors';
 import { selectSourceUse } from '@/features/settings/sources/state';
@@ -50,17 +49,14 @@ const MAX_TRACKS = 10;
  */
 export default function LBCreatedForSection({ sectionKey, mixType, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
-  const discoveryEnabled = useSelector(selectSourceUse('listenbrainz.homeShelves'));
+  const discoveryEnabled = useSelector(selectSourceUse(LISTENERS_HOME_USE));
   const username = useSelector(selectListenBrainzUsername);
 
   const enabled = discoveryEnabled && Boolean(username);
 
   const query = useQuery<Song[]>({
     queryKey: [QueryKeys.LbCreatedForPlaylists, username || '', mixType, refreshKey],
-    queryFn: async () => {
-      const mixes = await getCreatedForPlaylists(username);
-      return mixes.find((m) => m.mixType === mixType)?.tracks ?? [];
-    },
+    queryFn: () => fetchMadeForYouMix(username, mixType),
     enabled,
     staleTime: 1000 * 60 * 60 * 6,
     networkMode: 'online',

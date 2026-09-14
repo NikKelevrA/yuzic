@@ -1,6 +1,3 @@
 export { testConnection } from './auth/testConnection'
 export { submitScrobble } from './scrobble'
 export { submitNowPlaying } from './nowPlaying'
-export { getLBSimilarArtists } from './recommendations/getSimilarArtists'
-export { getCreatedForPlaylists } from './recommendations/getCreatedForPlaylists'
-export type { CreatedForMixType } from './recommendations/getCreatedForPlaylists'

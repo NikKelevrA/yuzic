@@ -1,18 +1,21 @@
 import {
-  buildDiscoverySections,
+  buildCatalogueSections,
   buildLibrarySections,
+  buildListenerSections,
   buildResumeSections,
   customizeHomeSections,
 } from './homeLayout'
 
-const discovery = (overrides: Partial<Parameters<typeof buildDiscoverySections>[0]> = {}) =>
-  buildDiscoverySections({
-    isOffline: false,
-    hasLibrary: true,
-    becauseSeeds: ['Radiohead'],
-    topGenres: ['Jazz'],
-    ...overrides,
-  })
+const seeds = (overrides: Partial<Parameters<typeof buildCatalogueSections>[0]> = {}) => ({
+  isOffline: false,
+  hasLibrary: true,
+  becauseSeeds: ['Radiohead'],
+  topGenres: ['Jazz'],
+  ...overrides,
+})
+
+const discovery = (overrides: Partial<Parameters<typeof buildCatalogueSections>[0]> = {}) =>
+  buildCatalogueSections(seeds(overrides))
 
 describe('customizeHomeSections', () => {
   it('filters hidden shelves and reorders only within the supplied tier', () => {
@@ -56,7 +59,25 @@ describe('buildLibrarySections', () => {
   })
 })
 
-describe('buildDiscoverySections', () => {
+describe('buildListenerSections', () => {
+  it('is empty offline', () => {
+    expect(buildListenerSections(seeds({ isOffline: true }))).toEqual([])
+  })
+
+  it('seeds similar artists from the first library seed, and always offers the made-for-you mixes', () => {
+    const sections = buildListenerSections(seeds({ becauseSeeds: ['Radiohead', 'Bowie'] }))
+
+    expect(sections[0]).toEqual({ key: 'lbSimilarArtistsForYou', type: 'lbSimilarArtistsForYou', artistName: 'Radiohead' })
+    expect(sections.filter(s => s.type === 'lbCreatedFor').map(s => s.mixType))
+      .toEqual(['daily-jams', 'weekly-jams', 'weekly-exploration'])
+  })
+
+  it('drops similar artists without a library to seed from', () => {
+    expect(buildListenerSections(seeds({ hasLibrary: false })).map(s => s.type)).not.toContain('lbSimilarArtistsForYou')
+  })
+})
+
+describe('buildCatalogueSections', () => {
   it('is empty offline, since every section here needs the network', () => {
     expect(discovery({ isOffline: true })).toEqual([])
   })

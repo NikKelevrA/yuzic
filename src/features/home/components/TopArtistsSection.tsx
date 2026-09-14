@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '@/features/theme/useTheme'
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
 import { prefetchCovers } from '@/features/artwork/imageCache'
-import { getDeezerChartArtists } from '@/providers/integration/deezer'
+import { CATALOGUE_HOME_USE, fetchChartArtists } from '@/providers/registry/homeDiscovery'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
 import { useSourceUse } from '@/features/settings/sources/useSourceUse'
@@ -29,7 +29,7 @@ export default function TopArtistsSection({ refreshKey = 0 }: Props) {
   const { colors } = useTheme()
   const { width: screenWidth } = useWindowDimensions()
   const dayKey = getDayKey()
-  const isEnabled = useSourceUse('deezer.homeShelves')
+  const isEnabled = useSourceUse(CATALOGUE_HOME_USE)
   const { navigateToArtist } = useMatchedNavigation()
 
   const gridItemWidth = useMemo(
@@ -39,7 +39,7 @@ export default function TopArtistsSection({ refreshKey = 0 }: Props) {
 
   const query = useQuery<Artist[]>({
     queryKey: [QueryKeys.ExploreTopArtists, dayKey, refreshKey],
-    queryFn: () => getDeezerChartArtists(10),
+    queryFn: () => fetchChartArtists(10),
     enabled: isEnabled,
     staleTime: STALE_DEEZER_CHARTS,
     networkMode: 'online',

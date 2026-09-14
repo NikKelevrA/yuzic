@@ -23,7 +23,7 @@ jest.mock('@tanstack/react-query', () => ({
 jest.mock('@/providers/integration/musicbrainz', () => ({
   searchArtist: jest.fn(async () => [{ id: 'mbid-1', name: 'Boards of Canada' }]),
 }))
-jest.mock('@/providers/integration/listenbrainz', () => ({
+jest.mock('@/providers/integration/listenbrainz/recommendations/getSimilarArtists', () => ({
   getLBSimilarArtists: jest.fn(async () => [{ artistMbid: 'mbid-2', name: 'Bibio' }]),
 }))
 jest.mock('@/providers/integration/lastfm/getSimilarArtists', () => ({
@@ -32,7 +32,7 @@ jest.mock('@/providers/integration/lastfm/getSimilarArtists', () => ({
 jest.mock('@/constants/keys', () => ({ LASTFM_API_KEY: 'test-key' }))
 
 import { searchArtist } from '@/providers/integration/musicbrainz'
-import { getLBSimilarArtists } from '@/providers/integration/listenbrainz'
+import { getLBSimilarArtists } from '@/providers/integration/listenbrainz/recommendations/getSimilarArtists'
 import { getLastFmSimilarArtists } from '@/providers/integration/lastfm/getSimilarArtists'
 import { useArtistMbid } from './useArtistMbid'
 import { useLBSimilarArtists } from './useLBSimilarArtists'

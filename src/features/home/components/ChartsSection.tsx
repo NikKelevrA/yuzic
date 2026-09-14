@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTheme } from '@/features/theme/useTheme'
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
 import { prefetchCovers } from '@/features/artwork/imageCache'
-import { getDeezerChartAlbums } from '@/providers/integration/deezer'
+import { CATALOGUE_HOME_USE, fetchChartAlbums } from '@/providers/registry/homeDiscovery'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
 import { useSourceUse } from '@/features/settings/sources/useSourceUse'
@@ -25,13 +25,13 @@ import { useRadius } from '@/features/theme/useRadius'
 
 type Props = { refreshKey?: number }
 
-export default function DeezerChartsSection({ refreshKey = 0 }: Props) {
+export default function ChartsSection({ refreshKey = 0 }: Props) {
   const { t } = useTranslation()
   const { colors } = useTheme()
   const rad = useRadius()
   const { width: screenWidth } = useWindowDimensions()
   const dayKey = getDayKey()
-  const isEnabled = useSourceUse('deezer.homeShelves')
+  const isEnabled = useSourceUse(CATALOGUE_HOME_USE)
   const { navigateToAlbum } = useMatchedNavigation()
 
   const gridItemWidth = useMemo(
@@ -41,7 +41,7 @@ export default function DeezerChartsSection({ refreshKey = 0 }: Props) {
 
   const query = useQuery<Album[]>({
     queryKey: [QueryKeys.ExploreCharts, dayKey, refreshKey],
-    queryFn: () => getDeezerChartAlbums(10),
+    queryFn: () => fetchChartAlbums(10),
     enabled: isEnabled,
     staleTime: STALE_DEEZER_CHARTS,
     networkMode: 'online',

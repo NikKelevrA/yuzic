@@ -2,12 +2,10 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 
-import { getLBSimilarArtists } from '@/providers/integration/listenbrainz';
+import { fetchSimilarArtistsFromListeners, LISTENERS_SIMILAR_USE } from '@/providers/registry/homeDiscovery';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { selectSourceUse } from '@/features/settings/sources/state';
 import type { Artist } from '@/domain/entities/Artist';
-import { makeLocalId } from '@/domain/identity/LocalId';
-import { integrationProvenance } from '@/domain/identity/Provenance';
 
 /**
  * Similar-artists from ListenBrainz's public session-based graph. Keyed on
@@ -19,37 +17,18 @@ export function useLBSimilarArtists(
   seed: { mbid?: string | null; excludeName?: string } | null,
   limit = 12
 ) {
-  const discoveryEnabled = useSelector(selectSourceUse('listenbrainz.similarArtists'));
+  const discoveryEnabled = useSelector(selectSourceUse(LISTENERS_SIMILAR_USE));
   const mbid = seed?.mbid ?? null;
-  const excludeName = seed?.excludeName?.trim().toLowerCase();
+  const excludeName = seed?.excludeName;
 
   const queryKey = useMemo(
-    () => [QueryKeys.SimilarArtists, 'listenbrainz', mbid ?? '', limit],
+    () => [QueryKeys.SimilarArtists, 'listeners', mbid ?? '', limit],
     [mbid, limit]
   );
 
   return useQuery<Artist[]>({
     queryKey,
-    queryFn: async () => {
-      const raw = await getLBSimilarArtists(mbid!, limit);
-      const provenance = integrationProvenance('listenbrainz');
-      return raw
-        .filter((a) => !excludeName || a.name.trim().toLowerCase() !== excludeName)
-        .map((a): Artist => ({
-          localId: makeLocalId('artist', provenance, a.artistMbid),
-          // ListenBrainz's similar-artists graph is keyed entirely on MBID —
-          // it names no artist id of its own — so the MBID doubles as
-          // `nativeId` here rather than leaving it blank.
-          nativeId: a.artistMbid,
-          provenance,
-          externalIds: { mbid: a.artistMbid },
-          libraryState: 'external',
-          name: a.name,
-          cover: { kind: 'none' },
-          tags: [],
-          albumIds: [],
-        }));
-    },
+    queryFn: () => fetchSimilarArtistsFromListeners(mbid!, limit, excludeName),
     enabled: discoveryEnabled && Boolean(mbid),
     staleTime: 1000 * 60 * 60 * 24,
     networkMode: 'online',

@@ -20,13 +20,10 @@ import {
   SECTION_VISIBLE_ITEMS,
   STALE_DEEZER_DISCOVERY,
   HOME_SEED_ARTISTS,
-  HOME_RELATED_PER_SEED,
-  HOME_GENRE_ARTIST_LIMIT,
 } from '@/features/home/constants'
-import * as deezer from '@/providers/integration/deezer'
+import { CATALOGUE_HOME_USE, fetchAlbumsForGenre } from '@/providers/registry/homeDiscovery'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
-import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDiscovery'
 import SelectionBottomSheet from '@/components/SelectionBottomSheet'
 import MediaTile from './MediaTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
@@ -50,73 +47,6 @@ function genreMatches(albumGenre: string, selectedGenre: string): boolean {
   )
 }
 
-function findDeezerGenreId(
-  libraryGenre: string,
-  deezerGenres: { id: number; name: string }[]
-): number | null {
-  const needle = normalize(libraryGenre)
-  if (!needle) return null
-  const exact = deezerGenres.find(g => normalize(g.name) === needle)
-  if (exact) return exact.id
-  const sub = deezerGenres.find(g => {
-    const n = normalize(g.name)
-    return n && needle.includes(n)
-  })
-  if (sub) return sub.id
-  const rev = deezerGenres.find(g => {
-    const n = normalize(g.name)
-    return n && n.includes(needle)
-  })
-  return rev?.id ?? null
-}
-
-async function fetchAlbumsForGenre(
-  genre: string,
-  seedArtistNames: string[],
-  libraryArtistNames: Set<string>,
-  itemCount: number
-): Promise<Album[]> {
-  const albums: Album[] = []
-  if (seedArtistNames.length > 0) {
-    const seedArtists = (await Promise.allSettled(
-      seedArtistNames.slice(0, HOME_SEED_ARTISTS).map(name => deezer.resolveDeezerArtistByName(name))
-    ))
-      .map(result => result.status === 'fulfilled' ? result.value : null)
-      .filter((artist): artist is NonNullable<typeof artist> => Boolean(artist))
-
-    const relatedGroups = await Promise.allSettled(
-      seedArtists.map(seed => deezer.getDeezerRelatedArtists(seed.nativeId, HOME_RELATED_PER_SEED))
-    )
-
-    const seenArtists = new Set<string>()
-    const relatedArtists = relatedGroups
-      .flatMap(result => result.status === 'fulfilled' ? result.value : [])
-      .filter(artist => {
-        const nameKey = artist.name.toLowerCase()
-        if (libraryArtistNames.has(nameKey) || seenArtists.has(nameKey)) return false
-        seenArtists.add(nameKey)
-        return true
-      })
-
-    albums.push(...await collectCoveredAlbumsForArtists(relatedArtists, { targetAlbums: itemCount }))
-  }
-
-  if (albums.length >= itemCount) return albums
-
-  const genreList = await deezer.getDeezerGenreList()
-  const genreId = findDeezerGenreId(genre, genreList)
-  if (!genreId) return albums
-
-  const artists = await deezer.getDeezerArtistsByGenreId(genreId, HOME_GENRE_ARTIST_LIMIT)
-  const fresh = artists.filter(a => !libraryArtistNames.has(a.name.toLowerCase()))
-
-  albums.push(...await collectCoveredAlbumsForArtists(fresh, {
-    targetAlbums: itemCount - albums.length,
-    excludeAlbumIds: albums.map(album => album.nativeId),
-  }))
-  return albums.slice(0, itemCount)
-}
-
 type Props = {
   genre: string
   refreshKey?: number
@@ -134,7 +64,7 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
   const sheetRef = useRef<BottomSheetModal>(null)
   const dayKey = getDayKey()
   const itemCount = useSelector(selectHomeShelfItemCount)
-  const isEnabled = useSourceUse('deezer.homeShelves')
+  const isEnabled = useSourceUse(CATALOGUE_HOME_USE)
 
   const [selectedGenre, setSelectedGenre] = React.useState<string>(genre)
 

@@ -1,4 +1,4 @@
-import { onDark , sourceColor, spacing, typography } from '@/constants/design';
+import { onDark, spacing, typography } from '@/constants/design';
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { StyleSheet, ScrollView, View, Text, RefreshControl } from 'react-native'
 import { useIsFetching } from '@tanstack/react-query'
@@ -8,9 +8,12 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/features/theme/useTheme'
 import { useDailyLayout } from '@/features/home/hooks/useDailyLayout'
 import { customizeHomeSections } from '@/features/home/homeLayout'
-import { useSourceUse } from '@/features/settings/sources/useSourceUse'
+import { useIsOffline } from '@/features/connectivity/useIsOffline'
+import { selectSourceUses } from '@/features/settings/sources/state'
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
-import { selectHomeServerSectionsEnabled, selectHomeShelfVisibilityMap, selectHomeShelfOrder } from '@/features/settings/home/state';
+import { resolveHomeShelfOrder, selectHomeServerSectionsEnabled, selectHomeShelfOrders, selectHomeShelfVisibilityMap, type HomeShelfTier } from '@/features/settings/home/state';
+import { HOME_SOURCE_TIERS } from '@/providers/registry/homeDiscovery'
+import { SOURCES } from '@/providers/registry/sources'
 
 import QuickPicksSection from './components/QuickPicksSection'
 import RecentlyPlayed from './components/RecentlyPlayed'
@@ -18,7 +21,7 @@ import RecentlyAdded from './components/RecentlyAdded'
 import MostPlayedAlbums from './components/MostPlayedAlbums'
 import BecauseYouListenedSection from './components/BecauseYouListenedSection'
 import TopArtistsSection from './components/TopArtistsSection'
-import DeezerChartsSection from './components/DeezerChartsSection'
+import ChartsSection from './components/ChartsSection'
 import GenreSection from './components/GenreSection'
 import ServerRandomSection from './components/ServerRandomSection'
 import ServerNowPlayingSection from './components/ServerNowPlayingSection'
@@ -47,7 +50,7 @@ function renderSection(config: SectionConfig, refreshKey: number) {
     case 'mostPlayed':
       return <MostPlayedAlbums key={config.key} />
     case 'charts':
-      return <DeezerChartsSection key={config.key} refreshKey={refreshKey} />
+      return <ChartsSection key={config.key} refreshKey={refreshKey} />
     case 'topArtists':
       return <TopArtistsSection key={config.key} refreshKey={refreshKey} />
     case 'becauseYouListened':
@@ -82,22 +85,18 @@ export default function Home() {
   const { colors } = useTheme()
   const rad = useRadius()
   const [refreshKey, setRefreshKey] = useState(0)
-  const { resume, library, server, listenbrainz, deezer } = useDailyLayout(refreshKey)
-  const deezerEnabled = useSourceUse('deezer.homeShelves')
+  const { resume, library, server, sources } = useDailyLayout(refreshKey)
+  const isOffline = useIsOffline()
+  const sourceUses = useSelector(selectSourceUses)
   const showSourceHeaders = useSelector(selectShowSourceHeaders)
   const homeServerEnabled = useSelector(selectHomeServerSectionsEnabled)
-  const listenbrainzDiscoveryEnabled = useSourceUse('listenbrainz.homeShelves')
   const homeVisibility = useSelector(selectHomeShelfVisibilityMap)
-  const resumeSections = useSelector(selectHomeShelfOrder('resume', resume.map(s => s.key)))
-  const librarySections = useSelector(selectHomeShelfOrder('library', library.map(s => s.key)))
-  const serverSections = useSelector(selectHomeShelfOrder('server', server.map(s => s.key)))
-  const listenbrainzSections = useSelector(selectHomeShelfOrder('listenbrainz', listenbrainz.map(s => s.key)))
-  const deezerSections = useSelector(selectHomeShelfOrder('deezer', deezer.map(s => s.key)))
-  const visibleResume = customizeHomeSections(resume, homeVisibility, resumeSections)
-  const visibleLibrary = customizeHomeSections(library, homeVisibility, librarySections)
-  const visibleServer = customizeHomeSections(server, homeVisibility, serverSections)
-  const visibleListenbrainz = customizeHomeSections(listenbrainz, homeVisibility, listenbrainzSections)
-  const visibleDeezer = customizeHomeSections(deezer, homeVisibility, deezerSections)
+  const shelfOrders = useSelector(selectHomeShelfOrders)
+  const visibleIn = (tier: HomeShelfTier, sections: SectionConfig[]) =>
+    customizeHomeSections(sections, homeVisibility, resolveHomeShelfOrder(shelfOrders?.[tier], sections.map(s => s.key)))
+  const visibleResume = visibleIn('resume', resume)
+  const visibleLibrary = visibleIn('library', library)
+  const visibleServer = visibleIn('server', server)
   const api = useApi()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -139,38 +138,27 @@ export default function Home() {
 
   // Server discovery is on whenever the adapter provides it — no per-user
   // toggle, matching how radio and shares appear only where the server can
-  // back them. Everything that leaves the device for a third party — Deezer,
-  // ListenBrainz — waits for its own integration setting first; the Home
-  // toggles below only decide whether an already-permitted source gets a
-  // shelf here.
+  // back them. Every outside tier waits for its source's Home switch, and is
+  // not attempted offline.
   const activeSources = [
     {
       id: 'server',
       label: t('explore.sources.server'),
       // Your own server is not a third-party brand, so it gets the app's own
-      // accent rather than borrowing ListenBrainz's orange — which is what it
-      // used to do, leaving two headers on one screen badged identically.
+      // accent rather than borrowing an outside source's colour.
       color: colors.themeColor,
       letter: 'S',
       sections: visibleServer,
       enabled: Boolean(api.discovery) && homeServerEnabled,
     },
-    {
-      id: 'listenbrainz',
-      label: 'ListenBrainz',
-      color: sourceColor.listenbrainz,
-      letter: 'B',
-      sections: visibleListenbrainz,
-      enabled: listenbrainzDiscoveryEnabled,
-    },
-    {
-      id: 'deezer',
-      label: 'Deezer',
-      color: sourceColor.deezer,
-      letter: 'D',
-      sections: visibleDeezer,
-      enabled: deezerEnabled,
-    },
+    ...HOME_SOURCE_TIERS.map(tier => ({
+      id: tier.source,
+      label: t(SOURCES[tier.source].nameKey),
+      color: tier.badge.color,
+      letter: tier.badge.letter,
+      sections: visibleIn(tier.source, sources[tier.source] ?? []),
+      enabled: Boolean(sourceUses?.[`${tier.source}.homeShelves`]) && !isOffline,
+    })),
   ]
 
   return (

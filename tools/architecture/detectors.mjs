@@ -108,6 +108,25 @@ const PROVIDER_HOMES = [
   'src/features/sources/registry',       // external source declarations
   'src/app/',                            // route files named after a provider's settings screen
   'src/locales/',                        // product names are user-facing copy
+  // Places that are about one provider by nature, agreed 2026-09-14. Android's
+  // settings guidelines call these entity screens: every setting on them
+  // belongs to that one thing, so naming it is the point, not a leak.
+  'src/providers/contracts/',            // the contract lists the server types it covers
+  'src/constants/design.ts',             // each brand's own colour
+  'src/constants/keys.ts',               // bundled public API keys
+  'src/features/settings/downloaders/',  // one settings screen per downloader
+  'src/features/settings/integrations/', // one settings screen per account integration
+  'src/features/settings/scrobbling/',   // where each scrobble destination is set
+  'src/state/redux/store.ts',            // wires each integration's persisted slice
+  'src/state/redux/slices/audiomuseSlice.ts',
+  'src/state/redux/slices/listenbrainzSlice.ts',
+  'src/state/redux/slices/downloadersSlice.ts',
+  'src/state/redux/selectors/audiomuseSelectors.ts',
+  'src/state/redux/selectors/listenbrainzSelectors.ts',
+  'src/state/redux/selectors/downloadersSelectors.ts',
+  'src/state/redux/selectors/scrobbleRoutingSelectors.ts',
+  'src/features/offline/offlineMutations.ts',         // a queued scrobble names its destination
+  'src/features/offline/OfflineMutationReplayer.tsx', // and replays to it
 ];
 
 /**

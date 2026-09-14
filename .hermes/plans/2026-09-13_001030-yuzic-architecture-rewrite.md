@@ -1051,11 +1051,25 @@ This follows the contract's own rule that a capability is added with its first c
 
 CI runs `pod install` on Ruby 3.3 and is unaffected. On a machine using Homebrew's Ruby 4, `pod install` fails with "unknown keyword: quirks_mode". Ruby 4 bundles json 3, and ActiveSupport still passes that option. Run CocoaPods with json 2 activated first; no repo change is needed.
 
-### 8.6 Still open
+### 8.6 Real provider matrix (Task 12.2) — run in part, rest waived
+
+Run on 2026-09-14 against media-vm on the iOS simulator (build `868971b0`):
+
+- **Navidrome:** sign-in, paging past 500 albums and tracks, artwork, the no-results state, and a cold relaunch keeping the library all passed.
+- **Jellyfin:** sign-in, library load, streaming, paging and artwork passed.
+- **Not run:** Plex (including Basic-auth audio and artwork), AudioMuse, Lidarr, slskd, ListenBrainz scrobbling, the keyless sources, and the wrong-credentials, server-unreachable and source-disabled columns. Emby and SoulSync are not on media-vm.
+
+Zack waived the rest of the matrix on 2026-09-14; Task 13.2's "complete parity matrix" condition is amended to this partial run. Follow-ups the run found remain open:
+
+1. Quick picks and Recents empty after a first sync killed mid-way: `lastSyncedAt` persists at once while stats persist on a 1 s throttle, so the relaunch skips the sync. A forced sync recovers.
+2. A restored position is about 5 s short after a media-session pause.
+3. A toast briefly overlaps the full player's transport row.
+4. Jellyfin and Plex Home have no server shelves; server discovery exists only for Navidrome.
+
+### 8.7 Still open
 
 These remain as the overview found them. Each blocks cutover unless it is separately amended:
 
-- the Phase 12 device and provider matrix
 - Android verification of these changes
 - provider-name references outside provider homes (92 allowlisted)
 - behaviour-level tests for Library and Equalizer settings, which only compose other components (unused exports are now at 0, and the other settings screens have behaviour tests)

@@ -19,10 +19,9 @@ import {
   STALE_DEEZER_DISCOVERY,
   HOME_RELATED_ARTIST_LIMIT,
 } from '@/features/home/constants'
-import * as deezer from '@/providers/integration/deezer'
+import { CATALOGUE_HOME_USE, fetchAlbumsLikeArtist } from '@/providers/registry/homeDiscovery'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
-import { collectCoveredAlbumsForArtists } from '@/features/home/utils/albumDiscovery'
 import SelectionBottomSheet from '@/components/SelectionBottomSheet'
 import MediaTile from './MediaTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
@@ -30,20 +29,6 @@ import type { Album } from '@/domain/entities/Album';
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
-
-async function fetchAlbumsForSeed(
-  artistName: string,
-  libraryArtistNames: Set<string>,
-  itemCount: number
-): Promise<Album[]> {
-  const seedArtist = await deezer.resolveDeezerArtistByName(artistName)
-  if (!seedArtist) return []
-
-  const related = await deezer.getDeezerRelatedArtists(seedArtist.nativeId, HOME_RELATED_ARTIST_LIMIT)
-  const fresh = related.filter(artist => !libraryArtistNames.has(artist.name.toLowerCase()))
-
-  return collectCoveredAlbumsForArtists(fresh, { targetAlbums: itemCount })
-}
 
 type Props = {
   artistName: string
@@ -60,7 +45,7 @@ export default function BecauseYouListenedSection({ artistName, refreshKey = 0 }
   const sheetRef = useRef<BottomSheetModal>(null)
   const dayKey = getDayKey()
   const itemCount = useSelector(selectHomeShelfItemCount)
-  const isEnabled = useSourceUse('deezer.homeShelves')
+  const isEnabled = useSourceUse(CATALOGUE_HOME_USE)
 
   const [selectedArtist, setSelectedArtist] = React.useState<string>(artistName)
 
@@ -102,7 +87,7 @@ export default function BecauseYouListenedSection({ artistName, refreshKey = 0 }
     // stays fresh: new library artists should stop appearing in suggestions
     // rather than waiting out the full 12h staleTime.
     queryKey: [QueryKeys.ExploreBecauseYouListened, dayKey, selectedArtist, libraryArtists.length, refreshKey, itemCount],
-    queryFn: () => fetchAlbumsForSeed(selectedArtist, libraryArtistNames, itemCount),
+    queryFn: () => fetchAlbumsLikeArtist(selectedArtist, libraryArtistNames, { relatedLimit: HOME_RELATED_ARTIST_LIMIT, targetAlbums: itemCount }),
     enabled: isEnabled,
     staleTime: STALE_DEEZER_DISCOVERY,
     networkMode: 'online',
