@@ -58,6 +58,7 @@ export default function Discovery() {
       <View style={styles.buttonContainer}>
         <Touchable
           style={[styles.enableButton, { borderRadius: rad.pill }]}
+          testID="onboarding-discovery-enable"
           onPress={handleEnable}
         >
           <Text style={styles.enableButtonText}>{t('onboarding.discovery.enable')}</Text>
@@ -65,6 +66,7 @@ export default function Discovery() {
 
         <Touchable
           style={[styles.notNowButton, { borderRadius: rad.pill }]}
+          testID="onboarding-discovery-not-now"
           onPress={handleNotNow}
         >
           <Text style={styles.notNowButtonText}>{t('onboarding.discovery.notNow')}</Text>
