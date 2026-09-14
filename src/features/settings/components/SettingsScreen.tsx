@@ -1,6 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Platform, ViewStyle } from 'react-native';
-import { NestableScrollContainer } from 'react-native-draggable-flatlist';
+import { ScrollView, StyleSheet, Platform, ViewStyle, type ScrollViewProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/features/theme/useTheme';
 import Header from './Header';
@@ -16,11 +15,13 @@ type Props = {
   /** For a screen that scrolls itself, e.g. to a section it was opened for. */
   scrollRef?: React.Ref<ScrollView>;
   /**
-   * The screen holds reorderable lists (`SettingsSourceList`). A plain
-   * ScrollView loses every vertical swipe that starts on one of them to the
-   * list's drag gesture, so the page only scrolled from the gaps between.
+   * Replaces the page's ScrollView. A screen holding reorderable lists passes
+   * `SourceListScrollContainer`: a plain ScrollView loses every vertical swipe
+   * that starts on one of them to the list's drag gesture, so the page only
+   * scrolled from the gaps between. Passed in rather than imported here, so
+   * the drag library loads only on the screen that uses it.
    */
-  nestableDrag?: boolean;
+  scrollContainer?: React.ComponentType<ScrollViewProps>;
 };
 
 const SettingsScreen: React.FC<Props> = ({
@@ -30,7 +31,7 @@ const SettingsScreen: React.FC<Props> = ({
   rightAction,
   scrollContentStyle,
   scrollRef,
-  nestableDrag = false,
+  scrollContainer: ScrollContainer,
 }) => {
   const { colors } = useTheme();
   const scrollClearance = useScrollClearance();
@@ -50,10 +51,10 @@ const SettingsScreen: React.FC<Props> = ({
       ]}
     >
       <Header title={title} onBackPress={onBackPress} rightAction={rightAction} />
-      {nestableDrag ? (
-        <NestableScrollContainer contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollClearance }, scrollContentStyle]}>
+      {ScrollContainer ? (
+        <ScrollContainer contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollClearance }, scrollContentStyle]}>
           {children}
-        </NestableScrollContainer>
+        </ScrollContainer>
       ) : (
         <ScrollView
           ref={scrollRef}

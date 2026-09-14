@@ -7,7 +7,7 @@ import SettingsScreen from '../components/SettingsScreen';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsToggleGroup from '../components/SettingsToggleGroup';
 import SettingsCard from '../components/SettingsCard';
-import SettingsSourceList from '../components/SettingsSourceList';
+import SettingsSourceList, { SourceListScrollContainer } from '../components/SettingsSourceList';
 import SettingsRow from '../components/SettingsRow';
 import SourceUseList from '../sources/SourceUseList';
 import { selectSourceUses } from '../sources/state';
@@ -50,7 +50,7 @@ const HomeSettings: React.FC = () => {
   const setLength = useCallback((next: HomeShelfLength) => dispatch(setHomeShelfLength(next)), [dispatch]);
 
   return (
-    <SettingsScreen title={t('settings.home.title')} nestableDrag>
+    <SettingsScreen title={t('settings.home.title')} scrollContainer={SourceListScrollContainer}>
       <SettingsCardHeader subtle title={t('settings.home.shelfLength')} />
       <SettingsCard>
         {LENGTHS.map(option => (
