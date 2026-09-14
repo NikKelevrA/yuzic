@@ -1,5 +1,5 @@
 import { createLidarrClient } from '../client';
-import type { LidarrConfig } from '@/types';
+import type { LidarrConfig } from '@/providers/integration/lidarr/config';
 
 /** Raw queue record from Lidarr API. */
 type LidarrQueueRecordRaw = {

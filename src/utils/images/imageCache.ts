@@ -1,7 +1,7 @@
 import TurboImage from 'react-native-turbo-image';
 import { buildCover, buildCoverCacheKey } from '@/utils/builders/buildCover';
 import { mmkv } from '@/utils/mmkvStorage';
-import type { CoverSource } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 
 const DISK_CACHE_MIGRATION_KEY = 'image_cache_stable_keys_v1';
 

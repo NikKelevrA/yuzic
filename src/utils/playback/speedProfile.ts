@@ -1,4 +1,3 @@
-import { getContentKind } from './contentKind';
 import type { ContentKind } from '@/domain/playback/ContentKind';
 
 type ContentKindSource = { contentKind?: ContentKind } | null | undefined;
@@ -19,7 +18,7 @@ type ContentKindSource = { contentKind?: ContentKind } | null | undefined;
 export type SpeedProfile = 'music' | 'spoken';
 
 export function speedProfileFor(song: ContentKindSource): SpeedProfile {
-  return getContentKind(song) === 'podcastEpisode' ? 'spoken' : 'music';
+  return song?.contentKind === 'podcastEpisode' ? 'spoken' : 'music';
 }
 
 /** What each profile starts at before the user has said otherwise. */

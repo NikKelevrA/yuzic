@@ -1,4 +1,4 @@
-import type { BasicAuth } from '@/types';
+import type { BasicAuth } from '@/types/Server';
 import { getInstallationId } from '@/utils/installationId';
 import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';

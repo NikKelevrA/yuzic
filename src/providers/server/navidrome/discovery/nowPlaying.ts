@@ -1,7 +1,7 @@
 import type { NavidromeClient } from '../client';
 import type { SubsonicResponse } from '../types';
 import type { NowPlayingEntry } from '@/providers/contracts/ServerAdapter';
-import type { CoverSource } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 
 /**
  * Users currently listening on this server. Small servers with a single user

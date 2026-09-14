@@ -7,7 +7,7 @@ import { useAlbums } from '@/features/album/useAlbums';
 import { usePlaylists } from '@/features/playlist/usePlaylists';
 import { useStarredSongs } from '@/features/library/useStarredSongs';
 import { useTracks } from '@/features/song/useTracks';
-import { Server } from '@/types';
+import { Server } from '@/types/Server';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 import type { Song as DomainSong } from '@/domain/entities/Song';
 import type { CoverSource } from '@/types/Cover';

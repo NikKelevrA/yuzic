@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { usePlayingState, usePlayingActions } from '@/features/playback/PlayingContext';
 import { selectShowJumpButtons } from '@/features/settings/playback/state';
-import { canJumpWithin } from '@/utils/playback/contentKind';
+import type { Song } from '@/domain/entities/Song';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
@@ -25,6 +25,19 @@ import { useReducedMotion } from '@/features/theme/useReducedMotion';
 import haptics from '@/utils/haptics';
 
 const JUMP_SECONDS = 15;
+
+/**
+ * Whether the 15-second jump buttons make sense for this track.
+ *
+ * Deliberately not the domain's `isSeekable`: a preview can be scrubbed, but
+ * it is a thirty-second clip, and two buttons that each move half of it are
+ * noise. A live stream has no position to jump within at all. This is a rule
+ * about these two buttons, so it lives beside them.
+ */
+function canJumpWithin(song: Song | null | undefined): boolean {
+  const kind = song?.contentKind ?? 'song';
+  return kind !== 'liveStream' && kind !== 'preview';
+}
 
 const HIT_SLOP = hitSlopFor(iconSize.control);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

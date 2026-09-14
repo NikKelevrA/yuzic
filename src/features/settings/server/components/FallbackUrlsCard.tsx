@@ -13,7 +13,7 @@ import SettingsCard from '../../components/SettingsCard';
 import SettingsCardHeader from '../../components/SettingsCardHeader';
 import Touchable from '@/components/Touchable';
 import SettingsDivider from '../../components/SettingsDivider';
-import type { Server } from '@/types';
+import type { Server } from '@/types/Server';
 
 type Props = {
   server: Server;

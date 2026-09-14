@@ -2,7 +2,12 @@ import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/Serve
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import { PODCAST_EPISODE_ID_PREFIX } from './contentKind';
+
+/**
+ * Namespaces an episode's id so it can never collide with a real track's.
+ * Exported because `needsSnapshot` reads it back to recognise an episode.
+ */
+export const PODCAST_EPISODE_ID_PREFIX = 'podcast:';
 
 /**
  * Turns a podcast episode into something the player accepts.

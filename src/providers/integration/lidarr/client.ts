@@ -1,4 +1,4 @@
-import { LidarrConfig } from '@/types';
+import { LidarrConfig } from '@/providers/integration/lidarr/config';
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 
 export type LidarrClient = ReturnType<typeof createLidarrClient>;

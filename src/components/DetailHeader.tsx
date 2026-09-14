@@ -35,7 +35,7 @@ import { ACCENT_WASH_LOCATIONS, accentWashColors } from '@/features/theme/coverA
 import { useTheme } from '@/features/theme/useTheme';
 import { controlSize, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
-import type { CoverSource } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 import Touchable from '@/components/Touchable';
 
 /** How far the wash reaches past the top of the hero, before the safe-area and

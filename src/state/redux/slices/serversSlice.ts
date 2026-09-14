@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Server } from "@/types";
+import { Server } from "@/types/Server";
 
 interface ServersState {
   servers: Server[];

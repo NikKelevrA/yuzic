@@ -15,7 +15,7 @@ import {
 import { FAVORITES_ID } from "@/constants/favorites";
 import { serverProvenance } from "@/domain/identity/Provenance";
 
-import { Server } from "@/types";
+import { Server } from "@/types/Server";
 
 import { createNavidromeClient } from "./client";
 import { connect } from "./auth/connect";

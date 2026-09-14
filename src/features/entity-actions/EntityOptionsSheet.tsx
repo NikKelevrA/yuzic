@@ -12,7 +12,7 @@ import {
 } from '@/components/options/OptionSheetPrimitives';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { iconSize } from '@/constants/design';
-import type { CoverSource } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 import type { ResolvedAction } from './types';
 
 interface EntityOptionsSheetHeader {

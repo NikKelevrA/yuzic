@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { useCodeAuth } from './useCodeAuth';
 import type { CodeAuthApi } from '@/providers/registry/serverConnections';
-import type { BasicAuth } from '@/types';
+import type { BasicAuth } from '@/types/Server';
 
 /**
  * Code sign-in — Jellyfin's Quick Connect, Plex's PIN — is a state machine

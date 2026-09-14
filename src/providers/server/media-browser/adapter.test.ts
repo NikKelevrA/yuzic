@@ -1,4 +1,4 @@
-import type { Server } from '@/types';
+import type { Server } from '@/types/Server';
 import { createMediaBrowserAdapter } from './adapter';
 import { JELLYFIN_BRAND, EMBY_BRAND } from './brand';
 import { createJellyfinAdapter } from './jellyfin';

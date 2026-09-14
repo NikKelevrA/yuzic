@@ -120,7 +120,6 @@
     "src/state/redux/slices/listenbrainzSlice.ts listenbrainz",
     "src/state/redux/store.ts audiomuse",
     "src/state/redux/store.ts listenbrainz",
-    "src/types/Configs.ts lidarr",
     "src/types/Cover.ts emby",
     "src/types/Cover.ts jellyfin",
     "src/types/Cover.ts musicbrainz",
@@ -536,10 +535,6 @@
     "src/state/redux/slices/statsSlice.ts - ServerSongStat (used in module)",
     "src/state/redux/slices/wantsSlice.ts - WantsState (used in module)",
     "src/state/redux/store.ts - AppDispatch",
-    "src/types/index.ts - GenreListing",
-    "src/types/index.ts - ProviderAuth",
-    "src/types/index.ts - firstResolvableCover",
-    "src/types/index.ts - hasCoverImage",
     "src/utils/audio/streamQuality.ts - StreamParams (used in module)",
     "src/utils/downloads/jobQueue.ts - DownloadJobRunner (used in module)",
     "src/utils/downloads/restore.ts - RestoredDownloadState (used in module)",
@@ -551,7 +546,6 @@
     "src/utils/haptics.ts - warning (used in module)",
     "src/utils/offline/offlineMutations.ts - OfflineMutationFailure (used in module)",
     "src/utils/offline/offlineMutations.ts - ScrobbleDetails (used in module)",
-    "src/utils/playback/contentKind.ts - isLiveStream (used in module)",
     "src/utils/playback/speedProfile.ts - DEFAULT_SPEEDS (used in module)"
   ]
 }

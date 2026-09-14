@@ -3,7 +3,7 @@ import { View, Image } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
 import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/utils/builders/buildCover';
-import { CoverSource } from '@/types';
+import { CoverSource } from '@/types/Cover';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { useTheme } from '@/features/theme/useTheme';

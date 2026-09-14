@@ -5,7 +5,7 @@ import type { ScrobbleDestinationKind, ScrobbleRoute } from '@/features/settings
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { useListenBrainzConfig } from '@/state/redux/selectors/listenbrainzSelectors';
 import type { ScrobbleDestination } from '@/utils/offline/offlineMutations';
-import type { ListenBrainzConfig } from '@/types';
+import type { ListenBrainzConfig } from '@/providers/integration/listenbrainz/config';
 import * as listenbrainz from '@/providers/integration/listenbrainz';
 
 /**

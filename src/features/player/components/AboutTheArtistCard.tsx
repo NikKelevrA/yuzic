@@ -8,7 +8,7 @@ import {
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { buildCover } from '@/utils/builders/buildCover';
-import { CoverSource } from '@/types';
+import { CoverSource } from '@/types/Cover';
 import {
   PLAYING_ARTIST_CARD_HEIGHT,
   PLAYING_ARTIST_TEXT_MIN_HEIGHT,

@@ -3,7 +3,7 @@ import type { PlayableResource } from '@/features/playback/playableResource';
 import { makeLocalId, parseLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { BookmarkSnapshot } from '@/state/redux/slices/playbackSlice';
-import { isPodcastEpisode, PODCAST_EPISODE_ID_PREFIX } from './contentKind';
+import { PODCAST_EPISODE_ID_PREFIX } from './buildPodcastSong';
 
 /**
  * Whether a resume position needs a stored snapshot to be renderable later.
@@ -19,7 +19,7 @@ import { isPodcastEpisode, PODCAST_EPISODE_ID_PREFIX } from './contentKind';
  * a Song rebuilt from a snapshot may arrive without its kind.
  */
 export function needsSnapshot(song: Song): boolean {
-  return isPodcastEpisode(song) || song.nativeId.startsWith(PODCAST_EPISODE_ID_PREFIX);
+  return song.contentKind === 'podcastEpisode' || song.nativeId.startsWith(PODCAST_EPISODE_ID_PREFIX);
 }
 
 /**

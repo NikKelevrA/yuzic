@@ -1,5 +1,5 @@
 import { DownloadProviderType } from '@/utils/downloads/provider';
-import { CoverSource } from '@/types';
+import { CoverSource } from '@/types/Cover';
 
 export type DownloadRow = {
   id: string;

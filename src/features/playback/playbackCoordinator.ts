@@ -3,7 +3,7 @@ import type { MediaItem } from '@/features/player/mediaItem';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import type { Song } from '@/domain/entities/Song';
 import { sameQueue } from '@/features/playback/playableResource';
-import { canFillQueueFrom } from '@/utils/playback/contentKind';
+import { isAutoplaySeed } from '@/domain/playback/ContentKind';
 import { shouldFillQueue } from './autoplayFill';
 import { resourceFromMediaItem, resourcesFromPlayerQueue } from './playingQueue';
 
@@ -193,7 +193,7 @@ export function createPlaybackCoordinator(
       // A radio station is its own infinite feed with no seed to compute a
       // follow-up from, and a podcast's "next episode" is not a similarity
       // call — neither is a candidate for filling.
-      if (canFillQueueFrom(song) && shouldFillQueue({
+      if (isAutoplaySeed(song.contentKind) && shouldFillQueue({
         queueLength: deps.queue().length,
         currentIndex: index,
         autoplayEnabled: deps.autoplayEnabled(),

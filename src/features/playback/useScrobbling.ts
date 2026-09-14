@@ -7,7 +7,7 @@ import {
   type ScrobbleDestination,
 } from '@/utils/offline/offlineMutations';
 import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
-import { canScrobble } from '@/utils/playback/contentKind';
+import { isScrobbleable } from '@/domain/playback/ContentKind';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import {
   useScrobbleDestinationPlan,
@@ -92,7 +92,7 @@ export function useScrobbling() {
     // A live radio stream isn't a discrete listen — nothing to record. Podcast
     // episodes still scrobble; a finished episode is a listen the same way a
     // finished track is.
-    if (!canScrobble(song)) return;
+    if (!isScrobbleable(song.contentKind)) return;
     if (lastScrobbledIdRef.current === song.nativeId) return;
     const songDuration = song.durationSeconds || 0;
     if (!passesScrobbleThreshold(opts.listenedSeconds, songDuration)) return;
@@ -143,7 +143,7 @@ export function useScrobbling() {
     // Live streams don't have a "now playing this track" identity — the
     // server would either reject an empty-duration nowPlaying or record it
     // as an odd zero-length listen. Skip the whole path for them.
-    if (!canScrobble(song)) return;
+    if (!isScrobbleable(song.contentKind)) return;
     const songDuration = song.durationSeconds || undefined;
 
     // Fire-and-forget: a report outage should never block the player. Each

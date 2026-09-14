@@ -1,4 +1,4 @@
-import { Server } from '@/types';
+import { Server } from '@/types/Server';
 import { MediaBrowserItemsResponse } from '../types';
 import { serverFetch } from '@/features/mtls/serverFetch';
 

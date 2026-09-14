@@ -5,7 +5,7 @@ import {
   lookupArtist,
   type LidarrArtistLookupResult,
 } from '../artists';
-import type { LidarrConfig } from '@/types';
+import type { LidarrConfig } from '@/providers/integration/lidarr/config';
 import type { Album } from '@/domain/entities/Album';
 
 export type LidarrAlbumErrorCode =

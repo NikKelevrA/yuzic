@@ -57,10 +57,13 @@ describe('contentKindBehaviour', () => {
     expect(isSeekable('liveStream')).toBe(false);
   });
 
-  it('podcastEpisode has duration and is seekable, but not scrobbleable and not an autoplay seed', () => {
+  it('podcastEpisode has duration, is seekable and scrobbleable, but is not an autoplay seed', () => {
+    // A finished episode is a listen. The table once said otherwise while the
+    // player's own gate scrobbled episodes anyway; the player reads this table
+    // now, so the rule it follows is the one written here.
     expect(hasDuration('podcastEpisode')).toBe(true);
     expect(isSeekable('podcastEpisode')).toBe(true);
-    expect(isScrobbleable('podcastEpisode')).toBe(false);
+    expect(isScrobbleable('podcastEpisode')).toBe(true);
     expect(isAutoplaySeed('podcastEpisode')).toBe(false);
   });
 });

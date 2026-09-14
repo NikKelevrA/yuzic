@@ -1,5 +1,5 @@
 import { ApiAdapter } from "@/providers/contracts/ServerAdapter";
-import { Server } from "@/types";
+import { Server } from "@/types/Server";
 
 import { JELLYFIN_BRAND } from "../brand";
 import { createMediaBrowserAdapter } from "../adapter";

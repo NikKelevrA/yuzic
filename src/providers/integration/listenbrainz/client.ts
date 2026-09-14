@@ -1,4 +1,4 @@
-import { ListenBrainzConfig } from '@/types';
+import { ListenBrainzConfig } from '@/providers/integration/listenbrainz/config';
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 
 const BASE_URL = 'https://api.listenbrainz.org/1';

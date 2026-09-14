@@ -1,4 +1,4 @@
-import { ListenBrainzConfig } from '@/types';
+import { ListenBrainzConfig } from '@/providers/integration/listenbrainz/config';
 import { createListenBrainzClient } from './client';
 
 export async function submitNowPlaying(

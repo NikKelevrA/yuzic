@@ -1,5 +1,5 @@
 import { APP_VERSION } from '@/constants/appVersion';
-import { ListenBrainzConfig } from '@/types';
+import { ListenBrainzConfig } from '@/providers/integration/listenbrainz/config';
 import { createListenBrainzClient } from './client';
 
 export type ScrobblePayload = {

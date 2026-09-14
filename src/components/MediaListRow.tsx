@@ -11,7 +11,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { controlSize, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { useListDensity } from '@/features/theme/useListDensity';
-import type { CoverSource } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 import Touchable from '@/components/Touchable';
 
 type Props = {

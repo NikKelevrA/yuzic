@@ -1,4 +1,4 @@
-import { normalize } from '@/utils/normalize';
+import { normalizeName } from '@/domain/identity/matching';
 
 /**
  * One item in a downloader's transfer queue, in terms every surface can read.
@@ -105,10 +105,10 @@ function looselyEqual(left: string, right: string): boolean {
  * name is all there is.
  */
 export function matchesAlbum(item: DownloaderQueueItem, album: AlbumIdentity): boolean {
-  const itemTitle = normalize(item.title);
-  const albumTitle = normalize(album.title);
-  const itemArtist = normalize(item.artistName);
-  const albumArtist = normalize(album.artist);
+  const itemTitle = normalizeName(item.title);
+  const albumTitle = normalizeName(album.title);
+  const itemArtist = normalizeName(item.artistName);
+  const albumArtist = normalizeName(album.artist);
 
   if (item.identity === 'exact') {
     return itemTitle === albumTitle && itemArtist === albumArtist;

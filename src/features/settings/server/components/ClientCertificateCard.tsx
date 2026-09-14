@@ -19,7 +19,7 @@ import {
   saveClientCertificate,
 } from '@/features/mtls/clientCertificateStore';
 import { useClientCertificate } from '@/features/mtls/useClientCertificate';
-import type { Server } from '@/types';
+import type { Server } from '@/types/Server';
 
 type Props = {
   server: Server;

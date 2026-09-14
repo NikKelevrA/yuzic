@@ -10,7 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { notify } from '@/components/toast';
 import { ChevronDown, Lock, LockOpen, Check } from 'lucide-react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { ServerType } from '@/types';
+import { ServerType } from '@/types/Server';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import { useSheetRef } from '@/utils/useSheetRef';

@@ -27,7 +27,7 @@ import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { hitSlopFor, iconSize, spacing, statusColor } from '@/constants/design';
 import { QueryKeys } from '@/enums/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
-import type { CoverSource } from '@/types';
+import type { CoverSource } from '@/types/Cover';
 
 export default function PodcastsScreen() {
   const { t } = useTranslation();

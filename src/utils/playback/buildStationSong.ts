@@ -2,7 +2,9 @@ import type { InternetRadioStation } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
-import { LIVE_STREAM_ID_PREFIX } from './contentKind';
+
+/** Namespaces a station's id so it can never collide with a real track's. */
+const LIVE_STREAM_ID_PREFIX = 'radio:';
 
 /**
  * Turns a radio station into something the player can accept.

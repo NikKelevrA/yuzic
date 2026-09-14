@@ -12,7 +12,7 @@ import type {
   StarredApi,
   TracksApi,
 } from '@/providers/contracts/ServerAdapter';
-import type { Server } from '@/types';
+import type { Server } from '@/types/Server';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 import { makeLocalId } from '@/domain/identity/LocalId';

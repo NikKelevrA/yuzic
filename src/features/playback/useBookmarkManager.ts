@@ -11,7 +11,6 @@ import {
   seedPlaybackBookmarks,
   setPlaybackBookmark,
 } from '@/state/redux/slices/playbackSlice';
-import { isPodcastEpisode } from '@/utils/playback/contentKind';
 import { needsSnapshot, toBookmarkSnapshot } from '@/utils/playback/bookmarkSnapshot';
 
 /**
@@ -34,7 +33,7 @@ const BOOKMARK_MAX_PROGRESS = 0.97;
 
 function isBookmarkable(song: Song | null | undefined): boolean {
   if (!song) return false;
-  if (isPodcastEpisode(song)) return true;
+  if (song.contentKind === 'podcastEpisode') return true;
   return (song.durationSeconds || 0) >= BOOKMARK_MIN_DURATION_SECONDS;
 }
 

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ellipsis } from 'lucide-react-native';
 import { MediaImage } from '@/components/MediaImage';
-import { CoverSource } from '@/types';
+import { CoverSource } from '@/types/Cover';
 import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
 import { useListDensity } from '@/features/theme/useListDensity';

@@ -55,7 +55,11 @@ const BEHAVIOUR: Record<ContentKind, ContentKindBehaviour> = {
   },
   podcastEpisode: {
     hasDuration: true,
-    isScrobbleable: false,
+    // A finished episode is a listen the same way a finished track is, and the
+    // player has always scrobbled them. This table said otherwise while
+    // nothing read it — a second rule beside the one that ran — until the
+    // player's own gates were folded into it.
+    isScrobbleable: true,
     isSeekable: true,
     isAutoplaySeed: false,
     // The server downloaded the episode and streams it, under an id of its own

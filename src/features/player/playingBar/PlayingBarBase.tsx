@@ -10,7 +10,7 @@ import PlaylistList from '@/components/PlaylistList';
 import OutputDeviceSheet from '@/features/player/components/OutputDeviceSheet';
 import { MediaImage } from '@/components/MediaImage';
 import { usePlayingState, usePlayingActions, usePlayingProgress } from '@/features/playback/PlayingContext';
-import { hasFiniteDuration } from '@/utils/playback/contentKind';
+import { hasDuration } from '@/domain/playback/ContentKind';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -401,7 +401,7 @@ export default function PlayingBarBase({ variant }: Props) {
 
       {/* A radio station has no meaningful position to draw — hide the strip
        * entirely rather than let it sit flat at zero. Podcast episodes keep it. */}
-      {hasFiniteDuration(currentSong) && (
+      {(!currentSong || hasDuration(currentSong.contentKind)) && (
         <ProgressBarStrip
           fallbackDuration={currentSong?.durationSeconds || 1}
           themeColor={themeColor}

@@ -1,4 +1,4 @@
-import type { Server } from '@/types';
+import type { Server } from '@/types/Server';
 
 /**
  * Multi-URL server failover for issue #115.

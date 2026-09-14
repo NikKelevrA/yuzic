@@ -5,7 +5,7 @@ import ImageColors from 'react-native-image-colors'
 import { buildCover } from '@/utils/builders/buildCover'
 import { PLAYING_GRADIENT_CACHE_MAX } from '@/constants/features'
 import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
-import type { CoverSource } from '@/types'
+import type { CoverSource } from '@/types/Cover';
 import { createAccentCache, pickAccent, toWashAccent } from './coverAccent'
 
 const accents = createAccentCache<string>(PLAYING_GRADIENT_CACHE_MAX)

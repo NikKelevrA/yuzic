@@ -32,7 +32,8 @@ import { ping as pingMediaBrowser } from '@/providers/server/media-browser/auth/
 import { connect as connectMediaBrowser } from '@/providers/server/media-browser/auth/connect';
 import { JELLYFIN_BRAND, EMBY_BRAND } from '@/providers/server/media-browser/brand';
 
-import { ServerType, Server, CoverSource, BasicAuth } from '@/types';
+import { ServerType, Server, BasicAuth, type ProviderAuth } from '@/types/Server';
+import { CoverSource } from '@/types/Cover';
 import type { Library, ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import i18n from '@/i18n';
 import { getCredentials, setCredential, forgetCredentials, type CredentialBundle } from '@/state/credentialCache';
@@ -145,10 +146,6 @@ export async function forgetAllServerCredentials(serverId: string): Promise<void
     ...DOWNLOADER_IDS.map(id => forgetCredentials(downloaderCredentialScope(id, serverId))),
   ]);
 }
-
-export type ProviderAuth = {
-  [key: string]: string | number | boolean | null;
-};
 
 export type ConnectResult = {
   success: boolean;

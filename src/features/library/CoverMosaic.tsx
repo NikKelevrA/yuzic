@@ -5,7 +5,7 @@ import { MediaImage } from '@/components/MediaImage'
 import { useTheme } from '@/features/theme/useTheme'
 import { useRadius } from '@/features/theme/useRadius'
 import { MOSAIC_COVERS } from './useLibrarySummary'
-import type { CoverSource } from '@/types'
+import type { CoverSource } from '@/types/Cover'
 
 type Props = {
   covers: CoverSource[]

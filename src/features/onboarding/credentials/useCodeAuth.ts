@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { CodeAuthApi, ProviderAuth } from '@/providers/registry/serverConnections';
-import type { BasicAuth } from '@/types';
+import type { CodeAuthApi } from '@/providers/registry/serverConnections';
+import type { BasicAuth, ProviderAuth } from '@/types/Server';
 
 export type CodeAuthPhase =
   /** Not started — the password form is showing. */

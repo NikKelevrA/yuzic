@@ -13,7 +13,7 @@ import {
   SearchApi
 } from "@/providers/contracts/ServerAdapter";
 
-import { Server } from "@/types";
+import { Server } from "@/types/Server";
 import type { Playlist } from "@/domain/entities/Playlist";
 import type { PlaylistDetail } from "@/domain/entities/Detail";
 import { makeLocalId } from "@/domain/identity/LocalId";

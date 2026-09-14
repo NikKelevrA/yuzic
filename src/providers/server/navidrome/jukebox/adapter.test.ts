@@ -1,4 +1,4 @@
-import type { Server } from '@/types';
+import type { Server } from '@/types/Server';
 import { createNavidromeAdapter } from '..';
 import { createJellyfinAdapter } from '../../media-browser/jellyfin';
 
