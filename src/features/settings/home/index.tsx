@@ -8,7 +8,7 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Server, Library, Volume2, Palette, Puzzle, CloudDownload, Github, ShieldCheck, ScrollText, House as HomeIcon, Mic2, Disc3, Tags, Search as SearchIcon } from 'lucide-react-native';
+import { Server, Library, Volume2, Palette, Puzzle, CloudDownload, Github, Globe, ShieldCheck, ScrollText, House as HomeIcon, Mic2, Disc3 } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
@@ -149,22 +149,16 @@ export default function Settings() {
                 </Text>
                 <SettingsCard>
                     <SettingsRow
+                        testID="settings-row-sources"
+                        label={t('settings.sources.title')}
+                        leftIcon={<Globe size={iconSize.secondary} color={colors.secondary} />}
+                        onPress={() => router.push('/settings/sourcesView')}
+                    />
+                    <SettingsDivider />
+                    <SettingsRow
                         label={t('settings.home.title')}
                         leftIcon={<HomeIcon size={iconSize.secondary} color={colors.secondary} />}
                         onPress={() => router.push('/settings/homeView')}
-                    />
-                    <SettingsDivider />
-                    <SettingsRow
-                        label={t('settings.metadata.title')}
-                        leftIcon={<Tags size={iconSize.secondary} color={colors.secondary} />}
-                        onPress={() => router.push('/settings/metadataView')}
-                    />
-                    <SettingsDivider />
-                    <SettingsRow
-                        testID="settings-row-search"
-                        label={t('settings.search.title')}
-                        leftIcon={<SearchIcon size={iconSize.secondary} color={colors.secondary} />}
-                        onPress={() => router.push('/settings/searchView')}
                     />
                     <SettingsDivider />
                     <SettingsRow

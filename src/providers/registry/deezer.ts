@@ -25,7 +25,7 @@ export const deezerProvider: IntegrationProvider = {
   // only server logos and lidarr/slskd are there). `icon: 0` is the same
   // placeholder the contract's own broker test uses for a provider with no
   // real asset, rather than inventing one.
-  presentation: { nameKey: 'settings.search.deezer', icon: 0, color: sourceColor.deezer },
+  presentation: { nameKey: 'settings.sources.deezer.name', icon: 0, color: sourceColor.deezer },
   auth: { tier: 'none' },
   capabilities: {
     'artist.enrich': async artist => {

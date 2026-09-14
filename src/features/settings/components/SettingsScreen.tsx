@@ -12,6 +12,8 @@ type Props = {
   onBackPress?: () => void;
   rightAction?: React.ReactNode;
   scrollContentStyle?: ViewStyle;
+  /** For a screen that scrolls itself, e.g. to a section it was opened for. */
+  scrollRef?: React.Ref<ScrollView>;
 };
 
 const SettingsScreen: React.FC<Props> = ({
@@ -20,6 +22,7 @@ const SettingsScreen: React.FC<Props> = ({
   onBackPress,
   rightAction,
   scrollContentStyle,
+  scrollRef,
 }) => {
   const { colors } = useTheme();
   const scrollClearance = useScrollClearance();
@@ -40,6 +43,7 @@ const SettingsScreen: React.FC<Props> = ({
     >
       <Header title={title} onBackPress={onBackPress} rightAction={rightAction} />
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: scrollClearance },

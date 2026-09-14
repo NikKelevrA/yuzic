@@ -3,9 +3,8 @@ import { renderHook } from '@testing-library/react-native';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import settingsReducer, {
-  setMetadataArtistInfoSourceEnabled,
+  setLastfmEnabled,
   setMetadataArtworkSourceEnabled,
-  setMetadataArtworkOrder,
 } from '@/features/settings/metadata/state';
 import { useMetadataEnrichmentBroker } from './enrichmentBroker';
 import { lastfmProvider } from './lastfm';
@@ -36,9 +35,9 @@ describe('useMetadataEnrichmentBroker', () => {
     expect(result.current.isAllowed(musicbrainzProvider.id, 'album.enrich')).toBe(false);
   });
 
-  it('allows Last.fm for artist bio only once the artist-info toggle is on', async () => {
+  it('allows Last.fm for artist bio only once Last.fm is on', async () => {
     const store = makeStore();
-    store.dispatch(setMetadataArtistInfoSourceEnabled({ sourceId: lastfmProvider.id, enabled: true }));
+    store.dispatch(setLastfmEnabled(true));
     const { result } = await renderBroker(store);
 
     expect(result.current.isAllowed(lastfmProvider.id, 'artist.enrich')).toBe(true);
@@ -66,9 +65,9 @@ describe('useMetadataEnrichmentBroker', () => {
     expect(result.current.isAllowed(musicbrainzProvider.id, 'artist.enrich')).toBe(false);
   });
 
-  it('carries the user-chosen artwork order through to the broker order (ordered first-hit fallback)', async () => {
+  it('carries the stored artwork order through to the broker order (ordered first-hit fallback)', async () => {
     const store = makeStore();
-    store.dispatch(setMetadataArtworkOrder(['coverartarchive', 'deezer']));
+    // Order is kept in the order sources were turned on.
     store.dispatch(setMetadataArtworkSourceEnabled({ sourceId: 'coverartarchive', enabled: true }));
     store.dispatch(setMetadataArtworkSourceEnabled({ sourceId: 'deezer', enabled: true }));
     const { result } = await renderBroker(store);

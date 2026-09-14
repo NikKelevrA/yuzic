@@ -8,7 +8,7 @@ import audiomuseReducer from './slices/audiomuseSlice';
 import settingsAppearanceReducer from '@/features/settings/appearance/state';
 import settingsHomeReducer from '@/features/settings/home/state';
 import settingsSearchReducer, { migrateSearchSettings } from '@/features/settings/search/state';
-import settingsMetadataReducer from '@/features/settings/metadata/state';
+import settingsMetadataReducer, { migrateMetadataSettings } from '@/features/settings/metadata/state';
 import settingsLyricsReducer from '@/features/settings/lyrics/state';
 import settingsScrobblingReducer from '@/features/settings/scrobbling/state';
 import settingsPlaybackReducer from '@/features/settings/playback/state';
@@ -63,7 +63,12 @@ const settingsSearchPersistConfig = {
   version: 1,
   migrate: (state: any): Promise<any> => Promise.resolve(migrateSearchSettings(state)),
 };
-const settingsMetadataPersistConfig = { key: 'settingsMetadata', storage };
+const settingsMetadataPersistConfig = {
+  key: 'settingsMetadata',
+  storage,
+  version: 1,
+  migrate: (state: any): Promise<any> => Promise.resolve(migrateMetadataSettings(state)),
+};
 const settingsLyricsPersistConfig = { key: 'settingsLyrics', storage };
 const settingsScrobblingPersistConfig = { key: 'settingsScrobbling', storage };
 const settingsPlaybackPersistConfig = { key: 'settingsPlayback', storage };

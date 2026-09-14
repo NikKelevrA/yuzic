@@ -192,27 +192,6 @@
       "lrclib": "LRCLIB",
       "lrclibSubtext": "免费、匿名的歌词查询。"
     },
-    "search": {
-      "title": "搜索",
-      "sourcesSection": "搜索来源",
-      "explanation": "“其他来源”可搜索的来源。与主页独立。",
-      "deezer": "Deezer",
-      "deezerSubtext": "搜索 Deezer，并打开其专辑和艺人。",
-      "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "搜索 MusicBrainz，并打开其专辑和艺人。"
-    },
-    "metadata": {
-      "title": "元数据",
-      "explanation": "补全服务器缺失的信息，绝不修改服务器。",
-      "artistInfoSection": "艺术家信息",
-      "artworkSection": "封面",
-      "lastfm": "Last.fm",
-      "lastfmSubtext": "简介和标签",
-      "deezerArtwork": "Deezer",
-      "deezerArtworkSubtext": "艺人图片",
-      "coverArtArchive": "Cover Art Archive",
-      "coverArtArchiveSubtext": "专辑封面"
-    },
     "library": {
       "title": "媒体库",
       "librarySelect": {
@@ -467,32 +446,6 @@
         "disconnected": "已断开与 SoulSync 的连接。"
       }
     },
-    "lastfm": {
-      "enable": "艺术家与推荐数据",
-      "enableDescription": "相似艺人和歌单种子。无需账号，发送艺人名查询。"
-    },
-    "deezer": {
-      "discovery": "发现",
-      "discoveryDescription": "探索页显示 Deezer 榜单和推荐。",
-      "search": "搜索",
-      "searchDescription": "在搜索中包含 Deezer 结果。",
-      "external": "外部艺术家和专辑数据",
-      "externalDescription": "用 Deezer 补全专辑和艺人页面。",
-      "topTracks": "热门歌曲",
-      "topTracksDescription": "在艺术家页面显示 Deezer 热门歌曲。",
-      "similarArtists": "相似艺术家",
-      "similarArtistsDescription": "在艺术家页面显示 Deezer 相似艺术家。",
-      "albumRecommendations": "推荐",
-      "albumRecommendationsDescription": "在专辑页显示推荐专辑。",
-      "samples": "试听片段",
-      "samplesDescription": "为外部专辑获取 30 秒试听。",
-      "enableSamplesToPreview": "请在设置中启用试听片段以收听预览",
-      "playlistRecommendations": "推荐",
-      "playlistRecommendationsDescription": "显示 Deezer 推荐的播放列表。",
-      "artistSection": "艺术家",
-      "albumSection": "专辑",
-      "playlistSection": "播放列表"
-    },
     "audiomuse": {
       "title": "AudioMuse-AI",
       "credentialsHelper": "用于 Smart Shuffle 的自托管 AudioMuse-AI 实例。",
@@ -558,6 +511,47 @@
         "lbCreatedForWeeklyExploration": "Weekly exploration",
         "topArtists": "Top artists",
         "charts": "Charts"
+      }
+    },
+    "sources": {
+      "title": "在线来源",
+      "explanation": "Yuzic 可以查询你音乐信息的服务。默认全部关闭，你的音乐库和服务器无需它们也能使用。",
+      "offline": "你已离线，重新连接前这些来源会暂停。",
+      "offRow": "{{name}} 已关闭",
+      "enableDeezerToPreview": "在“设置 › 在线来源”中开启 Deezer 即可试听",
+      "deezer": {
+        "name": "Deezer",
+        "sends": "发送艺人、专辑和曲目名称，以及你的搜索内容。",
+        "pages": "主页和页面",
+        "pagesSubtext": "排行榜、相似艺人、试听片段和推荐。",
+        "search": "搜索",
+        "searchSubtext": "搜索 Deezer，并打开其专辑和艺人。",
+        "artwork": "艺人图片",
+        "artworkSubtext": "补充服务器缺少的艺人照片。"
+      },
+      "listenbrainz": {
+        "name": "ListenBrainz",
+        "sends": "发送 MusicBrainz 艺人 ID；如已连接，还会发送你的 ListenBrainz 用户名。",
+        "discovery": "发现",
+        "discoverySubtext": "相似艺人和为你打造的歌单。"
+      },
+      "lastfm": {
+        "name": "Last.fm",
+        "sends": "发送艺人名称。无需账户。",
+        "artistInfo": "艺人信息",
+        "artistInfoSubtext": "简介、标签、相似艺人和歌单推荐。"
+      },
+      "musicbrainz": {
+        "name": "MusicBrainz",
+        "sends": "发送你的搜索内容，以及用于查找 ID 的艺人名称。",
+        "search": "搜索",
+        "searchSubtext": "搜索 MusicBrainz，并打开其专辑和艺人。"
+      },
+      "coverartarchive": {
+        "name": "Cover Art Archive",
+        "sends": "发送专辑和艺人名称以查找封面。",
+        "covers": "专辑封面",
+        "coversSubtext": "补充服务器缺少的专辑封面。"
       }
     }
   },
@@ -845,7 +839,8 @@
       "title": "筛选",
       "sources": "来源",
       "entityTypes": "包含",
-      "noSourcesEnabled": "尚未启用任何搜索来源。请在 设置 › 搜索 中启用一个。"
+      "sendsQuery": "将你输入的内容发送到 {{name}}",
+      "alsoInSettings": "也可在“设置 › 在线来源”中更改。"
     },
     "entityTypes": {
       "song": "歌曲",

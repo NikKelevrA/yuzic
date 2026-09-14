@@ -35,8 +35,9 @@ export const CONNECTION_GROUPS: { group: ConnectionGroup; titleKey: string }[] =
  * inline, so adding an integration meant editing the screen's layout. It now
  * draws whatever this returns: the managed integrations declared in
  * `providers/registry/connections.ts` and the downloaders declared in their
- * registry. Feature source opt-ins (Deezer, MusicBrainz, Last.fm) are not
- * connections and stay in their feature settings.
+ * registry. Keyless outside services (Deezer, MusicBrainz, Last.fm, …) are
+ * not connections — there is nothing to sign in to — and live in Online
+ * sources.
  */
 export function buildConnectionEntries({
   integrations,

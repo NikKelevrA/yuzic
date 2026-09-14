@@ -23,7 +23,7 @@ export const musicbrainzProvider: IntegrationProvider = {
   // No dedicated icon asset exists for MusicBrainz today — see the file
   // report. `icon: 0` matches the broker test's own placeholder convention
   // rather than inventing an asset.
-  presentation: { nameKey: 'settings.search.musicbrainz', icon: 0, color: sourceColor.musicbrainz },
+  presentation: { nameKey: 'settings.sources.musicbrainz.name', icon: 0, color: sourceColor.musicbrainz },
   auth: { tier: 'none' },
   capabilities: {
     'catalogue.search': async (query, kinds) => {

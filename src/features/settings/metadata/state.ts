@@ -14,8 +14,30 @@ export interface MetadataSettingsState {
   metadataArtistInfoEnabled: Record<string, boolean>;
   metadataArtworkOrder: string[];
   metadataArtworkEnabled: Record<string, boolean>;
-  /** Last.fm read-only metadata (similar artists, recommendation seeds). */
+  /**
+   * The one Last.fm switch: bios and tags, similar artists, and playlist
+   * recommendation seeds. Each of those sends artist names to Last.fm, so
+   * they are one decision — not a bios entry in `metadataArtistInfoEnabled`
+   * plus a second flag with no screen of its own.
+   */
   lastfmEnabled: boolean;
+}
+
+const LASTFM = 'lastfm';
+
+/**
+ * Persist version 1: fold the Metadata screen's Last.fm bios entry into
+ * `lastfmEnabled`. Either being on means the user had agreed to Last.fm, so
+ * the merged switch starts on if either was.
+ */
+export function migrateMetadataSettings<T extends Partial<MetadataSettingsState> | undefined>(state: T): T {
+  if (!state) return state;
+  const { [LASTFM]: bios, ...otherArtistInfo } = state.metadataArtistInfoEnabled ?? {};
+  return {
+    ...state,
+    metadataArtistInfoEnabled: otherArtistInfo,
+    lastfmEnabled: Boolean(state.lastfmEnabled) || Boolean(bios),
+  };
 }
 
 const initialState: MetadataSettingsState = {
@@ -30,21 +52,6 @@ const metadataSlice = createSlice({
   name: 'settingsMetadata',
   initialState,
   reducers: {
-    setMetadataArtistInfoSourceEnabled(
-      state,
-      action: PayloadAction<{ sourceId: string; enabled: boolean }>
-    ) {
-      const { sourceId, enabled } = action.payload;
-      if (!state.metadataArtistInfoEnabled) state.metadataArtistInfoEnabled = {};
-      state.metadataArtistInfoEnabled[sourceId] = enabled;
-      if (!state.metadataArtistInfoOrder) state.metadataArtistInfoOrder = [];
-      if (enabled && !state.metadataArtistInfoOrder.includes(sourceId)) {
-        state.metadataArtistInfoOrder.push(sourceId);
-      }
-    },
-    setMetadataArtistInfoOrder(state, action: PayloadAction<string[]>) {
-      state.metadataArtistInfoOrder = action.payload;
-    },
     setMetadataArtworkSourceEnabled(
       state,
       action: PayloadAction<{ sourceId: string; enabled: boolean }>
@@ -57,20 +64,19 @@ const metadataSlice = createSlice({
         state.metadataArtworkOrder.push(sourceId);
       }
     },
-    setMetadataArtworkOrder(state, action: PayloadAction<string[]>) {
-      state.metadataArtworkOrder = action.payload;
-    },
     setLastfmEnabled(state, action: PayloadAction<boolean>) {
       state.lastfmEnabled = action.payload;
+      // Last.fm is still a step in the artist-info fallback chain.
+      if (!state.metadataArtistInfoOrder) state.metadataArtistInfoOrder = [];
+      if (action.payload && !state.metadataArtistInfoOrder.includes(LASTFM)) {
+        state.metadataArtistInfoOrder.push(LASTFM);
+      }
     },
   },
 });
 
 export const {
-  setMetadataArtistInfoSourceEnabled,
-  setMetadataArtistInfoOrder,
   setMetadataArtworkSourceEnabled,
-  setMetadataArtworkOrder,
   setLastfmEnabled,
 } = metadataSlice.actions;
 
@@ -82,9 +88,6 @@ interface MetadataRootState {
 
 export const selectMetadataArtistInfoOrder = (state: MetadataRootState): string[] =>
   state.settingsMetadata.metadataArtistInfoOrder;
-
-export const selectMetadataArtistInfoSourceEnabled = (sourceId: string) =>
-  (state: MetadataRootState): boolean => state.settingsMetadata.metadataArtistInfoEnabled?.[sourceId] ?? false;
 
 export const selectMetadataArtworkOrder = (state: MetadataRootState): string[] =>
   state.settingsMetadata.metadataArtworkOrder;

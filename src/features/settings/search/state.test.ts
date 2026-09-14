@@ -7,10 +7,9 @@ import {
 /**
  * Task 4.3: `selectSearchSourceEnabled` used to fall back to the older
  * `deezerSearchEnabled` flag when `searchSourcesEnabled` had no entry for
- * Deezer. That flag is gone — it was reachable only through a settings
- * screen that has been rewired to write `searchSourcesEnabled` directly
- * (see `screens/settings/integrations/deezer/index.tsx`) — so the fallback
- * is gone with it and every source now reads straight off the unified map.
+ * Deezer. That flag is gone, so the fallback is gone with it and every
+ * source now reads straight off the unified map (written by Online sources
+ * and the Search filter sheet).
  */
 function stateWith(settingsSearch: Record<string, unknown>) {
   return { settingsSearch } as any

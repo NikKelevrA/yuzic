@@ -81,8 +81,9 @@ export const selectSearchSourceEnabled = (sourceId: string) =>
   (state: SearchRootState): boolean =>
     state.settingsSearch.searchSourcesEnabled?.[sourceId] ?? false;
 
+/** Every outside catalogue Search can query, on or off. */
+export const SEARCH_SOURCE_IDS = ['deezer', 'musicbrainz'] as const;
+
 /** Every source id enabled for Search, independent of Home/discovery. */
-export const selectEnabledSearchSourceIds = (state: SearchRootState): string[] => {
-  const ids = new Set<string>(['deezer', 'musicbrainz']);
-  return [...ids].filter(id => selectSearchSourceEnabled(id)(state));
-};
+export const selectEnabledSearchSourceIds = (state: SearchRootState): string[] =>
+  SEARCH_SOURCE_IDS.filter(id => selectSearchSourceEnabled(id)(state));

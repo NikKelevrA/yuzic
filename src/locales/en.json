@@ -192,27 +192,6 @@
       "lrclib": "LRCLIB",
       "lrclibSubtext": "Free, anonymous lyrics lookup."
     },
-    "search": {
-      "title": "Search",
-      "sourcesSection": "Search sources",
-      "explanation": "Sources the “Other sources” scope may search. Separate from Home.",
-      "deezer": "Deezer",
-      "deezerSubtext": "Search Deezer, and open its albums and artists.",
-      "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "Search MusicBrainz, and open its albums and artists."
-    },
-    "metadata": {
-      "title": "Metadata",
-      "explanation": "Fills gaps your server is missing. Never edits your server.",
-      "artistInfoSection": "Artist information",
-      "artworkSection": "Artwork",
-      "lastfm": "Last.fm",
-      "lastfmSubtext": "Bios and tags",
-      "deezerArtwork": "Deezer",
-      "deezerArtworkSubtext": "Artist images",
-      "coverArtArchive": "Cover Art Archive",
-      "coverArtArchiveSubtext": "Album covers"
-    },
     "library": {
       "title": "Library",
       "librarySelect": {
@@ -404,10 +383,6 @@
       "discovery": "Discovery",
       "discoveryDescription": "Similar artists on Home and artist pages. No account; artist names are sent to match."
     },
-    "lastfm": {
-      "enable": "Artist & Recommendation Data",
-      "enableDescription": "Similar artists and playlist seeds. No account; artist names are sent to look up."
-    },
     "downloaders": {
       "title": "Downloaders",
       "connected": "Connected",
@@ -471,28 +446,6 @@
         "connectionFailed": "SoulSync connection failed",
         "disconnected": "Disconnected from SoulSync."
       }
-    },
-    "deezer": {
-      "discovery": "Discovery",
-      "discoveryDescription": "Deezer charts and recommendations on Explore.",
-      "search": "Search",
-      "searchDescription": "Include Deezer results in search.",
-      "external": "External Artist & Album Data",
-      "externalDescription": "Fill artist and album pages from Deezer.",
-      "topTracks": "Top Tracks",
-      "topTracksDescription": "Show Deezer top tracks on artist pages.",
-      "similarArtists": "Similar Artists",
-      "similarArtistsDescription": "Show Deezer similar artists on artist pages.",
-      "albumRecommendations": "Recommendations",
-      "albumRecommendationsDescription": "Recommended albums on album pages.",
-      "samples": "Samples",
-      "samplesDescription": "30s preview samples on external albums.",
-      "enableSamplesToPreview": "Enable Samples in Settings to hear previews",
-      "playlistRecommendations": "Recommendations",
-      "playlistRecommendationsDescription": "Show Deezer recommended playlists.",
-      "artistSection": "Artist",
-      "albumSection": "Album",
-      "playlistSection": "Playlist"
     },
     "audiomuse": {
       "title": "AudioMuse-AI",
@@ -559,6 +512,47 @@
         "lbCreatedForWeeklyExploration": "Weekly exploration",
         "topArtists": "Top artists",
         "charts": "Charts"
+      }
+    },
+    "sources": {
+      "title": "Online sources",
+      "explanation": "Services Yuzic can ask about your music. All start off — your library and server work without them.",
+      "offline": "You're offline, so these are paused until you reconnect.",
+      "offRow": "{{name}} is off",
+      "enableDeezerToPreview": "Turn on Deezer in Settings › Online sources to hear previews",
+      "deezer": {
+        "name": "Deezer",
+        "sends": "Sends artist, album and track names, and what you search.",
+        "pages": "Home and pages",
+        "pagesSubtext": "Charts, similar artists, samples and recommendations.",
+        "search": "Search",
+        "searchSubtext": "Search Deezer, and open its albums and artists.",
+        "artwork": "Artist images",
+        "artworkSubtext": "Fill artist photos your server is missing."
+      },
+      "listenbrainz": {
+        "name": "ListenBrainz",
+        "sends": "Sends MusicBrainz artist IDs, and your ListenBrainz username if you've connected one.",
+        "discovery": "Discovery",
+        "discoverySubtext": "Similar artists and playlists made for you."
+      },
+      "lastfm": {
+        "name": "Last.fm",
+        "sends": "Sends artist names. No account needed.",
+        "artistInfo": "Artist info",
+        "artistInfoSubtext": "Bios, tags, similar artists and playlist recommendations."
+      },
+      "musicbrainz": {
+        "name": "MusicBrainz",
+        "sends": "Sends what you search, and artist names to look up their IDs.",
+        "search": "Search",
+        "searchSubtext": "Search MusicBrainz, and open its albums and artists."
+      },
+      "coverartarchive": {
+        "name": "Cover Art Archive",
+        "sends": "Sends album and artist names to find covers.",
+        "covers": "Album covers",
+        "coversSubtext": "Fill album covers your server is missing."
       }
     }
   },
@@ -848,7 +842,8 @@
       "title": "Filters",
       "sources": "Sources",
       "entityTypes": "Include",
-      "noSourcesEnabled": "No search sources are enabled. Turn one on in Settings › Search."
+      "sendsQuery": "Sends what you type to {{name}}",
+      "alsoInSettings": "Also in Settings › Online sources."
     },
     "entityTypes": {
       "song": "Song",

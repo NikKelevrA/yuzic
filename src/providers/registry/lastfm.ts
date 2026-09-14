@@ -17,7 +17,7 @@ export const lastfmProvider: IntegrationProvider = {
   kind: 'integration',
   id: 'lastfm',
   // No dedicated icon asset exists for Last.fm today — see the file report.
-  presentation: { nameKey: 'settings.metadata.lastfm', icon: 0, color: sourceColor.lastfm },
+  presentation: { nameKey: 'settings.sources.lastfm.name', icon: 0, color: sourceColor.lastfm },
   auth: { tier: 'none' },
   capabilities: {
     'artist.enrich': async artist => {

@@ -107,7 +107,8 @@ export function useSearchScreenModel() {
   // the device going offline) drops out of the current selection too, so a
   // stale id never reaches `handleSearchWithFilters`. A newly-enabled source
   // is not auto-selected, so a user who narrowed the Filters sheet on purpose
-  // doesn't have that choice silently widened out from under them.
+  // doesn't have that choice silently widened out from under them — except
+  // when it was switched on from that sheet, which selects it itself.
   useEffect(() => {
     setSelectedSourceIds(prev => {
       const next = prev.filter(id => enabledSearchSourceIds.includes(id as never));

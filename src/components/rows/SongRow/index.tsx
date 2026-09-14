@@ -73,7 +73,7 @@ const ExternalSongRowView: React.FC<{
     if (onPress) {
       onPress();
     } else if (!samplesEnabled) {
-      notify.info(t('settings.deezer.enableSamplesToPreview'));
+      notify.info(t('settings.sources.enableDeezerToPreview'));
     }
   }, [onPress, samplesEnabled, t]);
 

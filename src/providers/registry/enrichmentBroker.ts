@@ -39,8 +39,8 @@ import type { BrokerInput } from './capabilityBroker';
 import type { CapabilityName } from '../contracts/Capabilities';
 import type { Provider, ProviderId } from '../contracts/Provider';
 import {
+  selectLastfmEnabled,
   selectMetadataArtistInfoOrder,
-  selectMetadataArtistInfoSourceEnabled,
   selectMetadataArtworkOrder,
   selectMetadataArtworkSourceEnabled,
 } from '@/features/settings/metadata/state';
@@ -63,7 +63,7 @@ const artworkSourceToProviderId = (sourceId: string): ProviderId =>
 export function useMetadataEnrichmentBroker(): BrokerInput {
   const artistInfoOrder = useSelector(selectMetadataArtistInfoOrder);
   const artworkOrder = useSelector(selectMetadataArtworkOrder);
-  const bioSourceEnabled = useSelector(selectMetadataArtistInfoSourceEnabled(lastfmProvider.id));
+  const bioSourceEnabled = useSelector(selectLastfmEnabled);
   const artworkIntegrationEnabled = useSelector(selectMetadataArtworkSourceEnabled(deezerProvider.id));
   const coverArtArchiveEnabled = useSelector(selectMetadataArtworkSourceEnabled('coverartarchive'));
 
