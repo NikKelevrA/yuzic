@@ -15,7 +15,7 @@ import { useSheetRef } from '@/components/useSheetRef';
 import { spacing, typography } from '@/constants/design';
 import { useTheme } from '@/features/theme/useTheme';
 import { SOURCES, SOURCE_USES } from '@/providers/registry/sources';
-import { dismissSourceUsePrompt, usePendingSourceUse } from './sourceUsePrompt';
+import { completeSourceUsePrompt, dismissSourceUsePrompt, usePendingSourceUse } from './sourceUsePrompt';
 import { setSourceUse } from './state';
 
 /**
@@ -70,7 +70,7 @@ export default function SourceUsePromptHost() {
               labelColor={colors.themeColor}
               onPress={() => {
                 dispatch(setSourceUse({ use: use.id, enabled: true }));
-                dismissSourceUsePrompt();
+                completeSourceUsePrompt();
               }}
             />
             <OptionSheetRow

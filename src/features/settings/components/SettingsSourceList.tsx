@@ -1,7 +1,7 @@
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import React, { useMemo } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import { NestableDraggableFlatList, NestableScrollContainer, type RenderItemParams } from 'react-native-draggable-flatlist';
 import { useTranslation } from 'react-i18next';
 import { Check, GripVertical } from 'lucide-react-native';
 
@@ -26,7 +26,13 @@ type Props = {
   showSubtext?: boolean;
 };
 
+/** The scroll container a screen holding these lists hands `SettingsScreen`. */
+export const SourceListScrollContainer = NestableScrollContainer;
+
 /**
+ * A feature-owned fallback chain. Rendered inside a `SettingsScreen` given
+ * `SourceListScrollContainer`, which is what lets the page scroll over it.
+ *
  * A feature-owned fallback chain. Its caller supplies the persisted ordering;
  * this component only exposes order when moving a source changes resolution.
  */
@@ -95,11 +101,10 @@ const SettingsSourceList: React.FC<Props> = ({
         </View>
       )}
 
-      <DraggableFlatList
+      <NestableDraggableFlatList
         data={orderedSources}
         keyExtractor={source => source.id}
         renderItem={renderSource}
-        scrollEnabled={false}
         onDragEnd={({ data }) => onOrderChange(data.map(source => source.id))}
       />
     </View>

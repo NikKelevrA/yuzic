@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from 'react';
-import { StyleSheet, Switch, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,7 @@ import {
 import { ALL_SOURCES, getSourceMeta, type SourceId } from '@/features/sources/registry';
 import { setSourceUse } from '@/features/settings/sources/state';
 import { searchUseOf } from '@/providers/registry/sources';
-import { iconSize, onDark, spacing, typography } from '@/constants/design';
+import { iconSize, spacing, typography } from '@/constants/design';
 import type { SearchEntityType } from '@/features/search/SearchContext';
 import type { SearchResultScope } from '@/features/search/searchLegs';
 
@@ -44,9 +44,9 @@ const ENTITY_TYPE_ORDER: SearchEntityType[] = ['album', 'artist'];
  * they don't apply to a local search.
  *
  * A source that is on is a check: in play for *this* search or not. A source
- * that is off is a switch, saying what turning it on sends — the same setting
- * as Settings › Search, offered where the decision comes up instead of as a
- * pointer to go and find it.
+ * that is off says what turning it on sends, with "Turn on" beside it rather
+ * than a switch — a switch among checks read as a second kind of filter. It is
+ * the same setting as Settings › Search, offered where the decision comes up.
  */
 const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
   ({ resultScope, onChangeScope, availableSourceIds, selectedSourceIds, onToggleSource, selectedEntityTypes, onToggleEntityType }, ref) => {
@@ -123,13 +123,9 @@ const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
                     description={t('search.filters.sendsQuery', { name: label })}
                     onPress={() => enableSource(sourceId)}
                     trailing={(
-                      <Switch
-                        testID={`search-filters-enable-switch-${sourceId}`}
-                        value={false}
-                        onValueChange={on => { if (on) enableSource(sourceId); }}
-                        trackColor={{ true: colors.themeColor }}
-                        thumbColor={onDark.text}
-                      />
+                      <Text style={[styles.turnOn, { color: colors.themeColor }]}>
+                        {t('settings.sources.turnOn')}
+                      </Text>
                     )}
                   />
                 );
@@ -172,6 +168,9 @@ const styles = StyleSheet.create({
     ...typography.rowTitle,
     fontWeight: '600',
     marginBottom: spacing.md,
+  },
+  turnOn: {
+    ...typography.label,
   },
   note: {
     ...typography.caption,

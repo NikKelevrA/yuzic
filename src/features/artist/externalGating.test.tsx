@@ -14,6 +14,7 @@ import settingsSourcesReducer, { setSourceUse } from '@/features/settings/source
  */
 jest.mock('@tanstack/react-query', () => ({
   useQuery: (options: { enabled?: boolean; queryFn: () => unknown }) => {
+    mockQueryOptions.push(options)
     const enabled = options.enabled !== false
     if (enabled) void options.queryFn()
     return { data: undefined, isLoading: enabled }
@@ -30,6 +31,10 @@ jest.mock('@/providers/integration/lastfm/getSimilarArtists', () => ({
   getLastFmSimilarArtists: jest.fn(async () => [{ name: 'Bibio', mbid: 'mbid-2' }]),
 }))
 jest.mock('@/constants/keys', () => ({ LASTFM_API_KEY: 'test-key' }))
+
+/* eslint-disable no-var -- hoisted for the jest.mock factory above */
+var mockQueryOptions: Record<string, unknown>[] = []
+/* eslint-enable no-var */
 
 import { searchArtist } from '@/providers/integration/musicbrainz'
 import { getLBSimilarArtists } from '@/providers/integration/listenbrainz/recommendations/getSimilarArtists'
@@ -83,6 +88,21 @@ describe('external metadata gating', () => {
     )
 
     expect(searchArtist).toHaveBeenCalledWith('Boards of Canada', 1)
+  })
+
+  it('asks a busy MusicBrainz again, but takes any other failure as final', async () => {
+    mockQueryOptions = []
+    await renderHook(
+      () => useArtistMbid('Boards of Canada', null, { allowLookup: true }),
+      { wrapper: wrapperFor(makeStore()) }
+    )
+    const retry = mockQueryOptions[mockQueryOptions.length - 1].retry as (failures: number, error: Error) => boolean
+
+    // Faster than one request a second is a 503: "again shortly", not "no match".
+    expect(retry(0, new Error('MusicBrainz 503: /artist'))).toBe(true)
+    expect(retry(1, new Error('MusicBrainz 503: /artist'))).toBe(true)
+    expect(retry(2, new Error('MusicBrainz 503: /artist'))).toBe(false)
+    expect(retry(0, new Error('MusicBrainz 400: /artist'))).toBe(false)
   })
 
   it('looks the id up with MusicBrainz off when the calling feature allows the lookup itself', async () => {
