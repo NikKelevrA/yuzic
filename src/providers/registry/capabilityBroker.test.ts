@@ -1,7 +1,7 @@
 import { firstOfferFor, hasCapability, offersFor, type BrokerInput } from './capabilityBroker';
 import type { Provider } from '../contracts/Provider';
 
-const lyrics = jest.fn(async () => null);
+const enrich = jest.fn(async () => null);
 
 function provider(id: string, over: Partial<Provider> = {}): Provider {
   return {
@@ -9,7 +9,7 @@ function provider(id: string, over: Partial<Provider> = {}): Provider {
     id,
     presentation: { nameKey: `provider.${id}`, icon: 0 },
     auth: { tier: 'none' },
-    capabilities: { lyrics },
+    capabilities: { 'artist.enrich': enrich },
     testConnection: async () => ({ ok: true }),
     ...over,
   } as Provider;
@@ -24,35 +24,35 @@ function input(over: Partial<BrokerInput> = {}): BrokerInput {
   };
 }
 
-beforeEach(() => lyrics.mockClear());
+beforeEach(() => enrich.mockClear());
 
 describe('offersFor', () => {
   it('returns only providers that declare the capability', () => {
     const offers = offersFor(input({
       providers: [provider('alpha'), provider('beta', { capabilities: {} })],
-    }), 'lyrics');
+    }), 'artist.enrich');
 
     expect(offers.map(o => o.providerId)).toEqual(['alpha']);
   });
 
   it('excludes a provider the app cannot currently reach', () => {
-    const offers = offersFor(input({ isConnected: id => id !== 'beta' }), 'lyrics');
+    const offers = offersFor(input({ isConnected: id => id !== 'beta' }), 'artist.enrich');
 
     expect(offers.map(o => o.providerId)).toEqual(['alpha']);
   });
 
   it('excludes a connected provider the user has switched off for this feature', () => {
     // Connection and permission are different questions. A reachable provider
-    // the user disabled for lyrics must not answer a lyrics request.
+    // the user disabled for artist info must not answer an artist-info request.
     const offers = offersFor(input({
-      isAllowed: (id, capability) => !(id === 'alpha' && capability === 'lyrics'),
-    }), 'lyrics');
+      isAllowed: (id, capability) => !(id === 'alpha' && capability === 'artist.enrich'),
+    }), 'artist.enrich');
 
     expect(offers.map(o => o.providerId)).toEqual(['beta']);
   });
 
   it('orders by the user preference, strongest first', () => {
-    const offers = offersFor(input({ order: ['beta', 'alpha'] }), 'lyrics');
+    const offers = offersFor(input({ order: ['beta', 'alpha'] }), 'artist.enrich');
 
     expect(offers.map(o => o.providerId)).toEqual(['beta', 'alpha']);
   });
@@ -63,7 +63,7 @@ describe('offersFor', () => {
     const offers = offersFor(input({
       providers: [provider('alpha'), provider('beta'), provider('gamma')],
       order: ['gamma'],
-    }), 'lyrics');
+    }), 'artist.enrich');
 
     expect(offers.map(o => o.providerId)).toEqual(['gamma', 'alpha', 'beta']);
   });
@@ -71,25 +71,25 @@ describe('offersFor', () => {
   it('invokes nothing while enumerating', () => {
     // The point of the split: asking who *could* answer must not make everyone
     // answer. Eager fan-out on load is what made enrichment unpredictable.
-    offersFor(input(), 'lyrics');
-    hasCapability(input(), 'lyrics');
-    firstOfferFor(input(), 'lyrics');
+    offersFor(input(), 'artist.enrich');
+    hasCapability(input(), 'artist.enrich');
+    firstOfferFor(input(), 'artist.enrich');
 
-    expect(lyrics).not.toHaveBeenCalled();
+    expect(enrich).not.toHaveBeenCalled();
   });
 
   it('hands back a callable that is the provider own implementation', async () => {
-    const offer = firstOfferFor(input(), 'lyrics');
+    const offer = firstOfferFor(input(), 'artist.enrich');
     await offer?.invoke({} as never);
 
-    expect(lyrics).toHaveBeenCalledTimes(1);
+    expect(enrich).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('firstOfferFor', () => {
   it('is null when nothing qualifies, rather than throwing', () => {
-    expect(firstOfferFor(input({ isConnected: () => false }), 'lyrics')).toBeNull();
-    expect(hasCapability(input({ isConnected: () => false }), 'lyrics')).toBe(false);
+    expect(firstOfferFor(input({ isConnected: () => false }), 'artist.enrich')).toBeNull();
+    expect(hasCapability(input({ isConnected: () => false }), 'artist.enrich')).toBe(false);
   });
 
   it('is null for a capability nothing declares', () => {

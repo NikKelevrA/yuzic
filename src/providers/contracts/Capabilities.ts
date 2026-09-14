@@ -40,17 +40,6 @@ interface AlbumEnrichment {
   externalIds?: ExternalIds;
 }
 
-interface LyricLine {
-  startMs: number;
-  text: string;
-}
-
-export interface Lyrics {
-  lines: LyricLine[];
-  /** True when `lines` carry real timings rather than one block of text. */
-  synced: boolean;
-}
-
 /** Which entity kinds a search should ask for. */
 interface CatalogueSearchKinds {
   artists: boolean;
@@ -80,8 +69,6 @@ export interface CapabilityMap {
   'artist.enrich': (artist: Artist) => Promise<ArtistEnrichment | null>;
   /** Fill gaps in an album record. Cover Art Archive needs a release id. */
   'album.enrich': (album: Album) => Promise<AlbumEnrichment | null>;
-  /** Lyrics for a song, synced where the provider has them. */
-  lyrics: (song: Song) => Promise<Lyrics | null>;
   /** Browse a catalogue this provider holds but the user does not own. */
   'catalogue.album': (nativeId: string) => Promise<AlbumDetail | null>;
   /**

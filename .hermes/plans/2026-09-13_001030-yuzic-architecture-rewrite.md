@@ -989,13 +989,15 @@ The rewrite is complete only when all are true:
 
 Where the work that shipped differs from the tasks above. Each entry says what changed and why, so the difference is a decision on record rather than something only an allowlist knows about.
 
-### 8.1 The capability broker serves five capabilities (Tasks 3.2–3.4)
+### 8.1 The capability broker serves four capabilities (Tasks 3.2–3.4)
 
-`595ace68` removed seven provider declarations that only a test imported. Each re-implemented a job a feature already did at runtime, in a thinner form. It also cut `CapabilityMap` to the capabilities that have both a provider and a caller: `artist.enrich`, `album.enrich`, `lyrics`, `catalogue.album` and `catalogue.search`.
+`595ace68` removed seven provider declarations that only a test imported. Each re-implemented a job a feature already did at runtime, in a thinner form. It also cut `CapabilityMap` to the capabilities that have both a provider and a caller: `artist.enrich`, `album.enrich`, `catalogue.album` and `catalogue.search`.
+
+`lyrics` was cut later for the same reason. Its only caller, `resolveLyricsAttributed`, was called by nothing but its own test. The lyrics screen resolves through `resolveLyrics`, with fetchers declared in `providers/registry/lyricsFetchers.ts`.
 
 - Acquisition stays in `features/downloaders/registry.ts`.
 - Scrobbling stays in the scrobble routing and the offline mutation queue.
-- Queue fill and similarity stay in `features/playback/queueProviders.ts`. The choice of fill source is declared in `providers/registry/queueFillProviders.ts`.
+- Queue fill stays in `features/playback/queueProviders.ts`. The choice of fill source is declared in `providers/registry/queueFillProviders.ts`, and the similarity service in `providers/registry/similarityService.ts`.
 - There is no `providers.ts` union of server and integration providers. The broker serves integrations, and the active server is reached through its adapter.
 
 This follows the contract's own rule that a capability is added with its first consumer. The Definition of Done item "one typed callable capability system" is met in that narrower sense.
@@ -1070,6 +1072,22 @@ Zack waived the rest of the matrix on 2026-09-14; Task 13.2's "complete parity m
 
 These remain as the overview found them. Each blocks cutover unless it is separately amended:
 
-- Android verification of these changes
-- provider-name references outside provider homes (92 allowlisted)
+- Android verification of these changes (handed to the desktop session on 2026-09-14)
 - behaviour-level tests for Library and Equalizer settings, which only compose other components (unused exports are now at 0, and the other settings screens have behaviour tests)
+
+### 8.8 Provider names and scaffolding (Tasks 11.3, 13.1)
+
+- **Provider names outside provider homes: 0.**
+  - Features ask the registry for what they need and never name who answers:
+    - page sources: previews, similar artists, recommendations, artist-id lookup (`pageSources.ts`)
+    - Home tiers (`homeDiscovery.ts`)
+    - the similarity service (`similarityService.ts`)
+    - cover URLs and cache keys (`covers.ts`)
+    - lyrics fetchers (`lyricsFetchers.ts`)
+  - Podcast covers are built by the server that owns the feed.
+  - The domain's cover kinds and external id names count as provider homes. Persisted data is written in them, and renaming them would orphan stored libraries and wants.
+- **Deleted:**
+  - the parity matrix and the tooling that generated it
+  - `tools/architecture/allowlist.json` (every gate is at zero, so any violation fails)
+  - comments that cited plan tasks, phases or gates
+- **Not done as written:** the plan asks to re-run the gates "from a clean install". They were re-run on the existing install instead. A clean `npm ci` would have replaced `node_modules` under the Metro server that the running dev app loads from this worktree.

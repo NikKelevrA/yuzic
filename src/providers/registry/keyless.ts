@@ -15,11 +15,9 @@ import type { Provider } from '../contracts/Provider';
 import { deezerProvider } from './deezer';
 import { musicbrainzProvider } from './musicbrainz';
 import { lastfmProvider } from './lastfm';
-import { lrclibProvider } from './lrclib';
 
 export const KEYLESS_INTEGRATIONS: readonly Provider[] = [
   deezerProvider,
   musicbrainzProvider,
   lastfmProvider,
-  lrclibProvider,
 ];

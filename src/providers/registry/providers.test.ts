@@ -32,7 +32,6 @@ jest.mock('@/providers/integration/musicbrainz', () => ({
 jest.mock('@/providers/integration/musicbrainz/mapAlbum', () => ({ mapAlbum: jest.fn() }));
 jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({ mapSong: jest.fn() }));
 jest.mock('@/providers/integration/lastfm', () => ({ getLastFmArtistInfo: jest.fn() }));
-jest.mock('@/providers/integration/lrclib', () => ({ getLyrics: jest.fn() }));
 // Last.fm's api_key is a build-time env var, empty in the test environment —
 // fix it to a non-empty value so the provider's own "no key, no request"
 // guard doesn't mask the wiring this file is testing.
@@ -41,14 +40,12 @@ jest.mock('@/constants/keys', () => ({ LASTFM_API_KEY: 'test-lastfm-key' }));
 import { deezerProvider } from './deezer';
 import { musicbrainzProvider } from './musicbrainz';
 import { lastfmProvider } from './lastfm';
-import { lrclibProvider } from './lrclib';
 import { KEYLESS_INTEGRATIONS } from './keyless';
 import * as deezerApi from '@/providers/integration/deezer';
 import * as mbApi from '@/providers/integration/musicbrainz';
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
 import * as lastfmApi from '@/providers/integration/lastfm';
-import * as lrclibApi from '@/providers/integration/lrclib';
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -178,29 +175,13 @@ describe('lastfm provider', () => {
   });
 });
 
-// --- lrclib --------------------------------------------------------------
-
-describe('lrclib provider', () => {
-  it('calls its own api module for lyrics', async () => {
-    (lrclibApi.getLyrics as jest.Mock).mockResolvedValue({ synced: true, lines: [] });
-
-    await lrclibProvider.capabilities.lyrics?.(makeSong());
-    expect(lrclibApi.getLyrics).toHaveBeenCalledWith({
-      artist: 'Test Artist',
-      title: 'Test Song',
-      album: 'Test Album',
-      durationSec: 180,
-    });
-  });
-});
-
 // --- cross-provider invariants -----------------------------------------------
 
 describe('the keyless integrations, assembled together', () => {
   it('has a unique id per provider', () => {
     const ids = KEYLESS_INTEGRATIONS.map(p => p.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect([...ids].sort()).toEqual(['deezer', 'lastfm', 'lrclib', 'musicbrainz']);
+    expect([...ids].sort()).toEqual(['deezer', 'lastfm', 'musicbrainz']);
   });
 
   it('declares every capability as a real function', () => {
@@ -221,6 +202,5 @@ describe('the keyless integrations, assembled together', () => {
     expect(deezerApi.resolveDeezerArtistByName).not.toHaveBeenCalled();
     expect(mbApi.searchArtist).not.toHaveBeenCalled();
     expect(lastfmApi.getLastFmArtistInfo).not.toHaveBeenCalled();
-    expect(lrclibApi.getLyrics).not.toHaveBeenCalled();
   });
 });

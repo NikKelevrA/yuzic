@@ -8,7 +8,7 @@
  *   3. May this feature use it? — feature policy, which the user sets.
  *
  * All three must hold. A connected provider the user has switched off for
- * lyrics must not answer a lyrics request, and a provider the user has enabled
+ * artist info must not answer an artist-info request, and a provider the user has enabled
  * but that cannot be reached must not be tried first and silently fail.
  *
  * Enumeration never invokes a provider. Asking who could supply an artist
