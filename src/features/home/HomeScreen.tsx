@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useSelector } from 'react-redux'
 
-import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
+import { selectActiveServer, selectCredentialsHydrated } from '@/state/redux/selectors/serversSelectors'
 import { selectSyncOnAppStart } from '@/features/settings/sync/state';
 import { useTheme } from '@/features/theme/useTheme'
 import { useSync } from '@/features/library/useSync'
@@ -30,6 +30,7 @@ export default function HomeScreen() {
 
   const { sync } = useSync()
   const syncOnAppStart = useSelector(selectSyncOnAppStart)
+  const credentialsHydrated = useSelector(selectCredentialsHydrated)
   const isOffline = useIsOffline()
   const isOfflineRef = useRef(isOffline)
 
@@ -43,12 +44,15 @@ export default function HomeScreen() {
       return
     }
     if (isOfflineRef.current) return
+    // Before the keystore read `sync()` does nothing, and marking the server
+    // synced here would mean the start-up sync never happened at all.
+    if (!credentialsHydrated) return
 
     if (lastAutoSyncServerIdRef.current === activeServer.id) return
 
     lastAutoSyncServerIdRef.current = activeServer.id
     sync()
-  }, [activeServer?.id, activeServer?.isAuthenticated, sync, syncOnAppStart])
+  }, [activeServer?.id, activeServer?.isAuthenticated, credentialsHydrated, sync, syncOnAppStart])
 
   useEffect(() => {
     setIsMounted(true)

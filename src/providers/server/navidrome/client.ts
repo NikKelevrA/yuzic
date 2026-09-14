@@ -25,6 +25,14 @@ const CLIENT_NAME = "Yuzic";
 
 export type NavidromeClient = ReturnType<typeof createNavidromeClient>;
 
+/** A request the server answered and refused — `status: "failed"` in a 200 body. */
+export class SubsonicRequestError extends Error {
+  constructor(readonly code: number | undefined, message: string | undefined) {
+    super(message ?? `Subsonic request failed${code !== undefined ? ` (${code})` : ''}`);
+    this.name = 'SubsonicRequestError';
+  }
+}
+
 function randomSalt(): string {
   return Math.random().toString(36).slice(2, 14);
 }
@@ -86,7 +94,15 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
         if (!res.ok) {
           throw new Error(`Navidrome API error (${res.status}): ${await res.text()}`);
         }
-        return res.json();
+        const body = await res.json();
+        // Subsonic refuses with 200 OK and says so in the body. Returned as-is,
+        // a refusal read as a response with nothing in it — a library that was
+        // empty rather than a request that failed (see client.test.ts).
+        const envelope = body?.["subsonic-response"];
+        if (envelope?.status === "failed") {
+          throw new SubsonicRequestError(envelope.error?.code, envelope.error?.message);
+        }
+        return body as T;
       } finally {
         clearTimeout(timer);
       }

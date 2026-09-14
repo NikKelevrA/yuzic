@@ -1,7 +1,9 @@
 import { useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { QueryKey, useQueries, useQuery } from '@tanstack/react-query';
 import { useServerUnreachable } from '@/features/connectivity/serverReachability';
+import { selectCredentialsHydrated } from '@/state/redux/selectors/serversSelectors';
 
 export function hasArrayData<T>(value: T[] | null | undefined): value is T[] {
   return Array.isArray(value) && value.length > 0;
@@ -75,11 +77,17 @@ export function useOfflineFirstQuery<T>({
   // until their own timeout. ServerReachabilityWatcher clears the flag on the
   // first successful ping and invalidates, so these re-enable and refetch.
   const serverUnreachable = useServerUnreachable();
+  // A server's secrets arrive from the keystore a moment after launch. Asked
+  // before then, the server refuses an empty password, and under
+  // `staleTime: Infinity` whatever came back would stand in for the library
+  // until the cache was cleared.
+  const credentialsHydrated = useSelector(selectCredentialsHydrated);
+  const awaitingCredentials = enabled && !credentialsHydrated;
 
   const query = useQuery<T, Error>({
     queryKey,
     queryFn,
-    enabled: enabled && !isOffline && !serverUnreachable,
+    enabled: enabled && credentialsHydrated && !isOffline && !serverUnreachable,
     staleTime,
     networkMode: 'offlineFirst',
   });
@@ -145,7 +153,8 @@ export function useOfflineFirstQuery<T>({
 
   return {
     data,
-    isLoading: query.isLoading && !hasAnyData && !isOffline && !serverUnreachable,
+    // Waiting for credentials is loading, not "nothing here".
+    isLoading: (query.isLoading || awaitingCredentials) && !hasAnyData && !isOffline && !serverUnreachable,
     error: hasAnyData ? null : query.error ?? null,
     isOffline,
     serverUnreachable,
