@@ -6,11 +6,11 @@
  * violate also fail, with instructions to prune them — that is what makes the
  * allowlist shrink-only rather than a place things quietly accumulate.
  *
- * The allowlist is the measured state of the tree when the gates went in. It
- * is not an exemption anyone is entitled to add to: every phase of the rewrite
- * is expected to empty its section.
+ * The allowlist held the measured state of the tree when the gates went in.
+ * Every section has since been emptied, so there is no file and any violation
+ * fails. It is not an exemption anyone is entitled to add to.
  */
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative, sep } from 'node:path';
 
@@ -27,7 +27,15 @@ export function readAllowlist() {
 
 export function writeAllowlist(next) {
   const sorted = {};
-  for (const key of Object.keys(next).sort()) sorted[key] = [...next[key]].sort();
+  for (const key of Object.keys(next).sort()) {
+    if (next[key].length) sorted[key] = [...next[key]].sort();
+  }
+  // A gate tolerating nothing needs no section, and with no sections there is
+  // no file to keep: a prune that empties the last one removes it.
+  if (Object.keys(sorted).length === 0) {
+    rmSync(ALLOWLIST_PATH, { force: true });
+    return;
+  }
   writeFileSync(ALLOWLIST_PATH, JSON.stringify(sorted, null, 2) + '\n');
 }
 

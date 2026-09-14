@@ -127,6 +127,13 @@ const PROVIDER_HOMES = [
   'src/state/redux/selectors/scrobbleRoutingSelectors.ts',
   'src/features/offline/offlineMutations.ts',         // a queued scrobble names its destination
   'src/features/offline/OfflineMutationReplayer.tsx', // and replays to it
+  // The domain's own vocabulary, which persisted data is written in: a cover
+  // says which kind of server can draw it, an external id says which
+  // catalogue issued it. Renaming either would orphan every stored library
+  // entry and want, for a name no user sees.
+  'src/domain/entities/Cover.ts',
+  'src/domain/identity/ExternalIds.ts',
+  'src/domain/identity/matching.ts',        // matches on those same id names
 ];
 
 /**

@@ -5,10 +5,7 @@ import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel'
 import ArtistHeader from './'
 
 /**
- * Ported from the old fetcher-based `useArtworkEnrichment` wiring test
- * (deleted alongside `features/metadata/resolveArtwork.ts` — Phase 5
- * closure, see `providers/registry/enrichmentBroker.ts`). `ArtistHeader`
- * now takes the screen model directly, so these drive it with a model
+ * `ArtistHeader` takes the screen model directly, so these drive it with a model
  * built by hand instead of mocking the resolver's network boundary —
  * `resolveArtistDetails.test.ts` and `enrichmentBroker.test.ts` cover the
  * resolution itself (ordered first-hit fallback, a disabled source

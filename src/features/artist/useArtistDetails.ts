@@ -1,8 +1,7 @@
 /**
  * `resolveArtistDetails` behind a `useQuery`, wired to the real
- * `metadata.enrich` broker — replaces the old fetcher-based
- * `useArtistInfoEnrichment` (bio) and `useArtworkEnrichment` (cover) call
- * pair with the one attributed resolution Phase 5 introduced.
+ * `metadata.enrich` broker: one attributed resolution for an artist's
+ * biography and cover.
  */
 import { useQuery } from '@tanstack/react-query';
 import { resolveArtistDetails, type ResolvedArtist } from './resolveArtistDetails';

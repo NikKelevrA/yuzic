@@ -13,7 +13,7 @@ function sourceFiles(dir: string): string[] {
 }
 
 /**
- * Every settings screen has a way in (plan Task 10.4).
+ * Every settings screen has a way in.
  *
  * Three routes — Deezer, Last.fm, MusicBrainz — outlived the rows that opened
  * them. Nothing failed: the screens still built and the layout still

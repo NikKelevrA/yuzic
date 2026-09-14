@@ -45,13 +45,11 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
 
   const { artist, isLocal, resolved, counts } = model;
   const displayName = artist?.name ?? '';
-  // The artist's own cover is authoritative — `resolveArtistDetails`
-  // (Phase 5 enrichment) is only ever consulted for the gap, so its result
-  // is used only when the artist itself has none. Its result is also `null`
-  // both while enrichment is off and while it hasn't settled yet, so this
-  // never flashes a wrong cover ahead of the real one, same "disabling
-  // restores the server view" guarantee the old fetcher-based
-  // `useArtworkEnrichment` had.
+  // The artist's own cover is authoritative — `resolveArtistDetails` is only
+  // ever consulted for the gap, so its result is used only when the artist
+  // itself has none. Its result is also `null` both while enrichment is off
+  // and while it hasn't settled yet, so this never flashes a wrong cover
+  // ahead of the real one, and turning enrichment off restores the server's.
   const hasOwnCover = artist ? artist.cover.kind !== 'none' : true;
   const displayCover = hasOwnCover ? (artist?.cover ?? { kind: 'none' as const }) : (resolved?.cover.value ?? { kind: 'none' as const });
   const showsEnrichedArtworkLine = !hasOwnCover && !!resolved && resolved.cover.value.kind !== 'none';

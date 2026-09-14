@@ -30,10 +30,9 @@ interface ScrobblingSettingsState {
    * they opt out of the other; broadcasting "listening now" only to hide
    * the finished listen was never a real user intent.
    *
-   * NOTE: the rewrite plan called for deleting this field as dead, but it is
-   * not — `scrobbleRoutingSelectors.ts` reads it directly to derive a route
-   * default for every server that predates per-destination routing. Only its
-   * selector (`selectServerScrobbleEnabled`, zero consumers) was dead. */
+   * Nothing selects this field on its own, but it is not dead:
+   * `scrobbleRoutingSelectors.ts` reads it directly to derive a route
+   * default for every server that predates per-destination routing. */
   serverScrobbleEnabled: boolean;
   /**
    * Per-server, per-destination scrobble route — see {@link ScrobbleRoutes}.

@@ -5,7 +5,7 @@ import {
 } from './state'
 
 /**
- * Task 4.3: these selectors used to fall back with `??` because a user
+ * These selectors used to fall back with `??` because a user
  * upgrading could have a settings blob written before the key existed.
  * Under this slice's own storage namespace there is no such blob — a fresh
  * `initialState` always supplies every key, and redux-persist's default

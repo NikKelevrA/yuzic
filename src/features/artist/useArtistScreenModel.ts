@@ -3,7 +3,7 @@
  *
  * Replaces the artist screen's old `localArtist ?? externalArtist` pair:
  * identity resolution (local-library match, or an external lookup when
- * there is none), the base entity fetch, Phase 5 enrichment
+ * there is none), the base entity fetch, enrichment
  * (`resolveArtistDetails`), and discography classification all happen here,
  * once, so `ArtistScreen`/`Header`/`Content` render a single model instead
  * of each re-deriving pieces of it.
@@ -39,7 +39,7 @@ export type ArtistScreenModel = {
   /** True when a local artist is showing persisted-cache data because the
    *  server couldn't be reached. */
   degraded: boolean;
-  /** Phase 5 attributed cover enrichment — the cover, gap-filled from the
+  /** Attributed cover enrichment — the cover, gap-filled from the
    *  first enabled `artist.enrich` offer. `null` until the artist itself is
    *  known and its resolution has settled.
    *

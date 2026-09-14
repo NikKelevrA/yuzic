@@ -3,7 +3,7 @@ import { createNavidromeClient } from './navidrome/client';
 
 /**
  * Playback quality is a setting that has to change what is actually requested
- * from the server (plan Task 10.3), not just what Redux holds.
+ * from the server, not just what Redux holds.
  */
 describe('stream quality reaches the stream request', () => {
   it('maps each quality to a transcode ceiling, and original to the untouched file', () => {

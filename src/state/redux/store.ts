@@ -49,7 +49,7 @@ const searchHistoryMigrate = (state: any, currentVersion: number): Promise<any> 
 const serversPersistConfig = { key: 'servers', storage, blacklist: ['credentialsHydrated'] };
 const downloadersPersistConfig = { key: 'downloaders', storage };
 const audiomusePersistConfig = { key: 'audiomuse', storage };
-// Task 4.3: the settings junk drawer (one `settings` key, 57 unrelated
+// The settings junk drawer (one `settings` key, 57 unrelated
 // fields) is gone — each feature owns its own slice and its own storage key.
 // These are new keys under the rewrite's storage namespace: there is no
 // legacy `settings` blob to migrate from, so no `migrate` function and no
@@ -130,7 +130,7 @@ const statsPersistConfig = {
   migrate: resetMigrate,
   throttle: 1000,
 };
-// Task 4.1 left genres behind in a `library` slice; they are now a catalog
+// Genres used to live in a `library` slice; they are now a catalog
 // query like the rest (`useGenres`), so the slice and its persist key are gone.
 // The old on-disk payload is simply never read again.
 

@@ -126,7 +126,7 @@ type SourceDefinition = {
 
 /**
  * Both sources are keyless public APIs — no credentials, no server URL, no
- * account. `'none'` still leaks query contents to the provider (§7 rule 1),
+ * account. `'none'` still leaks query contents to the provider,
  * so it isn't "no auth model", just the weakest tier.
  */
 const noAuth = { tier: 'none' as const }

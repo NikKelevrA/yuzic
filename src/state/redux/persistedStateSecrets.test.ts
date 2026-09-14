@@ -1,5 +1,5 @@
 /**
- * Task 4.4: no secret reaches Redux (and therefore MMKV, which is what
+ * No secret reaches Redux (and therefore MMKV, which is what
  * redux-persist writes every persisted slice to as plain JSON).
  *
  * This seeds a store through the real credential-capture paths — the same

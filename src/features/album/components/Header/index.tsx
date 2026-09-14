@@ -53,8 +53,8 @@ const AlbumHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
   const { album, isLocal, resolved, songs } = model;
   const displayTitle = album?.title ?? '';
   const hasOwnCover = album ? album.cover.kind !== 'none' : true;
-  // The album's own cover always wins — `resolveAlbumDetails` (Phase 5
-  // enrichment) is only ever consulted for the gap, and its result is
+  // The album's own cover always wins — `resolveAlbumDetails` enrichment is
+  // only ever consulted for the gap, and its result is
   // `null` both while it's off and while it hasn't settled — either way
   // this falls back to the bare `album.cover`, so nothing flashes a wrong
   // cover ahead of the real one.

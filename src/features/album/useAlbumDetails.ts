@@ -1,8 +1,7 @@
 /**
  * `resolveAlbumDetails` behind a `useQuery`, wired to the real
- * `metadata.enrich` broker — replaces the old fetcher-based
- * `useArtworkEnrichment` call for album covers with Phase 5's attributed
- * resolution.
+ * `metadata.enrich` broker, so a gap in an album's cover is filled with an
+ * attributed result.
  */
 import { useQuery } from '@tanstack/react-query';
 import { resolveAlbumDetails, type ResolvedAlbum } from './resolveAlbumDetails';
