@@ -28,6 +28,7 @@ import {
 import { selectListenBrainzUsername } from '@/state/redux/selectors/listenbrainzSelectors';
 import type { RootState } from '@/state/redux/store';
 import type { SourceId, SourceUseId } from './sources';
+import { withArtistArtwork } from './artistArtwork';
 
 export type { CreatedForMixType };
 
@@ -215,12 +216,13 @@ export async function fetchAlbumsForGenre(
 export async function fetchSimilarArtistsFromListeners(
   mbid: string,
   limit: number,
-  excludeName?: string
+  excludeName?: string,
+  options: { withArtwork?: boolean } = {}
 ): Promise<Artist[]> {
   const raw = await getLBSimilarArtists(mbid, limit);
   const provenance = integrationProvenance('listenbrainz');
   const exclude = excludeName?.trim().toLowerCase();
-  return raw
+  const artists = raw
     .filter(artist => !exclude || artist.name.trim().toLowerCase() !== exclude)
     .map((artist): Artist => ({
       localId: makeLocalId('artist', provenance, artist.artistMbid),
@@ -233,6 +235,8 @@ export async function fetchSimilarArtistsFromListeners(
       tags: [],
       albumIds: [],
     }));
+  // The graph names artists and nothing more, so every tile was a placeholder.
+  return options.withArtwork ? withArtistArtwork(artists) : artists;
 }
 
 /** One of the account's made-for-you mixes, or no tracks if it has none. */
