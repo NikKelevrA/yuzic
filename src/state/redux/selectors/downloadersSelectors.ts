@@ -1,5 +1,6 @@
 import { RootState } from '@/state/redux/store';
 import { createSelector } from '@reduxjs/toolkit';
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import {
   DOWNLOADER_IDS,
@@ -51,10 +52,13 @@ function buildSelectors(id: DownloaderId): DownloaderSelectors {
     useSelector(selectCredentialsHydrated);
     return serverId ? getCredentials(downloaderCredentialScope(id, serverId)).apiKey ?? '' : '';
   }
+  // One object per URL and key rather than per render: callers put the config
+  // in effect dependencies, and a fresh object each time re-ran the Lidarr
+  // quality-profile fetch after every fetch it caused.
   function useConfig(): { serverUrl: string; apiKey: string } {
     const url = useSelector(serverUrl);
     const apiKey = useApiKey();
-    return { serverUrl: url, apiKey };
+    return useMemo(() => ({ serverUrl: url, apiKey }), [url, apiKey]);
   }
   return { serverUrl, isAuthenticated, useApiKey, useConfig };
 }
