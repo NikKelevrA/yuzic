@@ -117,11 +117,10 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
 
   const downloadedAlbumIds = useMemo(
     () => getFullyDownloadedAlbumIds(
-      // `nativeId`, matching what DownloadContext persists a track under
-      // (`trackId`/`originalTrack.id` are `nativeId` there too — see its
-      // `toQueueTrack` doc) — these two sides have to agree on which id they
-      // key by, or every album would read as never fully downloaded.
-      tracks.map(track => ({ id: track.nativeId, albumId: track.album.nativeId })),
+      // Tracks by `localId`, the id downloads are filed under — the two sides
+      // have to agree, or every album reads as never fully downloaded. Albums
+      // by `nativeId`, which is what search results carry.
+      tracks.map(track => ({ id: track.localId, albumId: track.album.nativeId })),
       downloadedTrackIds
     ),
     [tracks, downloadedTrackIds]

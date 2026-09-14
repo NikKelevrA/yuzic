@@ -111,7 +111,7 @@ export function useLibraryItems(
         return sortItems([
           ...albums.filter(a => downloadedCollectionIds.has(a.nativeId)).map(a => ({ kind: 'album' as const, data: a })),
           ...playlists.filter(p => downloadedCollectionIds.has(p.nativeId)).map(p => ({ kind: 'playlist' as const, data: p })),
-          ...tracks.filter(tr => looseDownloadedTrackIds.has(tr.nativeId)).map(tr => ({ kind: 'track' as const, data: tr })),
+          ...tracks.filter(tr => looseDownloadedTrackIds.has(tr.localId)).map(tr => ({ kind: 'track' as const, data: tr })),
         ], sortOrder, statsForSort)
       default:
         return sortItems([

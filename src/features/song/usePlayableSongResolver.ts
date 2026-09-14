@@ -61,17 +61,15 @@ export function usePlayableSongResolver() {
     const songId = songIdFromInput(input);
     if (!songId) return null;
 
-    const localPath = getLocalPath(songId);
-    if (localPath) {
-      // A downloaded file is playable from its own bytes regardless of server
-      // reachability, so it takes priority over the cache below. Its metadata
-      // comes from the synced library — a domain `Song` is the only shape
-      // this hook hands onward now, so a track downloaded but never synced
-      // (should not happen — download starts from a synced row) has no
-      // honest metadata to attach and is left unresolved rather than guessed.
-      const domainSong = songsById.get(songId);
-      if (!domainSong) return null;
-      const resource: PlayableResource = { song: domainSong, streamUrl: localPath, filePath: localPath };
+    // A downloaded file is playable from its own bytes regardless of server
+    // reachability, so it takes priority over the cache below. Downloads are
+    // filed under the song's `localId`, which only the synced library's copy
+    // can supply from the server id this was asked with — and a download
+    // always starts from a synced row.
+    const librarySong = songsById.get(songId);
+    const localPath = librarySong ? getLocalPath(librarySong.localId) : null;
+    if (librarySong && localPath) {
+      const resource: PlayableResource = { song: librarySong, streamUrl: localPath, filePath: localPath };
       queryClient.setQueryData([QueryKeys.Song, activeServer?.id, songId], resource);
       return resource;
     }
@@ -86,7 +84,7 @@ export function usePlayableSongResolver() {
     // Prefer the synced library's own copy — no network round trip — and
     // fall back to fetching it fresh (a track outside the synced library:
     // search, an artist page never opened before, ...).
-    const domainSong = songsById.get(songId) ?? await withTimeout(
+    const domainSong = librarySong ?? await withTimeout(
       api.tracks.get(songId),
       options.timeoutMs ?? DEFAULT_TIMEOUT_MS
     ).catch(() => null);

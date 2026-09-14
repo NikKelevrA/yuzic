@@ -1,4 +1,4 @@
-import type { PersistedResumable } from './localDownloadStore';
+import type { PersistedResumable } from './downloadStore';
 
 /**
  * Bookkeeping for downloads that were interrupted part-way.

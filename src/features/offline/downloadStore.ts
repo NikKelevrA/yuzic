@@ -1,3 +1,30 @@
+import type { Song } from '@/domain/entities/Song';
+
+/**
+ * Enough to pick a half-finished download back up: expo's own
+ * `DownloadResumable.savable()` shape, keyed by track `localId`. Without it,
+ * backgrounding the app during a 40MB track threw those 40MB away.
+ */
+export type PersistedResumable = {
+  trackId: string;
+  url: string;
+  fileUri: string;
+  resumeData?: string;
+  /** So a stale entry from a since-changed server can be discarded. */
+  savedAt: number;
+};
+
+export type PersistedDownloadJob = {
+  id: string;
+  type: 'track' | 'album' | 'playlist';
+  collectionId?: string;
+  tracks: Song[];
+  createdAt: number;
+  updatedAt: number;
+  /** Failed runs so far; the queue drops the job once this hits its cap. */
+  attempts?: number;
+};
+
 export type DownloadedTrackEntry = {
   trackId: string;
   fileSize: number;

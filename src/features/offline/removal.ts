@@ -1,5 +1,4 @@
-import type { DownloadedCollectionEntry } from './downloadStore';
-import type { PersistedDownloadJob } from './localDownloadStore';
+import type { DownloadedCollectionEntry, PersistedDownloadJob } from './downloadStore';
 import {
   doesTrackMatchProviderScope,
   type DownloadProviderScope,

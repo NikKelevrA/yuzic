@@ -59,7 +59,7 @@ export function usePlaybackResources() {
    * unplayable.
    */
   const resolvePlayableSong = useCallback((song: Song): PlayableResource | null => {
-    const localPath = getLocalPath(song.nativeId);
+    const localPath = getLocalPath(song.localId);
     if (localPath) return { song, streamUrl: localPath, filePath: localPath };
     // A preview clip is issued once and cannot be rebuilt, so `streamId`
     // carries the literal playable URL. Everything else is built fresh every

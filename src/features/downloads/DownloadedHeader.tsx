@@ -27,12 +27,13 @@ export default function DownloadedHeader() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const activeServer = useSelector(selectActiveServer);
-  const { totalDownloadedBytes, downloadStateVersion, clearDownloadsForProvider } = useDownload();
+  const { totalDownloadedBytes, downloadedTrackCount, clearDownloadsForProvider } = useDownload();
   const [freeBytes, setFreeBytes] = useState<number | null>(null);
 
+  // Re-read whenever what is downloaded changes, which is when free space does.
   useEffect(() => {
     setFreeBytes(Paths.availableDiskSpace);
-  }, [downloadStateVersion]);
+  }, [downloadedTrackCount]);
 
   const confirmClear = () => {
     confirmDestructive({

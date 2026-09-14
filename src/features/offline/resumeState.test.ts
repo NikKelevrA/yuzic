@@ -6,7 +6,7 @@ import {
   stagingPathsToKeep,
   upsertResumable,
 } from './resumeState';
-import type { PersistedResumable } from './localDownloadStore';
+import type { PersistedResumable } from './downloadStore';
 
 const NOW = 1_700_000_000_000;
 

@@ -1,8 +1,8 @@
 import type {
   DownloadedCollectionEntry,
   DownloadedTrackEntry,
+  PersistedDownloadJob,
 } from './downloadStore';
-import type { PersistedDownloadJob } from './localDownloadStore';
 
 /**
  * Pure half of restoring downloads at startup.
