@@ -8,9 +8,7 @@
     "src/features/artist/components/Content/index.tsx",
     "src/features/artist/components/Header/index.tsx",
     "src/features/player/PlayingScreen.tsx",
-    "src/features/player/playingBar/PlayingBarBase.tsx",
-    "src/providers/integration/lidarr/albums/index.ts",
-    "src/providers/registry/serverConnections.ts"
+    "src/features/player/playingBar/PlayingBarBase.tsx"
   ],
   "provider-branches": [
     "src/components/options/GetReviewSheet.tsx lidarr",
@@ -121,8 +119,6 @@
     "src/state/redux/store.ts listenbrainz"
   ],
   "shims": [],
-  "unsafe": [
-    "double-cast src/components/useSheetRef.ts"
-  ],
+  "unsafe": [],
   "unused-exports": []
 }

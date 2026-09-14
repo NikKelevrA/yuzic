@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { ApiAdapter } from "../contracts/ServerAdapter";
-import { SERVER_PROVIDERS, withServerCredentials } from "@/providers/registry/serverConnections";
+import { SERVER_PROVIDERS } from "@/providers/registry/serverConnections";
+import { withServerCredentials } from "@/providers/registry/serverCredentials";
 import { selectActiveServer, selectCredentialsHydrated } from "@/state/redux/selectors/serversSelectors";
 
 const empty = async () => {

@@ -22,7 +22,7 @@ import { addServer, setActiveServer } from './slices/serversSlice';
 import { setUsername } from './slices/listenbrainzSlice';
 import { setAudiomuseServerUrl, connectAudiomuse } from './slices/audiomuseSlice';
 import { setDownloaderServerUrl, connectDownloader } from './slices/downloadersSlice';
-import { saveServerCredentials } from '@/providers/registry/serverConnections';
+import { saveServerCredentials } from '@/providers/registry/serverCredentials';
 import { listenBrainzCredentialScope } from './selectors/listenbrainzSelectors';
 import { audiomuseCredentialScope } from './selectors/audiomuseSelectors';
 import { downloaderCredentialScope } from './selectors/downloadersSelectors';

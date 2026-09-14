@@ -45,7 +45,7 @@ interface Props {
   album: Album;
   /** When set, the sheet requests this single track instead of the whole album. */
   track?: { title: string; artist: string };
-  sheetRef: React.RefObject<BottomSheetModal>;
+  sheetRef: React.RefObject<BottomSheetModal | null>;
 }
 
 /**

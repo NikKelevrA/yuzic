@@ -2,16 +2,14 @@ import type { Album } from '@/domain/entities/Album';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 
+import { downloadAlbum } from './';
 import {
   albumRequestFromExternal,
-  downloadAlbum,
   resolveAlbumCandidate,
   resolveArtistCandidate,
-} from './';
-import type {
-  LidarrAlbum,
-  LidarrAlbumRequest,
-} from './';
+  type LidarrAlbum,
+  type LidarrAlbumRequest,
+} from './resolution';
 import type { LidarrArtistLookupResult } from '../artists';
 
 const iveCandidates: LidarrArtistLookupResult[] = [

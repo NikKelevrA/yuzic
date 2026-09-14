@@ -5,7 +5,7 @@ import { hydrateAll } from '@/state/credentialCache';
 import type { RootState } from '@/state/redux/store';
 import { setCredentialsHydrated } from '@/state/redux/slices/serversSlice';
 import { selectCredentialsHydrated } from '@/state/redux/selectors/serversSelectors';
-import { serverCredentialScopes } from '@/providers/registry/serverConnections';
+import { serverCredentialScopes } from '@/providers/registry/serverCredentials';
 
 /**
  * Nothing that can talk to a server renders before its secrets are loaded.

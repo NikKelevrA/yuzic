@@ -12,10 +12,8 @@ export function getQualityProfiles(config: LidarrConfig) {
 export type { LidarrQualityProfile } from './artists';
 
 // Albums
-export {
-  albumRequestFromExternal,
-  downloadAlbum,
-} from './albums';
+export { downloadAlbum } from './albums';
+export { albumRequestFromExternal } from './albums/resolution';
 
 // Queue
 export {

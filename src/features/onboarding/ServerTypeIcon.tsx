@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
-import type { ServerProviderIcon } from '@/providers/registry/serverConnections';
+import type { ServerProviderIcon } from '@/providers/registry/serverProviderTypes';
 
 /**
  * A server type's mark: its brand logo where it has one, a glyph from the

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { CodeAuthApi } from '@/providers/registry/serverConnections';
+import type { CodeAuthApi } from '@/providers/registry/serverProviderTypes';
 import type { BasicAuth, ProviderAuth } from '@/providers/contracts/Server';
 
 type CodeAuthPhase =

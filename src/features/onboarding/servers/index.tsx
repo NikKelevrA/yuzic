@@ -19,7 +19,8 @@ import {
 import { clearOfflineMutationsForServer } from '@/state/redux/slices/offlineMutationsSlice';
 import { Ellipsis } from 'lucide-react-native';
 
-import { SERVER_PROVIDERS, forgetAllServerCredentials } from '@/providers/registry/serverConnections';
+import { SERVER_PROVIDERS } from '@/providers/registry/serverConnections';
+import { forgetAllServerCredentials } from '@/providers/registry/serverCredentials';
 import { Server } from '@/providers/contracts/Server';
 import { useTranslation } from 'react-i18next';
 import Touchable from '@/components/Touchable';
