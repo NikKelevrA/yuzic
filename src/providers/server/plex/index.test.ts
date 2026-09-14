@@ -69,4 +69,52 @@ describe('Plex adapter', () => {
     });
   });
 
+
+  describe("discovery", () => {
+    const track = (id: string, genres: string[] = []) => ({
+      type: "track", ratingKey: id, title: id, Genre: genres.map(tag => ({ tag })), Media: [{ Part: [{ key: `/library/parts/${id}` }] }],
+    });
+
+    it("draws a random page from each library and interleaves them", async () => {
+      mockRequest.mockImplementation(async (path: string) => {
+        if (path === "/library/sections") return { MediaContainer: { Directory: [{ key: "1" }, { key: "2" }] } };
+        if (path.startsWith("/library/sections/1/all?type=10&sort=random")) return { MediaContainer: { Metadata: [track("a1"), track("a2")] } };
+        if (path.startsWith("/library/sections/2/all?type=10&sort=random")) return { MediaContainer: { Metadata: [track("b1")] } };
+        throw new Error(`unexpected ${path}`);
+      });
+
+      const songs = await createPlexAdapter(server).discovery!.getRandomSongs({ size: 3 });
+
+      expect(songs.map(song => song.nativeId)).toEqual(["a1", "b1", "a2"]);
+    });
+
+    it("keeps only tracks tagged with the asked-for genre, from a wider draw", async () => {
+      mockRequest.mockImplementation(async (path: string) => {
+        if (path === "/library/sections") return { MediaContainer: { Directory: [{ key: "1" }] } };
+        return { MediaContainer: { Metadata: [track("j1", ["Jazz"]), track("r1", ["Rock"]), track("j2", ["jazz"])] } };
+      });
+
+      const songs = await createPlexAdapter(server).discovery!.getRandomSongs({ size: 5, genre: "Jazz" });
+
+      expect(songs.map(song => song.nativeId)).toEqual(["j1", "j2"]);
+      expect(mockRequest).toHaveBeenCalledWith(expect.stringContaining("sort=random"), {
+        headers: { "X-Plex-Container-Start": "0", "X-Plex-Container-Size": "20" },
+      });
+    });
+
+    it("lists tracks playing in sessions, and nothing when Plex refuses to show them", async () => {
+      mockRequest.mockResolvedValueOnce({
+        MediaContainer: { Metadata: [
+          { ...track("t1"), grandparentTitle: "Artist", parentTitle: "Album", parentRatingKey: "al1", thumb: "/thumb/t1", User: { title: "ari" } },
+          { type: "episode", ratingKey: "e1", title: "Show", User: { title: "sam" } },
+        ] },
+      });
+      await expect(createPlexAdapter(server).discovery!.getNowPlaying()).resolves.toEqual([
+        expect.objectContaining({ songId: "t1", artist: "Artist", albumId: "al1", username: "ari", cover: { kind: "plex", path: "/thumb/t1" } }),
+      ]);
+
+      mockRequest.mockRejectedValueOnce(new Error("Plex request failed (401)"));
+      await expect(createPlexAdapter(server).discovery!.getNowPlaying()).resolves.toEqual([]);
+    });
+  });
 });

@@ -49,6 +49,7 @@ import { getTracks } from "./tracks/getTracks";
 import { getInstantMix } from "./instantMix/getInstantMix";
 import { getSimilarAlbums, getSimilarArtists } from "./similar/getSimilarItems";
 import { search } from "./search/search";
+import { getNowPlaying, getRandomSongs } from "./discovery/discovery";
 
 /**
  * The synthetic "Favorites" playlist, built locally from starred songs
@@ -265,6 +266,22 @@ export const createMediaBrowserAdapter = (
     avatarUrl: () => client.buildAvatarUrl(),
   };
 
+  // Home's server shelves. With more than one chosen library each draws its
+  // own random page; interleaving them keeps the first library from taking
+  // the whole rail once the shelf trims to its length.
+  const discovery = {
+    getRandomSongs: async (opts?: { size?: number; genre?: string; fromYear?: number; toYear?: number }) => {
+      if (parentIds.length <= 1) return getRandomSongs(parentIds.length ? clientFor(parentIds[0]) : client, opts);
+      const draws = await Promise.all(parentIds.map(id => getRandomSongs(clientFor(id), opts)));
+      const merged = [];
+      for (let i = 0; draws.some(draw => i < draw.length); i++) {
+        for (const draw of draws) if (draw[i]) merged.push(draw[i]);
+      }
+      return merged.slice(0, opts?.size ?? merged.length);
+    },
+    getNowPlaying: async () => getNowPlaying(client),
+  };
+
   return {
     auth,
     albums,
@@ -279,5 +296,6 @@ export const createMediaBrowserAdapter = (
     search: searchApi,
     bookmarks,
     user,
+    discovery,
   };
 };

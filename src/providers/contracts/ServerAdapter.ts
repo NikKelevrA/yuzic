@@ -222,7 +222,7 @@ export type NowPlayingEntry = {
   minutesAgo?: number;
 };
 
-interface DiscoveryApi {
+export interface DiscoveryApi {
   getRandomSongs(opts?: { size?: number; genre?: string; fromYear?: number; toYear?: number }): Promise<Song[]>;
   getNowPlaying(): Promise<NowPlayingEntry[]>;
 }

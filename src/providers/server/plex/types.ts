@@ -64,6 +64,8 @@ export type PlexMetadata = {
   leafCount?: number;
   /** Alternate ids, including a `mbid://` entry where an agent resolved one. */
   Guid?: PlexGuid[];
+  /** On a `/status/sessions` entry: the account playing it. */
+  User?: { title?: string };
 };
 
 type PlexDirectory = {

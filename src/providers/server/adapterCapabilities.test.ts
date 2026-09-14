@@ -61,11 +61,15 @@ describe('adapter capability declarations', () => {
   it('offers queue sync and the now-playing shelf only where the server backs them', () => {
     // Both switches live on the Server screen behind these two surfaces.
     expect(adapters.navidrome().queue).toBeDefined();
-    expect(adapters.navidrome().discovery).toBeDefined();
-
     for (const make of [adapters.jellyfin, adapters.emby, adapters.plex, adapters.local]) {
       expect(make().queue).toBeUndefined();
-      expect(make().discovery).toBeUndefined();
     }
+
+    // Random draws and who is listening: every media server has them, files
+    // on the device have neither.
+    for (const make of [adapters.navidrome, adapters.jellyfin, adapters.emby, adapters.plex]) {
+      expect(make().discovery).toBeDefined();
+    }
+    expect(adapters.local().discovery).toBeUndefined();
   });
 });

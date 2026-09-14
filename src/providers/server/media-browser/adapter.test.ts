@@ -45,6 +45,8 @@ describe('mediaBrowser adapter', () => {
     expect(adapter.radio).toBeUndefined();
     expect(adapter.shares).toBeUndefined();
     expect(adapter.podcasts).toBeUndefined();
+    // Random draws and sessions back Home's server shelves.
+    expect(adapter.discovery).toBeDefined();
   });
 
   it('puts the brand where the two servers actually differ', () => {

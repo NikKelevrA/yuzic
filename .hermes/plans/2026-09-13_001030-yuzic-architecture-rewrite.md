@@ -1061,12 +1061,12 @@ Run on 2026-09-14 against media-vm on the iOS simulator (build `868971b0`):
 - **Jellyfin:** sign-in, library load, streaming, paging and artwork passed.
 - **Not run:** Plex (including Basic-auth audio and artwork), AudioMuse, Lidarr, slskd, ListenBrainz scrobbling, the keyless sources, and the wrong-credentials, server-unreachable and source-disabled columns. Emby and SoulSync are not on media-vm.
 
-Zack waived the rest of the matrix on 2026-09-14; Task 13.2's "complete parity matrix" condition is amended to this partial run. Follow-ups the run found remain open:
+Zack waived the rest of the matrix on 2026-09-14; Task 13.2's "complete parity matrix" condition is amended to this partial run. The run found four follow-ups, all since fixed:
 
-1. Quick picks and Recents empty after a first sync killed mid-way: `lastSyncedAt` persists at once while stats persist on a 1 s throttle, so the relaunch skips the sync. A forced sync recovers.
-2. A restored position is about 5 s short after a media-session pause.
-3. A toast briefly overlaps the full player's transport row.
-4. Jellyfin and Plex Home have no server shelves; server discovery exists only for Navidrome.
+1. Quick picks and Recents empty after a first sync killed mid-way: `lastSyncedAt` persists at once while stats persist on a 1 s throttle, so the relaunch skips the sync. A forced sync recovers. Fixed in `057203f6`: the stats are flushed to disk before the timestamp is written.
+2. A restored position is about 5 s short after a media-session pause. Fixed in `c9082815`.
+3. A toast briefly overlaps the full player's transport row. Fixed in `c9082815`: toasts come down from the top while the player is open.
+4. Jellyfin and Plex Home have no server shelves; server discovery exists only for Navidrome. Fixed: Jellyfin and Emby draw random tracks with `SortBy=Random` and read now-playing from `/Sessions`. Plex draws a random page per library and reads `/status/sessions`, which only the server owner may see. Not yet checked against the servers on media-vm.
 
 ### 8.7 Still open
 

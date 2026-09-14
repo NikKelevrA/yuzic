@@ -3,6 +3,7 @@ import type {
   AlbumsApi,
   ArtistsApi,
   AuthApi,
+  DiscoveryApi,
   GenresApi,
   LyricsApi,
   PlaylistsApi,
@@ -81,8 +82,12 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   // every entity this adapter produces comes from this one server.
   const provenance = serverProvenance(server.id);
 
+  async function sectionKeys(): Promise<string[]> {
+    return sections.length ? sections : (await client.request<PlexResponse>('/library/sections')).MediaContainer?.Directory?.map(s => String(s.key)).filter(Boolean) ?? [];
+  }
+
   async function libraryItems(type: number, extra = ''): Promise<PlexMetadata[]> {
-    const ids = sections.length ? sections : (await client.request<PlexResponse>('/library/sections')).MediaContainer?.Directory?.map(s => String(s.key)).filter(Boolean) ?? [];
+    const ids = await sectionKeys();
     const responses = await Promise.all(ids.map(section =>
       pagedMetadata(client, `/library/sections/${encodeURIComponent(section)}/all?type=${type}${extra}`)
     ));
@@ -229,5 +234,58 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     },
   };
 
-  return { auth, albums, artists, genres, playlists, starred, songs, tracks, similar, lyrics, search };
+  const discovery: DiscoveryApi = {
+    getRandomSongs: async (opts = {}) => {
+      const size = opts.size ?? 50;
+      // Plex filters by genre id, not name, and tracks often carry no genre
+      // of their own. Draw a wider page and keep the tracks tagged with it;
+      // too few, and the shelf falls back to an untinted draw by itself.
+      const pageSize = opts.genre ? size * 4 : size;
+      const ids = await sectionKeys();
+      const pages = await Promise.all(ids.map(section => client.request<PlexResponse>(
+        `/library/sections/${encodeURIComponent(section)}/all?type=10&sort=random`,
+        { headers: { 'X-Plex-Container-Start': '0', 'X-Plex-Container-Size': String(pageSize) } },
+      )));
+      const draws = pages.map(page => mapTracks(metadata(page)));
+      const merged: Song[] = [];
+      for (let i = 0; draws.some(draw => i < draw.length); i++) {
+        for (const draw of draws) if (draw[i]) merged.push(draw[i]);
+      }
+      const genre = opts.genre?.toLowerCase();
+      const inYears = (song: Song) =>
+        (!opts.fromYear || (song.year ?? 0) >= opts.fromYear) && (!opts.toYear || (song.year ?? Infinity) <= opts.toYear);
+      return merged
+        .filter(song => !genre || song.genres.some(tag => tag.toLowerCase() === genre))
+        .filter(inYears)
+        .slice(0, size);
+    },
+    getNowPlaying: async () => {
+      // Only the server's owner may read every session; for a managed or
+      // shared user Plex refuses, and there is nothing to show rather than
+      // something broken.
+      let response: PlexResponse;
+      try {
+        response = await client.request<PlexResponse>('/status/sessions');
+      } catch {
+        return [];
+      }
+      return metadata(response)
+        .filter(entry => entry.type === 'track' && entry.ratingKey != null)
+        .map(entry => {
+          const song = mapSong(entry, { provenance });
+          return {
+            songId: song.nativeId,
+            title: song.title,
+            artist: song.artist.name,
+            albumTitle: song.album.title || undefined,
+            albumId: song.album.nativeId || undefined,
+            cover: song.cover,
+            username: entry.User?.title ?? '',
+            minutesAgo: 0,
+          };
+        });
+    },
+  };
+
+  return { auth, albums, artists, genres, playlists, starred, songs, tracks, similar, lyrics, search, discovery };
 }
