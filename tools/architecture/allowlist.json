@@ -79,8 +79,6 @@
     "src/features/playlist/components/RecommendedSection/LocalRecommendedSection.tsx audiomuse",
     "src/features/podcasts/PodcastsScreen.tsx navidrome",
     "src/features/podcasts/buildPodcastSong.ts navidrome",
-    "src/features/settings/connections/index.tsx audiomuse",
-    "src/features/settings/connections/index.tsx listenbrainz",
     "src/features/settings/downloaders/Lidarr.tsx lidarr",
     "src/features/settings/downloaders/Slskd.tsx slskd",
     "src/features/settings/downloaders/SoulSync.tsx soulsync",

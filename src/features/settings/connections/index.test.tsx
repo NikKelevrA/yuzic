@@ -14,27 +14,21 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('react-redux', () => ({
-  useSelector: (selector: string) => {
-    switch (selector) {
-      case 'lbAuthenticated':
-        return false;
-      case 'audiomuseEnabled':
-        return true;
-      case 'audiomuseAuthenticated':
-        return true;
-      default:
-        return undefined;
-    }
+  shallowEqual: () => true,
+  // The screen asks for every declared integration's connected state at once;
+  // the shared settings chrome asks for things this test does not set up.
+  useSelector: (selector: (state: unknown) => unknown) => {
+    try { return selector({}); } catch { return undefined; }
   },
 }));
 
 jest.mock('@/state/redux/selectors/listenbrainzSelectors', () => ({
-  selectListenBrainzAuthenticated: 'lbAuthenticated',
+  selectListenBrainzAuthenticated: () => false,
 }));
 
 jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
-  selectAudiomuseEnabled: 'audiomuseEnabled',
-  selectAudiomuseAuthenticated: 'audiomuseAuthenticated',
+  selectAudiomuseEnabled: () => true,
+  selectAudiomuseAuthenticated: () => true,
 }));
 
 jest.mock('@/features/downloaders/registry', () => ({
