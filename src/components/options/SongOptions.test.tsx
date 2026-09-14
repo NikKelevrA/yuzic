@@ -4,7 +4,6 @@ import { render } from '@testing-library/react-native';
 import SongOptions from './SongOptions';
 import type { Song } from '@/domain/entities/Song';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('react-i18next', () => ({
@@ -112,7 +111,6 @@ jest.mock('@/components/options/GetReviewSheet', () => 'GetReviewSheet');
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
 
 jest.mock('@/components/options/OptionSheetPrimitives', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   return {
     OptionSheetHeader: ({ title, subtitle }: any) => (

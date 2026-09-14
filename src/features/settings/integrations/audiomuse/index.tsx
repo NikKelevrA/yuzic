@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { notify } from '@/components/toast';
@@ -40,7 +40,7 @@ const AudiomuseView: React.FC = () => {
   useEffect(() => { setLocalApiToken(cachedApiToken); }, [cachedApiToken]);
   const isEnabled = useSelector(selectAudiomuseEnabled);
   const isAuthenticated = useSelector(selectAudiomuseAuthenticated);
-  const config = { serverUrl, apiToken };
+  const config = useMemo(() => ({ serverUrl, apiToken }), [serverUrl, apiToken]);
 
   const [isLoading, setIsLoading] = useState(false);
 

@@ -1,5 +1,5 @@
 import { hitSlopFor, iconSize, spacing, statusColor, typography } from '@/constants/design';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +27,7 @@ const FallbackUrlsCard: React.FC<Props> = ({ server }) => {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const urls = server.fallbackUrls ?? [];
+  const urls = useMemo(() => server.fallbackUrls ?? [], [server.fallbackUrls]);
 
   const validateNewUrl = useCallback((raw: string): string | null => {
     const trimmed = raw.trim().replace(/\/+$/, '');

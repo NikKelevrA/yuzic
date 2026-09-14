@@ -61,7 +61,7 @@ export default function TopArtistsSection({ refreshKey = 0 }: Props) {
         navigateToArtist(item)
       }}
     />
-  ), [navigateToArtist, gridItemWidth])
+  ), [navigateToArtist, gridItemWidth, t])
 
   return (
     <View style={styles.container}>

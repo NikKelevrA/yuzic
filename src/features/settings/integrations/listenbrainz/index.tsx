@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { notify } from '@/components/toast';
@@ -36,7 +36,7 @@ const ListenBrainzView: React.FC = () => {
   const [token, setLocalToken] = useState(cachedToken);
   useEffect(() => { setLocalToken(cachedToken); }, [cachedToken]);
   const isAuthenticated = useSelector(selectListenBrainzAuthenticated);
-  const config = username && token ? { username, token } : null;
+  const config = useMemo(() => (username && token ? { username, token } : null), [username, token]);
 
   const [isLoading, setIsLoading] = useState(false);
 

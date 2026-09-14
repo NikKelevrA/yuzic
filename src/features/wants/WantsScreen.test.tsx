@@ -29,19 +29,16 @@ jest.mock('@/features/theme/useListDensity', () => ({
 }));
 
 jest.mock('react-native-safe-area-context', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
   const { View } = require('react-native');
   return { SafeAreaView: View };
 });
 
 jest.mock('@/components/MediaImage', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
   const { View } = require('react-native');
   return { MediaImage: () => <View testID="media-image-mock" /> };
 });
 
 jest.mock('@/components/EmptyState', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
   const { Text, View } = require('react-native');
   return {
     __esModule: true,

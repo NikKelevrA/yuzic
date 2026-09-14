@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
@@ -42,7 +42,7 @@ export function useDownloaderConnection(
   const [apiKey, setLocalApiKey] = useState(cachedApiKey);
   useEffect(() => { setLocalApiKey(cachedApiKey); }, [cachedApiKey]);
   const isAuthenticated = useSelector(selectors.isAuthenticated);
-  const config: DownloaderConfig = { serverUrl, apiKey };
+  const config = useMemo<DownloaderConfig>(() => ({ serverUrl, apiKey }), [serverUrl, apiKey]);
 
   const [isLoading, setIsLoading] = useState(false);
 

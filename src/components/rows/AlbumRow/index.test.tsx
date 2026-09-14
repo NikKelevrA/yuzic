@@ -23,7 +23,6 @@ jest.mock('@/components/useSheetRef', () => ({
 
 jest.mock('@/components/options/AlbumOptions', () => 'AlbumOptions');
 jest.mock('@/components/MediaListRow', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   function MockMediaListRow({ title, subtitleTrailing, trailing }: any) {
     return (
@@ -46,7 +45,6 @@ jest.mock('@/features/downloaders/useExternalAlbumStatus', () => ({
 // covered by the project's transformIgnorePatterns, so a minimal inline
 // stub is used instead of `react-native-reanimated/mock`.
 jest.mock('react-native-reanimated', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const RN = require('react-native');
   return {
     __esModule: true,

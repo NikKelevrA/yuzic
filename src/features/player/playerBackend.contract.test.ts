@@ -42,7 +42,6 @@ const mockEngine = new Proxy(
 
 jest.mock('yuzic-engine', () => ({ YuzicEngine: mockEngine }), { virtual: true });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { createEngineBackend } = require('./createEngineBackend');
 
 function item(id: string, over: Partial<MediaItem> = {}): MediaItem {

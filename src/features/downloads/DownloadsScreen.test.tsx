@@ -39,7 +39,6 @@ jest.mock('@/features/downloaders/registry', () => ({
 }));
 
 jest.mock('./DownloaderQueueSection', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
   const { Text: RNText } = require('react-native');
   return {
     __esModule: true,
@@ -50,7 +49,6 @@ jest.mock('./DownloaderQueueSection', () => {
 });
 
 jest.mock('@/components/DetailHeader', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
   const { Text: RNText } = require('react-native');
   return { DetailHeaderBar: ({ title }: { title: string }) => <RNText>{title}</RNText> };
 });

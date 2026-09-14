@@ -322,6 +322,7 @@ export function useDownloaderStates(): DownloaderState[] {
       },
       isConnected: connection?.isAuthenticated === true,
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- credentialsHydrated is the recompute trigger described above, not a value read here
   }), [entry, serverId, credentialsHydrated])
 }
 

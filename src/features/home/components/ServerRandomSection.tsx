@@ -109,7 +109,7 @@ export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Prop
     staleTime: 1000 * 60 * 60 * 4,
   });
 
-  const data = query.data?.songs ?? [];
+  const data = useMemo(() => query.data?.songs ?? [], [query.data]);
   const isLoading = discoveryAvailable && query.isLoading;
   const hasEnough = data.length >= MIN_ITEMS;
   const isThemed = Boolean(themeGenre) && (query.data?.themed ?? false);

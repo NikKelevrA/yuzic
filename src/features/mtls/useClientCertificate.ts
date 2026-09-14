@@ -9,6 +9,7 @@ import { applyClientCertificate, type ApplyResult } from './applyClientCertifica
  * first render pass, before the module is registered.
  */
 function engine() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return (require('yuzic-engine') as typeof import('yuzic-engine')).YuzicEngine;
 }
 

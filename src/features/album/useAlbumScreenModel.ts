@@ -91,6 +91,9 @@ function useExternalAlbumLookup(input: {
   });
 }
 
+/** One empty list for every render, so an album with no songs yet keeps memos below stable. */
+const NO_SONGS: Song[] = [];
+
 export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel {
   const { id, source, albumId, artist, title, forceExternal } = params;
   const { albums } = useAlbums();
@@ -110,7 +113,7 @@ export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel 
   const external = useExternalAlbumLookup({ enabled: externalEnabled, source, albumId, artist, title });
 
   const album: Album | null = isLocal ? local.album : (external.data?.album ?? null);
-  const songs: Song[] = isLocal ? local.songs : (external.data?.songs ?? []);
+  const songs: Song[] = isLocal ? local.songs : (external.data?.songs ?? NO_SONGS);
   const songsLoading = isLocal ? local.songsLoading : external.isLoading;
 
   const resolved = useAlbumDetails(album);

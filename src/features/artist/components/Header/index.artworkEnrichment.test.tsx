@@ -47,7 +47,6 @@ jest.mock('@/components/DetailHeader', () => ({
 // render. Mocked to a plain text stub that dumps its `cover` prop's `kind`
 // (and `url` when present) so the assertions below can read it back.
 jest.mock('@/components/MediaImage', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText } = require('react-native')
   return {
     MediaImage: ({ cover }: { cover: { kind: string; url?: string } }) => (

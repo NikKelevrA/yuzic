@@ -43,7 +43,6 @@ jest.mock('@/components/toast', () => ({
 }));
 
 jest.mock('@/components/MediaListRow', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   function MockMediaListRow({ title }: any) {
     return (
@@ -59,7 +58,6 @@ jest.mock('@/components/MediaListRow', () => {
 // module's own jest mock is ESM and isn't covered by the project's
 // transformIgnorePatterns, so a minimal inline stub is used instead.
 jest.mock('react-native-reanimated', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const RN = require('react-native');
   return {
     __esModule: true,

@@ -76,5 +76,6 @@ export const useApi = (): ApiAdapter => {
     if (!activeServer || !activeServer.isAuthenticated) return EMPTY_ADAPTER;
     const server = withServerCredentials(activeServer);
     return SERVER_PROVIDERS[activeServer.type]?.createAdapter(server) ?? EMPTY_ADAPTER;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- credentialsHydrated is the rebuild trigger described above, not a value the adapter reads
   }, [activeServer, credentialsHydrated]);
 };

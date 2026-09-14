@@ -120,7 +120,7 @@ const LibraryList: React.FC<Props> = ({
           />
         )
     }
-  }, [isGridView, gridWidth, GRID_SPACING, showTypeLabel])
+  }, [isGridView, gridWidth, showTypeLabel])
 
   return (
     <>

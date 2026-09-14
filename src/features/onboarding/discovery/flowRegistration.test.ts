@@ -36,7 +36,6 @@ describe('onboarding flow registration — discovery step', () => {
     // within `(onboarding)`, never as a global post-onboarding modal.
     const appDir = join(__dirname, '../../../app');
     const glob: (dir: string) => string[] = (dir) => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- test-only helper
       const fs = require('fs');
       let files: string[] = [];
       for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

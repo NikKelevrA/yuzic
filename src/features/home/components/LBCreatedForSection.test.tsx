@@ -51,7 +51,6 @@ jest.mock('@/components/toast', () => ({
 }));
 
 jest.mock('@/components/MediaListRow', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   return function MockMediaListRow({ title }: any) {
     return (
@@ -63,7 +62,6 @@ jest.mock('@/components/MediaListRow', () => {
 });
 
 jest.mock('react-native-reanimated', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const RN = require('react-native');
   return {
     __esModule: true,

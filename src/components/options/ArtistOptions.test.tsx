@@ -4,7 +4,6 @@ import { render } from '@testing-library/react-native';
 import ArtistOptions from './ArtistOptions';
 import type { Artist } from '@/domain/entities/Artist';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-only test mock, no typed ESM export
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('react-i18next', () => ({
@@ -79,7 +78,6 @@ jest.mock('./useLazyCollectionDetails', () => ({
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
 
 jest.mock('@/components/options/OptionSheetPrimitives', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text: RNText, View: RNView } = require('react-native');
   return {
     OptionSheetHeader: ({ title, subtitle }: any) => (
