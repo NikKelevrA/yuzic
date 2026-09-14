@@ -35,7 +35,7 @@ export async function getLyricsBySongId(
           text: l.Text,
         }));
       if (lines.length) {
-        return { provider: client.brand.kind, synced: true, lines };
+        return { synced: true, lines };
       }
     }
 
@@ -51,7 +51,7 @@ export async function getLyricsBySongId(
           text: l.Text,
         }));
       if (lines.length) {
-        return { provider: client.brand.kind, synced, lines };
+        return { synced, lines };
       }
     }
     return null;

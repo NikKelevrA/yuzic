@@ -49,7 +49,6 @@ export async function getLyricsBySongId(
     if (lines.length === 0) return null;
 
     return {
-      provider: "navidrome",
       synced: structured.synced,
       lines,
     };

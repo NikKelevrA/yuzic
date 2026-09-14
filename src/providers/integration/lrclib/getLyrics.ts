@@ -42,7 +42,7 @@ function toLyricsResult(data: LrclibGetResponse): LyricsResult | null {
   if (data.syncedLyrics && data.syncedLyrics.trim()) {
     const lines = parseLrc(data.syncedLyrics);
     if (lines.length > 0) {
-      return { provider: "lrclib", synced: true, lines };
+      return { synced: true, lines };
     }
   }
 
@@ -53,7 +53,7 @@ function toLyricsResult(data: LrclibGetResponse): LyricsResult | null {
       .filter(text => text.length > 0)
       .map(text => ({ startMs: 0, text }));
     if (lines.length > 0) {
-      return { provider: "lrclib", synced: false, lines };
+      return { synced: false, lines };
     }
   }
 

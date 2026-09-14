@@ -9,8 +9,8 @@ import { makeLocalId } from "@/domain/identity/LocalId";
 
 const song: LyricsSongInfo = { songId: "s1", title: "T", artist: "A" };
 
-const serverResult: LyricsResult = { provider: "navidrome", synced: true, lines: [{ startMs: 0, text: "server" }] };
-const lrclibResult: LyricsResult = { provider: "lrclib", synced: true, lines: [{ startMs: 0, text: "lrclib" }] };
+const serverResult: LyricsResult = { synced: true, lines: [{ startMs: 0, text: "server" }] };
+const lrclibResult: LyricsResult = { synced: true, lines: [{ startMs: 0, text: "lrclib" }] };
 
 describe("resolveLyrics", () => {
   it("returns the server result without calling any external source", async () => {
@@ -59,7 +59,7 @@ describe("resolveLyrics", () => {
   });
 
   it("treats an empty-lines server result the same as no result", async () => {
-    const getServerLyrics = jest.fn().mockResolvedValue({ provider: "navidrome", synced: true, lines: [] });
+    const getServerLyrics = jest.fn().mockResolvedValue({ synced: true, lines: [] });
     const lrclibFetcher = jest.fn().mockResolvedValue(lrclibResult);
 
     const result = await resolveLyrics({

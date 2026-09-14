@@ -22,7 +22,6 @@ describe('getLyricsBySongId', () => {
     const result = await getLyricsBySongId(client, 'song-1');
 
     expect(result).toEqual({
-      provider: 'navidrome',
       synced: true,
       lines: [
         { startMs: 0, text: 'first' },
@@ -42,7 +41,6 @@ describe('getLyricsBySongId', () => {
     const result = await getLyricsBySongId(client, 'song-1');
 
     expect(result).toEqual({
-      provider: 'navidrome',
       synced: false,
       lines: [
         { startMs: 0, text: 'a plain line' },

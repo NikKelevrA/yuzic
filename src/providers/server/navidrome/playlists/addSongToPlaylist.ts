@@ -1,9 +1,6 @@
 import type { NavidromeClient } from "../client";
 import { SubsonicResponse } from "../types";
-
-export interface AddSongToPlaylistResult {
-  success: boolean;
-}
+import type { AddSongToPlaylistResult } from "@/providers/contracts/ServerAdapter";
 
 export async function addSongToPlaylist(
   client: NavidromeClient,

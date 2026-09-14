@@ -371,7 +371,7 @@ import * as lrclibApi from '@/providers/integration/lrclib';
 
 describe('lrclib provider', () => {
   it('calls its own api module for lyrics', async () => {
-    (lrclibApi.getLyrics as jest.Mock).mockResolvedValue({ provider: 'lrclib', synced: true, lines: [] });
+    (lrclibApi.getLyrics as jest.Mock).mockResolvedValue({ synced: true, lines: [] });
 
     await lrclibProvider.capabilities.lyrics?.(makeSong());
     expect(lrclibApi.getLyrics).toHaveBeenCalledWith({

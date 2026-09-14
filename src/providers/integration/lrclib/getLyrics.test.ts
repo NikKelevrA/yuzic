@@ -31,7 +31,6 @@ describe("lrclib getLyrics", () => {
     const result = await getLyrics({ artist: "A", title: "T" });
 
     expect(result).toEqual({
-      provider: "lrclib",
       synced: true,
       lines: [
         { startMs: 0, text: "hello" },
@@ -48,7 +47,6 @@ describe("lrclib getLyrics", () => {
     const result = await getLyrics({ artist: "A", title: "T" });
 
     expect(result).toEqual({
-      provider: "lrclib",
       synced: false,
       lines: [
         { startMs: 0, text: "line one" },

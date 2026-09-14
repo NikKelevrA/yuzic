@@ -1,9 +1,6 @@
 import type { NavidromeClient } from "../client";
 import { SubsonicResponse } from "../types";
-
-export interface RemoveSongFromPlaylistResult {
-  success: boolean;
-}
+import type { RemoveSongFromPlaylistResult } from "@/providers/contracts/ServerAdapter";
 
 export async function removeSongFromPlaylist(
   client: NavidromeClient,

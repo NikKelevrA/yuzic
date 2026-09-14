@@ -20,7 +20,6 @@ describe('getLyricsBySongId', () => {
     const result = await getLyricsBySongId(client, 'song-1');
 
     expect(result).toEqual({
-      provider: 'jellyfin',
       synced: true,
       lines: [
         { startMs: 0, text: 'first' },
@@ -39,7 +38,6 @@ describe('getLyricsBySongId', () => {
     const result = await getLyricsBySongId(client, 'song-1');
 
     expect(result).toEqual({
-      provider: 'jellyfin',
       synced: false,
       lines: [
         { startMs: 0, text: 'a plain line' },
@@ -57,7 +55,6 @@ describe('getLyricsBySongId', () => {
     const result = await getLyricsBySongId(client, 'song-1');
 
     expect(result).toEqual({
-      provider: 'jellyfin',
       synced: true,
       lines: [{ startMs: 4200, text: 'timed' }],
     });

@@ -4,9 +4,17 @@ import type { Playlist } from "@/domain/entities/Playlist";
 import type { Song } from "@/domain/entities/Song";
 import type { AlbumDetail, PlaylistDetail } from "@/domain/entities/Detail";
 import type { CoverSource } from "@/types/Cover";
-import { AddSongToPlaylistResult } from "../server/navidrome/playlists/addSongToPlaylist";
-import { RemoveSongFromPlaylistResult } from "../server/navidrome/playlists/removeSongFromPlaylist";
 import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat';
+
+/** What a server answers when a song is added to one of its playlists. */
+export interface AddSongToPlaylistResult {
+  success: boolean;
+}
+
+/** What a server answers when a song is removed from one of its playlists. */
+export interface RemoveSongFromPlaylistResult {
+  success: boolean;
+}
 
 export type Library = {
   id: string;
@@ -346,13 +354,6 @@ export type LyricLine = {
 };
 
 export type LyricsResult = {
-  /**
-   * `"lrclib"` is not a server type: it is the one launch entry in the
-   * user-configurable external fallback chain (see
-   * `features/lyrics/resolveLyrics`), which only ever runs after the
-   * server-embedded lookup below has come back empty.
-   */
-  provider: "jellyfin" | "navidrome" | "emby" | "lrclib";
   /**
    * Whether `startMs` on each line means anything.
    *
