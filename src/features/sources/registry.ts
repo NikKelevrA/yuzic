@@ -96,7 +96,6 @@ type SourceArtistDetail = {
 }
 
 export type SourceDefinition = {
-  /** Declared once here; capabilities live in the provider registry. */
   label: string
   auth: AuthDescriptor
   testConnection(config: unknown): Promise<Health>
@@ -105,11 +104,9 @@ export type SourceDefinition = {
   id: SourceId
   color: string
   /**
-   * Kept as their own top-level fields (not read off `slots`) because every
-   * existing consumer (ExternalResolutionProvider, useMatchedNavigation, the
-   * Home/Search source headers) calls them directly; `slots['resolution']`
-   * / `slots['discovery.shelf']` are an additional capability-view over the
-   * same methods, kept in sync below, not a replacement for them.
+   * Resolution is this registry's own job, not a broker capability:
+   * ExternalResolutionProvider, useMatchedNavigation and the Home/Search
+   * source headers call these directly, and nothing else resolves names.
    */
   resolveArtist(name: string): Promise<SourceResolvedArtist | null>
   resolveAlbum(artist: string, title: string): Promise<SourceResolvedAlbum | null>
@@ -172,9 +169,9 @@ const deezerSource: SourceDefinition = {
   color: sourceColor.deezer,
   auth: noAuth,
   testConnection: trivialTestConnection,
-  // Deezer fills identity/metadata resolution (resolveArtist/resolveAlbum)
-  // and feeds Home's external discovery shelves — hence
-  // `useEnabledExternalSources` existing at all.
+  // Deezer resolves names to its own ids (resolveArtist/resolveAlbum) and
+  // backs browsing things the library doesn't have: external album and artist
+  // screens and search results. Home's Deezer shelves fetch on their own.
 
   async resolveArtist(name) {
     const artist = await resolveDeezerArtistByName(name)
@@ -256,9 +253,9 @@ const musicbrainzSource: SourceDefinition = {
   color: sourceColor.musicbrainz,
   auth: noAuth,
   testConnection: trivialTestConnection,
-  // MusicBrainz fills identity/metadata resolution (resolveArtist/
-  // resolveAlbum) and feeds Home's external discovery shelves — hence
-  // `useEnabledExternalSources` existing at all. Values are markers onto the
+  // MusicBrainz resolves names to canonical ids (resolveArtist/resolveAlbum)
+  // and backs browsing things the library doesn't have: external album and
+  // artist screens and search results. It has no Home shelf.
 
   async resolveArtist(name) {
     const results = await mb.searchArtist(name, 5)

@@ -52,15 +52,15 @@ export type AlbumDownloadRequest = Album
 export type TrackDownloadRequest = { title: string; artist: string }
 
 /**
- * What a downloader is, beyond its capabilities.
+ * What a downloader is and what it can do — the one place either is declared.
  *
- * Acquiring an album or a track is declared in the provider registry, where
- * every provider declares what it can do. What stays here is operational and
- * downloader-specific: the settings route, the toast keys, and queue polling —
- * none of which is a product capability anything would ask for by name.
+ * Acquisition is not a broker capability. It was declared as one once, as a
+ * thinner copy of the methods below that nothing called: it could carry no
+ * per-call options (Lidarr's quality profile), no error codes, and no queue.
+ * Every download flow — the Get sheet, the auto-downloader, batch requests —
+ * calls these definitions directly.
  */
 export type DownloaderDefinition = {
-  /** Declared once here; capabilities live in the provider registry. */
   label: string
   auth: AuthDescriptor
   testConnection(config: unknown): Promise<Health>
@@ -78,11 +78,6 @@ export type DownloaderDefinition = {
    * both. Callers presence-check the unit they need rather than assuming an
    * album is always on offer — `downloadAlbum` used to be required, which was
    * Lidarr's shape written into the contract for everyone.
-   *
-   * These stay as their own top-level fields (not read off `slots`) because
-   * every existing consumer calls them directly; `slots['acquisition.album']`
-   * / `slots['acquisition.track']` are an additional capability-view over the
-   * same methods, kept in sync below, not a replacement for them.
    */
   downloadAlbum?(config: DownloaderConfig, req: AlbumDownloadRequest, options?: DownloadOptions): Promise<DownloadResult>
   downloadTrack?(config: DownloaderConfig, req: TrackDownloadRequest): Promise<DownloadResult>
@@ -139,7 +134,7 @@ const lidarrDownloader: DownloaderDefinition = {
   albumAddedKey: 'externalAlbum.download.addedToLidarr',
   settingsRoute: '/settings/lidarrView',
   auth: apiKeyAuth,
-  // Lidarr is album-only — no `acquisition.track` slot.
+  // Lidarr is album-only — no `downloadTrack`.
   downloadAlbum: lidarrDownloadAlbum,
   fetchQueue: async (config) => (await lidarr.fetchQueue(lidarrConfigOf(config))).map(record => ({
     id: record.id,
@@ -253,7 +248,7 @@ const soulsyncDownloader: DownloaderDefinition = {
   trackAddedKey: 'externalAlbum.download.addedTrackToSoulsync',
   settingsRoute: '/settings/soulsyncView',
   auth: apiKeyAuth,
-  // SoulSync is track-only — no `acquisition.album` slot.
+  // SoulSync is track-only — no `downloadAlbum`.
   downloadTrack: soulsyncDownloadTrack,
   fetchQueue: async (config) => (await soulsync.fetchQueue(soulsyncConfigOf(config))).map(record => ({
     id: record.id,

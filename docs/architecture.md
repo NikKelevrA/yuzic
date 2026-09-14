@@ -364,39 +364,47 @@ bodies' worth of divergence.
   difference the row layer already encodes but the list bodies keep explicit.
   Converging them is a deferred, higher-risk option, not an accident.
 
-## 7. Integration modules — one capability-slot contract
+## 7. Providers and capabilities
 
-Providers (downloaders, external sources) converge on one `IntegrationModule`
-contract (`features/integrations/types.ts`) so a feature asks *what a provider
-can do*, never *which product it is*.
+A feature asks *what can do this*, never *which product it is*. Two mechanisms
+answer that, and which one a job uses depends on how many providers can do it.
 
-- **`CapabilitySlot`** — the vocabulary of things a provider can fill
-  (`acquisition.track/album`, `resolution`, `similarity.songs/artists`,
-  `discovery.shelf`, `playlist.generate`, `lyrics`, `scrobble`,
-  `metadata.enrich`, `preview`). **`IntegrationModule`** = `{ id, label, auth,
-  slots: Partial<Record<CapabilitySlot, SlotImpl>>, options?, testConnection }`.
-  `slots` is partial for the same reason `ApiAdapter` fields are optional —
-  callers presence-check the capability, never the provider name.
-- **`SlotImpl` is intentionally `unknown`** for now: typing every slot's method
-  signature would couple the contract to providers that don't exist yet. Each
-  slot gains a concrete impl type when it's actually built.
-- **Existing registries were extended, not rewritten.** `DownloaderDefinition`
-  and `SourceDefinition` are now `IntegrationModule & { …operational fields }`
-  (their `id` re-narrowed to the closed union). Downloaders are `apiKey`-tier and
-  fill `acquisition.*`; sources are `none`-tier (keyless public APIs; a trivial
-  `{ok:true}` testConnection — enablement is a user setting, not a connection)
-  and fill `resolution` + `discovery.shelf`. A downloader's `fetchQueue`
-  deliberately maps to **no** slot — it's operational progress reporting, not a
-  product capability. It returns `DownloaderQueueItem[]`, normalised by the
-  downloader that owns the records, so nothing downstream branches on which
-  downloader a transfer came from; `finishedSince` diffs two reads by id.
-- **Server adapters stay their own concern.** An `ApiAdapter` is required core,
-  not an optional integration, so it does **not** become an `IntegrationModule`.
-  Instead `serverAdapterSlots()` (`features/integrations/capabilityRegistry.ts`)
-  surfaces its capabilities into the same slot vocabulary, and
-  `useSlotProviders(slot)` answers "who fills this right now?" across the active
-  server **and** connected modules — read-only availability; blend/select/
-  fallback policy stays with the calling feature.
+- **Typed capabilities, served by a broker**, for jobs more than one provider
+  can do. `providers/contracts/Capabilities.ts` is a map of capability name to
+  the function a provider supplies — `artist.enrich`, `album.enrich`, `lyrics`,
+  `catalogue.album`, `catalogue.search`. A provider
+  (`providers/contracts/Provider.ts`) declares `Partial<CapabilityMap>` plus
+  its presentation, auth tier and `testConnection`. `providers/registry/capabilityBroker.ts`
+  answers "who can serve this, in what order": a provider must declare the
+  capability, be reachable, and be allowed by the user's policy for that
+  feature, and enumeration never invokes one. The declared providers today are
+  the keyless integrations in `providers/registry/keyless.ts` (Deezer,
+  MusicBrainz, Last.fm, LRCLIB); `enrichmentBroker.ts` orders them for artist
+  and album enrichment.
+- **Feature-owned registries**, for jobs with one provider each and behaviour
+  no shared contract carries. Downloads are `features/downloaders/registry.ts`
+  (`DownloaderDefinition`: `downloadAlbum`/`downloadTrack` with per-call
+  options and error codes, plus `fetchQueue` normalised to
+  `DownloaderQueueItem[]` so nothing downstream branches on which downloader a
+  transfer came from, and `cancelQueueItem`). Autoplay and Smart Shuffle fill
+  come from `features/playback/queueProviders.ts` (AudioMuse first, the server's
+  own similar songs as the fallback). Scrobbling routes through
+  `state/redux/selectors/scrobbleRoutingSelectors.ts` and the offline mutation
+  queue. Playlist generation is `features/audiomuse/generatePlaylist.ts`.
+  External-source name resolution is `features/sources/registry.ts`.
+- **Why the second kind is not a capability.** Similarity, discovery,
+  playlist generation, scrobbling and acquisition were declared as
+  capabilities once, beside the features above, and nothing ever asked the
+  broker for them. The declarations were thinner copies — no queue
+  over-sampling, no downloader options or error codes, no offline replay — so
+  they were removed rather than wired in. A capability is added when its
+  first consumer exists; when a job gains a second provider, it becomes one,
+  shaped by both.
+- **Server adapters stay their own concern.** The active server's `ApiAdapter`
+  (`providers/contracts/ServerAdapter.ts`) is required core, not an optional
+  integration, and features call it through `useApi`. How each server connects,
+  signs in, lists libraries and builds cover URLs is declared in
+  `providers/registry/serverConnections.ts`.
 - **One Connections screen** (`features/settings/connections/`) is generated from
   the provider list and replaced the two separate Integrations/Downloaders hubs.
   Per-provider detail screens and their deep-link routes are unchanged.
@@ -422,7 +430,7 @@ acquiring. The two are deliberately different code paths.
   when the user ticks "save as default"; a per-request override is request-only.
 - **Arrival is presence-based, not queue-based.** `findArrivedWants`
   (`features/wants/arrival.ts`) matches wants against the *synced library index*
-  (reusing `libraryMatch`), and `useWantArrivalWatcher` removes a fulfilled want
+  (reusing `features/library/matchToLibrary.ts`), and `useWantArrivalWatcher` removes a fulfilled want
   + toasts once when its entity appears **by any route** (a Get, a manual copy, a
   Bandcamp purchase). It is not gated on `jobRef`. The
   `DownloadersQueueContext` poll still runs untouched — it *causes* the rescan
@@ -492,19 +500,20 @@ add durations; both are surfaced in Home settings and read through defaults.
   calls** and is *not* gated behind the external-discovery toggles — it lives in
   the local/server tier, presence-checked on play history + server similarity.
 - **ListenBrainz `createdfor` shelves**
-  (`api/listenbrainz/recommendations/getCreatedForPlaylists`,
+  (`providers/integration/listenbrainz/recommendations/getCreatedForPlaylists`,
   `LBCreatedForSection`) fetch the user's daily-jams / weekly-jams /
   weekly-exploration mixes (public endpoint) and render **one standalone shelf
   each** under the compact ListenBrainz `SourceGroup` header — LB built the mix,
-  yuzic fetches and renders it (no mix-generator, no new slot; the raw CF
-  endpoint is deliberately not built). Off by default; unowned tracks get
-  Want/Get for free through the shared `SongRow`.
-- **`playlist.generate`** — the "Make a playlist from this" gesture
-  (`features/audiomuse/generateFromEntity`) derives a seed from a track, album,
-  or artist and calls the existing generator; **AudioMuse builds the playlist on
-  the server** (no yuzic-local playlist store). The gesture is gated on
-  `useCanGeneratePlaylist`/`useSlotFilled('playlist.generate')` and hidden when
-  no provider fills the slot. Track/entity-seeded only (mood-centroid deferred).
+  yuzic fetches and renders it (no mix-generator; the raw CF endpoint is
+  deliberately not built). Off by default; unowned tracks get Want/Get for free
+  through the shared `SongRow`.
+- **Make a playlist from this** (`features/audiomuse/generatePlaylist`)
+  derives a seed from a track, album, or artist and asks AudioMuse for similar
+  tracks; **AudioMuse's results become a playlist on the server** (no
+  yuzic-local playlist store). The gesture is gated on `useCanGeneratePlaylist`,
+  which asks whether AudioMuse is configured — it is the only generator, so
+  there is no capability for it (§7). Track/entity-seeded only (mood-centroid
+  deferred).
 - **Onboarding asks once** (`features/onboarding/discovery`): a single transparent
   opt-in for external discovery (Deezer/ListenBrainz, no accounts, exactly what
   gets sent), guarded by `onboardingDiscoveryPrompted` so it shows once and only

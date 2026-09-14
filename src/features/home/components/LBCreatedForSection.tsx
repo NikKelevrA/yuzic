@@ -36,9 +36,8 @@ const MAX_TRACKS = 10;
 /**
  * One of ListenBrainz's periodic "created for you" mixes — Daily Jams,
  * Weekly Jams, Weekly Exploration — as its own standalone shelf. LB built
- * the mix; this only fetches and renders it, the same discovery.shelf
- * pattern as every other external Home row, so there is no local
- * mix-generator here.
+ * the mix; this only fetches and renders it, the same as every other
+ * external Home row, so there is no local mix-generator here.
  *
  * Rides the same setting as the similar-artists shelf (`listenbrainzDiscoveryEnabled`)
  * rather than a setting of its own, plus a configured LB username — without

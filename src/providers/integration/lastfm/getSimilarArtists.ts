@@ -1,6 +1,6 @@
 import { lastfmRequest } from './client';
 
-export type LastFmSimilarArtist = {
+type LastFmSimilarArtist = {
   name: string
   mbid: string | null
   match: number

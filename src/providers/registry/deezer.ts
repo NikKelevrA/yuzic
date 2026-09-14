@@ -12,8 +12,6 @@ import {
   searchDeezerAlbums,
   getDeezerAlbum,
   getDeezerArtist,
-  getDeezerChartAlbums,
-  getDeezerRelatedArtists,
   resolveDeezerAlbum,
   resolveDeezerArtistByName,
 } from '@/providers/integration/deezer';
@@ -54,15 +52,6 @@ export const deezerProvider: IntegrationProvider = {
         albums: albums.map(entity => ({ entity, subtitle: entity.artist.name })),
       };
     },
-    'similarity.artists': async (artist, limit) => {
-      const resolved = await resolveDeezerArtistByName(artist.name);
-      if (!resolved) return [];
-      return getDeezerRelatedArtists(resolved.nativeId, limit);
-    },
-    'discovery.shelf': async () => ({
-      titleKey: 'explore.sections.charts',
-      albums: await getDeezerChartAlbums(20),
-    }),
     'catalogue.album': async nativeId => getDeezerAlbum(nativeId),
   },
   // Keyless public API, reachable by construction — matches

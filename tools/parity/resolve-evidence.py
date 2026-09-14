@@ -124,22 +124,66 @@ CAP_SRC = open('src/providers/contracts/Capabilities.ts').read()
 CAP_BODY = re.search(r'export interface CapabilityMap \{(.*?)\n\}', CAP_SRC, re.S).group(1)
 CAP_KEYS = set(re.findall(r"^\s{2}'?([A-Za-z][\w.]*)'?\s*:", CAP_BODY, re.M))
 
+# Capabilities the legacy contract had and this one deliberately does not, each
+# with where the job lives now. Every owner path is checked to exist and every
+# name checked to be absent from CapabilityMap, so an entry here cannot go stale
+# into cover for a capability that came back or an owner that moved.
+FOLDED_INTO_SEARCH = ("folded into 'catalogue.search' as a parameter "
+                      "(src/providers/contracts/Capabilities.ts CatalogueSearchKinds); "
+                      "marker-style slots were removed with SlotImpl")
+REMOVED_CAPABILITIES = {
+    'kinds': (None, FOLDED_INTO_SEARCH),
+    'query': (None, FOLDED_INTO_SEARCH),
+    'acquisition.album': ('src/features/downloaders/registry.ts',
+        'one implementation per downloader, with per-call options, error codes and queue polling the capability could not carry'),
+    'acquisition.track': ('src/features/downloaders/registry.ts',
+        'one implementation per downloader, with per-call options, error codes and queue polling the capability could not carry'),
+    'similarity.songs': ('src/features/playback/queueProviders.ts',
+        'autoplay and Smart Shuffle fill: AudioMuse first, the server adapter\'s similar songs as the fallback'),
+    'similarity.artists': ('src/features/artist/components/Content/index.tsx',
+        'the similar-artists rail combines useSimilarArtists (Last.fm), useLBSimilarArtists and '
+        'useServerSimilarArtists; nothing asked the broker'),
+    'discovery.shelf': ('src/features/home/Explore.tsx',
+        'each Home shelf fetches from its own source (DeezerChartsSection, LBCreatedForSection, '
+        'LBSimilarForYouSection, ServerRandomSection) and Explore renders it; nothing asked the broker'),
+    'playlist.generate': ('src/features/audiomuse/generatePlaylist.ts',
+        'AudioMuse is the only generator'),
+    'scrobble': ('src/state/redux/selectors/scrobbleRoutingSelectors.ts',
+        'routed per destination with the offline mutation queue, which the capability bypassed'),
+}
+
+def verify_removed_capabilities():
+    for name, (owner, _why) in REMOVED_CAPABILITIES.items():
+        if name in CAP_KEYS:
+            raise SystemExit(f'{name} is listed as removed but CapabilityMap declares it')
+        if owner and not os.path.exists(owner):
+            raise SystemExit(f'{name} is said to live in {owner}, which does not exist')
+
+# A provider declaration is a registry module that declares an integration —
+# not every file that happens to have a `lyrics:` key (the empty server adapter
+# in useApi.ts does).
+def declaration_files():
+    for f in sorted(os.listdir('src/providers/registry')):
+        pth = os.path.join('src/providers/registry', f)
+        if f.endswith('.ts') and '.test.' not in f and "kind: 'integration'" in open(pth).read():
+            yield pth
+
 def resolve_capability(row_id):
     """(evidence, is_divergence). A capability absent from CapabilityMap is a
-    real divergence from the legacy contract, not an unresolved row."""
+    divergence only when REMOVED_CAPABILITIES says where its job went; any other
+    absence stays unresolved."""
     name = row_id.split('.', 1)[1]
     if name not in CAP_KEYS:
-        return (f"absent from CapabilityMap — folded into 'catalogue.search' as a "
-                f"parameter (src/providers/contracts/Capabilities.ts CatalogueSearchKinds); "
-                f"marker-style slots were removed with SlotImpl", True)
-    line = CAP_SRC[:CAP_SRC.index(CAP_BODY)].count('\n') + CAP_BODY[:CAP_BODY.index(name)].count('\n') + 1
+        if name not in REMOVED_CAPABILITIES:
+            return (None, False)
+        owner, why = REMOVED_CAPABILITIES[name]
+        if owner is None:
+            return (f'absent from CapabilityMap — {why}', True)
+        return (f'absent from CapabilityMap — owned by {owner}: {why}', True)
     impls = []
-    for f in sorted(os.listdir('src/providers/registry')):
-        if not f.endswith('.ts') or '.test.' in f:
-            continue
-        pth = os.path.join('src/providers/registry', f)
-        # Keys that are valid identifiers (lyrics, scrobble) are written
-        # unquoted; dotted ones must be quoted.
+    for pth in declaration_files():
+        # Keys that are valid identifiers (lyrics) are written unquoted; dotted
+        # ones must be quoted.
         pat = r"'" + re.escape(name) + r"'\s*:" if '.' in name else r"(?:'" + name + r"'|\b" + name + r")\s*:"
         if re.search(pat, open(pth).read()):
             impls.append(pth)
@@ -189,6 +233,7 @@ def resolve_route(legacy):
 
 # ---------- drive ----------
 verify_divergences()
+verify_removed_capabilities()
 data = json.load(open('.hermes/rewrite-parity.json'))
 filled = unfilled = 0
 report = []

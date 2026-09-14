@@ -4,10 +4,12 @@
  * Keyless public APIs: no client, no credentials, no server URL, so they can
  * be handed to the broker as declarations rather than built per call.
  *
- * Its own module rather than part of the registry barrel, because the barrel
- * re-exports every provider — including ones whose module graph reaches native
- * configuration — and a feature that only wants to search a catalogue should
- * not drag all of that in behind it.
+ * These are every provider the broker serves today. The jobs a credentialed
+ * integration does — scrobbling, downloading, AudioMuse's queue fill and
+ * playlists — are owned by the features that do them (`features/playback`,
+ * `features/downloaders`, `features/audiomuse`), not by a capability, because
+ * each has exactly one provider and behaviour a shared contract would have to
+ * invent. See the note at the top of `contracts/Capabilities.ts`.
  */
 import type { Provider } from '../contracts/Provider';
 import { deezerProvider } from './deezer';

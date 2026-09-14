@@ -9,7 +9,15 @@
  * registries that used it said so in their own comments.
  *
  * A capability is added here when its first real consumer exists. Declaring
- * one ahead of that produces exactly the marker this replaces.
+ * one ahead of that produces exactly the marker this replaces — and that is
+ * what happened: similarity, discovery, playlist generation, scrobbling and
+ * acquisition were declared, implemented a second time beside the features
+ * that already did those jobs, and never asked for by anything. They were
+ * removed rather than wired in, because the feature implementations carry
+ * behaviour the declarations did not (queue over-sampling, per-call
+ * downloader options and error codes, the offline scrobble queue). When a
+ * second provider for one of those jobs arrives, the capability comes back
+ * shaped by both.
  */
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
@@ -43,19 +51,6 @@ export interface Lyrics {
   synced: boolean;
 }
 
-/** A listen, as reported to a scrobble destination. */
-export interface Listen {
-  song: Song;
-  /** Unix ms when playback started. Preserved across an offline replay. */
-  startedAt: number;
-}
-
-/** One shelf of content for the Home screen. */
-export interface DiscoveryShelf {
-  titleKey: string;
-  albums: Album[];
-}
-
 /** Which entity kinds a search should ask for. */
 export interface CatalogueSearchKinds {
   artists: boolean;
@@ -73,17 +68,6 @@ export interface CatalogueSearchResults {
   albums: CatalogueSearchMatch<Album>[];
 }
 
-export interface AcquisitionRequest {
-  artist: string;
-  title: string;
-  externalIds: ExternalIds;
-}
-
-export interface AcquisitionResult {
-  accepted: boolean;
-  message?: string;
-}
-
 /**
  * The capabilities a provider may implement.
  *
@@ -96,22 +80,8 @@ export interface CapabilityMap {
   'artist.enrich': (artist: Artist) => Promise<ArtistEnrichment | null>;
   /** Fill gaps in an album record. Cover Art Archive needs a release id. */
   'album.enrich': (album: Album) => Promise<AlbumEnrichment | null>;
-  /** Artists related to this one, for the similar-artists rail. */
-  'similarity.artists': (artist: Artist, limit: number) => Promise<Artist[]>;
-  /** Tracks similar to this one, for autoplay and smart shuffle. */
-  'similarity.songs': (song: Song, limit: number) => Promise<Song[]>;
-  /** A Home shelf this provider can populate. */
-  'discovery.shelf': () => Promise<DiscoveryShelf | null>;
-  /** Build a playlist on the provider from a seed, returning its id. */
-  'playlist.generate': (seed: Song, size: number) => Promise<string>;
   /** Lyrics for a song, synced where the provider has them. */
   lyrics: (song: Song) => Promise<Lyrics | null>;
-  /** Report a listen. At most one destination is active per route. */
-  scrobble: (listen: Listen) => Promise<void>;
-  /** Ask a downloader to fetch a whole release. */
-  'acquisition.album': (request: AcquisitionRequest) => Promise<AcquisitionResult>;
-  /** Ask a downloader to fetch a single track. */
-  'acquisition.track': (request: AcquisitionRequest) => Promise<AcquisitionResult>;
   /** Browse a catalogue this provider holds but the user does not own. */
   'catalogue.album': (nativeId: string) => Promise<AlbumDetail | null>;
   /**

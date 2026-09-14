@@ -1,15 +1,17 @@
 /**
- * What every provider declares about itself.
+ * What every provider the capability broker serves declares about itself.
  *
- * Two kinds, deliberately distinct rather than one list with a flag. Exactly
- * one server provider is active at a time and the user's library lives on it:
- * it is required core. Integrations are optional, any number can be connected
- * at once, and none of them owns anything. Collapsing the two would mean every
- * caller re-deriving which kind it was holding.
+ * Every such provider is an optional integration: any number can be connected
+ * at once, and none of them owns the user's library. The music server is not
+ * one of them — it is required core, reached through the active `ApiAdapter`
+ * (`contracts/ServerAdapter.ts`), and how it connects is declared in
+ * `registry/serverConnections.ts`. Server capability declarations existed here
+ * once, were never asked for, and were removed; see `contracts/Capabilities.ts`.
  *
- * What they share is how they are presented and authenticated, and that both
- * expose their abilities through one typed `Capabilities` map — so a feature
- * asks for a capability and never for a provider by name.
+ * What an integration shares with the rest is how it is presented and
+ * authenticated, and that it exposes its abilities through one typed
+ * `Capabilities` map — so a feature asks for a capability and never for a
+ * provider by name.
  */
 import type { Capabilities } from './Capabilities';
 
@@ -47,7 +49,9 @@ export interface Health {
   message?: string;
 }
 
-interface ProviderCore {
+/** An optional service. Any number may be connected. */
+export interface IntegrationProvider {
+  kind: 'integration';
   id: ProviderId;
   presentation: Presentation;
   auth: AuthDescriptor;
@@ -60,14 +64,4 @@ interface ProviderCore {
   testConnection(): Promise<Health>;
 }
 
-/** The user's music server. Required core; exactly one is active. */
-export interface ServerProvider extends ProviderCore {
-  kind: 'server';
-}
-
-/** An optional service. Any number may be connected. */
-export interface IntegrationProvider extends ProviderCore {
-  kind: 'integration';
-}
-
-export type Provider = ServerProvider | IntegrationProvider;
+export type Provider = IntegrationProvider;

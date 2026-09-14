@@ -93,6 +93,6 @@ describe('firstOfferFor', () => {
   });
 
   it('is null for a capability nothing declares', () => {
-    expect(firstOfferFor(input(), 'scrobble')).toBeNull();
+    expect(firstOfferFor(input(), 'catalogue.search')).toBeNull();
   });
 });

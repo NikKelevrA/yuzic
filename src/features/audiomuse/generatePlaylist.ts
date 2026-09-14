@@ -94,12 +94,11 @@ export async function generateSimilarPlaylistForArtist(
 /**
  * Whether the "make a playlist from this" gesture should be offered.
  *
- * A direct configuration read rather than a capability lookup, deliberately:
- * the generic slot lookup pulls in the active server adapter plus the
- * downloader and external-source registries, which every options sheet using
- * this gesture would then have to mock. Both answer the same today. When a
- * second provider can fill `playlist.generate`, this becomes the capability
- * lookup so both count — that is Phase 3's job.
+ * AudioMuse is the only thing that can generate a playlist, so this asks
+ * whether it is configured. There is no `playlist.generate` capability: one
+ * was declared once, beside this file, and never asked for (see
+ * `providers/contracts/Capabilities.ts`). If a second generator arrives, that
+ * is when the capability is worth having.
  */
 export function useCanGeneratePlaylist(): boolean {
   return useIsAudiomuseConfigured();
