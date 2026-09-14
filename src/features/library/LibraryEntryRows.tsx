@@ -86,9 +86,12 @@ const LibraryEntryRows: React.FC = () => {
     },
     {
       key: 'downloaded',
-      labelKey: 'library.downloaded.title',
+      labelKey: 'home.filters.downloaded',
       icon: <ArrowDownToLine size={size} color={color} />,
-      onPress: () => router.push('/offlineView'),
+      // The same collection screen as Albums or Tracks, so saved music opens
+      // and plays from here. Storage management is one tap further, from its
+      // header, rather than being the whole screen.
+      onPress: () => openCollection('downloaded'),
     },
     {
       key: 'downloads',

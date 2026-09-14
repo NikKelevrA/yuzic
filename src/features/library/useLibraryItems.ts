@@ -52,7 +52,7 @@ export function useLibraryItems(
   const { artists, isLoading: artistsLoading } = useArtists()
   const { playlists, isLoading: playlistsLoading } = usePlaylists()
   const { tracks, isLoading: tracksLoading } = useTracks()
-  const { getAllDownloadedCollections } = useDownload()
+  const { getAllDownloadedCollections, getAllDownloadedTracks } = useDownload()
 
   const stats = useMemo<SortStats>(
     () => ({ songLastPlayed, songPlays, albumLastPlayed, albumPlays, artistLastPlayed, artistPlays }),
@@ -62,6 +62,18 @@ export function useLibraryItems(
   // Orders that ignore play data get the stable empty constant, so the list
   // doesn't recompute every time a song is played.
   const statsForSort = usesPlayStats(sortOrder) ? stats : EMPTY_SORT_STATS
+
+  // Tracks saved on their own rather than as part of a saved album or
+  // playlist. Without these the Downloaded collection hid every single song
+  // downloaded from a track's own options.
+  const looseDownloadedTrackIds = useMemo(() => {
+    const inCollections = new Set(getAllDownloadedCollections().flatMap(c => c.trackIds))
+    const ids = new Set<string>()
+    getAllDownloadedTracks().forEach(track => {
+      if (!inCollections.has(track.trackId)) ids.add(track.trackId)
+    })
+    return ids
+  }, [getAllDownloadedCollections, getAllDownloadedTracks])
 
   const downloadedCollectionIds = useMemo(() => {
     const ids = new Set<string>()
@@ -77,7 +89,7 @@ export function useLibraryItems(
       case 'albums': return albumsLoading
       case 'artists': return artistsLoading
       case 'tracks': return tracksLoading
-      case 'downloaded': return albumsLoading || playlistsLoading
+      case 'downloaded': return albumsLoading || playlistsLoading || tracksLoading
       default: return albumsLoading || artistsLoading || playlistsLoading
     }
   })()
@@ -99,6 +111,7 @@ export function useLibraryItems(
         return sortItems([
           ...albums.filter(a => downloadedCollectionIds.has(a.nativeId)).map(a => ({ kind: 'album' as const, data: a })),
           ...playlists.filter(p => downloadedCollectionIds.has(p.nativeId)).map(p => ({ kind: 'playlist' as const, data: p })),
+          ...tracks.filter(tr => looseDownloadedTrackIds.has(tr.nativeId)).map(tr => ({ kind: 'track' as const, data: tr })),
         ], sortOrder, statsForSort)
       default:
         return sortItems([
@@ -107,7 +120,7 @@ export function useLibraryItems(
           ...artists.map(a => ({ kind: 'artist' as const, data: a })),
         ], sortOrder, statsForSort)
     }
-  }, [type, sortOrder, statsForSort, albums, artists, playlists, tracks, downloadedCollectionIds])
+  }, [type, sortOrder, statsForSort, albums, artists, playlists, tracks, downloadedCollectionIds, looseDownloadedTrackIds])
 
   return { items, isLoading }
 }

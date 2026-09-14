@@ -725,7 +725,7 @@
       "title": "ダウンロード"
     },
     "downloaded": {
-      "title": "オフライン"
+      "clear": "削除"
     },
     "wants": {
       "title": "ウォンツ"

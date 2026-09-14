@@ -18,7 +18,7 @@ import { useUnstarAlbum } from '@/features/library/useUnstarAlbum';
 import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 import type { Album } from '@/domain/entities/Album';
 import { useLazyAlbumDetail } from '@/components/options/useLazyCollectionDetails';
-import { toggleFavorite } from '../shared/starActions';
+import { toggleFavorite, confirmDestructive } from '../shared/starActions';
 import { useWantToggle } from '../shared/wantActions';
 import { useShareAction } from '../shared/shareActions';
 import { useCollectionPlaybackActions } from '../shared/playbackActions';
@@ -36,7 +36,7 @@ export function useAlbumLibraryActions(
   const api = useApi();
   const enabledSources = useEnabledExternalSources();
   const playing = usePlaying();
-  const { downloadAlbumById, getCollectionDownloadState } = useDownload();
+  const { downloadAlbumById, removeDownloadByCollectionId, getCollectionDownloadState } = useDownload();
   const { albums: starredAlbums } = useStarredAlbums();
   const starAlbum = useStarAlbum();
   const unstarAlbum = useUnstarAlbum();
@@ -97,7 +97,22 @@ export function useAlbumLibraryActions(
       },
       share: () => void share(),
       download: async () => {
-        if (isDownloaded || isDownloading) return;
+        if (isDownloading) return;
+        if (isDownloaded) {
+          confirmDestructive({
+            title: t('settings.library.downloads.removeTitle'),
+            body: t('settings.library.downloads.removeBody', { title: album.title }),
+            cancelLabel: t('common.cancel'), confirmLabel: t('common.delete'),
+            onConfirm: async () => {
+              try {
+                await removeDownloadByCollectionId(album.nativeId, songIds);
+              } catch {
+                notify.error(t('settings.library.downloads.removeFailedBody'));
+              }
+            },
+          });
+          return;
+        }
         await downloadAlbumById(album.nativeId, songs);
       },
     },

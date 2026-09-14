@@ -725,7 +725,7 @@
       "title": "下载"
     },
     "downloaded": {
-      "title": "离线"
+      "clear": "清空"
     },
     "wants": {
       "title": "想要列表"

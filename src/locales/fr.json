@@ -726,7 +726,7 @@
       "title": "Téléchargements"
     },
     "downloaded": {
-      "title": "Hors ligne"
+      "clear": "Effacer"
     },
     "wants": {
       "title": "Souhaits"

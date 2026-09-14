@@ -89,7 +89,8 @@ export const playlistActions: ActionDef<Ctx>[] = [
     }),
     icon: ctx => downloadRowIcon({ isDownloaded: ctx.isDownloaded, subtextColor: ctx.colors.subtext, secondaryColor: ctx.colors.secondary }),
     visible: () => true,
-    enabled: ctx => !(ctx.isDownloaded || ctx.isDownloading),
+    // Tappable once downloaded too: that is where a download is removed.
+    enabled: ctx => !ctx.isDownloading,
     loading: ctx => ctx.isDownloading,
     dimLabel: ctx => ctx.isDownloaded || ctx.isDownloading,
     invoke: ctx => ctx.handlers.download(),

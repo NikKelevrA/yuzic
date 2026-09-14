@@ -16,6 +16,7 @@ import { useShareAction } from '../shared/shareActions';
 import { useCollectionPlaybackActions } from '../shared/playbackActions';
 import { resolveActions } from '../types';
 import { playlistActions, type PlaylistActionContext } from '../registry/playlistActions';
+import { confirmDestructive } from '../shared/starActions';
 
 export function usePlaylistOptionsActions(
   playlist: Playlist | null, opts: { hideGoToPlaylist: boolean; isSheetOpen: boolean; close: () => void }
@@ -25,7 +26,7 @@ export function usePlaylistOptionsActions(
   const navigation = useNavigation();
   const router = useRouter();
   const playingActions = usePlayingActions();
-  const { downloadPlaylistById, getCollectionDownloadState } = useDownload();
+  const { downloadPlaylistById, removeDownloadByCollectionId, getCollectionDownloadState } = useDownload();
   const deletePlaylist = useDeletePlaylist();
   const renamePlaylist = useRenamePlaylist();
 
@@ -59,7 +60,22 @@ export function usePlaylistOptionsActions(
         router.push({ pathname: '/playlistView', params: { id: playlist.nativeId } });
       },
       download: async () => {
-        if (isDownloaded || isDownloading) return;
+        if (isDownloading) return;
+        if (isDownloaded) {
+          confirmDestructive({
+            title: t('settings.library.downloads.removeTitle'),
+            body: t('settings.library.downloads.removeBody', { title: playlist.title }),
+            cancelLabel: t('common.cancel'), confirmLabel: t('common.delete'),
+            onConfirm: async () => {
+              try {
+                await removeDownloadByCollectionId(playlist.nativeId, songIds);
+              } catch {
+                notify.error(t('settings.library.downloads.removeFailedBody'));
+              }
+            },
+          });
+          return;
+        }
         await downloadPlaylistById(playlist.nativeId, songs);
       },
       share: () => void share(),

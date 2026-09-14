@@ -443,13 +443,9 @@ appId: com.arinora.rawarr
           timeout: 30000
       - tapOn:
           id: "library-entry-downloaded"
-# iPad: Settings > Offline downloads instead. Three albums as a library list
-# fill only the top ~11% of a 2732px screen and the `bottom` layout crops
-# exactly that strip away, leaving the shot almost empty; switching that
-# collection to a grid only moved the void down. The shipped iPad reference is
-# a different screen entirely — the Library → Offline screen, whose per-item
-# rows (size, date, delete) plus the storage summary fill the frame at this
-# height.
+# iPad: the same Downloaded collection, reached the same way. The separate
+# Offline screen this used to shoot (per-item rows plus a storage summary) was
+# folded into the collection, whose header now carries the storage summary.
 #
 # Navigated by tapping, not by `openLink`: a scheme URL raises iOS's
 # "Open in Yuzic?" alert, which is a system alert outside the app's hierarchy,
@@ -470,11 +466,7 @@ appId: com.arinora.rawarr
           id: "library-entry-downloaded"
       - extendedWaitUntil:
           visible:
-            id: "offline-section"
-          timeout: 30000
-      - extendedWaitUntil:
-          visible:
-            id: "download-info-row"
+            id: "downloaded-header"
           timeout: 30000
 - waitForAnimationToEnd:
     timeout: 5000

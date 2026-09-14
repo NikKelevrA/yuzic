@@ -17,6 +17,7 @@ jest.mock('react-redux', () => ({
 
 jest.mock('@/features/theme/useScrollClearance', () => ({
   useScrollClearance: () => 0,
+  useBottomOverlayHeight: () => 0,
 }));
 
 jest.mock('@/features/theme/useRadius', () => ({
@@ -37,15 +38,21 @@ jest.mock('@/features/downloaders/registry', () => ({
   useDownloaderStates: () => mockUseDownloaderStates(),
 }));
 
-jest.mock('../settings/downloaders/DownloaderQueueCard', () => {
+jest.mock('./DownloaderQueueSection', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
   const { Text: RNText } = require('react-native');
   return {
     __esModule: true,
     default: ({ id, title }: { id: string; title?: string }) => (
-      <RNText testID={`downloader-queue-card-${id}`}>{title}</RNText>
+      <RNText testID={`downloader-queue-section-${id}`}>{title}</RNText>
     ),
   };
+});
+
+jest.mock('@/components/DetailHeader', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory can't reference outer-scope imports
+  const { Text: RNText } = require('react-native');
+  return { DetailHeaderBar: ({ title }: { title: string }) => <RNText>{title}</RNText> };
 });
 
 jest.mock('@/providers/integration/lidarr', () => ({ fetchQueueWithDiff: jest.fn(), cancelQueueItem: jest.fn() }));
@@ -83,9 +90,9 @@ describe('DownloadsScreen', () => {
 
     const view = await render(<DownloadsScreen />);
 
-    expect(view.getByTestId('downloader-queue-card-lidarr')).toBeTruthy();
-    expect(view.getByTestId('downloader-queue-card-slskd')).toBeTruthy();
-    expect(view.getByTestId('downloader-queue-card-soulsync')).toBeTruthy();
+    expect(view.getByTestId('downloader-queue-section-lidarr')).toBeTruthy();
+    expect(view.getByTestId('downloader-queue-section-slskd')).toBeTruthy();
+    expect(view.getByTestId('downloader-queue-section-soulsync')).toBeTruthy();
   });
 
   it('reads the shared useDownloadersQueue() context rather than spinning up its own poll', async () => {

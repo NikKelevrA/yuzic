@@ -11,6 +11,7 @@ import { usePlayingActions } from '@/features/playback/PlayingContext'
 import { useTheme } from '@/features/theme/useTheme'
 import { spacing } from '@/constants/design'
 import CollectionActions from './CollectionActions'
+import DownloadedHeader from '@/features/downloads/DownloadedHeader'
 import LibraryList from './LibraryList'
 import LoadingLibraryList from './Loading'
 import { useLibraryItems } from './useLibraryItems'
@@ -102,7 +103,9 @@ const LibraryCollectionScreen: React.FC = () => {
 
   // The bar above already names the screen, so there is no heading here — only
   // the actions, where the collection is actually a queue.
-  const header = playableTracks.length > 0 ? (
+  const header = type === 'downloaded' ? (
+    <DownloadedHeader />
+  ) : playableTracks.length > 0 ? (
     <View style={styles.actions}>
       <CollectionActions
         onPlay={() => { void play(false) }}

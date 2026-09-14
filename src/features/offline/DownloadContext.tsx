@@ -94,7 +94,7 @@ export interface DownloadableTrack {
   streamUrl: string;
 }
 
-export type DownloadedTrack = DownloadedTrackEntry & {
+type DownloadedTrack = DownloadedTrackEntry & {
   localPath: string;
   originalTrack?: {
     id?: string;

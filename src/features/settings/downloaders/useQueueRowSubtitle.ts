@@ -9,7 +9,7 @@ import type { DownloaderQueueItem } from '@/features/downloaders/queueItem';
  * There were three of these — one per downloader — and they differed only in
  * which facts they had to show: Lidarr counts an album's tracks, slskd counts
  * a directory's files and reports a rate and a peer, SoulSync names the album
- * a track belongs to. All three then rendered the same `DownloaderQueueRow`
+ * a track belongs to. All three then rendered the same queue row
  * with the same props, so what actually varied was this string.
  *
  * Composing it from whichever facts are present means a fourth downloader

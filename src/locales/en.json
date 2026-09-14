@@ -726,7 +726,7 @@
       "title": "Downloads"
     },
     "downloaded": {
-      "title": "Offline"
+      "clear": "Clear"
     },
     "wants": {
       "title": "Wants"

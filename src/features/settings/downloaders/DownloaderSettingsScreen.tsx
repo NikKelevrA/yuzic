@@ -28,17 +28,6 @@ type Props = {
   onDisconnected?: () => void;
 };
 
-export type RowCancelHelpers = {
-  /**
-   * Shows the "are you sure?" prompt for cancelling this row. Pass the label
-   * to name in the prompt (album title, folder name — whatever the row uses).
-   * Undefined when the screen has no cancel implementation, so the row can
-   * hide its control entirely instead of drawing a button that does nothing.
-   */
-  requestCancel?: (label: string) => void;
-  isCancelling: boolean;
-};
-
 /**
  * Shared shell for the Lidarr and slskd settings screens. The two used to be
  * near-identical copies, which is how slskd ended up silently swallowing queue
@@ -108,26 +97,3 @@ function DownloaderSettingsScreen({
 }
 
 export default DownloaderSettingsScreen;
-
-/** Shared by both screens' queue rows so the two lists stay visually identical. */
-export const downloaderQueueStyles = StyleSheet.create({
-  itemRow: { paddingVertical: spacing.controlGap, paddingHorizontal: spacing.lg, marginBottom: spacing.xs },
-  itemHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: spacing.tight,
-  },
-  itemMain: { flex: 1, minWidth: 0, marginRight: spacing.sm },
-  itemTitle: { ...typography.rowSubtitle, fontWeight: '500' },
-  itemSub: { ...typography.caption, marginTop: spacing.xxs },
-  itemPct: { ...typography.caption },
-  // borderRadius is applied at the callsite from useRadius() so the pill
-  // shape follows the user's radius preset live.
-  progressTrack: { height: 4, width: '100%', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: radius.xs },
-  warningContainer: { marginTop: spacing.sm, padding: spacing.sm, borderRadius: radius.sm },
-  warningMessage: { ...typography.caption, marginLeft: spacing.sm, marginTop: spacing.xxs },
-  headerTrailing: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  cancelButton: { padding: spacing.xxs, marginLeft: spacing.xs },
-});

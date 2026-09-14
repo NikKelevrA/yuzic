@@ -1,6 +1,6 @@
 import { ServerType } from '@/providers/contracts/Server';
 
-export type DownloadProviderType = ServerType | 'unknown';
+type DownloadProviderType = ServerType | 'unknown';
 export type DownloadProviderScope = {
   serverId?: string | null;
   serverType?: ServerType | null;
