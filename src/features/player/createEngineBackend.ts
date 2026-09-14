@@ -290,6 +290,7 @@ export function createEngineBackend(): PlayerBackend {
     },
 
     getProgress() { return toPlaybackProgress(shadow.progress); },
+    getOutgoingProgress() { return toPlaybackProgress(shadow.outgoingProgress); },
     getQueue() { return shadow.queue; },
     // Null on an empty queue, matching rntp: "nothing is active" and "the
     // first track" are different answers, and the app branches on it.

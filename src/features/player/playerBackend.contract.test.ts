@@ -123,6 +123,9 @@ function createFakeBackend(): PlayerBackend {
     getProgress() {
       return { position: 0, duration: 0, buffered: 0 };
     },
+    getOutgoingProgress() {
+      return { position: 0, duration: 0, buffered: 0 };
+    },
     getQueue() {
       return queue;
     },

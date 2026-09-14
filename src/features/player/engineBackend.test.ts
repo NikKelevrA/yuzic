@@ -41,6 +41,18 @@ describe('the shadow the synchronous getters read from', () => {
     expect(next.activeIndex).toBe(1);
   });
 
+  it('keeps where the outgoing track had got to across the change', () => {
+    // The app reads this after the change. Without it, a track that played to
+    // its end was filed as a zero-second listen and never counted as a play.
+    const playing = applyEvent(createShadow(), {
+      type: 'progress',
+      progress: { positionSec: 178, durationSec: 180, bufferedSec: 180 },
+    });
+    const next = applyEvent(playing, { type: 'trackChange', index: 1, id: 'song-2' });
+
+    expect(next.outgoingProgress.positionSec).toBe(178);
+  });
+
   it('takes the new duration from the queue so the bar is not zero-width', () => {
     const withQueue = { ...createShadow(), queue: [item(), item({ duration: 240 })] };
     const next = applyEvent(withQueue, { type: 'trackChange', index: 1, id: 'song-2' });

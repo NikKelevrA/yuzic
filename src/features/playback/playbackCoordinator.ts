@@ -125,9 +125,15 @@ export function createPlaybackCoordinator(
       // Read before anything moves the pointer: a moment later this position
       // belongs to the track now playing, and both the listen and the resume
       // point would be filed against the wrong song.
+      //
+      // The *outgoing* progress, not the current one. By the time this runs the
+      // player has already reset its position for the new track, so reading
+      // `getProgress()` here filed every song that played through to its end as
+      // a zero-second listen — below the scrobble threshold, never counted.
+      // Only a manual skip past halfway ever registered a play.
       const previous = deps.currentResource();
       if (previous && previous.song.localId !== mediaId) {
-        const leftAt = Math.floor(deps.backend().getProgress().position);
+        const leftAt = Math.floor(deps.backend().getOutgoingProgress().position);
         deps.scrobbleOutgoing(previous.song, leftAt);
         deps.saveBookmark(previous.song, leftAt);
         deps.markNewListen();

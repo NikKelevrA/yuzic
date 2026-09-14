@@ -56,6 +56,8 @@ function harness(over: Partial<{
   nativeIndex: number | null;
   nativeQueue: MediaItem[];
   position: number;
+  /** Where the track the player just left had got to. Defaults to `position`. */
+  outgoingPosition: number;
   resumeAt: number | null;
   speed: number;
   currentSpeed: number;
@@ -76,6 +78,7 @@ function harness(over: Partial<{
 
   const backend = {
     getProgress: () => ({ position: over.position ?? 0, duration: 200, buffered: 0 }),
+    getOutgoingProgress: () => ({ position: over.outgoingPosition ?? over.position ?? 0, duration: 200, buffered: 0 }),
     getQueue: () => over.nativeQueue ?? queue.map(r => itemFor(r.song.nativeId)),
     getActiveMediaItemIndex: () => (over.nativeIndex === undefined ? 0 : over.nativeIndex),
     seekTo: (s: number) => { events.push(`seekTo:${s}`); },
@@ -156,6 +159,18 @@ describe('leaving the previous track', () => {
     expect(scrobbleAt).toBeGreaterThan(-1);
     expect(scrobbleAt).toBeLessThan(activeAt);
     expect(bookmarkAt).toBeLessThan(activeAt);
+  });
+
+  it('files a song that played to its end with its whole length, not the next track\'s zero', () => {
+    // How it looks from here when a track finishes on its own: the player has
+    // already moved to the next song, so its current position is 0. Reading
+    // that filed the finished song as a 0-second listen and it never counted.
+    const h = harness({ nativeIndex: 1, position: 0, outgoingPosition: 199.6 });
+
+    h.coordinator.onActiveTrackChanged(itemFor('2'));
+
+    expect(h.events).toContain('scrobble:1:199');
+    expect(h.events).toContain('bookmark:1:199');
   });
 
   it('restarts the listen clock for the track now playing', () => {

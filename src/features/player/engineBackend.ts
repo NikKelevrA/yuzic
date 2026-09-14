@@ -36,13 +36,22 @@ export interface Shadow {
   queue: MediaItem[];
   activeIndex: number;
   progress: Progress;
+  /**
+   * Where the previous track had got to when the engine moved off it.
+   *
+   * `progress` resets on a track change, and the app hears about the change
+   * only after that reset — so a listener asking "how far into the outgoing
+   * track were we?" read the new track's zero. That is what kept a song that
+   * played through to its end from ever counting as a listen.
+   */
+  outgoingProgress: Progress;
   playing: boolean;
 }
 
 const EMPTY_PROGRESS: Progress = { positionSec: 0, durationSec: 0, bufferedSec: 0 };
 
 export function createShadow(): Shadow {
-  return { queue: [], activeIndex: 0, progress: EMPTY_PROGRESS, playing: false };
+  return { queue: [], activeIndex: 0, progress: EMPTY_PROGRESS, outgoingProgress: EMPTY_PROGRESS, playing: false };
 }
 
 /**
@@ -66,6 +75,7 @@ export function applyEvent(shadow: Shadow, event: EngineEvent): Shadow {
       return {
         ...shadow,
         activeIndex: event.index,
+        outgoingProgress: shadow.progress,
         progress: { ...EMPTY_PROGRESS, durationSec: shadow.queue[event.index]?.duration ?? 0 },
       };
 

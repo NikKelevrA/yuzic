@@ -70,6 +70,12 @@ export interface PlayerBackend {
   // is not index 0 — the app already distinguishes them, falling back to
   // finding the track by id when the player has no opinion yet.
   getProgress(): { position: number; duration: number; buffered: number };
+  /**
+   * Progress of the track that was active until the last track change — how
+   * far a listener got into the song the player just left. `getProgress` has
+   * already moved on to the new track by the time anyone hears about a change.
+   */
+  getOutgoingProgress(): { position: number; duration: number; buffered: number };
   getQueue(): MediaItem[];
   getActiveMediaItemIndex(): number | null;
   getActiveMediaItem(): MediaItem | null;
