@@ -1161,6 +1161,12 @@
       "songs": "{{count}} 首曲目",
       "songs_other": "{{count}} 首曲目",
       "externalMetadata": "外部元数据"
+    },
+    "connectDownloader": {
+      "title": "连接下载器以获取",
+      "body": "“获取”会把专辑交给你运行的下载器，由它添加到你的服务器。",
+      "setUp": "设置 {{name}}",
+      "notNow": "暂不"
     }
   },
   "wants": {

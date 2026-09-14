@@ -24,6 +24,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { useSheetRef } from '@/components/useSheetRef';
 import { formatDuration } from '@/components/formatDuration';
 import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
+import { promptConnectDownloader } from '@/features/downloaders/connectDownloaderPrompt';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { playableSongs } from '@/features/album/trackPlayability';
 import type { AlbumScreenModel } from '@/features/album/useAlbumScreenModel';
@@ -328,7 +329,13 @@ function ExternalActionRow({ model }: { model: AlbumScreenModel }) {
   }, [previewSongs, previewCollection, playSongInCollection]);
 
   const handleDownload = useCallback(() => {
-    if (!canDownload || albumStatus.kind !== 'none') return;
+    if (albumStatus.kind !== 'none') return;
+    // Nothing connected to send it to: say so and offer to connect one, rather
+    // than a greyed-out button that swallows the tap.
+    if (!canDownload) {
+      promptConnectDownloader('album');
+      return;
+    }
     downloadSheetRef.current?.present();
   }, [canDownload, albumStatus.kind, downloadSheetRef]);
 
@@ -339,7 +346,7 @@ function ExternalActionRow({ model }: { model: AlbumScreenModel }) {
       <DetailActionRow>
         <DetailPlayAction
           onPress={handleDownload}
-          disabled={!canDownload || albumStatus.kind !== 'none'}
+          disabled={albumStatus.kind !== 'none'}
           accessibilityLabel={t('a11y.detail.downloadToServer')}
         >
           <CloudDownload

@@ -1167,6 +1167,12 @@
       "songs": "{{count}} song",
       "songs_other": "{{count}} songs",
       "externalMetadata": "External metadata"
+    },
+    "connectDownloader": {
+      "title": "Connect a downloader to get this",
+      "body": "Get hands albums to a downloader you run, which adds them to your server.",
+      "setUp": "Set up {{name}}",
+      "notNow": "Not now"
     }
   },
   "manualAddWant": {
