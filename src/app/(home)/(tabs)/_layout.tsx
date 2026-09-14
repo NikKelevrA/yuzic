@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import PlayingBar from '@/features/player/playingBar/PlayingBar';
 import Touchable from '@/components/Touchable';
+import { setToastClearance } from '@/components/toast/clearance';
 import { useTheme } from '@/features/theme/useTheme';
 import { selectThemeColor, selectTranslucentDock } from '@/features/settings/appearance/state';
 import { iconSize, spacing } from '@/constants/design';
@@ -90,8 +91,14 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
   // BottomTabBarHeightContext gets the library's estimate for a plain tab row
   // — which is nothing like this dock, since it carries the playing bar too.
   const onHeightChange = React.useContext(BottomTabBarHeightCallbackContext);
+  // Toasts live above the navigator and cannot read its context, so the dock
+  // tells them too — see `components/toast/clearance.ts`.
+  React.useEffect(() => () => setToastClearance(null), []);
   const handleLayout = React.useCallback(
-    (e: LayoutChangeEvent) => onHeightChange?.(e.nativeEvent.layout.height),
+    (e: LayoutChangeEvent) => {
+      onHeightChange?.(e.nativeEvent.layout.height);
+      setToastClearance(e.nativeEvent.layout.height);
+    },
     [onHeightChange]
   );
 

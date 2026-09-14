@@ -1,30 +1,31 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { BottomTabBarHeightContext } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { spacing } from '@/constants/design';
 import Toast from './Toast';
 import { notify, useToasts } from './notify';
+import { useToastClearance } from './clearance';
 
 /**
  * Renders the active toast stack. Mounted once, high in the tree but below the
  * sheet portal, so toasts float over the app and the dock. Newest at the
  * bottom, nearest the thumb.
  *
- * Sits above the tab dock (which grows to include the playing bar when a track
- * is loaded) by reading the bottom-tab height from context rather than guessing;
- * falls back to the safe-area inset plus generous clearance outside a tab
- * navigator (onboarding, modals).
+ * Sits above the tab dock — which grows to include the playing bar when a track
+ * is loaded — using the height the dock reports into `clearance.ts`, never a
+ * guess: a toast over the playing bar takes the taps meant for it. Falls back
+ * to the safe-area inset plus generous clearance where no dock is mounted
+ * (onboarding, modals).
  */
 const ToastHost: React.FC = () => {
   const toasts = useToasts();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useContext(BottomTabBarHeightContext);
+  const dockHeight = useToastClearance();
 
   if (toasts.length === 0) return null;
 
-  const bottom = (tabBarHeight ?? insets.bottom + spacing.xxxl) + spacing.md;
+  const bottom = (dockHeight ?? insets.bottom + spacing.xxxl) + spacing.md;
 
   return (
     <View pointerEvents="box-none" style={[styles.host, { bottom }]}>
