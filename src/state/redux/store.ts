@@ -1,5 +1,5 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
+import { persistReducer } from 'redux-persist';
 import { reduxStorage as storage } from '@/state/mmkvStorage';
 
 import serversReducer from './slices/serversSlice';
@@ -173,7 +173,6 @@ const store = configureStore({
         }),
 });
 
-export const persistor = persistStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
