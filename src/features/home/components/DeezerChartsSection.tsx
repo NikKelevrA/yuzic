@@ -40,7 +40,7 @@ export default function DeezerChartsSection({ refreshKey = 0 }: Props) {
   )
 
   const query = useQuery<Album[]>({
-    queryKey: [QueryKeys.ExploreDeezerCharts, dayKey, refreshKey],
+    queryKey: [QueryKeys.ExploreCharts, dayKey, refreshKey],
     queryFn: () => getDeezerChartAlbums(10),
     enabled: isEnabled,
     staleTime: STALE_DEEZER_CHARTS,

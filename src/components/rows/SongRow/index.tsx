@@ -12,7 +12,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Heart, ArrowDownCircle, Ellipsis, PlayCircle } from 'lucide-react-native';
-import { notify } from '@/components/toast';
 
 import type { Song } from '@/domain/entities/Song';
 import type { PlayableCollection } from '@/features/playback/playingTypes';
@@ -27,6 +26,7 @@ import Touchable from '@/components/Touchable';
 import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { useSourceUse } from '@/features/settings/sources/useSourceUse';
+import { promptSourceUse } from '@/features/settings/sources/sourceUsePrompt';
 
 type SongRowSong = Song;
 
@@ -73,9 +73,11 @@ const ExternalSongRowView: React.FC<{
     if (onPress) {
       onPress();
     } else if (!samplesEnabled) {
-      notify.info(t('settings.sources.enableDeezerToPreview'));
+      // Ask here, beside the song that was tapped, rather than sending
+      // anyone to Settings to find the switch.
+      promptSourceUse('deezer.previews');
     }
-  }, [onPress, samplesEnabled, t]);
+  }, [onPress, samplesEnabled]);
 
   return (
     <>

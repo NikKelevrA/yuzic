@@ -1,4 +1,8 @@
-import { ServerType } from '@/providers/contracts/Server';
+import type { ServerType } from '@/providers/contracts/Server';
+import { SERVER_PROVIDERS } from '@/providers/registry/serverConnections';
+
+const isServerType = (value: unknown): value is ServerType =>
+  typeof value === 'string' && Object.prototype.hasOwnProperty.call(SERVER_PROVIDERS, value);
 
 export type DownloadProviderScope = {
   serverId?: string | null;
@@ -21,13 +25,12 @@ type DownloadTrackLike = {
 };
 
 export function normalizeServerType(value: unknown): ServerType | null {
-  if (value === 'navidrome' || value === 'jellyfin' || value === 'emby') return value;
-  return null;
+  return isServerType(value) ? value : null;
 }
 
+/** A server's own cover kinds are named for the server type that serves them. */
 export function inferServerTypeFromCoverKind(value: unknown): ServerType | null {
-  if (value === 'navidrome' || value === 'jellyfin' || value === 'emby') return value;
-  return null;
+  return isServerType(value) ? value : null;
 }
 
 export function normalizeServerId(value: unknown): string | null {

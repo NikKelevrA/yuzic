@@ -67,8 +67,6 @@ export const downloaderSelectors = Object.fromEntries(
   DOWNLOADER_IDS.map((id) => [id, buildSelectors(id)])
 ) as Record<DownloaderId, DownloaderSelectors>;
 
-export const selectLidarrAuthenticated = downloaderSelectors.lidarr.isAuthenticated;
-export const selectSlskdAuthenticated = downloaderSelectors.slskd.isAuthenticated;
 export const useLidarrConfig = downloaderSelectors.lidarr.useConfig;
 
 const selectSlskdConnection = createSelector(

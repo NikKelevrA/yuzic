@@ -1,6 +1,6 @@
 import PlexIcon from '@assets/images/plex.png';
 
-import { createPlexClient } from '@/providers/server/plex/client';
+import { createPlexClient, plexBasicAuthHeader } from '@/providers/server/plex/client';
 import { createPlexAdapter } from '@/providers/server/plex';
 import { beginPlexPin, pollPlexPin } from '@/providers/server/plex/auth/pin';
 import type { ServerProviderConfig } from '@/providers/registry/serverProviderTypes';
@@ -50,6 +50,9 @@ export const plexProvider: ServerProviderConfig = {
     instructionKey: 'onboarding.credentials.codeAuth.plex.instruction',
     actionKey: 'onboarding.credentials.codeAuth.plex.action',
   },
+  // A Plex server behind a reverse proxy with Basic auth needs it on every
+  // stream and artwork request.
+  mediaAuthHeaders: (server) => plexBasicAuthHeader(server.basicAuth) ?? null,
   buildCoverUrl: (server, cover) => {
     if (cover.kind !== 'plex' || !server.serverUrl) return null;
     const token = server.auth?.token as string | undefined;

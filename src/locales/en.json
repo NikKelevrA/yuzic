@@ -501,7 +501,6 @@
       "connectListenBrainz": "Connect ListenBrainz for playlists made for you"
     },
     "sources": {
-      "enableDeezerToPreview": "Turn on previews in Settings › Pages to hear samples",
       "deezer": {
         "name": "Deezer",
         "sends": "Sends artist, album and track names, and what you search."
@@ -528,7 +527,10 @@
       },
       "usedFor": "Used for",
       "stopUsing": "Stop using {{name}}",
-      "off": "Off"
+      "off": "Off",
+      "promptTitle": "Turn on {{use}} from {{name}}?",
+      "turnOn": "Turn on",
+      "notNow": "Not now"
     },
     "sourceUses": {
       "lastfm": {

@@ -20,12 +20,8 @@ import type { Song } from '@/domain/entities/Song';
 import type { Album } from '@/domain/entities/Album';
 import type { LyricsResult } from '@/providers/contracts/ServerAdapter';
 import { selectEnabledSourcesFor } from '@/features/settings/sources/state';
-import {
-  resolveLyrics,
-  ALL_EXTERNAL_LYRICS_SOURCES,
-  type ExternalLyricsSourceId,
-} from '@/features/lyrics/resolveLyrics';
-import { externalLyricsFetchers } from '@/features/lyrics/externalLyricsFetchers';
+import { resolveLyrics, type ExternalLyricsSourceId } from '@/features/lyrics/resolveLyrics';
+import { externalLyricsFetchers } from '@/providers/registry/lyricsFetchers';
 
 export type SongScreenModel = {
   song: Song | null;
@@ -51,7 +47,7 @@ export function useSongScreenModel(song: Song | null): SongScreenModel {
   // one place that reads it.
   const enabledExternalLyricsSources = useMemo(
     () => enabledExternalLyricsSourceIds.filter(
-      (id): id is ExternalLyricsSourceId => (ALL_EXTERNAL_LYRICS_SOURCES as string[]).includes(id)
+      (id): id is ExternalLyricsSourceId => id in externalLyricsFetchers
     ),
     [enabledExternalLyricsSourceIds]
   );

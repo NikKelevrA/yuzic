@@ -500,7 +500,6 @@
       "connectListenBrainz": "ListenBrainzを接続して、あなた向けのプレイリストを表示"
     },
     "sources": {
-      "enableDeezerToPreview": "サンプルを聴くには、設定 › ページでプレビューをオンにしてください",
       "deezer": {
         "name": "Deezer",
         "sends": "アーティスト名・アルバム名・曲名と、検索した内容を送信します。"
@@ -527,7 +526,10 @@
       },
       "usedFor": "用途",
       "stopUsing": "{{name}}の使用をやめる",
-      "off": "オフ"
+      "off": "オフ",
+      "promptTitle": "{{name}}の{{use}}をオンにしますか？",
+      "turnOn": "オンにする",
+      "notNow": "今はしない"
     },
     "sourceUses": {
       "lastfm": {

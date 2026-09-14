@@ -500,7 +500,6 @@
       "connectListenBrainz": "连接 ListenBrainz 以获取为你打造的歌单"
     },
     "sources": {
-      "enableDeezerToPreview": "在“设置 › 页面”中开启试听以收听片段",
       "deezer": {
         "name": "Deezer",
         "sends": "发送艺人、专辑和曲目名称，以及你的搜索内容。"
@@ -527,7 +526,10 @@
       },
       "usedFor": "用于",
       "stopUsing": "停止使用 {{name}}",
-      "off": "关闭"
+      "off": "关闭",
+      "promptTitle": "开启来自 {{name}} 的{{use}}？",
+      "turnOn": "开启",
+      "notNow": "暂不"
     },
     "sourceUses": {
       "lastfm": {

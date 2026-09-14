@@ -132,6 +132,13 @@ export type ServerProviderConfig = {
   ) => Promise<ConnectResult>;
   createAdapter: (server: Server) => ApiAdapter;
   buildCoverUrl: (server: Server, cover: CoverSource, px: number) => string | null;
+  /**
+   * Headers every media fetch against this server needs — the stream and its
+   * artwork alike — when it sits behind something that authenticates each
+   * request. Absent, or null for a server configured without it: signed-URL
+   * and token servers need nothing added.
+   */
+  mediaAuthHeaders?: (server: Server) => Record<string, string> | null;
   /** Sign in by code instead of password, where the provider offers it. */
   codeAuth?: CodeAuthApi;
   demo?: () => Promise<DemoResult>;

@@ -1,6 +1,6 @@
 import type { Server } from '@/providers/contracts/Server';
 import type { Provenance } from '@/domain/identity/Provenance';
-import { plexBasicAuthHeader } from '@/providers/server/plex/client';
+import { SERVER_PROVIDERS } from '@/providers/registry/serverConnections';
 
 /**
  * The ephemeral request headers a track needs to be fetched, kept off the URL
@@ -48,8 +48,9 @@ export function mediaHeadersForSong(
   if (provenance && (provenance.origin !== 'server' || provenance.serverId !== server?.id)) {
     return EMPTY;
   }
-  if (server?.type !== 'plex') return EMPTY;
-  const auth = plexBasicAuthHeader(server?.basicAuth);
+  if (!server) return EMPTY;
+  // Only a server type that declares media auth headers adds any.
+  const auth = SERVER_PROVIDERS[server.type]?.mediaAuthHeaders?.(server);
   if (!auth) return EMPTY;
   return { headers: auth, artworkHeaders: auth };
 }

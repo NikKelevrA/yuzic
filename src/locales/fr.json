@@ -501,7 +501,6 @@
       "connectListenBrainz": "Connectez ListenBrainz pour des playlists faites pour vous"
     },
     "sources": {
-      "enableDeezerToPreview": "Activez les extraits dans Réglages › Pages pour les écouter",
       "deezer": {
         "name": "Deezer",
         "sends": "Envoie des noms d'artistes, d'albums et de titres, et vos recherches."
@@ -528,7 +527,10 @@
       },
       "usedFor": "Utilisé pour",
       "stopUsing": "Ne plus utiliser {{name}}",
-      "off": "Désactivé"
+      "off": "Désactivé",
+      "promptTitle": "Activer {{use}} de {{name}} ?",
+      "turnOn": "Activer",
+      "notNow": "Pas maintenant"
     },
     "sourceUses": {
       "lastfm": {

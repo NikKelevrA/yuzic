@@ -5,5 +5,4 @@ export const staleTime = {
     tracks: Infinity,
     genres: Infinity,
     starred: Infinity,
-    musicbrainz: 3 * 24 * 60 * 60 * 1000
 }
