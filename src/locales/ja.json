@@ -197,9 +197,9 @@
       "sourcesSection": "検索ソース",
       "explanation": "「その他のソース」が検索する対象。ホームとは別。",
       "deezer": "Deezer",
-      "deezerSubtext": "Deezerのアルバム・アーティストを検索。",
+      "deezerSubtext": "Deezerを検索し、そのアルバムとアーティストを開きます。",
       "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "MusicBrainzのアルバム・アーティストを検索。"
+      "musicbrainzSubtext": "MusicBrainzを検索し、そのアルバムとアーティストを開きます。"
     },
     "metadata": {
       "title": "メタデータ",
@@ -466,10 +466,6 @@
         "connectionFailed": "SoulSync への接続に失敗しました",
         "disconnected": "SoulSync から切断しました。"
       }
-    },
-    "musicbrainz": {
-      "external": "外部アーティスト・アルバムデータ",
-      "externalDescription": "MusicBrainzでページを補完。アカウント不要。"
     },
     "lastfm": {
       "enable": "アーティスト・おすすめデータ",

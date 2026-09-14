@@ -7,7 +7,7 @@ import downloadersReducer from './slices/downloadersSlice';
 import audiomuseReducer from './slices/audiomuseSlice';
 import settingsAppearanceReducer from '@/features/settings/appearance/state';
 import settingsHomeReducer from '@/features/settings/home/state';
-import settingsSearchReducer from '@/features/settings/search/state';
+import settingsSearchReducer, { migrateSearchSettings } from '@/features/settings/search/state';
 import settingsMetadataReducer from '@/features/settings/metadata/state';
 import settingsLyricsReducer from '@/features/settings/lyrics/state';
 import settingsScrobblingReducer from '@/features/settings/scrobbling/state';
@@ -56,7 +56,13 @@ const audiomusePersistConfig = { key: 'audiomuse', storage };
 // version bump here — a fresh install and an upgrading one look the same.
 const settingsAppearancePersistConfig = { key: 'settingsAppearance', storage };
 const settingsHomePersistConfig = { key: 'settingsHome', storage };
-const settingsSearchPersistConfig = { key: 'settingsSearch', storage };
+// v1 folded the per-source external-data flags into the source switch.
+const settingsSearchPersistConfig = {
+  key: 'settingsSearch',
+  storage,
+  version: 1,
+  migrate: (state: any): Promise<any> => Promise.resolve(migrateSearchSettings(state)),
+};
 const settingsMetadataPersistConfig = { key: 'settingsMetadata', storage };
 const settingsLyricsPersistConfig = { key: 'settingsLyrics', storage };
 const settingsScrobblingPersistConfig = { key: 'settingsScrobbling', storage };

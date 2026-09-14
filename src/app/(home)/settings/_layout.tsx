@@ -29,7 +29,6 @@ export default function SettingsLayout() {
             <Stack.Screen name='scrobblingView' options={{ headerShown: false, title: "Scrobbling" }} />
             <Stack.Screen name='deezerView' options={{ headerShown: false, title: "Deezer" }} />
             <Stack.Screen name='lastfmView' options={{ headerShown: false, title: "Last.fm" }} />
-            <Stack.Screen name='musicbrainzView' options={{ headerShown: false, title: "MusicBrainz" }} />
             <Stack.Screen name='audiomuseView' options={{ headerShown: false, title: "AudioMuse-AI" }} />
             <Stack.Screen name='lyricsView' options={{ headerShown: false, title: "Lyrics" }} />
             <Stack.Screen name='searchView' options={{ headerShown: false, title: "Search" }} />

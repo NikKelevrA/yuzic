@@ -197,9 +197,9 @@
       "sourcesSection": "Search sources",
       "explanation": "Sources the “Other sources” scope may search. Separate from Home.",
       "deezer": "Deezer",
-      "deezerSubtext": "Search Deezer albums and artists.",
+      "deezerSubtext": "Search Deezer, and open its albums and artists.",
       "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "Search MusicBrainz albums and artists."
+      "musicbrainzSubtext": "Search MusicBrainz, and open its albums and artists."
     },
     "metadata": {
       "title": "Metadata",
@@ -403,10 +403,6 @@
       "nowPlaying": "Now Playing",
       "discovery": "Discovery",
       "discoveryDescription": "Similar artists on Home and artist pages. No account; artist names are sent to match."
-    },
-    "musicbrainz": {
-      "external": "External Artist & Album Data",
-      "externalDescription": "Fill artist and album pages from MusicBrainz. No account."
     },
     "lastfm": {
       "enable": "Artist & Recommendation Data",

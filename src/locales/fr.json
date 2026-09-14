@@ -197,9 +197,9 @@
       "sourcesSection": "Sources de recherche",
       "explanation": "Sources interrogées par « Autres sources ». Distinct de l'accueil.",
       "deezer": "Deezer",
-      "deezerSubtext": "Rechercher albums et artistes Deezer.",
+      "deezerSubtext": "Rechercher sur Deezer et ouvrir ses albums et artistes.",
       "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "Rechercher albums et artistes MusicBrainz."
+      "musicbrainzSubtext": "Rechercher sur MusicBrainz et ouvrir ses albums et artistes."
     },
     "metadata": {
       "title": "Métadonnées",
@@ -467,10 +467,6 @@
         "connectionFailed": "Échec de la connexion à SoulSync",
         "disconnected": "Déconnecté de SoulSync."
       }
-    },
-    "musicbrainz": {
-      "external": "Données externes d'artiste et d'album",
-      "externalDescription": "Compléter les pages depuis MusicBrainz. Sans compte."
     },
     "lastfm": {
       "enable": "Données d'artiste et de recommandation",

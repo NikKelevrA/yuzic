@@ -10,16 +10,10 @@ import { spacing, typography } from '@/constants/design';
 import { selectSearchSourceEnabled, setSearchSourceEnabled } from '@/features/settings/search/state';
 
 /**
- * Which sources Search's "Other sources" scope may query — entirely
- * separate from Home's discovery toggles and from the per-integration
- * Settings pages (Deezer/MusicBrainz there govern Home shelves and the
- * external-browse catalog, not this). A source lighting up Home says
- * nothing about whether Search may call it.
- *
- * Deezer here reads (and writes) the unified `searchSourcesEnabled` map —
- * the same map the Deezer integrations screen's own "Search" toggle now
- * writes to (Task 4.3 retired the separate `deezerSearchEnabled` flag it
- * used to write, which this map only consulted as a fallback).
+ * One switch per outside catalogue: with it on, Search's "Other sources"
+ * scope may query that source and its albums and artists open and fill their
+ * pages. Home's discovery shelves are a separate setting — a source lighting
+ * up Home says nothing about whether Search may call it.
  */
 export default function SearchSettings() {
   const { t } = useTranslation();

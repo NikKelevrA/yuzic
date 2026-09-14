@@ -1,6 +1,7 @@
 import {
   selectEnabledSearchSourceIds,
   selectSearchSourceEnabled,
+  migrateSearchSettings,
 } from './state'
 
 /**
@@ -35,14 +36,45 @@ describe('selectEnabledSearchSourceIds', () => {
   })
 
   it('is independent of Home/discovery enablement', () => {
-    // Home/discovery fields aren't even part of this slice's state, so
-    // there is nothing for search enablement to accidentally read.
-    const state = stateWith({ searchSourcesEnabled: {}, deezerExternalEnabled: true, musicbrainzExternalEnabled: true })
+    // Home/discovery fields aren't part of this slice's state, so there is
+    // nothing for search enablement to accidentally read.
+    const state = stateWith({ searchSourcesEnabled: {} })
     expect(selectEnabledSearchSourceIds(state)).toEqual([])
   })
 
   it('includes exactly the sources explicitly enabled for search', () => {
     const state = stateWith({ searchSourcesEnabled: { deezer: true, musicbrainz: true } })
     expect(selectEnabledSearchSourceIds(state).sort()).toEqual(['deezer', 'musicbrainz'])
+  })
+})
+
+/**
+ * The per-source "external data" flags were retired into the source switch. A
+ * user who had a source's external pages on must still have them.
+ */
+describe('migrateSearchSettings', () => {
+  it('turns a source on for anyone who had its external pages on', () => {
+    const migrated = migrateSearchSettings({
+      searchScope: 'server',
+      searchSourcesEnabled: { deezer: false },
+      deezerExternalEnabled: true,
+      musicbrainzExternalEnabled: true,
+    })
+    expect(migrated.searchSourcesEnabled).toEqual({ deezer: true, musicbrainz: true })
+    expect(migrated).not.toHaveProperty('deezerExternalEnabled')
+    expect(migrated).not.toHaveProperty('musicbrainzExternalEnabled')
+  })
+
+  it('leaves a source alone when its external flag was off', () => {
+    const migrated = migrateSearchSettings({
+      searchSourcesEnabled: { musicbrainz: true },
+      deezerExternalEnabled: false,
+      musicbrainzExternalEnabled: false,
+    })
+    expect(migrated.searchSourcesEnabled).toEqual({ musicbrainz: true })
+  })
+
+  it('passes a fresh install through', () => {
+    expect(migrateSearchSettings(undefined)).toBeUndefined()
   })
 })

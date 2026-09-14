@@ -5,7 +5,7 @@ import { Provider } from 'react-redux'
 
 import settingsMetadataReducer, { setLastfmEnabled } from '@/features/settings/metadata/state'
 import settingsHomeReducer, { setListenbrainzDiscoveryEnabled } from '@/features/settings/home/state'
-import settingsSearchReducer, { setMusicbrainzExternalEnabled } from '@/features/settings/search/state'
+import settingsSearchReducer, { setSearchSourceEnabled } from '@/features/settings/search/state'
 
 /**
  * A stand-in for react-query that does the one thing under test: run the
@@ -80,7 +80,7 @@ describe('external metadata gating', () => {
     // rather than sitting on a spinner that will never resolve.
     expect(result.current.isResolving).toBe(false)
 
-    await act(async () => { store.dispatch(setMusicbrainzExternalEnabled(true)) })
+    await act(async () => { store.dispatch(setSearchSourceEnabled({ sourceId: 'musicbrainz', enabled: true })) })
     await renderHook(
       () => useArtistMbid('Boards of Canada', null),
       { wrapper: wrapperFor(store) }

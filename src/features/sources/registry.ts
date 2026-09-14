@@ -12,7 +12,7 @@ import {
   searchDeezerArtists,
   searchDeezerAlbums,
 } from '@/providers/integration/deezer'
-import { selectDeezerExternalEnabled, selectMusicbrainzExternalEnabled } from '@/features/settings/search/state';
+import { selectSearchSourceEnabled } from '@/features/settings/search/state';
 import * as mb from '@/providers/integration/musicbrainz'
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum'
 import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
@@ -131,7 +131,7 @@ const noAuth = { tier: 'none' as const }
 /**
  * There is nothing to authenticate for a keyless public source — it is
  * reachable by construction. "Enabled" is a plain user setting
- * (`selectDeezerExternalEnabled` / `selectMusicbrainzExternalEnabled`), not a
+ * (the source's switch, `selectSearchSourceEnabled`), not a
  * connection, so this deliberately does not perform a network ping.
  */
 const trivialTestConnection = async (): Promise<Health> => ({ ok: true })
@@ -345,8 +345,8 @@ export function getSourceMeta(id: string): Pick<SourceDefinition, 'label' | 'col
 }
 
 export function useEnabledExternalSources(): SourceDefinition[] {
-  const deezerEnabled = useSelector(selectDeezerExternalEnabled)
-  const musicbrainzEnabled = useSelector(selectMusicbrainzExternalEnabled)
+  const deezerEnabled = useSelector(selectSearchSourceEnabled('deezer'))
+  const musicbrainzEnabled = useSelector(selectSearchSourceEnabled('musicbrainz'))
   return ALL_SOURCES.filter(s => {
     if (s.id === 'deezer') return deezerEnabled
     if (s.id === 'musicbrainz') return musicbrainzEnabled
@@ -362,8 +362,8 @@ type ExternalArtistLookupInput = { enabled: boolean; source?: string; artistId: 
  *  stays inside this registry. */
 export function useExternalArtistLookup(input: ExternalArtistLookupInput) {
   const { enabled, source, artistId, mbid, name } = input
-  const musicbrainzEnabled = useSelector(selectMusicbrainzExternalEnabled)
-  const deezerEnabled = useSelector(selectDeezerExternalEnabled)
+  const musicbrainzEnabled = useSelector(selectSearchSourceEnabled('musicbrainz'))
+  const deezerEnabled = useSelector(selectSearchSourceEnabled('deezer'))
 
   return useQuery({
     queryKey: [QueryKeys.ExternalArtist, source ?? 'unknown', artistId ?? mbid ?? name ?? ''],

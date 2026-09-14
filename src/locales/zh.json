@@ -197,9 +197,9 @@
       "sourcesSection": "搜索来源",
       "explanation": "“其他来源”可搜索的来源。与主页独立。",
       "deezer": "Deezer",
-      "deezerSubtext": "搜索 Deezer 专辑和艺人。",
+      "deezerSubtext": "搜索 Deezer，并打开其专辑和艺人。",
       "musicbrainz": "MusicBrainz",
-      "musicbrainzSubtext": "搜索 MusicBrainz 专辑和艺人。"
+      "musicbrainzSubtext": "搜索 MusicBrainz，并打开其专辑和艺人。"
     },
     "metadata": {
       "title": "元数据",
@@ -466,10 +466,6 @@
         "connectionFailed": "SoulSync 连接失败",
         "disconnected": "已断开与 SoulSync 的连接。"
       }
-    },
-    "musicbrainz": {
-      "external": "外部艺术家和专辑数据",
-      "externalDescription": "用 MusicBrainz 补全页面，无需账号。"
     },
     "lastfm": {
       "enable": "艺术家与推荐数据",

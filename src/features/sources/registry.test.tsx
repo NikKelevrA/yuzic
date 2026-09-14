@@ -4,18 +4,12 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ALL_SOURCES, getSourceMeta, useEnabledExternalSources } from './registry';
-import settingsSearchReducer, {
-  setDeezerExternalEnabled,
-  setMusicbrainzExternalEnabled,
-} from '@/features/settings/search/state';
+import settingsSearchReducer, { setSearchSourceEnabled } from '@/features/settings/search/state';
 
-function makeStore(overrides: Partial<{ deezerExternalEnabled: boolean; musicbrainzExternalEnabled: boolean }> = {}) {
+function makeStore(overrides: Partial<{ deezer: boolean; musicbrainz: boolean }> = {}) {
   const store = configureStore({ reducer: { settingsSearch: settingsSearchReducer } });
-  if (overrides.deezerExternalEnabled !== undefined) {
-    store.dispatch(setDeezerExternalEnabled(overrides.deezerExternalEnabled));
-  }
-  if (overrides.musicbrainzExternalEnabled !== undefined) {
-    store.dispatch(setMusicbrainzExternalEnabled(overrides.musicbrainzExternalEnabled));
+  for (const [sourceId, enabled] of Object.entries(overrides)) {
+    if (enabled !== undefined) store.dispatch(setSearchSourceEnabled({ sourceId, enabled }));
   }
   return store;
 }
@@ -43,14 +37,14 @@ describe('useEnabledExternalSources', () => {
     expect(result.current).toEqual([]);
   });
 
-  it('includes only the sources whose settings flag is enabled', async () => {
-    const store = makeStore({ deezerExternalEnabled: true, musicbrainzExternalEnabled: false });
+  it('includes only the sources switched on — the same switch Search uses', async () => {
+    const store = makeStore({ deezer: true, musicbrainz: false });
     const { result } = await renderHook(() => useEnabledExternalSources(), { wrapper: wrapper(store) });
     expect(result.current.map((s) => s.id)).toEqual(['deezer']);
   });
 
-  it('includes both sources when both flags are enabled', async () => {
-    const store = makeStore({ deezerExternalEnabled: true, musicbrainzExternalEnabled: true });
+  it('includes both sources when both are switched on', async () => {
+    const store = makeStore({ deezer: true, musicbrainz: true });
     const { result } = await renderHook(() => useEnabledExternalSources(), { wrapper: wrapper(store) });
     expect(result.current.map((s) => s.id).sort()).toEqual(['deezer', 'musicbrainz']);
   });

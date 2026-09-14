@@ -9,7 +9,7 @@ export const HOME_SHELF_LENGTHS: Record<HomeShelfLength, number> = {
 };
 export const DEFAULT_SLEEP_TIMER_PRESETS = [5, 15, 30] as const;
 
-export interface HomeSettingsState {
+interface HomeSettingsState {
   /* Home discovery source visibility. The server tier gets its own toggle
    * because nothing else governs it; the two external families are steered by
    * the integration settings that decide whether we may call them at all

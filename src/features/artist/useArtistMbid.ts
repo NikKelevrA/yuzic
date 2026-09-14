@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 
 import { searchArtist } from '@/providers/integration/musicbrainz'
 import { QueryKeys } from '@/state/query/queryKeys'
-import { selectMusicbrainzExternalEnabled } from '@/features/settings/search/state';
+import { selectSearchSourceEnabled } from '@/features/settings/search/state';
 
 /**
  * The MusicBrainz id for an artist, from the library if the server knows it
@@ -19,8 +19,8 @@ import { selectMusicbrainzExternalEnabled } from '@/features/settings/search/sta
  * and MusicBrainz asks callers not to hammer it. A name that matches nothing
  * resolves to null and the caller hides itself, same as before.
  *
- * The lookup is a request to MusicBrainz, so it is gated on the MusicBrainz
- * setting — with that off, only an MBID the server already carries is used
+ * The lookup is a request to MusicBrainz, so it is gated on MusicBrainz's
+ * switch in Search settings — with that off, only an MBID the server already carries is used
  * and no name ever leaves the device. Callers that need a lookup for their
  * own feature therefore hide themselves when MusicBrainz is off, which is the
  * intended reading of "external data only when asked for".
@@ -30,7 +30,7 @@ export function useArtistMbid(
   localMbid?: string | null,
   options: { enabled?: boolean } = {}
 ): { mbid: string | null; isResolving: boolean } {
-  const lookupAllowed = useSelector(selectMusicbrainzExternalEnabled)
+  const lookupAllowed = useSelector(selectSearchSourceEnabled('musicbrainz'))
   const trimmed = artistName?.trim() ?? ''
   const known = localMbid?.trim() || null
   const shouldLookUp =

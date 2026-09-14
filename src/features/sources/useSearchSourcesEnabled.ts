@@ -6,7 +6,7 @@ import { ALL_SOURCES, type SourceId } from '@/features/sources/registry'
 /**
  * Which sources the user has turned on for Search's "Other sources" scope —
  * state entirely separate from Home/discovery enablement
- * (`useDeezerDiscoveryEnabled`, `musicbrainzExternalEnabled`, etc). A source
+ * (`useDeezerDiscoveryEnabled`, etc). A source
  * lighting up a Home shelf says nothing about whether Search may call it;
  * each surface's enablement is its own on/off switch.
  *
