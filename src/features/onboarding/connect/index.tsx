@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { notify } from '@/components/toast';
@@ -20,6 +19,7 @@ import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { selectOnboardingDiscoveryPrompted } from '@/features/settings/onboarding/state';
+import ServerTypeIcon from '@/features/onboarding/ServerTypeIcon';
 
 export default function Connect() {
     const [selectedType, setSelectedType] = useState<ServerType | null>(null);
@@ -130,11 +130,11 @@ export default function Connect() {
                                     isSelected && styles.serverTypeButtonSelected,
                                 ]}
                             >
-                                <Image
-                                    source={provider.icon}
-                                    style={{ width: 36, height: 36, marginBottom: spacing.tight }}
-                                    contentFit="contain"
-                                    cachePolicy="memory-disk"
+                                <ServerTypeIcon
+                                    icon={provider.icon}
+                                    size={iconSize.providerLogo}
+                                    color={onDark.text}
+                                    style={{ marginBottom: spacing.tight }}
                                 />
                                 <Text
                                     style={[

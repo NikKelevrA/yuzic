@@ -1,8 +1,9 @@
+import type { ComponentType } from 'react';
+import { FileMusic } from 'lucide-react-native';
 import NavidromeIcon from '@assets/images/navidrome.png';
 import JellyfinIcon from '@assets/images/jellyfin.png';
 import EmbyIcon from '@assets/images/emby.png';
 import PlexIcon from '@assets/images/plex.png';
-import LocalFilesIcon from '@assets/images/local-files.png';
 
 import { createNavidromeClient, buildTokenParams } from '@/providers/server/navidrome/client';
 import { ping as pingNavidrome } from '@/providers/server/navidrome/auth/ping';
@@ -247,11 +248,20 @@ export type CodeAuthApi = {
   actionKey: string;
 };
 
+/**
+ * A server type's mark on the connect and server-list screens: the brand's own
+ * logo, or — for a type with no brand, like local files — a glyph from the
+ * app's icon library, drawn in the screen's colour.
+ */
+export type ServerProviderIcon =
+  | { kind: 'image'; source: number }
+  | { kind: 'glyph'; Glyph: ComponentType<{ size?: number; color?: string }> };
+
 export type ServerProviderConfig = {
   type: ServerType;
   label: string;
   description: string;
-  icon: any;
+  icon: ServerProviderIcon;
   capabilities: ServerCapabilities;
   libraryScope: LibraryScope;
   /** The libraries/folders this server offers to scope the app to. */
@@ -292,7 +302,7 @@ export const SERVER_PROVIDERS: Record<ServerType, ServerProviderConfig> = {
     type: 'navidrome',
     label: 'Navidrome',
     get description() { return i18n.t('onboarding.connect.providerDescription.navidrome'); },
-    icon: NavidromeIcon,
+    icon: { kind: 'image', source: NavidromeIcon },
     capabilities: {
       supportsDemo: true,
     },
@@ -355,7 +365,7 @@ export const SERVER_PROVIDERS: Record<ServerType, ServerProviderConfig> = {
     type: 'jellyfin',
     label: 'Jellyfin',
     get description() { return i18n.t('onboarding.connect.providerDescription.jellyfin'); },
-    icon: JellyfinIcon,
+    icon: { kind: 'image', source: JellyfinIcon },
     capabilities: {
       supportsDemo: false,
     },
@@ -421,7 +431,7 @@ export const SERVER_PROVIDERS: Record<ServerType, ServerProviderConfig> = {
     type: 'plex',
     label: 'Plex',
     get description() { return i18n.t('onboarding.connect.providerDescription.plex'); },
-    icon: PlexIcon,
+    icon: { kind: 'image', source: PlexIcon },
     capabilities: { supportsDemo: false },
     libraryScope: { key: 'sectionIds', legacyKey: 'sectionId' },
     listLibraries: async (server) => {
@@ -478,7 +488,7 @@ export const SERVER_PROVIDERS: Record<ServerType, ServerProviderConfig> = {
     type: 'emby',
     label: 'Emby',
     get description() { return i18n.t('onboarding.connect.providerDescription.emby'); },
-    icon: EmbyIcon,
+    icon: { kind: 'image', source: EmbyIcon },
     capabilities: {
       supportsDemo: false,
     },
@@ -525,7 +535,7 @@ export const SERVER_PROVIDERS: Record<ServerType, ServerProviderConfig> = {
     type: 'local',
     label: 'Local files',
     get description() { return i18n.t('onboarding.connect.providerDescription.local'); },
-    icon: LocalFilesIcon,
+    icon: { kind: 'glyph', Glyph: FileMusic },
     capabilities: { supportsDemo: false },
     libraryScope: { key: 'localLibraryIds', legacyKey: 'localLibraryId' },
     listLibraries: async () => [{ id: 'device', name: i18n.t('onboarding.local.libraryName') }],

@@ -374,6 +374,8 @@ export const iconSize = {
   large: 28,
   /** The player's skip buttons, either side of the 68pt play button. */
   transport: 34,
+  /** A server type's logo or glyph on the connect and server-list screens. */
+  providerLogo: 36,
   /** The glyph an empty state is built around. */
   emptyState: 40,
   /** Oversized and faded, as texture rather than as an icon — the moon behind

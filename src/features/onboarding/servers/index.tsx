@@ -8,7 +8,6 @@ import {
   FlatList,
   Alert,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
@@ -26,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { selectOnboardingDiscoveryPrompted } from '@/features/settings/onboarding/state';
+import ServerTypeIcon from '@/features/onboarding/ServerTypeIcon';
 
 export default function Servers() {
     const { t } = useTranslation();
@@ -85,11 +85,11 @@ export default function Servers() {
                     style={styles.serverInfo}
                     onPress={() => handleSelectServer(item.id)}
                 >
-                    <Image
-                        source={icon}
+                    <ServerTypeIcon
+                        icon={icon}
+                        size={iconSize.providerLogo}
+                        color={onDark.text}
                         style={styles.serverIcon}
-                        contentFit="contain"
-                        cachePolicy="memory-disk"
                     />
 
                     <View style={styles.textContainer}>
