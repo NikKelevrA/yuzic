@@ -3,7 +3,6 @@ import { StyleSheet, Text } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
 import { useTheme } from '@/features/theme/useTheme';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import {
@@ -14,7 +13,7 @@ import {
   useOptionSheetBackground,
 } from '@/components/options/OptionSheetPrimitives';
 import { ALL_SOURCES, getSourceMeta, type SourceId } from '@/features/sources/registry';
-import { setSourceUse } from '@/features/settings/sources/state';
+import { promptSourceUse } from '@/features/settings/sources/sourceUsePrompt';
 import { searchUseOf } from '@/providers/registry/sources';
 import { iconSize, spacing, typography } from '@/constants/design';
 import type { SearchEntityType } from '@/features/search/SearchContext';
@@ -23,8 +22,8 @@ import type { SearchResultScope } from '@/features/search/searchLegs';
 type Props = {
   resultScope: SearchResultScope;
   onChangeScope: (scope: SearchResultScope) => void;
-  /** Sources enabled for search at all. The rest are offered below them with
-   *  a switch, so turning one on doesn't mean leaving the search. */
+  /** Sources enabled for search at all. The rest are listed beside them, and
+   *  turning one on doesn't mean leaving the search. */
   availableSourceIds: SourceId[];
   selectedSourceIds: string[];
   onToggleSource: (sourceId: SourceId) => void;
@@ -43,25 +42,28 @@ const ENTITY_TYPE_ORDER: SearchEntityType[] = ['album', 'artist'];
  * source and entity-type filters beneath; "Your Library" hides them because
  * they don't apply to a local search.
  *
- * A source that is on is a check: in play for *this* search or not. A source
- * that is off says what turning it on sends, with "Turn on" beside it rather
- * than a switch — a switch among checks read as a second kind of filter. It is
- * the same setting as Settings › Search, offered where the decision comes up.
+ * Every source is the same kind of row, a check for whether it is in *this*
+ * search, in a fixed order so nothing moves. A source that is off says so and
+ * what it would be sent; checking it asks first, in the same sheet that asks
+ * about previews, because it starts sending searches somewhere new. Saying yes
+ * turns its search use on and checks it. A switch or a "Turn on" action here
+ * made one list do two jobs, and the row changed shape once it was on.
  */
 const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
   ({ resultScope, onChangeScope, availableSourceIds, selectedSourceIds, onToggleSource, selectedEntityTypes, onToggleEntityType }, ref) => {
     const { t } = useTranslation();
     const { colors } = useTheme();
-    const dispatch = useDispatch();
     const sheetBg = useOptionSheetBackground();
 
     const entityTypeLabel = (entityType: SearchEntityType) => t(`search.entityTypes.${entityType}`);
-    const offSourceIds = ALL_SOURCES.map(source => source.id).filter(id => !availableSourceIds.includes(id));
-    const enableSource = (sourceId: SourceId) => {
-      dispatch(setSourceUse({ use: searchUseOf(sourceId), enabled: true }));
-      // Turned on from here, it's wanted for this search too.
-      if (!selectedSourceIds.includes(sourceId)) onToggleSource(sourceId);
-    };
+    const anySourceOff = ALL_SOURCES.some(source => !availableSourceIds.includes(source.id));
+    const askToTurnOn = (sourceId: SourceId) =>
+      promptSourceUse(searchUseOf(sourceId), {
+        // Turned on from here, it's wanted for this search too.
+        onTurnOn: () => {
+          if (!selectedSourceIds.includes(sourceId)) onToggleSource(sourceId);
+        },
+      });
 
     const snapPoints = useMemo(() => ['50%'], []);
     const isOther = resultScope === 'other';
@@ -100,37 +102,22 @@ const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
               <OptionSheetDivider />
 
               <OptionSheetSectionLabel label={t('search.filters.sources')} />
-              {availableSourceIds.map(sourceId => {
-                const meta = getSourceMeta(sourceId);
-                const checked = selectedSourceIds.includes(sourceId);
+              {ALL_SOURCES.map(({ id: sourceId }) => {
+                const label = getSourceMeta(sourceId)?.label ?? sourceId;
+                const isOn = availableSourceIds.includes(sourceId);
+                const checked = isOn && selectedSourceIds.includes(sourceId);
                 return (
                   <OptionSheetRow
                     key={sourceId}
                     testID={`search-filters-source-${sourceId}`}
-                    label={meta?.label ?? sourceId}
-                    onPress={() => onToggleSource(sourceId)}
+                    label={label}
+                    description={isOn ? undefined : t('search.filters.sourceOff', { name: label })}
+                    onPress={() => (isOn ? onToggleSource(sourceId) : askToTurnOn(sourceId))}
                     trailing={checked ? <Check size={iconSize.secondary} color={colors.themeColor} /> : undefined}
                   />
                 );
               })}
-              {offSourceIds.map(sourceId => {
-                const label = getSourceMeta(sourceId)?.label ?? sourceId;
-                return (
-                  <OptionSheetRow
-                    key={sourceId}
-                    testID={`search-filters-enable-${sourceId}`}
-                    label={label}
-                    description={t('search.filters.sendsQuery', { name: label })}
-                    onPress={() => enableSource(sourceId)}
-                    trailing={(
-                      <Text style={[styles.turnOn, { color: colors.themeColor }]}>
-                        {t('settings.sources.turnOn')}
-                      </Text>
-                    )}
-                  />
-                );
-              })}
-              {offSourceIds.length > 0 && (
+              {anySourceOff && (
                 <Text style={[styles.note, { color: colors.subtext }]}>
                   {t('search.filters.alsoInSettings')}
                 </Text>
@@ -168,9 +155,6 @@ const styles = StyleSheet.create({
     ...typography.rowTitle,
     fontWeight: '600',
     marginBottom: spacing.md,
-  },
-  turnOn: {
-    ...typography.label,
   },
   note: {
     ...typography.caption,

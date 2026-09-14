@@ -875,7 +875,7 @@
       "title": "筛选",
       "sources": "来源",
       "entityTypes": "包含",
-      "sendsQuery": "将你输入的内容发送到 {{name}}",
+      "sourceOff": "已关闭 · 将你输入的内容发送到 {{name}}",
       "alsoInSettings": "也可在“设置 › 搜索”中找到。"
     },
     "entityTypes": {

@@ -878,7 +878,7 @@
       "title": "Filtres",
       "sources": "Sources",
       "entityTypes": "Inclure",
-      "sendsQuery": "Envoie votre saisie à {{name}}",
+      "sourceOff": "Désactivé · envoie votre saisie à {{name}}",
       "alsoInSettings": "Aussi dans Réglages › Recherche."
     },
     "entityTypes": {
