@@ -210,9 +210,6 @@ export const selectCoverAccentEnabled = (state: AppearanceRootState): boolean =>
 export const selectGridColumns = (state: AppearanceRootState): number =>
   state.settingsAppearance.gridColumns;
 
-export const selectIsGridView = (state: AppearanceRootState): boolean =>
-  state.settingsAppearance.isGridView;
-
 /**
  * Grid or list for one collection.
  *

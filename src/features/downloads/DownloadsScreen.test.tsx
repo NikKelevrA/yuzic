@@ -55,9 +55,9 @@ jest.mock('@/components/DetailHeader', () => {
   return { DetailHeaderBar: ({ title }: { title: string }) => <RNText>{title}</RNText> };
 });
 
-jest.mock('@/providers/integration/lidarr', () => ({ fetchQueueWithDiff: jest.fn(), cancelQueueItem: jest.fn() }));
-jest.mock('@/providers/integration/slskd', () => ({ fetchQueueWithDiff: jest.fn(), cancelQueueItem: jest.fn() }));
-jest.mock('@/providers/integration/soulsync', () => ({ fetchQueueWithDiff: jest.fn(), cancelDownload: jest.fn() }));
+jest.mock('@/providers/integration/lidarr', () => ({ cancelQueueItem: jest.fn() }));
+jest.mock('@/providers/integration/slskd', () => ({ cancelQueueItem: jest.fn() }));
+jest.mock('@/providers/integration/soulsync', () => ({ cancelDownload: jest.fn() }));
 
 function connectedState(id: 'lidarr' | 'slskd' | 'soulsync', label: string) {
   return {

@@ -5,8 +5,6 @@ export interface SoulSyncConfig {
   apiKey: string;
 }
 
-export type SoulSyncClient = ReturnType<typeof createSoulSyncClient>;
-
 /**
  * Every SoulSync reply is wrapped in the same envelope, success or failure,
  * and the HTTP status carries the same information a second time. The client

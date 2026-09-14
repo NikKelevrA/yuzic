@@ -17,7 +17,7 @@ type LidarrQueueRecordRaw = {
 };
 
 /** One queue entry per album. Keeps queue minimal. */
-export type LidarrQueueRecord = {
+type LidarrQueueRecord = {
   id: string;
   albumId?: number;
   albumTitle: string;
@@ -39,8 +39,6 @@ type LidarrQueueResponse = {
   totalRecords: number;
   records: LidarrQueueRecordRaw[];
 };
-
-type FinishedQueueItem = LidarrQueueRecord;
 
 function groupByAlbum(records: LidarrQueueRecordRaw[]): LidarrQueueRecord[] {
   const byKey = new Map<string, LidarrQueueRecordRaw[]>();
@@ -93,28 +91,7 @@ export async function fetchQueue(
   return groupByAlbum(raw);
 }
 
-export function detectFinishedQueueItems(
-  previous: LidarrQueueRecord[],
-  current: LidarrQueueRecord[]
-): FinishedQueueItem[] {
-  if (!previous.length) return [];
-  const currentIds = new Set(current.map((item) => item.id));
-  return previous.filter((item) => !currentIds.has(item.id));
-}
-
-export async function fetchQueueWithDiff(
-  config: LidarrConfig,
-  previousQueue: LidarrQueueRecord[]
-): Promise<{
-  currentQueue: LidarrQueueRecord[];
-  finishedItems: FinishedQueueItem[];
-}> {
-  const currentQueue = await fetchQueue(config);
-  const finishedItems = detectFinishedQueueItems(previousQueue, currentQueue);
-  return { currentQueue, finishedItems };
-}
-
-export type CancelQueueOptions = {
+type CancelQueueOptions = {
   /** Also tell the download client (Sabnzbd/Transmission/etc.) to drop it. */
   removeFromClient?: boolean;
   /**

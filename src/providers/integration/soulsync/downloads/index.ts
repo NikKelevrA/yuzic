@@ -1,8 +1,8 @@
 import { createSoulSyncClient, type SoulSyncConfig } from '../client';
 
-export type TrackRequest = { title: string; artist: string };
+type TrackRequest = { title: string; artist: string };
 
-export type SoulSyncQueueRecord = {
+type SoulSyncQueueRecord = {
   id: string;
   status: string;
   title: string;
@@ -77,31 +77,6 @@ export async function fetchQueue(config: SoulSyncConfig): Promise<SoulSyncQueueR
   const data = await client.request<{ downloads?: RawDownload[] }>('/downloads?limit=100');
   const rows = Array.isArray(data?.downloads) ? data.downloads : [];
   return rows.map(toRecord).filter(record => record.id);
-}
-
-/**
- * Which transfers disappeared since the last read. The global watcher turns
- * disappearances into a server rescan, so what matters is that an item left
- * the queue, not why.
- */
-export function detectFinishedQueueItems(
-  previous: SoulSyncQueueRecord[],
-  current: SoulSyncQueueRecord[]
-): SoulSyncQueueRecord[] {
-  if (!previous.length) return [];
-  const currentIds = new Set(current.map(item => item.id));
-  return previous.filter(item => !currentIds.has(item.id));
-}
-
-export async function fetchQueueWithDiff(
-  config: SoulSyncConfig,
-  previousQueue: SoulSyncQueueRecord[]
-): Promise<{ currentQueue: SoulSyncQueueRecord[]; finishedItems: SoulSyncQueueRecord[] }> {
-  const currentQueue = await fetchQueue(config);
-  return {
-    currentQueue,
-    finishedItems: detectFinishedQueueItems(previousQueue, currentQueue),
-  };
 }
 
 export async function cancelDownload(

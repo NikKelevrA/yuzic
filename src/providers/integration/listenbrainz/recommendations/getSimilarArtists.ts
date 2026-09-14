@@ -1,6 +1,6 @@
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 
-export type LBSimilarArtist = {
+type LBSimilarArtist = {
   artistMbid: string;
   name: string;
   score: number;

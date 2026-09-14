@@ -1,6 +1,6 @@
 import { lastfmRequest } from './client';
 
-export type LastFmArtistInfo = {
+type LastFmArtistInfo = {
   bio: string | null;
   tags: string[];
 };

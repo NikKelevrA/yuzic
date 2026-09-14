@@ -1,7 +1,7 @@
 import { createSlskdClient, type SlskdConfig } from '../client';
 import { parseDirectory } from './directoryName';
 
-export interface SlskdQueueRecord {
+interface SlskdQueueRecord {
   id: string;
   /** The peer serving the files; shown when the path reveals no artist. */
   username: string;
@@ -98,27 +98,6 @@ export async function fetchQueue(config: SlskdConfig): Promise<SlskdQueueRecord[
   const client = createSlskdClient(config);
   const data = await client.request<Transfer[]>('/transfers/downloads/');
   return groupDownloadsByDirectory(Array.isArray(data) ? data : []);
-}
-
-export function detectFinishedQueueItems(
-  previous: SlskdQueueRecord[],
-  current: SlskdQueueRecord[]
-): SlskdQueueRecord[] {
-  if (!previous.length) return [];
-  const currentIds = new Set(current.map((item) => item.id));
-  return previous.filter((item) => !currentIds.has(item.id));
-}
-
-export async function fetchQueueWithDiff(
-  config: SlskdConfig,
-  previousQueue: SlskdQueueRecord[]
-): Promise<{
-  currentQueue: SlskdQueueRecord[];
-  finishedItems: SlskdQueueRecord[];
-}> {
-  const currentQueue = await fetchQueue(config);
-  const finishedItems = detectFinishedQueueItems(previousQueue, currentQueue);
-  return { currentQueue, finishedItems };
 }
 
 /**

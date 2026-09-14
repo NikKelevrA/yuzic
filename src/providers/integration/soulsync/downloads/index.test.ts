@@ -1,10 +1,8 @@
 import {
   buildQuery,
-  detectFinishedQueueItems,
   downloadTrack,
   fetchQueue,
   cancelDownload,
-  type SoulSyncQueueRecord,
 } from './';
 import { SoulSyncError } from '../client';
 
@@ -28,12 +26,6 @@ function errorEnvelope(code: string, message: string, status: number) {
 
 const fetchMock = jest.fn();
 global.fetch = fetchMock as unknown as typeof fetch;
-
-const record = (over: Partial<SoulSyncQueueRecord> = {}): SoulSyncQueueRecord => ({
-  id: '1', status: 'downloading', title: 'Roygbiv', artist: 'Boards of Canada',
-  album: 'Music Has the Right to Children', username: 'peer', progress: 10,
-  sizeBytes: 0, error: null, ...over,
-});
 
 describe('SoulSync downloads', () => {
   beforeEach(() => { fetchMock.mockReset(); });
@@ -92,15 +84,6 @@ describe('SoulSync downloads', () => {
     const queue = await fetchQueue(config);
     expect(queue).toHaveLength(1);
     expect(queue[0]).toMatchObject({ id: 'a', title: 'One', artist: 'X', progress: 42, username: 'peer' });
-  });
-
-  it('treats a row that left the queue as finished', () => {
-    const before = [record({ id: '1' }), record({ id: '2' })];
-    const after = [record({ id: '2' })];
-    expect(detectFinishedQueueItems(before, after).map(r => r.id)).toEqual(['1']);
-    // Nothing is "finished" on the first read, or the watcher would kick a
-    // rescan for every item already in the queue when the app opened.
-    expect(detectFinishedQueueItems([], after)).toEqual([]);
   });
 
   it('cancels by id and peer, which is what the endpoint requires', async () => {

@@ -28,11 +28,6 @@ export const selectListenBrainzAuthenticated = createSelector(
   (entry) => entry.isAuthenticated
 );
 
-export const selectListenBrainzScrobbleEnabled = createSelector(
-  [selectListenBrainzForActiveServer],
-  (entry) => entry.scrobbleEnabled ?? true
-);
-
 /** Where one server's ListenBrainz user token lives in the keystore. */
 export const listenBrainzCredentialScope = (serverId: string): CredentialScope => ({
   kind: 'integration',

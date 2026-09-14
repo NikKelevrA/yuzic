@@ -1,4 +1,4 @@
-import { cancelQueueItem, detectFinishedQueueItems, fetchQueue, type SlskdQueueRecord } from './';
+import { cancelQueueItem, fetchQueue } from './';
 
 const config = { serverUrl: 'http://slskd:5030', apiKey: 'key' };
 const originalFetch = global.fetch;
@@ -92,18 +92,6 @@ describe('fetchQueue', () => {
     ]) as unknown as typeof fetch;
 
     await expect(fetchQueue(config)).resolves.toEqual([]);
-  });
-});
-
-describe('detectFinishedQueueItems', () => {
-  const item = (id: string) => ({ id }) as SlskdQueueRecord;
-
-  it('reports entries that left the queue', () => {
-    expect(detectFinishedQueueItems([item('a'), item('b')], [item('b')])).toEqual([item('a')]);
-  });
-
-  it('reports nothing on the first read', () => {
-    expect(detectFinishedQueueItems([], [item('a')])).toEqual([]);
   });
 });
 

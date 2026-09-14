@@ -33,7 +33,7 @@ type SearchStateResponse = {
 };
 
 /** Stable reasons a download can fail, so the UI can translate them. */
-export type SlskdDownloadErrorCode =
+type SlskdDownloadErrorCode =
   | 'missing_identity'
   | 'search_failed'
   | 'search_timeout'
@@ -42,11 +42,11 @@ export type SlskdDownloadErrorCode =
   | 'enqueue_failed'
   | 'request_failed';
 
-export type DownloadAlbumResult =
+type DownloadAlbumResult =
   | { success: true }
   | { success: false; code: SlskdDownloadErrorCode; message: string };
 
-export type DownloadTrackResult = DownloadAlbumResult;
+type DownloadTrackResult = DownloadAlbumResult;
 
 const errorMessages: Record<SlskdDownloadErrorCode, string> = {
   missing_identity: 'Missing album or artist name',

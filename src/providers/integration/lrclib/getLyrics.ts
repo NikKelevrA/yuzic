@@ -11,7 +11,7 @@ const HEADERS = {
   Accept: "application/json",
 };
 
-export type GetLyricsInput = {
+type GetLyricsInput = {
   artist: string;
   title: string;
   album?: string;

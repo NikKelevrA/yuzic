@@ -554,9 +554,6 @@ export const getServerProvider = (type: ServerType) => {
   return provider;
 };
 
-const supportsDemo = (type: ServerType) =>
-  SERVER_PROVIDERS[type]?.capabilities.supportsDemo ?? false;
-
 /** The libraries this server offers, asked of it without knowing its type. */
 export const listServerLibraries = (server: Server): Promise<Library[]> =>
   getServerProvider(server.type).listLibraries(withServerCredentials(server));

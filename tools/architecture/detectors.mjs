@@ -65,6 +65,14 @@ const isRouteExport = line => {
   return Boolean(match && ROUTE_EXPORTS.has(match[2]));
 };
 
+/**
+ * The default export of a platform variant (`PlayingBar.ios.tsx`). Imports
+ * name the base module, and the bundler picks the variant for the platform it
+ * builds, so no import ever names the variant file itself.
+ */
+const isPlatformVariantDefault = line =>
+  /^src\/[^:]+\.(ios|android|native|web)\.tsx?:\d+\s*-\s*default\b/.test(line);
+
 export function unusedExports() {
   const out = run('npx', ['--no-install', 'ts-prune', '-p', 'tools/architecture/tsconfig.prune.json']);
   return [...new Set(
@@ -75,7 +83,7 @@ export function unusedExports() {
       .map(line => line.replace(/^.*?(src[/\\].*)$/, '$1').replace(/\\/g, '/'))
       .filter(line => line.startsWith('src/'))
       .filter(line => !isTest(line.split(':')[0]))
-      .filter(line => !isRouteExport(line))
+      .filter(line => !isRouteExport(line) && !isPlatformVariantDefault(line))
       // Drop ts-prune's line number: `path:12 - name` becomes `path - name`.
       // Keying on the line would make every export below an inserted line read
       // as simultaneously new and fixed, so the gate would churn on edits that

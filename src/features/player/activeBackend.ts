@@ -22,7 +22,3 @@ export function getBackend(): PlayerBackend {
 
 let instance: PlayerBackend | null = null;
 
-/** Test seam: drop the memoized instance so a fresh one is built. */
-export function resetBackendForTests() {
-  instance = null;
-}

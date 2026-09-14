@@ -12,12 +12,12 @@ import { useSyncExternalStore } from 'react';
 
 export type ToastVariant = 'success' | 'error' | 'info' | 'loading';
 
-export type ToastAction = {
+type ToastAction = {
   label: string;
   onPress: () => void;
 };
 
-export type ToastOptions = {
+type ToastOptions = {
   /** Stable id — a repeat call with the same id updates in place, never stacks. */
   id?: string;
   /** ms visible; `Infinity` pins it until dismissed by id. Defaults per variant. */

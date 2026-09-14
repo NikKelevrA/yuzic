@@ -70,7 +70,7 @@ type AlbumResolution =
       code: 'album_not_found_for_artist' | 'album_identity_ambiguous';
     };
 
-export type AlbumSearchResult =
+type AlbumSearchResult =
   | {
       success: true;
       status: 'submitted' | 'already_processing' | 'already_available';

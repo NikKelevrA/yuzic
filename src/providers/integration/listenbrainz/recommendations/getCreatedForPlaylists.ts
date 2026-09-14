@@ -9,11 +9,11 @@ const PROVENANCE = integrationProvenance('musicbrainz');
 /** The three periodic mixes troi-bot generates for a user. Anything else
  * ListenBrainz might create-for (a one-off, a different bot) is ignored —
  * this shelf mirrors the LOCKED set, not "whatever comes back". */
-export const CREATED_FOR_MIX_TYPES = ['daily-jams', 'weekly-jams', 'weekly-exploration'] as const;
+const CREATED_FOR_MIX_TYPES = ['daily-jams', 'weekly-jams', 'weekly-exploration'] as const;
 
 export type CreatedForMixType = (typeof CREATED_FOR_MIX_TYPES)[number];
 
-export type LBCreatedForMix = {
+type LBCreatedForMix = {
   mixType: CreatedForMixType;
   title: string;
   playlistMbid: string;
