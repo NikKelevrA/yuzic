@@ -6,7 +6,7 @@ import { CloudOff } from 'lucide-react-native'
 import { useTranslation } from 'react-i18next'
 
 import { useTheme } from '@/hooks/useTheme'
-import { useAlbums } from '@/hooks/albums'
+import { useAlbums } from '@/hooks/albums/useAlbums';
 import NotFoundView from '@/components/NotFoundView'
 import StatusBanner from '@/components/StatusBanner'
 import GenreContent from './components/Content'

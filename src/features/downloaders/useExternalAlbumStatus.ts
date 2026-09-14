@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useAlbums } from '@/hooks/albums';
+import { useAlbums } from '@/hooks/albums/useAlbums';
 import type { Album } from '@/domain/entities/Album';
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';

@@ -8,7 +8,7 @@ import { useApi } from '@/api'
 import { QueryKeys } from '@/enums/queryKeys'
 import { useTheme } from '@/hooks/useTheme'
 import { usePlayingActions } from '@/contexts/PlayingContext'
-import { usePlayableSongResolver } from '@/hooks/songs'
+import { usePlayableSongResolver } from '@/hooks/songs/usePlayableSongResolver';
 import TopTrackRow from '@/components/rows/TopTrackRow'
 import { spacing, typography } from '@/constants/design'
 import type { Artist } from '@/domain/entities/Artist'

@@ -60,14 +60,12 @@ jest.mock('@/components/options/useLazyCollectionDetails', () => ({
 
 const mockStarSong = jest.fn().mockResolvedValue(undefined);
 const mockUnstarSong = jest.fn().mockResolvedValue(undefined);
-jest.mock('@/hooks/starred', () => ({
-  useStarredSongs: () => ({ songs: [] }),
-  useStarSong: () => ({ mutateAsync: mockStarSong }),
-  useUnstarSong: () => ({ mutateAsync: mockUnstarSong }),
-  useStarredAlbums: () => ({ albums: [] }),
-  useStarAlbum: () => ({ mutateAsync: mockStarSong }),
-  useUnstarAlbum: () => ({ mutateAsync: mockUnstarSong }),
-}));
+jest.mock('@/hooks/starred/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
+jest.mock('@/hooks/starred/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: mockStarSong }) }));
+jest.mock('@/hooks/starred/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: mockUnstarSong }) }));
+jest.mock('@/hooks/starred/useStarredAlbums', () => ({ useStarredAlbums: () => ({ albums: [] }) }));
+jest.mock('@/hooks/starred/useStarAlbum', () => ({ useStarAlbum: () => ({ mutateAsync: mockStarSong }) }));
+jest.mock('@/hooks/starred/useUnstarAlbum', () => ({ useUnstarAlbum: () => ({ mutateAsync: mockUnstarSong }) }));
 
 jest.mock('@/components/options/GetReviewSheet', () => 'GetReviewSheet');
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');

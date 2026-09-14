@@ -70,9 +70,7 @@ jest.mock('@/features/sources/registry', () => ({
   useEnabledExternalSources: () => [],
 }));
 
-jest.mock('@/hooks/artists', () => ({
-  useArtistAlbums: () => [],
-}));
+jest.mock('@/hooks/artists/useArtistAlbums', () => ({ useArtistAlbums: () => [] }));
 
 jest.mock('./useLazyCollectionDetails', () => ({
   useLazyArtistSongs: () => ({ songs: [], songsLoading: false }),

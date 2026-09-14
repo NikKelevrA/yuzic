@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 
-import { useAlbums } from '@/hooks/albums'
-import { useArtists } from '@/hooks/artists'
-import { usePlaylists } from '@/hooks/playlists'
-import { useTracks } from '@/hooks/tracks'
+import { useAlbums } from '@/hooks/albums/useAlbums'
+import { useArtists } from '@/hooks/artists/useArtists'
+import { usePlaylists } from '@/hooks/playlists/usePlaylists'
+import { useTracks } from '@/hooks/tracks/useTracks'
 import { useDownload } from '@/contexts/DownloadContext'
 import {
   selectSongLastPlayedAt,

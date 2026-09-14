@@ -13,7 +13,7 @@ import { selectHomeShelfItemCount } from '@/features/settings/home/state';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/hooks/useTheme';
 import { usePlayingActions } from '@/contexts/PlayingContext';
-import { usePlayableSongResolver } from '@/hooks/songs';
+import { usePlayableSongResolver } from '@/hooks/songs/usePlayableSongResolver';
 import { useSongActionSheets } from '@/contexts/SongActionSheetContext';
 import IconActionButton from '@/components/IconActionButton';
 import MediaListRow from '@/components/MediaListRow';

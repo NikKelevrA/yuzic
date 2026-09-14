@@ -13,7 +13,7 @@ import {
   useIsAudiomuseConfigured,
   useAudiomuseConfig,
 } from '@/state/redux/selectors/audiomuseSelectors';
-import { useTracks } from '@/hooks/tracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { QueryKeys } from '@/enums/queryKeys';
 import { iconSize, spacing } from '@/constants/design';

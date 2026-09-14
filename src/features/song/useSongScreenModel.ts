@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { InteractionManager } from 'react-native';
 import { useApi } from '@/api';
-import { useAlbum } from '@/hooks/albums';
+import { useAlbum } from '@/hooks/albums/useAlbum';
 import type { Song } from '@/domain/entities/Song';
 import type { Album } from '@/domain/entities/Album';
 import type { LyricsResult } from '@/api/types';

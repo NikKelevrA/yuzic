@@ -12,9 +12,7 @@ import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices
 import downloadersReducer from '@/state/redux/slices/downloadersSlice';
 import type { Server } from '@/types/Server';
 
-jest.mock('@/hooks/albums', () => ({
-  useAlbums: () => ({ albums: [] }),
-}));
+jest.mock('@/hooks/albums/useAlbums', () => ({ useAlbums: () => ({ albums: [] }) }));
 
 function makeStore() {
   return configureStore({

@@ -21,7 +21,7 @@ import { useApi } from '@/api'
 import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails'
 import { buildCover } from '@/utils/builders/buildCover'
 import { useTheme } from '@/hooks/useTheme'
-import { useTracks } from '@/hooks/tracks'
+import { useTracks } from '@/hooks/tracks/useTracks';
 import { usePlayingActions } from '@/contexts/PlayingContext'
 import { useDownload } from '@/contexts/DownloadContext'
 import { useSheetRef } from '@/utils/useSheetRef'

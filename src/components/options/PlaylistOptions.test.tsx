@@ -42,10 +42,8 @@ jest.mock('@/contexts/DownloadContext', () => ({
 
 const mockDeleteMutateAsync = jest.fn().mockResolvedValue(undefined);
 const mockRenameMutateAsync = jest.fn().mockResolvedValue(undefined);
-jest.mock('@/hooks/playlists', () => ({
-  useDeletePlaylist: () => ({ mutateAsync: mockDeleteMutateAsync, isPending: false }),
-  useRenamePlaylist: () => ({ mutateAsync: mockRenameMutateAsync }),
-}));
+jest.mock('@/hooks/playlists/useDeletePlaylist', () => ({ useDeletePlaylist: () => ({ mutateAsync: mockDeleteMutateAsync, isPending: false }) }));
+jest.mock('@/hooks/playlists/useRenamePlaylist', () => ({ useRenamePlaylist: () => ({ mutateAsync: mockRenameMutateAsync }) }));
 
 jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: jest.fn() }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));

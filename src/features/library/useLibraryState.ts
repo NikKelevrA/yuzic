@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { useAlbums } from '@/hooks/albums';
+import { useAlbums } from '@/hooks/albums/useAlbums';
 import { matchAlbumToLibrary } from './matchToLibrary';
 import type { Album } from '@/domain/entities/Album';
 import { resolveLibraryState, type LibraryState } from '@/domain/library/LibraryState';

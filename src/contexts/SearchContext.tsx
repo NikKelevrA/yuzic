@@ -8,13 +8,13 @@ import React, {
   useRef,
 } from 'react';
 
-import { useAlbums } from '@/hooks/albums';
-import { useArtists } from '@/hooks/artists';
-import { usePlaylists } from '@/hooks/playlists';
+import { useAlbums } from '@/hooks/albums/useAlbums';
+import { useArtists } from '@/hooks/artists/useArtists';
+import { usePlaylists } from '@/hooks/playlists/usePlaylists';
 import { useIsOffline } from '@/hooks/useIsOffline';
 import { useServerUnreachable } from '@/features/connectivity/serverReachability';
 
-import { useTracks } from '@/hooks/tracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 import { useApi } from '@/api';
 import { useSelector } from 'react-redux';
 import { selectSearchScope } from '@/features/settings/search/state';

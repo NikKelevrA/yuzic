@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useApi } from '@/api';
 import type { ServerPlayQueue } from '@/api/types';
 import type { Song } from '@/domain/entities/Song';
-import { useTracks } from '@/hooks/tracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { selectQueueSyncEnabled } from '@/features/settings/playback/state';
 import { selectPersistedPlaybackQueue } from '@/state/redux/selectors/playbackSelectors';

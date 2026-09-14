@@ -30,12 +30,8 @@ jest.mock('@/components/toast', () => ({
 // `useAlbums`/`useTracks`), but this unit test only needs their shape.
 let mockAlbums: Album[] = [];
 let mockTracks: Song[] = [];
-jest.mock('@/hooks/albums', () => ({
-  useAlbums: () => ({ albums: mockAlbums }),
-}));
-jest.mock('@/hooks/tracks', () => ({
-  useTracks: () => ({ tracks: mockTracks }),
-}));
+jest.mock('@/hooks/albums/useAlbums', () => ({ useAlbums: () => ({ albums: mockAlbums }) }));
+jest.mock('@/hooks/tracks/useTracks', () => ({ useTracks: () => ({ tracks: mockTracks }) }));
 
 const SERVER_ID = 'server-1';
 

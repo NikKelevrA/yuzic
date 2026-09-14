@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, ScrollView, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAlbums } from '@/hooks/albums';
+import { useAlbums } from '@/hooks/albums/useAlbums';
 import AlbumItem from '@/screens/library/components/Items/AlbumItem';
 import SectionEmptyState from '../SectionEmptyState';
 import SectionShelfHeader from '../SectionShelfHeader';

@@ -11,7 +11,7 @@ import SongRow from '@/components/rows/SongRow';
 import LoadingSongRow from '@/components/rows/SongRow/Loading';
 import MediaTile from '@/screens/home/components/MediaTile';
 import { useTheme } from '@/hooks/useTheme';
-import { useStarredSongs } from '@/hooks/starred';
+import { useStarredSongs } from '@/hooks/starred/useStarredSongs';
 import { useSelector } from 'react-redux';
 import { selectAlbumPlayCount } from '@/state/redux/selectors/statsSelectors';
 import { usePreviewPlayer } from '@/features/playback/usePreviewPlayer';

@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
-import { useArtists } from '@/hooks/artists'
+import { useArtists } from '@/hooks/artists/useArtists';
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'

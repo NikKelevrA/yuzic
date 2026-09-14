@@ -5,7 +5,7 @@ import { usePlayingActions } from "@/contexts/PlayingContext";
 import type { Song } from '@/domain/entities/Song';
 import { useTranslation } from "react-i18next";
 import { notify } from '@/components/toast';
-import { usePlayableSongResolver } from '@/hooks/songs';
+import { usePlayableSongResolver } from '@/hooks/songs/usePlayableSongResolver';
 import { FULL_TRACK_FETCH_TIMEOUT_MS, TRACK_PRESS_COOLDOWN_MS } from '@/constants/playback';
 import { formatDuration } from '@/utils/formatDuration';
 import haptics from '@/utils/haptics';

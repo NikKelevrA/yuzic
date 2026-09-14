@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useDownloadActions, useDownloadState } from '@/contexts/DownloadContext';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { selectAutoDownloadNewSongs } from '@/features/settings/downloads/state';
-import { useTracks } from '@/hooks/tracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 
 /**
  * Watches the synced library track list and auto-downloads additions when the

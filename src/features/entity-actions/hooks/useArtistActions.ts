@@ -11,7 +11,7 @@ import { selectArtistPlayCount } from '@/state/redux/selectors/statsSelectors';
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useDownload } from '@/contexts/DownloadContext';
 import { useEnabledExternalSources } from '@/features/sources/registry';
-import { useArtistAlbums } from '@/hooks/artists';
+import { useArtistAlbums } from '@/hooks/artists/useArtistAlbums';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Song } from '@/domain/entities/Song';
 import type { Playlist } from '@/domain/entities/Playlist';

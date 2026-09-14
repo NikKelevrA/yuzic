@@ -98,11 +98,9 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
-jest.mock('@/hooks/starred', () => ({
-  useStarredSongs: () => ({ songs: [] }),
-  useStarSong: () => ({ mutateAsync: jest.fn() }),
-  useUnstarSong: () => ({ mutateAsync: jest.fn() }),
-}));
+jest.mock('@/hooks/starred/useStarredSongs', () => ({ useStarredSongs: () => ({ songs: [] }) }));
+jest.mock('@/hooks/starred/useStarSong', () => ({ useStarSong: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/hooks/starred/useUnstarSong', () => ({ useUnstarSong: () => ({ mutateAsync: jest.fn() }) }));
 
 jest.mock('@/features/downloaders/registry', () => ({
   useAnyDownloaderConnected: jest.fn(() => false),

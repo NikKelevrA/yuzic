@@ -31,7 +31,7 @@ const PlaylistItem: React.FC<ItemProps> = ({
 
   const handlePress = useCallback(() => {
     prefetchCovers([playlist.cover], 'detail');
-    // Server adapter identity — becomes `usePlaylist(id)` -> `api.playlists.get(id)`.
+    // Server adapter identity — the playlist screen resolves it by id.
     navigation.navigate('playlistView', { id: playlist.nativeId });
   }, [playlist, navigation]);
 

@@ -25,7 +25,7 @@ import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useSongActionSheets } from '@/contexts/SongActionSheetContext';
 import { notify } from '@/components/toast';
 import { usePrefetchCovers } from '@/hooks/usePrefetchCovers';
-import { usePlayableSongResolver } from '@/hooks/songs';
+import { usePlayableSongResolver } from '@/hooks/songs/usePlayableSongResolver';
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { selectActiveServer, selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import type { SearchEntityEntry } from '@/state/redux/slices/searchHistorySlice';

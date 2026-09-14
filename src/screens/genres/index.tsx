@@ -11,7 +11,7 @@ import { DetailHeaderBar } from '@/components/DetailHeader'
 import EmptyState from '@/components/EmptyState'
 import { useTheme } from '@/hooks/useTheme'
 import { iconSize, spacing, typography } from '@/constants/design'
-import { useAlbums } from '@/hooks/albums'
+import { useAlbums } from '@/hooks/albums/useAlbums';
 import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
 import { buildGenreRows, type GenreRow } from '@/utils/library/genreList'
 import LoadingGenreList from './Loading'

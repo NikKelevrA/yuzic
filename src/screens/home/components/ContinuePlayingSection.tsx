@@ -10,7 +10,7 @@ import { resourceFromBookmarkSnapshot } from '@/utils/playback/bookmarkSnapshot'
 import { usePlayingActions } from '@/contexts/PlayingContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useRadius } from '@/hooks/useRadius';
-import { useTracks } from '@/hooks/tracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 import { selectPersistedPlaybackBookmarks } from '@/state/redux/selectors/playbackSelectors';
 import {
   SECTION_H_PADDING as H_PADDING,

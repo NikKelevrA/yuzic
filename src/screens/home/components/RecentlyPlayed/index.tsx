@@ -3,8 +3,8 @@ import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native'
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { selectAlbumLastPlayedAt, selectPlaylistLastPlayedAt } from '@/state/redux/selectors/statsSelectors';
-import { useAlbums } from '@/hooks/albums';
-import { usePlaylists } from '@/hooks/playlists';
+import { useAlbums } from '@/hooks/albums/useAlbums';
+import { usePlaylists } from '@/hooks/playlists/usePlaylists';
 import MediaTile from '../MediaTile';
 import SectionShelfHeader from '../SectionShelfHeader';
 import { SECTION_H_PADDING } from '../sectionStyles';
@@ -48,7 +48,7 @@ const RecentTile = memo(function RecentTile({ item, itemWidth }: TileProps) {
   const rad = useRadius();
 
   const handlePress = useCallback(() => {
-    // Server adapter identity — this becomes `useAlbum(id)`/`usePlaylist(id)`.
+    // Server adapter identity — the album or playlist screen resolves it by id.
     if (item.kind === 'album') {
       navigation.navigate('albumView', { id: item.data.nativeId });
     } else {

@@ -13,7 +13,7 @@ import Header, { ArtistHeaderBar } from '../Header'
 import { DetailScreen } from '@/components/DetailHeader'
 import { useTheme } from '@/hooks/useTheme'
 import { useTranslation } from 'react-i18next'
-import { useSimilarArtists } from '@/hooks/artists'
+import { useSimilarArtists } from '@/hooks/artists/useSimilarArtists';
 import { useServerSimilarArtists } from '@/hooks/artists/useServerSimilarArtists'
 import { useLBSimilarArtists } from '@/hooks/artists/useLBSimilarArtists'
 import { useArtistTopTracks } from '@/hooks/artists/useArtistTopTracks'
@@ -31,7 +31,7 @@ import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { useSelector } from 'react-redux'
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
-import { useAlbums } from '@/hooks/albums'
+import { useAlbums } from '@/hooks/albums/useAlbums';
 import Touchable from '@/components/Touchable'
 import { useScrollClearance } from '@/hooks/useScrollClearance'
 

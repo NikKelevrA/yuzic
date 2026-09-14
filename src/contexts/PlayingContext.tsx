@@ -78,7 +78,7 @@ import {
   selectPersistedPlaybackShuffleMode,
 } from '@/state/redux/selectors/playbackSelectors';
 import { selectActiveServerId as selectActiveServerIdSel, selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import { useTracks } from '@/hooks/tracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 import {
   backendRepeatMode,
   clampVolume,

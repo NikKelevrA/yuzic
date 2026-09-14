@@ -7,8 +7,8 @@ import { useSelector } from 'react-redux'
 import { selectHomeShelfItemCount } from '@/features/settings/home/state';
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useTheme } from '@/hooks/useTheme'
-import { useAlbums } from '@/hooks/albums'
-import { useArtists } from '@/hooks/artists'
+import { useAlbums } from '@/hooks/albums/useAlbums';
+import { useArtists } from '@/hooks/artists/useArtists';
 import { usePrefetchCovers } from '@/hooks/usePrefetchCovers'
 import { prefetchCovers } from '@/utils/images/imageCache'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'

@@ -8,7 +8,7 @@ import type { Song } from '@/domain/entities/Song';
 import SongRow from '@/components/rows/SongRow';
 import LoadingSongRow from '@/components/rows/SongRow/Loading';
 import SectionEmptyState from '@/screens/home/components/SectionEmptyState';
-import { useStarredSongs } from '@/hooks/starred';
+import { useStarredSongs } from '@/hooks/starred/useStarredSongs';
 
 import Header, { PlaylistHeaderBar } from '../Header';
 import RecommendedSection from '../RecommendedSection';

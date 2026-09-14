@@ -115,11 +115,9 @@ jest.mock('./useLazyCollectionDetails', () => ({
   useLazyAlbumDetail: () => ({ albumWithSongs: null, songs: [], songsLoading: false }),
 }));
 
-jest.mock('@/hooks/starred', () => ({
-  useStarredAlbums: () => ({ albums: [] }),
-  useStarAlbum: () => ({ mutateAsync: jest.fn() }),
-  useUnstarAlbum: () => ({ mutateAsync: jest.fn() }),
-}));
+jest.mock('@/hooks/starred/useStarredAlbums', () => ({ useStarredAlbums: () => ({ albums: [] }) }));
+jest.mock('@/hooks/starred/useStarAlbum', () => ({ useStarAlbum: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/hooks/starred/useUnstarAlbum', () => ({ useUnstarAlbum: () => ({ mutateAsync: jest.fn() }) }));
 
 jest.mock('@/features/downloaders/useExternalAlbumStatus', () => ({
   useExternalAlbumStatus: jest.fn(() => ({ kind: 'none' })),

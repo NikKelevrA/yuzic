@@ -20,7 +20,7 @@ import { QueryKeys } from '@/enums/queryKeys';
 import { staleTime } from '@/constants/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasValue, useOfflineFirstQuery } from '@/hooks/useOfflineFirstQuery';
-import { usePlaylists } from '@/hooks/playlists';
+import { usePlaylists } from '@/hooks/playlists/usePlaylists';
 import { getPlaylist } from './playlistRepository';
 import { resolvePlaylistOrigin, type PlaylistOrigin } from './playlistOrigin';
 
@@ -34,9 +34,8 @@ export type PlaylistScreenModel = {
   /** The playlist's tracks, in playlist order — see `PlaylistDetail`. */
   songs: Song[];
   songsLoading: boolean;
-  /** See `usePlaylist`'s equivalent field — a playlist's membership was
-   *  never synced list-wide, only its metadata, so a degraded playlist that
-   *  was never opened online shows no songs. */
+  /** A playlist's membership was never synced list-wide, only its metadata,
+   *  so a degraded playlist that was never opened online shows no songs. */
   degraded: boolean;
   /** Where this playlist came from — `null` until the playlist itself is
    *  known. */

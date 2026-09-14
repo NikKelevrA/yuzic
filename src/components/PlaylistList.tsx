@@ -29,12 +29,10 @@ import { QueryKeys } from '@/enums/queryKeys';
 import { MediaImage } from './MediaImage';
 import { useTheme } from '@/hooks/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  usePlaylists,
-  useCreatePlaylist,
-  useAddSongToPlaylist,
-  useRemoveSongFromPlaylist,
-} from '@/hooks/playlists';
+import { usePlaylists } from '@/hooks/playlists/usePlaylists';
+import { useCreatePlaylist } from '@/hooks/playlists/useCreatePlaylist';
+import { useAddSongToPlaylist } from '@/hooks/playlists/useAddSongToPlaylist';
+import { useRemoveSongFromPlaylist } from '@/hooks/playlists/useRemoveSongFromPlaylist';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import { useIsOffline } from '@/hooks/useIsOffline';

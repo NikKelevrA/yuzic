@@ -7,7 +7,7 @@ import type { Playlist } from '@/domain/entities/Playlist';
 import type { PlaylistDetail } from '@/domain/entities/Detail';
 import type { Song } from '@/domain/entities/Song';
 import { useIsOffline } from '@/hooks/useIsOffline';
-import { usePlayableSongResolver } from '@/hooks/songs';
+import { usePlayableSongResolver } from '@/hooks/songs/usePlayableSongResolver';
 import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/utils/offline/offlineMutations';
 

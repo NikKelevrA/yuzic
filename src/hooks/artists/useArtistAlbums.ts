@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useAlbums } from '@/hooks/albums'
+import { useAlbums } from '@/hooks/albums/useAlbums';
 import type { Album } from '@/domain/entities/Album'
 
 // `artistId` is the artist's `nativeId` — every call site has it from a

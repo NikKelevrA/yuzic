@@ -5,9 +5,9 @@ import { useTheme } from '@/hooks/useTheme'
 import { useTranslation } from 'react-i18next'
 import { notify } from '@/components/toast';
 import { selectSongPlayCounts } from '@/state/redux/selectors/statsSelectors'
-import { useTracks } from '@/hooks/tracks'
+import { useTracks } from '@/hooks/tracks/useTracks';
 import { usePlayingActions } from '@/contexts/PlayingContext'
-import { usePlayableSongResolver } from '@/hooks/songs'
+import { usePlayableSongResolver } from '@/hooks/songs/usePlayableSongResolver';
 import TopTrackRow from '@/components/rows/TopTrackRow'
 import { rankMostPlayedTracks } from './mostPlayed'
 import type { Artist } from '@/domain/entities/Artist'

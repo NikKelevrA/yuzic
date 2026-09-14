@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { selectHomeShelfItemCount } from '@/features/settings/home/state';
 import { useTheme } from '@/hooks/useTheme'
-import { useArtists } from '@/hooks/artists'
+import { useArtists } from '@/hooks/artists/useArtists';
 import { usePrefetchCovers } from '@/hooks/usePrefetchCovers'
 import { prefetchCovers } from '@/utils/images/imageCache'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'

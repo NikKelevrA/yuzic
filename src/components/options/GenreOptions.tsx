@@ -17,7 +17,7 @@ import { fetchAlbumSongsSettled } from './useLazyCollectionDetails';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { usePlaying } from '@/contexts/PlayingContext';
 import { useDownload } from '@/contexts/DownloadContext';
-import { useTracks } from '@/hooks/tracks';
+import { useTracks } from '@/hooks/tracks/useTracks';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';

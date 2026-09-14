@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { useAlbums } from '@/hooks/albums'
-import { useArtists } from '@/hooks/artists'
+import { useAlbums } from '@/hooks/albums/useAlbums';
+import { useArtists } from '@/hooks/artists/useArtists';
 import { useIsOffline } from '@/hooks/useIsOffline'
 import { selectArtistPlayCounts } from '@/state/redux/selectors/statsSelectors'
 import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'

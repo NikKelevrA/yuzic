@@ -5,18 +5,10 @@ import { SearchProvider, useSearch } from './SearchContext';
 
 // Library data hooks — enough of a shape for SearchContext to build its
 // lowercased search index over.
-jest.mock('@/hooks/albums', () => ({
-  useAlbums: () => ({ albums: [] }),
-}));
-jest.mock('@/hooks/artists', () => ({
-  useArtists: () => ({ artists: [] }),
-}));
-jest.mock('@/hooks/playlists', () => ({
-  usePlaylists: () => ({ playlists: [] }),
-}));
-jest.mock('@/hooks/tracks', () => ({
-  useTracks: () => ({ tracks: [] }),
-}));
+jest.mock('@/hooks/albums/useAlbums', () => ({ useAlbums: () => ({ albums: [] }) }));
+jest.mock('@/hooks/artists/useArtists', () => ({ useArtists: () => ({ artists: [] }) }));
+jest.mock('@/hooks/playlists/usePlaylists', () => ({ usePlaylists: () => ({ playlists: [] }) }));
+jest.mock('@/hooks/tracks/useTracks', () => ({ useTracks: () => ({ tracks: [] }) }));
 
 jest.mock('@/api', () => ({
   useApi: () => ({ search: { search: jest.fn().mockResolvedValue({ albums: [], artists: [], songs: [] }) } }),
