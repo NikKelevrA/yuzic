@@ -44,7 +44,7 @@ function externalIdsOf(dto: DeezerTrack): ExternalIds {
   return ids;
 }
 
-export interface MapSongContext {
+interface MapSongContext {
   provenance: Provenance;
   /**
    * The album this track belongs to. Every call site that produces a
@@ -86,7 +86,7 @@ export function mapSong(dto: DeezerTrack, context: MapSongContext): Song {
   };
 }
 
-export interface MapPreviewTrackContext {
+interface MapPreviewTrackContext {
   provenance: Provenance;
   /** The album this preview clip was resolved for. */
   album: DeezerAlbum;

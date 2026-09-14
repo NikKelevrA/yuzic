@@ -2,7 +2,6 @@ import type { NavidromeClient } from '../client';
 import type { SubsonicResponse } from '../types';
 import type { InternetRadioStation } from '@/providers/contracts/ServerAdapter';
 
-export type { InternetRadioStation };
 
 /**
  * User-defined internet radio stations stored on the Subsonic server. Navidrome

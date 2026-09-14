@@ -5,7 +5,7 @@ import type { MediaItem } from '@/features/player/mediaItem';
 
 // ─── DLNA ────────────────────────────────────────────────────────────────────
 
-export interface DlnaDevice {
+interface DlnaDevice {
   name: string;
   udn: string;
   avTransportUrl: string;

@@ -17,13 +17,13 @@ import type { ExternalIds } from './ExternalIds';
 import type { LocalId } from './LocalId';
 
 /** Why two records were considered the same. Ordered strongest first. */
-export type MatchReason = 'mbid' | 'isrc' | 'upc' | 'deezerId' | 'normalizedName';
+type MatchReason = 'mbid' | 'isrc' | 'upc' | 'deezerId' | 'normalizedName';
 
-export const MATCH_REASON_PRECEDENCE: readonly MatchReason[] = Object.freeze([
+const MATCH_REASON_PRECEDENCE: readonly MatchReason[] = Object.freeze([
   'mbid', 'isrc', 'upc', 'deezerId', 'normalizedName',
 ]);
 
-export interface Match<T> {
+interface Match<T> {
   candidate: T;
   reason: MatchReason;
   /** `exact` comes from a shared identifier; `heuristic` from normalised names. */

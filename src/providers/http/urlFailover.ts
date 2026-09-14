@@ -15,7 +15,7 @@ import type { Server } from '@/providers/contracts/Server';
 
 const preferredByServer = new Map<string, string>();
 
-export type ServerUrlHint = Pick<Server, 'id' | 'serverUrl' | 'fallbackUrls'>;
+type ServerUrlHint = Pick<Server, 'id' | 'serverUrl' | 'fallbackUrls'>;
 
 export function candidateUrls(server: ServerUrlHint): string[] {
   const primary = normalize(server.serverUrl);

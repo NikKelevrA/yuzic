@@ -16,7 +16,7 @@ import { selectRadiusPreset } from '@/features/settings/appearance/state';
  * so a component migrating to the hook doesn't visually change until the user
  * picks a different preset.
  */
-export type ScaledRadius = {
+type ScaledRadius = {
   thumb: number;
   md: number;
   card: number;

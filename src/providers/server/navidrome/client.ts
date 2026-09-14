@@ -7,7 +7,7 @@ import { serverFetch } from '@/features/mtls/serverFetch';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const md5 = require("md5") as (s: string) => string;
 
-export interface NavidromeClientConfig {
+interface NavidromeClientConfig {
   /** Primary server URL. Used verbatim when no serverId/fallbackUrls given. */
   serverUrl: string;
   /** Server identity, needed to cache the last-known-good URL across requests. */

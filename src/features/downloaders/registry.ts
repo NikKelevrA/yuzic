@@ -24,13 +24,13 @@ export type { DownloaderId }
  * downloaders ignore it. Kept untyped at this layer so a new downloader with
  * its own preferences shape doesn't have to widen this file.
  */
-export type DownloaderConfig = {
+type DownloaderConfig = {
   serverUrl: string
   apiKey: string
   preferences?: Record<string, unknown>
 }
 
-export type DownloadResult =
+type DownloadResult =
   | { success: true }
   | { success: false; code?: string; message: string }
 
@@ -39,7 +39,7 @@ export type DownloadResult =
  * saved default. Only Lidarr album downloads currently read
  * `qualityProfileId` — every other downloader ignores this bag entirely.
  */
-export type DownloadOptions = {
+type DownloadOptions = {
   qualityProfileId?: number
 }
 
@@ -48,8 +48,8 @@ export type DownloadOptions = {
  * release by MBID/Deezer id where available, and collapsing it to two strings
  * here would put it back on fuzzy name matching.
  */
-export type AlbumDownloadRequest = Album
-export type TrackDownloadRequest = { title: string; artist: string }
+type AlbumDownloadRequest = Album
+type TrackDownloadRequest = { title: string; artist: string }
 
 /**
  * What a downloader is and what it can do — the one place either is declared.
@@ -60,7 +60,7 @@ export type TrackDownloadRequest = { title: string; artist: string }
  * Every download flow — the Get sheet, the auto-downloader, batch requests —
  * calls these definitions directly.
  */
-export type DownloaderDefinition = {
+type DownloaderDefinition = {
   label: string
   auth: AuthDescriptor
   testConnection(config: unknown): Promise<Health>

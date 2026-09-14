@@ -40,7 +40,7 @@ function externalIdsOf(dto: MbTrack): ExternalIds {
   return mbid ? { mbid } : {};
 }
 
-export interface MapSongContext {
+interface MapSongContext {
   provenance: Provenance;
   /** The release-group this track was resolved from, for its album reference and cover. */
   releaseGroup: MbReleaseGroup;

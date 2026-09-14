@@ -10,8 +10,6 @@ import type { Song } from '@/domain/entities/Song';
 import { LocalRecommendedSection } from './LocalRecommendedSection';
 import { ExternalRecommendedSection } from './ExternalRecommendedSection';
 
-export { LocalRecommendedSection } from './LocalRecommendedSection';
-export { ExternalRecommendedSection } from './ExternalRecommendedSection';
 
 type RecommendedSectionProps = {
   playlist: Playlist;

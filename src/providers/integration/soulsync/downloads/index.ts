@@ -1,4 +1,4 @@
-import { createSoulSyncClient, SoulSyncError, type SoulSyncConfig } from '../client';
+import { createSoulSyncClient, type SoulSyncConfig } from '../client';
 
 export type TrackRequest = { title: string; artist: string };
 
@@ -115,4 +115,3 @@ export async function cancelDownload(
   });
 }
 
-export { SoulSyncError };

@@ -49,7 +49,7 @@ export type MbTrack = {
   'artist-credit'?: { name?: string; artist: { id?: string; name: string } }[];
 };
 
-export type MbRelease = {
+type MbRelease = {
   id: string;
   title: string;
   media: { tracks: MbTrack[] }[];

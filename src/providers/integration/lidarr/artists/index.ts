@@ -15,11 +15,11 @@ export type LidarrArtistLookupResult = {
   links?: { name?: string; url?: string }[];
 };
 
-export type LidarrArtist = LidarrArtistLookupResult & {
+type LidarrArtist = LidarrArtistLookupResult & {
   id: number;
 };
 
-export type LidarrMonitorPolicy =
+type LidarrMonitorPolicy =
   | 'all'
   | 'future'
   | 'missing'
@@ -28,7 +28,7 @@ export type LidarrMonitorPolicy =
   | 'latest'
   | 'none';
 
-export type EnsureArtistOptions = {
+type EnsureArtistOptions = {
   qualityProfileId?: number;
   metadataProfileId?: number;
   monitored?: boolean;
@@ -57,7 +57,7 @@ export async function getArtists(client: LidarrClient): Promise<LidarrArtist[]> 
   return client.request<LidarrArtist[]>('/artist');
 }
 
-export async function getRootFolders(client: LidarrClient): Promise<{ path: string }[]> {
+async function getRootFolders(client: LidarrClient): Promise<{ path: string }[]> {
   return client.request<{ path: string }[]>('/rootfolder');
 }
 

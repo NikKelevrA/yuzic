@@ -12,7 +12,7 @@ const emptyConnection: AudiomuseConnection = {
   isAuthenticated: false,
 };
 
-export const selectAudiomuseForActiveServer = createSelector(
+const selectAudiomuseForActiveServer = createSelector(
   [(s: RootState) => s.audiomuse.byServer, (s: RootState) => s.servers.activeServerId],
   (byServer, activeServerId): AudiomuseConnection =>
     (activeServerId ? byServer[activeServerId] ?? emptyConnection : emptyConnection)

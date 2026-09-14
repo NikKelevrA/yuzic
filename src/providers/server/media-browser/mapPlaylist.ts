@@ -12,7 +12,7 @@ import type { Provenance } from '@/domain/identity/Provenance';
 import { buildCover, type MediaBrowserBrand } from './brand';
 import type { MediaBrowserItem } from './types';
 
-export interface MapPlaylistContext {
+interface MapPlaylistContext {
   provenance: Provenance;
   brand: MediaBrowserBrand;
   /** Ids of the playlist's tracks, in playlist order, where they were mapped. */

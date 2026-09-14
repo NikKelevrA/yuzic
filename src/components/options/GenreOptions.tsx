@@ -31,7 +31,7 @@ import {
 } from './OptionSheetPrimitives';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 
-export type GenreOptionsProps = {
+type GenreOptionsProps = {
   genre: string;
   albums: Album[];
 };

@@ -32,9 +32,9 @@ import {
  */
 
 /** A square of cover art, in window coordinates. */
-export type CoverRect = { x: number; y: number; size: number };
+type CoverRect = { x: number; y: number; size: number };
 
-export const EMPTY_COVER_RECT: CoverRect = { x: 0, y: 0, size: 0 };
+const EMPTY_COVER_RECT: CoverRect = { x: 0, y: 0, size: 0 };
 
 /**
  * Snappy enough to feel like it is following the finger that let go, soft
@@ -51,7 +51,7 @@ export const PLAYER_SPRING: WithSpringConfig = {
 /** Below this the player counts as closed: the bar owns its own cover again
  *  and the host stops taking touches. Not exactly zero, so a spring settling
  *  through 0.0001 doesn't flicker the handover. */
-export const CLOSED_EPSILON = 0.001;
+const CLOSED_EPSILON = 0.001;
 
 /**
  * Whether the host has taken the cover over from the bar.

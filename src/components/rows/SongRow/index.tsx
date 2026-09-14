@@ -28,7 +28,7 @@ import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled';
 
-export type SongRowSong = Song;
+type SongRowSong = Song;
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than

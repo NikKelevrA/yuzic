@@ -4,8 +4,8 @@ import { useSelector } from 'react-redux';
 import { selectThemeMode, selectThemeColor } from '@/features/settings/appearance/state';
 import { statusColor, type SemanticThemeColors } from '@/constants/design';
 
-export type ThemeMode = 'system' | 'light' | 'dark';
-export type ResolvedTheme = 'light' | 'dark';
+type ThemeMode = 'system' | 'light' | 'dark';
+type ResolvedTheme = 'light' | 'dark';
 
 export const useTheme = () => {
   const mode = useSelector(selectThemeMode) as ThemeMode;

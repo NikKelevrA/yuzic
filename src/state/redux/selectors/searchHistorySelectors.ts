@@ -9,7 +9,7 @@ import {
 
 const EMPTY: SearchHistoryEntry[] = [];
 
-export const selectSearchHistoryForActiveServer = createSelector(
+const selectSearchHistoryForActiveServer = createSelector(
   [(s: RootState) => s.searchHistory.byServer, (s: RootState) => s.servers.activeServerId],
   (byServer, activeServerId): SearchHistoryEntry[] => {
     const raw = activeServerId ? byServer[activeServerId] : undefined;

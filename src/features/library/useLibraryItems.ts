@@ -30,7 +30,7 @@ import {
  * Shared by the library tab and the per-type screens so both read the same
  * data and order it the same way.
  */
-export type LibraryItemsResult = {
+type LibraryItemsResult = {
   items: LibraryItem[]
   /** True until the data this type needs has arrived. Distinguishes a library
    * that is still syncing from one that is genuinely empty. */

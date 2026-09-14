@@ -2,12 +2,12 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type HomeShelfLength = 'compact' | 'standard' | 'generous';
 export type HomeShelfTier = 'resume' | 'library' | 'server' | 'listenbrainz' | 'deezer';
-export const HOME_SHELF_LENGTHS: Record<HomeShelfLength, number> = {
+const HOME_SHELF_LENGTHS: Record<HomeShelfLength, number> = {
   compact: 6,
   standard: 10,
   generous: 14,
 };
-export const DEFAULT_SLEEP_TIMER_PRESETS = [5, 15, 30] as const;
+const DEFAULT_SLEEP_TIMER_PRESETS = [5, 15, 30] as const;
 
 interface HomeSettingsState {
   /* Home discovery source visibility. The server tier gets its own toggle
@@ -87,7 +87,6 @@ const homeSlice = createSlice({
 });
 
 export const {
-  setHomeServerSectionsEnabled,
   setHomeShelfVisibility,
   setHomeShelfOrder,
   setHomeShelfLength,

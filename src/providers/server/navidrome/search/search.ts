@@ -8,7 +8,7 @@ import { mapArtist } from '../mapArtist';
 import { mapSong } from '../mapSong';
 import { SubsonicResponse } from '../types';
 
-export type NavidromeSearchResult = {
+type NavidromeSearchResult = {
   albums: Album[];
   artists: Artist[];
   songs: Song[];

@@ -12,7 +12,7 @@ import type { Song } from '@/domain/entities/Song';
 
 const SEED_POOL_SIZE = 20;
 const SEED_COUNT = 2;
-export const LOCAL_MIX_MAX_TRACKS = 10;
+const LOCAL_MIX_MAX_TRACKS = 10;
 
 /**
  * The device-local daily mix used by both Home and its complete screen.

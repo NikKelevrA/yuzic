@@ -25,7 +25,7 @@ function externalIdsOf(dto: PlexMetadata): ExternalIds {
   return mbid ? { mbid } : {};
 }
 
-export interface MapSongContext {
+interface MapSongContext {
   provenance: Provenance;
   /** The cover to use where the track carries none of its own — usually the album's. */
   cover?: CoverSource;

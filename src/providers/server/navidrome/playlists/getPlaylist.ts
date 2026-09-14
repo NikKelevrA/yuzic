@@ -5,7 +5,7 @@ import { mapPlaylist } from "../mapPlaylist";
 import { mapSong } from "../mapSong";
 import { SubsonicResponse } from "../types";
 
-export type GetPlaylistResult = PlaylistDetail | null;
+type GetPlaylistResult = PlaylistDetail | null;
 
 export async function getPlaylist(
   client: NavidromeClient,

@@ -1,7 +1,7 @@
 import type { NavidromeClient } from "../client";
 import { SubsonicResponse } from "../types";
 
-export type GetGenresResult = string[];
+type GetGenresResult = string[];
 
 function normalizeGenreItems(raw: SubsonicResponse): GetGenresResult {
   const genres = raw?.["subsonic-response"]?.genres?.genre ?? [];

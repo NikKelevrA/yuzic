@@ -1,6 +1,6 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface LyricsSettingsState {
+interface LyricsSettingsState {
   /**
    * Lyrics fallback chain, external sources only — server-embedded lyrics
    * are always tried first and are never part of this list (see

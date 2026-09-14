@@ -20,7 +20,7 @@ const initialState: ServersState = {
   credentialsHydrated: false,
 };
 
-export const serversSlice = createSlice({
+const serversSlice = createSlice({
   name: "servers",
   initialState,
   reducers: {

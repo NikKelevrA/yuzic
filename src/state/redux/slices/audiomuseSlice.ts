@@ -14,7 +14,7 @@ export interface AudiomuseConnection {
   isAuthenticated: boolean;
 }
 
-export interface AudiomuseState {
+interface AudiomuseState {
   byServer: Record<string, AudiomuseConnection>;
 }
 

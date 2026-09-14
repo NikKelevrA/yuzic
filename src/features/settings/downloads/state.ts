@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface DownloadsSettingsState {
+interface DownloadsSettingsState {
   /** Auto-download songs newly added to the library after a sync. */
   autoDownloadNewSongs: boolean;
   /** Hold downloads until the device is on WiFi. Downloads are the one thing

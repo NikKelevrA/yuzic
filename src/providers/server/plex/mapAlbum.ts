@@ -20,7 +20,7 @@ function externalIdsOf(dto: PlexMetadata): ExternalIds {
   return mbid ? { mbid, mbidType: 'release' } : {};
 }
 
-export interface MapAlbumContext {
+interface MapAlbumContext {
   provenance: Provenance;
   /**
    * Ids of the album's tracks, in running order, where they have been mapped.

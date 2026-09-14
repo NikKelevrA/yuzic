@@ -3,7 +3,7 @@
  * fields this adapter actually reads are modeled; everything is optional
  * since Subsonic servers omit absent fields rather than nulling them.
  */
-export interface SubsonicGenreRef {
+interface SubsonicGenreRef {
   name?: string;
 }
 
@@ -65,7 +65,7 @@ export interface SubsonicAlbumListEntry {
 }
 
 /** Shape returned by search3's ID3-based `album` entries (uses "name", not "title"). */
-export interface SubsonicSearchAlbumEntry {
+interface SubsonicSearchAlbumEntry {
   id?: string;
   name?: string;
   artist?: string;
@@ -84,11 +84,11 @@ export interface SubsonicArtist {
   musicBrainzId?: string;
 }
 
-export interface SubsonicArtistIndex {
+interface SubsonicArtistIndex {
   artist?: SubsonicArtist[];
 }
 
-export interface SubsonicGenreEntry {
+interface SubsonicGenreEntry {
   value?: string;
 }
 
@@ -101,18 +101,18 @@ export interface SubsonicPlaylist {
   entry?: SubsonicSong[];
 }
 
-export interface SubsonicMusicFolder {
+interface SubsonicMusicFolder {
   id?: string | number;
   name?: string;
   title?: string;
 }
 
-export interface SubsonicError {
+interface SubsonicError {
   code?: number;
   message?: string;
 }
 
-export interface SubsonicResponseBody {
+interface SubsonicResponseBody {
   status?: string;
   error?: SubsonicError;
   song?: SubsonicSong;

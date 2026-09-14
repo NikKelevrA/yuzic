@@ -4,7 +4,7 @@ import type { EntityCore } from './EntityCore';
 import type { AlbumRef, ArtistRef } from './EntityRef';
 
 /** Technical detail about the file behind a song, where the origin reports it. */
-export interface AudioProperties {
+interface AudioProperties {
   bitrateKbps?: number;
   sampleRateHz?: number;
   bitsPerSample?: number;

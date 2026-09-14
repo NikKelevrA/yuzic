@@ -3,7 +3,7 @@ import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapArtist } from "../mapArtist";
 import { MediaBrowserItemsResponse } from "../types";
 
-export type GetArtistsResult = Artist[];
+type GetArtistsResult = Artist[];
 
 // Prefer /Artists over /Items?IncludeItemTypes=MusicArtist. The generic /Items
 // endpoint returns empty on several Jellyfin builds when there is no ParentId

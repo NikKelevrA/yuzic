@@ -2,7 +2,7 @@ import { APP_VERSION } from '@/constants/appVersion';
 import { ListenBrainzConfig } from '@/providers/integration/listenbrainz/config';
 import { createListenBrainzClient } from './client';
 
-export type ScrobblePayload = {
+type ScrobblePayload = {
   artist: string;
   track: string;
   /** Unix ts when playback started (required by ListenBrainz). */

@@ -5,7 +5,7 @@ import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat
 
 export type { AudioQuality, PreferredCodec };
 
-export interface PlaybackSettingsState {
+interface PlaybackSettingsState {
   wifiStreamQuality: AudioQuality;
   cellularStreamQuality: AudioQuality;
   downloadQuality: AudioQuality;

@@ -43,7 +43,7 @@ export function seededShuffle<T>(arr: T[], seed: number): T[] {
 }
 
 
-export type HomeLayout = {
+type HomeLayout = {
   /** What you were listening to. First, unlabelled. */
   resume: SectionConfig[]
   /** Your own collection, behind its own header. */

@@ -54,7 +54,7 @@ const defaultRetryDelayMs = (attempt: number) => 1000 * 2 ** attempt;
 
 const defaultDelay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
-export type DownloadJobRunner<TTrack, TJob extends QueueJob<TTrack>> = {
+type DownloadJobRunner<TTrack, TJob extends QueueJob<TTrack>> = {
   run: (deps: JobRunDeps<TTrack, TJob>) => Promise<void>;
   /** True while a pass is draining. Callers use it to avoid tidying up files a
    * running pass is still writing. */

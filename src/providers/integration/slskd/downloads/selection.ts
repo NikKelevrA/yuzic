@@ -12,7 +12,7 @@
 import type { SlskdSearchPreferences } from '../client';
 import { DEFAULT_SLSKD_PREFERENCES } from '../client';
 
-export const ALLOWED_EXTENSIONS = ['flac', 'mp3'];
+const ALLOWED_EXTENSIONS = ['flac', 'mp3'];
 
 export type SearchFile = {
   filename: string;
@@ -32,7 +32,7 @@ export type SearchResponseItem = {
   queueLength?: number;
 };
 
-export type DirectoryCandidate = {
+type DirectoryCandidate = {
   username: string;
   hasFreeUploadSlot: boolean;
   directory: string;
@@ -41,18 +41,18 @@ export type DirectoryCandidate = {
   artistMatches: boolean;
 };
 
-export function ext(path: string): string {
+function ext(path: string): string {
   const i = path.lastIndexOf('.');
   return i < 0 ? '' : path.slice(i + 1).toLowerCase();
 }
 
-export function basename(path: string): string {
+function basename(path: string): string {
   const normalized = path.replace(/\//g, '\\');
   const i = normalized.lastIndexOf('\\');
   return i < 0 ? normalized : normalized.slice(i + 1);
 }
 
-export function dirname(path: string): string {
+function dirname(path: string): string {
   const normalized = path.replace(/\//g, '\\');
   const i = normalized.lastIndexOf('\\');
   return i < 0 ? '' : normalized.slice(0, i);
@@ -71,7 +71,7 @@ export function normalize(value: string): string {
     .replace(/[^a-z0-9]/g, '');
 }
 
-export function playableFiles(
+function playableFiles(
   response: SearchResponseItem,
   prefs: SlskdSearchPreferences = DEFAULT_SLSKD_PREFERENCES
 ): SearchFile[] {
@@ -107,7 +107,7 @@ function flacShare(files: SearchFile[]): number {
  * response mixes every matching file across a user's whole share, so the
  * directory is the only thing that delimits one release from the next.
  */
-export function groupByDirectory(
+function groupByDirectory(
   response: SearchResponseItem,
   normalizedAlbum: string,
   normalizedArtist: string,
@@ -183,7 +183,7 @@ export function selectAlbumDirectory(
   return candidates[0];
 }
 
-export type TrackCandidate = {
+type TrackCandidate = {
   username: string;
   hasFreeUploadSlot: boolean;
   file: SearchFile;

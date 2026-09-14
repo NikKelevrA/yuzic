@@ -4,7 +4,7 @@ import type { NavidromeClient } from "../client";
 import { mapArtist } from "../mapArtist";
 import { SubsonicResponse } from "../types";
 
-export type GetArtistsResult = Artist[];
+type GetArtistsResult = Artist[];
 
 export async function getArtists(
   client: NavidromeClient,

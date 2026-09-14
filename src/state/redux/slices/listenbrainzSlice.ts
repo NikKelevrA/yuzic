@@ -17,7 +17,7 @@ export interface PerServerListenBrainzState {
   scrobbleEnabled: boolean;
 }
 
-export interface ListenBrainzState {
+interface ListenBrainzState {
   byServer: Record<string, PerServerListenBrainzState>;
 }
 

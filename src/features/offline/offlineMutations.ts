@@ -1,7 +1,7 @@
 import type { Song } from '@/domain/entities/Song';
 import type { LocalId } from '@/domain/identity/LocalId';
 
-export type OfflineMutationFailure = {
+type OfflineMutationFailure = {
   retryCount?: number;
   lastError?: string;
   lastFailedAt?: number;
@@ -129,7 +129,7 @@ function sameTarget(a: OfflineMutation, b: OfflineMutation): boolean {
   return false;
 }
 
-export type ScrobbleDetails = {
+type ScrobbleDetails = {
   serverId: string;
   destination: ScrobbleDestination;
   songId: string;

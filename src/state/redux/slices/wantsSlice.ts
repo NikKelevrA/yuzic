@@ -25,7 +25,7 @@ export interface Want {
   updatedAt: number;
 }
 
-export interface WantsState {
+interface WantsState {
   byServer: Record<string, Want[]>;
 }
 

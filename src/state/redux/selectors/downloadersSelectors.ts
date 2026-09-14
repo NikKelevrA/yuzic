@@ -32,7 +32,7 @@ export const downloaderCredentialScope = (id: DownloaderId, serverId: string): C
   providerId: `downloader:${id}:${serverId}`,
 });
 
-export interface DownloaderSelectors {
+interface DownloaderSelectors {
   serverUrl: (s: RootState) => string;
   isAuthenticated: (s: RootState) => boolean;
   useApiKey: () => string;

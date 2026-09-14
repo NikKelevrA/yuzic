@@ -16,7 +16,7 @@ import { useSheetRef } from '@/components/useSheetRef';
 import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
 import { iconSize, spacing, statusColor, typography } from '@/constants/design';
 
-export type AlbumRowAlbum = Album;
+type AlbumRowAlbum = Album;
 
 /**
  * True when `album` came from an external catalog (Deezer/etc) rather than

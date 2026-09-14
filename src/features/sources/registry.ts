@@ -95,7 +95,7 @@ type SourceArtistDetail = {
   similarArtists: Artist[]
 }
 
-export type SourceDefinition = {
+type SourceDefinition = {
   label: string
   auth: AuthDescriptor
   testConnection(config: unknown): Promise<Health>

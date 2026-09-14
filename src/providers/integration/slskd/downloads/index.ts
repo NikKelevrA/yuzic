@@ -9,7 +9,7 @@ import {
   type SearchResponseItem,
 } from './selection';
 
-export type SlskdAlbumRequest = {
+type SlskdAlbumRequest = {
   title: string;
   artist: string;
   /** Optional MusicBrainz release-group id — when present, used to look up
@@ -17,7 +17,7 @@ export type SlskdAlbumRequest = {
   mbid?: string | null;
 };
 
-export type SlskdTrackRequest = {
+type SlskdTrackRequest = {
   title: string;
   artist: string;
 };

@@ -2,7 +2,7 @@ import type { NavidromeClient } from "../client";
 import type { StarredItemType } from "@/providers/contracts/ServerAdapter";
 import { SubsonicResponse } from "../types";
 
-export interface UnstarResult {
+interface UnstarResult {
   success: boolean;
 }
 

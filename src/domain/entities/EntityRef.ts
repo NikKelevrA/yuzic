@@ -30,8 +30,3 @@ export interface AlbumRef extends RefCore {
   title: string;
   cover: CoverSource;
 }
-
-export interface PlaylistRef extends RefCore {
-  title: string;
-  cover: CoverSource;
-}

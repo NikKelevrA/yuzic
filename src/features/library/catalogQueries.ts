@@ -12,7 +12,7 @@ import { QueryKeys } from '@/state/query/queryKeys';
 import { staleTime } from '@/state/query/staleTime';
 import type { QueryKey } from '@tanstack/react-query';
 
-export interface CatalogResource {
+interface CatalogResource {
   /** Stable name, used for reporting which part of a sync failed. */
   name: 'albums' | 'artists' | 'playlists' | 'tracks' | 'starred' | 'genres';
   queryKey: (serverId: string) => QueryKey;

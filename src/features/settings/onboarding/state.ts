@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface OnboardingSettingsState {
+interface OnboardingSettingsState {
   hasSeenGetStarted: boolean;
   /**
    * Whether the onboarding discovery opt-in step (E4) has been shown and

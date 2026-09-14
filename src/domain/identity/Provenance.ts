@@ -14,14 +14,14 @@
  */
 
 /** A record that came from the user's own music server or local files. */
-export interface ServerProvenance {
+interface ServerProvenance {
   origin: 'server';
   /** The configured server this record lives on — `Server.id`, not a brand. */
   serverId: string;
 }
 
 /** A record that came from an optional integration's catalogue. */
-export interface IntegrationProvenance {
+interface IntegrationProvenance {
   origin: 'integration';
   /** The provider that returned it, e.g. `'deezer'`, as declared in the registry. */
   providerId: string;
@@ -34,9 +34,6 @@ export const serverProvenance = (serverId: string): ServerProvenance =>
 
 export const integrationProvenance = (providerId: string): IntegrationProvenance =>
   ({ origin: 'integration', providerId });
-
-export const isServerOriginated = (provenance: Provenance): provenance is ServerProvenance =>
-  provenance.origin === 'server';
 
 /**
  * The origin's own identifier, for use where a single opaque scope string is

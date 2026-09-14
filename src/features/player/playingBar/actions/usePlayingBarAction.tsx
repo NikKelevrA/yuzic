@@ -13,7 +13,7 @@ import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { useTheme } from '@/features/theme/useTheme';
 import { iconSize } from '@/constants/design';
 
-export type PlayingBarActionConfig = {
+type PlayingBarActionConfig = {
   id: PlayingBarAction;
   icon: React.ReactNode;
   /** What the control is called out loud. The dock draws it as a bare glyph,

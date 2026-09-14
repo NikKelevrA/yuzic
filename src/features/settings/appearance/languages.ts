@@ -1,7 +1,7 @@
 /** Supported language codes */
-export type LanguageCode = 'en' | 'ja' | 'fr' | 'zh';
+type LanguageCode = 'en' | 'ja' | 'fr' | 'zh';
 
-export interface LanguageOption {
+interface LanguageOption {
   /** ISO 639-1 code used by i18next */
   code: LanguageCode;
   /** Native name shown in the selector (e.g. "日本語") */

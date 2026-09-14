@@ -4,7 +4,7 @@ import { mapPlaylist } from "../mapPlaylist";
 import { getPlaylistItems } from "./getPlaylistItems";
 import { MediaBrowserItemsResponse } from "../types";
 
-export type GetPlaylistResult = PlaylistDetail | null;
+type GetPlaylistResult = PlaylistDetail | null;
 
 async function fetchGetPlaylist(client: MediaBrowserClient, playlistId: string) {
   const path =

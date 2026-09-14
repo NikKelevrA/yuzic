@@ -1,7 +1,7 @@
 import type { NavidromeClient } from "../client";
 import { SubsonicResponse } from "../types";
 
-export interface GetAlbumInfoResult {
+interface GetAlbumInfoResult {
   notes: string;
   musicBrainzId: string | null;
   lastFmUrl: string | null;

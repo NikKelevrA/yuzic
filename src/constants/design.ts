@@ -172,7 +172,7 @@ export const radius = {
  *  circular button reads as a bug when it squares up under `sharp`. `sharp`
  *  is a softly-rounded square rather than a razor corner — the razor version
  *  had no real use, and cards under it looked broken. */
-export const RADIUS_MULTIPLIER: Record<RadiusPreset, number> = {
+const RADIUS_MULTIPLIER: Record<RadiusPreset, number> = {
   sharp: 0.35,
   default: 1,
   rounded: 1.75,

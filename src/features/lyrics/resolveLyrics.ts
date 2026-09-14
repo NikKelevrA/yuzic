@@ -23,14 +23,14 @@ export type LyricsSongInfo = {
   durationSec?: number;
 };
 
-export type ExternalLyricsFetcher = (song: LyricsSongInfo) => Promise<LyricsResult | null>;
+type ExternalLyricsFetcher = (song: LyricsSongInfo) => Promise<LyricsResult | null>;
 
 /** One fetcher per source id. Extending the fallback chain with a second
  *  external source only means adding an entry here and to
  *  `ALL_EXTERNAL_LYRICS_SOURCES` — nothing else in this file changes. */
 export type ExternalLyricsFetchers = Partial<Record<ExternalLyricsSourceId, ExternalLyricsFetcher>>;
 
-export type ResolveLyricsInput = {
+type ResolveLyricsInput = {
   song: LyricsSongInfo;
   /** The server-embedded lookup — always tried first, unconditionally. */
   getServerLyrics: (songId: string) => Promise<LyricsResult | null>;

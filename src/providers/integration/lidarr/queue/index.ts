@@ -33,14 +33,14 @@ export type LidarrQueueRecord = {
   rawIds: number[];
 };
 
-export type LidarrQueueResponse = {
+type LidarrQueueResponse = {
   page: number;
   pageSize: number;
   totalRecords: number;
   records: LidarrQueueRecordRaw[];
 };
 
-export type FinishedQueueItem = LidarrQueueRecord;
+type FinishedQueueItem = LidarrQueueRecord;
 
 function groupByAlbum(records: LidarrQueueRecordRaw[]): LidarrQueueRecord[] {
   const byKey = new Map<string, LidarrQueueRecordRaw[]>();

@@ -12,7 +12,7 @@ import type { Provenance } from '@/domain/identity/Provenance';
 import type { CoverSource } from '@/domain/entities/Cover';
 import type { SubsonicPlaylist } from './types';
 
-export interface MapPlaylistContext {
+interface MapPlaylistContext {
   provenance: Provenance;
   /** Ids of the playlist's tracks, in playlist order, where they were mapped. */
   songIds?: LocalId[];

@@ -8,7 +8,7 @@ import { mapAlbumSongs } from "./mapAlbumSongs";
 import { mapAlbum } from "../mapAlbum";
 import { SubsonicResponse } from "../types";
 
-export type GetAlbumResult = AlbumDetail | null;
+type GetAlbumResult = AlbumDetail | null;
 
 export async function getAlbum(
   client: NavidromeClient,

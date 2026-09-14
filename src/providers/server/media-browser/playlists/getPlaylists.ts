@@ -3,7 +3,7 @@ import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapPlaylist } from "../mapPlaylist";
 import { MediaBrowserItemsResponse } from "../types";
 
-export type GetPlaylistsResult = Playlist[];
+type GetPlaylistsResult = Playlist[];
 
 async function fetchGetPlaylists(client: MediaBrowserClient) {
   const path =

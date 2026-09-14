@@ -23,7 +23,7 @@ function externalIdsOf(dto: MediaBrowserItem): ExternalIds {
   return trackMbid ? { mbid: trackMbid } : {};
 }
 
-export interface MapSongContext {
+interface MapSongContext {
   provenance: Provenance;
   brand: MediaBrowserBrand;
   /** The cover to use where the song carries none of its own — usually the album's. */

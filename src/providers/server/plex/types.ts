@@ -1,7 +1,7 @@
 /** Plex JSON shapes. Plex returns many more fields; these are the fields Yuzic
  * actually consumes, intentionally all optional because scanners and agents
  * populate different subsets. */
-export type PlexGenre = { tag?: string };
+type PlexGenre = { tag?: string };
 
 /**
  * An alternate identifier Plex's metadata agents attach to an item, as
@@ -10,9 +10,9 @@ export type PlexGenre = { tag?: string };
  * ids; the built-in Plex Music agent generally does not, third-party ones
  * (e.g. MusicBrainz-backed agents) do.
  */
-export type PlexGuid = { id?: string };
+type PlexGuid = { id?: string };
 
-export type PlexPart = {
+type PlexPart = {
   id?: number | string;
   key?: string;
   duration?: number;
@@ -21,7 +21,7 @@ export type PlexPart = {
   container?: string;
 };
 
-export type PlexMedia = {
+type PlexMedia = {
   id?: number | string;
   duration?: number;
   bitrate?: number;
@@ -66,19 +66,19 @@ export type PlexMetadata = {
   Guid?: PlexGuid[];
 };
 
-export type PlexDirectory = {
+type PlexDirectory = {
   key?: string | number;
   title?: string;
   type?: string;
 };
 
-export type PlexHub = {
+type PlexHub = {
   type?: string;
   title?: string;
   Metadata?: PlexMetadata[];
 };
 
-export type PlexMediaContainer = {
+type PlexMediaContainer = {
   size?: number;
   totalSize?: number;
   Metadata?: PlexMetadata[];

@@ -1,4 +1,4 @@
-export type PlayCountTrack = { id: string; artistId: string };
+type PlayCountTrack = { id: string; artistId: string };
 
 // Personal listening history is a different claim than chart popularity —
 // this ranks by the current user's own play counts, not global popularity,

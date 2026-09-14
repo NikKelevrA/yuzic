@@ -11,7 +11,7 @@ import type { NavidromeClient } from '../client';
  * Docs: http://www.subsonic.org/pages/api.jsp#jukeboxControl
  */
 
-export type JukeboxAction =
+type JukeboxAction =
   | 'get'      // returns status, no side effect
   | 'status'   // alias in some servers
   | 'set'      // replace playlist with the given ids
@@ -32,7 +32,7 @@ export type JukeboxStatus = {
   position: number;
 };
 
-export type JukeboxEntry = {
+type JukeboxEntry = {
   id: string;
   title: string;
   artist?: string;
@@ -45,7 +45,7 @@ export type JukeboxEntry = {
  * echo the playlist in the response. Status-only calls (`start`, `stop`,
  * `skip`, `setGain`) return {@link JukeboxStatus} without entries.
  */
-export type JukeboxPlaylist = JukeboxStatus & {
+type JukeboxPlaylist = JukeboxStatus & {
   entries: JukeboxEntry[];
 };
 

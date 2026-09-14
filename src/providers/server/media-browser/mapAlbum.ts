@@ -26,7 +26,7 @@ function externalIdsOf(dto: MediaBrowserItem): ExternalIds {
   return {};
 }
 
-export interface MapAlbumContext {
+interface MapAlbumContext {
   provenance: Provenance;
   brand: MediaBrowserBrand;
   /**

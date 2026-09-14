@@ -3,7 +3,7 @@ import { QueryKeys } from '@/state/query/queryKeys';
 import { useEnabledExternalSources } from '@/features/sources/registry';
 import type { Album } from '@/domain/entities/Album';
 
-export type ArtistExternalDiscography = {
+type ArtistExternalDiscography = {
   albums: Album[];
   singles: Album[];
 };

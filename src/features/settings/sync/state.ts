@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface SyncSettingsState {
+interface SyncSettingsState {
   /**
    * When each server's catalog last synced, by server id. Per server because
    * the sync throttle is: one app-wide timestamp let a sync of one server keep

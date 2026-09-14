@@ -1,7 +1,7 @@
 import { createMediaBrowserClient, MediaBrowserClientConfig } from "../client";
 import { JELLYFIN_BRAND } from "../brand";
 
-export type JellyfinClientConfig = MediaBrowserClientConfig;
+type JellyfinClientConfig = MediaBrowserClientConfig;
 
 export type JellyfinClient = ReturnType<typeof createJellyfinClient>;
 

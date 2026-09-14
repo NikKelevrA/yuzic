@@ -24,7 +24,7 @@ function labelFor(frequencyHz: number): string {
   return frequencyHz >= 1000 ? `${frequencyHz / 1000}k` : `${frequencyHz}`;
 }
 
-export const Equalizer: React.FC = () => {
+const Equalizer: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { colors } = useTheme();

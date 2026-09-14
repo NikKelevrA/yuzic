@@ -7,7 +7,7 @@ import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import { usePlaylistOptionsActions } from '@/features/entity-actions/hooks/usePlaylistActions';
 
-export type PlaylistOptionsProps = {
+type PlaylistOptionsProps = {
   playlist: Playlist | null;
   /** Hide "Go to Playlist" when already on the playlist screen */
   hideGoToPlaylist?: boolean;

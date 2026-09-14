@@ -4,7 +4,7 @@
  * far more than this, and callers ask for extra fields via `Fields=...`
  * query params per-endpoint, so every field here is optional.
  */
-export interface MediaBrowserProviderIds {
+interface MediaBrowserProviderIds {
   MusicBrainz?: string;
   MusicBrainzAlbum?: string;
   /**
@@ -17,32 +17,32 @@ export interface MediaBrowserProviderIds {
   MusicBrainzTrack?: string;
 }
 
-export interface MediaBrowserImageTags {
+interface MediaBrowserImageTags {
   Primary?: string;
 }
 
-export interface MediaBrowserUserData {
+interface MediaBrowserUserData {
   PlayCount?: number;
   LastPlayedDate?: string;
   /** 100ns ticks — the resume position the "Continue Watching" surface reads. */
   PlaybackPositionTicks?: number;
 }
 
-export interface MediaBrowserMediaStream {
+interface MediaBrowserMediaStream {
   Type?: string;
   BitRate?: number;
   SampleRate?: number;
   BitDepth?: number;
 }
 
-export interface MediaBrowserMediaSource {
+interface MediaBrowserMediaSource {
   RunTimeTicks?: number;
   Bitrate?: number;
   Container?: string;
   MediaStreams?: MediaBrowserMediaStream[];
 }
 
-export interface MediaBrowserArtistRef {
+interface MediaBrowserArtistRef {
   Id?: string;
   Name?: string;
   ProviderIds?: MediaBrowserProviderIds;

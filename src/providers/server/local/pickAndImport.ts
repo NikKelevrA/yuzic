@@ -9,7 +9,7 @@ export const LOCAL_AUDIO_MIME_TYPES = [
   'audio/x-m4a',
 ] as const;
 
-export type LocalImportOutcome = Awaited<ReturnType<typeof importLocalFiles>>;
+type LocalImportOutcome = Awaited<ReturnType<typeof importLocalFiles>>;
 
 /**
  * Selects files through the platform picker and puts durable private copies in

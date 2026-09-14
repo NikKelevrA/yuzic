@@ -15,7 +15,7 @@
  * no require()-style asset numbers or bundle-relative names, since every URL
  * here is a server URL or a local file path resolved at runtime.
  */
-export type MediaUrl = string | { uri: string };
+type MediaUrl = string | { uri: string };
 
 export interface MediaItem {
   /**

@@ -19,7 +19,7 @@ import { withAlpha } from '@/features/theme/coverAccent';
  */
 const MAX_SECONDS = 12;
 
-export const Crossfade: React.FC = () => {
+const Crossfade: React.FC = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { colors } = useTheme();

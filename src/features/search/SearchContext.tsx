@@ -37,10 +37,9 @@ import {
 } from '@/features/search/searchPolicy';
 
 export type { SearchResult } from '@/features/search/searchRanking';
-export type { SearchResultScope } from '@/features/search/searchLegs';
 export type { SearchEntityType } from '@/features/search/searchPolicy';
 
-export type SearchFilters = {
+type SearchFilters = {
   /** 'library' (default) — today's local search — or 'other', the
    *  deliberate external-search action. The two are never both attempted
    *  in the same request; that split is what keeps library and external

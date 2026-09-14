@@ -9,7 +9,7 @@ import Touchable from '@/components/Touchable';
 import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
 
-export type SettingsSource = {
+type SettingsSource = {
   id: string;
   label: string;
   subtext?: string;

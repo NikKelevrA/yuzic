@@ -15,7 +15,7 @@ import type { CoverSource } from '@/domain/entities/Cover';
 import type { MbReleaseGroup } from './';
 
 /** The `artist-credit` entry shape MusicBrainz embeds on releases and tracks. */
-export type MbArtistCredit = { name?: string; artist: { id?: string; name: string } };
+type MbArtistCredit = { name?: string; artist: { id?: string; name: string } };
 
 export function artistRef(provenance: Provenance, credits: MbArtistCredit[] | undefined): ArtistRef {
   const credit = credits?.[0];

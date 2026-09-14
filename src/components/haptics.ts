@@ -33,31 +33,31 @@ function fire(fn: () => Promise<unknown>): void {
 }
 
 /** Feather-light bump — the everyday tap on a menu item, a chip, a toggle. */
-export function tap(): void {
+function tap(): void {
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
 }
 
 /** A firmer tick — play/pause, skip, primary action inside a screen. */
-export function primary(): void {
+function primary(): void {
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
 }
 
 /** Weighty confirmation — long-press activation, sheet opening on a hold. */
-export function heavy(): void {
+function heavy(): void {
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy));
 }
 
 /** A completed action — download finished, playlist created, favourite added. */
-export function success(): void {
+function success(): void {
   fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
 }
 
 /** Something went wrong the user should feel — failed to enqueue, playback error. */
-export function warning(): void {
+function warning(): void {
   fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
 }
 
-export function error(): void {
+function error(): void {
   fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
 }
 

@@ -18,8 +18,8 @@ import Touchable from '@/components/Touchable';
 import { iconSize, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 
-export type PickerItemAlbum = SourceResolvedAlbum & { kind: 'album' }
-export type PickerItemArtist = SourceResolvedArtist & { kind: 'artist' }
+type PickerItemAlbum = SourceResolvedAlbum & { kind: 'album' }
+type PickerItemArtist = SourceResolvedArtist & { kind: 'artist' }
 export type PickerItem = PickerItemAlbum | PickerItemArtist
 
 type Props = {

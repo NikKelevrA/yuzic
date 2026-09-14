@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CodeAuthApi } from '@/providers/registry/serverConnections';
 import type { BasicAuth, ProviderAuth } from '@/providers/contracts/Server';
 
-export type CodeAuthPhase =
+type CodeAuthPhase =
   /** Not started — the password form is showing. */
   | { status: 'idle' }
   /** `begin()` is in flight; there is no code to show yet. */

@@ -20,13 +20,13 @@ function replaceNamespace(map: Record<string, number>, serverId: string): void {
   }
 }
 
-export type ServerAlbumStat = {
+type ServerAlbumStat = {
   id: string;
   playCount: number;
   lastPlayedAt: number; // unix ms, 0 if never played
 };
 
-export type ServerSongStat = {
+type ServerSongStat = {
   id: string;
   playCount: number;
   lastPlayedAt?: number;

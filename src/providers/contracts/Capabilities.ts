@@ -27,7 +27,7 @@ import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import type { CoverSource } from '@/domain/entities/Cover';
 
 /** Fields an integration can contribute to an artist it recognises. */
-export interface ArtistEnrichment {
+interface ArtistEnrichment {
   biography?: string;
   tags?: string[];
   cover?: CoverSource;
@@ -35,12 +35,12 @@ export interface ArtistEnrichment {
 }
 
 /** Fields an integration can contribute to an album it recognises. */
-export interface AlbumEnrichment {
+interface AlbumEnrichment {
   cover?: CoverSource;
   externalIds?: ExternalIds;
 }
 
-export interface LyricLine {
+interface LyricLine {
   startMs: number;
   text: string;
 }
@@ -52,18 +52,18 @@ export interface Lyrics {
 }
 
 /** Which entity kinds a search should ask for. */
-export interface CatalogueSearchKinds {
+interface CatalogueSearchKinds {
   artists: boolean;
   albums: boolean;
 }
 
 /** One hit, with the second line the provider chose for it. */
-export interface CatalogueSearchMatch<T> {
+interface CatalogueSearchMatch<T> {
   entity: T;
   subtitle: string;
 }
 
-export interface CatalogueSearchResults {
+interface CatalogueSearchResults {
   artists: CatalogueSearchMatch<Artist>[];
   albums: CatalogueSearchMatch<Album>[];
 }

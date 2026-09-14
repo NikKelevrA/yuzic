@@ -13,7 +13,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import { buildCoverWithTag, type MediaBrowserBrand } from './brand';
 import type { MediaBrowserItem } from './types';
 
-export interface MapArtistContext {
+interface MapArtistContext {
   provenance: Provenance;
   /** Jellyfin and Emby address artist art differently — see `brand.ts`. */
   brand: MediaBrowserBrand;

@@ -8,7 +8,7 @@ import type { ListDensity, RadiusPreset } from '@/constants/design';
  * Mirrors `LibraryCollectionType` in features/library/librarySort, kept here as
  * its own type so this slice doesn't reach up into a screen for it.
  */
-export type LibraryViewKey =
+type LibraryViewKey =
   | 'playlists'
   | 'albums'
   | 'artists'
@@ -23,7 +23,7 @@ export type LibraryViewKey =
  * per song on the record — so tracks and the mixed downloads list are rows,
  * where the title gets the width instead of a caption under a thumbnail.
  */
-export const LIBRARY_VIEW_DEFAULTS: Record<LibraryViewKey, boolean> = {
+const LIBRARY_VIEW_DEFAULTS: Record<LibraryViewKey, boolean> = {
   playlists: true,
   albums: true,
   artists: true,
@@ -33,9 +33,9 @@ export const LIBRARY_VIEW_DEFAULTS: Record<LibraryViewKey, boolean> = {
 
 export type PlayingBarAction = 'none' | 'skip' | 'favorite' | 'randomAlbum' | 'addToPlaylist' | 'cast';
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type AppLanguage = string;
+type AppLanguage = string;
 
-export interface AppearanceSettingsState {
+interface AppearanceSettingsState {
   themeMode: ThemeMode;
   themeColor: string;
   /**

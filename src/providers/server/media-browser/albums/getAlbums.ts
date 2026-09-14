@@ -3,7 +3,7 @@ import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapAlbum } from "../mapAlbum";
 import type { MediaBrowserItem, MediaBrowserItemsResponse } from "../types";
 
-export type GetAlbumsResult = Album[];
+type GetAlbumsResult = Album[];
 
 /**
  * Shared with `getStarredItems` and `getSimilarItems` — every endpoint that

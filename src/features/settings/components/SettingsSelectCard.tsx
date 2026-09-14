@@ -7,7 +7,7 @@ import SettingsRow from './SettingsRow';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { iconSize, spacing, typography } from '@/constants/design';
 
-export type SelectItem = { key: string; label: string };
+type SelectItem = { key: string; label: string };
 
 type Props = {
   title?: string;

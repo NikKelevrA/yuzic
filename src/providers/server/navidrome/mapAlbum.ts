@@ -19,7 +19,7 @@ type AnyAlbumDto = SubsonicAlbum | SubsonicAlbumListEntry;
 const titleOf = (dto: AnyAlbumDto): string =>
   ('name' in dto ? dto.name : undefined) ?? ('title' in dto ? dto.title : undefined) ?? 'Unknown Album';
 
-export interface MapAlbumContext {
+interface MapAlbumContext {
   provenance: Provenance;
   /**
    * The artist's own cover, where the caller already has it.

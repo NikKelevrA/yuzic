@@ -5,7 +5,7 @@ import { mapSong } from "../mapSong";
 import { normalizeAlbum } from "../albums/getAlbums";
 import { MediaBrowserItemsResponse } from "../types";
 
-export interface GetStarredItemsResult {
+interface GetStarredItemsResult {
   songs: Song[];
   albums: Album[];
 }

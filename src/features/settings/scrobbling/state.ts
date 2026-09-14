@@ -23,9 +23,9 @@ export type ScrobbleRoute = 'disabled' | 'through-server' | 'direct';
  * always wins once one exists, and everyone else keeps reading the derived
  * default forever.
  */
-export type ScrobbleRoutes = Partial<Record<ScrobbleDestinationKind, ScrobbleRoute>>;
+type ScrobbleRoutes = Partial<Record<ScrobbleDestinationKind, ScrobbleRoute>>;
 
-export interface ScrobblingSettingsState {
+interface ScrobblingSettingsState {
   /* Scrobbling. Now-playing follows scrobble — if a user opts out of one
    * they opt out of the other; broadcasting "listening now" only to hide
    * the finished listen was never a real user intent.
@@ -77,6 +77,6 @@ const scrobblingSlice = createSlice({
   },
 });
 
-export const { setServerScrobbleEnabled, setScrobbleRoute } = scrobblingSlice.actions;
+export const { setScrobbleRoute } = scrobblingSlice.actions;
 
 export default scrobblingSlice.reducer;

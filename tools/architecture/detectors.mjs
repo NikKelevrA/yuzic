@@ -52,6 +52,19 @@ export function cycles() {
  * only that way were reported unused — false positives the allowlist had been
  * carrying since the gate went in.
  */
+/**
+ * The exports expo-router itself reads from a route file: the screen, the
+ * stack's `unstable_settings`, and a route's own `ErrorBoundary`. Nothing in
+ * the app imports them because the router does, by convention. They were the
+ * largest block of the allowlist — every screen in the app — which made the
+ * list read as far more dead code than there was.
+ */
+const ROUTE_EXPORTS = new Set(['default', 'unstable_settings', 'ErrorBoundary']);
+const isRouteExport = line => {
+  const match = line.match(/^(src\/app\/[^:]+):\d+\s*-\s*(\w+)/);
+  return Boolean(match && ROUTE_EXPORTS.has(match[2]));
+};
+
 export function unusedExports() {
   const out = run('npx', ['--no-install', 'ts-prune', '-p', 'tools/architecture/tsconfig.prune.json']);
   return [...new Set(
@@ -62,6 +75,7 @@ export function unusedExports() {
       .map(line => line.replace(/^.*?(src[/\\].*)$/, '$1').replace(/\\/g, '/'))
       .filter(line => line.startsWith('src/'))
       .filter(line => !isTest(line.split(':')[0]))
+      .filter(line => !isRouteExport(line))
       // Drop ts-prune's line number: `path:12 - name` becomes `path - name`.
       // Keying on the line would make every export below an inserted line read
       // as simultaneously new and fixed, so the gate would churn on edits that

@@ -8,7 +8,7 @@ import {
 import type { LidarrConfig } from '@/providers/integration/lidarr/config';
 import type { Album } from '@/domain/entities/Album';
 
-export type LidarrAlbumErrorCode =
+type LidarrAlbumErrorCode =
   | 'missing_album_identity'
   | 'artist_identity_unresolved'
   | 'artist_identity_ambiguous'

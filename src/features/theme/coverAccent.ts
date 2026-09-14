@@ -9,7 +9,7 @@ export const ACCENT_CACHE_MAX = 150;
  * public entry point, so depending on them would break on any reshuffle of its
  * build output.
  */
-export type ExtractedColors = {
+type ExtractedColors = {
   platform: string
   // Android: a palette, named by what each swatch is.
   dominant?: string
@@ -250,7 +250,7 @@ export function withAlpha(hex: string, alpha: number): string {
  * alpha out instead: full for the first quarter, where the cover sits, then
  * away faster than the distance to the end.
  */
-export const ACCENT_WASH_ALPHAS = [1, 0.92, 0.68, 0.38, 0.16, 0.04, 0] as const
+const ACCENT_WASH_ALPHAS = [1, 0.92, 0.68, 0.38, 0.16, 0.04, 0] as const
 export const ACCENT_WASH_LOCATIONS = [0, 0.22, 0.42, 0.6, 0.76, 0.9, 1] as const
 
 export function accentWashColors(

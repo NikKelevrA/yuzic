@@ -52,7 +52,7 @@ const selectScrobbleRoutesForActiveServer = createSelector(
     (activeServerId ? scrobbleRoutes?.[activeServerId] : undefined)
 );
 
-export const selectScrobbleRoute = (destination: ScrobbleDestinationKind) =>
+const selectScrobbleRoute = (destination: ScrobbleDestinationKind) =>
   createSelector(
     [
       selectScrobbleRoutesForActiveServer,

@@ -4,7 +4,7 @@ import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapSong } from "../mapSong";
 import { MediaBrowserItem, MediaBrowserItemsResponse } from "../types";
 
-export type GetInstantMixResult = Song[];
+type GetInstantMixResult = Song[];
 
 function parseInstantMixResponse(text: string): MediaBrowserItemsResponse {
   const trimmed = text.trim();

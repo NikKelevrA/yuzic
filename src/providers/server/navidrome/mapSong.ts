@@ -32,7 +32,7 @@ function externalIdsOf(dto: SubsonicSong): ExternalIds {
   return ids;
 }
 
-export interface MapSongContext {
+interface MapSongContext {
   provenance: Provenance;
   /** The cover to use where the song carries none of its own — usually the album's. */
   cover?: CoverSource;

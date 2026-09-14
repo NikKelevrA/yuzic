@@ -4,7 +4,7 @@ import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
 import type { PlexResponse } from './types';
 
-export type PlexClientConfig = {
+type PlexClientConfig = {
   serverUrl: string;
   /** Stable identity lets API calls remember the last reachable endpoint. */
   serverId?: string;

@@ -20,7 +20,7 @@ import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import { useAlbumLibraryActions, useAlbumExternalActions } from '@/features/entity-actions/hooks/useAlbumActions';
 
-export type AlbumOptionsProps = {
+type AlbumOptionsProps = {
   album: Album | null;
   /** Hide "Go to Album" when already on the album screen (library albums only). */
   hideGoToAlbum?: boolean;

@@ -31,7 +31,7 @@ import type { Provenance } from './Provenance';
 export type LocalId = string & { readonly __brand: 'LocalId' };
 
 /** The kinds of entity that have their own identity. */
-export type EntityKind = 'artist' | 'album' | 'song' | 'playlist';
+type EntityKind = 'artist' | 'album' | 'song' | 'playlist';
 
 /**
  * Builds the identity for an entity. Synchronous, offline, and total: the same

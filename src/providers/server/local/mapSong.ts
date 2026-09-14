@@ -24,7 +24,7 @@ function externalIdsOf(dto: LocalTrack): ExternalIds {
   return ids;
 }
 
-export interface MapSongContext {
+interface MapSongContext {
   provenance: Provenance;
 }
 

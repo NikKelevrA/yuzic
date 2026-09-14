@@ -1,6 +1,6 @@
 import { type AudioQuality } from '@/features/settings/playback/state';
 
-export type StreamParams = {
+type StreamParams = {
   format: 'mp3' | 'raw';
   maxBitRate?: number;
 };

@@ -11,7 +11,7 @@ import type { Song } from '@/domain/entities/Song';
  * normalized title+artist — the same `normalizeName` the domain matcher uses,
  * no new fuzzy algorithm.
  */
-export interface ArrivalLibrary {
+interface ArrivalLibrary {
   albums: Album[];
   tracks?: Song[];
 }

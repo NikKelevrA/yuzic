@@ -48,7 +48,7 @@ export const CLOSE_VELOCITY = 700;
  * Fully collapsed, fully open, or — for a gesture that never moved the player —
  * leave it to whatever did (a press, a spring already running).
  */
-export type Settled = 0 | 1 | null;
+type Settled = 0 | 1 | null;
 
 /**
  * Dragging up from the playing bar.

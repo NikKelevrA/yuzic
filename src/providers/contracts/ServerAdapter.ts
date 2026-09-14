@@ -132,7 +132,7 @@ export interface ApiAdapter {
  * the image is drawn by the same `<Image>` pipeline as cover art — the caller
  * wants something to put in a `source`, not bytes to hold in JS.
  */
-export interface UserApi {
+interface UserApi {
   /**
    * Where to fetch the signed-in user's avatar, or null when this server
    * cannot supply one.
@@ -157,7 +157,7 @@ export type JukeboxState = {
  * Server-side playback. Every call returns the resulting state, so a caller
  * that drives the jukebox never has to follow a command with a read.
  */
-export interface JukeboxApi {
+interface JukeboxApi {
   /** Throws when the server has the feature but this user may not use it. */
   status(): Promise<JukeboxState>;
   setPlaylist(songIds: string[]): Promise<JukeboxState>;
@@ -169,7 +169,7 @@ export interface JukeboxApi {
   setGain(gain: number): Promise<JukeboxState>;
 }
 
-export type PodcastEpisodeStatus = 'new' | 'downloading' | 'completed' | 'skipped' | 'error';
+type PodcastEpisodeStatus = 'new' | 'downloading' | 'completed' | 'skipped' | 'error';
 
 export type PodcastEpisode = {
   id: string;
@@ -197,7 +197,7 @@ export type PodcastChannel = {
   episodes: PodcastEpisode[];
 };
 
-export interface PodcastsApi {
+interface PodcastsApi {
   list(includeEpisodes?: boolean): Promise<PodcastChannel[]>;
   newestEpisodes(count?: number): Promise<PodcastEpisode[]>;
   subscribe(rssUrl: string): Promise<void>;
@@ -221,7 +221,7 @@ export type NowPlayingEntry = {
   minutesAgo?: number;
 };
 
-export interface DiscoveryApi {
+interface DiscoveryApi {
   getRandomSongs(opts?: { size?: number; genre?: string; fromYear?: number; toYear?: number }): Promise<Song[]>;
   getNowPlaying(): Promise<NowPlayingEntry[]>;
 }
@@ -234,7 +234,7 @@ export type ServerPlayQueue = {
   changedBy?: string;
 };
 
-export interface QueueApi {
+interface QueueApi {
   get(): Promise<ServerPlayQueue | null>;
   save(input: { songIds: string[]; currentSongId?: string; positionMs?: number }): Promise<void>;
 }
@@ -247,7 +247,7 @@ export type Bookmark = {
   changed?: string;
 };
 
-export interface BookmarksApi {
+interface BookmarksApi {
   list(): Promise<Bookmark[]>;
   /** Creates or replaces the bookmark for `songId` — Subsonic upserts on the
    * same call, no distinct update method. */
@@ -262,7 +262,7 @@ export type InternetRadioStation = {
   homepageUrl?: string;
 };
 
-export interface RadioApi {
+interface RadioApi {
   list(): Promise<InternetRadioStation[]>;
   create(input: { name: string; streamUrl: string; homepageUrl?: string }): Promise<void>;
   update(input: { id: string; name: string; streamUrl: string; homepageUrl?: string }): Promise<void>;
@@ -278,7 +278,7 @@ export type Share = {
   visitCount?: number;
 };
 
-export interface SharesApi {
+interface SharesApi {
   list(): Promise<Share[]>;
   /** Creates a public share URL for an album/playlist/track id and returns
    * the created record. Nullable so callers can toast an error instead of

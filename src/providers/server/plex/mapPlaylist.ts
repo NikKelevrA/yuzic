@@ -14,7 +14,7 @@ import type { PlexMetadata } from './types';
 
 const id = (value: string | number | undefined): string => (value == null ? '' : String(value));
 
-export interface MapPlaylistContext {
+interface MapPlaylistContext {
   provenance: Provenance;
   /** Ids of the playlist's tracks, in playlist order, where they were mapped. */
   songIds?: LocalId[];

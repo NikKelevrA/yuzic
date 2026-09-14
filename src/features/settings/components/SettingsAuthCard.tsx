@@ -9,7 +9,7 @@ import ConnectivityIndicator from './ConnectivityIndicator';
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize, spacing } from '@/constants/design';
 
-export type AuthField = {
+type AuthField = {
   label: string;
   value: string | undefined;
   onChangeText: (v: string) => void;

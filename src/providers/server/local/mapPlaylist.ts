@@ -11,7 +11,7 @@ import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { LocalPlaylist } from './store';
 
-export interface MapPlaylistContext {
+interface MapPlaylistContext {
   provenance: Provenance;
   /** Ids of the playlist's tracks, in playlist order, where they were mapped. */
   songIds?: LocalId[];

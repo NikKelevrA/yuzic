@@ -40,8 +40,6 @@ export function normalizeExternalIds(ids: unknown): ExternalIds {
   return out as ExternalIds;
 }
 
-export const EMPTY_EXTERNAL_IDS: ExternalIds = Object.freeze({});
-
 /**
  * Merges newly resolved ids over known ones.
  *

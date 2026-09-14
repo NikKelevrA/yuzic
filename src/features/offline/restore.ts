@@ -35,7 +35,7 @@ export type DownloadSnapshot = {
   jobs: PersistedDownloadJob[];
 };
 
-export type RestoredDownloadState = {
+type RestoredDownloadState = {
   tracks: LocalDownloadedTrackEntry[];
   collections: DownloadedCollectionEntry[];
   jobs: PersistedDownloadJob[];

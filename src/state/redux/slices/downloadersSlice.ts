@@ -32,7 +32,7 @@ export type PerServerDownloadersState = Record<DownloaderId, DownloaderConnectio
  * a Get request — and read back only to *preselect* a provider row; the Get
  * confirm tap still has to happen for a job to start.
  */
-export interface DownloaderDefaults {
+interface DownloaderDefaults {
   defaultAlbumProvider?: DownloaderId;
   defaultTrackProvider?: DownloaderId;
   /**
@@ -45,7 +45,7 @@ export interface DownloaderDefaults {
   lidarrDefaultQualityProfileId?: number;
 }
 
-export interface DownloadersState {
+interface DownloadersState {
   byServer: Record<string, PerServerDownloadersState>;
   defaultsByServer: Record<string, DownloaderDefaults>;
 }

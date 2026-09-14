@@ -2,7 +2,7 @@ import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { CoverSource } from '@/domain/entities/Cover';
 
-export type SearchEntityType = 'song' | 'album' | 'artist' | 'playlist';
+type SearchEntityType = 'song' | 'album' | 'artist' | 'playlist';
 
 /**
  * The ids a remembered entity carries, in the domain's own shape.
@@ -11,7 +11,7 @@ export type SearchEntityType = 'song' | 'album' | 'artist' | 'playlist';
  * history enumerated which catalogues exist — and would have needed editing
  * every time one was added.
  */
-export type SearchHistoryExternalIds = ExternalIds;
+type SearchHistoryExternalIds = ExternalIds;
 
 /** Something the user typed and submitted. Replaying it re-runs the search. */
 export interface SearchQueryEntry {
@@ -39,7 +39,7 @@ export interface SearchEntityEntry {
 
 export type SearchHistoryEntry = SearchQueryEntry | SearchEntityEntry;
 
-export interface SearchHistoryState {
+interface SearchHistoryState {
   byServer: Record<string, SearchHistoryEntry[]>;
 }
 

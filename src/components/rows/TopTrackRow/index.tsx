@@ -14,7 +14,7 @@ import { useRadius } from '@/features/theme/useRadius'
  *  — it sits inside a row rather than beside one. `hitSlopFor` pads it out. */
 const PREVIEW_BUTTON_SIZE = 28
 
-export type TopTrackRowSong = Song
+type TopTrackRowSong = Song
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than

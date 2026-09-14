@@ -18,7 +18,7 @@ import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { CATALOG_RESOURCES } from './catalogQueries';
 
-export interface ServerStat {
+interface ServerStat {
   id: string;
   playCount: number;
   lastPlayedAt: number;

@@ -3,7 +3,7 @@ import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapArtist } from "../mapArtist";
 import { MediaBrowserItemsResponse } from "../types";
 
-export type GetArtistResult = Artist | null;
+type GetArtistResult = Artist | null;
 
 export async function getArtist(
   client: MediaBrowserClient,

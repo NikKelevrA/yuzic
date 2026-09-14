@@ -15,8 +15,8 @@ import { SECTION_H_PADDING } from '@/features/home/constants'
  * numbers that only happened to agree.
  */
 export { SECTION_H_PADDING }
-export const SECTION_GAP = spacing.md
-export const SECTION_VISIBLE_ITEMS = 2.5
+const SECTION_GAP = spacing.md
+const SECTION_VISIBLE_ITEMS = 2.5
 
 export function getSectionItemWidth(screenWidth: number): number {
   const available = screenWidth - SECTION_H_PADDING * 2

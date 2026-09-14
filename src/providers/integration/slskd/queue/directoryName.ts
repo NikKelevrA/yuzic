@@ -8,7 +8,7 @@
  * the caller keeps showing the username rather than inventing an artist.
  */
 
-export type ParsedDirectory = {
+type ParsedDirectory = {
   albumTitle: string;
   /** Absent when the layout doesn't reveal one. */
   artistName?: string;

@@ -19,7 +19,7 @@ const DEFAULT_TIMEOUT_MS = 5000;
  * always built from the library's own record or a fresh fetch, never from
  * whatever fields the caller happened to be holding.
  */
-export type PlayableSongInput = string | Song | null | undefined;
+type PlayableSongInput = string | Song | null | undefined;
 
 type ResolvePlayableSongOptions = {
   allowNetwork?: boolean;

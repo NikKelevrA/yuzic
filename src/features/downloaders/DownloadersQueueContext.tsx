@@ -29,7 +29,7 @@ const POLL_INTERVAL_MS = 30_000;
 // with a stale library.
 const SYNC_DELAYS_MS = [15_000, 60_000];
 
-export type DownloaderQueueSnapshot = {
+type DownloaderQueueSnapshot = {
   id: DownloaderId;
   label: string;
   /** Everything currently queued. Empty is a real answer, not "unread". */

@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type SearchScope = 'client' | 'server';
 
-export interface SearchSettingsState {
+interface SearchSettingsState {
   searchScope: SearchScope;
   /**
    * The one switch per outside catalogue (`deezer`, `musicbrainz`): may Search's

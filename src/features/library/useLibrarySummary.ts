@@ -24,7 +24,7 @@ export type LibraryEntryKey =
   | 'podcasts'
   | 'shares'
 
-export type LibraryEntrySummary = {
+type LibraryEntrySummary = {
   /** How much sits behind the entry point. */
   count?: number
   /** Art for the row, most-representative first. Fewer than `MOSAIC_COVERS`

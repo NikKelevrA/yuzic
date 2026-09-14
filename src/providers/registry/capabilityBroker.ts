@@ -19,7 +19,7 @@ import type { CapabilityMap, CapabilityName } from '../contracts/Capabilities';
 import type { Provider, ProviderId } from '../contracts/Provider';
 
 /** A capability, together with whose it is, so results can be attributed. */
-export interface CapabilityOffer<K extends CapabilityName> {
+interface CapabilityOffer<K extends CapabilityName> {
   providerId: ProviderId;
   invoke: CapabilityMap[K];
 }

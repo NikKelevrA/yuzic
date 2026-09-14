@@ -3,7 +3,7 @@ import { Minus, SkipForward, Heart, Dices, Cast, PlusCircle } from 'lucide-react
 import { PlayingBarAction } from '@/features/settings/appearance/state';
 import { iconSize } from '@/constants/design';
 
-export type PlayingBarActionMeta = {
+type PlayingBarActionMeta = {
   id: PlayingBarAction;
   icon: React.ReactNode;
 };

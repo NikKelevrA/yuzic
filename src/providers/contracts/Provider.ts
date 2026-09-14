@@ -19,7 +19,7 @@ import type { Capabilities } from './Capabilities';
 export type ProviderId = string;
 
 /** How a provider is shown, so no screen keeps its own copy of a label or icon. */
-export interface Presentation {
+interface Presentation {
   /** i18n key for the provider's display name. */
   nameKey: string;
   /** Product logo. Distinct from a server's own user-supplied avatar. */
@@ -29,7 +29,7 @@ export interface Presentation {
 }
 
 /** How much a provider is trusted with, and what it needs to connect. */
-export type AuthTier =
+type AuthTier =
   /** A public API. Still leaks what is asked of it, so not "no auth model". */
   | 'none'
   /** A key or token the user supplies. */

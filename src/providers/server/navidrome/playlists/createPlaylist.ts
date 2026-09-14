@@ -1,7 +1,7 @@
 import type { NavidromeClient } from "../client";
 import { SubsonicResponse } from "../types";
 
-export interface CreatePlaylistResult {
+interface CreatePlaylistResult {
   id: string | null;
 }
 

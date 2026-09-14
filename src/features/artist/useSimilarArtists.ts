@@ -10,7 +10,7 @@ import type { Artist } from '@/domain/entities/Artist'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { integrationProvenance } from '@/domain/identity/Provenance'
 
-export type SimilarArtistsInput = {
+type SimilarArtistsInput = {
   mbid?: string | null
   name?: string | null
   excludeName?: string | null

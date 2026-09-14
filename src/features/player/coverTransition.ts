@@ -1,7 +1,7 @@
 import type { SwipeOutcome } from './coverSwipe';
 
 export type CoverSlideDirection = Exclude<SwipeOutcome, 'cancel'>;
-export type CoverSlidePhase = 'exiting' | 'entering';
+type CoverSlidePhase = 'exiting' | 'entering';
 
 /** A two-stage cover change: old art leaves before replacement art enters. */
 export type CoverSlide = {

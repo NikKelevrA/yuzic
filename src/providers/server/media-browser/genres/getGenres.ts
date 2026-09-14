@@ -1,7 +1,7 @@
 import type { MediaBrowserClient } from "../client";
 import { MediaBrowserItemsResponse } from "../types";
 
-export type GetGenresResult = string[];
+type GetGenresResult = string[];
 
 function normalizeGenreItems(raw: MediaBrowserItemsResponse): GetGenresResult {
   const items = raw?.Items ?? [];

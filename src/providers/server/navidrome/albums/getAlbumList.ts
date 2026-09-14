@@ -4,7 +4,7 @@ import type { NavidromeClient } from "../client";
 import { mapAlbum } from "../mapAlbum";
 import { SubsonicResponse } from "../types";
 
-export type GetAlbumListResult = Album[];
+type GetAlbumListResult = Album[];
 
 const PAGE_SIZE = 500;
 

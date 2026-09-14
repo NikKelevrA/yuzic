@@ -6,17 +6,17 @@ import * as artists from './artists';
 export { testConnection } from './auth';
 
 // Artists
-export function lookupArtist(config: LidarrConfig, term: string) {
+function lookupArtist(config: LidarrConfig, term: string) {
   return artists.lookupArtist(createLidarrClient(config), term);
 }
-export function getArtists(config: LidarrConfig) {
+function getArtists(config: LidarrConfig) {
   return artists.getArtists(createLidarrClient(config));
 }
 export function getQualityProfiles(config: LidarrConfig) {
   return artists.getQualityProfiles(createLidarrClient(config));
 }
 export type { LidarrQualityProfile } from './artists';
-export function ensureArtist(
+function ensureArtist(
   config: LidarrConfig,
   artist: Parameters<typeof artists.ensureArtist>[1],
   opts?: Parameters<typeof artists.ensureArtist>[2]

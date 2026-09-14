@@ -154,20 +154,20 @@ export async function forgetAllServerCredentials(serverId: string): Promise<void
   await Promise.all(serverCredentialScopes(serverId).map(forgetCredentials));
 }
 
-export type ConnectResult = {
+type ConnectResult = {
   success: boolean;
   message?: string;
   auth?: ProviderAuth;
   libraries?: Library[];
 };
 
-export type DemoResult = {
+type DemoResult = {
   serverUrl: string;
   username: string;
   auth?: ProviderAuth;
 };
 
-export type ServerCapabilities = {
+type ServerCapabilities = {
   supportsDemo: boolean;
 };
 
@@ -180,7 +180,7 @@ export type ServerCapabilities = {
  * install may still be carrying. Callers read and write the selection through
  * `selectedLibraryIds` / `libraryScopePatch` rather than knowing either name.
  */
-export type LibraryScope = {
+type LibraryScope = {
   key: string;
   legacyKey: string;
 };
@@ -257,7 +257,7 @@ export type ServerProviderIcon =
   | { kind: 'image'; source: number }
   | { kind: 'glyph'; Glyph: ComponentType<{ size?: number; color?: string }> };
 
-export type ServerProviderConfig = {
+type ServerProviderConfig = {
   type: ServerType;
   label: string;
   description: string;
@@ -554,7 +554,7 @@ export const getServerProvider = (type: ServerType) => {
   return provider;
 };
 
-export const supportsDemo = (type: ServerType) =>
+const supportsDemo = (type: ServerType) =>
   SERVER_PROVIDERS[type]?.capabilities.supportsDemo ?? false;
 
 /** The libraries this server offers, asked of it without knowing its type. */

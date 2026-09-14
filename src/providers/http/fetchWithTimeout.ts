@@ -14,7 +14,7 @@ export class RequestTimeoutError extends Error {
   }
 }
 
-export type FetchWithTimeoutOptions = RequestInit & {
+type FetchWithTimeoutOptions = RequestInit & {
   /** Overrides {@link DEFAULT_REQUEST_TIMEOUT_MS}. */
   timeoutMs?: number;
 };

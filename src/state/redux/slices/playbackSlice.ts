@@ -52,7 +52,7 @@ export interface BookmarkSnapshot {
  * starts empty for the new server.
  */
 
-export interface PlaybackState {
+interface PlaybackState {
   activeServerId: string | null;
   queueSongIds: string[];
   currentIndex: number;

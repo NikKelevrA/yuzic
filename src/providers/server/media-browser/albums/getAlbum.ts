@@ -4,7 +4,7 @@ import { mapAlbum } from "../mapAlbum";
 import { getAlbumSongs } from "./getAlbumSongs";
 import { MediaBrowserItemsResponse } from "../types";
 
-export type GetAlbumResult = AlbumDetail | null;
+type GetAlbumResult = AlbumDetail | null;
 
 async function fetchGetAlbum(client: MediaBrowserClient, albumId: string) {
   const path =

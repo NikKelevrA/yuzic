@@ -7,7 +7,7 @@ import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import { useArtistOptionsActions } from '@/features/entity-actions/hooks/useArtistActions';
 
-export type ArtistOptionsProps = {
+type ArtistOptionsProps = {
   artist: Artist | null;
   /** Hide "Go to Artist" when already on the artist screen */
   hideGoToArtist?: boolean;

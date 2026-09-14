@@ -6,7 +6,7 @@ import SettingsCard from './SettingsCard';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 
-export type IconSelectItem = {
+type IconSelectItem = {
   id: string;
   icon: React.ReactElement<{ color?: string }>;
   /** What this option is called. The card draws options as bare glyphs, so

@@ -6,7 +6,7 @@ import { mapAlbum } from "../mapAlbum";
 import { mapSong } from "../mapSong";
 import { SubsonicResponse } from "../types";
 
-export interface GetStarredItemsResult {
+interface GetStarredItemsResult {
   songs: Song[];
   albums: Album[];
 }
