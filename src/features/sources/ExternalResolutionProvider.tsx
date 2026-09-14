@@ -103,7 +103,7 @@ export function ExternalResolutionProvider({ children }: { children: React.React
     }
 
     if (enabledSources.length === 1 && (!providerId || enabledSources[0].id === providerId)) {
-      router.push({ pathname: '/artistView', params: { source: providerId ?? enabledSources[0].id, artistId: item.externalIds.deezerId, mbid: item.externalIds.mbid ?? item.nativeId, name: item.name } });
+      router.push({ pathname: '/artistView', params: { source: providerId ?? enabledSources[0].id, artistId: enabledSources[0].artistIdOf(item.externalIds), mbid: item.externalIds.mbid ?? item.nativeId, name: item.name } });
       return;
     }
 

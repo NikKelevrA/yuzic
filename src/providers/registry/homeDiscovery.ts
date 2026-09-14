@@ -31,6 +31,9 @@ import type { SourceId, SourceUseId } from './sources';
 
 export type { CreatedForMixType };
 
+/** The account whose made-for-you mixes Home shows, or empty when none is connected. */
+export const selectListenersAccountName = selectListenBrainzUsername;
+
 /** The switch a shelf of each kind reads. */
 export const CATALOGUE_HOME_USE: SourceUseId = 'deezer.homeShelves';
 export const CATALOGUE_RECOMMENDATIONS_USE: SourceUseId = 'deezer.recommendations';
@@ -63,7 +66,7 @@ export const HOME_SOURCE_TIERS: readonly HomeSourceTier[] = [
     shuffleDaily: false,
     account: {
       shelves: ['lbCreatedForDailyJams', 'lbCreatedForWeeklyJams', 'lbCreatedForWeeklyExploration'],
-      isConnected: state => Boolean(selectListenBrainzUsername(state)),
+      isConnected: state => Boolean(selectListenersAccountName(state)),
       connectRoute: '/settings/listenbrainzView',
     },
   },

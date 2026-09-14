@@ -17,95 +17,21 @@ import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { selectSourceUse } from '@/features/settings/sources/state';
-import * as deezer from '@/providers/integration/deezer';
-import { getLastFmSimilarArtists } from '@/providers/integration/lastfm/getSimilarArtists';
-import { LASTFM_API_KEY } from '@/constants/keys';
+import {
+  CATALOGUE_TRACKS_RECOMMENDATIONS_USE,
+  fetchCatalogueAlbum,
+  fetchPlaylistRecommendations,
+  SCROBBLES_AVAILABLE,
+  SCROBBLES_RECOMMENDATIONS_USE,
+} from '@/providers/registry/pageSources';
+import { ARTIST_CATALOGUE } from '@/providers/registry/artistSources';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { iconSize, onDark, sourceColor, spacing, typography } from '@/constants/design';
-import shuffleArray from '@/features/playback/shuffleArray';
+import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import { playlistArtistNames as computePlaylistArtistNames } from '@/features/playlist/recommendedSongs';
 import type { Album } from '@/domain/entities/Album';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import { ExternalRow } from './Rows';
-
-const EXTERNAL_COUNT = 8;
-
-/**
- * Last.fm expands the seed artists into similar ones, Deezer turns those
- * into playable tracks. Two round trips, deliberately independent of any
- * particular playlist: a caller with no `LASTFM_API_KEY` bundled, or no seed
- * artists, gets `[]` rather than an error — this is a discovery rail, not a
- * critical path. Kept in this file (rather than the provider-free
- * `recommendedSongs.ts`) so the Deezer/Last.fm names it references stay
- * confined to the one file that already named them.
- */
-async function fetchExternalRecs(artistNames: string[]): Promise<Song[]> {
-  if (!artistNames.length || !LASTFM_API_KEY) return [];
-
-  try {
-    const similarResults = await Promise.all(
-      artistNames.map(name => getLastFmSimilarArtists(LASTFM_API_KEY, name, 15))
-    );
-
-    const seen = new Set<string>(artistNames.map(n => n.toLowerCase()));
-    const candidates: string[] = [];
-    for (const similar of similarResults) {
-      for (const s of shuffleArray(similar)) {
-        if (candidates.length >= artistNames.length * 8) break;
-        const key = s.name.toLowerCase();
-        if (!seen.has(key)) {
-          seen.add(key);
-          candidates.push(s.name);
-        }
-      }
-    }
-
-    const shuffledCandidates = shuffleArray(candidates);
-    const trackGroupResults = await Promise.allSettled(
-      shuffledCandidates.map(async name => {
-        const artist = await deezer.resolveDeezerArtistByName(name);
-        if (!artist) return [] as Song[];
-        return deezer.getDeezerArtistTopTracks(artist.nativeId, 2);
-      })
-    );
-    const trackGroups = trackGroupResults
-      .filter((r): r is PromiseFulfilledResult<Song[]> => r.status === 'fulfilled')
-      .map(r => r.value);
-
-    const seenIds = new Set<string>();
-    const tracks: Song[] = [];
-    const groups = shuffleArray(trackGroups.filter(group => group.length > 0));
-
-    for (let trackIndex = 0; trackIndex < 2; trackIndex++) {
-      for (const group of groups) {
-        if (tracks.length >= EXTERNAL_COUNT) break;
-        const track = group[trackIndex];
-        if (!track) continue;
-        if (!seenIds.has(track.nativeId)) {
-          seenIds.add(track.nativeId);
-          tracks.push(track);
-        }
-      }
-      if (tracks.length >= EXTERNAL_COUNT) break;
-    }
-
-    for (const group of groups) {
-      if (tracks.length >= EXTERNAL_COUNT) break;
-      for (const track of group) {
-        if (tracks.length >= EXTERNAL_COUNT) break;
-        if (!seenIds.has(track.nativeId)) {
-          seenIds.add(track.nativeId);
-          tracks.push(track);
-        }
-      }
-    }
-
-    return tracks;
-  } catch {
-    return [];
-  }
-}
 
 type Props = {
   playlist: Playlist;
@@ -124,8 +50,8 @@ export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, o
   const rad = useRadius();
   const showSourceHeaders = useSelector(selectShowSourceHeaders);
   const isOffline = useIsOffline();
-  const deezerEnabled = useSelector(selectSourceUse('deezer.recommendations'));
-  const lastfmEnabled = useSelector(selectSourceUse('lastfm.recommendations'));
+  const catalogueEnabled = useSelector(selectSourceUse(CATALOGUE_TRACKS_RECOMMENDATIONS_USE));
+  const scrobblesEnabled = useSelector(selectSourceUse(SCROBBLES_RECOMMENDATIONS_USE));
   const hasDownloader = useAnyAlbumDownloaderConnected();
   const downloadSheetRef = useSheetRef();
   const [albumForDownload, setAlbumForDownload] = useState<Album | null>(null);
@@ -139,17 +65,17 @@ export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, o
 
   const externalQuery = useQuery({
     queryKey: externalQueryKey,
-    queryFn: () => fetchExternalRecs(playlistArtistNames),
+    queryFn: () => fetchPlaylistRecommendations(playlistArtistNames),
     // This row is two services in a trench coat: Last.fm expands the seed
     // artists into similar ones, Deezer turns those into playable tracks. It
     // needs both to have been turned on — plus a bundled Last.fm key to
     // expand with — so it asks for all three before calling anyone.
     enabled:
-      deezerEnabled &&
-      lastfmEnabled &&
+      catalogueEnabled &&
+      scrobblesEnabled &&
       !isOffline &&
       playlistArtistNames.length > 0 &&
-      Boolean(LASTFM_API_KEY),
+      SCROBBLES_AVAILABLE,
     staleTime: 1000 * 60 * 60 * 6,
     networkMode: 'online',
   });
@@ -162,13 +88,13 @@ export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, o
     }
 
     try {
-      const detail = await deezer.getDeezerAlbum(song.album.nativeId);
-      if (!detail) {
+      const album = await fetchCatalogueAlbum(song.album.nativeId);
+      if (!album) {
         notify.error(t('externalAlbum.download.startFailed'));
         return;
       }
 
-      setAlbumForDownload(detail.album);
+      setAlbumForDownload(album);
       requestAnimationFrame(() => {
         downloadSheetRef.current?.present();
       });
@@ -177,16 +103,16 @@ export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, o
     }
   }, [downloadSheetRef, hasDownloader, t]);
 
-  if (!deezerEnabled || !lastfmEnabled || isOffline || playlistArtistNames.length === 0 || !LASTFM_API_KEY) return null;
+  if (!catalogueEnabled || !scrobblesEnabled || isOffline || playlistArtistNames.length === 0 || !SCROBBLES_AVAILABLE) return null;
 
   return (
     <View style={styles.section}>
       <SectionHeader
-        title={t('playlist.recommended.deezerTitle')}
+        title={t('playlist.recommended.catalogueTitle')}
         badge={
           showSourceHeaders ? (
-            <View style={[styles.sourceBadge, styles.sourceBadgeDeezer, { borderRadius: rad.pill }]}>
-              <Text style={styles.sourceBadgeLetter}>D</Text>
+            <View style={[styles.sourceBadge, { backgroundColor: ARTIST_CATALOGUE.badge.color, borderRadius: rad.pill }]}>
+              <Text style={styles.sourceBadgeLetter}>{ARTIST_CATALOGUE.badge.letter}</Text>
             </View>
           ) : undefined
         }
@@ -243,9 +169,6 @@ const styles = StyleSheet.create({
     height: 22,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sourceBadgeDeezer: {
-    backgroundColor: sourceColor.deezer,
   },
   sourceBadgeLetter: {
     ...typography.micro,

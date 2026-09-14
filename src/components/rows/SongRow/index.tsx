@@ -27,6 +27,7 @@ import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { useSourceUse } from '@/features/settings/sources/useSourceUse';
 import { promptSourceUse } from '@/features/settings/sources/sourceUsePrompt';
+import { PREVIEWS_USE } from '@/providers/registry/pageSources';
 
 type SongRowSong = Song;
 
@@ -64,7 +65,7 @@ const ExternalSongRowView: React.FC<{
 }> = ({ song, albumTitle, albumArtist, previewUrl, onPress }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const samplesEnabled = useSourceUse('deezer.previews');
+  const samplesEnabled = useSourceUse(PREVIEWS_USE);
   const density = useListDensity();
   const hasPreview = !!previewUrl;
   const optionsSheetRef = useSheetRef();
@@ -75,7 +76,7 @@ const ExternalSongRowView: React.FC<{
     } else if (!samplesEnabled) {
       // Ask here, beside the song that was tapped, rather than sending
       // anyone to Settings to find the switch.
-      promptSourceUse('deezer.previews');
+      promptSourceUse(PREVIEWS_USE);
     }
   }, [onPress, samplesEnabled]);
 

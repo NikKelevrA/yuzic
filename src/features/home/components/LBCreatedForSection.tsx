@@ -4,9 +4,8 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
-import { fetchMadeForYouMix, LISTENERS_HOME_USE, type CreatedForMixType } from '@/providers/registry/homeDiscovery';
+import { fetchMadeForYouMix, LISTENERS_HOME_USE, selectListenersAccountName, type CreatedForMixType } from '@/providers/registry/homeDiscovery';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { selectListenBrainzUsername } from '@/state/redux/selectors/listenbrainzSelectors';
 import { selectSourceUse } from '@/features/settings/sources/state';
 import SectionShelfHeader from './SectionShelfHeader';
 import SongRow from '@/components/rows/SongRow';
@@ -50,7 +49,7 @@ const MAX_TRACKS = 10;
 export default function LBCreatedForSection({ sectionKey, mixType, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
   const discoveryEnabled = useSelector(selectSourceUse(LISTENERS_HOME_USE));
-  const username = useSelector(selectListenBrainzUsername);
+  const username = useSelector(selectListenersAccountName);
 
   const enabled = discoveryEnabled && Boolean(username);
 

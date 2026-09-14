@@ -1006,7 +1006,7 @@
       "title": "推荐",
       "local": "来自您的音乐库",
       "external": "发现",
-      "deezerTitle": "来自 Deezer",
+      "catalogueTitle": "来自 Deezer",
       "added": "已添加到播放列表",
       "addFailed": "添加歌曲失败",
       "externalEmpty": "暂无可发现的内容",

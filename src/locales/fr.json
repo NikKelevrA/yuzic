@@ -1010,7 +1010,7 @@
       "title": "Recommandé",
       "local": "De votre bibliothèque",
       "external": "Découvrir",
-      "deezerTitle": "Via Deezer",
+      "catalogueTitle": "Via Deezer",
       "added": "Ajouté à la liste de lecture",
       "addFailed": "Impossible d'ajouter la chanson",
       "externalEmpty": "Rien à découvrir pour l'instant",

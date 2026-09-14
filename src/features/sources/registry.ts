@@ -18,6 +18,7 @@ import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapA
 import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong'
 import type { Album } from '@/domain/entities/Album'
+import type { ExternalIds } from '@/domain/identity/ExternalIds'
 import type { Artist } from '@/domain/entities/Artist'
 import type { Song } from '@/domain/entities/Song'
 import type { AlbumDetail } from '@/domain/entities/Detail'
@@ -109,6 +110,8 @@ type SourceDefinition = {
    * source headers call these directly, and nothing else resolves names.
    */
   resolveArtist(name: string): Promise<SourceResolvedArtist | null>
+  /** The id this source knows an artist by, from the ids a record carries. */
+  artistIdOf(ids: ExternalIds): string | undefined
   resolveAlbum(artist: string, title: string): Promise<SourceResolvedAlbum | null>
   fetchAlbum(id: string): Promise<AlbumDetail | null>
   fetchArtist(id: string, mbid?: string | null): Promise<SourceArtistDetail | null>
@@ -165,6 +168,7 @@ function stubDeezerArtist(artistId: string, artistName: string): Artist {
 
 const deezerSource: SourceDefinition = {
   id: 'deezer',
+  artistIdOf: ids => ids.deezerId,
   label: 'Deezer',
   color: sourceColor.deezer,
   auth: noAuth,
@@ -249,6 +253,7 @@ const MB_PROVENANCE = integrationProvenance('musicbrainz')
 
 const musicbrainzSource: SourceDefinition = {
   id: 'musicbrainz',
+  artistIdOf: ids => ids.mbid,
   label: 'MusicBrainz',
   color: sourceColor.musicbrainz,
   auth: noAuth,

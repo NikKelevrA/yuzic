@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useSelector } from 'react-redux'
 
-import { searchArtist } from '@/providers/integration/musicbrainz'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { selectSourceUse } from '@/features/settings/sources/state';
+import { ARTIST_ID_LOOKUP_USE, lookupArtistId } from '@/providers/registry/pageSources'
 
 /**
  * The MusicBrainz id for an artist, from the library if the server knows it
@@ -35,8 +35,8 @@ export function useArtistMbid(
   localMbid?: string | null,
   options: { enabled?: boolean; allowLookup?: boolean } = {}
 ): { mbid: string | null; isResolving: boolean } {
-  const musicbrainzEnabled = useSelector(selectSourceUse('musicbrainz.search'))
-  const lookupAllowed = options.allowLookup ?? musicbrainzEnabled
+  const lookupSourceEnabled = useSelector(selectSourceUse(ARTIST_ID_LOOKUP_USE))
+  const lookupAllowed = options.allowLookup ?? lookupSourceEnabled
   const trimmed = artistName?.trim() ?? ''
   const known = localMbid?.trim() || null
   const shouldLookUp =
@@ -44,10 +44,7 @@ export function useArtistMbid(
 
   const query = useQuery<string | null>({
     queryKey: [QueryKeys.ArtistMbid, trimmed.toLowerCase()],
-    queryFn: async () => {
-      const [match] = await searchArtist(trimmed, 1)
-      return match?.id ?? null
-    },
+    queryFn: () => lookupArtistId(trimmed),
     enabled: shouldLookUp,
     staleTime: 1000 * 60 * 60 * 24,
     gcTime: 1000 * 60 * 60 * 24,
