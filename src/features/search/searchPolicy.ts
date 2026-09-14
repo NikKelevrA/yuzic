@@ -7,18 +7,11 @@
  * `SearchContext` still owns *when* to run these (debounce, request-id
  * guarding, the library data itself); this owns the mapping and dispatch.
  *
- * External sources are reached through `ALL_SOURCES`
- * (`src/features/sources/registry.ts`), each source's own `search()`
- * capability — never a name-by-name branch here. `src/features/sources/`
- * is the provider registry this codebase already has for external catalogs
- * (`useMatchedNavigation`, `getSourceMeta`, the Filters sheet all go through
- * it); `src/providers/registry/capabilityBroker.ts` is the newer, narrower
- * broker for enrichment/lyrics/scrobble-style capabilities and has no
- * search-by-text capability declared for any provider, so it cannot serve
- * this leg without adding one — out of scope here (`src/providers/` is not
- * this task's to edit). Going through `ALL_SOURCES` still gets the thing
- * that actually matters for the provider-branches gate: zero named-provider
- * conditionals in this file or in `SearchContext`.
+ * External sources are asked through the capability broker's
+ * `catalogue.search` — whichever keyless integration can search a catalogue
+ * answers, and this file never names one. Each source is settled on its own,
+ * so one over its rate limit (both Deezer and MusicBrainz enforce one, see
+ * `providers/http/rateLimit.ts`) cannot throw away the others' results.
  */
 import { offersFor } from '@/providers/registry/capabilityBroker';
 import { KEYLESS_INTEGRATIONS } from '@/providers/registry/keyless';
@@ -28,7 +21,6 @@ import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import type { SearchResult } from '@/features/search/searchRanking';
-import { ALL_SOURCES } from '@/features/sources/registry';
 
 /** Entity types an external source can be asked to return. Deliberately
  *  narrower than the library's four kinds — 'song'/'playlist' have no
@@ -192,12 +184,19 @@ export async function searchExternalLeg(
   );
   if (offers.length === 0) return [];
 
-  const perProvider = await Promise.all(
+  // Settled one by one: a source over its rate limit, or simply down, must not
+  // take the others' answers with it. The leg fails only when nobody answered.
+  const settled = await Promise.allSettled(
     offers.map(async offer => ({
       providerId: offer.providerId,
       found: await offer.invoke(query, kinds),
     }))
   );
+  const perProvider = settled.flatMap(outcome => (outcome.status === 'fulfilled' ? [outcome.value] : []));
+  if (perProvider.length === 0) {
+    const firstFailure = settled.find((outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected');
+    throw firstFailure?.reason ?? new Error('No external source answered');
+  }
 
   const results: SearchResult[] = [];
   for (const { providerId, found } of perProvider) {

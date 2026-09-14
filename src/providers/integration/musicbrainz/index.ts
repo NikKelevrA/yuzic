@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
+import { createRateLimiter } from '@/providers/http/rateLimit';
 
 const BASE = 'https://musicbrainz.org/ws/2';
 const HEADERS = {
@@ -6,10 +7,20 @@ const HEADERS = {
   'Accept': 'application/json',
 };
 
+/**
+ * MusicBrainz allows one request per second per client and answers anything
+ * faster with 503. Every call in the app shares this line — search, enrichment
+ * and release lookups alike — because the limit is per client, not per feature.
+ */
+const MUSICBRAINZ_MIN_INTERVAL_MS = 1100;
+const limit = createRateLimiter(MUSICBRAINZ_MIN_INTERVAL_MS);
+
 async function mb<T>(path: string): Promise<T> {
-  const res = await fetchWithTimeout(`${BASE}${path}`, { headers: HEADERS });
-  if (!res.ok) throw new Error(`MusicBrainz ${res.status}: ${path}`);
-  return res.json() as Promise<T>;
+  return limit(async () => {
+    const res = await fetchWithTimeout(`${BASE}${path}`, { headers: HEADERS });
+    if (!res.ok) throw new Error(`MusicBrainz ${res.status}: ${path}`);
+    return res.json() as Promise<T>;
+  });
 }
 
 export type MbArtist = {
