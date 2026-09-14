@@ -132,7 +132,7 @@ function measureTests() {
   const argv = ['jest', '--ci', '--silent', '--json', '--outputFile', '.hermes/.jest-result.json'];
   if (withCoverage) argv.push('--coverage', '--coverageReporters', 'json-summary');
   try {
-    execFileSync('npx', ['--no-install', ...argv], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+    execFileSync('npx', ['--no-install', ...argv], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' });
   } catch (err) {
     if (typeof err.stdout !== 'string') throw err;
   }

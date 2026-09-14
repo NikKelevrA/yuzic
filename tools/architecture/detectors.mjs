@@ -14,7 +14,8 @@ import { isTest, sourceFiles } from './allowlist.mjs';
 /** Run a tool, keeping stdout even on a non-zero exit — these signal findings that way. */
 function run(cmd, argv) {
   try {
-    return execFileSync(cmd, argv, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+    // npx is a .cmd on Windows, which execFileSync cannot start without a shell.
+    return execFileSync(cmd, argv, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' });
   } catch (err) {
     if (typeof err.stdout === 'string') return err.stdout;
     throw err;
@@ -168,7 +169,9 @@ const PROVIDER_MATCHERS = PROVIDER_NAMES.map(name => [name, providerMatcher(name
 function stripComments(source) {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, match => match.replace(/[^\n]/g, ' '))
-    .split('\n')
+    // CRLF checkouts: `.` never matches the \r, so a line comment ending in one
+    // would survive the strip and its prose would count as code.
+    .split(/\r?\n/)
     .map(line => line.replace(/\/\/.*$/, ''))
     .join('\n');
 }
@@ -214,7 +217,7 @@ export function unsafeEscapes(files = sourceFiles()) {
     if (isTest(file)) continue;
     const raw = readFileSync(file, 'utf8');
     const code = stripComments(raw).split('\n');
-    raw.split('\n').forEach((rawLine, index) => {
+    raw.split(/\r?\n/).forEach((rawLine, index) => {
       for (const [kind, pattern] of UNSAFE_PATTERNS) {
         if (pattern.test(code[index] ?? '')) found.push({ kind, file, line: index + 1 });
       }
