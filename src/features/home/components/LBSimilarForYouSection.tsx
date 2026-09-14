@@ -12,6 +12,8 @@ import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useArtistMbid } from '@/features/artist/useArtistMbid';
 import { useArtists } from '@/features/artist/useArtists';
 import { selectSourceUse } from '@/features/settings/sources/state';
+import { useSourceUse } from '@/features/settings/sources/useSourceUse';
+import { ARTIST_ARTWORK_USE } from '@/providers/registry/artistArtwork';
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
@@ -90,11 +92,13 @@ export default function LBSimilarForYouSection({ sectionKey, artistNames, refres
     [screenWidth]
   );
 
+  // Pictures for the shelf only while artist artwork is allowed.
+  const withArtwork = useSourceUse(ARTIST_ARTWORK_USE);
   const query = useQuery<Artist[]>({
-    queryKey: [QueryKeys.LbSimilarForYou, seedMbid ?? '', refreshKey],
+    queryKey: [QueryKeys.LbSimilarForYou, seedMbid ?? '', refreshKey, withArtwork],
     queryFn: async () => {
       if (!seedMbid) return [];
-      return fetchSimilarArtistsFromListeners(seedMbid, 10);
+      return fetchSimilarArtistsFromListeners(seedMbid, 10, undefined, { withArtwork });
     },
     enabled: discoveryEnabled && Boolean(seedMbid),
     staleTime: 1000 * 60 * 60 * 24,

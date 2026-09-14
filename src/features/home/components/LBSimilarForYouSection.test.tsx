@@ -45,6 +45,14 @@ jest.mock('@shopify/flash-list', () => {
   };
 });
 
+jest.mock('@/providers/registry/artistArtwork', () => ({
+  ARTIST_ARTWORK_USE: 'deezer.artwork',
+}));
+
+jest.mock('@/features/settings/sources/useSourceUse', () => ({
+  useSourceUse: () => false,
+}));
+
 jest.mock('@/providers/registry/homeDiscovery', () => ({
   LISTENERS_HOME_USE: 'listenbrainz.homeShelves',
   fetchSimilarArtistsFromListeners: jest.fn(),

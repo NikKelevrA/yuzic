@@ -31,6 +31,17 @@ jest.mock('@/providers/integration/lastfm/getSimilarArtists', () => ({
   getLastFmSimilarArtists: jest.fn(async () => [{ name: 'Bibio', mbid: 'mbid-2' }]),
 }))
 jest.mock('@/constants/keys', () => ({ LASTFM_API_KEY: 'test-key' }))
+jest.mock('@/providers/integration/deezer', () => ({
+  resolveDeezerArtistByName: jest.fn(async (name: string) => ({
+    name,
+    cover: { kind: 'url', url: `https://img.example/${name}.jpg` },
+  })),
+}))
+// A switched-on use is also gated on being online; the library's own mock
+// reports a connected device.
+jest.mock('@react-native-community/netinfo', () =>
+  require('@react-native-community/netinfo/jest/netinfo-mock.js')
+)
 
 /* eslint-disable no-var -- hoisted for the jest.mock factory above */
 var mockQueryOptions: Record<string, unknown>[] = []
@@ -39,6 +50,7 @@ var mockQueryOptions: Record<string, unknown>[] = []
 import { searchArtist } from '@/providers/integration/musicbrainz'
 import { getLBSimilarArtists } from '@/providers/integration/listenbrainz/recommendations/getSimilarArtists'
 import { getLastFmSimilarArtists } from '@/providers/integration/lastfm/getSimilarArtists'
+import { resolveDeezerArtistByName } from '@/providers/integration/deezer'
 import { useArtistMbid } from './useArtistMbid'
 import { useLBSimilarArtists } from './useLBSimilarArtists'
 import { useSimilarArtists } from './useSimilarArtists'
@@ -174,5 +186,26 @@ describe('external metadata gating', () => {
     )
 
     expect(getLastFmSimilarArtists).toHaveBeenCalled()
+  })
+
+  it('looks up pictures for similar artists only once artist artwork is enabled', async () => {
+    const store = makeStore()
+    const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+    await act(async () => { store.dispatch(setSourceUse({ use: 'listenbrainz.similarArtists', enabled: true })) })
+    await act(async () => { store.dispatch(setSourceUse({ use: 'lastfm.similarArtists', enabled: true })) })
+
+    await renderHook(() => useLBSimilarArtists({ mbid: 'mbid-1' }, 8), { wrapper: wrapperFor(store) })
+    await renderHook(() => useSimilarArtists({ name: 'Boards of Canada', limit: 8 }), { wrapper: wrapperFor(store) })
+    await settle()
+    // The lists were fetched, but no names went out for their pictures.
+    expect(getLBSimilarArtists).toHaveBeenCalled()
+    expect(resolveDeezerArtistByName).not.toHaveBeenCalled()
+
+    await act(async () => { store.dispatch(setSourceUse({ use: 'deezer.artwork', enabled: true })) })
+    await renderHook(() => useLBSimilarArtists({ mbid: 'mbid-1' }, 8), { wrapper: wrapperFor(store) })
+    await renderHook(() => useSimilarArtists({ name: 'Boards of Canada', limit: 8 }), { wrapper: wrapperFor(store) })
+    await settle()
+
+    expect(resolveDeezerArtistByName).toHaveBeenCalledWith('Bibio')
   })
 })
