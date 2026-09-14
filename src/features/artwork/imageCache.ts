@@ -1,5 +1,5 @@
 import TurboImage from 'react-native-turbo-image';
-import { buildCover, buildCoverCacheKey } from '@/features/artwork/buildCover';
+import { buildCover, buildCoverCacheKey } from '@/providers/registry/covers';
 import { mmkv } from '@/state/mmkvStorage';
 import type { CoverSource } from '@/domain/entities/Cover';
 

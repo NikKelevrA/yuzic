@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
 import TurboImage from 'react-native-turbo-image';
 import { MediaImage } from '@/components/MediaImage';
-import { buildCover } from '@/features/artwork/buildCover';
+import { buildCover } from '@/providers/registry/covers';
 import { useTheme } from '@/features/theme/useTheme';
 import {
   DetailHeaderBar,

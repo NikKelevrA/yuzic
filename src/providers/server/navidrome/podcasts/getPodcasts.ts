@@ -1,6 +1,18 @@
 import type { NavidromeClient } from '../client';
 import type { SubsonicResponse } from '../types';
 import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/ServerAdapter';
+import type { CoverSource } from '@/domain/entities/Cover';
+
+/**
+ * A channel or episode cover. `coverArt` is a Subsonic image id the server
+ * serves; `originalImageUrl` is the feed's own image, already a URL — handing
+ * that to getCoverArt as an id drew nothing.
+ */
+function podcastCover(coverArt: string | undefined, originalImageUrl?: string): CoverSource {
+  if (coverArt) return { kind: 'navidrome', coverArtId: coverArt };
+  if (originalImageUrl) return { kind: 'url', url: originalImageUrl };
+  return { kind: 'none' };
+}
 
 type RawEpisode = {
   id?: string;
@@ -42,7 +54,7 @@ function normalizeEpisode(e: RawEpisode, channelId: string): PodcastEpisode | nu
     status,
     playableStreamId: status === 'completed' ? e.streamId ?? null : null,
     durationSeconds: typeof e.duration === 'number' ? e.duration : undefined,
-    coverArt: e.coverArt ?? undefined,
+    cover: podcastCover(e.coverArt),
   };
 }
 
@@ -75,7 +87,7 @@ export async function getPodcasts(
         url: c.url ?? '',
         title: c.title ?? 'Untitled podcast',
         description: c.description,
-        coverArt: c.coverArt ?? c.originalImageUrl ?? undefined,
+        cover: podcastCover(c.coverArt, c.originalImageUrl),
         status: c.status ?? 'ok',
         errorMessage: c.errorMessage,
         episodes: (c.episode ?? [])

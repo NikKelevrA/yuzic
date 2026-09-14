@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { buildCover } from '@/features/artwork/buildCover';
+import { buildCover } from '@/providers/registry/covers';
 import { CoverSource } from '@/domain/entities/Cover';
 import Touchable from '@/components/Touchable';
 import { onDark, spacing, typography } from '@/constants/design';

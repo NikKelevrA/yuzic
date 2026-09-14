@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Image } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
-import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/features/artwork/buildCover';
+import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/providers/registry/covers';
 import { CoverSource } from '@/domain/entities/Cover';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';

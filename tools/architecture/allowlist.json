@@ -8,13 +8,7 @@
     "src/domain/entities/Cover.ts navidrome",
     "src/domain/entities/Cover.ts plex",
     "src/domain/identity/ExternalIds.ts deezer",
-    "src/domain/identity/matching.ts deezer",
-    "src/features/artwork/buildCover.ts emby",
-    "src/features/artwork/buildCover.ts jellyfin",
-    "src/features/artwork/buildCover.ts musicbrainz",
-    "src/features/artwork/buildCover.ts navidrome",
-    "src/features/podcasts/PodcastsScreen.tsx navidrome",
-    "src/features/podcasts/buildPodcastSong.ts navidrome"
+    "src/domain/identity/matching.ts deezer"
   ],
   "shims": [],
   "unsafe": [],

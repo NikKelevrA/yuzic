@@ -19,7 +19,7 @@ import type { Album } from '@/domain/entities/Album'
 import type { Song } from '@/domain/entities/Song'
 import { useApi } from '@/providers/registry/useApi'
 import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails'
-import { buildCover } from '@/features/artwork/buildCover'
+import { buildCover } from '@/providers/registry/covers'
 import { useTheme } from '@/features/theme/useTheme'
 import { useTracks } from '@/features/song/useTracks';
 import { usePlayingActions } from '@/features/playback/PlayingContext'

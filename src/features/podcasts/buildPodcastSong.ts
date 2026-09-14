@@ -29,9 +29,7 @@ export function podcastEpisodeToSong(
 ): Song {
   const provenance = serverProvenance(serverId);
   const nativeId = `${PODCAST_EPISODE_ID_PREFIX}${episode.id}`;
-  const cover = channel?.coverArt
-    ? ({ kind: 'navidrome', coverArtId: channel.coverArt } as const)
-    : ({ kind: 'none' } as const);
+  const cover = channel?.cover ?? episode.cover;
   const channelId = channel?.id ?? episode.channelId;
 
   return {

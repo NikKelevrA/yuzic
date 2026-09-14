@@ -11,7 +11,7 @@ import { Server } from '@/providers/contracts/Server';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 import type { Song as DomainSong } from '@/domain/entities/Song';
 import type { CoverSource } from '@/domain/entities/Cover';
-import { buildCover } from '@/features/artwork/buildCover';
+import { buildCover } from '@/providers/registry/covers';
 import { toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';

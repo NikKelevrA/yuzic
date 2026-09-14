@@ -55,7 +55,7 @@ jest.mock('@/components/MediaImage', () => {
   }
 })
 
-jest.mock('@/features/artwork/buildCover', () => ({
+jest.mock('@/providers/registry/covers', () => ({
   buildCover: (cover: { kind: string; url?: string }) => (cover.kind === 'url' ? cover.url : null),
   buildCoverArtArchiveUrl: jest.fn(),
   buildCoverCacheKey: jest.fn(),

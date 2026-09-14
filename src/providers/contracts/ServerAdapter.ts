@@ -183,7 +183,7 @@ export type PodcastEpisode = {
    * routes playback through buildStreamUrl(playableStreamId). */
   playableStreamId: string | null;
   durationSeconds?: number;
-  coverArt?: string;
+  cover: CoverSource;
 };
 
 export type PodcastChannel = {
@@ -191,7 +191,8 @@ export type PodcastChannel = {
   url: string;
   title: string;
   description?: string;
-  coverArt?: string;
+  /** Built by the server that owns the feed, so screens never assemble one. */
+  cover: CoverSource;
   status: string;
   errorMessage?: string;
   episodes: PodcastEpisode[];

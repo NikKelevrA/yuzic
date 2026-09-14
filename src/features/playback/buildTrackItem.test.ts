@@ -10,7 +10,7 @@ import { buildTrackItem } from './buildTrackItem';
 // is inconvenient — what it returns is covered by its own tests, and every
 // fixture here has `cover: { kind: 'none' }`, for which the real function also
 // answers null.
-jest.mock('../artwork/buildCover', () => ({
+jest.mock('@/providers/registry/covers', () => ({
   buildCover: () => null,
 }));
 

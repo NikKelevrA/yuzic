@@ -1,8 +1,13 @@
+/**
+ * How each kind of cover becomes an image URL and a cache key — the outside
+ * archives' URL shapes and each server's key layout — declared with the
+ * providers, so image code asks for "the cover" and never names who serves it.
+ */
 import { COVER_PX, CoverSource } from '@/domain/entities/Cover';
 import store from '@/state/redux/store';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import { SERVER_PROVIDERS } from '@/providers/registry/serverConnections';
-import { withServerCredentials } from '@/providers/registry/serverCredentials';
+import { SERVER_PROVIDERS } from './serverConnections';
+import { withServerCredentials } from './serverCredentials';
 import { normalizeImageUrlForSize } from '@/features/artwork/normalizeImageUrl';
 
 export function buildCoverArtArchiveUrl(

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import ImageColors from 'react-native-image-colors'
 
-import { buildCover } from '@/features/artwork/buildCover'
+import { buildCover } from '@/providers/registry/covers'
 import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
 import type { CoverSource } from '@/domain/entities/Cover';
 import { ACCENT_CACHE_MAX, createAccentCache, pickAccent, toWashAccent } from './coverAccent'

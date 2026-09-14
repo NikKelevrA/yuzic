@@ -27,7 +27,6 @@ import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { hitSlopFor, iconSize, spacing, statusColor } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
-import type { CoverSource } from '@/domain/entities/Cover';
 
 export default function PodcastsScreen() {
   const { t } = useTranslation();
@@ -108,14 +107,11 @@ export default function PodcastsScreen() {
       // hand-built URL into a raw image view: that is what makes it resolve
       // against the active server, fall back, and show the app's placeholder
       // instead of a blank square.
-      const cover: CoverSource = item.coverArt
-        ? { kind: 'navidrome', coverArtId: item.coverArt }
-        : { kind: 'none' };
-      return (
+            return (
         <MediaListRow
           title={item.title}
           subtitle={item.errorMessage || item.description || ''}
-          cover={cover}
+          cover={item.cover}
           onPress={() => navigation.push('podcastChannel', { channelId: item.id })}
           // The message a broken feed reports reads in the same grey as a
           // show's own blurb, so the row says which one it is.

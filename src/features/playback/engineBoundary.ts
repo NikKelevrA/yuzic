@@ -21,7 +21,7 @@
  * decides on its own what a header or an artwork URI *is*.
  */
 import type { ContentKind } from '@/domain/playback/ContentKind';
-import { buildCover } from '@/features/artwork/buildCover';
+import { buildCover } from '@/providers/registry/covers';
 import type { RequestHeaders } from '@/features/player/mediaHeaders';
 import type { PlayableResource } from './playableResource';
 

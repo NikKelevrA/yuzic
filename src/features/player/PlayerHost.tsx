@@ -14,7 +14,7 @@ import { useSelector } from 'react-redux';
 import { ACCENT_CACHE_MAX, createAccentCache, pickAccent, toWashAccent } from '@/features/theme/coverAccent';
 import { usePlayingState } from '@/features/playback/PlayingContext';
 import { MediaImage } from '@/components/MediaImage';
-import { buildCover } from '@/features/artwork/buildCover';
+import { buildCover } from '@/providers/registry/covers';
 import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
 import PlayingScreen from '@/features/player/PlayingScreen';
 import PlayingBackground from '@/features/player/components/PlayingBackground';
