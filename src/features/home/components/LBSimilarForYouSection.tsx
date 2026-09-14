@@ -58,11 +58,13 @@ export default function LBSimilarForYouSection({ sectionKey, artistName, refresh
   // Subsonic servers don't carry MusicBrainz ids, so the library mbid is null
   // for everyone not on Jellyfin/Emby and this shelf never rendered for them.
   // Looking the seed up by name is what makes it work on any server.
-  // The name-to-MBID lookup is MusicBrainz's own call and carries its own
-  // setting inside the hook, so on a Subsonic server with MusicBrainz off
-  // there is no seed and this shelf stays away.
+  // The lookup is allowed by discovery itself rather than by MusicBrainz's
+  // search switch: discovery's description says it sends artist names to
+  // MusicBrainz, and without the lookup this shelf never appeared for a seed
+  // the server had no MBID for, however ListenBrainz was set.
   const { mbid: seedMbid, isResolving } = useArtistMbid(artistName, seed?.externalIds.mbid, {
     enabled: discoveryEnabled,
+    allowLookup: true,
   });
 
   const gridItemWidth = useMemo(

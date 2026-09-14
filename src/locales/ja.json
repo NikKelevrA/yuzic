@@ -531,9 +531,9 @@
       },
       "listenbrainz": {
         "name": "ListenBrainz",
-        "sends": "MusicBrainzのアーティストIDと、接続している場合はListenBrainzのユーザー名を送信します。",
+        "sends": "IDを調べるためにアーティスト名をMusicBrainzへ、そのIDをListenBrainzへ送信します。接続している場合はListenBrainzのユーザー名も送信します。",
         "discovery": "ディスカバリー",
-        "discoverySubtext": "似たアーティストと、あなた向けのプレイリスト。"
+        "discoverySubtext": "似たアーティスト。ListenBrainzアカウントを接続すると、あなた向けのプレイリストも表示されます。"
       },
       "lastfm": {
         "name": "Last.fm",

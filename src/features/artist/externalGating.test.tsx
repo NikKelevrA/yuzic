@@ -89,6 +89,29 @@ describe('external metadata gating', () => {
     expect(searchArtist).toHaveBeenCalledWith('Boards of Canada', 1)
   })
 
+  it('looks the id up with MusicBrainz off when the calling feature allows the lookup itself', async () => {
+    const store = makeStore()
+
+    await renderHook(
+      () => useArtistMbid('Boards of Canada', null, { allowLookup: true }),
+      { wrapper: wrapperFor(store) }
+    )
+
+    expect(searchArtist).toHaveBeenCalledWith('Boards of Canada', 1)
+  })
+
+  it('does not look up even an allowed id while the feature itself is off', async () => {
+    const store = makeStore()
+
+    const { result } = await renderHook(
+      () => useArtistMbid('Boards of Canada', null, { allowLookup: true, enabled: false }),
+      { wrapper: wrapperFor(store) }
+    )
+
+    expect(searchArtist).not.toHaveBeenCalled()
+    expect(result.current.isResolving).toBe(false)
+  })
+
   it('still uses an mbid the server already carries with MusicBrainz off', async () => {
     const store = makeStore()
 

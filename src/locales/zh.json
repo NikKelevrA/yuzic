@@ -531,9 +531,9 @@
       },
       "listenbrainz": {
         "name": "ListenBrainz",
-        "sends": "发送 MusicBrainz 艺人 ID；如已连接，还会发送你的 ListenBrainz 用户名。",
+        "sends": "将艺人名发送至 MusicBrainz 以查找其 ID，再将 ID 发送至 ListenBrainz；如已连接，还会发送你的 ListenBrainz 用户名。",
         "discovery": "发现",
-        "discoverySubtext": "相似艺人和为你打造的歌单。"
+        "discoverySubtext": "相似艺人；连接 ListenBrainz 账户后，还有为你打造的歌单。"
       },
       "lastfm": {
         "name": "Last.fm",

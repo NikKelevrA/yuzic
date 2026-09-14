@@ -532,9 +532,9 @@
       },
       "listenbrainz": {
         "name": "ListenBrainz",
-        "sends": "Envoie des identifiants MusicBrainz d'artistes, et votre nom d'utilisateur ListenBrainz si vous en avez connecté un.",
+        "sends": "Envoie des noms d'artistes à MusicBrainz pour trouver leurs identifiants, ces identifiants à ListenBrainz, et votre nom d'utilisateur ListenBrainz si vous en avez connecté un.",
         "discovery": "Découverte",
-        "discoverySubtext": "Artistes similaires et playlists faites pour vous."
+        "discoverySubtext": "Artistes similaires, et playlists faites pour vous une fois votre compte ListenBrainz connecté."
       },
       "lastfm": {
         "name": "Last.fm",

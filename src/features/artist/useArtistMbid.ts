@@ -19,18 +19,24 @@ import { selectSearchSourceEnabled } from '@/features/settings/search/state';
  * and MusicBrainz asks callers not to hammer it. A name that matches nothing
  * resolves to null and the caller hides itself, same as before.
  *
- * The lookup is a request to MusicBrainz, so it is gated on MusicBrainz's
- * switch in Search settings — with that off, only an MBID the server already carries is used
- * and no name ever leaves the device. Callers that need a lookup for their
- * own feature therefore hide themselves when MusicBrainz is off, which is the
- * intended reading of "external data only when asked for".
+ * The lookup is a request to MusicBrainz, so by default it is gated on
+ * MusicBrainz's own switch — with that off, only an MBID the server already
+ * carries is used and no name leaves the device.
+ *
+ * A feature whose own switch already says it sends names to MusicBrainz
+ * passes `allowLookup`. ListenBrainz discovery does: for any seed artist the
+ * server has no MBID for — every artist on Subsonic, and many on Jellyfin —
+ * it cannot work without the lookup (ListenBrainz's own lookup needs an
+ * account token), and gating it on a MusicBrainz *search* switch left the
+ * shelf silently empty for someone who had turned discovery on.
  */
 export function useArtistMbid(
   artistName: string | null,
   localMbid?: string | null,
-  options: { enabled?: boolean } = {}
+  options: { enabled?: boolean; allowLookup?: boolean } = {}
 ): { mbid: string | null; isResolving: boolean } {
-  const lookupAllowed = useSelector(selectSearchSourceEnabled('musicbrainz'))
+  const musicbrainzEnabled = useSelector(selectSearchSourceEnabled('musicbrainz'))
+  const lookupAllowed = options.allowLookup ?? musicbrainzEnabled
   const trimmed = artistName?.trim() ?? ''
   const known = localMbid?.trim() || null
   const shouldLookUp =
