@@ -6,7 +6,7 @@ import { useArtists } from '@/features/artist/useArtists'
 import { usePlaylists } from '@/features/playlist/usePlaylists'
 import { useTracks } from '@/features/song/useTracks'
 import { useDownload } from '@/features/offline/DownloadContext'
-import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
+import { useGenres } from '@/features/genre/useGenres'
 import { selectWantCountForActiveServer } from '@/state/redux/selectors/wantsSelectors'
 import { buildGenreRows } from '@/features/genre/genreList'
 import type { CoverSource } from '@/domain/entities/Cover'
@@ -71,7 +71,7 @@ export function useLibrarySummary(): Record<LibraryEntryKey, LibraryEntrySummary
   const { playlists } = usePlaylists()
   const { tracks } = useTracks()
   const { getAllDownloadedCollections } = useDownload()
-  const genres = useSelector(selectLibraryGenres)
+  const { genres } = useGenres()
   const wantCount = useSelector(selectWantCountForActiveServer)
 
   return useMemo(() => {

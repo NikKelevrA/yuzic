@@ -1,5 +1,5 @@
 import type { Album } from '@/domain/entities/Album';
-import { buildGenreRows } from './genreList';
+import { buildGenreRows, libraryGenres } from './genreList';
 
 const album = (...genres: string[]) => ({ genres }) as Pick<Album, 'genres'>;
 
@@ -62,5 +62,17 @@ describe('buildGenreRows', () => {
   it('returns nothing for an empty library', () => {
     expect(buildGenreRows([], [])).toEqual([]);
     expect(buildGenreRows(['Jazz'], [])).toEqual([]);
+  });
+});
+
+describe('libraryGenres', () => {
+  // A server that returns no genre list (or one never fetched) used to leave
+  // every genre screen at "0 genres" even with every album tagged.
+  it('uses the server\'s own list when it has one', () => {
+    expect(libraryGenres(['Jazz', 'Rock'], [{ genres: ['Pop'] }])).toEqual(['Jazz', 'Rock']);
+  });
+
+  it('falls back to the albums\' tags, de-duplicated and sorted, when the server has none', () => {
+    expect(libraryGenres([], [{ genres: ['Rock', 'Jazz'] }, { genres: ['Rock'] }, { genres: [] }])).toEqual(['Jazz', 'Rock']);
   });
 });

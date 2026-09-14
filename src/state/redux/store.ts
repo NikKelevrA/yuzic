@@ -18,7 +18,6 @@ import settingsOnboardingReducer from '@/features/settings/onboarding/state';
 import listenbrainzReducer from './slices/listenbrainzSlice';
 import playbackReducer from './slices/playbackSlice';
 import statsReducer from './slices/statsSlice';
-import libraryReducer from './slices/librarySlice';
 import offlineMutationsReducer from './slices/offlineMutationsSlice';
 import searchHistoryReducer, { normalizeSearchHistoryEntries } from './slices/searchHistorySlice';
 import wantsReducer from './slices/wantsSlice';
@@ -106,7 +105,6 @@ const wantsPersistConfig = { key: 'wants', storage };
 // action — measurable on cold-boot and playback. Throttling batches writes
 // without changing any consumer's behavior.
 //
-//   library: 1s — genre updates arrive in one tick per sync.
 //   playback: 3s — the position tick is throttled inside
 //     usePlaybackPersistence to ~5s, but the queue slice also gets rewrites
 //     from track advances; 3s catches both without piling up.
@@ -118,20 +116,9 @@ const statsPersistConfig = {
   migrate: resetMigrate,
   throttle: 1000,
 };
-// Task 4.1: the libraryAlbums/libraryArtists/libraryPlaylists/libraryTracks/
-// libraryStarred slices (and their persist keys below) are gone — the
-// catalog lives solely in the persisted TanStack Query cache
-// (`PersistQueryClientProvider` in `_layout.tsx`) now. This slice's own
-// shape (`{ genres }`) and version are unchanged, so no new migration is
-// needed here; the removed keys' old on-disk payloads are simply never read
-// again (redux-persist doesn't delete them, but nothing addresses them).
-const libraryPersistConfig = {
-  key: 'library',
-  storage,
-  version: 3,
-  migrate: resetMigrate,
-  throttle: 1000,
-};
+// Task 4.1 left genres behind in a `library` slice; they are now a catalog
+// query like the rest (`useGenres`), so the slice and its persist key are gone.
+// The old on-disk payload is simply never read again.
 
 export const rootReducer = combineReducers({
     servers: serversReducer,
@@ -150,7 +137,6 @@ export const rootReducer = combineReducers({
     listenbrainz: listenbrainzReducer,
     playback: playbackReducer,
     stats: statsReducer,
-    library: libraryReducer,
     offlineMutations: offlineMutationsReducer,
     searchHistory: searchHistoryReducer,
     wants: wantsReducer,
@@ -173,7 +159,6 @@ const persistedReducer = combineReducers({
     listenbrainz: persistReducer(listenbrainzPersistConfig, listenbrainzReducer),
     playback: persistReducer(playbackPersistConfig, playbackReducer),
     stats: persistReducer(statsPersistConfig, statsReducer),
-    library: persistReducer(libraryPersistConfig, libraryReducer),
     offlineMutations: persistReducer(offlineMutationsPersistConfig, offlineMutationsReducer),
     searchHistory: persistReducer(searchHistoryPersistConfig, searchHistoryReducer),
     wants: persistReducer(wantsPersistConfig, wantsReducer),

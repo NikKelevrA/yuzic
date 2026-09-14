@@ -1,12 +1,11 @@
 import { Stack } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 import { useSync } from '@/features/library/useSync';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
-import { clearLibraryGenres } from '@/state/redux/slices/librarySlice';
 import { ExternalResolutionProvider } from '@/features/sources/ExternalResolutionProvider';
 import { ServerReachabilityWatcher } from '@/features/connectivity/ServerReachabilityWatcher';
 import { AutoDownloadWatcher } from '@/features/downloads/AutoDownloadWatcher';
@@ -44,7 +43,6 @@ import { AccountSheetProvider } from '@/features/settings/AccountSheetContext';
  */
 export default function HomeLayout() {
   const { sync } = useSync();
-  const dispatch = useDispatch();
   const isOffline = useIsOffline();
   const isOfflineRef = useRef(isOffline);
   const appState = useRef(AppState.currentState);
@@ -76,18 +74,17 @@ export default function HomeLayout() {
   // `serverId` (`[Albums, serverId]`, ...), so the previous server's
   // persisted cache entries simply go unused rather than leaking into the
   // new server's screens — they age out under the query cache's own
-  // `gcTime`/`maxAge` like anything else. Only genres (still Redux, see
-  // `librarySlice`) get an explicit clear, for hygiene.
+  // `gcTime`/`maxAge` like anything else — genres included, now that they are
+  // a query too.
   // Both values must be non-null to avoid triggering during persist rehydration
   // (null → real-id on cold start would otherwise be treated as a server switch).
   useEffect(() => {
     const prev = prevServerIdRef.current;
     prevServerIdRef.current = activeServerId;
     if (prev && activeServerId && prev !== activeServerId) {
-      dispatch(clearLibraryGenres());
       if (!isOfflineRef.current) sync();
     }
-  }, [activeServerId, dispatch, sync]);
+  }, [activeServerId, sync]);
 
   return (
     <ExternalResolutionProvider>

@@ -294,7 +294,6 @@
     "src/features/home/hooks/useDailyLayout.ts - HomeLayout (used in module)",
     "src/features/home/hooks/useLocalMix.ts - LOCAL_MIX_MAX_TRACKS (used in module)",
     "src/features/library/catalogQueries.ts - CatalogResource (used in module)",
-    "src/features/library/catalogSync.ts - CatalogSyncResult (used in module)",
     "src/features/library/catalogSync.ts - ServerStat (used in module)",
     "src/features/library/useLibraryItems.ts - LibraryItemsResult (used in module)",
     "src/features/library/useLibrarySummary.ts - LibraryEntrySummary (used in module)",

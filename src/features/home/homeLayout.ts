@@ -6,7 +6,7 @@
  * this type back, which was the app's last import cycle. A type describing the
  * output of these functions belongs beside them.
  */
-export type SectionType =
+type SectionType =
   | 'quickPicks'
   | 'recentlyPlayed'
   | 'continuePlaying'

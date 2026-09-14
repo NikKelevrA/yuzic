@@ -13,7 +13,7 @@ import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
 import { prefetchCovers } from '@/features/artwork/imageCache'
 import { useDeezerDiscoveryEnabled } from '@/features/home/hooks/useDeezerEnabled'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
-import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
+import { useGenres } from '@/features/genre/useGenres'
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
@@ -129,7 +129,7 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
   const rad = useRadius()
   const { albums: libraryAlbums } = useAlbums()
   const { artists: libraryArtists } = useArtists()
-  const libraryGenres = useSelector(selectLibraryGenres)
+  const { genres: libraryGenres } = useGenres()
   const { width: screenWidth } = useWindowDimensions()
   const sheetRef = useRef<BottomSheetModal>(null)
   const dayKey = getDayKey()

@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { FlashList } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 import { useTranslation } from 'react-i18next'
-import { useSelector } from 'react-redux'
 import { ChevronRight } from 'lucide-react-native'
 
 import { DetailHeaderBar } from '@/components/DetailHeader'
@@ -12,7 +11,7 @@ import EmptyState from '@/components/EmptyState'
 import { useTheme } from '@/features/theme/useTheme'
 import { iconSize, spacing, typography } from '@/constants/design'
 import { useAlbums } from '@/features/album/useAlbums';
-import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
+import { useGenres } from '@/features/genre/useGenres'
 import { buildGenreRows, type GenreRow } from '@/features/genre/genreList'
 import LoadingGenreList from './GenresLoading'
 import Touchable from '@/components/Touchable'
@@ -26,7 +25,7 @@ const GenresScreen: React.FC = () => {
   const { colors } = useTheme()
   const density = useListDensity()
   const { albums, isLoading } = useAlbums()
-  const genres = useSelector(selectLibraryGenres)
+  const { genres } = useGenres()
 
   const rows = useMemo(() => buildGenreRows(genres, albums), [genres, albums])
 

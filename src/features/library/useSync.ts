@@ -16,13 +16,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDispatch, useSelector } from 'react-redux'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
-import { selectLastSyncedAt, setLastSyncedAt } from '@/features/settings/sync/state';
-import { setLibraryGenres } from '@/state/redux/slices/librarySlice'
-import { setServerAlbumStats, setServerSongStats } from '@/state/redux/slices/statsSlice'
+import { selectLastSyncedAt } from '@/features/settings/sync/state';
+import { persistor } from '@/state/redux/store'
 import { useApi } from '@/providers/registry/useApi'
 import { catalogSyncKey } from '@/features/library/catalogQueries'
 import { runCatalogSync } from '@/features/library/catalogSync'
 import { useCatalogSyncStatus } from '@/features/library/useCatalogSyncStatus'
+import { commitSyncResult } from '@/features/library/commitSyncResult'
 
 const SYNC_THROTTLE_MS = 30 * 60 * 1000
 
@@ -46,24 +46,17 @@ export function useSync() {
     mutationKey: serverId ? catalogSyncKey(serverId) : ['catalog-sync'],
     mutationFn: ({ force }: { force: boolean }) =>
       runCatalogSync({ queryClient, api, serverId: serverId!, force }),
-    onSuccess: result => {
+    onSuccess: async result => {
       if (!serverId) return
-      // Each of these replaces a server's whole namespace, so an empty list is
-      // dispatched as nothing rather than as "there is nothing" — an origin
-      // that reports no play counts must not wipe locally-tracked ones.
-      if (result.albumStats.length > 0) {
-        dispatch(setServerAlbumStats({ serverId, stats: result.albumStats }))
-      }
-      if (result.songStats.length > 0) {
-        dispatch(setServerSongStats({ serverId, stats: result.songStats }))
-      }
-      if (result.genres) dispatch(setLibraryGenres({ serverId, genres: result.genres }))
-
-      if (result.hasData) {
-        const syncedAt = Date.now()
-        lastSyncedAtRef.current = syncedAt
-        dispatch(setLastSyncedAt(syncedAt))
-      }
+      // Genres need nothing here: the sync's fetch wrote them into the same
+      // cache entry `useGenres` reads.
+      const syncedAt = await commitSyncResult({
+        dispatch,
+        flush: () => persistor.flush(),
+        serverId,
+        result,
+      })
+      if (syncedAt !== null) lastSyncedAtRef.current = syncedAt
     },
   })
 

@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
@@ -14,7 +13,7 @@ import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/useDailyLayout';
 import { presentableGenres } from '@/features/home/genres';
 import { onePerAlbum } from '@/features/home/randomDraw';
-import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors';
+import { useGenres } from '@/features/genre/useGenres';
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
@@ -64,7 +63,7 @@ export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Prop
   const discoveryAvailable = Boolean(api.discovery) && serverReachable;
   const { playSongs } = usePlayingActions();
   const { width: screenWidth } = useWindowDimensions();
-  const genres = useSelector(selectLibraryGenres);
+  const { genres } = useGenres();
   const dayKey = getDayKey();
 
   // Genre-of-the-day rotation: pick one library genre from the daily

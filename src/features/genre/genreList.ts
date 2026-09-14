@@ -14,6 +14,22 @@ export type GenreRow = {
   albumCount: number;
 };
 
+/**
+ * The genres a library has: the server's own list when it reports one,
+ * otherwise every genre its albums are tagged with.
+ */
+export function libraryGenres(
+  serverGenres: string[],
+  albums: Pick<Album, 'genres'>[]
+): string[] {
+  if (serverGenres.length > 0) return serverGenres;
+  const tagged = new Set<string>();
+  for (const album of albums) {
+    for (const genre of album.genres ?? []) tagged.add(genre);
+  }
+  return [...tagged].sort((a, b) => a.localeCompare(b));
+}
+
 export function buildGenreRows(
   genres: string[],
   albums: Pick<Album, 'genres'>[]

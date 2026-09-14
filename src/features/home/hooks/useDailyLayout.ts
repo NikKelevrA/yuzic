@@ -4,14 +4,13 @@ import { useAlbums } from '@/features/album/useAlbums';
 import { useArtists } from '@/features/artist/useArtists';
 import { useIsOffline } from '@/features/connectivity/useIsOffline'
 import { selectArtistPlayCounts } from '@/state/redux/selectors/statsSelectors'
-import { selectLibraryGenres } from '@/state/redux/selectors/librarySelectors'
+import { useGenres } from '@/features/genre/useGenres'
 import { presentableGenres } from '../genres'
 import {
   buildDiscoverySections,
   buildLibrarySections,
   buildResumeSections,
   type SectionConfig,
-  type SectionType,
 } from '../homeLayout'
 
 const BECAUSE_SEED_COUNT = 1
@@ -65,7 +64,7 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
   const { albums: libraryAlbums } = useAlbums()
   const { artists: libraryArtists } = useArtists()
   const artistPlayCounts = useSelector(selectArtistPlayCounts)
-  const libraryGenres = useSelector(selectLibraryGenres)
+  const { genres: libraryGenres } = useGenres()
   const dayKey = getDayKey()
   const dailySeed = getDailySeed(`${dayKey}:${refreshKey}`)
 
