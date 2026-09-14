@@ -199,10 +199,10 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                     // for every ending, so there is exactly one way out and it
                     // always names 0 or 1.
                     .onFinalize(event => {
-                        expansion.value = withSpring(
-                            settleFromPlayer(expansion.value, event.velocityY, dragMoved.value),
-                            PLAYER_SPRING,
-                        );
+                        const target = settleFromPlayer(expansion.value, event.velocityY, dragMoved.value);
+                        // A tap: the pressable already started the spring it meant.
+                        if (target === null) return;
+                        expansion.value = withSpring(target, PLAYER_SPRING);
                     }),
                 // Hands the scroll view's own gesture to RNGH so the two are
                 // siblings that may both run, rather than the pan swallowing

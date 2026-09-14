@@ -278,10 +278,10 @@ export default function PlayingBarBase({ variant }: Props) {
         // settles too. An exit that names no end is what leaves the bar faded
         // out with the music still playing (#211).
         .onFinalize(event => {
-          expansion.value = withSpring(
-            settleFromBar(expansion.value, event.velocityY, dragMoved.value),
-            PLAYER_SPRING,
-          );
+          const target = settleFromBar(expansion.value, event.velocityY, dragMoved.value);
+          // A tap: the pressable already started the spring it meant.
+          if (target === null) return;
+          expansion.value = withSpring(target, PLAYER_SPRING);
         }),
     [currentSong, dragMoved, expansion, height, measureCover, prepare],
   );
