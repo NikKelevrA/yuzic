@@ -1161,6 +1161,12 @@
       "songs": "{{count}} 曲",
       "songs_other": "{{count}} 曲",
       "externalMetadata": "外部メタデータ"
+    },
+    "connectDownloader": {
+      "title": "取得するにはダウンローダーを接続してください",
+      "body": "「取得」はアルバムをあなたのダウンローダーに渡し、サーバーに追加します。",
+      "setUp": "{{name}} を設定",
+      "notNow": "今はしない"
     }
   },
   "wants": {

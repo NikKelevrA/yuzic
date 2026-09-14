@@ -1165,6 +1165,12 @@
       "songs": "{{count}} morceau",
       "songs_other": "{{count}} morceaux",
       "externalMetadata": "Métadonnées externes"
+    },
+    "connectDownloader": {
+      "title": "Connectez un téléchargeur pour récupérer ceci",
+      "body": "Récupérer confie les albums à un téléchargeur que vous gérez, qui les ajoute à votre serveur.",
+      "setUp": "Configurer {{name}}",
+      "notNow": "Plus tard"
     }
   },
   "wants": {

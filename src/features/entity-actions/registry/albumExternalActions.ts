@@ -4,6 +4,7 @@ import type { Album } from '@/domain/entities/Album';
 import { iconSize, spacing, statusColor } from '@/constants/design';
 import type { ActionDef, BaseActionContext } from '../types';
 import type { ExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumStatus';
+import { promptConnectDownloader } from '@/features/downloaders/connectDownloaderPrompt';
 
 export interface AlbumExternalActionContext extends BaseActionContext {
   kind: 'album';
@@ -74,6 +75,6 @@ export const albumExternalActions: ActionDef<Ctx>[] = [
     icon: ctx => React.createElement(CloudDownload, { size: sz, color: ctx.colors.muted }),
     labelColor: ctx => ctx.colors.muted,
     visible: ctx => ctx.status.kind === 'none' && !ctx.canDownload,
-    invoke: () => {},
+    invoke: () => promptConnectDownloader('album'),
   },
 ];

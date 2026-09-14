@@ -26,6 +26,8 @@ export type SectionConfig = {
   key: string
   type: SectionType
   artistName?: string
+  /** lbSimilarArtistsForYou only — seeds to try in order, `artistName` first. */
+  artistNames?: string[]
   genre?: string
   /** lbCreatedFor only — which of the three periodic mixes this shelf is. */
   mixType?: 'daily-jams' | 'weekly-jams' | 'weekly-exploration'
@@ -93,6 +95,13 @@ export type HomeShelfSeeds = {
   isOffline: boolean
   hasLibrary: boolean
   becauseSeeds: string[]
+  /**
+   * Seeds for the listeners' similar-artists shelf, in the order to try them.
+   * ListenBrainz knows nothing about plenty of smaller artists, so one seed
+   * left that shelf empty for whole libraries; the shelf moves down this list
+   * until one has listeners.
+   */
+  similarSeeds: string[]
   topGenres: string[]
 }
 
@@ -132,8 +141,13 @@ export function buildCatalogueSections(options: HomeShelfSeeds): SectionConfig[]
 export function buildListenerSections(options: HomeShelfSeeds): SectionConfig[] {
   if (options.isOffline) return []
   const sections: SectionConfig[] = []
-  if (options.hasLibrary && options.becauseSeeds.length > 0) {
-    sections.push({ key: 'lbSimilarArtistsForYou', type: 'lbSimilarArtistsForYou', artistName: options.becauseSeeds[0] })
+  if (options.hasLibrary && options.similarSeeds.length > 0) {
+    sections.push({
+      key: 'lbSimilarArtistsForYou',
+      type: 'lbSimilarArtistsForYou',
+      artistName: options.similarSeeds[0],
+      artistNames: options.similarSeeds,
+    })
   }
   sections.push(
     { key: 'lbCreatedForDailyJams', type: 'lbCreatedFor', mixType: 'daily-jams' },
