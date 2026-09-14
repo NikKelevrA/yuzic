@@ -1073,7 +1073,8 @@ Zack waived the rest of the matrix on 2026-09-14; Task 13.2's "complete parity m
 These remain as the overview found them. Each blocks cutover unless it is separately amended:
 
 - Android verification of these changes (handed to the desktop session on 2026-09-14)
-- behaviour-level tests for Library and Equalizer settings, which only compose other components (unused exports are now at 0, and the other settings screens have behaviour tests)
+
+Library and Equalizer settings now have behaviour tests like the other settings screens. They cover sync, download switches, library scope, offline changes, file import, bands, presets and reset.
 
 ### 8.8 Provider names and scaffolding (Tasks 11.3, 13.1)
 
