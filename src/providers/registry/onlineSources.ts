@@ -32,7 +32,9 @@ type OnlineSource = {
   uses: readonly OnlineSourceUse[];
 };
 
-const use = (key: string, isOn: OnlineSourceUse['isOn'], set: OnlineSourceUse['set']): OnlineSourceUse => ({
+// Not `use`: that name is React's hook, and the hooks lint rule treats a call
+// to anything named `use` as one.
+const sourceUse = (key: string, isOn: OnlineSourceUse['isOn'], set: OnlineSourceUse['set']): OnlineSourceUse => ({
   labelKey: `settings.sources.${key}`,
   subtextKey: `settings.sources.${key}Subtext`,
   isOn,
@@ -57,20 +59,20 @@ const source = (id: OnlineSourceId, uses: OnlineSourceUse[]): OnlineSource => ({
  */
 export const ONLINE_SOURCES: readonly OnlineSource[] = [
   source('deezer', [
-    use('deezer.pages', selectDeezerDiscoveryEnabled, setDeezerDiscoveryEnabled),
-    use('deezer.search', selectSearchSourceEnabled('deezer'), enabled => setSearchSourceEnabled({ sourceId: 'deezer', enabled })),
-    use('deezer.artwork', selectMetadataArtworkSourceEnabled('deezer'), enabled => setMetadataArtworkSourceEnabled({ sourceId: 'deezer', enabled })),
+    sourceUse('deezer.pages', selectDeezerDiscoveryEnabled, setDeezerDiscoveryEnabled),
+    sourceUse('deezer.search', selectSearchSourceEnabled('deezer'), enabled => setSearchSourceEnabled({ sourceId: 'deezer', enabled })),
+    sourceUse('deezer.artwork', selectMetadataArtworkSourceEnabled('deezer'), enabled => setMetadataArtworkSourceEnabled({ sourceId: 'deezer', enabled })),
   ]),
   source('listenbrainz', [
-    use('listenbrainz.discovery', selectListenbrainzDiscoveryEnabled, setListenbrainzDiscoveryEnabled),
+    sourceUse('listenbrainz.discovery', selectListenbrainzDiscoveryEnabled, setListenbrainzDiscoveryEnabled),
   ]),
   source('lastfm', [
-    use('lastfm.artistInfo', selectLastfmEnabled, setLastfmEnabled),
+    sourceUse('lastfm.artistInfo', selectLastfmEnabled, setLastfmEnabled),
   ]),
   source('musicbrainz', [
-    use('musicbrainz.search', selectSearchSourceEnabled('musicbrainz'), enabled => setSearchSourceEnabled({ sourceId: 'musicbrainz', enabled })),
+    sourceUse('musicbrainz.search', selectSearchSourceEnabled('musicbrainz'), enabled => setSearchSourceEnabled({ sourceId: 'musicbrainz', enabled })),
   ]),
   source('coverartarchive', [
-    use('coverartarchive.covers', selectMetadataArtworkSourceEnabled('coverartarchive'), enabled => setMetadataArtworkSourceEnabled({ sourceId: 'coverartarchive', enabled })),
+    sourceUse('coverartarchive.covers', selectMetadataArtworkSourceEnabled('coverartarchive'), enabled => setMetadataArtworkSourceEnabled({ sourceId: 'coverartarchive', enabled })),
   ]),
 ];
