@@ -9,6 +9,8 @@
   [![Google Play](https://img.shields.io/badge/Google%20Play-Download-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.arinora.rawarr)
   [![Latest release](https://img.shields.io/github/v/release/yuzicapp/yuzic?label=Release&color=F36C7D)](https://github.com/yuzicapp/yuzic/releases/latest)
   [![Discord](https://img.shields.io/discord/1417549384127610932?label=Discord&logo=discord&logoColor=white&color=5865F2)](https://discord.gg/NzsGEhg5Fs)
+
+  <img src="assets/images/readme-banner.jpg" alt="Yuzic v2: discovery, downloaders, connections, native audio, customizable, free forever" width="100%" />
 </div>
 
 ## Features
