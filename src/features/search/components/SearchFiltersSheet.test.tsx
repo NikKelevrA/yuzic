@@ -61,7 +61,7 @@ async function renderSheet(props: Partial<React.ComponentProps<typeof SearchFilt
 describe('SearchFiltersSheet sources', () => {
   beforeEach(() => mockDispatch.mockClear());
 
-  it('offers each source that is off with a switch saying what it sends', async () => {
+  it('offers each source that is off with what it sends and a way to turn it on, not a switch', async () => {
     const { view } = await renderSheet({ availableSourceIds: ['deezer'], selectedSourceIds: ['deezer'] });
 
     expect(view.getByTestId('search-filters-source-deezer')).toBeTruthy();
@@ -69,12 +69,14 @@ describe('SearchFiltersSheet sources', () => {
     expect(view.getByTestId('search-filters-enable-musicbrainz')).toBeTruthy();
     expect(view.getByText('search.filters.sendsQuery:MusicBrainz')).toBeTruthy();
     expect(view.getByText('search.filters.alsoInSettings')).toBeTruthy();
+    expect(view.getAllByText('settings.sources.turnOn')).toHaveLength(1);
+    expect(view.queryAllByRole('switch')).toHaveLength(0);
   });
 
   it('turns a source on for search and puts it in this search', async () => {
     const { view, onToggleSource } = await renderSheet();
 
-    fireEvent(view.getByTestId('search-filters-enable-switch-deezer'), 'valueChange', true);
+    fireEvent.press(view.getByText('Deezer'));
 
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
       payload: { use: 'deezer.search', enabled: true },
@@ -82,10 +84,10 @@ describe('SearchFiltersSheet sources', () => {
     expect(onToggleSource).toHaveBeenCalledWith('deezer');
   });
 
-  it('has no switches or settings note once every source is on', async () => {
+  it('has nothing to turn on and no settings note once every source is on', async () => {
     const { view } = await renderSheet({ availableSourceIds: ['deezer', 'musicbrainz'] });
 
-    expect(view.queryAllByRole('switch')).toHaveLength(0);
+    expect(view.queryAllByText('settings.sources.turnOn')).toHaveLength(0);
     expect(view.queryByText('search.filters.alsoInSettings')).toBeNull();
   });
 });
