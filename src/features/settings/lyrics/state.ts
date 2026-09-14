@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface LyricsSettingsState {
   /**
@@ -66,11 +66,16 @@ interface LyricsRootState {
  * without being removed from the order (or an id from a future version this
  * one doesn't recognise) never gets called.
  */
-export const selectEnabledLyricsExternalSourcesInOrder = (state: LyricsRootState): string[] => {
-  const order = state.settingsLyrics.lyricsExternalSourcesOrder;
-  const enabled = state.settingsLyrics.lyricsExternalSourcesEnabled;
-  return order.filter(sourceId => enabled[sourceId]);
-};
+export const selectEnabledLyricsExternalSourcesInOrder = createSelector(
+  [
+    (state: LyricsRootState) => state.settingsLyrics.lyricsExternalSourcesOrder,
+    (state: LyricsRootState) => state.settingsLyrics.lyricsExternalSourcesEnabled,
+  ],
+  // Memoized: `filter` builds a new array each call, and a selector that
+  // returns a new reference for the same state re-renders every subscriber
+  // and trips react-redux's identity check in development.
+  (order, enabled): string[] => order.filter(sourceId => enabled[sourceId])
+);
 
 export const selectLyricsExternalSourcesOrder = (state: LyricsRootState): string[] =>
   state.settingsLyrics.lyricsExternalSourcesOrder;

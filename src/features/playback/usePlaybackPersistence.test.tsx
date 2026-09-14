@@ -4,6 +4,11 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { Provider } from 'react-redux'
 
 import { usePlaybackPersistence } from './usePlaybackPersistence'
+
+const mockFlush = jest.fn(() => Promise.resolve())
+jest.mock('@/state/redux/flush', () => ({
+  flushPersistedState: () => mockFlush(),
+}))
 import playbackReducer from '@/state/redux/slices/playbackSlice'
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice'
 import { makeLocalId } from '@/domain/identity/LocalId'
@@ -186,5 +191,32 @@ describe('usePlaybackPersistence', () => {
     expect(store.getState().playback.positionMs).toBe(5000)
 
     nowSpy.mockRestore()
+  })
+})
+
+
+describe('persistPosition reaching disk', () => {
+  beforeEach(() => mockFlush.mockClear())
+
+  // redux-persist holds the playback slice back for 3 s. A pause followed
+  // by a kill inside that window used to restore the position from before
+  // the pause — found on Android as a resume about 5 s early.
+  it('flushes a forced write (pause, track change) straight to disk', async () => {
+    const store = makeStore({ activeServerId: 'server-A' })
+    const { result } = await renderHook(() => usePlaybackPersistence(), { wrapper: wrapperFor(store) })
+
+    await act(async () => { result.current.persistPosition(117.8, { force: true }) })
+
+    expect(store.getState().playback.positionMs).toBe(117800)
+    expect(mockFlush).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves the ordinary tick to the persist throttle', async () => {
+    const store = makeStore({ activeServerId: 'server-A' })
+    const { result } = await renderHook(() => usePlaybackPersistence(), { wrapper: wrapperFor(store) })
+
+    await act(async () => { result.current.persistPosition(12) })
+
+    expect(mockFlush).not.toHaveBeenCalled()
   })
 })

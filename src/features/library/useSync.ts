@@ -17,7 +17,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors'
 import { selectLastSyncedAt } from '@/features/settings/sync/state';
-import { persistor } from '@/state/redux/store'
+import { flushPersistedState } from '@/state/redux/flush'
 import { useApi } from '@/providers/registry/useApi'
 import { catalogSyncKey } from '@/features/library/catalogQueries'
 import { runCatalogSync } from '@/features/library/catalogSync'
@@ -52,7 +52,7 @@ export function useSync() {
       // cache entry `useGenres` reads.
       const syncedAt = await commitSyncResult({
         dispatch,
-        flush: () => persistor.flush(),
+        flush: flushPersistedState,
         serverId,
         result,
       })

@@ -14,14 +14,23 @@ jest.mock('./Toast', () => {
   return { __esModule: true, default: () => <View /> };
 });
 
+let mockPlayerOpen = false;
+jest.mock('@/features/player/PlayerExpansion', () => ({
+  usePlayerIsOpen: () => mockPlayerOpen,
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 34, left: 0 }),
 }));
 
-function hostBottom(toJSON: () => unknown): number | undefined {
+function hostStyle(toJSON: () => unknown): { top?: number; bottom?: number } {
   const tree = toJSON() as { props: { style: unknown } } | null;
-  if (!tree) return undefined;
-  return (StyleSheet.flatten(tree.props.style) as { bottom?: number }).bottom;
+  if (!tree) return {};
+  return StyleSheet.flatten(tree.props.style) as { top?: number; bottom?: number };
+}
+
+function hostBottom(toJSON: () => unknown): number | undefined {
+  return hostStyle(toJSON).bottom;
 }
 
 /**
@@ -38,6 +47,22 @@ describe('ToastHost placement', () => {
   beforeEach(() => {
     __resetToasts();
     setToastClearance(null);
+    mockPlayerOpen = false;
+  });
+
+  // Found on Android: with the full player open, a toast sat over its
+  // transport row. The dock is hidden under the player then, so toasts move
+  // to the top.
+  it('comes down from the top while the full player is open', async () => {
+    mockPlayerOpen = true;
+    const { toJSON } = await render(<ToastHost />);
+    await act(async () => {
+      setToastClearance(152);
+      notify.success('Added to queue');
+    });
+
+    expect(hostStyle(toJSON)).toMatchObject({ top: 0 + spacing.md });
+    expect(hostStyle(toJSON).bottom).toBeUndefined();
   });
 
   it('sits above the height the dock reports, playing bar included', async () => {

@@ -134,6 +134,13 @@ export const usePlayerExpansion = (): PlayerExpansionValue => {
   return ctx;
 };
 
+/**
+ * Whether the full player is open, for surfaces that can render outside the
+ * provider as well as inside it (the toast host is mounted within it in the
+ * app, alone in its tests). False with no provider, where no player exists.
+ */
+export const usePlayerIsOpen = (): boolean => useContext(PlayerExpansionContext)?.isOpen ?? false;
+
 export const PlayerExpansionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const expansion = useSharedValue(0);
   const barCover = useSharedValue<CoverRect>(EMPTY_COVER_RECT);

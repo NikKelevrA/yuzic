@@ -15,6 +15,7 @@ import {
   setPlaybackRepeatMode,
   setPlaybackShuffleMode,
 } from '@/state/redux/slices/playbackSlice';
+import { flushPersistedState } from '@/state/redux/flush';
 
 /**
  * The bridge between the in-memory PlayingContext and the persisted
@@ -89,12 +90,16 @@ export function usePlaybackPersistence() {
 
   /** Throttled — called every second by PlayingProgress; only writes to the
    * slice every 5s. Force=true bypasses the throttle for track-change and
-   * pause events, where the latest position is the whole point. */
+   * pause events, where the latest position is the whole point — and flushes
+   * it to disk, because the slice's own persist throttle would otherwise hold
+   * it back for three more seconds. A pause from the notification followed by
+   * a kill restored the position from the last 10 s tick, about 5 s early. */
   const persistPosition = useCallback((positionSeconds: number, opts: { force?: boolean } = {}) => {
     const now = Date.now();
     if (!opts.force && now - lastPositionWriteAtRef.current < POSITION_PERSIST_INTERVAL_MS) return;
     lastPositionWriteAtRef.current = now;
     dispatch(setPlaybackPosition({ positionMs: Math.floor(positionSeconds * 1000) }));
+    if (opts.force) void flushPersistedState().catch(() => {});
   }, [dispatch]);
 
   const persistRepeatMode = useCallback((mode: RepeatModeState) => {
