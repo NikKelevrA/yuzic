@@ -1,6 +1,6 @@
 import React from 'react';
 import { BackHandler } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 
 import { renderBackdrop } from './BottomSheetBackdrop';
@@ -10,7 +10,18 @@ jest.mock('@gorhom/bottom-sheet', () => ({
   useBottomSheet: () => ({ close: mockClose }),
 }));
 
-/* eslint-disable no-var -- hoisted for the jest.mock factory above */
+// The reaction stands in for the UI thread: it hands the current open/closed
+// state over when rendered, and again whenever a test moves the sheet.
+jest.mock('react-native-reanimated', () => ({
+  runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
+  useAnimatedReaction: (prepare: () => boolean, react: (value: boolean, previous: boolean | null) => void) => {
+    const { useEffect } = require('react');
+    const value = prepare();
+    useEffect(() => { react(value, null); }, [value]);
+  },
+}));
+
+/* eslint-disable no-var -- hoisted for the jest.mock factories above */
 var mockClose = jest.fn();
 /* eslint-enable no-var */
 
@@ -22,15 +33,15 @@ function backdropProps(index: number): BottomSheetBackdropProps {
   } as unknown as BottomSheetBackdropProps;
 }
 
-/** The back handler the backdrop registered, and a spy on its removal. */
+/** The back handlers the backdrop registered, and a spy on their removal. */
 function captureBackHandler() {
   const remove = jest.fn();
-  let handler: (() => boolean | null | undefined) | undefined;
+  const handlers: (() => boolean | null | undefined)[] = [];
   jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, listener) => {
-    handler = listener;
+    handlers.push(listener);
     return { remove };
   });
-  return { press: () => handler?.(), remove };
+  return { handlers, press: () => handlers[handlers.length - 1]?.(), remove };
 }
 
 describe('sheet backdrop and Android back', () => {
@@ -47,12 +58,22 @@ describe('sheet backdrop and Android back', () => {
     expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
-  it('lets back through while its sheet is already closing', async () => {
+  it('does not take back while its sheet is still closed', async () => {
     const back = captureBackHandler();
     await render(renderBackdrop(backdropProps(-1)));
 
-    expect(back.press()).toBe(false);
-    expect(mockClose).not.toHaveBeenCalled();
+    expect(back.handlers).toHaveLength(0);
+  });
+
+  it('starts listening once a sheet that mounted closed has opened, so the first press counts', async () => {
+    const back = captureBackHandler();
+    const view = await render(renderBackdrop(backdropProps(-1)));
+    expect(back.handlers).toHaveLength(0);
+
+    await act(async () => { view.rerender(renderBackdrop(backdropProps(0))); });
+
+    expect(back.press()).toBe(true);
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('stops listening once the sheet is gone', async () => {
