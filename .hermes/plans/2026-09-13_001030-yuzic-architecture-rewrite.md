@@ -1072,7 +1072,15 @@ Zack waived the rest of the matrix on 2026-09-14; Task 13.2's "complete parity m
 
 These remain as the overview found them. Each blocks cutover unless it is separately amended:
 
-- Android verification of these changes (handed to the desktop session on 2026-09-14)
+- Nothing blocking. Android was verified on the desktop emulator at `9d9d7980` on 2026-09-14:
+  - **Passed:** the settings migration on a real upgrade from the old build, the source screens, search scope, the preview prompt, Home shelves, the split screens, and Library and Equalizer.
+  - **Not tested:** the Get sheet (no downloader), AudioMuse, podcasts, and the Jellyfin/Emby/Plex server tier (none were available there).
+  - **Findings, fixed on `dev` afterwards:**
+    - the settings row summary ran into its label
+    - "Turn on" needed a second tap to play
+    - Settings › Home only scrolled between its lists
+    - Android back left sheets open
+    - a busy MusicBrainz looked like "no match"
 
 Library and Equalizer settings now have behaviour tests like the other settings screens. They cover sync, download switches, library scope, offline changes, file import, bands, presets and reset.
 
