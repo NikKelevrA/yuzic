@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { QueryKey, useQueries, useQuery } from '@tanstack/react-query';
 import { useServerUnreachable } from '@/features/connectivity/serverReachability';
@@ -93,14 +94,37 @@ export function useOfflineFirstQuery<T>({
     })),
   });
 
-  const rawFallbackData = fallback
-    ? fallback.select(fallbackQueries.map(q => q.data))
-    : undefined;
+  // Both values below are handed to every memo and effect keyed on this hook's
+  // `data`, so each has to be the same object until its content changes.
+  //
+  // `emptyValue` is almost always a literal (`[]`) written at the call site — a
+  // new object every render. Returned as-is, "nothing cached" read as "the data
+  // changed" on every render, and a consumer that copies derived state in an
+  // effect looped: `PlaylistList`, mounted by the playing bar, threw "Maximum
+  // update depth exceeded" whenever the catalog was empty, and nothing else on
+  // screen got to render. The first one is kept.
+  const emptyRef = useRef(emptyValue);
+
+  // `select` builds a new value each time it runs, so it runs again only when a
+  // source's cached data actually changes.
+  const fallbackDatas = fallbackQueries.map(q => q.data);
+  const fallbackMemo = useRef<{ datas: unknown[]; value: T | undefined } | null>(null);
+  if (
+    !fallbackMemo.current ||
+    fallbackMemo.current.datas.length !== fallbackDatas.length ||
+    fallbackMemo.current.datas.some((cached, i) => cached !== fallbackDatas[i])
+  ) {
+    fallbackMemo.current = {
+      datas: fallbackDatas,
+      value: fallback ? fallback.select(fallbackDatas) : undefined,
+    };
+  }
+  const rawFallbackData = fallbackMemo.current.value;
   const hasFallback = rawFallbackData !== undefined && hasData(rawFallbackData);
 
   const data = selectOfflineFirstData({
     queryData: query.data,
-    fallbackData: hasFallback ? (rawFallbackData as T) : emptyValue,
+    fallbackData: hasFallback ? (rawFallbackData as T) : emptyRef.current,
     hasFallbackData: hasData,
   });
 
