@@ -28,8 +28,8 @@ function passesScrobbleThreshold(listenedSeconds: number, durationSeconds: numbe
  * a `ScrobbleDestinationPlan` can carry, so a listen is never double-
  * reported. It knows nothing about how any particular server or destination
  * is actually told: the active server's own semantics live behind
- * `SongsApi` (`scrobble`, `reportNowPlaying`, `reportPlaybackStart/
- * Progress/Stop` — each adapter implements only what its protocol needs),
+ * `SongsApi` (`scrobble`, `reportNowPlaying`, `reportPlaybackProgress/Stop`
+ * — each adapter implements only what its protocol needs),
  * and the plan's 'direct' branch is submitted through
  * `submitDirectListen`/`submitDirectNowPlaying`, both owned by
  * `scrobbleRoutingSelectors` alongside the routing rules themselves.

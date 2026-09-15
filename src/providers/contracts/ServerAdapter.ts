@@ -47,7 +47,6 @@ export interface SongsApi {
    * PlayedItems). Optional — Navidrome's Subsonic path already forwards to
    * Last.fm through scrobble() and doesn't need session pings.
    */
-  reportPlaybackStart?(songId: string, positionMs: number): Promise<void>;
   reportPlaybackProgress?(songId: string, positionMs: number, isPaused: boolean): Promise<void>;
   reportPlaybackStop?(songId: string, positionMs: number): Promise<void>;
 }
@@ -307,7 +306,6 @@ export interface AuthApi {
     password: string
   ): Promise<{ success: boolean; message?: string }>;
   ping(): Promise<boolean>;
-  testUrl(url: string): Promise<{ success: boolean; message?: string }>;
   startScan(): Promise<{ success: boolean; message?: string }>;
   disconnect(): void;
 }
@@ -315,8 +313,6 @@ export interface AuthApi {
 export interface AlbumsApi {
   list(): Promise<Album[]>;
   get(id: string): Promise<AlbumDetail>;
-  /** Optional bulk fetch — returns all albums with songs in the fewest possible requests. */
-  listWithSongs?(): Promise<AlbumDetail[]>;
 }
 
 export interface ArtistsApi {

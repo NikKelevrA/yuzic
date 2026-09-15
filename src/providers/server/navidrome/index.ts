@@ -20,12 +20,10 @@ import { Server } from "@/providers/contracts/Server";
 import { createNavidromeClient } from "./client";
 import { connect } from "./auth/connect";
 import { ping } from "./auth/ping";
-import { testServerUrl } from "./auth/testServerUrl";
 import { startScan } from "./auth/startScan";
 
 import { getAlbum } from "./albums/getAlbum";
 import { getAlbumList } from "./albums/getAlbumList";
-import { getAlbumsWithSongs } from "./albums/getAlbumsWithSongs";
 
 import { getArtistWithBiography } from "./artists/getArtist";
 import { getArtists } from "./artists/getArtists";
@@ -104,8 +102,8 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   // record needs a real server id. `Server.id` is a required field of the
   // `Server` type, so this is always sound here — unlike `NavidromeClient`'s
   // own `serverId`, which is optional only because `NavidromeClientConfig`
-  // doubles as the shape used before a server is saved (auth/testServerUrl,
-  // connect), where no id exists yet. Building provenance once here, rather
+  // doubles as the shape used before a server is saved (auth/connect), where
+  // no id exists yet. Building provenance once here, rather
   // than reading `client.serverId` inside every endpoint, means those
   // pre-save code paths never have to fake one.
   const provenance = serverProvenance(serverId);
@@ -145,7 +143,6 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
     connect: (serverUrl, username, password) =>
       connect(serverUrl, username, password),
     ping: () => ping(client),
-    testUrl: (url) => testServerUrl(url),
     startScan: () => startScan(client),
     disconnect: () => {},
   };
@@ -181,8 +178,6 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
       return full;
     },
 
-    listWithSongs: async () =>
-      fromFolders(c => getAlbumsWithSongs(c, provenance), (d) => d.album.nativeId),
   };
 
   const artists: ArtistsApi = {

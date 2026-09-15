@@ -13,7 +13,6 @@ const EMPTY_ADAPTER: ApiAdapter = {
   auth: {
     connect: empty,
     ping: empty,
-    testUrl: empty,
     startScan: empty,
     disconnect: empty,
   },

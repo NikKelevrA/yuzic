@@ -19,11 +19,9 @@ import { MediaBrowserBrand } from "./brand";
 import { createMediaBrowserClient, requireProvenance, MediaBrowserClient } from "./client";
 import { connect } from "./auth/connect";
 import { ping } from "./auth/ping";
-import { testServerUrl } from "./auth/testServerUrl";
 import { startScan } from "./auth/startScan";
 import { getAlbum } from "./albums/getAlbum";
 import { getAlbums } from "./albums/getAlbums";
-import { getAlbumsWithSongs } from "./albums/getAlbumsWithSongs";
 import { getArtists } from "./artists/getArtists";
 import { getPlaylists } from "./playlists/getPlaylists";
 import { getPlaylist } from "./playlists/getPlaylist";
@@ -92,8 +90,7 @@ export const createMediaBrowserAdapter = (
     createMediaBrowserClient({ serverUrl, serverId, fallbackUrls, token, userId, parentId: pid, basicAuth }, brand);
 
   // Keyed by `keyOf` rather than a hardcoded `.id` — the domain entities this
-  // now fans out over carry their identity as `localId`, and `listWithSongs`
-  // fans out over `AlbumDetail`, whose identity is nested under `.album`.
+  // fans out over carry their identity as `localId`.
   async function fromParents<T>(
     fn: (c: MediaBrowserClient) => Promise<T[]>,
     keyOf: (item: T) => string
@@ -118,7 +115,6 @@ export const createMediaBrowserAdapter = (
       if (!token) return false;
       return ping(client);
     },
-    testUrl: async (url) => testServerUrl(brand, url),
     startScan: async () => startScan(client),
     disconnect: () => {},
   };
@@ -130,7 +126,6 @@ export const createMediaBrowserAdapter = (
       if (!detail) throw new Error("Album not found");
       return detail;
     },
-    listWithSongs: async () => fromParents(c => getAlbumsWithSongs(c), d => d.album.localId),
   };
 
   const artists: ArtistsApi = {
@@ -235,7 +230,6 @@ export const createMediaBrowserAdapter = (
     buildStreamUrl: (songId, quality, codec) => client.buildStreamUrl(songId, quality, codec),
     scrobbleKind: 'markPlayed',
     streamableCodecs: ['mp3', 'opus'],
-    reportPlaybackStart: async (songId, positionMs) => reportPlaybackStart(client, songId, positionMs),
     reportPlaybackProgress: async (songId, positionMs, isPaused) =>
       reportPlaybackProgress(client, songId, positionMs, isPaused),
     reportPlaybackStop: async (songId, positionMs) => reportPlaybackStop(client, songId, positionMs),

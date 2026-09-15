@@ -46,7 +46,7 @@ const song = (nativeId: string): Song => ({
 
 function fakeApi(overrides: Partial<ApiAdapter> = {}): ApiAdapter {
   return {
-    auth: { connect: jest.fn(), ping: jest.fn(), testUrl: jest.fn(), startScan: jest.fn(), disconnect: jest.fn() },
+    auth: { connect: jest.fn(), ping: jest.fn(), startScan: jest.fn(), disconnect: jest.fn() },
     albums: { list: jest.fn(), get: jest.fn() },
     artists: { list: jest.fn(), get: jest.fn() },
     genres: { list: jest.fn() },

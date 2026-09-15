@@ -39,7 +39,7 @@ export function createLocalAdapter(server: Server): ApiAdapter {
   const provenance = serverProvenance(server.id);
 
   const auth: AuthApi = {
-    connect: async () => ({ success: true }), ping: async () => true, testUrl: async () => ({ success: true }),
+    connect: async () => ({ success: true }), ping: async () => true,
     startScan: async () => ({ success: true }), disconnect: () => {},
   };
 
@@ -70,7 +70,6 @@ export function createLocalAdapter(server: Server): ApiAdapter {
       const album = mapAlbum(group, { provenance, songIds: albumSongs.map(song => song.localId) });
       return { album, songs: albumSongs };
     },
-    listWithSongs: async () => Promise.all(albumGroups().map(async group => albumApi.get(group.albumId))),
   };
 
   const artistApi: ArtistsApi = {

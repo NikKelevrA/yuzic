@@ -165,13 +165,6 @@ export function createPlexAdapter(server: Server): ApiAdapter {
       // distinguish an invalid/expired account token from a reachable server.
       try { await client.request('/library/sections'); return true; } catch { return false; }
     },
-    testUrl: async (url) => {
-      try {
-        const probe = createPlexClient({ serverUrl: url, basicAuth: server.basicAuth });
-        await probe.request('/identity');
-        return { success: true };
-      } catch { return { success: false, message: 'Plex server is not responding.' }; }
-    },
     startScan: async () => ({ success: false, message: 'Plex scans are managed on the server.' }),
     disconnect: () => {},
   };
@@ -182,10 +175,6 @@ export function createPlexAdapter(server: Server): ApiAdapter {
       const [album, trackItems] = await Promise.all([item(id), itemTracks(id)]);
       if (!album) throw new Error('Album not found');
       return albumDetail(album, trackItems);
-    },
-    listWithSongs: async () => {
-      const base = await libraryItems(9);
-      return Promise.all(base.map(async album => albumDetail(album, await itemTracks(String(album.ratingKey)))));
     },
   };
 
@@ -226,7 +215,6 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     streamableCodecs: [],
     scrobble: async (songId) => { await client.request(`/:/scrobble?key=${encodeURIComponent(`/library/metadata/${songId}`)}`); },
     reportNowPlaying: async (songId) => { await client.request(`/:/timeline?ratingKey=${encodeURIComponent(songId)}&state=playing&time=0`); },
-    reportPlaybackStart: async (songId, positionMs) => { await client.request(`/:/timeline?ratingKey=${encodeURIComponent(songId)}&state=playing&time=${Math.max(0, Math.floor(positionMs))}`); },
     reportPlaybackProgress: async (songId, positionMs, paused) => { await client.request(`/:/timeline?ratingKey=${encodeURIComponent(songId)}&state=${paused ? 'paused' : 'playing'}&time=${Math.max(0, Math.floor(positionMs))}`); },
     reportPlaybackStop: async (songId, positionMs) => { await client.request(`/:/timeline?ratingKey=${encodeURIComponent(songId)}&state=stopped&time=${Math.max(0, Math.floor(positionMs))}`); },
   };

@@ -20,7 +20,6 @@ const mockSongsApi = {
   get: jest.fn(),
   scrobble: jest.fn(async () => {}),
   reportNowPlaying: jest.fn(async () => {}),
-  reportPlaybackStart: jest.fn(async () => {}),
   reportPlaybackProgress: jest.fn(async () => {}),
   reportPlaybackStop: jest.fn(async () => {}),
   buildStreamUrl: jest.fn(() => ''),
