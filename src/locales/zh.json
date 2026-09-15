@@ -1161,7 +1161,9 @@
           "BAD_REQUEST": "SoulSync 无法解析该请求。",
           "BAD_RESPONSE": "该地址的响应不像 SoulSync，请检查网址。",
           "HTTP_ERROR": "无法连接 SoulSync，请检查服务器后重试。",
-          "NOT_AVAILABLE": "SoulSync 尚未配置 Soulseek 连接。"
+          "NOT_AVAILABLE": "SoulSync 尚未配置 Soulseek 连接。",
+          "no_tracks": "无法获取这张专辑要请求的歌曲。",
+          "some_tracks_failed": "这张专辑的部分歌曲未能向 SoulSync 请求。"
         }
       },
       "soulsyncDesc": "通过 SoulSync 搜索 Soulseek",

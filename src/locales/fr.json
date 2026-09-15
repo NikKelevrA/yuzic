@@ -1166,7 +1166,9 @@
           "BAD_REQUEST": "SoulSync n’a pas pu lire cette demande.",
           "BAD_RESPONSE": "Cette adresse n’a pas répondu comme SoulSync. Vérifiez l’URL.",
           "HTTP_ERROR": "Impossible de joindre SoulSync. Vérifiez le serveur et réessayez.",
-          "NOT_AVAILABLE": "SoulSync n’a aucune connexion Soulseek configurée."
+          "NOT_AVAILABLE": "SoulSync n’a aucune connexion Soulseek configurée.",
+          "no_tracks": "Impossible de lister les morceaux de cet album à demander.",
+          "some_tracks_failed": "Certains morceaux de cet album n’ont pas pu être demandés à SoulSync."
         }
       },
       "soulsyncDesc": "Chercher sur Soulseek via SoulSync",

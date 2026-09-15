@@ -20,8 +20,9 @@ import { dismissConnectDownloaderPrompt, usePendingDownloaderPrompt } from './co
 /**
  * The one sheet that offers to connect a downloader from where a Get needed
  * one, mounted once at the root. It lists only the downloaders that can take
- * what was asked for — an album Get offers none that are track-only — and each
- * opens that downloader's own settings, where it is connected.
+ * what was asked for — a track Get offers none that are album-only; an album
+ * Get offers every one, since a track-only downloader takes an album as its
+ * tracks — and each opens that downloader's own settings, where it is connected.
  */
 export default function ConnectDownloaderPromptHost() {
   const { t } = useTranslation();
@@ -37,7 +38,7 @@ export default function ConnectDownloaderPromptHost() {
   }, [unit, sheetRef]);
 
   const offered = unit
-    ? ALL_DOWNLOADERS.filter(def => (unit === 'album' ? !!def.downloadAlbum : !!def.downloadTrack))
+    ? ALL_DOWNLOADERS.filter(def => (unit === 'album' ? !!(def.downloadAlbum || def.downloadTrack) : !!def.downloadTrack))
     : [];
 
   return (

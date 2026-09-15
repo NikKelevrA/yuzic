@@ -20,6 +20,8 @@ import {
   type DownloaderState,
   type QualityProfile,
 } from '@/features/downloaders/registry';
+import { downloadAlbumByTracks } from '@/features/downloaders/albumByTracks';
+import { useAlbumTrackLoader } from '@/features/downloaders/albumTracks';
 import { setDefaultProvider, setDefaultQualityProfileId } from '@/state/redux/slices/downloadersSlice';
 import {
   selectDefaultProviderForActiveServer,
@@ -70,10 +72,12 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
   const savedDefaultQualityProfileId = useSelector(selectDefaultQualityProfileId);
 
   const downloaders = useDownloaderStates();
-  // A downloader appears only if it takes the unit being asked for: Lidarr has
-  // no way to fetch one track, SoulSync no way to take a whole album.
+  const loadAlbumTracks = useAlbumTrackLoader();
+  // A downloader appears only if it can take the unit being asked for. Lidarr
+  // has no way to fetch one track; a track-only downloader (SoulSync) takes an
+  // album as its tracks, so every connected downloader can take an album.
   const available = downloaders.filter(
-    (d) => d.isConnected && !!(track ? d.def.downloadTrack : d.def.downloadAlbum)
+    (d) => d.isConnected && !!(track ? d.def.downloadTrack : d.def.downloadAlbum || d.def.downloadTrack)
   );
 
   // Preselect the saved default only if it's still available for this unit;
@@ -139,11 +143,13 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
     try {
       const result = track
         ? await def.downloadTrack!(config, { title: track.title, artist: track.artist })
-        : await def.downloadAlbum!(
-            config,
-            album,
-            showQualityProfile ? { qualityProfileId: selectedQualityProfileId } : undefined
-          );
+        : def.downloadAlbum
+          ? await def.downloadAlbum(
+              config,
+              album,
+              showQualityProfile ? { qualityProfileId: selectedQualityProfileId } : undefined
+            )
+          : await downloadAlbumByTracks(def.downloadTrack!, config, await loadAlbumTracks(album));
       const successKey = track ? def.trackAddedKey! : def.albumAddedKey;
       const fallback = t('externalAlbum.download.failed');
       notify[result.success ? 'success' : 'error'](

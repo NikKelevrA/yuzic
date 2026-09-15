@@ -54,7 +54,7 @@ describe('ConnectDownloaderPromptHost', () => {
     expect(view.queryByTestId('connect-downloader-not-now')).toBeNull();
   });
 
-  it('says why, and offers only downloaders that take an album', async () => {
+  it('says why, and offers every downloader for an album — a track-only one takes it as its tracks', async () => {
     const view = await renderHost();
 
     await act(async () => promptConnectDownloader('album'));
@@ -63,7 +63,7 @@ describe('ConnectDownloaderPromptHost', () => {
     expect(view.getByText('externalAlbum.connectDownloader.body')).toBeTruthy();
     expect(view.getByText('externalAlbum.connectDownloader.setUp:Albums Only')).toBeTruthy();
     expect(view.getByText('externalAlbum.connectDownloader.setUp:Both')).toBeTruthy();
-    expect(view.queryByText('externalAlbum.connectDownloader.setUp:Tracks Only')).toBeNull();
+    expect(view.getByText('externalAlbum.connectDownloader.setUp:Tracks Only')).toBeTruthy();
   });
 
   it('offers only downloaders that take a track when a track was asked for', async () => {

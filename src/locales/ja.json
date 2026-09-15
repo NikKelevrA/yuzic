@@ -1161,7 +1161,9 @@
           "BAD_REQUEST": "SoulSync がこのリクエストを解釈できませんでした。",
           "BAD_RESPONSE": "そのアドレスは SoulSync の応答を返しませんでした。URL を確認してください。",
           "HTTP_ERROR": "SoulSync に接続できません。サーバーを確認して再試行してください。",
-          "NOT_AVAILABLE": "SoulSync に Soulseek 接続が設定されていません。"
+          "NOT_AVAILABLE": "SoulSync に Soulseek 接続が設定されていません。",
+          "no_tracks": "このアルバムのリクエストする曲を取得できませんでした。",
+          "some_tracks_failed": "このアルバムの一部の曲を SoulSync にリクエストできませんでした。"
         }
       },
       "soulsyncDesc": "SoulSync 経由で Soulseek を検索",

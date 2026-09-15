@@ -334,7 +334,11 @@ export function useAnyTrackDownloaderConnected(): boolean {
   return useDownloaderStates().some((d) => d.isConnected && !!d.def.downloadTrack)
 }
 
-/** Somewhere to send a whole album — not every connected downloader takes one. */
+/**
+ * Somewhere to send a whole album. A downloader with no album endpoint still
+ * counts: the Get sheet sends it the album as its tracks (`albumByTracks`), so
+ * a listener with only SoulSync connected is offered Get on an album too.
+ */
 export function useAnyAlbumDownloaderConnected(): boolean {
-  return useDownloaderStates().some((d) => d.isConnected && !!d.def.downloadAlbum)
+  return useDownloaderStates().some((d) => d.isConnected && !!(d.def.downloadAlbum || d.def.downloadTrack))
 }

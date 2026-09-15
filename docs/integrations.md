@@ -201,7 +201,7 @@ without a manual pull (`src/features/downloaders/DownloadersQueueContext.tsx`).
 | --- | --- | --- | --- | --- |
 | [Lidarr](https://lidarr.audio) | Lidarr | ✅ | — (Lidarr is album-oriented) | Server URL + API key (Lidarr → Settings → General) |
 | [slskd](https://github.com/slskd/slskd) (Soulseek) | Soulseek | ✅ | ✅ | Server URL + API key, plus its own search preferences |
-| [SoulSync](https://github.com/Nezreka/SoulSync) | SoulSync | — (no album endpoint) | ✅ | Server URL + API key |
+| [SoulSync](https://github.com/Nezreka/SoulSync) | SoulSync | ✅ as its tracks (no album endpoint) | ✅ | Server URL + API key |
 
 Registry and the shared `DownloaderDefinition` shape:
 `src/features/downloaders/registry.ts`. A downloader is offered on an external
@@ -277,7 +277,21 @@ checked against a live Plex server yet.
 because a playlist can hold a song twice (`providers/server/playlistEntries.ts`).
 Navidrome removes by `songIndexToRemove`; it has no move, so a move rewrites the
 playlist from the first changed position with one `updatePlaylist` call.
+That call repeats a song id per track, so on a server that declares the
+OpenSubsonic `formPost` extension (`getOpenSubsonicExtensions`, asked once per
+client) every POST sends its parameters form-encoded in the body instead of the
+URL, where a long playlist would outgrow a reverse proxy's URL limit. Servers
+without it get the plain Subsonic query string.
 Jellyfin and Emby move with `POST /Playlists/{id}/Items/{PlaylistItemId}/Move/{index}`.
+
+**Who may change a playlist.** Navidrome names each playlist's `owner`; only the
+owner's playlists offer Edit songs, Rename, Delete, or a place in Add to
+Playlist. Jellyfin 10.9+ shares playlists with edit rights, which its item
+listing does not say, so a playlist's detail also reads `GET /Playlists/{id}`
+(its `Shares`) and `GET /Playlists/{id}/Users/{userId}` (`CanEdit`, answered
+for the owner too; a 404 means neither owner nor shared). An account shared
+with edit rights may edit and rename but not delete. Emby and older Jellyfin
+cannot say, and keep every playlist editable. Plex reports no owner.
 
 ### Local files
 
@@ -413,8 +427,13 @@ the HTTP status says; the client unwraps it so callers see `data` or an Error.
 | `GET /downloads?limit=100` | The in-app transfer queue, and spotting finished items |
 | `POST /downloads/{id}/cancel` | Cancelling — takes the peer username in the body, since a transfer is addressed by id *and* peer |
 
-SoulSync is track-only: it exposes no album endpoint, which is why
-`downloadAlbum` is optional on `DownloaderDefinition`.
+SoulSync has no album endpoint — its API's only way in is `POST /request` with a
+free-text query, and its wishlist takes one track at a time too — which is why
+`downloadAlbum` is optional on `DownloaderDefinition`. An album Get to it is
+the album's tracks, each its own `POST /request`, one after another
+(`features/downloaders/albumByTracks.ts`); the tracks come from the album's
+catalogue source or the server (`albumTracks.ts`), so any album sheet can offer
+it.
 
 ## What we don't call
 

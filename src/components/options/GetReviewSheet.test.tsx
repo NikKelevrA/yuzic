@@ -104,6 +104,11 @@ jest.mock('@/features/downloaders/registry', () => ({
   useDownloaderStates: () => mockDownloaderStates(),
 }));
 
+const mockLoadAlbumTracks = jest.fn();
+jest.mock('@/features/downloaders/albumTracks', () => ({
+  useAlbumTrackLoader: () => mockLoadAlbumTracks,
+}));
+
 const externalAlbum: Album = {
   localId: 'local:album:ext:deezer:ext1' as Album['localId'],
   nativeId: 'ext1',
@@ -344,6 +349,64 @@ describe('GetReviewSheet', () => {
       type: 'downloaders/setDefaultQualityProfileId',
       payload: { serverId: 'server-1', qualityProfileId: 4 },
     });
+  });
+});
+
+describe('GetReviewSheet with a downloader that takes only tracks', () => {
+  const soulsyncDownloadTrack = jest.fn(async (..._args: unknown[]) => ({ success: true as const }));
+  const soulsync = {
+    def: {
+      id: 'soulsync',
+      label: 'SoulSync',
+      descriptionKey: 'externalAlbum.download.soulsyncDesc',
+      albumAddedKey: 'externalAlbum.download.addedToSoulsync',
+      trackAddedKey: 'externalAlbum.download.addedTrackToSoulsync',
+      downloadTrack: soulsyncDownloadTrack,
+    },
+    config: { serverUrl: 'http://soulsync', apiKey: 'k3' },
+    isConnected: true,
+  };
+
+  beforeEach(() => {
+    mockDownloaderStates.mockReset().mockReturnValue([soulsync]);
+    soulsyncDownloadTrack.mockClear();
+    mockLoadAlbumTracks.mockReset().mockResolvedValue([
+      { title: 'First', artist: 'External Artist' },
+      { title: 'Second', artist: 'External Artist' },
+    ]);
+    mockState = {
+      servers: { activeServer: { id: 'server-1', serverUrl: 'My Server' }, activeServerId: 'server-1' },
+      downloaders: { defaultsByServer: {} },
+    };
+  });
+
+  it('offers it for an album, and requests the album as its tracks', async () => {
+    const { notify } = require('@/components/toast');
+    const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
+
+    await fireEvent.press(view.getByTestId('row-SoulSync'));
+    await fireEvent.press(view.getByText('externalAlbum.review.confirmGet'));
+    await flush();
+
+    expect(mockLoadAlbumTracks).toHaveBeenCalledWith(externalAlbum);
+    expect(soulsyncDownloadTrack.mock.calls.map(([, req]) => req)).toEqual([
+      { title: 'First', artist: 'External Artist' },
+      { title: 'Second', artist: 'External Artist' },
+    ]);
+    expect(notify.success).toHaveBeenCalledWith('externalAlbum.download.addedToSoulsync');
+  });
+
+  it("says so when the album's tracks can't be listed", async () => {
+    const { notify } = require('@/components/toast');
+    mockLoadAlbumTracks.mockResolvedValue([]);
+    const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
+
+    await fireEvent.press(view.getByTestId('row-SoulSync'));
+    await fireEvent.press(view.getByText('externalAlbum.review.confirmGet'));
+    await flush();
+
+    expect(soulsyncDownloadTrack).not.toHaveBeenCalled();
+    expect(notify.error).toHaveBeenCalledWith('externalAlbum.download.errors.soulsync.no_tracks');
   });
 });
 
