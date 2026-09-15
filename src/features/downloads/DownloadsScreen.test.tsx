@@ -86,7 +86,7 @@ describe('DownloadsScreen', () => {
   it('shows every connected downloader, including SoulSync (previously omitted)', async () => {
     mockUseDownloaderStates.mockReturnValue([
       connectedState('lidarr', 'Lidarr'),
-      connectedState('slskd', 'Soulseek'),
+      connectedState('slskd', 'slskd'),
       connectedState('soulsync', 'SoulSync'),
     ]);
 

@@ -80,7 +80,7 @@ describe('DownloaderQueueSection', () => {
     const view = await render(
       <DownloaderQueueSection
         id="slskd"
-        title="Soulseek"
+        title="slskd"
         items={[item({ title: 'Some Other Record', artistName: 'Nobody', identity: 'loose' })]}
         isLoading={false}
         hasError={false}

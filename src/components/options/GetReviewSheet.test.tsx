@@ -149,7 +149,7 @@ function makeDownloaderStates() {
     {
       def: {
         id: 'slskd',
-        label: 'Soulseek',
+        label: 'slskd',
         descriptionKey: 'externalAlbum.download.slskdDesc',
         albumAddedKey: 'externalAlbum.download.addedToSlskd',
         trackAddedKey: 'externalAlbum.download.addedTrackToSlskd',
@@ -179,7 +179,7 @@ describe('GetReviewSheet', () => {
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
     expect(view.getByText(/My Server/)).toBeTruthy();
     expect(view.getByText('Lidarr')).toBeTruthy();
-    expect(view.getByText('Soulseek')).toBeTruthy();
+    expect(view.getByText('slskd')).toBeTruthy();
   });
 
   it('shows a Requesting line with the title/artist being asked for', async () => {
@@ -296,7 +296,7 @@ describe('GetReviewSheet', () => {
     expect(view.getByText('externalAlbum.review.qualityProfile')).toBeTruthy();
     expect(view.getByTestId('row-Lossless')).toBeTruthy();
 
-    await fireEvent.press(view.getByTestId('row-Soulseek'));
+    await fireEvent.press(view.getByTestId('row-slskd'));
     await flush();
     expect(view.queryByText('externalAlbum.review.qualityProfile')).toBeNull();
   });
