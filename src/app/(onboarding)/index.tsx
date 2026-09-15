@@ -1,4 +1,4 @@
-import Home from "@/screens/onboarding/home";
+import Home from "@/features/onboarding/home";
 
 export default function WelcomeScreen() {
   return <Home />;

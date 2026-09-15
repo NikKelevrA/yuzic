@@ -1,0 +1,56 @@
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { spacing } from '@/constants/design';
+import Toast from './Toast';
+import { notify, useToasts } from './notify';
+import { useToastClearance } from './clearance';
+import { usePlayerIsOpen } from '@/features/player/PlayerExpansion';
+
+/**
+ * Renders the active toast stack. Mounted once, high in the tree but below the
+ * sheet portal, so toasts float over the app and the dock. Newest at the
+ * bottom, nearest the thumb.
+ *
+ * Sits above the tab dock — which grows to include the playing bar when a track
+ * is loaded — using the height the dock reports into `clearance.ts`, never a
+ * guess: a toast over the playing bar takes the taps meant for it. Falls back
+ * to the safe-area inset plus generous clearance where no dock is mounted
+ * (onboarding, modals).
+ *
+ * With the full player open the dock is hidden under it, and the bottom of the
+ * screen is the player's own transport — so toasts come down from the top
+ * instead of sitting over its play button.
+ */
+const ToastHost: React.FC = () => {
+  const toasts = useToasts();
+  const insets = useSafeAreaInsets();
+  const dockHeight = useToastClearance();
+  const playerOpen = usePlayerIsOpen();
+
+  if (toasts.length === 0) return null;
+
+  const placement = playerOpen
+    ? { top: insets.top + spacing.md }
+    : { bottom: (dockHeight ?? insets.bottom + spacing.xxxl) + spacing.md };
+
+  return (
+    <View pointerEvents="box-none" style={[styles.host, placement]}>
+      {toasts.map(toast => (
+        <Toast key={toast.id} toast={toast} onDismiss={notify.dismiss} />
+      ))}
+    </View>
+  );
+};
+
+export default ToastHost;
+
+const styles = StyleSheet.create({
+  host: {
+    position: 'absolute',
+    left: spacing.page,
+    right: spacing.page,
+    alignItems: 'stretch',
+  },
+});

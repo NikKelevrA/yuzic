@@ -1,19 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Image, StyleSheet as RNStyleSheet } from 'react-native';
-import LetterCover from '@/components/LetterCover';
+import { View, Image } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
-import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/utils/builders/buildCover';
-import { CoverSource } from '@/types';
+import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/providers/registry/covers';
+import { CoverSource } from '@/domain/entities/Cover';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
-import { selectActiveServerId } from '@/utils/redux/selectors/serversSelectors';
-import { useTheme } from '@/hooks/useTheme';
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+import { useTheme } from '@/features/theme/useTheme';
+import { useResolvedCover } from '@/features/artwork/useResolvedCover';
 import {
   hasImageUrlFailed,
   IMAGE_CACHE_POLICY,
   markImageUrlFailed,
   markImageUrlSucceeded,
-} from '@/utils/images/imageCache';
+} from '@/features/artwork/imageCache';
 
 const placeholder = require('@assets/images/placeholder.png');
 
@@ -31,18 +31,21 @@ export function MediaImage({
   // some other state (e.g. list data) causes a re-render.
   const activeServerId = useSelector(selectActiveServerId);
   const { colors } = useTheme();
+  // A gap is filled here the same way everywhere: the library's copy, then
+  // the artwork backups the user has switched on. Asking a backup starts here.
+  const { cover: resolved } = useResolvedCover(cover);
   const uri = useMemo(() => {
     void activeServerId;
-    return buildCover(cover, size);
-  }, [cover, size, activeServerId]);
+    return buildCover(resolved, size);
+  }, [resolved, size, activeServerId]);
   const cacheKey = useMemo(() => {
     void activeServerId;
-    return buildCoverCacheKey(cover, size);
-  }, [cover, size, activeServerId]);
+    return buildCoverCacheKey(resolved, size);
+  }, [resolved, size, activeServerId]);
   const fallbackUri = useMemo(() => {
-    if (cover.kind !== 'coverartarchive' || cover.mbidType !== 'unknown') return null;
-    return buildCoverArtArchiveUrl(cover.mbid, 'release', size);
-  }, [cover, size]);
+    if (resolved.kind !== 'coverartarchive' || resolved.mbidType !== 'unknown') return null;
+    return buildCoverArtArchiveUrl(resolved.mbid, 'release', size);
+  }, [resolved, size]);
   const [useFallback, setUseFallback] = useState(false);
   const [failedVersion, setFailedVersion] = useState(0);
   const primaryFailed = hasImageUrlFailed(uri);
@@ -59,13 +62,6 @@ export function MediaImage({
     setUseFallback(false);
     setFailedVersion(version => version + 1);
   }, [uri, fallbackUri]);
-
-  if (cover.kind === 'letter') {
-    const flat = RNStyleSheet.flatten(style);
-    const size = typeof flat?.width === 'number' ? flat.width : 80;
-    const radius = typeof flat?.borderRadius === 'number' ? flat.borderRadius : 0;
-    return <LetterCover name={cover.name} size={size} radius={radius} style={style} />;
-  }
 
   if (uri === 'heart-icon') {
     return (

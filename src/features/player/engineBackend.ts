@@ -1,5 +1,6 @@
 import type { MediaItem } from './mediaItem';
-import type { EngineEvent, Progress, Track } from 'yuzic-engine';
+import type { BrowseItem } from './browse';
+import type { BrowseNode, EngineEvent, Progress, Track } from 'yuzic-engine';
 
 /**
  * yuzic-engine, wearing the shape the app already talks to.
@@ -31,17 +32,26 @@ import type { EngineEvent, Progress, Track } from 'yuzic-engine';
  */
 
 /** The queue as the app hands it over, kept so the sync getters can answer. */
-interface Shadow {
+export interface Shadow {
   queue: MediaItem[];
   activeIndex: number;
   progress: Progress;
+  /**
+   * Where the previous track had got to when the engine moved off it.
+   *
+   * `progress` resets on a track change, and the app hears about the change
+   * only after that reset — so a listener asking "how far into the outgoing
+   * track were we?" read the new track's zero. That is what kept a song that
+   * played through to its end from ever counting as a listen.
+   */
+  outgoingProgress: Progress;
   playing: boolean;
 }
 
 const EMPTY_PROGRESS: Progress = { positionSec: 0, durationSec: 0, bufferedSec: 0 };
 
 export function createShadow(): Shadow {
-  return { queue: [], activeIndex: 0, progress: EMPTY_PROGRESS, playing: false };
+  return { queue: [], activeIndex: 0, progress: EMPTY_PROGRESS, outgoingProgress: EMPTY_PROGRESS, playing: false };
 }
 
 /**
@@ -65,6 +75,7 @@ export function applyEvent(shadow: Shadow, event: EngineEvent): Shadow {
       return {
         ...shadow,
         activeIndex: event.index,
+        outgoingProgress: shadow.progress,
         progress: { ...EMPTY_PROGRESS, durationSec: shadow.queue[event.index]?.duration ?? 0 },
       };
 
@@ -72,10 +83,71 @@ export function applyEvent(shadow: Shadow, event: EngineEvent): Shadow {
       return { ...shadow, playing: event.state === 'playing' };
 
     default:
-      // queueChange carries no payload, and error/remoteCommand are the
-      // host's business rather than the shadow's.
+      // queueChange carries no payload — what it means for the shadow is
+      // `reconcileQueue`, which has to ask the engine and so cannot happen in
+      // a pure fold. error/remoteCommand are the host's business.
       return shadow;
   }
+}
+
+/**
+ * Replace the shadow's queue with the engine's, keeping the app's own items.
+ *
+ * Two things know what is in the queue, and they are not equals. The engine
+ * owns membership and order: it is what actually plays, it applies an insert
+ * or a move itself, and it resolves the cases the app cannot see — a remote
+ * command from the lock screen, a track dropped because it could not be
+ * opened, a queue restored into a fresh JavaScript context. The app owns what
+ * each item *is*: it built the `MediaItem`, with the URL it resolved and the
+ * headers it attached, and the engine cannot hand any of that back.
+ *
+ * So this takes order and membership from `engineIds` and looks each one up in
+ * what the app already has. Before it existed, both sides did the splice
+ * arithmetic separately and were expected to agree — and a disagreement did
+ * not announce itself, it showed up later as the wrong song playing after a
+ * remove, or an index pointing one track off.
+ *
+ * A track the app has never seen is taken from the engine's own record — its
+ * URL, title, artist, artwork and headers, which is everything it was handed
+ * when it was queued. That is a normal case, not a corner: a CarPlay or
+ * Android Auto selection queues the tracks under the chosen row natively,
+ * without the app, and a queue can outlive the JavaScript context that set
+ * it. It used to become a stub carrying only its id, which nothing downstream
+ * could play or name, so the app went on showing its old queue while the car
+ * played another. Dropping it would be worse still: the two queues would be
+ * different lengths, which makes every index after it wrong.
+ */
+export function reconcileQueue(
+  shadow: Shadow,
+  engineTracks: Track[],
+  activeIndex: number
+): Shadow {
+  const known = new Map<string, MediaItem>();
+  for (const item of shadow.queue) {
+    if (item.mediaId != null && !known.has(item.mediaId)) known.set(item.mediaId, item);
+  }
+
+  const queue = engineTracks.map(track => known.get(track.id) ?? toMediaItem(track));
+  // Clamped rather than trusted: an index past the end would make
+  // `getActiveMediaItem` undefined and every caller of it wrong at once.
+  const clamped = queue.length === 0
+    ? 0
+    : Math.min(Math.max(activeIndex, 0), queue.length - 1);
+
+  return { ...shadow, queue, activeIndex: clamped };
+}
+
+/**
+ * Whether the shadow already names the track the engine says just started.
+ *
+ * When it does not, the queue changed under the app — a car selection plays
+ * natively and announces the new queue only after the track has started — and
+ * the backend has to re-read the engine before telling the app, or the app
+ * looks the index up in its old queue and shows another song. An event with
+ * no id cannot be checked and is taken at its index, as before.
+ */
+export function shadowNamesTrack(shadow: Shadow, index: number, id: string | null | undefined): boolean {
+  return !id || shadow.queue[index]?.mediaId === id;
 }
 
 /**
@@ -100,9 +172,28 @@ function engineUri(url: MediaItem['url'] | undefined): string {
 }
 
 /**
- * The app's `MediaItem` as the engine's `Track`.
+ * The subset of `MediaItem` this needs, shared with `BrowseItem` (see
+ * `toBrowseNode` below) so a browse-tree row converts to a wire `Track`
+ * through this exact function rather than a second hand-rolled copy of it —
+ * which is how the browse tree's `playable` track used to lose the
+ * `artworkUri` that the queue's version always carried.
  */
-export function toEngineTrack(item: MediaItem): Track {
+interface EngineTrackInput {
+  mediaId?: string;
+  url: MediaItem['url'];
+  title?: string;
+  artist?: string;
+  albumTitle?: string;
+  artworkUrl?: string;
+  duration?: number;
+  headers?: Record<string, string>;
+  artworkHeaders?: Record<string, string>;
+}
+
+/**
+ * The app's `MediaItem` (or a `BrowseItem` row) as the engine's `Track`.
+ */
+export function toEngineTrack(item: EngineTrackInput): Track {
   const uri = engineUri(item.url);
   return {
     // `mediaId` is optional to rntp and always set by `buildTrackItem`, but the
@@ -151,7 +242,7 @@ export function toMediaItem(track: Track): MediaItem {
  * here rather than changed in the engine, because absolute is the right answer
  * for drawing a buffering bar and this is the one caller that wants otherwise.
  */
-export function toRntpProgress(progress: Progress): {
+export function toPlaybackProgress(progress: Progress): {
   position: number;
   duration: number;
   buffered: number;
@@ -163,4 +254,44 @@ export function toRntpProgress(progress: Progress): {
   };
 }
 
-export type { Shadow };
+/**
+ * One browse row, as the engine wants it.
+ *
+ * A row with a `url` becomes playable; one without becomes a folder and its
+ * children are converted the same way. The app produces both, and which one a
+ * row is cannot be told from its position in the tree — an album row and the
+ * track rows beneath it sit at different depths in different categories.
+ */
+/** `BrowseItem` with `url` narrowed to present, for the one call site above. */
+function toEngineTrackInput(item: BrowseItem, url: string): EngineTrackInput {
+  return {
+    mediaId: item.mediaId,
+    url,
+    title: item.title,
+    artist: item.artist,
+    artworkUrl: item.artworkUrl,
+    duration: item.duration,
+    headers: item.headers,
+    artworkHeaders: item.artworkHeaders,
+  };
+}
+
+export function toBrowseNode(item: BrowseItem): BrowseNode {
+  return {
+    id: item.mediaId,
+    title: item.title,
+    subtitle: item.artist,
+    // The row's own thumbnail — not the same as `playable`'s artwork, since a
+    // folder has one and nothing to play. Neither was sent at all before, so
+    // the car drew titles with no covers. Headers go with it, or a protected
+    // server answers 401 for every one; see `BrowseItem.artworkHeaders`.
+    artworkUri: item.artworkUrl,
+    ...(item.artworkHeaders ? { artworkHeaders: item.artworkHeaders } : {}),
+    children: item.children?.map(toBrowseNode),
+    // Same `toEngineTrack` the queue uses — see `EngineTrackInput` — so a
+    // playable browse row and a queued track agree on every field, artwork
+    // and headers included, instead of the browse tree hand-building a
+    // second, thinner copy of the same conversion.
+    playable: item.url ? toEngineTrack(toEngineTrackInput(item, item.url)) : undefined,
+  };
+}

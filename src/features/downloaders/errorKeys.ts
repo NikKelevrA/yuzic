@@ -1,4 +1,4 @@
-import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice'
+import type { DownloaderId } from '@/state/redux/slices/downloadersSlice'
 
 /**
  * Translation key for a downloader's failure reason. Both downloaders report a

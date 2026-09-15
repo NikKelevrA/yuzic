@@ -1,4 +1,5 @@
-import type { Song } from '@/types'
+import type { Song } from '@/domain/entities/Song'
+import type { LocalId } from '@/domain/identity/LocalId'
 
 /**
  * One song per album, in the order drawn.
@@ -10,15 +11,18 @@ import type { Song } from '@/types'
  * whole matching pool can be a single release.
  *
  * Thinning to one per album makes the row look like the surprise it claims to
- * be. Songs with no album id can't be grouped, so each stands alone.
+ * be. Songs with no album (an empty `album.nativeId`) can't be grouped, so
+ * each stands alone. Grouping itself compares `album.localId` — an equality
+ * check between loaded entities, never the origin id, which two origins
+ * could coincidentally share.
  */
 export function onePerAlbum(songs: readonly Song[]): Song[] {
-  const seen = new Set<string>()
+  const seen = new Set<LocalId>()
   const result: Song[] = []
   for (const song of songs) {
-    if (song.albumId) {
-      if (seen.has(song.albumId)) continue
-      seen.add(song.albumId)
+    if (song.album.nativeId) {
+      if (seen.has(song.album.localId)) continue
+      seen.add(song.album.localId)
     }
     result.push(song)
   }

@@ -1,9 +1,9 @@
+import { hitSlopFor, iconSize, onDark, spacing, stateLayer, typography } from '@/constants/design';
 import React, {
   useCallback,
   useState,
   forwardRef,
   useMemo,
-  useEffect,
 } from 'react';
 import {
   View,
@@ -17,30 +17,26 @@ import {
 } from '@gorhom/bottom-sheet';
 import { X, Search, Plus, Check } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from '@backpackapp-io/react-native-toast';
-import { selectThemeColor } from '@/utils/redux/selectors/settingsSelectors';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { Playlist, PlaylistBase, Song } from '@/types';
-import { QueryKeys } from '@/enums/queryKeys';
+import { notify } from '@/components/toast';
+import { selectThemeColor } from '@/features/settings/appearance/state';
+import type { Playlist } from '@/domain/entities/Playlist';
+import type { Song } from '@/domain/entities/Song';
 import { MediaImage } from './MediaImage';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  usePlaylists,
-  useCreatePlaylist,
-  useAddSongToPlaylist,
-  useRemoveSongFromPlaylist,
-} from '@/hooks/playlists';
+import { usePlaylists } from '@/features/playlist/usePlaylists';
+import { useCreatePlaylist } from '@/features/playlist/useCreatePlaylist';
+import { useAddSongToPlaylist } from '@/features/playlist/useAddSongToPlaylist';
+import { usePlaylistMembership } from '@/features/playlist/usePlaylistMembership';
+import { useRemoveSongFromPlaylist } from '@/features/playlist/useRemoveSongFromPlaylist';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
-import { useIsOffline } from '@/hooks/useIsOffline';
-import { useApi } from '@/api';
-import { staleTime } from '@/constants/staleTime';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
-import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
+import { FAVORITES_ID } from '@/constants/favorites';
+import { canEditPlaylist } from '@/features/entity-actions/registry/playlistActions';
 
 type PlaylistListProps = {
   selectedSong: Song | null;
@@ -56,20 +52,33 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
     const themeColor = useSelector(selectThemeColor);
     const insets = useSafeAreaInsets();
 
-    const api = useApi();
-    const queryClient = useQueryClient();
-    const activeServer = useSelector(selectActiveServer);
-    const { playlists } = usePlaylists();
+    const { playlists: allPlaylists } = usePlaylists();
+    // Favorites is a synthetic playlist backed by starred songs: toggling it
+    // here would call the same star/unstar as the heart button already on the
+    // song, so it's redundant in the add-to-playlist chooser. It stays a
+    // browsable collection in the Library; it just isn't a target you pick.
+    const playlists = useMemo(
+      // FAVORITES_ID is the synthetic playlist's id at the origin, so the
+      // comparison is against nativeId rather than on-device identity. A
+      // playlist this account may not change is no place to add a song to:
+      // another account's public playlist was offered here, and the server
+      // refused the add.
+      () => allPlaylists.filter(p => p.nativeId !== FAVORITES_ID && canEditPlaylist(p)),
+      [allPlaylists]
+    );
     const createPlaylist = useCreatePlaylist();
     const addSongToPlaylist = useAddSongToPlaylist();
     const removeSongFromPlaylist = useRemoveSongFromPlaylist();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [newPlaylistName, setNewPlaylistName] = useState('');
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [baseSelectedIds, setBaseSelectedIds] = useState<Set<string>>(new Set());
     const [isSheetOpen, setIsSheetOpen] = useState(false);
-    const [membershipLoading, setMembershipLoading] = useState(false);
+    const {
+      selectedIds,
+      baseSelectedIds,
+      loading: membershipLoading,
+      toggle: togglePlaylist,
+    } = usePlaylistMembership(selectedSong, playlists, isSheetOpen);
 
     const snapPoints = useMemo(() => ['85%'], []);
 
@@ -81,97 +90,14 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
       [playlists, searchQuery]
     );
 
-    const initialIds = useMemo(() => {
-      if (!selectedSong) return new Set<string>();
-      const selectedSongId = selectedSong.id;
-
-      return new Set(
-        playlists
-          .filter(p => {
-            // Individual playlist cache has full songs (populated when user opens a playlist)
-            const cached = queryClient.getQueryData<Playlist | null>(
-              [QueryKeys.Playlist, activeServer?.id, p.id]
-            );
-            if (cached) return cached.songs.some(s => s.id === selectedSongId);
-            return false;
-          })
-          .map(p => p.id)
-      );
-    }, [playlists, selectedSong, queryClient, activeServer?.id]);
-
-    useEffect(() => {
-      setSelectedIds(new Set(initialIds));
-      setBaseSelectedIds(new Set(initialIds));
-    }, [initialIds]);
-
-    useEffect(() => {
-      if (!isSheetOpen || !selectedSong || !activeServer?.id || !playlists.length) {
-        setMembershipLoading(false);
-        return;
-      }
-
-      let cancelled = false;
-      const selectedSongId = selectedSong.id;
-      setMembershipLoading(true);
-
-      const hydrateMembership = async () => {
-        const results: Playlist[] = [];
-        for (let start = 0; start < playlists.length; start += 3) {
-          const batch = await Promise.all(
-            playlists.slice(start, start + 3).map(playlist =>
-              queryClient.fetchQuery<Playlist>({
-                queryKey: [QueryKeys.Playlist, activeServer.id, playlist.id],
-                queryFn: () => api.playlists.get(playlist.id),
-                staleTime: staleTime.playlists,
-              })
-            )
-          );
-          results.push(...batch);
-        }
-
-        if (cancelled) return;
-        const hydratedIds = new Set<string>();
-        results.forEach((result, index) => {
-          if (result.songs.some(song => song.id === selectedSongId)) {
-            hydratedIds.add(playlists[index].id);
-          }
-        });
-        setSelectedIds(hydratedIds);
-        setBaseSelectedIds(hydratedIds);
-      };
-
-      void hydrateMembership()
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) setMembershipLoading(false);
-        });
-
-      return () => {
-        cancelled = true;
-      };
-    }, [activeServer?.id, api, isSheetOpen, playlists, queryClient, selectedSong]);
-
-    const togglePlaylist = useCallback((id: string) => {
-      if (membershipLoading) return;
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-        return next;
-      });
-    }, [membershipLoading]);
-
-    const renderPlaylistItem = useCallback(({ item }: { item: PlaylistBase }) => {
-      const isChecked = selectedIds.has(item.id);
+    const renderPlaylistItem = useCallback(({ item }: { item: Playlist }) => {
+      const isChecked = selectedIds.has(item.nativeId);
 
       return (
         <Touchable
           style={styles.option}
           disabled={membershipLoading}
-          onPress={() => togglePlaylist(item.id)}
+          onPress={() => togglePlaylist(item.nativeId)}
         >
           <MediaImage
             cover={item.cover ?? { kind: 'none' }}
@@ -199,9 +125,9 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
         setNewPlaylistName('');
       } catch (e) {
         if (e instanceof Error && e.message === 'offline') {
-          toast.error(t('common.offline.notAvailable'));
+          notify.error(t('common.offline.notAvailable'));
         } else {
-          toast.error(t('playlistList.createFailed'));
+          notify.error(t('playlistList.createFailed'));
         }
       }
     };
@@ -212,18 +138,18 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
 
       const mutations: Promise<unknown>[] = [];
       for (const playlist of playlists) {
-        const wasIn = baseSelectedIds.has(playlist.id);
-        const isIn = selectedIds.has(playlist.id);
+        const wasIn = baseSelectedIds.has(playlist.nativeId);
+        const isIn = selectedIds.has(playlist.nativeId);
 
         if (isIn && !wasIn) {
           mutations.push(addSongToPlaylist.mutateAsync({
-            playlistId: playlist.id,
+            playlistId: playlist.nativeId,
             song: selectedSong,
           }));
         } else if (!isIn && wasIn) {
           mutations.push(removeSongFromPlaylist.mutateAsync({
-            playlistId: playlist.id,
-            songId: selectedSong.id,
+            playlistId: playlist.nativeId,
+            songId: selectedSong.nativeId,
           }));
         }
       }
@@ -232,9 +158,9 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
       const failed = results.filter(r => r.status === 'rejected').length;
 
       if (failed > 0) {
-        toast.error(t('playlistList.updateFailed'));
+        notify.error(t('playlistList.updateFailed'));
       } else {
-        toast.success(t(wasOffline ? 'playlistList.updatedOffline' : 'playlistList.updated'));
+        notify.success(t(wasOffline ? 'playlistList.updatedOffline' : 'playlistList.updated'));
         onClose();
       }
     };
@@ -307,7 +233,7 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
 
           <BottomSheetFlatList
             data={filteredPlaylists}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.localId}
             contentContainerStyle={{ paddingBottom: spacing.scrollClearance }}
             extraData={selectedIds}
             renderItem={renderPlaylistItem}
@@ -330,7 +256,7 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
             onPress={handleDone}
           >
             {membershipLoading ? (
-              <SpinningLoaderCircle size={iconSize.row} color="#fff" />
+              <SpinningLoaderCircle size={iconSize.row} color={onDark.text} />
             ) : (
               <Text style={styles.doneButtonText}>{t('common.done')}</Text>
             )}
@@ -415,10 +341,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   doneButtonDisabled: {
-    opacity: 0.7,
+    opacity: stateLayer.secondaryContentOpacity,
   },
   doneButtonText: {
     ...typography.rowTitle,
-    color: '#fff',
+    color: onDark.text,
   },
 });

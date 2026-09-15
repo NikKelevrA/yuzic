@@ -4,8 +4,25 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { ALL_DOWNLOADERS, useDownloaderStates } from './registry';
-import downloadersReducer from '@/utils/redux/slices/downloadersSlice';
-import serversReducer from '@/utils/redux/slices/serversSlice';
+import downloadersReducer from '@/state/redux/slices/downloadersSlice';
+import serversReducer from '@/state/redux/slices/serversSlice';
+import * as lidarr from '@/providers/integration/lidarr';
+import * as slskd from '@/providers/integration/slskd';
+import * as soulsync from '@/providers/integration/soulsync';
+
+jest.mock('@/providers/integration/lidarr', () => ({
+  ...jest.requireActual('@/providers/integration/lidarr'),
+  testConnection: jest.fn(),
+}));
+jest.mock('@/providers/integration/slskd', () => ({
+  ...jest.requireActual('@/providers/integration/slskd'),
+  testConnection: jest.fn(),
+}));
+jest.mock('@/providers/integration/soulsync', () => ({
+  ...jest.requireActual('@/providers/integration/soulsync'),
+  testConnection: jest.fn(),
+}));
+
 
 /**
  * The identity of this hook's result is load-bearing: DownloadersQueueProvider
@@ -72,11 +89,51 @@ describe('downloader units', () => {
   it('gives every downloader at least one unit and a way to read its queue', () => {
     for (const def of ALL_DOWNLOADERS) {
       expect(Boolean(def.downloadAlbum || def.downloadTrack)).toBe(true);
-      expect(typeof def.fetchQueueWithDiff).toBe('function');
+      expect(typeof def.fetchQueue).toBe('function');
       // The success toast is looked up by these keys, so a downloader that
       // handles a unit has to name the string for it.
       if (def.downloadAlbum) expect(def.albumAddedKey).toBeTruthy();
       if (def.downloadTrack) expect(def.trackAddedKey).toBeTruthy();
     }
+  });
+});
+
+/**
+ * Each downloader authenticates the same
+ * way (an apiKey tier), wires `testConnection` to its existing per-provider
+ * function, and declares an `acquisition.*` slot for exactly the units it
+ * implements above. `fetchQueue` stays downloader-operational and is
+ * deliberately absent from `slots` — it isn't a product capability.
+ */
+describe('downloaders as providers', () => {
+  const by = (id: string) => ALL_DOWNLOADERS.find(d => d.id === id)!;
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('declares apiKey auth for every downloader', () => {
+    for (const def of ALL_DOWNLOADERS) {
+      expect(def.auth.tier).toBe('apiKey');
+      expect(def.auth.configKeys).toEqual(expect.arrayContaining(['serverUrl', 'apiKey']));
+    }
+  });
+
+  const config = { serverUrl: 'http://example.test', apiKey: 'key' };
+
+  it('maps lidarr testConnection (boolean) to Health', async () => {
+    (lidarr.testConnection as jest.Mock).mockResolvedValue(true);
+    await expect(by('lidarr').testConnection(config)).resolves.toEqual({ ok: true });
+    expect(lidarr.testConnection).toHaveBeenCalledWith({ serverUrl: config.serverUrl, apiKey: config.apiKey });
+  });
+
+  it('maps slskd testConnection (boolean) to Health', async () => {
+    (slskd.testConnection as jest.Mock).mockResolvedValue(true);
+    await expect(by('slskd').testConnection(config)).resolves.toEqual({ ok: true });
+  });
+
+  it('maps soulsync testConnection (boolean) to Health', async () => {
+    (soulsync.testConnection as jest.Mock).mockResolvedValue(false);
+    await expect(by('soulsync').testConnection(config)).resolves.toEqual({ ok: false });
   });
 });

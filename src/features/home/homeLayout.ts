@@ -1,4 +1,38 @@
-import type { SectionConfig } from './hooks/useDailyLayout'
+/**
+ * What a Home shelf is, before anything decides whether to show it.
+ *
+ * Declared here, with the builders that produce them, rather than in the hook
+ * that consumes them: the hook imported the builders and the builders imported
+ * this type back, which was the app's last import cycle. A type describing the
+ * output of these functions belongs beside them.
+ */
+type SectionType =
+  | 'quickPicks'
+  | 'recentlyPlayed'
+  | 'continuePlaying'
+  | 'recentlyAdded'
+  | 'becauseYouListened'
+  | 'topArtists'
+  | 'mostPlayed'
+  | 'charts'
+  | 'genre'
+  | 'serverRandom'
+  | 'serverNowPlaying'
+  | 'localMix'
+  | 'lbSimilarArtistsForYou'
+  | 'lbCreatedFor'
+
+export type SectionConfig = {
+  key: string
+  type: SectionType
+  artistName?: string
+  /** lbSimilarArtistsForYou only — seeds to try in order, `artistName` first. */
+  artistNames?: string[]
+  genre?: string
+  /** lbCreatedFor only — which of the three periodic mixes this shelf is. */
+  mixType?: 'daily-jams' | 'weekly-jams' | 'weekly-exploration'
+}
+
 
 /**
  * Which tier each home section belongs to.
@@ -10,8 +44,19 @@ import type { SectionConfig } from './hooks/useDailyLayout'
  * an order of importance; the sections themselves are unchanged.
  */
 
-/** What you were doing. Highest confidence, so it comes first and unlabelled —
- * it is the default context rather than a category. */
+export function customizeHomeSections(
+  sections: SectionConfig[],
+  visibility: Record<string, boolean>,
+  order: string[]
+): SectionConfig[] {
+  const byKey = new Map(sections.map(section => [section.key, section]))
+  const orderedKeys = [...order, ...sections.map(section => section.key).filter(key => !order.includes(key))]
+  return orderedKeys
+    .map(key => byKey.get(key))
+    .filter((section): section is SectionConfig => section !== undefined && visibility[section.key] !== false)
+}
+
+
 export function buildResumeSections(): SectionConfig[] {
   return [
     { key: 'quickPicks', type: 'quickPicks' },
@@ -45,16 +90,26 @@ export function buildLibrarySections(hasLibrary: boolean): SectionConfig[] {
   ]
 }
 
-/**
- * Music you don't own yet. Sits last behind its own source header, and is
- * absent offline — every section here needs the network.
- */
-export function buildDiscoverySections(options: {
+/** What the library offers an outside tier to seed its shelves from. */
+export type HomeShelfSeeds = {
   isOffline: boolean
   hasLibrary: boolean
   becauseSeeds: string[]
+  /**
+   * Seeds for the listeners' similar-artists shelf, in the order to try them.
+   * ListenBrainz knows nothing about plenty of smaller artists, so one seed
+   * left that shelf empty for whole libraries; the shelf moves down this list
+   * until one has listeners.
+   */
+  similarSeeds: string[]
   topGenres: string[]
-}): SectionConfig[] {
+}
+
+/**
+ * Music from a catalogue you don't own yet. Sits last behind its own source
+ * header, and is absent offline — every section here needs the network.
+ */
+export function buildCatalogueSections(options: HomeShelfSeeds): SectionConfig[] {
   if (options.isOffline) return []
 
   const pool: SectionConfig[] = [
@@ -74,4 +129,30 @@ export function buildDiscoverySections(options: {
   }
 
   return pool
+}
+
+/**
+ * What listeners play. Similar artists are seeded from the library — the
+ * seed's MBID comes from the server where it carries one and from MusicBrainz
+ * where it doesn't. The made-for-you mixes are the account's own, so they wait
+ * on nothing but the network; each shelf withholds itself without an account
+ * or a matching mix.
+ */
+export function buildListenerSections(options: HomeShelfSeeds): SectionConfig[] {
+  if (options.isOffline) return []
+  const sections: SectionConfig[] = []
+  if (options.hasLibrary && options.similarSeeds.length > 0) {
+    sections.push({
+      key: 'lbSimilarArtistsForYou',
+      type: 'lbSimilarArtistsForYou',
+      artistName: options.similarSeeds[0],
+      artistNames: options.similarSeeds,
+    })
+  }
+  sections.push(
+    { key: 'lbCreatedForDailyJams', type: 'lbCreatedFor', mixType: 'daily-jams' },
+    { key: 'lbCreatedForWeeklyJams', type: 'lbCreatedFor', mixType: 'weekly-jams' },
+    { key: 'lbCreatedForWeeklyExploration', type: 'lbCreatedFor', mixType: 'weekly-exploration' },
+  )
+  return sections
 }

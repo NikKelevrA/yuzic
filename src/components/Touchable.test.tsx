@@ -5,7 +5,7 @@ import { render, fireEvent, screen } from '@testing-library/react-native'
 import Touchable, { dimsOnPress, rippleFor } from './Touchable'
 import { stateLayer } from '@/constants/design'
 
-jest.mock('@/hooks/useTheme', () => ({
+jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ isDarkMode: true, colors: {} }),
 }))
 

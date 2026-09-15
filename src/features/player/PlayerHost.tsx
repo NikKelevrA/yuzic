@@ -1,3 +1,4 @@
+import { motion, onDark, radius } from '@/constants/design';
 import React, { useCallback, useEffect, useState } from 'react';
 import { BackHandler, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -10,26 +11,24 @@ import Animated, {
 import ImageColors from 'react-native-image-colors';
 import { useSelector } from 'react-redux';
 
-import { createAccentCache, pickAccent, toWashAccent } from '@/features/theme/coverAccent';
-import { PLAYING_GRADIENT_CACHE_MAX } from '@/constants/features';
-import { usePlayingState } from '@/contexts/PlayingContext';
+import { ACCENT_CACHE_MAX, createAccentCache, pickAccent, toWashAccent } from '@/features/theme/coverAccent';
+import { usePlayingState } from '@/features/playback/PlayingContext';
 import { MediaImage } from '@/components/MediaImage';
-import { buildCover } from '@/utils/builders/buildCover';
-import { selectCoverAccentEnabled } from '@/utils/redux/selectors/settingsSelectors';
-import PlayingScreen from '@/screens/playing';
-import PlayingBackground from '@/screens/playing/components/PlayingBackground';
-import { radius } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { buildCover } from '@/providers/registry/covers';
+import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
+import PlayingScreen from '@/features/player/PlayingScreen';
+import PlayingBackground from '@/features/player/components/PlayingBackground';
+import { useRadius } from '@/features/theme/useRadius';
 
-import { coverSlideOffset } from '@/screens/playing/coverTransition';
+import { coverSlideOffset } from '@/features/player/coverTransition';
 
 import { coverHandedOver, usePlayerExpansion } from './PlayerExpansion';
 
-const gradientCache = createAccentCache<[string, string]>(PLAYING_GRADIENT_CACHE_MAX);
+const gradientCache = createAccentCache<[string, string]>(ACCENT_CACHE_MAX);
 
 /** What the player fades to with no accent to show — extraction failed, or the
  *  user turned cover tinting off. */
-const NEUTRAL_GRADIENT: [string, string] = ['#121212', '#000'];
+const NEUTRAL_GRADIENT: [string, string] = ['#121212', onDark.background];
 
 /**
  * The full-screen player, and the cover art that travels between it and the
@@ -57,8 +56,8 @@ export default function PlayerHost() {
   const coverAccentEnabled = useSelector(selectCoverAccentEnabled);
   const rad = useRadius();
 
-  const [currentGradient, setCurrentGradient] = useState<[string, string]>(['#000', '#000']);
-  const [nextGradient, setNextGradient] = useState<[string, string]>(['#000', '#000']);
+  const [currentGradient, setCurrentGradient] = useState<[string, string]>([onDark.background, onDark.background]);
+  const [nextGradient, setNextGradient] = useState<[string, string]>([onDark.background, onDark.background]);
 
   // A queue command changes React state asynchronously. Keep the old artwork
   // on screen while it leaves, then place the replacement beyond the opposite
@@ -67,18 +66,18 @@ export default function PlayerHost() {
   useEffect(() => {
     if (
       !coverSlide || coverSlide.phase !== 'exiting' ||
-      !currentSong?.id || currentSong.id === coverSlide.outgoingSongId
+      !currentSong?.localId || currentSong.localId === coverSlide.outgoingSongId
     ) return;
 
     coverSwipeX.value = coverSlideOffset(coverSlide.direction, 'entering', width);
-    enterCoverSlide(currentSong.id);
+    enterCoverSlide(currentSong.localId);
     const frame = requestAnimationFrame(() => {
-      coverSwipeX.value = withTiming(0, { duration: 220 }, finished => {
+      coverSwipeX.value = withTiming(0, { duration: motion.swipe }, finished => {
         if (finished) runOnJS(finishCoverSlide)();
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [coverSlide, coverSwipeX, currentSong?.id, enterCoverSlide, finishCoverSlide, width]);
+  }, [coverSlide, coverSwipeX, currentSong?.localId, enterCoverSlide, finishCoverSlide, width]);
 
   const extractColors = useCallback(async (uri: string) => {
     const cached = gradientCache.get(uri);
@@ -88,7 +87,7 @@ export default function PlayerHost() {
     }
     try {
       const result = await ImageColors.getColors(uri, { fallback: '#121212' });
-      const gradient: [string, string] = [toWashAccent(pickAccent(result, '#121212')), '#000'];
+      const gradient: [string, string] = [toWashAccent(pickAccent(result, '#121212')), onDark.background];
       gradientCache.set(uri, gradient);
       setNextGradient(gradient);
     } catch {
@@ -117,7 +116,7 @@ export default function PlayerHost() {
       buildCover(currentSong.cover, 'grid') ??
       buildCover({ kind: 'none' }, 'grid');
     if (uri) extractColors(uri);
-  }, [coverAccentEnabled, currentSong?.cover, currentSong?.id, extractColors]);
+  }, [coverAccentEnabled, currentSong?.cover, currentSong?.localId, extractColors]);
 
   const handleFadeComplete = useCallback(() => {
     setCurrentGradient(nextGradient);

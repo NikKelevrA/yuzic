@@ -2,10 +2,10 @@ import React, { ReactNode, useState } from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 
 type Props = {
   icon: ReactNode;
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.tight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.tight,
   },

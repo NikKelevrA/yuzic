@@ -1,0 +1,71 @@
+import { useCallback, useRef } from 'react';
+import { useSelector } from 'react-redux';
+
+import { useApi } from '@/providers/registry/useApi';
+import type { PlayableResource } from '@/features/playback/playableResource';
+import { selectQueueSyncEnabled } from '@/features/settings/playback/state';
+
+/**
+ * Subsonic servers store one play queue per user; saving it here means opening
+ * yuzic on another device (or reinstalling) can resume where the last session
+ * left off. Only real library songs go up — radio and podcast entries synthesize
+ * their id namespace and would be unresolvable when someone else's client
+ * asked for them by id.
+ */
+
+// The queue changes on every track advance; saving on every change would flood
+// the server on a long shuffle. This is the minimum gap between two saves.
+const SAVE_MIN_INTERVAL_MS = 15_000;
+
+function isServerAddressable(resource: PlayableResource): boolean {
+  return resource.song.contentKind === 'song' && !!resource.song.nativeId;
+}
+
+export function useQueueSync() {
+  const api = useApi();
+  const enabled = useSelector(selectQueueSyncEnabled);
+  const supported = Boolean(api.queue) && enabled;
+
+  const lastSavedAtRef = useRef(0);
+  const lastSignatureRef = useRef<string>('');
+  const inFlightRef = useRef(false);
+
+  const save = useCallback(
+    async (queue: PlayableResource[], currentSongId: string | undefined, positionMs: number) => {
+      if (!supported || !api.queue || inFlightRef.current) return;
+
+      // Sent to the server's own queue endpoint, so this is `nativeId` — the
+      // id the server itself understands — not the branded `localId` the app
+      // uses to key its own queue.
+      const ids = queue.filter(isServerAddressable).map((r) => r.song.nativeId);
+      if (!ids.length) return;
+
+      // Nothing changed since the last successful save — the position update
+      // alone is worth going through, but let the periodic tick handle it.
+      const signature = `${currentSongId ?? ''}|${ids.join(',')}`;
+      const sameQueueAsBefore = signature === lastSignatureRef.current;
+
+      const now = Date.now();
+      if (sameQueueAsBefore && now - lastSavedAtRef.current < SAVE_MIN_INTERVAL_MS) return;
+
+      inFlightRef.current = true;
+      try {
+        await api.queue.save({
+          songIds: ids,
+          currentSongId: currentSongId && ids.includes(currentSongId) ? currentSongId : ids[0],
+          positionMs: Math.max(0, Math.floor(positionMs)),
+        });
+        lastSavedAtRef.current = now;
+        lastSignatureRef.current = signature;
+      } catch {
+        // Cross-device queue is best-effort; a failed save just means the
+        // other device might not see this session's queue immediately.
+      } finally {
+        inFlightRef.current = false;
+      }
+    },
+    [api.queue, supported]
+  );
+
+  return { supported, save };
+}

@@ -7,11 +7,11 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { MediaImage } from '@/components/MediaImage';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { controlSize, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
-import { useListDensity } from '@/hooks/useListDensity';
-import type { CoverSource } from '@/types';
+import { useRadius } from '@/features/theme/useRadius';
+import { useListDensity } from '@/features/theme/useListDensity';
+import type { CoverSource } from '@/domain/entities/Cover';
 import Touchable from '@/components/Touchable';
 
 type Props = {

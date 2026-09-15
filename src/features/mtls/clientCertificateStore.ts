@@ -16,7 +16,7 @@ import * as SecureStore from 'expo-secure-store';
  */
 
 /** What is handed to the native layer to authenticate with. */
-export interface StoredClientCertificate {
+interface StoredClientCertificate {
   /** The PKCS#12 file, base64'd — the form the bridge takes. */
   pkcs12Base64: string;
   /** Decrypts the blob. Not a credential to check; without it the file is inert. */

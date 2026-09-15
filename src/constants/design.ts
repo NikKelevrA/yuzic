@@ -1,5 +1,3 @@
-import { PixelRatio } from 'react-native';
-
 /**
  * The spacing scale.
  *
@@ -37,6 +35,20 @@ export const spacing = {
   headerOffset: 60,
 } as const;
 
+export const motion = {
+  pressIn: 80, pressOut: 150, quick: 140, titleFade: 180, favorite: 200,
+  swipe: 220, contentFade: 240, modeChange: 300, washArrival: 450,
+  indeterminate: 900, progress: 1000, backgroundArrival: 1200,
+  easing: { linear: 'linear', standard: 'cubic' },
+} as const;
+
+export const shadow = {
+  toast: { shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
+  primaryButton: { shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 5 }, elevation: 5 },
+  selectedSwatch: { shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 3 },
+  none: { shadowOpacity: 0, elevation: 0 },
+} as const;
+
 export const statusColor = {
   favorite: '#ff3b30',
   destructive: '#ff3b30',
@@ -46,6 +58,13 @@ export const statusColor = {
    *  that would look shouty in the pure iOS orange. */
   warningText: '#f59e0b',
   downloading: '#007AFF',
+  errorText: '#e57373',
+} as const;
+
+export const fixedColor = {
+  onboardingBlue: '#1f6feb',
+  onboardingWarningSurface: '#1c1400',
+  onboardingWarningBorder: '#78450a',
 } as const;
 
 /**
@@ -59,6 +78,7 @@ export const sourceColor = {
   lastfm: '#D51007',
   listenbrainz: '#EB743B',
   musicbrainz: '#BA478F',
+  audiomuse: '#7C3AED',
 } as const;
 
 /**
@@ -101,6 +121,9 @@ export const stateLayer = {
   rippleDark: 'rgba(255, 255, 255, 0.12)',
   rippleLight: 'rgba(0, 0, 0, 0.10)',
   pressedOpacity: 0.6,
+  disabledTextOpacity: 0.35, disabledOpacity: 0.4, inactiveOpacity: 0.45,
+  mutedOpacity: 0.5, secondaryOpacity: 0.55, secondaryContentOpacity: 0.7,
+  selectedOpacity: 0.9, decorativeOpacity: 0.07, subtleOpacity: 0.08,
 } as const;
 
 /**
@@ -147,7 +170,7 @@ export const radius = {
  *  circular button reads as a bug when it squares up under `sharp`. `sharp`
  *  is a softly-rounded square rather than a razor corner — the razor version
  *  had no real use, and cards under it looked broken. */
-export const RADIUS_MULTIPLIER: Record<RadiusPreset, number> = {
+const RADIUS_MULTIPLIER: Record<RadiusPreset, number> = {
   sharp: 0.35,
   default: 1,
   rounded: 1.75,
@@ -164,106 +187,8 @@ export function scaleRadius(base: number, preset: RadiusPreset): number {
   return preset === 'sharp' ? Math.max(scaled, 1) : scaled;
 }
 
-/**
- * The type scale: 14 roles, each chosen by naming what the text is so the same
- * decision comes out the same way twice. Literal `fontSize` was up to thirteen
- * distinct values across the app, including 13, 14 and 15 all doing the job of
- * "small"; and the scale itself had drift too (a `detailTitle` byte-for-byte
- * identical to `screenTitle`, and a `compactRowSubtitle` identical to `caption`,
- * both since collapsed).
- *
- * Weight ladder is 400 / 500 / 600 — hero and display sit at 600 so the whole
- * app has one bold weight instead of a lonely 700 at the top.
- *
- * Adding a role is fine. Adding one that differs from an existing role only in
- * size is how the drift starts again.
- */
-const TYPE_SCALE = {
-  hero: { fontSize: 48, lineHeight: 52, fontWeight: '600' as const },
-  display: { fontSize: 28, lineHeight: 34, fontWeight: '600' as const },
-  screenTitle: { fontSize: 24, lineHeight: 30, fontWeight: '600' as const },
-  sectionTitle: { fontSize: 20, lineHeight: 25, fontWeight: '600' as const },
-  navigationTitle: { fontSize: 18, lineHeight: 22, fontWeight: '600' as const },
-  sheetTitle: { fontSize: 16, lineHeight: 20, fontWeight: '600' as const },
-  rowTitle: { fontSize: 16, lineHeight: 20, fontWeight: '500' as const },
-  body: { fontSize: 16, lineHeight: 21 },
-  button: { fontSize: 15, lineHeight: 20, fontWeight: '600' as const },
-  compactRowTitle: { fontSize: 15, lineHeight: 19, fontWeight: '500' as const },
-  label: { fontSize: 14, lineHeight: 18, fontWeight: '600' as const },
-  rowSubtitle: { fontSize: 14, lineHeight: 18 },
-  caption: { fontSize: 13, lineHeight: 17 },
-  micro: { fontSize: 11, lineHeight: 14 },
-} as const;
-
-/**
- * The same scale with its leading grown to match the user's text size.
- *
- * React Native scales `fontSize` by the system text size and leaves
- * `lineHeight` exactly where it was written. At the default size that is
- * invisible; at the accessibility sizes a 20pt role renders at 60pt inside a
- * 25pt line box, and every title, subtitle and timestamp in the app is sliced
- * off top and bottom. The now-playing screen was unreadable — the song title
- * and both timestamps were fragments of glyphs.
- *
- * So the leading is scaled here by the same factor the platform is about to
- * apply to the size, which keeps the ratio each role was drawn with. It reads
- * the scale once, at module load: a role is a static style object, spread into
- * `StyleSheet.create` at import time, and the alternative is a hook at every
- * one of several hundred call sites. iOS and Android both restart the JS
- * context when the system text size changes, so this is re-read in practice.
- */
-export function withScaledLeading<T extends Record<string, { lineHeight: number }>>(
-  scale: T,
-  fontScale: number
-): T {
-  return Object.fromEntries(
-    Object.entries(scale).map(([role, style]) => [
-      role,
-      { ...style, lineHeight: Math.round(style.lineHeight * fontScale) },
-    ])
-  ) as T;
-}
-
-const SYSTEM_FONT_SCALE = PixelRatio.getFontScale();
-
-export const typography = withScaledLeading(TYPE_SCALE, SYSTEM_FONT_SCALE);
-
-/**
- * How far text inside a fixed-height control may grow.
- *
- * Most of the app should scale all the way — a list, a screen, a sheet all
- * have room to get taller. A few surfaces do not: the playing bar is a strip
- * of a set height that the dock is built around, and an avatar is a circle
- * with one letter in it. Left uncapped those grow until the bar owns half the
- * screen and the letter spills out of its disc.
- *
- * `maxFontSizeMultiplier` is the per-`Text` ceiling for exactly this. It is a
- * ceiling, not an opt-out: `allowFontScaling={false}` ignores the setting
- * outright, which is why the two places still doing that were changed to this.
- */
-export const fontScaleCap = {
-  /** Text laid into a control whose height is structural. */
-  control: 1.3,
-  /** A single glyph inside a disc — an avatar initial, a track number. */
-  glyph: 1.15,
-} as const;
-
-/**
- * The scale again, for text that carries a `maxFontSizeMultiplier`.
- *
- * `maxFontSizeMultiplier` caps the rendered size and nothing else, so a role
- * whose leading was grown by the full system scale ends up as a 1.3x line of
- * text sitting in a 3x line box — the playing bar stopped clipping and started
- * being half the screen tall instead. Leading has to stop where the size does,
- * so a capped role reads its lineHeight from the same capped factor.
- *
- * Always used with the matching cap on the `Text` itself; one without the
- * other is the mismatch this exists to close.
- */
-export const cappedTypography = {
-  control: withScaledLeading(TYPE_SCALE, Math.min(SYSTEM_FONT_SCALE, fontScaleCap.control)),
-  glyph: withScaledLeading(TYPE_SCALE, Math.min(SYSTEM_FONT_SCALE, fontScaleCap.glyph)),
-} as const;
+/** The type scale lives in its own module; re-exported here so every style keeps one import. */
+export { cappedTypography, fontScaleCap, typography, withScaledLeading } from './typography';
 
 export const controlSize = {
   /**
@@ -349,6 +274,8 @@ export const iconSize = {
   large: 28,
   /** The player's skip buttons, either side of the 68pt play button. */
   transport: 34,
+  /** A server type's logo or glyph on the connect and server-list screens. */
+  providerLogo: 36,
   /** The glyph an empty state is built around. */
   emptyState: 40,
   /** Oversized and faded, as texture rather than as an icon — the moon behind
@@ -453,4 +380,7 @@ export type SemanticThemeColors = {
   destructiveOnSurface: string;
   /** Warning-toned foreground for inline text like unsaved-changes hints. */
   warningText: string;
+  /** Elevated surface for floating transient UI (toasts) that must read as
+   *  distinct from the playing bar / tab bar, which both use `card`. */
+  toastSurface: string;
 };

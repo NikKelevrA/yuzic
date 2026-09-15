@@ -1,0 +1,8 @@
+{
+  "//": "ts-prune bundles TypeScript 4.5, which does not know expo's `module: preserve` / `moduleResolution: bundler`. It silently falls back to classic resolution, where an `@/` import of a directory never reaches its index file — so everything exported only through one reads as unused. These two options are the only difference from the app's tsconfig.",
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "node"
+  }
+}

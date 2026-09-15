@@ -1,14 +1,14 @@
+import { iconSize, radius, spacing, stateLayer, typography } from '@/constants/design';
 import React from 'react';
-import { iconSize, radius, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
 import {
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { MediaImage } from '@/components/MediaImage';
-import { useTheme } from '@/hooks/useTheme';
-import type { CoverSource } from '@/types';
+import { useTheme } from '@/features/theme/useTheme';
+import type { CoverSource } from '@/domain/entities/Cover';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 
@@ -55,6 +55,7 @@ type RowProps = {
   loading?: boolean;
   labelColor?: string;
   trailing?: React.ReactNode;
+  testID?: string;
 };
 
 export function OptionSheetRow({
@@ -68,12 +69,14 @@ export function OptionSheetRow({
   loading,
   labelColor,
   trailing,
+  testID,
 }: RowProps) {
   const { colors } = useTheme();
   const leading = loading ? <SpinningLoaderCircle size={iconSize.row} color={colors.subtext} /> : icon;
 
   return (
     <Touchable
+      testID={testID}
       style={[styles.option, dimRow && styles.optionDimmed]}
       onPress={onPress}
       disabled={disabled || !onPress}
@@ -215,7 +218,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   optionDimmed: {
-    opacity: 0.55,
+    opacity: stateLayer.secondaryOpacity,
   },
   optionBody: {
     flex: 1,
@@ -226,7 +229,7 @@ const styles = StyleSheet.create({
   },
   optionText: { ...typography.rowTitle },
   optionTextDimmed: {
-    opacity: 0.6,
+    opacity: stateLayer.pressedOpacity,
   },
   optionDescription: {
     ...typography.caption,

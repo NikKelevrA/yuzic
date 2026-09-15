@@ -1,0 +1,164 @@
+import type { AudioQuality } from '@/domain/playback/AudioFormat';
+import { qualityToStreamParams } from '@/providers/server/streamQuality';
+import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
+import { serverProvenance, type Provenance } from '@/domain/identity/Provenance';
+import { MediaBrowserBrand } from './brand';
+import { mediaBrowserClientHeader } from './clientHeader';
+import { serverFetch } from '@/features/mtls/serverFetch';
+import { MediaBrowserRequestError } from './requestError';
+
+
+export interface MediaBrowserClientConfig {
+  /** Primary server URL. Used verbatim when no serverId/fallbackUrls given. */
+  serverUrl: string;
+  /** Server identity, needed to cache the last-known-good URL across requests. */
+  serverId?: string;
+  /** Extra URLs the failover layer tries after `serverUrl` (issue #115). */
+  fallbackUrls?: string[];
+  token: string;
+  userId: string;
+  parentId?: string;
+  basicAuth?: { username: string; password?: string };
+}
+
+export type MediaBrowserClient = ReturnType<typeof createMediaBrowserClient>;
+
+/**
+ * `Provenance`, derived from `client.serverId` at the point every endpoint
+ * already has a client in hand — the one place this adapter builds it, so
+ * every mapper call in the folder gets the same record for the same server.
+ *
+ * A missing `serverId` here is not a data case a server can send: every real
+ * adapter is constructed from `Server.id`, which is required. Inventing a
+ * placeholder scope would silently merge that client's entities under one
+ * shared bucket of `LocalId`s, which corrupts identity on-device far worse
+ * than a thrown error during development.
+ */
+export function requireProvenance(client: Pick<MediaBrowserClient, 'serverId'>): Provenance {
+  if (!client.serverId) {
+    throw new Error(
+      'MediaBrowser client has no serverId — cannot derive entity identity. ' +
+      'This is a programming error: every adapter is constructed from Server.id.'
+    );
+  }
+  return serverProvenance(client.serverId);
+}
+
+export function createMediaBrowserClient(config: MediaBrowserClientConfig, brand: MediaBrowserBrand) {
+  const { serverUrl, serverId, fallbackUrls, token, userId, parentId, basicAuth } = config;
+  const baseUrl = serverUrl.replace(/\/$/, "");
+  const failoverHint = serverId
+    ? { id: serverId, serverUrl: baseUrl, fallbackUrls }
+    : null;
+  const proxyHeader: Record<string, string> = basicAuth
+    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) }
+    : {};
+
+  const defaultHeaders: Record<string, string> = {
+    "X-Emby-Token": token,
+    "X-Emby-Authorization": `${mediaBrowserClientHeader()}, Token="${token}"`,
+    ...proxyHeader,
+  };
+
+  const tokenOnlyHeaders: Record<string, string> = {
+    "X-Emby-Token": token,
+    ...proxyHeader,
+  };
+
+  async function callOne(url: string, path: string, headers: Record<string, string>, fetchOptions: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    try {
+      return await serverFetch(`${url}${path}`, {
+        ...fetchOptions,
+        headers,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function withFailover<T>(attempt: (url: string) => Promise<T>): Promise<T> {
+    return failoverHint
+      ? tryWithFailover(failoverHint, attempt)
+      : attempt(baseUrl);
+  }
+
+  async function request<T>(
+    path: string,
+    options: RequestInit & { tokenOnly?: boolean } = {}
+  ): Promise<T> {
+    const { tokenOnly, ...fetchOptions } = options;
+    const headers = {
+      ...(tokenOnly ? tokenOnlyHeaders : defaultHeaders),
+      ...((fetchOptions.headers as Record<string, string>) ?? {}),
+    };
+    return withFailover(async (url) => {
+      const res = await callOne(url, path, headers, fetchOptions);
+      if (!res.ok) {
+        throw new MediaBrowserRequestError(brand.label, res.status, await res.text());
+      }
+      if (res.status === 204 || res.headers.get("content-length") === "0") {
+        return {} as T;
+      }
+      return res.json();
+    });
+  }
+
+  async function requestText(
+    path: string,
+    options: RequestInit & { tokenOnly?: boolean } = {}
+  ): Promise<string> {
+    const { tokenOnly, ...fetchOptions } = options;
+    const headers = {
+      ...(tokenOnly ? tokenOnlyHeaders : defaultHeaders),
+      ...((fetchOptions.headers as Record<string, string>) ?? {}),
+    };
+    return withFailover(async (url) => {
+      const res = await callOne(url, path, headers, fetchOptions);
+      if (!res.ok) {
+        throw new Error(`${brand.label} API error (${res.status})`);
+      }
+      return res.text();
+    });
+  }
+
+  function buildStreamUrl(songId: string, quality: AudioQuality = 'high', codec: 'mp3' | 'opus' = 'mp3'): string {
+    // Streams pick up whichever URL failover has most recently confirmed alive:
+    // a metadata request that just fell over to the fallback also moves the
+    // stream URL onto that same address for the next `getPlayableUrl` call.
+    const streamBaseUrl = failoverHint ? orderedUrls(failoverHint)[0] ?? baseUrl : baseUrl;
+    const { format, maxBitRate } = qualityToStreamParams(quality);
+    if (format === 'raw') {
+      return `${streamBaseUrl}/Audio/${songId}/stream?Static=true&${brand.streamTokenParam}=${token}`;
+    }
+    const bitrate = (maxBitRate ?? 320) * 1000;
+    const ext = codec === 'opus' ? 'opus' : 'mp3';
+    return `${streamBaseUrl}/Audio/${songId}/stream.${ext}?AudioCodec=${codec}&MaxStreamingBitrate=${bitrate}&${brand.streamTokenParam}=${token}`;
+  }
+
+  function buildAvatarUrl(): string {
+    const base = failoverHint ? orderedUrls(failoverHint)[0] ?? baseUrl : baseUrl;
+    // The React Native Image loader cannot send the request headers used by
+    // API calls. Carry the same brand-specific token that stream URLs use.
+    // Without it, authenticated Jellyfin/Emby installations reject this image
+    // even though the account request that produced the client succeeded.
+    const params = new URLSearchParams({ [brand.streamTokenParam]: token });
+    return `${base}/Users/${userId}/Images/Primary?${params}`;
+  }
+
+  return {
+    request,
+    requestText,
+    serverUrl: baseUrl,
+    /** Server identity used to build a stable `LocalId` for entities this client fetches. */
+    serverId,
+    token,
+    userId,
+    parentId,
+    buildStreamUrl,
+    buildAvatarUrl,
+    brand,
+  };
+}

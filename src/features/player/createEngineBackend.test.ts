@@ -18,6 +18,8 @@ const mockCalls: { name: string; args: unknown[] }[] = [];
 let mockListener: ((event: unknown) => void) | null = null;
 let mockFailing: string | null = null;
 let mockSetupGate: Promise<void> | null = null;
+/** What the engine answers for the getters the backend reads back. */
+const mockReturns: Record<string, unknown> = {};
 
 const mockEngine = new Proxy(
   {},
@@ -35,6 +37,7 @@ const mockEngine = new Proxy(
         // `setup` can be held open, so a test can reproduce the window in
         // which the native graph does not exist yet.
         if (name === 'setup' && mockSetupGate) return mockSetupGate;
+        if (name in mockReturns) return Promise.resolve(mockReturns[name]);
         return Promise.resolve();
       };
     },
@@ -43,7 +46,6 @@ const mockEngine = new Proxy(
 
 jest.mock('yuzic-engine', () => ({ YuzicEngine: mockEngine }), { virtual: true });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { createEngineBackend } = require('./createEngineBackend');
 
 const item = (id: string, over: Partial<MediaItem> = {}): MediaItem => ({
@@ -57,6 +59,14 @@ const item = (id: string, over: Partial<MediaItem> = {}): MediaItem => ({
 });
 
 const named = (name: string) => mockCalls.filter(call => call.name === name);
+
+/**
+ * The commands sent, without the queue reads. Setup reads the engine's queue
+ * once (so a queue the car started while the app was asleep is not lost); the
+ * gate tests are about commands being held and ordered, which a read is not.
+ */
+const QUEUE_READS = new Set(['getQueue', 'getActiveIndex']);
+const commands = () => mockCalls.map(c => c.name).filter(name => !QUEUE_READS.has(name));
 
 /**
  * Drain the microtask queue.
@@ -74,6 +84,7 @@ beforeEach(() => {
   mockListener = null;
   mockFailing = null;
   mockSetupGate = null;
+  for (const key of Object.keys(mockReturns)) delete mockReturns[key];
   // Several tests here make calls fail on purpose, and `fire` warns on every
   // failure so a release build leaves a trace. Silenced rather than tolerated:
   // expected output that looks like a problem trains you to ignore the run.
@@ -195,12 +206,12 @@ describe('the cold-launch race', () => {
     backend.play();
 
     await Promise.resolve();
-    expect(mockCalls.map(c => c.name)).toEqual(['setup']);
+    expect(commands()).toEqual(['setup']);
 
     openTheGate();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(mockCalls.map(c => c.name)).toEqual(['setup', 'setQueue', 'play']);
+    expect(commands()).toEqual(['setup', 'setQueue', 'play']);
   });
 
   /**
@@ -228,7 +239,7 @@ describe('the cold-launch race', () => {
     backend.setup();
     await flush();
 
-    expect(mockCalls.map(c => c.name)).toEqual(['setup', 'setQueue']);
+    expect(commands()).toEqual(['setup', 'setQueue']);
   });
 
   /** Order is preserved once the gate opens — a play must not overtake a queue. */
@@ -247,7 +258,7 @@ describe('the cold-launch race', () => {
     openTheGate();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(mockCalls.map(c => c.name)).toEqual(['setup', 'setQueue', 'seekTo', 'play']);
+    expect(commands()).toEqual(['setup', 'setQueue', 'seekTo', 'play']);
   });
 
   /**
@@ -339,5 +350,260 @@ describe('events from the engine', () => {
     off();
     mockListener?.({ type: 'stateChange', state: 'playing' });
     expect(seen).toEqual([]);
+  });
+});
+
+describe('queueChange', () => {
+  /**
+   * The event exists so the app can stop keeping its own splice arithmetic.
+   * If it arrived before the shadow had been replaced, a listener reacting
+   * with `getQueue()` would read back the very prediction the event was sent
+   * to correct — which is worse than not emitting at all.
+   */
+  it('re-reads the engine before telling the app the queue moved', async () => {
+    const backend = createEngineBackend();
+    const seen: string[][] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'queueChange') seen.push(backend.getQueue().map((i: MediaItem) => i.mediaId as string));
+    });
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('a'), item('b'), item('c')], 0);
+    // The engine says `b` is gone — a drop the app never asked for and could
+    // not have predicted.
+    mockReturns.getQueue = [{ id: 'a' }, { id: 'c' }];
+    mockReturns.getActiveIndex = 1;
+
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    expect(seen).toEqual([['a', 'c']]);
+    expect(backend.getActiveMediaItemIndex()).toBe(1);
+  });
+
+  it('keeps the app\'s own items, which the engine cannot hand back', async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('a', { headers: { Authorization: 'Basic x' } })], 0);
+    mockReturns.getQueue = [{ id: 'a' }];
+    mockReturns.getActiveIndex = 0;
+
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    // The resolved URL and the request headers were never sent back across the
+    // bridge; losing them here would mean a protected server stopped playing
+    // the moment the queue was reconciled.
+    expect(backend.getQueue()[0].headers).toEqual({ Authorization: 'Basic x' });
+    expect(backend.getQueue()[0].url).toBe('https://example/a');
+  });
+
+  it('says nothing when the engine could not be read', async () => {
+    const backend = createEngineBackend();
+    const seen: unknown[] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'queueChange') seen.push(event);
+    });
+    backend.setup();
+    await flush();
+    backend.setMediaItems([item('a')], 0);
+
+    mockFailing = 'getQueue';
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    // The queue the app is showing is the one it last set, which is the best
+    // answer available — and a thrown error here would surface as a playback
+    // failure the listener's music never had.
+    expect(seen).toEqual([]);
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['a']);
+  });
+});
+
+describe('a queue the car started', () => {
+  /**
+   * A CarPlay or Android Auto selection plays natively: the engine replaces
+   * its queue with the tracks under the chosen row, starts one, and only then
+   * announces the queue change. The app never queued any of it, so it has to
+   * learn both what is playing and what each track is from the engine.
+   */
+  it('reports the track change only once the shadow holds the tracks the car queued', async () => {
+    const backend = createEngineBackend();
+    const seen: { type: string; active?: string }[] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'trackChange' || event.type === 'queueChange') {
+        seen.push({ type: event.type, active: backend.getActiveMediaItem()?.mediaId });
+      }
+    });
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('old1'), item('old2')], 0);
+    mockReturns.getQueue = [
+      { id: 'car1', uri: 'https://example/car1', title: 'Car One', artist: 'Driver', durationSec: 180, headers: { Authorization: 'Basic y' } },
+      { id: 'car2', uri: 'https://example/car2', title: 'Car Two' },
+    ];
+    mockReturns.getActiveIndex = 0;
+
+    // The native order: the track starts, then the queue change is announced.
+    mockListener?.({ type: 'trackChange', index: 0, id: 'car1' });
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    expect(seen.find(event => event.type === 'trackChange')?.active).toBe('car1');
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['car1', 'car2']);
+  });
+
+  it("takes each unknown track's details from the engine's own record rather than an empty stub", async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('old1')], 0);
+    mockReturns.getQueue = [
+      { id: 'car1', uri: 'https://example/car1', title: 'Car One', artist: 'Driver', durationSec: 180, headers: { Authorization: 'Basic y' } },
+    ];
+    mockReturns.getActiveIndex = 0;
+
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    expect(backend.getQueue()[0]).toMatchObject({
+      mediaId: 'car1',
+      url: 'https://example/car1',
+      title: 'Car One',
+      artist: 'Driver',
+      duration: 180,
+      headers: { Authorization: 'Basic y' },
+    });
+  });
+
+  it('takes a queue the engine already holds when the app starts listening', async () => {
+    // The car played while the app's JavaScript was asleep, so no event
+    // reached it. Waking up believing nothing was queued is what let the
+    // persisted-queue restore load last session's queue over the car's.
+    mockReturns.getQueue = [{ id: 'car1', uri: 'https://example/car1', title: 'Car One' }];
+    mockReturns.getActiveIndex = 0;
+    const backend = createEngineBackend();
+
+    backend.setup();
+    await flush();
+
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['car1']);
+  });
+
+  it('does not let an engine that has not received the app queue yet wipe it at setup', async () => {
+    // The app's own setQueue is held until setup finishes and replayed right
+    // after the setup-time read goes out, so "empty" here may just be early.
+    mockReturns.getQueue = [];
+    mockReturns.getActiveIndex = 0;
+    const backend = createEngineBackend();
+
+    backend.setMediaItems([item('a')], 0);
+    backend.setup();
+    await flush();
+
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['a']);
+  });
+});
+
+describe('the browse tree the car is given', () => {
+  interface Node {
+    id: string;
+    artworkUri?: string;
+    artworkHeaders?: Record<string, string>;
+    children?: Node[];
+    playable?: { artworkUri?: string };
+  }
+
+  const treeSent = () => (named('setBrowseTree')[0].args[0] as { children: Node[] });
+  const rowsOf = (tree: { children: Node[] }) => tree.children[0].children ?? [];
+
+  const row = (over: Record<string, unknown> = {}) => ({
+    mediaId: 'album-1',
+    title: 'An Album',
+    artist: 'Someone',
+    artworkUrl: 'https://library.test/cover/1.jpg',
+    ...over,
+  });
+
+  const category = (items: ReturnType<typeof row>[]) => ({
+    mediaId: 'albums',
+    title: 'Albums',
+    items,
+  });
+
+  it("sends each row's own thumbnail", async () => {
+    // It was never sent at all, so the car drew a column of titles with no
+    // covers even though every row had a URL sitting on it.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row()])]);
+    await flush();
+
+    expect(rowsOf(treeSent())[0].artworkUri).toBe('https://library.test/cover/1.jpg');
+  });
+
+  it('sends the artwork headers a protected server needs', async () => {
+    // Without them the server answers 401 for every thumbnail and the car
+    // shows blank squares, while the same cover renders on the now-playing
+    // screen from the track's own headers.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([
+      row({ artworkHeaders: { Authorization: 'Basic abc' } }),
+    ])]);
+    await flush();
+
+    expect(rowsOf(treeSent())[0].artworkHeaders).toEqual({ Authorization: 'Basic abc' });
+  });
+
+  it('leaves artworkHeaders off entirely for an unprotected server', async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row()])]);
+    await flush();
+
+    expect(rowsOf(treeSent())[0]).not.toHaveProperty('artworkHeaders');
+  });
+
+  it('gives a folder a thumbnail and nothing to play', async () => {
+    // A row is a folder because it has no url, not because of where it sits —
+    // and a folder still has a cover.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row({ children: [row({ mediaId: 'track-1' })] })])]);
+    await flush();
+
+    const folder = rowsOf(treeSent())[0];
+    expect(folder.artworkUri).toBe('https://library.test/cover/1.jpg');
+    expect(folder.playable).toBeUndefined();
+    expect(folder.children).toHaveLength(1);
+  });
+
+  it("carries the thumbnail down to a playable row as well as its track", async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([
+      row({ mediaId: 'track-1', url: 'https://library.test/stream/1' }),
+    ])]);
+    await flush();
+
+    const leaf = rowsOf(treeSent())[0];
+    expect(leaf.artworkUri).toBe('https://library.test/cover/1.jpg');
+    expect(leaf.playable?.artworkUri).toBe('https://library.test/cover/1.jpg');
   });
 });

@@ -9,13 +9,14 @@ import React, {
   useState,
 } from 'react';
 
-import { useApi } from '@/api';
-import { useAppActive } from '@/hooks/useAppActive';
-import { useIsOffline } from '@/hooks/useIsOffline';
-import { usePollWhile } from '@/hooks/usePollWhile';
-import { useSync } from '@/hooks/useSync';
+import { useApi } from '@/providers/registry/useApi';
+import { useAppActive } from '@/features/connectivity/useAppActive';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
+import { usePollWhile } from '@/state/query/usePollWhile';
+import { useSync } from '@/features/library/useSync';
 import { useDownloaderStates, type DownloaderState } from './registry';
-import type { DownloaderId } from '@/utils/redux/slices/downloadersSlice';
+import { finishedSince, type DownloaderQueueItem } from './queueItem';
+import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 
 // A completed download on a downloader (Lidarr/slskd) writes to the media
 // library the same way a manual copy would — the server has no way to know
@@ -28,34 +29,51 @@ const POLL_INTERVAL_MS = 30_000;
 // with a stale library.
 const SYNC_DELAYS_MS = [15_000, 60_000];
 
-export type DownloaderQueueSnapshot = {
+type DownloaderQueueSnapshot = {
   id: DownloaderId;
   label: string;
+  /** Everything currently queued. Empty is a real answer, not "unread". */
+  items: DownloaderQueueItem[];
   count: number;
+  /** True only until the first read lands, so a list does not flash a spinner. */
+  isLoading: boolean;
+  /** The last read failed. The items above are then the previous good read. */
+  hasError: boolean;
 };
 
 type ContextValue = {
-  /** Live count per connected downloader. Empty when nothing is queued. */
+  /** One entry per connected downloader, queued or not. */
   queues: DownloaderQueueSnapshot[];
   /** Total items across all connected downloaders. */
   totalInFlight: number;
+  /** Items that left a queue since the last read, for whoever wants to react. */
+  recentlyFinished: DownloaderQueueItem[];
 };
 
 const DownloadersQueueContext = createContext<ContextValue>({
   queues: [],
   totalInFlight: 0,
+  recentlyFinished: [],
 });
 
 /**
- * The single background poller for every connected downloader. Its two jobs:
+ * The single background poller for every connected downloader.
  *
- *   1. Detect completions (items that disappeared since the last read) and
- *      trigger a server rescan + forced library sync — the same
- *      "post-download library refresh" the old DownloaderCompletionWatcher
- *      did on its own.
- *   2. Expose the live queue count per downloader so surfaces (a Home
- *      banner today, other places later) can read a fresh snapshot
- *      without spinning up a second poller against the same server.
+ *   1. Detect completions — items that disappeared since the last read — and
+ *      trigger a server rescan plus a forced library sync. A downloader that
+ *      finishes writes into the library the way a manual copy would, and the
+ *      media server has no idea until it looks.
+ *   2. Expose the whole queue per downloader, so every surface that wants to
+ *      know what is transferring reads one snapshot instead of opening its own
+ *      connection to the same server.
+ *
+ * The second job is why this is the only poller left. There were three: this
+ * one at 30s for counts, the settings screen's at 10s for its cards, and a
+ * React Query pair at 12s per album row for progress — three reads of the same
+ * endpoints, three intervals, and three separate ideas of what "finished"
+ * meant. A downloader saw up to three times the traffic it needed, and which
+ * of the three noticed a completion first decided whether the library got
+ * rescanned.
  *
  * Mounted once at the top of the home layout.
  */
@@ -68,42 +86,77 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
 
   const [queues, setQueues] = useState<DownloaderQueueSnapshot[]>([]);
 
+  const [recentlyFinished, setRecentlyFinished] = useState<DownloaderQueueItem[]>([]);
+
   // One previous-queue ref per downloader id — a Map, so add/remove
   // downloaders don't shift indices under an in-flight poll.
-  const previousQueuesRef = useRef<Map<DownloaderId, { id: string }[]>>(new Map());
+  const previousQueuesRef = useRef<Map<DownloaderId, DownloaderQueueItem[]>>(new Map());
   const inFlightRef = useRef<Set<DownloaderId>>(new Set());
 
   const connectedStates = useMemo(() => states.filter((s) => s.isConnected), [states]);
   const shouldPoll = connectedStates.length > 0 && isAppActive && !isOffline;
   const tick = usePollWhile(shouldPoll, POLL_INTERVAL_MS);
 
+  /**
+   * Replace one downloader's entry, keeping the rest.
+   *
+   * Every connected downloader keeps an entry whether or not anything is
+   * queued — an empty queue is a real answer, and dropping the row for one
+   * made "nothing is transferring" indistinguishable from "not read yet",
+   * which is what a card needs to tell apart to stop flashing its spinner.
+   */
+  const updateQueue = useCallback((
+    state: DownloaderState,
+    patch: Partial<DownloaderQueueSnapshot>
+  ) => {
+    setQueues((prev) => {
+      const existing = prev.find((q) => q.id === state.def.id);
+      const next: DownloaderQueueSnapshot = {
+        id: state.def.id,
+        label: state.def.label,
+        items: existing?.items ?? [],
+        count: existing?.count ?? 0,
+        isLoading: existing?.isLoading ?? true,
+        hasError: existing?.hasError ?? false,
+        ...patch,
+      };
+      return [...prev.filter((q) => q.id !== state.def.id), next];
+    });
+  }, []);
+
   const pollOne = useCallback(async (state: DownloaderState) => {
     if (inFlightRef.current.has(state.def.id)) return;
     inFlightRef.current.add(state.def.id);
     const previous = previousQueuesRef.current.get(state.def.id) ?? [];
     try {
-      const { currentQueue, finishedItems } = await state.def.fetchQueueWithDiff(state.config, previous);
-      previousQueuesRef.current.set(state.def.id, currentQueue);
-      setQueues((prev) => {
-        const filtered = prev.filter((q) => q.id !== state.def.id);
-        return currentQueue.length > 0
-          ? [...filtered, { id: state.def.id, label: state.def.label, count: currentQueue.length }]
-          : filtered;
+      const items = await state.def.fetchQueue(state.config);
+      const finished = finishedSince(previous, items);
+      previousQueuesRef.current.set(state.def.id, items);
+      updateQueue(state, {
+        items,
+        count: items.length,
+        isLoading: false,
+        hasError: false,
       });
-      if (finishedItems.length > 0) {
-        // Server rescan + staggered library refetch — same as before, just
-        // living here instead of in a per-downloader component.
+      if (finished.length > 0) {
+        setRecentlyFinished(finished);
+        // Ask the server to look, then read the library again — twice, because
+        // a scan of a multi-thousand album library is not instant and a single
+        // early refetch would find the same catalogue it already had.
         api.auth.startScan().catch(() => {});
         for (const delay of SYNC_DELAYS_MS) {
           setTimeout(() => { void sync(true).catch(() => {}); }, delay);
         }
       }
     } catch {
-      // Transient reachability failure; leave previous baseline in place.
+      // Transient reachability failure. The previous items stay: showing an
+      // empty queue because one read failed would look like every transfer
+      // had finished.
+      updateQueue(state, { isLoading: false, hasError: true });
     } finally {
       inFlightRef.current.delete(state.def.id);
     }
-  }, [api.auth, sync]);
+  }, [api.auth, sync, updateQueue]);
 
   useEffect(() => {
     if (!shouldPoll) return;
@@ -133,7 +186,8 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
   const value = useMemo<ContextValue>(() => ({
     queues,
     totalInFlight: queues.reduce((sum, q) => sum + q.count, 0),
-  }), [queues]);
+    recentlyFinished,
+  }), [queues, recentlyFinished]);
 
   return (
     <DownloadersQueueContext.Provider value={value}>

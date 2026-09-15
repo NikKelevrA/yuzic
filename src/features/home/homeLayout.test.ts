@@ -1,17 +1,35 @@
 import {
-  buildDiscoverySections,
+  buildCatalogueSections,
   buildLibrarySections,
+  buildListenerSections,
   buildResumeSections,
+  customizeHomeSections,
 } from './homeLayout'
 
-const discovery = (overrides: Partial<Parameters<typeof buildDiscoverySections>[0]> = {}) =>
-  buildDiscoverySections({
-    isOffline: false,
-    hasLibrary: true,
-    becauseSeeds: ['Radiohead'],
-    topGenres: ['Jazz'],
-    ...overrides,
+const seeds = (overrides: Partial<Parameters<typeof buildCatalogueSections>[0]> = {}) => ({
+  isOffline: false,
+  hasLibrary: true,
+  becauseSeeds: ['Radiohead'],
+  similarSeeds: ['Radiohead'],
+  topGenres: ['Jazz'],
+  ...overrides,
+})
+
+const discovery = (overrides: Partial<Parameters<typeof buildCatalogueSections>[0]> = {}) =>
+  buildCatalogueSections(seeds(overrides))
+
+describe('customizeHomeSections', () => {
+  it('filters hidden shelves and reorders only within the supplied tier', () => {
+    const sections = [{ key: 'a', type: 'quickPicks' as const }, { key: 'b', type: 'recentlyPlayed' as const }, { key: 'c', type: 'continuePlaying' as const }]
+    expect(customizeHomeSections(sections, { b: false }, ['c', 'a']).map(s => s.key)).toEqual(['c', 'a'])
   })
+
+  it('falls back to newly available shelves after a persisted order', () => {
+    const sections = [{ key: 'a', type: 'quickPicks' as const }, { key: 'b', type: 'recentlyPlayed' as const }]
+    expect(customizeHomeSections(sections, {}, ['b']).map(s => s.key)).toEqual(['b', 'a'])
+  })
+})
+
 
 describe('buildResumeSections', () => {
   it('leads with what you were listening to', () => {
@@ -42,7 +60,34 @@ describe('buildLibrarySections', () => {
   })
 })
 
-describe('buildDiscoverySections', () => {
+describe('buildListenerSections', () => {
+  it('is empty offline', () => {
+    expect(buildListenerSections(seeds({ isOffline: true }))).toEqual([])
+  })
+
+  it('seeds similar artists from the first library seed, and always offers the made-for-you mixes', () => {
+    const sections = buildListenerSections(seeds({ similarSeeds: ['Radiohead', 'Bowie'] }))
+
+    expect(sections[0]).toEqual({
+      key: 'lbSimilarArtistsForYou',
+      type: 'lbSimilarArtistsForYou',
+      artistName: 'Radiohead',
+      artistNames: ['Radiohead', 'Bowie'],
+    })
+    expect(sections.filter(s => s.type === 'lbCreatedFor').map(s => s.mixType))
+      .toEqual(['daily-jams', 'weekly-jams', 'weekly-exploration'])
+  })
+
+  it('drops similar artists without a library to seed from', () => {
+    expect(buildListenerSections(seeds({ hasLibrary: false })).map(s => s.type)).not.toContain('lbSimilarArtistsForYou')
+  })
+
+  it('drops similar artists when there are no seeds to try', () => {
+    expect(buildListenerSections(seeds({ similarSeeds: [] })).map(s => s.type)).not.toContain('lbSimilarArtistsForYou')
+  })
+})
+
+describe('buildCatalogueSections', () => {
   it('is empty offline, since every section here needs the network', () => {
     expect(discovery({ isOffline: true })).toEqual([])
   })

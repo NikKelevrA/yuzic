@@ -1,41 +1,24 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { useAlbums } from '@/hooks/albums'
-import { useArtists } from '@/hooks/artists'
-import { useIsOffline } from '@/hooks/useIsOffline'
-import { selectArtistPlayCounts } from '@/utils/redux/selectors/statsSelectors'
-import { selectLibraryGenres } from '@/utils/redux/selectors/librarySelectors'
+import { useAlbums } from '@/features/album/useAlbums';
+import { useArtists } from '@/features/artist/useArtists';
+import { useIsOffline } from '@/features/connectivity/useIsOffline'
+import { selectArtistPlayCounts } from '@/state/redux/selectors/statsSelectors'
+import { useGenres } from '@/features/genre/useGenres'
+import { HOME_SOURCE_TIERS } from '@/providers/registry/homeDiscovery'
+import type { SourceId } from '@/providers/registry/sources'
 import { presentableGenres } from '../genres'
 import {
-  buildDiscoverySections,
   buildLibrarySections,
   buildResumeSections,
+  type SectionConfig,
 } from '../homeLayout'
 
 const BECAUSE_SEED_COUNT = 1
 const BECAUSE_SEED_POOL_SIZE = 20
+/** How many seeds the similar-artists shelf may try before it gives up. */
+const SIMILAR_SEED_COUNT = 4
 const GENRE_COUNT = 1
-
-export type SectionType =
-  | 'quickPicks'
-  | 'recentlyPlayed'
-  | 'continuePlaying'
-  | 'recentlyAdded'
-  | 'becauseYouListened'
-  | 'topArtists'
-  | 'mostPlayed'
-  | 'charts'
-  | 'genre'
-  | 'serverRandom'
-  | 'serverNowPlaying'
-  | 'lbSimilarArtistsForYou'
-
-export type SectionConfig = {
-  key: string
-  type: SectionType
-  artistName?: string
-  genre?: string
-}
 
 export function getDayKey(date = new Date()): string {
   return date.toDateString()
@@ -63,19 +46,17 @@ export function seededShuffle<T>(arr: T[], seed: number): T[] {
 }
 
 
-export type HomeLayout = {
+type HomeLayout = {
   /** What you were listening to. First, unlabelled. */
   resume: SectionConfig[]
   /** Your own collection, behind its own header. */
   library: SectionConfig[]
   /** Server-native discovery (random shelves, now-playing) — behind the
-   * server source header. Independent of Deezer/LB. */
+   * server source header. Independent of every outside source. */
   server: SectionConfig[]
-  /** ListenBrainz-driven discovery (similar-artist expansions, later
-   * Weekly/Daily recs) — behind the LB source header. */
-  listenbrainz: SectionConfig[]
-  /** Deezer external discovery, behind the source header. */
-  deezer: SectionConfig[]
+  /** Each outside tier's shelves, by the source that fills it
+   * (`HOME_SOURCE_TIERS`), each behind that source's header. */
+  sources: Partial<Record<SourceId, SectionConfig[]>>
   isOffline: boolean
 }
 
@@ -84,7 +65,7 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
   const { albums: libraryAlbums } = useAlbums()
   const { artists: libraryArtists } = useArtists()
   const artistPlayCounts = useSelector(selectArtistPlayCounts)
-  const libraryGenres = useSelector(selectLibraryGenres)
+  const { genres: libraryGenres } = useGenres()
   const dayKey = getDayKey()
   const dailySeed = getDailySeed(`${dayKey}:${refreshKey}`)
 
@@ -92,7 +73,7 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
     return seededShuffle(
       [...libraryArtists]
         .filter(a => a.name.trim() && a.name.toLowerCase() !== 'various artists')
-        .sort((a, b) => (artistPlayCounts[b.id] ?? 0) - (artistPlayCounts[a.id] ?? 0))
+        .sort((a, b) => (artistPlayCounts[b.nativeId] ?? 0) - (artistPlayCounts[a.nativeId] ?? 0))
         .slice(0, BECAUSE_SEED_POOL_SIZE),
       dailySeed
     )
@@ -100,6 +81,12 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
 
   const becauseSeeds = useMemo(
     () => artistSeedPool.slice(0, BECAUSE_SEED_COUNT).map(a => a.name),
+    [artistSeedPool]
+  )
+
+  // Same pool, same order, so the first seed matches the "More like" shelf's.
+  const similarSeeds = useMemo(
+    () => artistSeedPool.slice(0, SIMILAR_SEED_COUNT).map(a => a.name),
     [artistSeedPool]
   )
 
@@ -129,42 +116,35 @@ export function useDailyLayout(refreshKey = 0): HomeLayout {
 
   const library = useMemo(() => buildLibrarySections(hasLibrary), [hasLibrary])
 
-  const deezer = useMemo(
-    () => seededShuffle(
-      buildDiscoverySections({
-        isOffline,
-        hasLibrary: libraryArtists.length > 0,
-        becauseSeeds,
-        topGenres,
-      }),
-      dailySeed
-    ),
-    [dailySeed, isOffline, libraryArtists.length, becauseSeeds, topGenres]
-  )
-
   // Server-native tier — cheap, always-on when a library exists. Random
-  // shelves keep Home changing day-to-day even for users with no external
+  // shelves keep Home changing day-to-day even for users with no outside
   // discovery configured; now-playing is opt-in visible when it has data.
   const server = useMemo<SectionConfig[]>(() => {
     if (isOffline || !hasLibrary) return []
     return [
       { key: 'serverRandom', type: 'serverRandom' },
       { key: 'serverNowPlaying', type: 'serverNowPlaying' },
+      // Local-first daily mix: play-stats seed + server-native similarity,
+      // zero external calls — so it lives in the server tier alongside the
+      // other always-on shelves rather than behind an outside source's switch.
+      { key: 'localMix', type: 'localMix' },
     ]
   }, [isOffline, hasLibrary])
 
-  // ListenBrainz tier — the seed's MBID comes from the library where the
-  // server carries one and from a MusicBrainz lookup where it doesn't, so a
-  // seed artist name is all this tier needs.
-  const listenbrainz = useMemo<SectionConfig[]>(() => {
-    if (isOffline || !hasLibrary || becauseSeeds.length === 0) return []
-    return [
-      { key: 'lbSimilarArtistsForYou', type: 'lbSimilarArtistsForYou', artistName: becauseSeeds[0] },
-    ]
-  }, [isOffline, hasLibrary, becauseSeeds])
+  // Every outside tier builds its shelves from the same seeds; a catalogue
+  // tier is reshuffled daily so its feed changes.
+  const sources = useMemo(() => {
+    const seeds = { isOffline, hasLibrary: libraryArtists.length > 0, becauseSeeds, similarSeeds, topGenres }
+    const bySource: Partial<Record<SourceId, SectionConfig[]>> = {}
+    for (const tier of HOME_SOURCE_TIERS) {
+      const shelves = tier.build(seeds)
+      bySource[tier.source] = tier.shuffleDaily ? seededShuffle(shelves, dailySeed) : shelves
+    }
+    return bySource
+  }, [dailySeed, isOffline, libraryArtists.length, becauseSeeds, similarSeeds, topGenres])
 
   return useMemo(
-    () => ({ resume, library, server, listenbrainz, deezer, isOffline }),
-    [resume, library, server, listenbrainz, deezer, isOffline]
+    () => ({ resume, library, server, sources, isOffline }),
+    [resume, library, server, sources, isOffline]
   )
 }

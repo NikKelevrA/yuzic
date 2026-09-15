@@ -1,6 +1,6 @@
 import React from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from '@/features/theme/useTheme'
 import SkeletonTile from './SkeletonTile'
 import { spacing } from '@/constants/design'
 

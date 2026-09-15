@@ -26,11 +26,16 @@ export interface BrowseItem {
   /**
    * Ephemeral request headers for a header-authenticated server (a Plex behind
    * a Basic-auth proxy). `headers` fetches the audio, `artworkHeaders` the
-   * now-playing art once the leaf plays. Set only on playable rows and only
-   * when the active server needs them. Note the *browse-tree thumbnail*
-   * (`artworkUrl`) cannot carry headers — the engine's `BrowseNode` has no
-   * field for it — so protected-server art may not render in the browse list,
-   * though it does on the now-playing screen via `artworkHeaders`.
+   * artwork — both the row's own thumbnail in the browse list and the
+   * now-playing cover once the leaf plays. Set only when the active server
+   * needs them.
+   *
+   * The thumbnail used to be the exception: `BrowseNode` had no field for
+   * headers, so protected-server art rendered on the now-playing screen and
+   * not in the car's list. It carries them as of engine 1.0.7 — on iOS. On
+   * Android the row's cover goes through Media3, which takes a URI and
+   * fetches it itself with no hook for a header, so the gap survives there
+   * and is declared in the engine's `Tools/parity.py`.
    */
   headers?: Record<string, string>;
   artworkHeaders?: Record<string, string>;

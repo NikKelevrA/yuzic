@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Skeleton } from 'moti/skeleton'
-import { useRadius } from '@/hooks/useRadius'
+import { useRadius } from '@/features/theme/useRadius'
 
 type Props = {
   size: number

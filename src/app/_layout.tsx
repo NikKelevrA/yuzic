@@ -1,45 +1,48 @@
+import { motion } from '@/constants/design';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 
 import { QueryClient, QueryCache, onlineManager } from '@tanstack/react-query';
-import { Toasts, toast } from '@backpackapp-io/react-native-toast';
+import { ToastHost, notify } from '@/components/toast';
+import SourceUsePromptHost from '@/features/settings/sources/SourceUsePromptHost';
+import CoverResolutionHost from '@/features/artwork/CoverResolutionHost';
+import ConnectDownloaderPromptHost from '@/features/downloaders/ConnectDownloaderPromptHost';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { enableFreeze } from 'react-native-screens';
-import { PlayingProvider } from '@/contexts/PlayingContext';
-import { DlnaProvider } from '@/contexts/DlnaContext';
-import { PlaybackSinkProvider } from '@/contexts/PlaybackSinkContext';
-import { LibraryProvider } from '@/contexts/LibraryContext';
-import { SongActionSheetProvider } from '@/contexts/SongActionSheetContext';
-import { DownloadProvider } from '@/contexts/DownloadContext';
+import { PlayingProvider } from '@/features/playback/PlayingContext';
+import { DlnaProvider } from '@/features/player/DlnaContext';
+import { PlaybackSinkProvider } from '@/features/player/PlaybackSinkContext';
+import { SongActionSheetProvider } from '@/features/entity-actions/SongActionSheetContext';
+import { DownloadProvider } from '@/features/offline/DownloadContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import store, { persistor } from '@/utils/redux/store';
+import store from '@/state/redux/store';
+import { persistor } from '@/state/redux/persistor';
 import { Alert, AppState } from 'react-native';
 import { setJSExceptionHandler, setNativeExceptionHandler } from 'react-native-exception-handler';
 import RNRestart from 'react-native-restart';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PlayerExpansionProvider } from '@/features/player/PlayerExpansion';
 import PlayerHost from '@/features/player/PlayerHost';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { selectLanguage } from '@/utils/redux/selectors/settingsSelectors';
+import { selectLanguage } from '@/features/settings/appearance/state';
 import i18n from '@/i18n';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { queryStorage } from '@/utils/mmkvStorage';
+import { queryCacheStorage } from '@/state/mmkvStorage';
 import NetInfo from '@react-native-community/netinfo';
-import OfflineMutationReplayer from '@/offline/OfflineMutationReplayer';
+import OfflineMutationReplayer from '@/features/offline/OfflineMutationReplayer';
 import { isLikelyNetworkError, setServerUnreachable } from '@/features/connectivity/serverReachability';
-import { QueryKeys } from '@/enums/queryKeys';
-import { clearImageMemoryCache, runImageCacheMigration } from '@/utils/images/imageCache';
-import { spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { QueryKeys } from '@/state/query/queryKeys';
+import { clearImageMemoryCache, runImageCacheMigration } from '@/features/artwork/imageCache';
 import { useClientCertificate } from '@/features/mtls/useClientCertificate';
+import { CredentialsGate } from '@/features/servers/CredentialsGate';
 
 
 const LIBRARY_LOAD_FAILED_TOAST_ID = 'library-load-failed';
@@ -137,7 +140,7 @@ const queryClient = new QueryClient({
         !hasCachedLibraryDataForServer(query.queryKey) &&
         !query.meta?.suppressGlobalErrorToast
       ) {
-        toast.error(i18n.t('common.libraryLoadFailed'), {
+        notify.error(i18n.t('common.libraryLoadFailed'), {
           id: LIBRARY_LOAD_FAILED_TOAST_ID,
         });
       }
@@ -156,8 +159,10 @@ const queryClient = new QueryClient({
 
 const QUERY_CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 30;
 
-const asyncStoragePersister = createAsyncStoragePersister({
-  storage: queryStorage,
+// Named for what it persists, not for AsyncStorage — the storage behind it
+// is MMKV, in the query cache's own namespace.
+const queryPersister = createAsyncStoragePersister({
+  storage: queryCacheStorage,
 })
 
 const OFFLINE_TOAST_ID = 'offline-banner';
@@ -182,8 +187,7 @@ function useImageMemoryCleanup() {
 }
 
 function AppShell() {
-  const { resolved, isDarkMode, colors } = useTheme();
-  const rad = useRadius();
+  const { resolved, isDarkMode } = useTheme();
   const language = useSelector(selectLanguage);
   useImageMemoryCleanup();
   // Mounted here, not on the settings screen that owns the import UI: the
@@ -201,12 +205,12 @@ function AppShell() {
   useEffect(() => {
     const unsub = NetInfo.addEventListener(state => {
       if (!state.isConnected) {
-        toast(i18n.t('common.offline.noConnection'), {
+        notify.info(i18n.t('common.offline.noConnection'), {
           id: OFFLINE_TOAST_ID,
           duration: Infinity,
         });
       } else {
-        toast.dismiss(OFFLINE_TOAST_ID);
+        notify.dismiss(OFFLINE_TOAST_ID);
       }
     });
     return unsub;
@@ -236,30 +240,16 @@ function AppShell() {
 
                 <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
-                <Toasts
-                  defaultStyle={{
-                    view: {
-                      backgroundColor: isDarkMode
-                        ? 'rgba(34,34,34,0.9)'
-                        : 'rgba(255,255,255,0.9)',
-                      borderRadius: rad.md,
-                      shadowColor: '#000',
-                      shadowOpacity: 0.15,
-                      shadowRadius: 10,
-                      elevation: 4,
-                    },
-                    pressable: {
-                      backgroundColor: 'transparent',
-                    },
-                    text: {
-                      ...typography.rowTitle,
-                      color: colors.secondary,
-                    },
-                    indicator: {
-                      marginRight: spacing.md,
-                    },
-                  }}
-                />
+                {/* Asks to turn a source use on from wherever it was needed. */}
+                <SourceUsePromptHost />
+
+                {/* Feeds cover resolution the library and artwork backups. */}
+                <CoverResolutionHost />
+
+                {/* Offers to connect a downloader when a Get needs one. */}
+                <ConnectDownloaderPromptHost />
+
+                <ToastHost />
                 </PlayerExpansionProvider>
                 </SongActionSheetProvider>
               </BottomSheetModalProvider>
@@ -279,7 +269,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    SplashScreen.setOptions({ duration: 1000, fade: true });
+    SplashScreen.setOptions({ duration: motion.progress, fade: true });
   }, []);
 
   useEffect(() => {
@@ -297,28 +287,23 @@ export default function RootLayout() {
     setNativeExceptionHandler(() => { }, false, true);
   }, []);
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
+  // The splash comes down in `CredentialsGate`, once the app can render.
   if (!loaded) return null;
 
   return (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        persister: asyncStoragePersister,
+        persister: queryPersister,
         maxAge: QUERY_CACHE_MAX_AGE,
       }}
     >
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <LibraryProvider>
+          <CredentialsGate>
             <OfflineMutationReplayer />
             <AppShell />
-          </LibraryProvider>
+          </CredentialsGate>
         </PersistGate>
       </Provider>
     </PersistQueryClientProvider>

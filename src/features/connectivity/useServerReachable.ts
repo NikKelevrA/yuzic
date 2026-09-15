@@ -1,4 +1,4 @@
-import { useIsOffline } from '@/hooks/useIsOffline';
+import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { useServerUnreachable } from './serverReachability';
 
 /**

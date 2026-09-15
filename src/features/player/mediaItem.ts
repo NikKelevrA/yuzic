@@ -15,7 +15,7 @@
  * no require()-style asset numbers or bundle-relative names, since every URL
  * here is a server URL or a local file path resolved at runtime.
  */
-export type MediaUrl = string | { uri: string };
+type MediaUrl = string | { uri: string };
 
 export interface MediaItem {
   /**
@@ -57,11 +57,4 @@ export interface MediaItem {
    * Authorization header.
    */
   artworkHeaders?: Record<string, string>;
-}
-
-/** What to do when the queue runs out. */
-export enum RepeatMode {
-  Off = 'off',
-  Track = 'track',
-  Queue = 'queue',
 }

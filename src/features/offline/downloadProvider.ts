@@ -1,0 +1,81 @@
+import type { ServerType } from '@/providers/contracts/Server';
+import { SERVER_PROVIDERS } from '@/providers/registry/serverConnections';
+
+const isServerType = (value: unknown): value is ServerType =>
+  typeof value === 'string' && Object.prototype.hasOwnProperty.call(SERVER_PROVIDERS, value);
+
+export type DownloadProviderScope = {
+  serverId?: string | null;
+  serverType?: ServerType | null;
+};
+
+type DownloadTrackLike = {
+  // Flat shape (DownloadedTrackEntry)
+  serverId?: unknown;
+  serverType?: unknown;
+  coverKind?: unknown;
+  // Legacy nested shape
+  originalTrack?: {
+    extraPayload?: {
+      serverId?: unknown;
+      serverType?: unknown;
+      coverKind?: unknown;
+    };
+  };
+};
+
+export function normalizeServerType(value: unknown): ServerType | null {
+  return isServerType(value) ? value : null;
+}
+
+/** A server's own cover kinds are named for the server type that serves them. */
+export function inferServerTypeFromCoverKind(value: unknown): ServerType | null {
+  return isServerType(value) ? value : null;
+}
+
+export function normalizeServerId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export function getDownloadedTrackServerId(track: DownloadTrackLike): string | null {
+  return normalizeServerId(track?.serverId ?? track?.originalTrack?.extraPayload?.serverId);
+}
+
+export function getDownloadedTrackServerType(track: DownloadTrackLike): ServerType | null {
+  const payload = track?.originalTrack?.extraPayload;
+  return (
+    normalizeServerType(track?.serverType ?? payload?.serverType) ??
+    inferServerTypeFromCoverKind(track?.coverKind ?? payload?.coverKind) ??
+    null
+  );
+}
+
+export function doesTrackMatchProviderScope(
+  track: DownloadTrackLike,
+  scope?: DownloadProviderScope
+): boolean {
+  if (!scope) return true;
+
+  const scopeServerId = normalizeServerId(scope.serverId);
+  const scopeServerType = normalizeServerType(scope.serverType);
+
+  // A scope object was explicitly passed but neither field resolved to
+  // anything identifiable (e.g. a downloaded track with missing/corrupt
+  // server metadata produced an "unknown provider" row with no serverId).
+  // Falling through to "match everything" here would turn a provider-
+  // scoped clear into a clear-all — match nothing instead.
+  if (!scopeServerId && !scopeServerType) return false;
+
+  const trackServerId = getDownloadedTrackServerId(track);
+  const trackServerType = getDownloadedTrackServerType(track);
+
+  if (scopeServerId && trackServerId) return trackServerId === scopeServerId;
+  if (scopeServerId && !trackServerId) return false;
+
+  if (scopeServerType && trackServerType) return trackServerType === scopeServerType;
+  if (scopeServerType && !trackServerType) return false;
+
+  return true;
+}

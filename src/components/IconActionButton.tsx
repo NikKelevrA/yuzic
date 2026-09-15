@@ -1,3 +1,4 @@
+import { controlSize, hitSlopFor, iconSize, stateLayer } from '@/constants/design';
 import React from 'react';
 import {
   StyleSheet,
@@ -5,9 +6,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
-import { controlSize, hitSlopFor, iconSize } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useTheme } from '@/features/theme/useTheme';
+import { useRadius } from '@/features/theme/useRadius';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 
@@ -73,6 +73,6 @@ const styles = StyleSheet.create({
     height: controlSize.iconCompact,
   },
   disabled: {
-    opacity: 0.45,
+    opacity: stateLayer.inactiveOpacity,
   },
 });

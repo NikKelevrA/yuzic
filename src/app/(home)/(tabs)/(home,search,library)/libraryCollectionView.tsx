@@ -1,1 +1,1 @@
-export { default } from '@/screens/library/LibraryCollectionScreen'
+export { default } from '@/features/library/LibraryCollectionScreen'

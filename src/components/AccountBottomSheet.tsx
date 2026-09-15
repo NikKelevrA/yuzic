@@ -3,20 +3,21 @@ import { View, Text, StyleSheet } from 'react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Settings, RefreshCw, LogOut } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { usePlayingActions } from '@/contexts/PlayingContext';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useRouter } from 'expo-router';
-import { useApi } from '@/api';
-import { disconnect } from '@/utils/redux/slices/serversSlice';
-import { toast } from '@backpackapp-io/react-native-toast';
-import { selectActiveServer } from '@/utils/redux/selectors/serversSelectors';
-import { useTheme } from '@/hooks/useTheme';
+import { useApi } from '@/providers/registry/useApi';
+import { disconnect } from '@/state/redux/slices/serversSlice';
+import { notify } from '@/components/toast';
+import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { useTheme } from '@/features/theme/useTheme';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import Touchable from '@/components/Touchable';
 import UserAvatar from '@/components/UserAvatar';
 import { controlSize, iconSize, radius, spacing, typography } from '@/constants/design';
-import { useRadius } from '@/hooks/useRadius';
+import { useRadius } from '@/features/theme/useRadius';
+import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 
 type Props = {
   onDismiss?: () => void;
@@ -41,7 +42,7 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
   const { pauseSong, resetQueue } = usePlayingActions();
 
   const cleanUrl = serverUrl?.replace(/^https?:\/\//, '');
-  const close = () => (ref as any)?.current?.dismiss();
+  const close = () => dismissSheetRef(ref);
 
   const handleSettings = () => {
     close();
@@ -52,9 +53,9 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
     close();
     try {
       const result = await api.auth.startScan();
-      toast.success(result?.message ?? t('home.account.scanTriggered'));
+      notify.success(result?.message ?? t('home.account.scanTriggered'));
     } catch {
-      toast.error(t('home.account.scanFailed'));
+      notify.error(t('home.account.scanFailed'));
     }
   };
 
@@ -68,7 +69,7 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
       queryClient.clear();
       router.replace('/(onboarding)');
     } catch {
-      toast.error(t('home.account.signOutFailed'));
+      notify.error(t('home.account.signOutFailed'));
     }
   };
 
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.rowGap,
     marginBottom: spacing.lg,
   },
   headerInfo: {
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
   serverMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.tight,
   },
   typeBadge: {
     paddingHorizontal: spacing.tight,
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.rowGap,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xs,
   },

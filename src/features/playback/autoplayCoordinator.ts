@@ -1,0 +1,199 @@
+import type { PlayerBackend } from '@/features/player/backend';
+import type { MediaItem } from '@/features/player/mediaItem';
+import type { PlayableResource } from '@/features/playback/playableResource';
+import type { Song } from '@/domain/entities/Song';
+import type { LocalId } from '@/domain/identity/LocalId';
+import { playableOnly } from '@/features/playback/playableResource';
+import shuffleArray from '@/features/playback/shuffleArray';
+import { buildFillRequest } from './autoplayFill';
+import { tagSegment, type QueueSegment } from './playingQueue';
+import { resolveQueueFillProvider, type QueueFillProvider } from './queueProviders';
+
+/**
+ * Extending a queue with tracks nobody chose.
+ *
+ * Two features share almost all of this and differ only in where the new
+ * tracks go:
+ *
+ * - **Autoplay** appends when the queue runs low, so the music does not stop.
+ *   The added stretch is tagged `autoplay-fill` — Smart Shuffle reads that tag
+ *   to tell what was never part of the listener's selection.
+ * - **Smart Shuffle** is a one-shot injection: fetch related tracks and
+ *   shuffle them through the *rest* of the queue, leaving the already-played
+ *   prefix alone. Someone who has heard six tracks of an album has heard them,
+ *   and reshuffling those six would replay them.
+ *
+ * Both go through `fetchExtension`, which is the part with the identity trap
+ * in it — see below.
+ */
+export interface AutoplayDeps {
+  backend: () => PlayerBackend;
+  /** Ordered by preference: the similarity service when connected, native similarity otherwise. */
+  providers: () => QueueFillProvider[];
+  queue: () => PlayableResource[];
+  setQueue: (resources: PlayableResource[]) => void;
+  segments: () => QueueSegment[];
+  setSegments: (segments: QueueSegment[]) => void;
+  currentIndex: () => number;
+  resolvePlayableSong: (song: Song) => PlayableResource | null;
+  toMediaItems: (resources: PlayableResource[]) => MediaItem[];
+  bumpQueue: () => void;
+  /** Hand a whole queue to the player. Smart Shuffle replaces rather than appends. */
+  loadQueue: (
+    resources: PlayableResource[],
+    startIndex: number,
+    play: boolean,
+    seekToPosition?: number
+  ) => Promise<void>;
+  logWarning: (message: string, error: unknown) => void;
+}
+
+interface AutoplayCoordinator {
+  /** Top the queue up if it is running low. Safe to call on every track change. */
+  fillQueueIfLow: () => Promise<void>;
+  /**
+   * Whether a fill is in flight.
+   *
+   * `shouldFillQueue` asks, because a fill takes a network round trip and the
+   * track changes that trigger one arrive more than once inside it. The guard
+   * inside `fillQueueIfLow` makes the second call harmless either way; this
+   * lets the caller skip deciding at all, and — more to the point — means
+   * there is no second copy of this flag anywhere to fall out of step.
+   */
+  isFilling: () => boolean;
+  /** Shuffle related tracks through what is left of the queue. */
+  injectSmartShuffleTracks: (wasPlaying: boolean, savedPosition: number) => Promise<void>;
+  /**
+   * Tracks related to one song — what "Play Similar" starts from.
+   *
+   * Empty when no provider is configured, which the caller distinguishes from
+   * "a provider answered with nothing": the first means fall back to the
+   * adapter's own similar-songs call, the second means there is genuinely
+   * nothing similar and falling back would only ask a worse source the same
+   * question.
+   */
+  relatedTo: (song: Song, count: number) => Promise<PlayableResource[] | null>;
+}
+
+export function createAutoplayCoordinator(deps: AutoplayDeps): AutoplayCoordinator {
+  /**
+   * A fill already in flight.
+   *
+   * Closure state rather than a provider ref, because nothing else has any
+   * business reading it. It is a re-entry guard: a fill takes a network round
+   * trip, and the track changes that trigger it can easily arrive twice inside
+   * one — which would append the same tracks twice.
+   */
+  let filling = false;
+
+  /**
+   * Ask a provider for more tracks, and turn them into something playable.
+   *
+   * The identity trap is in the two id arguments and they are not the same
+   * kind. Seeds go out as `nativeId`, because both providers hand them
+   * straight to a server that only knows its own ids. Exclusions are matched
+   * on `localId`, because a queue can hold tracks from more than one origin at
+   * once and two origins can easily both call something `42` — excluding on
+   * the native id would drop the wrong track.
+   */
+  const fetchExtension = async (
+    provider: QueueFillProvider,
+    recentSongs: { song: Song }[],
+    excludeLocalIds: Iterable<LocalId | undefined>,
+    count: number
+  ): Promise<PlayableResource[]> => {
+    const extension = await provider.fetchExtension({
+      recentSongs: recentSongs.map(entry => ({ nativeId: entry.song.nativeId })),
+      excludeIds: new Set([...excludeLocalIds].filter((id): id is LocalId => Boolean(id))),
+      count,
+    });
+    return playableOnly(
+      extension
+        .map(deps.resolvePlayableSong)
+        .filter((resource): resource is PlayableResource => Boolean(resource))
+    );
+  };
+
+  /** The tracks both features start from, or an empty list if there is nothing to add. */
+  const nextTracks = async (): Promise<PlayableResource[]> => {
+    const provider = resolveQueueFillProvider(deps.providers());
+    if (!provider) return [];
+    const request = buildFillRequest(deps.queue(), deps.currentIndex());
+    return fetchExtension(
+      provider,
+      request.recentResources,
+      deps.queue().map(resource => resource.song.localId),
+      request.count
+    );
+  };
+
+  return {
+    isFilling: () => filling,
+
+    async fillQueueIfLow() {
+      if (filling) return;
+      filling = true;
+      try {
+        const playable = await nextTracks();
+        if (!playable.length) return;
+
+        const insertAt = deps.queue().length;
+        deps.setQueue([...deps.queue(), ...playable]);
+        // Tagged so Smart Shuffle can tell these from the listener's own
+        // selection. Keyed by where they landed, because a queue can be
+        // topped up many times and each stretch is its own context.
+        deps.setSegments(tagSegment(deps.segments(), insertAt, playable.length, {
+          kind: 'autoplay-fill',
+          contextId: `autoplay-${insertAt}`,
+        }));
+        deps.backend().addMediaItems(deps.toMediaItems(playable));
+        deps.bumpQueue();
+      } catch (error) {
+        // Autoplay failing is the music stopping at the end of the queue,
+        // which is also what happens without the feature. Not worth a toast.
+        deps.logWarning('Autoplay fill failed', error);
+      } finally {
+        filling = false;
+      }
+    },
+
+    async relatedTo(song: Song, count: number) {
+      const provider = resolveQueueFillProvider(deps.providers());
+      if (!provider) return null;
+      // The seed is excluded from its own results: a provider returning the
+      // song you asked about would put it in the queue twice, since the caller
+      // places it first itself.
+      return fetchExtension(provider, [{ song }], [song.localId], count);
+    },
+
+    async injectSmartShuffleTracks(wasPlaying: boolean, savedPosition: number) {
+      try {
+        const playable = await nextTracks();
+        if (!playable.length) return;
+
+        // The prefix is what has already been heard, and it stays put:
+        // reshuffling it would replay tracks the listener has just finished.
+        const played = deps.queue().slice(0, deps.currentIndex() + 1);
+        const remaining = deps.queue().slice(deps.currentIndex() + 1);
+        const full = [...played, ...shuffleArray([...remaining, ...playable])];
+
+        deps.setQueue(full);
+        // One segment over the whole thing. After a smart shuffle there is no
+        // album or playlist left to speak of — the tracks are interleaved —
+        // and claiming otherwise would have Smooth Transitions drawing
+        // boundaries through a deliberately continuous mix.
+        deps.setSegments([{
+          startIndex: 0,
+          length: full.length,
+          source: { kind: 'user', contextId: 'smart-shuffled', contextType: 'adhoc' },
+        }]);
+        deps.bumpQueue();
+        // Reloaded rather than appended, and resumed where it was: the queue
+        // after the current track is entirely different now.
+        await deps.loadQueue(full, deps.currentIndex(), wasPlaying, savedPosition);
+      } catch (error) {
+        deps.logWarning('Smart Shuffle inject failed', error);
+      }
+    },
+  };
+}

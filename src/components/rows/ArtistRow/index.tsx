@@ -4,13 +4,13 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ellipsis } from 'lucide-react-native';
-import { Artist } from '@/types';
+import type { Artist } from '@/domain/entities/Artist';
 import ArtistOptions from '@/components/options/ArtistOptions';
 import IconActionButton from '@/components/IconActionButton';
 import MediaListRow from '@/components/MediaListRow';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/features/theme/useTheme';
 import { useTranslation } from 'react-i18next';
-import { useSheetRef } from '@/utils/useSheetRef';
+import { useSheetRef } from '@/components/useSheetRef';
 import { iconSize, spacing } from '@/constants/design';
 
 type Props = {
@@ -36,7 +36,7 @@ const ArtistRow: React.FC<Props> = ({ artist, onPress, rounded = false }) => {
       <View style={styles.wrapper}>
         <MediaListRow
           title={artist.name}
-          subtitle={artist.subtext === 'Artist' ? t('common.artist') : artist.subtext}
+          subtitle={t('common.artist')}
           cover={artist.cover}
           onPress={handlePress}
           roundedCover={rounded}

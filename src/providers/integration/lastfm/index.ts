@@ -1,0 +1,1 @@
+export { getLastFmArtistInfo } from './getArtistInfo'
