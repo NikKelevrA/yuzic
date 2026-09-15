@@ -113,6 +113,26 @@ describe('wantStatus', () => {
     expect(status).toEqual({ kind: 'queued' });
   });
 
+  /**
+   * 2.4.0 wrote `jobRef` as a `${id}:${Date.now()}` string that nothing read
+   * back. A want persisted with one must not read as a failure: it would put
+   * a retry under a download that may well have finished.
+   */
+  it('reads a want carrying the old string jobRef as saved, not as failed', () => {
+    const legacy = want();
+    // The shape that upgrades off 2.4.0, which the current type cannot spell.
+    Object.assign(legacy, { jobRef: 'lidarr:1700000000000' });
+
+    expect(wantStatus(legacy, { queues: [], hasArrived: false, now: NOW })).toEqual({ kind: 'saved' });
+  });
+
+  it('still reports arrival for a want carrying an unreadable job', () => {
+    const legacy = want();
+    Object.assign(legacy, { jobRef: 'lidarr:1700000000000' });
+
+    expect(wantStatus(legacy, { queues: [], hasArrived: true, now: NOW })).toEqual({ kind: 'arrived' });
+  });
+
   it('does not match a queue item for a different release', () => {
     const status = wantStatus(
       want({ jobRef: { downloader: 'lidarr', requestedAt: NOW - JOB_GRACE_MS - 1 } }),

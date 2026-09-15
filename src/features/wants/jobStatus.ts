@@ -88,6 +88,12 @@ export function wantStatus(want: Want, input: StatusInput): WantStatus {
 
   const job = want.jobRef;
   if (!job) return { kind: 'saved' };
+  // A job this version cannot read is not a job that failed. 2.4.0 wrote
+  // `jobRef` as a `${id}:${Date.now()}` string that nothing ever read back;
+  // a want persisted with one would otherwise fall past every branch below
+  // and report as "didn't arrive", offering a retry for a download that may
+  // well have completed. Saved is the honest reading — it says what is known.
+  if (typeof job.requestedAt !== 'number' || !job.downloader) return { kind: 'saved' };
 
   // Only the downloader that was asked. Another downloader fetching something
   // with the same name is not this want's job, and reading it as one would
