@@ -20,7 +20,7 @@ import { useExternalAlbumStatus } from '@/features/downloaders/useExternalAlbumS
 import type { Album } from '@/domain/entities/Album';
 import { useLazyAlbumDetail } from '@/components/options/useLazyCollectionDetails';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
-import { albumWebLink } from '@/features/sources/sourceWebUrl';
+import { albumWebLink } from '@/providers/registry/sourceLinks';
 import { shareItem } from '@/features/shares/share';
 import { toggleFavorite, confirmDestructive } from '../shared/starActions';
 import { useWantToggle } from '../shared/wantActions';

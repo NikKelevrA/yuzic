@@ -12,6 +12,10 @@
  * have to keep it per source, and an id the record already carries says the
  * same thing. Null when nothing identifies the record publicly — the actions
  * are then not offered at all, instead of opening a guess.
+ *
+ * Lives with the other provider declarations because naming a source, and
+ * knowing the shape of its pages, is what this layer is for — feature code
+ * asks for a link and never learns which company answered.
  */
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
@@ -91,5 +95,3 @@ export function artistWebLink(artist: Artist): WebLink | null {
     return ids.mbid ? `https://musicbrainz.org/artist/${ids.mbid}` : null;
   });
 }
-
-export type { WebLink };

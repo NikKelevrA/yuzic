@@ -16,7 +16,7 @@ export interface AlbumExternalActionContext extends BaseActionContext {
   isWanted: boolean;
   canDownload: boolean;
   /** i18n key naming the source this record has a public page on, or null when
-   *  nothing identifies it publicly — see `features/sources/sourceWebUrl`. */
+   *  nothing identifies it publicly — see `providers/registry/sourceLinks`. */
   webSourceNameKey: string | null;
   canGoToArtist: boolean;
   handlers: {

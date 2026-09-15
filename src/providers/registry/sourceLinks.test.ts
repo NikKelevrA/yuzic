@@ -1,7 +1,7 @@
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 import { integrationProvenance, serverProvenance } from '@/domain/identity/Provenance';
-import { albumWebLink, artistWebLink } from './sourceWebUrl';
+import { albumWebLink, artistWebLink } from './sourceLinks';
 
 const album = (over: Partial<Album>): Album => ({
   localId: 'local:album:int:deezer:1' as Album['localId'],

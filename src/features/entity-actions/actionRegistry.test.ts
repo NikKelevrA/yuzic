@@ -25,7 +25,7 @@ describe('actionRegistrySummary', () => {
       'favorite', 'addToQueue', 'addToEnd', 'addToPlaylist', 'sleepTimer', 'download',
       'goToAlbum', 'goToArtist', 'instantMix', 'generatePlaylist',
     ]);
-    expect(actionRegistrySummary['song.external']).toEqual(['play', 'want', 'getSong', 'get']);
+    expect(actionRegistrySummary['song.external']).toEqual(['play', 'inLibrary', 'want', 'getSong', 'get']);
     expect(actionRegistrySummary['album.library']).toEqual([
       'favorite', 'play', 'shuffle', 'addToNext', 'addToEnd', 'shuffleToQueue',
       'generatePlaylist', 'goToAlbum', 'viewExternal', 'share', 'download',
@@ -102,7 +102,7 @@ function songExternalCtx(overrides: Partial<SongExternalActionContext> = {}): So
     kind: 'song', origin: 'external',
     song: { localId: 'local:song:ext:deezer:1' } as SongExternalActionContext['song'],
     t, colors: { secondary: '#000', placeholder: '#999' }, close: noop, onPlay: undefined,
-    isWanted: false, canDownload: false, canDownloadTrack: false,
+    isWanted: false, isInLibrary: false, canDownload: false, canDownloadTrack: false,
     handlers: { play: noop, toggleWant: noop, openAlbumGet: noop, openTrackGet: noop },
     ...overrides,
   };
@@ -123,6 +123,26 @@ describe('songExternalActions', () => {
   it('hides Want entirely when the song has no localId', () => {
     const ctx = songExternalCtx({ song: { localId: '' } as SongExternalActionContext['song'] });
     expect(resolveActions(songExternalActions, ctx).map(a => a.id)).not.toContain('want');
+  });
+
+  /**
+   * Local first: a track the library already holds is not something to want or
+   * to go and get again. Same shape as the external *album* sheet's inLibrary
+   * row, and the flag behind it comes from the same rule
+   * (features/library/localFirst).
+   */
+  it('replaces Want and Get with an inert "in library" row once the track is owned', () => {
+    const ids = resolveActions(songExternalActions, songExternalCtx({
+      isInLibrary: true, onPlay: noop, canDownload: true, canDownloadTrack: true,
+    })).map(a => a.id);
+
+    expect(ids).toEqual(['play', 'inLibrary']);
+  });
+
+  it('leaves the inLibrary row out — and Want in — for a track nobody owns', () => {
+    const ids = resolveActions(songExternalActions, songExternalCtx()).map(a => a.id);
+
+    expect(ids).toEqual(['want']);
   });
 });
 

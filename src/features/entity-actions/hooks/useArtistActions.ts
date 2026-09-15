@@ -23,7 +23,7 @@ import { useGeneratePlaylistAction } from '../shared/generatePlaylistAction';
 import { resolveActions } from '../types';
 import { artistActions, type ArtistActionContext } from '../registry/artistActions';
 import { artistExternalActions, type ArtistExternalActionContext } from '../registry/artistExternalActions';
-import { artistWebLink } from '@/features/sources/sourceWebUrl';
+import { artistWebLink } from '@/providers/registry/sourceLinks';
 import { shareItem } from '@/features/shares/share';
 
 export function useArtistOptionsActions(

@@ -1,5 +1,18 @@
 import { renderHook } from '@testing-library/react-native';
 
+jest.mock('@/features/library/useLocalFirst', () => ({
+  useLocalFirst: () => ({
+    index: {
+      songs: { size: 0, find: () => null },
+      albums: { size: 0, find: () => null },
+      artists: { size: 0, find: () => null },
+    },
+    localSong: () => null,
+    localAlbum: () => null,
+    localArtist: () => null,
+    preferLocalSong: (song: unknown) => song,
+  }),
+}));
 jest.mock('@/features/sources/useMatchedNavigation', () => ({
   useMatchedNavigation: () => ({ navigateToAlbum: jest.fn(), navigateToArtist: jest.fn() }),
 }));

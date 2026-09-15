@@ -11,7 +11,7 @@ import type { Song } from '@/domain/entities/Song';
 import type { CoverSource } from '@/domain/entities/Cover';
 
 /** What the tile is showing, and therefore which options sheet it opens. */
-export type TileEntity =
+type TileEntity =
   | { kind: 'album'; album: Album }
   | { kind: 'artist'; artist: Artist }
   | { kind: 'song'; song: Song };
