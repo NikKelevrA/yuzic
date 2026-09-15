@@ -21,7 +21,7 @@ const t = (key: string) => key;
 describe('actionRegistrySummary', () => {
   it('lists a stable id set per entity kind/origin', () => {
     expect(actionRegistrySummary['song.library']).toEqual([
-      'favorite', 'addToQueue', 'addToEnd', 'addToPlaylist', 'download',
+      'favorite', 'addToQueue', 'addToEnd', 'addToPlaylist', 'sleepTimer', 'download',
       'goToAlbum', 'goToArtist', 'instantMix', 'generatePlaylist',
     ]);
     expect(actionRegistrySummary['song.external']).toEqual(['play', 'want', 'getSong', 'get']);
@@ -45,8 +45,9 @@ function songLibraryCtx(overrides: Partial<SongLibraryActionContext> = {}): Song
     song: { album: { nativeId: 'a1' }, artist: { nativeId: 'ar1' } } as SongLibraryActionContext['song'],
     t, colors: { secondary: '#000', subtext: '#666' }, close: noop,
     isStarred: false, isDownloaded: false, isDownloading: false, isGeneratingPlaylist: false, similarPlaylistAvailable: false,
+    sleepTimer: { mode: 'off' }, sleepTimerAvailable: false,
     handlers: {
-      toggleFavorite: noop, addToQueue: noop, addToEndQueue: noop, addToPlaylist: noop, download: noop,
+      toggleFavorite: noop, addToQueue: noop, addToEndQueue: noop, addToPlaylist: noop, sleepTimer: noop, download: noop,
       goToAlbum: noop, goToArtist: noop, instantMix: noop, generatePlaylist: noop,
     },
     ...overrides,
@@ -59,6 +60,12 @@ describe('songLibraryActions', () => {
     expect(resolved.map(a => a.id)).toEqual([
       'favorite', 'addToQueue', 'addToEnd', 'addToPlaylist', 'download', 'goToAlbum', 'goToArtist', 'instantMix',
     ]);
+  });
+
+  it('offers the sleep timer only where the player asked for it', () => {
+    expect(resolveActions(songLibraryActions, songLibraryCtx()).map(a => a.id)).not.toContain('sleepTimer');
+    const ids = resolveActions(songLibraryActions, songLibraryCtx({ sleepTimerAvailable: true })).map(a => a.id);
+    expect(ids.indexOf('sleepTimer')).toBe(ids.indexOf('addToPlaylist') + 1);
   });
 
   it('hides goToAlbum/goToArtist when the song carries no album/artist native id', () => {

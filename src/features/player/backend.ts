@@ -6,7 +6,7 @@ import type { MediaItem } from './mediaItem';
  * The player, as the app talks to it.
  *
  * Taken from what yuzic actually calls — every `TrackPlayer.*` in
- * `PlayingContext`, `SleepTimerCard`, the player settings screen and the
+ * `PlayingContext`, `sleepTimer`, the player settings screen and the
  * CarPlay hook — rather than from anyone's idea of a complete player. If a
  * method is here, something calls it; if something calls it, it is here.
  *

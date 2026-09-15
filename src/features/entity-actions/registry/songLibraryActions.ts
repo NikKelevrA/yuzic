@@ -1,9 +1,11 @@
 import React from 'react';
 import {
-  Heart, CirclePlus, Disc, Radio, Mic2, ListEnd, ListStart, Sparkles,
+  Heart, CirclePlus, Disc, Radio, Mic2, ListEnd, ListStart, Sparkles, Moon,
 } from 'lucide-react-native';
 import type { Song } from '@/domain/entities/Song';
-import { iconSize, statusColor } from '@/constants/design';
+import { iconSize, statusColor, typography } from '@/constants/design';
+import type { SleepTimer } from '@/features/player/sleepTimer';
+import SleepTimerRemaining from '@/features/player/components/SleepTimerRemaining';
 import type { ActionDef, BaseActionContext } from '../types';
 import { downloadRowIcon, downloadRowLabel } from '../shared/downloadActions';
 
@@ -18,11 +20,15 @@ export interface SongLibraryActionContext extends BaseActionContext {
   isDownloading: boolean;
   isGeneratingPlaylist: boolean;
   similarPlaylistAvailable: boolean;
+  sleepTimer: SleepTimer;
+  /** Only the player's own sheet, for the playing track, offers the timer. */
+  sleepTimerAvailable: boolean;
   handlers: {
     toggleFavorite: () => void;
     addToQueue: () => void;
     addToEndQueue: () => void;
     addToPlaylist: () => void;
+    sleepTimer: () => void;
     download: () => void;
     goToAlbum: () => void;
     goToArtist: () => void;
@@ -64,6 +70,18 @@ export const songLibraryActions: ActionDef<Ctx>[] = [
     icon: ctx => React.createElement(CirclePlus, { size: icon(), color: ctx.colors.secondary }),
     visible: () => true,
     invoke: ctx => ctx.handlers.addToPlaylist(),
+  },
+  {
+    id: 'sleepTimer',
+    label: ctx => ctx.t('songOptions.actions.sleepTimer'),
+    icon: ctx => React.createElement(Moon, { size: icon(), color: ctx.colors.secondary }),
+    visible: ctx => ctx.sleepTimerAvailable,
+    trailing: ctx => React.createElement(SleepTimerRemaining, {
+      timer: ctx.sleepTimer,
+      style: { ...typography.rowSubtitle, color: ctx.colors.subtext },
+    }),
+    testID: () => 'song-options-sleep-timer',
+    invoke: ctx => ctx.handlers.sleepTimer(),
   },
   {
     id: 'download',

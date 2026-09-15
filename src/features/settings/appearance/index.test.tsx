@@ -49,7 +49,6 @@ async function renderScreen(store: Store) {
 /** Every switch on the screen, in the order the screen declares its toggle groups. */
 const SWITCH_ORDER = [
   'settings.appearance.showQualityBadge',
-  'settings.player.showSleepTimer',
   'settings.player.showPlaybackSpeed',
   'settings.player.showJumpButtons',
   'settings.player.showVolumeSlider',
@@ -74,7 +73,7 @@ describe('AppearanceSettings', () => {
     const view = await renderScreen(makeStore());
 
     expect(switchFor(view, 'settings.appearance.showQualityBadge').props.value).toBe(false);
-    expect(switchFor(view, 'settings.player.showSleepTimer').props.value).toBe(true);
+    expect(switchFor(view, 'settings.player.showPlaybackSpeed').props.value).toBe(false);
     expect(switchFor(view, 'settings.appearance.haptics').props.value).toBe(true);
   });
 
@@ -93,10 +92,10 @@ describe('AppearanceSettings', () => {
     const store = makeStore();
     const view = await renderScreen(store);
 
-    await fireEvent(switchFor(view, 'settings.player.showSleepTimer'), 'valueChange', false);
+    await fireEvent(switchFor(view, 'settings.player.showPlaybackSpeed'), 'valueChange', true);
     await fireEvent(switchFor(view, 'settings.player.showVolumeSlider'), 'valueChange', true);
 
-    expect(store.getState().settingsPlayback.showSleepTimer).toBe(false);
+    expect(store.getState().settingsPlayback.showPlaybackSpeed).toBe(true);
     expect(store.getState().settingsPlayback.showVolumeSlider).toBe(true);
   });
 

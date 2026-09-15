@@ -317,8 +317,6 @@
       },
       "opusCodec": "Opusコーデック",
       "opusCodecSubtext": "同ビットレートでMP3より高音質。",
-      "showSleepTimer": "スリープタイマー",
-      "showSleepTimerSubtext": "プレイヤーにスリープタイマーを表示します。",
       "showPlaybackSpeed": "再生速度",
       "showPlaybackSpeedSubtext": "プレイヤーに速度調整を表示します。",
       "showJumpButtons": "スキップボタン",
@@ -465,10 +463,7 @@
     "home": {
       "title": "ホーム",
       "shelfLength": "Shelf size",
-      "sleepPresets": "Sleep timer quick-adds",
-      "sleepPresetsSubtext": "Show this duration as a quick-add button.",
       "selected": "Selected",
-      "minutes": "{{count}} minutes",
       "length": {
         "compact": "Compact",
         "standard": "Standard",
@@ -974,9 +969,12 @@
     },
     "sleepTimer": {
       "title": "スリープタイマー",
-      "off": "オフ",
-      "cancel": "オフ",
-      "addMinutes_other": "+{{count}}分"
+      "minutes_other": "{{count}}分",
+      "hours_other": "{{count}}時間",
+      "endOfTrack": "この曲の終わり",
+      "turnOff": "タイマーをオフ",
+      "stopsIn": "停止まで",
+      "stopsAtEndOfTrack": "この曲が終わると停止します"
     },
     "bar": {
       "noSong": "再生中の曲はありません",
@@ -1038,7 +1036,8 @@
       "downloading": "ダウンロード中…",
       "downloaded": "ダウンロード済み",
       "goToArtist": "アーティストへ移動",
-      "generatePlaylist": "この曲からプレイリストを作成"
+      "generatePlaylist": "この曲からプレイリストを作成",
+      "sleepTimer": "スリープタイマー"
     },
     "sections": {
       "media": "メディア",
@@ -1432,7 +1431,8 @@
       "goToArtist": "アーティストへ移動",
       "nowPlayingBar": "再生中",
       "noSongPlaying": "再生中の曲はありません",
-      "coverArt": "アルバムアート。スワイプで曲を変更します。"
+      "coverArt": "アルバムアート。スワイプで曲を変更します。",
+      "sleepTimer": "スリープタイマー"
     },
     "search": {
       "clear": "検索をクリア"

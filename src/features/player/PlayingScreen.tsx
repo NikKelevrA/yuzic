@@ -11,7 +11,7 @@ import { usePlayingState, usePlayingProgress } from '@/features/playback/Playing
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { selectShowSleepTimer, selectShowPlaybackSpeed, selectShowVolumeSlider } from '@/features/settings/playback/state';
+import { selectShowPlaybackSpeed, selectShowVolumeSlider } from '@/features/settings/playback/state';
 import { useSongScreenModel, type SongScreenModel } from '@/features/song/useSongScreenModel';
 import type { LyricsResult } from '@/providers/contracts/ServerAdapter';
 import SongOptions from '@/components/options/SongOptions';
@@ -27,7 +27,8 @@ import LyricsBottomSheet from './components/LyricsBottomSheet';
 import LyricsPreviewCard from './components/LyricsPreviewCard';
 import OutputDeviceSheet from './components/OutputDeviceSheet';
 import AboutTheArtistCard from './components/AboutTheArtistCard';
-import SleepTimerCard from './components/SleepTimerCard';
+import SleepTimerSheet from './components/SleepTimerSheet';
+import { setSleepTimerPlaybackRate } from './sleepTimer';
 import PlaybackSpeedCard from './components/PlaybackSpeedCard';
 import VolumeCard from './components/VolumeCard';
 import { useDragToClose } from './useDragToClose';
@@ -67,7 +68,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
 }) => {
     const { t } = useTranslation();
     const router = useRouter();
-    const { currentSong } = usePlayingState();
+    const { currentSong, playbackSpeed } = usePlayingState();
     const insets = useSafeAreaInsets();
     const songModel: SongScreenModel = useSongScreenModel(currentSong);
     const { album, artistId, lyrics, lyricsAvailable } = songModel;
@@ -76,6 +77,10 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     const playlistRef = useSheetRef();
     const lyricsSheetRef = useSheetRef();
     const outputDeviceSheetRef = useSheetRef();
+    const sleepTimerSheetRef = useSheetRef();
+
+    // "End of track" is measured in the listener's time, not the track's.
+    useEffect(() => { setSleepTimerPlaybackRate(playbackSpeed); }, [playbackSpeed]);
 
     const { expansion, scrollY, coverVisibility, isOpen } = usePlayerExpansion();
 
@@ -119,7 +124,6 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
 
     const dragToClose = useDragToClose(expansion, scrollY, height);
 
-    const showSleepTimer = useSelector(selectShowSleepTimer);
     const showPlaybackSpeed = useSelector(selectShowPlaybackSpeed);
     const showVolumeSlider = useSelector(selectShowVolumeSlider);
 
@@ -234,6 +238,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                                         mode={mode}
                                         setMode={changeMode}
                                         onOpenOutputSheet={() => outputDeviceSheetRef.current?.present()}
+                                        onOpenSleepTimer={() => sleepTimerSheetRef.current?.present()}
                                     />
                                 </View>
                             </View>
@@ -248,10 +253,6 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                                     contentWidth={contentWidth}
                                     onPress={openLyricsSheet}
                                 />
-                            )}
-
-                            {showSleepTimer && (
-                                <SleepTimerCard contentWidth={contentWidth} />
                             )}
 
                             {showPlaybackSpeed && (
@@ -281,6 +282,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                 ref={songOptionsRef}
                 selectedSong={currentSong}
                 onAddToPlaylist={() => playlistRef.current?.present()}
+                onSleepTimer={() => sleepTimerSheetRef.current?.present()}
                 onNavigate={onClose}
             />
 
@@ -297,6 +299,8 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
             />
 
             <OutputDeviceSheet ref={outputDeviceSheetRef} />
+
+            <SleepTimerSheet ref={sleepTimerSheetRef} />
         </View>
     );
 };

@@ -318,8 +318,6 @@
       },
       "opusCodec": "Opus Codec",
       "opusCodecSubtext": "Better than MP3 at the same bitrate.",
-      "showSleepTimer": "Sleep Timer",
-      "showSleepTimerSubtext": "Show a sleep timer control in the player.",
       "showPlaybackSpeed": "Playback Speed",
       "showPlaybackSpeedSubtext": "Show a speed control in the player.",
       "showJumpButtons": "Jump Buttons",
@@ -466,10 +464,7 @@
     "home": {
       "title": "Home",
       "shelfLength": "Shelf size",
-      "sleepPresets": "Sleep timer quick-adds",
-      "sleepPresetsSubtext": "Show this duration as a quick-add button.",
       "selected": "Selected",
-      "minutes": "{{count}} minutes",
       "length": {
         "compact": "Compact",
         "standard": "Standard",
@@ -979,10 +974,14 @@
     },
     "sleepTimer": {
       "title": "Sleep timer",
-      "off": "Off",
-      "cancel": "Off",
-      "addMinutes_one": "+{{count}}m",
-      "addMinutes_other": "+{{count}}m"
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "endOfTrack": "End of track",
+      "turnOff": "Turn off timer",
+      "stopsIn": "Stops in",
+      "stopsAtEndOfTrack": "Stops when this track ends"
     },
     "bar": {
       "noSong": "No song playing",
@@ -1044,7 +1043,8 @@
       "download": "Download",
       "downloading": "Downloading…",
       "downloaded": "Downloaded",
-      "generatePlaylist": "Make a playlist from this"
+      "generatePlaylist": "Make a playlist from this",
+      "sleepTimer": "Sleep timer"
     },
     "sections": {
       "media": "Media",
@@ -1426,7 +1426,8 @@
       "goToArtist": "Go to artist",
       "nowPlayingBar": "Now playing",
       "noSongPlaying": "No song playing",
-      "coverArt": "Cover art. Swipe to change track."
+      "coverArt": "Cover art. Swipe to change track.",
+      "sleepTimer": "Sleep timer"
     },
     "search": {
       "clear": "Clear search"

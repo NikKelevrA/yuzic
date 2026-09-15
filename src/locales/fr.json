@@ -318,8 +318,6 @@
       },
       "opusCodec": "Codec Opus",
       "opusCodecSubtext": "Meilleur que le MP3 à débit égal.",
-      "showSleepTimer": "Minuterie de veille",
-      "showSleepTimerSubtext": "Affiche une commande de minuterie de veille dans le lecteur.",
       "showPlaybackSpeed": "Vitesse de lecture",
       "showPlaybackSpeedSubtext": "Affiche une commande de vitesse dans le lecteur.",
       "showJumpButtons": "Boutons de saut",
@@ -466,10 +464,7 @@
     "home": {
       "title": "Accueil",
       "shelfLength": "Shelf size",
-      "sleepPresets": "Sleep timer quick-adds",
-      "sleepPresetsSubtext": "Show this duration as a quick-add button.",
       "selected": "Selected",
-      "minutes": "{{count}} minutes",
       "length": {
         "compact": "Compact",
         "standard": "Standard",
@@ -977,10 +972,14 @@
     },
     "sleepTimer": {
       "title": "Minuteur de veille",
-      "off": "Désactivé",
-      "cancel": "Arrêter",
-      "addMinutes_one": "+{{count}} min",
-      "addMinutes_other": "+{{count}} min"
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "hours_one": "{{count}} heure",
+      "hours_other": "{{count}} heures",
+      "endOfTrack": "Fin du titre",
+      "turnOff": "Désactiver le minuteur",
+      "stopsIn": "Arrêt dans",
+      "stopsAtEndOfTrack": "Arrêt à la fin de ce titre"
     },
     "bar": {
       "noSong": "Aucun morceau en lecture",
@@ -1042,7 +1041,8 @@
       "downloading": "Téléchargement…",
       "downloaded": "Téléchargé",
       "goToArtist": "Voir l'artiste",
-      "generatePlaylist": "Créer une playlist à partir de ce titre"
+      "generatePlaylist": "Créer une playlist à partir de ce titre",
+      "sleepTimer": "Minuteur de veille"
     },
     "sections": {
       "media": "Média",
@@ -1436,7 +1436,8 @@
       "goToArtist": "Aller à l'artiste",
       "nowPlayingBar": "Lecture en cours",
       "noSongPlaying": "Aucun morceau en lecture",
-      "coverArt": "Pochette. Balayez pour changer de piste."
+      "coverArt": "Pochette. Balayez pour changer de piste.",
+      "sleepTimer": "Minuteur de veille"
     },
     "search": {
       "clear": "Effacer la recherche"

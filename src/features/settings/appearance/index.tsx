@@ -12,7 +12,7 @@ import { GridColumns } from './components/GridColumns';
 import { RadiusPresetSelector } from './components/RadiusPresetSelector';
 import { ListDensitySelector } from './components/ListDensitySelector';
 import { selectShowQualityBadge, selectShowSourceHeaders, selectHapticsEnabled, selectTranslucentDock, selectRespectReducedMotion, selectCoverAccentEnabled, setShowQualityBadge, setShowSourceHeaders, setHapticsEnabled, setTranslucentDock, setRespectReducedMotion, setCoverAccentEnabled } from '@/features/settings/appearance/state';
-import { selectShowSleepTimer, selectShowPlaybackSpeed, selectShowJumpButtons, selectShowVolumeSlider, setShowSleepTimer, setShowPlaybackSpeed, setShowJumpButtons, setShowVolumeSlider } from '@/features/settings/playback/state';
+import { selectShowPlaybackSpeed, selectShowJumpButtons, selectShowVolumeSlider, setShowPlaybackSpeed, setShowJumpButtons, setShowVolumeSlider } from '@/features/settings/playback/state';
 
 const AppearanceSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -23,7 +23,6 @@ const AppearanceSettings: React.FC = () => {
   const translucentDock = useSelector(selectTranslucentDock);
   const respectReducedMotion = useSelector(selectRespectReducedMotion);
   const coverAccentEnabled = useSelector(selectCoverAccentEnabled);
-  const showSleepTimer = useSelector(selectShowSleepTimer);
   const showPlaybackSpeed = useSelector(selectShowPlaybackSpeed);
   const showJumpButtons = useSelector(selectShowJumpButtons);
   const showVolumeSlider = useSelector(selectShowVolumeSlider);
@@ -35,7 +34,6 @@ const AppearanceSettings: React.FC = () => {
   const toggleCoverAccent = useCallback((v: boolean) => { dispatch(setCoverAccentEnabled(v)); }, [dispatch]);
   const toggleTranslucentDock = useCallback((v: boolean) => { dispatch(setTranslucentDock(v)); }, [dispatch]);
 
-  const toggleSleepTimer = useCallback((v: boolean) => { dispatch(setShowSleepTimer(v)); }, [dispatch]);
   const togglePlaybackSpeed = useCallback((v: boolean) => { dispatch(setShowPlaybackSpeed(v)); }, [dispatch]);
   const toggleJumpButtons = useCallback((v: boolean) => { dispatch(setShowJumpButtons(v)); }, [dispatch]);
   const toggleVolumeSlider = useCallback((v: boolean) => { dispatch(setShowVolumeSlider(v)); }, [dispatch]);
@@ -44,12 +42,6 @@ const AppearanceSettings: React.FC = () => {
   // `settings.player.*` because that is where they were written and a key is
   // not worth a four-locale rename; the setting itself belongs here.
   const playerControlItems = useMemo(() => [
-    {
-      label: t('settings.player.showSleepTimer'),
-      subtext: t('settings.player.showSleepTimerSubtext'),
-      value: showSleepTimer,
-      onValueChange: toggleSleepTimer,
-    },
     {
       label: t('settings.player.showPlaybackSpeed'),
       subtext: t('settings.player.showPlaybackSpeedSubtext'),
@@ -69,8 +61,8 @@ const AppearanceSettings: React.FC = () => {
       onValueChange: toggleVolumeSlider,
     },
   ], [
-    t, showSleepTimer, showPlaybackSpeed, showJumpButtons, showVolumeSlider,
-    toggleSleepTimer, togglePlaybackSpeed, toggleJumpButtons, toggleVolumeSlider,
+    t, showPlaybackSpeed, showJumpButtons, showVolumeSlider,
+    togglePlaybackSpeed, toggleJumpButtons, toggleVolumeSlider,
   ]);
 
   const feelItems = useMemo(() => [

@@ -25,6 +25,8 @@ type SongOptionsProps = {
   selectedSong: Song;
   /** Library-song-only: opens the add-to-playlist sheet. Ignored for external songs. */
   onAddToPlaylist?: () => void;
+  /** Library-song-only: opens the sleep timer. Passed by the player, so only the playing track offers it. */
+  onSleepTimer?: () => void;
   onNavigate?: () => void;
   /** External-song-only: album context for its options sheet. */
   albumTitle?: string;
@@ -56,7 +58,7 @@ function isExternalSongOrigin(song: Song): boolean {
 }
 
 const SongOptions = forwardRef<BottomSheetModal, SongOptionsProps>(
-  ({ selectedSong, onAddToPlaylist, onNavigate, albumTitle, albumArtist, onPlay }, ref) => {
+  ({ selectedSong, onAddToPlaylist, onSleepTimer, onNavigate, albumTitle, albumArtist, onPlay }, ref) => {
     if (isExternalSongOrigin(selectedSong)) {
       return (
         <ExternalSongOptionsSheet
@@ -73,6 +75,7 @@ const SongOptions = forwardRef<BottomSheetModal, SongOptionsProps>(
         ref={ref}
         selectedSong={selectedSong}
         onAddToPlaylist={onAddToPlaylist ?? (() => {})}
+        onSleepTimer={onSleepTimer}
         onNavigate={onNavigate}
       />
     );
@@ -90,16 +93,17 @@ export default SongOptions;
 type LibrarySongOptionsProps = {
   selectedSong: Song;
   onAddToPlaylist: () => void;
+  onSleepTimer?: () => void;
   onNavigate?: () => void;
 };
 
 const LibrarySongOptionsSheet = forwardRef<BottomSheetModal, LibrarySongOptionsProps>(
-  ({ selectedSong, onAddToPlaylist, onNavigate }, ref) => {
+  ({ selectedSong, onAddToPlaylist, onSleepTimer, onNavigate }, ref) => {
     const { t } = useTranslation();
     const snapPoints = useMemo(() => ['55%', '90%'], []);
     const close = () => dismissSheetRef(ref);
 
-    const { actions, playCount } = useSongLibraryActions(selectedSong, { onAddToPlaylist, onNavigate, close });
+    const { actions, playCount } = useSongLibraryActions(selectedSong, { onAddToPlaylist, onSleepTimer, onNavigate, close });
 
     return (
       <EntityOptionsSheet

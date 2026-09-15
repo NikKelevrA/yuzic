@@ -14,7 +14,6 @@ interface PlaybackSettingsState {
   resumeLongTracksEnabled: boolean;
   queueSyncEnabled: boolean;
   showVolumeSlider: boolean;
-  showSleepTimer: boolean;
   showJumpButtons: boolean;
   showPlaybackSpeed: boolean;
   /**
@@ -48,7 +47,6 @@ const initialState: PlaybackSettingsState = {
   resumeLongTracksEnabled: true,
   queueSyncEnabled: true,
   showVolumeSlider: false,
-  showSleepTimer: true,
   showJumpButtons: false,
   showPlaybackSpeed: false,
   playbackSpeeds: {},
@@ -84,9 +82,6 @@ const playbackSlice = createSlice({
     },
     setShowVolumeSlider(state, action: PayloadAction<boolean>) {
       state.showVolumeSlider = action.payload;
-    },
-    setShowSleepTimer(state, action: PayloadAction<boolean>) {
-      state.showSleepTimer = action.payload;
     },
     setShowJumpButtons(state, action: PayloadAction<boolean>) {
       state.showJumpButtons = action.payload;
@@ -124,7 +119,6 @@ export const {
   setResumeLongTracksEnabled,
   setQueueSyncEnabled,
   setShowVolumeSlider,
-  setShowSleepTimer,
   setShowJumpButtons,
   setShowPlaybackSpeed,
   setPlaybackSpeedForProfile,
@@ -162,9 +156,6 @@ export const selectQueueSyncEnabled = (state: PlaybackRootState): boolean =>
 
 export const selectShowVolumeSlider = (state: PlaybackRootState): boolean =>
   state.settingsPlayback.showVolumeSlider;
-
-export const selectShowSleepTimer = (state: PlaybackRootState): boolean =>
-  state.settingsPlayback.showSleepTimer;
 
 export const selectShowJumpButtons = (state: PlaybackRootState): boolean =>
   state.settingsPlayback.showJumpButtons;

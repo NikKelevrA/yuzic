@@ -19,7 +19,6 @@ jest.mock('react-redux', () => ({
       homeShelfVisibility: { quickPicks: false },
       homeShelfOrder: { resume: ['recentlyPlayed', 'quickPicks'] },
       homeShelfLength: 'standard',
-      sleepTimerPresets: [5, 15],
     },
     settingsSources: { uses: mockUses },
   }),
@@ -156,7 +155,7 @@ describe('Home settings shelf editor', () => {
 
     expect(view.queryAllByText('settings.home.shelves.quickPicks')).toHaveLength(1);
     expect(view.getByText('recentlyPlayed,quickPicks,continuePlaying')).toBeTruthy();
-    expect(view.queryAllByTestId('toggle-group')).toHaveLength(1);
+    expect(view.queryAllByTestId('toggle-group')).toHaveLength(0);
 
     await fireEvent.press(view.getByTestId('source-toggle-quickPicks'));
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({

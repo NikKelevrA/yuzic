@@ -5,7 +5,6 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
 import SettingsScreen from '../components/SettingsScreen';
 import SettingsCardHeader from '../components/SettingsCardHeader';
-import SettingsToggleGroup from '../components/SettingsToggleGroup';
 import SettingsCard from '../components/SettingsCard';
 import SettingsSourceList, { SourceListScrollContainer } from '../components/SettingsSourceList';
 import SettingsRow from '../components/SettingsRow';
@@ -14,7 +13,7 @@ import { selectSourceUses } from '../sources/state';
 import { HOME_SOURCE_TIERS } from '@/providers/registry/homeDiscovery';
 import type { SourceId } from '@/providers/registry/sources';
 import type { RootState } from '@/state/redux/store';
-import { resolveHomeShelfOrder, selectHomeShelfOrders, selectHomeShelfVisibilityMap, selectHomeShelfLength, selectSleepTimerPresets, setHomeShelfVisibility, setHomeShelfOrder, setHomeShelfLength, setSleepTimerPresets, type HomeShelfLength, type HomeShelfTier } from '@/features/settings/home/state';
+import { resolveHomeShelfOrder, selectHomeShelfOrders, selectHomeShelfVisibilityMap, selectHomeShelfLength, setHomeShelfVisibility, setHomeShelfOrder, setHomeShelfLength, type HomeShelfLength, type HomeShelfTier } from '@/features/settings/home/state';
 
 type Tier = {
   tier: HomeShelfTier;
@@ -30,7 +29,6 @@ const TIERS: Tier[] = [
   { tier: 'server', ids: ['serverRandom', 'serverNowPlaying', 'localMix'] },
   ...HOME_SOURCE_TIERS.map(tier => ({ tier: tier.source, ids: tier.shelves, source: tier.source })),
 ];
-const SLEEP_OPTIONS = [5, 10, 15, 20, 30, 45, 60];
 const LENGTHS: HomeShelfLength[] = ['compact', 'standard', 'generous'];
 
 /** For each outside tier that needs an account for some shelves: whether one is connected. */
@@ -44,7 +42,6 @@ const HomeSettings: React.FC = () => {
   const visibility = useSelector(selectHomeShelfVisibilityMap);
   const sourceUses = useSelector(selectSourceUses);
   const accountsConnected = useSelector(selectAccountsConnected, shallowEqual);
-  const presets = useSelector(selectSleepTimerPresets);
   const length = useSelector(selectHomeShelfLength);
   const orders = useSelector(selectHomeShelfOrders);
   const setLength = useCallback((next: HomeShelfLength) => dispatch(setHomeShelfLength(next)), [dispatch]);
@@ -104,16 +101,6 @@ const HomeSettings: React.FC = () => {
           </React.Fragment>
         );
       })}
-      <SettingsCardHeader subtle title={t('settings.home.sleepPresets')} />
-      <SettingsToggleGroup items={SLEEP_OPTIONS.map(minutes => ({
-        label: t('settings.home.minutes', { count: minutes }),
-        subtext: t('settings.home.sleepPresetsSubtext'),
-        value: presets.includes(minutes),
-        onValueChange: enabled => {
-          const next = enabled ? [...new Set([...presets, minutes])].sort((a, b) => a - b) : presets.filter(value => value !== minutes);
-          if (next.length > 0) dispatch(setSleepTimerPresets(next));
-        },
-      }))} />
     </SettingsScreen>
   );
 };

@@ -10,7 +10,6 @@ const HOME_SHELF_LENGTHS: Record<HomeShelfLength, number> = {
   standard: 10,
   generous: 14,
 };
-const DEFAULT_SLEEP_TIMER_PRESETS = [5, 15, 30] as const;
 
 interface HomeSettingsState {
   /* The server tier gets its own toggle because nothing else governs it. The
@@ -23,8 +22,6 @@ interface HomeSettingsState {
   homeShelfOrder: Partial<Record<HomeShelfTier, string[]>>;
   /** Number of items in Home shelves; standard preserves the original layout. */
   homeShelfLength: HomeShelfLength;
-  /** Quick-add sleep timer durations, in minutes. */
-  sleepTimerPresets: number[];
   serverNowPlayingShelfEnabled: boolean;
 }
 
@@ -33,7 +30,6 @@ const initialState: HomeSettingsState = {
   homeShelfVisibility: {},
   homeShelfOrder: {},
   homeShelfLength: 'standard',
-  sleepTimerPresets: [...DEFAULT_SLEEP_TIMER_PRESETS],
   // Default-on: cross-device continuity is what the user asked for by
   // opening the app on another device and expecting to see what's playing.
   serverNowPlayingShelfEnabled: true,
@@ -57,9 +53,6 @@ const homeSlice = createSlice({
     setHomeShelfLength(state, action: PayloadAction<HomeShelfLength>) {
       state.homeShelfLength = action.payload;
     },
-    setSleepTimerPresets(state, action: PayloadAction<number[]>) {
-      state.sleepTimerPresets = action.payload;
-    },
     setServerNowPlayingShelfEnabled(state, action: PayloadAction<boolean>) {
       state.serverNowPlayingShelfEnabled = action.payload;
     },
@@ -70,7 +63,6 @@ export const {
   setHomeShelfVisibility,
   setHomeShelfOrder,
   setHomeShelfLength,
-  setSleepTimerPresets,
   setServerNowPlayingShelfEnabled,
 } = homeSlice.actions;
 
@@ -91,11 +83,6 @@ export const selectHomeShelfLength = (state: HomeRootState): HomeShelfLength =>
 
 export const selectHomeShelfItemCount = (state: HomeRootState): number =>
   HOME_SHELF_LENGTHS[selectHomeShelfLength(state)] ?? HOME_SHELF_LENGTHS.standard;
-
-export const selectSleepTimerPresets = (state: HomeRootState): number[] => {
-  const presets = state.settingsHome.sleepTimerPresets;
-  return Array.isArray(presets) && presets.length > 0 ? presets : [...DEFAULT_SLEEP_TIMER_PRESETS];
-};
 
 /** A tier's saved order, keeping only shelves that still exist and adding new ones after. */
 export function resolveHomeShelfOrder(configured: string[] | undefined, defaults: string[]): string[] {

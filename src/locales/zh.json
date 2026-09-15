@@ -317,8 +317,6 @@
       },
       "opusCodec": "Opus编解码器",
       "opusCodecSubtext": "同码率下音质优于 MP3。",
-      "showSleepTimer": "睡眠定时器",
-      "showSleepTimerSubtext": "在播放器中显示睡眠定时器控件。",
       "showPlaybackSpeed": "播放速度",
       "showPlaybackSpeedSubtext": "在播放器中显示速度控件。",
       "showJumpButtons": "跳转按钮",
@@ -465,10 +463,7 @@
     "home": {
       "title": "主页",
       "shelfLength": "Shelf size",
-      "sleepPresets": "Sleep timer quick-adds",
-      "sleepPresetsSubtext": "Show this duration as a quick-add button.",
       "selected": "Selected",
-      "minutes": "{{count}} minutes",
       "length": {
         "compact": "Compact",
         "standard": "Standard",
@@ -974,9 +969,12 @@
     },
     "sleepTimer": {
       "title": "睡眠定时器",
-      "off": "关闭",
-      "cancel": "关闭",
-      "addMinutes_other": "+{{count}}分钟"
+      "minutes_other": "{{count}} 分钟",
+      "hours_other": "{{count}} 小时",
+      "endOfTrack": "本曲结束时",
+      "turnOff": "关闭定时器",
+      "stopsIn": "停止倒计时",
+      "stopsAtEndOfTrack": "本曲结束后停止"
     },
     "bar": {
       "noSong": "当前无播放曲目",
@@ -1038,7 +1036,8 @@
       "downloading": "下载中…",
       "downloaded": "已下载",
       "goToArtist": "前往艺术家",
-      "generatePlaylist": "以此创建播放列表"
+      "generatePlaylist": "以此创建播放列表",
+      "sleepTimer": "睡眠定时器"
     },
     "sections": {
       "media": "媒体信息",
@@ -1432,7 +1431,8 @@
       "goToArtist": "前往歌手页面",
       "nowPlayingBar": "正在播放",
       "noSongPlaying": "没有正在播放的歌曲",
-      "coverArt": "专辑封面。滑动可切换曲目。"
+      "coverArt": "专辑封面。滑动可切换曲目。",
+      "sleepTimer": "睡眠定时器"
     },
     "search": {
       "clear": "清除搜索"
