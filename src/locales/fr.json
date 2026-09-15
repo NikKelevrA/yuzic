@@ -1179,7 +1179,8 @@
       },
       "soulsyncDesc": "Chercher sur Soulseek via SoulSync",
       "addedToSoulsync": "Demandé à SoulSync.",
-      "addedTrackToSoulsync": "Demandé à SoulSync."
+      "addedTrackToSoulsync": "Demandé à SoulSync.",
+      "monitoringOnLidarr": "Lidarr suit désormais {{artist}}."
     },
     "header": {
       "songs": "{{count}} morceau",
@@ -1197,7 +1198,19 @@
     "title": "Souhaits",
     "empty": "Rien d'enregistré pour l'instant.",
     "searchAction": "Rechercher de la musique",
-    "remove": "Retirer"
+    "remove": "Retirer",
+    "get": "Récupérer",
+    "retry": "Réessayer",
+    "openAlbum": "Aller à l’album",
+    "openArtist": "Aller à l’artiste",
+    "openArrival": "Ouvrir",
+    "artistLabel": "Artiste",
+    "status": {
+      "queued": "En attente",
+      "downloading": "Téléchargement · {{progress}} %",
+      "failed": "Non reçu",
+      "arrived": "Dans votre bibliothèque"
+    }
   },
   "manualAddWant": {
     "title": "Ajouter aux souhaits",

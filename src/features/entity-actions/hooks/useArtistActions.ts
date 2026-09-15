@@ -18,6 +18,8 @@ import type { Song } from '@/domain/entities/Song';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { useLazyArtistSongs } from '@/components/options/useLazyCollectionDetails';
+import { useLocalFirst } from '@/features/library/useLocalFirst';
+import { useWantToggle } from '../shared/wantActions';
 import { useCollectionPlaybackActions } from '../shared/playbackActions';
 import { useGeneratePlaylistAction } from '../shared/generatePlaylistAction';
 import { resolveActions } from '../types';
@@ -121,11 +123,23 @@ export function useArtistExternalActions(artist: Artist, opts: { close: () => vo
   const { t } = useTranslation();
   const { colors } = useTheme();
   const webLink = useMemo(() => artistWebLink(artist), [artist]);
+  const { isWanted, toggle } = useWantToggle(artist.localId, 'artist', 'artist-page');
+  // Nothing to want if they are already yours — the one rule answers that
+  // here as everywhere else (features/library/localFirst).
+  const { localArtist } = useLocalFirst();
+  const isInLibrary = localArtist(artist) !== null;
 
   const ctx: ArtistExternalActionContext = {
     kind: 'artist', origin: 'external', artist, t, colors, close: opts.close,
+    isWanted, isInLibrary,
     webSourceNameKey: webLink?.sourceNameKey ?? null,
     handlers: {
+      // An artist want carries the artist's name in both fields: there is no
+      // separate credit to record, and `arrival`/`jobStatus` both read the
+      // artist off `want.artist`.
+      toggleWant: () => toggle({
+        externalIds: artist.externalIds, title: artist.name, artist: artist.name, cover: artist.cover,
+      }),
       share: () => {
         if (!webLink) return;
         opts.close();

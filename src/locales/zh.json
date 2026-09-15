@@ -1174,7 +1174,8 @@
       },
       "soulsyncDesc": "通过 SoulSync 搜索 Soulseek",
       "addedToSoulsync": "已向 SoulSync 发起请求。",
-      "addedTrackToSoulsync": "已向 SoulSync 发起请求。"
+      "addedTrackToSoulsync": "已向 SoulSync 发起请求。",
+      "monitoringOnLidarr": "Lidarr 正在关注 {{artist}}。"
     },
     "header": {
       "songs": "{{count}} 首曲目",
@@ -1192,7 +1193,19 @@
     "title": "想要列表",
     "empty": "还没有保存任何内容。",
     "searchAction": "搜索音乐",
-    "remove": "移除"
+    "remove": "移除",
+    "get": "获取",
+    "retry": "重试",
+    "openAlbum": "转到专辑",
+    "openArtist": "转到艺人",
+    "openArrival": "打开",
+    "artistLabel": "艺人",
+    "status": {
+      "queued": "排队中",
+      "downloading": "正在下载 · {{progress}}%",
+      "failed": "未能获取",
+      "arrived": "已在音乐库中"
+    }
   },
   "manualAddWant": {
     "title": "添加到想要列表",

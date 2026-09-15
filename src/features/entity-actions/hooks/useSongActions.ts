@@ -141,7 +141,15 @@ export function useSongExternalActions(
     isWanted, isInLibrary, canDownload, canDownloadTrack,
     handlers: {
       play: () => { opts.close(); opts.onPlay?.(); },
-      toggleWant: () => toggle({ externalIds: song.externalIds, title: song.title, artist: song.artist.name || opts.albumArtist }),
+      // The album's cover, not the song's own: a track want is looked up as
+      // the record it is on, which is the only thing an artwork archive has a
+      // picture of.
+      toggleWant: () => toggle({
+        externalIds: song.externalIds,
+        title: song.title,
+        artist: song.artist.name || opts.albumArtist,
+        cover: song.album.cover.kind === 'none' ? song.cover : song.album.cover,
+      }),
       openAlbumGet: opts.openAlbumGet,
       openTrackGet: opts.openTrackGet,
     },

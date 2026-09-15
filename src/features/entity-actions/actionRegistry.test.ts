@@ -37,7 +37,11 @@ describe('actionRegistrySummary', () => {
     expect(actionRegistrySummary.artist).toEqual([
       'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'generatePlaylist', 'download', 'goToArtist', 'viewExternal',
     ]);
-    expect(actionRegistrySummary['artist.external']).toEqual(['share', 'openInSource']);
+    // Want leads, and the ownership row that settles it comes first — the
+    // same shape as `album.external` above.
+    expect(actionRegistrySummary['artist.external']).toEqual([
+      'inLibrary', 'want', 'share', 'openInSource',
+    ]);
     expect(actionRegistrySummary.playlist).toEqual([
       'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'goToPlaylist', 'download', 'share', 'editSongs', 'rename', 'delete',
     ]);
@@ -258,23 +262,51 @@ describe('artistExternalActions', () => {
     kind: 'artist', origin: 'external',
     artist: { localId: 'local:artist:ext:deezer:9' } as ArtistExternalActionContext['artist'],
     t, colors: { secondary: '#000' }, close: noop,
+    isWanted: false, isInLibrary: false,
     webSourceNameKey: 'settings.sources.deezer.name',
-    handlers: { share: noop, openInSource: noop },
+    handlers: { toggleWant: noop, share: noop, openInSource: noop },
     ...overrides,
   });
 
   it('carries none of the library actions a browsed artist cannot do', () => {
     const ids = resolveActions(artistExternalActions, artistExternalCtx()).map(a => a.id);
 
-    expect(ids).toEqual(['share', 'openInSource']);
+    expect(ids).toEqual(['want', 'share', 'openInSource']);
     expect(ids).not.toContain('play');
     expect(ids).not.toContain('download');
   });
 
-  it('is empty when no source addresses the artist', () => {
+  it('leads with Want, the way the external album sheet does', () => {
+    const ids = resolveActions(artistExternalActions, artistExternalCtx()).map(a => a.id);
+
+    expect(ids[0]).toBe('want');
+  });
+
+  it('says so once the want is saved, and never offers to fetch anything itself', () => {
+    const actions = resolveActions(artistExternalActions, artistExternalCtx({ isWanted: true }));
+
+    expect(actions.find(a => a.id === 'want')?.label).toBe('externalAlbum.menu.wanted');
+    // Wanting an artist saves and nothing else: a Get lives on the Wants
+    // screen, behind its own tap.
+    expect(actions.map(a => a.id)).not.toContain('get');
+  });
+
+  /**
+   * Owning them settles it, the same way the external album sheet's
+   * "In Library" row settles Want and Get there.
+   */
+  it('replaces Want with an inert In Library row for an artist already held', () => {
+    const actions = resolveActions(artistExternalActions, artistExternalCtx({ isInLibrary: true }));
+
+    expect(actions.map(a => a.id)).toEqual(['inLibrary', 'share', 'openInSource']);
+    expect(actions.find(a => a.id === 'inLibrary')?.disabled).toBe(true);
+  });
+
+  it('still offers Want when no source addresses the artist', () => {
     const ids = resolveActions(artistExternalActions, artistExternalCtx({ webSourceNameKey: null })).map(a => a.id);
 
-    expect(ids).toEqual([]);
+    // Share and "Open in …" need a public page; saving one does not.
+    expect(ids).toEqual(['want']);
   });
 });
 

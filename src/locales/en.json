@@ -1181,7 +1181,8 @@
       },
       "soulsyncDesc": "Search Soulseek through SoulSync",
       "addedToSoulsync": "Requested from SoulSync.",
-      "addedTrackToSoulsync": "Requested from SoulSync."
+      "addedTrackToSoulsync": "Requested from SoulSync.",
+      "monitoringOnLidarr": "Lidarr is following {{artist}}."
     },
     "header": {
       "songs": "{{count}} song",
@@ -1209,7 +1210,19 @@
     "title": "Wants",
     "empty": "Nothing saved yet.",
     "searchAction": "Search music",
-    "remove": "Remove"
+    "remove": "Remove",
+    "get": "Get",
+    "retry": "Try again",
+    "openAlbum": "Go to album",
+    "openArtist": "Go to artist",
+    "openArrival": "Open",
+    "artistLabel": "Artist",
+    "status": {
+      "queued": "Queued",
+      "downloading": "Downloading · {{progress}}%",
+      "failed": "Didn't arrive",
+      "arrived": "In your library"
+    }
   },
   "albumOptions": {
     "actions": {

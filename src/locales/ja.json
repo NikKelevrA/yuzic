@@ -1174,7 +1174,8 @@
       },
       "soulsyncDesc": "SoulSync 経由で Soulseek を検索",
       "addedToSoulsync": "SoulSync にリクエストしました。",
-      "addedTrackToSoulsync": "SoulSync にリクエストしました。"
+      "addedTrackToSoulsync": "SoulSync にリクエストしました。",
+      "monitoringOnLidarr": "Lidarr が {{artist}} を追跡しています。"
     },
     "header": {
       "songs": "{{count}} 曲",
@@ -1192,7 +1193,19 @@
     "title": "ウォンツ",
     "empty": "まだ何も保存されていません。",
     "searchAction": "音楽を検索",
-    "remove": "削除"
+    "remove": "削除",
+    "get": "取得",
+    "retry": "再試行",
+    "openAlbum": "アルバムへ移動",
+    "openArtist": "アーティストへ移動",
+    "openArrival": "開く",
+    "artistLabel": "アーティスト",
+    "status": {
+      "queued": "待機中",
+      "downloading": "ダウンロード中 · {{progress}}%",
+      "failed": "届きませんでした",
+      "arrived": "ライブラリにあります"
+    }
   },
   "manualAddWant": {
     "title": "ウォンツに追加",

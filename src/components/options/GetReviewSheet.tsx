@@ -47,6 +47,17 @@ interface Props {
   album: Album;
   /** When set, the sheet requests this single track instead of the whole album. */
   track?: { title: string; artist: string };
+  /**
+   * The want this Get belongs to, when the sheet was opened from one.
+   *
+   * Normally the sheet infers it — an album Get wires its job back to a want
+   * for that album. A track Get had no way to say which want it was for, so a
+   * track want's row could never show its job; naming it here is that way.
+   */
+  wantLocalId?: Album['localId'];
+  /** Told when the sheet closes, so a caller that mounted it on demand can
+   *  unmount it again rather than leaving it in the tree. */
+  onDismiss?: () => void;
   sheetRef: React.RefObject<BottomSheetModal | null>;
 }
 
@@ -56,14 +67,14 @@ interface Props {
  * job, never a hidden default. Any provider choice made here is a
  * request-only override unless the user explicitly flips "save as default".
  */
-const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
+const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss, sheetRef }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const rad = useRadius();
   const dispatch = useDispatch();
 
   const unit: 'album' | 'track' = track ? 'track' : 'album';
-  const localId = track ? undefined : album.localId;
+  const localId = wantLocalId ?? (track ? undefined : album.localId);
   const isWanted = useSelector(localId ? selectIsWanted(localId) : () => false);
   const activeServer = useSelector(selectActiveServer);
   const activeServerId = useSelector(selectActiveServerId);
@@ -177,7 +188,11 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
         // Wire the started job back to the want, if this entity is wanted —
         // Get never requires a Want, so this is a no-op otherwise.
         if (localId && isWanted && activeServerId) {
-          dispatch(setWantJobRef({ serverId: activeServerId, localId, jobRef: `${def.id}:${Date.now()}` }));
+          dispatch(setWantJobRef({
+            serverId: activeServerId,
+            localId,
+            jobRef: { downloader: def.id, requestedAt: Date.now() },
+          }));
         }
         sheetRef.current?.dismiss();
       }
@@ -203,6 +218,7 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, sheetRef }) => {
       stackBehavior="push"
       handleIndicatorStyle={{ backgroundColor: colors.border }}
       backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
+      onDismiss={onDismiss}
     >
       <BottomSheetScrollView style={sheetBg} contentContainerStyle={styles.content}>
         <OptionSheetHeader cover={album.cover} title={headerTitle} subtitle={headerSubtext} />

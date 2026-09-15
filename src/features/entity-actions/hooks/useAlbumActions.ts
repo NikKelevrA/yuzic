@@ -140,7 +140,9 @@ export function useAlbumExternalActions(album: Album, opts: { close: () => void;
     webSourceNameKey: webLink?.sourceNameKey ?? null,
     canGoToArtist: Boolean(album.artist.name),
     handlers: {
-      toggleWant: () => toggle({ externalIds: album.externalIds, title: album.title, artist: album.artist.name }),
+      toggleWant: () => toggle({
+        externalIds: album.externalIds, title: album.title, artist: album.artist.name, cover: album.cover,
+      }),
       openGet: opts.openGet,
       // The album carries a thin `ArtistRef`, not a full `Artist` — the same
       // minimal-but-valid build the external header's meta row does, so both
