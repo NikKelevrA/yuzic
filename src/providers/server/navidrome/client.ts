@@ -79,6 +79,22 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
     ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) }
     : {};
 
+  let extensions: Promise<Set<string>> | null = null;
+
+  /**
+   * The OpenSubsonic extensions the server declares, asked once per client.
+   * A server that predates them, or fails to answer, has none — the request
+   * then goes the plain Subsonic way, which every server accepts.
+   */
+  function openSubsonicExtensions(): Promise<Set<string>> {
+    extensions ??= request<{ "subsonic-response"?: { openSubsonicExtensions?: { name?: string }[] } }>(
+      "getOpenSubsonicExtensions.view"
+    )
+      .then(body => new Set((body["subsonic-response"]?.openSubsonicExtensions ?? []).map(ext => ext.name ?? "")))
+      .catch(() => new Set<string>());
+    return extensions;
+  }
+
   async function request<T>(
     endpoint: string,
     extraParams: Record<string, ParamValue> = {},
@@ -86,13 +102,18 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
   ): Promise<T> {
     const auth = buildTokenParams(username, password);
     const params = buildParams(auth, { ...(defaultParams ?? {}), ...extraParams });
+    // A POST carries its parameters in the body where the server says it can
+    // take them there. In the URL, a playlist rewrite repeats a song id per
+    // track, and a long one outgrows the URL limit of a reverse proxy in front.
+    const asForm = options.method === "POST" && (await openSubsonicExtensions()).has("formPost");
     const attempt = async (url: string): Promise<T> => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 30_000);
       try {
-        const res = await serverFetch(`${url}/rest/${endpoint}?${params}`, {
+        const res = await serverFetch(asForm ? `${url}/rest/${endpoint}` : `${url}/rest/${endpoint}?${params}`, {
           method: options.method ?? "GET",
-          headers: proxyHeader,
+          headers: asForm ? { ...proxyHeader, "Content-Type": "application/x-www-form-urlencoded" } : proxyHeader,
+          body: asForm ? params : undefined,
           signal: controller.signal,
         });
         // 501 is Navidrome's answer for an endpoint it has not implemented

@@ -32,6 +32,53 @@ const client = () =>
  * refetched: on a cold start that raced the keystore read, Albums, Tracks and
  * Artists stayed empty until the app's data was cleared.
  */
+describe('form POST', () => {
+  beforeEach(() => mockServerFetch.mockReset());
+
+  const ok = { 'subsonic-response': { status: 'ok' } };
+  const extensions = (names: string[]) => ({
+    'subsonic-response': { status: 'ok', openSubsonicExtensions: names.map(name => ({ name, versions: [1] })) },
+  });
+
+  it('sends a POST form-encoded in the body when the server declares formPost', async () => {
+    mockServerFetch
+      .mockReturnValueOnce(respond(extensions(['formPost', 'songLyrics'])))
+      .mockReturnValue(respond(ok));
+    const nd = client();
+
+    await nd.request('updatePlaylist.view', { playlistId: 'p1', songIdToAdd: ['a', 'b'] }, { method: 'POST' });
+    await nd.request('updatePlaylist.view', { playlistId: 'p1' }, { method: 'POST' });
+
+    const [url, init] = mockServerFetch.mock.calls[1];
+    expect(url).toBe('https://music.example.com/rest/updatePlaylist.view');
+    expect(init.headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    expect(new URLSearchParams(init.body).getAll('songIdToAdd')).toEqual(['a', 'b']);
+    // Asked once, not per request.
+    expect(mockServerFetch.mock.calls.filter(([u]) => String(u).includes('getOpenSubsonicExtensions'))).toHaveLength(1);
+  });
+
+  it('keeps parameters in the URL on a server without it, or one that cannot say', async () => {
+    mockServerFetch
+      .mockReturnValueOnce(respond({ 'subsonic-response': { status: 'failed', error: { code: 0, message: 'not found' } } }))
+      .mockReturnValue(respond(ok));
+
+    await client().request('updatePlaylist.view', { playlistId: 'p1' }, { method: 'POST' });
+
+    const [url, init] = mockServerFetch.mock.calls[1];
+    expect(url).toContain('/rest/updatePlaylist.view?');
+    expect(url).toContain('playlistId=p1');
+    expect(init.body).toBeUndefined();
+  });
+
+  it('never asks for extensions on a GET', async () => {
+    mockServerFetch.mockReturnValue(respond(ok));
+
+    await client().request('ping.view');
+
+    expect(mockServerFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('request', () => {
   beforeEach(() => mockServerFetch.mockReset());
 
