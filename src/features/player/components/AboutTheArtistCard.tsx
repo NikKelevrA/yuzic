@@ -9,6 +9,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { buildCover } from '@/providers/registry/covers';
 import { CoverSource } from '@/domain/entities/Cover';
+import { useResolvedCover } from '@/features/artwork/useResolvedCover';
 import Touchable from '@/components/Touchable';
 import { onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
@@ -19,7 +20,7 @@ const CARD_PADDING = 16;
 
 type Props = {
   artistName: string;
-  artistCover: CoverSource | null;
+  artistCover: CoverSource;
   subtext?: string;
   contentWidth: number;
   onPress?: () => void;
@@ -35,9 +36,10 @@ export default function AboutTheArtistCard({
   const { t } = useTranslation();
   const rad = useRadius();
   const imageHeight = CARD_HEIGHT - TEXT_MIN_HEIGHT;
-  const imageUri = artistCover
-    ? buildCover(artistCover, 'detail')
-    : null;
+  // An artist with no picture of its own gets your library's copy or a backup,
+  // the same as anywhere else an artist is drawn.
+  const { cover } = useResolvedCover(artistCover);
+  const imageUri = buildCover(cover, 'detail');
 
   const card = (
     <View

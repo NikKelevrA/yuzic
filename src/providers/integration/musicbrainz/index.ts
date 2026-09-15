@@ -55,21 +55,6 @@ type MbRelease = {
   media: { tracks: MbTrack[] }[];
 };
 
-/**
- * Cover Art Archive indexes a release and its release-group under different
- * paths (`/release/{mbid}/...` vs `/release-group/{mbid}/...`) — the two ids
- * are not interchangeable, and CAA has no artist-image endpoint at all.
- * `mbidType` defaults to `'release-group'` to keep every existing call site
- * (which only ever deals in release-group ids today) working unchanged; a
- * caller that has a release id must say so explicitly.
- */
-export function coverArtArchiveUrl(
-  mbid: string,
-  mbidType: 'release' | 'release-group' = 'release-group'
-): string {
-  return `https://coverartarchive.org/${mbidType}/${mbid}/front-500`;
-}
-
 export async function searchArtist(name: string, limit = 5): Promise<MbArtist[]> {
   const q = encodeURIComponent(`artist:"${name}"`);
   const data = await mb<{ artists: MbArtist[] }>(`/artist?query=${q}&limit=${limit}&fmt=json`);

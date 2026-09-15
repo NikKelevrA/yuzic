@@ -112,9 +112,7 @@ export default function PlayerHost() {
     //
     // It also 404s more: Navidrome only generates 1200 for large originals,
     // as `buildCover` already notes for the MusicBrainz path.
-    const uri =
-      buildCover(currentSong.cover, 'grid') ??
-      buildCover({ kind: 'none' }, 'grid');
+    const uri = buildCover(currentSong.cover, 'grid');
     if (uri) extractColors(uri);
   }, [coverAccentEnabled, currentSong?.cover, currentSong?.localId, extractColors]);
 

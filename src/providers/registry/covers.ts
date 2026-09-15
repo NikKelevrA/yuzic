@@ -11,9 +11,9 @@ import { withServerCredentials } from './serverCredentials';
 import { normalizeImageUrlForSize } from '@/features/artwork/normalizeImageUrl';
 import { resolveCoverNow } from '@/features/artwork/coverResolution';
 
-export function buildCoverArtArchiveUrl(
+function buildCoverArtArchiveUrl(
   mbid: string,
-  mbidType: 'release' | 'release-group' | 'unknown',
+  mbidType: 'release' | 'release-group',
   size: 'thumb' | 'grid' | 'detail' | 'background'
 ): string | null {
   if (!mbid) return null
@@ -38,8 +38,6 @@ export function buildCoverCacheKey(
   if (!cover || cover.kind === 'none' || cover.kind === 'special') return null;
 
   if (cover.kind === 'url') return `url:${cover.url}:${px}`;
-  if (cover.kind === 'commons') return `commons:${cover.filename}:${px}`;
-  if (cover.kind === 'musicbrainz') return `musicbrainz:${cover.releaseGroupId}:${px}`;
   if (cover.kind === 'coverartarchive') return `coverartarchive:${cover.mbid}:${cover.mbidType}:${px}`;
 
   const state = store.getState();
@@ -70,15 +68,8 @@ export function buildCover(
     return cover.url ? normalizeImageUrlForSize(cover.url, px) : null;
   }
 
-  if (cover.kind === 'commons') {
-    const w = Math.min(px, 1800)
-    return `https://commons.wikimedia.org/w/thumb.php?f=${encodeURIComponent(cover.filename)}&w=${w}`
-  }
-
-  if (cover.kind === 'musicbrainz' || cover.kind === 'coverartarchive') {
-    const id = cover.kind === 'musicbrainz' ? cover.releaseGroupId : cover.mbid
-    const mbidType = cover.kind === 'coverartarchive' ? cover.mbidType : 'release-group'
-    return buildCoverArtArchiveUrl(id, mbidType, size)
+  if (cover.kind === 'coverartarchive') {
+    return buildCoverArtArchiveUrl(cover.mbid, cover.mbidType, size)
   }
 
   const state = store.getState();

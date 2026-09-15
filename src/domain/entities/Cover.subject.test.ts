@@ -3,7 +3,6 @@ import {
   artistCoverSubject,
   coverOrMissing,
   coverSubjectKey,
-  hasCoverImage,
   missingCover,
 } from './Cover';
 
@@ -38,10 +37,6 @@ describe('cover subjects', () => {
     expect(coverOrMissing({ kind: 'url', url: 'x' }, subject)).toEqual({ kind: 'url', url: 'x' });
     expect(coverOrMissing({ kind: 'none' }, subject)).toEqual({ kind: 'none', subject });
     expect(missingCover(undefined)).toEqual({ kind: 'none' });
-  });
-
-  it('still reads a named gap as having no image, so fallback chains fall through it', () => {
-    expect(hasCoverImage(missingCover(artistCoverSubject('Bibio')))).toBe(false);
   });
 
   it('keys a subject by MusicBrainz id when it has one, else by normalised name', () => {

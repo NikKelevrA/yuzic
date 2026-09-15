@@ -1,4 +1,3 @@
-import { firstResolvableCover } from '@/domain/entities/Cover';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -71,7 +70,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     const { currentSong, playbackSpeed } = usePlayingState();
     const insets = useSafeAreaInsets();
     const songModel: SongScreenModel = useSongScreenModel(currentSong);
-    const { album, artistId, lyrics, lyricsAvailable } = songModel;
+    const { artistId, lyrics, lyricsAvailable } = songModel;
 
     const songOptionsRef = useSheetRef();
     const playlistRef = useSheetRef();
@@ -265,10 +264,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
 
                             <AboutTheArtistCard
                                 artistName={currentSong.artist.name}
-                                artistCover={firstResolvableCover(
-                                  album?.artist?.cover,
-                                  currentSong.cover
-                                )}
+                                artistCover={currentSong.artist.cover}
                                 contentWidth={contentWidth}
                                 onPress={artistId ? navigateToArtist : undefined}
                             />

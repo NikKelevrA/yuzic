@@ -7,8 +7,7 @@
  * concrete release internally to read its tracks back out. So the id this
  * mapper records is always a release-group id, and `mbidType` is always
  * `'release-group'` — never `'release'` — which matters because Cover Art
- * Archive indexes releases and release-groups under different paths, and
- * `coverArtArchiveUrl` in this same folder already assumes release-group.
+ * Archive indexes releases and release-groups under different paths.
  */
 import type { Album, ReleaseType } from '@/domain/entities/Album';
 import { makeLocalId } from '@/domain/identity/LocalId';
