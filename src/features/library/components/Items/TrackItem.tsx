@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { notify } from '@/components/toast';
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
 import { formatDuration } from '@/components/formatDuration';
-import haptics from '@/components/haptics';
+import { heavy as heavyHaptic } from '@/components/haptics';
 import LibraryItem from './LibraryItem';
 
 /** A second tap inside this window is the same tap. */
@@ -65,7 +65,7 @@ const TrackItem: React.FC<Props> = ({ song, isGridView, gridWidth, gridSpacing }
   const handleLongPress = async () => {
     if (longPressInFlightRef.current) return;
     longPressInFlightRef.current = true;
-    haptics.heavy();
+    heavyHaptic();
     try {
       // Resolved by the origin's own id: the resolver looks the track up
       // fresh rather than trusting fields this row happens to hold.

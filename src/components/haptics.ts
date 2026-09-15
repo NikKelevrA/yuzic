@@ -43,7 +43,7 @@ function primary(): void {
 }
 
 /** Weighty confirmation — long-press activation, sheet opening on a hold. */
-function heavy(): void {
+export function heavy(): void {
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy));
 }
 

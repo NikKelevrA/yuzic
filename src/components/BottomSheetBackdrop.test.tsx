@@ -1,4 +1,3 @@
-import React from 'react';
 import { BackHandler } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
@@ -14,10 +13,10 @@ jest.mock('@gorhom/bottom-sheet', () => ({
 // state over when rendered, and again whenever a test moves the sheet.
 jest.mock('react-native-reanimated', () => ({
   runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
-  useAnimatedReaction: (prepare: () => boolean, react: (value: boolean, previous: boolean | null) => void) => {
+  useAnimatedReaction: (prepare: () => boolean, onChange: (value: boolean, previous: boolean | null) => void) => {
     const { useEffect } = require('react');
     const value = prepare();
-    useEffect(() => { react(value, null); }, [value]);
+    useEffect(() => { onChange(value, null); }, [value, onChange]);
   },
 }));
 

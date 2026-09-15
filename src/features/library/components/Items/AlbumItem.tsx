@@ -5,7 +5,7 @@ import type { Album } from '@/domain/entities/Album';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { prefetchCovers } from '@/features/artwork/imageCache';
-import haptics from '@/components/haptics';
+import { heavy as heavyHaptic } from '@/components/haptics';
 import LibraryItem from './LibraryItem';
 
 interface ItemProps {
@@ -31,7 +31,7 @@ const AlbumItem: React.FC<ItemProps> = ({ album, showTypeLabel = true, isGridVie
   }, [album, navigation]);
 
   const handleLongPress = useCallback(() => {
-    haptics.heavy();
+    heavyHaptic();
     if (!optionsMounted) {
       setOptionsMounted(true);
       requestAnimationFrame(() => sheetRef.current?.present());

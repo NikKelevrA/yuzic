@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import SettingsScreen from '../components/SettingsScreen';
-import Equalizer from '../player/components/Equalizer';
+import EqualizerBands from '../player/components/Equalizer';
 
 /**
  * The equalizer, on a screen of its own.
@@ -22,7 +22,7 @@ const EqualizerSettings: React.FC = () => {
 
   return (
     <SettingsScreen title={t('settings.player.equalizer.title')}>
-      <Equalizer />
+      <EqualizerBands />
     </SettingsScreen>
   );
 };
