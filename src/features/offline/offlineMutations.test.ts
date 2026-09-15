@@ -1,3 +1,4 @@
+import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
@@ -76,6 +77,17 @@ describe('enqueueOfflineMutation', () => {
 
     expect(enqueueOfflineMutation([first], second)).toEqual([second])
   })
+
+  it('keeps only the latest favorite operation for an album', () => {
+    const album = { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1' } as unknown as Album;
+    const first: OfflineMutation = { id: '1', serverId: 'server', type: 'starAlbum', album, createdAt: 1 };
+    const second: OfflineMutation = { id: '2', serverId: 'server', type: 'unstarAlbum', albumId: album.localId, createdAt: 2 };
+    const otherAlbum: OfflineMutation = {
+      id: '3', serverId: 'server', type: 'unstarAlbum', albumId: makeLocalId('album', provenance, 'al2'), createdAt: 3,
+    };
+
+    expect(enqueueOfflineMutation([first, otherAlbum], second)).toEqual([otherAlbum, second]);
+  });
 
   it('does not coalesce operations for different servers', () => {
     const first: OfflineMutation = {

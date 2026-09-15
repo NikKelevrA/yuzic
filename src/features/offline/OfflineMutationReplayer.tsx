@@ -71,6 +71,12 @@ async function replayMutation(ctx: ReplayContext, mutation: OfflineMutation) {
       // The queue holds identity; the server only knows its own id.
       await api.starred.remove(parseLocalId(mutation.songId)?.nativeId ?? mutation.songId);
       break;
+    case 'starAlbum':
+      await api.starred.add(mutation.album.nativeId, 'album');
+      break;
+    case 'unstarAlbum':
+      await api.starred.remove(parseLocalId(mutation.albumId)?.nativeId ?? mutation.albumId, 'album');
+      break;
     case 'addSongToPlaylist':
       await api.playlists.addSong(mutation.playlistId, mutation.song.nativeId);
       break;

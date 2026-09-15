@@ -74,7 +74,7 @@ export function useAlbumLibraryActions(
     isGeneratingPlaylist, canGeneratePlaylist, hasExternalSources: enabledSources.length > 0, hideGoToAlbum: opts.hideGoToAlbum,
     handlers: {
       toggleFavorite: () => void toggleFavorite({
-        isStarred, star: () => starAlbum.mutateAsync(album.nativeId), unstar: () => unstarAlbum.mutateAsync(album.nativeId),
+        isStarred, star: () => starAlbum.mutateAsync(album), unstar: () => unstarAlbum.mutateAsync(album),
         t, title: album.title, addedKey: 'albumOptions.toasts.addedToFavorites', removedKey: 'albumOptions.toasts.removedFromFavorites',
         failedKey: 'albumOptions.toasts.updateFavoritesFailed', close: opts.close,
       }),

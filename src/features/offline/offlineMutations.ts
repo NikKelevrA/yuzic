@@ -1,3 +1,4 @@
+import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import type { LocalId } from '@/domain/identity/LocalId';
 
@@ -32,6 +33,15 @@ export type OfflineMutation =
        */
       type: 'unstarSong';
       songId: LocalId;
+    })
+  | (OfflineMutationBase & {
+      type: 'starAlbum';
+      album: Album;
+    })
+  | (OfflineMutationBase & {
+      /** Identity, as for `unstarSong`, so a star and an unstar collapse. */
+      type: 'unstarAlbum';
+      albumId: LocalId;
     })
   | (OfflineMutationBase & {
       type: 'addSongToPlaylist';
@@ -103,6 +113,15 @@ function sameTarget(a: OfflineMutation, b: OfflineMutation): boolean {
     const aSongId = a.type === 'starSong' ? a.song.localId : a.songId;
     const bSongId = b.type === 'starSong' ? b.song.localId : b.songId;
     return aSongId === bSongId;
+  }
+
+  if (
+    (a.type === 'starAlbum' || a.type === 'unstarAlbum') &&
+    (b.type === 'starAlbum' || b.type === 'unstarAlbum')
+  ) {
+    const aAlbumId = a.type === 'starAlbum' ? a.album.localId : a.albumId;
+    const bAlbumId = b.type === 'starAlbum' ? b.album.localId : b.albumId;
+    return aAlbumId === bAlbumId;
   }
 
   if (
