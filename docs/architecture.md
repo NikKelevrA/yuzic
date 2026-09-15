@@ -295,6 +295,11 @@ Live streams are `Song`-shaped fabrications built by `buildStationSong`; the
 title and streamUrl carry meaning, everything else is a placeholder that the
 gates above hide.
 
+A live stream also reaches the engine marked `continuous` (`isContinuous`,
+set in `buildTrackItem`). That one is not a UI gate: yuzic-engine reads a
+continuous track with a stream parser, and without the flag it treats a
+station like a file and waits for the end of a broadcast, so no station starts.
+
 Podcasts use `buildPodcastSong`. The bookmark manager treats podcastEpisode as
 always-bookmarkable, so resume across sessions works for free.
 
