@@ -1,5 +1,5 @@
 import type { ExternalIds } from '../identity/ExternalIds';
-import { normalizeName } from '../identity/matching';
+import { leadArtistName, normalizeName } from '../identity/matching';
 
 /**
  * Who an image is of, for a cover its source could not supply.
@@ -54,16 +54,23 @@ export const COVER_PX: Record<'thumb' | 'grid' | 'detail' | 'background', number
   background: 1800,
 };
 
-/** The subject of an artist's picture, or none for a name that identifies nobody. */
+/**
+ * The subject of an artist's picture, or none for a name that identifies nobody.
+ * A credit line names its lead artist: that is whose picture is looked up.
+ */
 export function artistCoverSubject(
   name: string | undefined,
   externalIds: ExternalIds = {}
 ): CoverSubject | undefined {
   if (!name?.trim()) return undefined;
-  return externalIds.mbid ? { kind: 'artist', name, mbid: externalIds.mbid } : { kind: 'artist', name };
+  const lead = leadArtistName(name);
+  return externalIds.mbid ? { kind: 'artist', name: lead, mbid: externalIds.mbid } : { kind: 'artist', name: lead };
 }
 
-/** The subject of an album's cover. Both a title and an artist are needed to name one. */
+/**
+ * The subject of an album's cover. Both a title and an artist are needed to
+ * name one; the artist is the credit's lead, which is who the album is filed under.
+ */
 export function albumCoverSubject(
   title: string | undefined,
   artistName: string | undefined,
@@ -73,7 +80,7 @@ export function albumCoverSubject(
   return {
     kind: 'album',
     title,
-    artistName,
+    artistName: leadArtistName(artistName),
     ...(externalIds.mbid ? { mbid: externalIds.mbid } : {}),
     ...(externalIds.mbid && externalIds.mbidType ? { mbidType: externalIds.mbidType } : {}),
   };

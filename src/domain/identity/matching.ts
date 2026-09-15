@@ -38,6 +38,18 @@ interface Match<T> {
 export const normalizeName = (value: string): string =>
   value.toLowerCase().trim().replace(/\s+/g, ' ');
 
+/** "feat." or "ft." with its dot, or "featuring", and everything after it. */
+const FEATURED_ARTISTS = /\s*[([]?\s*\b(?:feat\.|ft\.|featuring\s)[\s\S]*$/i;
+
+/**
+ * The lead artist of a credit line. Services credit a track to "Drake feat.
+ * Rihanna", but a catalogue files the album, and a library the artist, under
+ * Drake. Only an explicit featuring marker is split on: "&", "x" and commas
+ * are as often part of one act's name ("Simon & Garfunkel") as a join.
+ */
+export const leadArtistName = (credit: string): string =>
+  credit.replace(FEATURED_ARTISTS, '').trim() || credit.trim();
+
 /** The identifier fields that can carry an exact match, strongest first. */
 const ID_FIELDS: readonly (readonly [MatchReason, keyof ExternalIds])[] = Object.freeze([
   ['mbid', 'mbid'],

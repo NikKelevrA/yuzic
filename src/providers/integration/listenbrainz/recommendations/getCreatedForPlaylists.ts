@@ -30,8 +30,8 @@ type JspfTrack = {
   extension?: {
     'https://musicbrainz.org/doc/jspf#track'?: {
       additional_metadata?: {
-        /** The credited artists, in order; `creator` is them joined into one line. */
-        artists?: { artist_credit_name?: string; artist_mbid?: string }[];
+        /** The credited artists, lead first; `creator` is them joined into one line. */
+        artists?: { artist_mbid?: string }[];
         /** The release ListenBrainz found front art for on Cover Art Archive. */
         caa_release_mbid?: string;
       };
@@ -85,17 +85,13 @@ function mapTrack(track: JspfTrack): Song | null {
   const nativeId = mbid ?? `${track.creator}:${track.title}`;
   const metadata = track.extension?.['https://musicbrainz.org/doc/jspf#track']?.additional_metadata;
   const releaseMbid = metadata?.caa_release_mbid;
-  // `creator` is the whole credit ("A feat. B"), which no catalogue files an
-  // album under. A backup is asked about the first credited artist instead.
-  const primary = metadata?.artists?.[0];
-  const primaryName = primary?.artist_credit_name || track.creator;
-  const primaryIds = primary?.artist_mbid ? { mbid: primary.artist_mbid } : {};
+  const leadMbid = metadata?.artists?.[0]?.artist_mbid;
   const albumIds = releaseMbid ? { mbid: releaseMbid, mbidType: 'release' as const } : {};
   // ListenBrainz names the release it has Cover Art Archive art for, so that
   // is this track's own picture; a track without one is a gap for the backups.
   const albumCover: CoverSource = releaseMbid
     ? { kind: 'coverartarchive', mbid: releaseMbid, mbidType: 'release' }
-    : missingCover(albumCoverSubject(track.album, primaryName, albumIds));
+    : missingCover(albumCoverSubject(track.album, track.creator, albumIds));
   return {
     localId: makeLocalId('song', PROVENANCE, nativeId),
     nativeId,
@@ -109,7 +105,7 @@ function mapTrack(track: JspfTrack): Song | null {
       nativeId: '',
       externalIds: {},
       name: track.creator,
-      cover: missingCover(artistCoverSubject(primaryName, primaryIds)),
+      cover: missingCover(artistCoverSubject(track.creator, leadMbid ? { mbid: leadMbid } : {})),
     },
     album: {
       localId: makeLocalId('album', PROVENANCE, track.album ?? ''),

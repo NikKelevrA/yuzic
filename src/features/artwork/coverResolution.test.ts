@@ -250,8 +250,23 @@ describe('cover resolution', () => {
     resolution.requestCoverBackup(artistGap('Stored', 'mbid-stored'));
     await flush();
 
-    const raw = storage.mmkv.getString('cover-backup:v1:deezer:artist:mbid:mbid-stored');
+    const raw = storage.mmkv.getString('cover-backup:v2:deezer:artist:mbid:mbid-stored');
     expect(raw && JSON.parse(raw).cover).toEqual(url('deezer'));
+  });
+
+  it('drops answers kept under the old exact-name rule and asks again', async () => {
+    mockBackups.deezer = backup('deezer', () => url('deezer'));
+    const { resolution, storage } = load();
+    const retired = 'cover-backup:v1:deezer:artist:mbid:mbid-old';
+    storage.mmkv.set(retired, JSON.stringify({ cover: null, at: Date.now() }));
+    resolution.setCoverResolutionContext({ backups: ['deezer'], online: true });
+
+    resolution.requestCoverBackup(artistGap('Old Miss', 'mbid-old'));
+    await flush();
+
+    expect(storage.mmkv.getString(retired)).toBeUndefined();
+    expect(mockBackups.deezer.lookup).toHaveBeenCalledTimes(1);
+    expect(resolution.resolveCoverNow(artistGap('Old Miss', 'mbid-old')).from).toBe('deezer');
   });
 
   it('names what it depends on, so a drawing surface knows to ask again', () => {

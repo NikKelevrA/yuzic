@@ -83,6 +83,27 @@ describe('Deezer backup', () => {
     expect(resolveDeezerAlbum).toHaveBeenCalledWith('Radiohead', 'Kid A');
   });
 
+  it('matches by lead artist, so a featured credit from any service finds the album', async () => {
+    (resolveDeezerAlbum as jest.Mock).mockResolvedValueOnce({
+      title: 'Begin Again', artist: { name: 'Ben Böhmer' }, cover: { kind: 'url', url: 'begin.jpg' },
+    });
+    (resolveDeezerArtistByName as jest.Mock).mockResolvedValueOnce({ name: 'Drake', cover: { kind: 'url', url: 'drake.jpg' } });
+
+    await expect(deezer.lookup({ kind: 'album', title: 'Begin Again', artistName: 'Ben Böhmer feat. lau.ra' }))
+      .resolves.toEqual({ kind: 'url', url: 'begin.jpg' });
+    expect(resolveDeezerAlbum).toHaveBeenCalledWith('Ben Böhmer', 'Begin Again');
+    await expect(deezer.lookup({ kind: 'artist', name: 'Drake ft. Rihanna' })).resolves.toEqual({ kind: 'url', url: 'drake.jpg' });
+    expect(resolveDeezerArtistByName).toHaveBeenCalledWith('Drake');
+  });
+
+  it('still turns away a different act that shares only part of the name', async () => {
+    (resolveDeezerAlbum as jest.Mock).mockResolvedValueOnce({
+      title: 'Bookends', artist: { name: 'Simon' }, cover: { kind: 'url', url: 'wrong.jpg' },
+    });
+
+    await expect(deezer.lookup({ kind: 'album', title: 'Bookends', artistName: 'Simon & Garfunkel' })).resolves.toBeNull();
+  });
+
   it('lets a failed search throw rather than read as "no picture"', async () => {
     (resolveDeezerArtistByName as jest.Mock).mockRejectedValueOnce(new Error('quota'));
 

@@ -26,6 +26,13 @@ describe('cover subjects', () => {
     });
   });
 
+  it('names the lead artist of a credit line, from whichever source it came', () => {
+    expect(artistCoverSubject('Drake feat. Rihanna', { mbid: 'm' })).toEqual({ kind: 'artist', name: 'Drake', mbid: 'm' });
+    expect(albumCoverSubject('Begin Again', 'Ben Böhmer feat. lau.ra')).toEqual({
+      kind: 'album', title: 'Begin Again', artistName: 'Ben Böhmer',
+    });
+  });
+
   it("keeps a source's own picture and only names a gap", () => {
     const subject = artistCoverSubject('Bibio');
     expect(coverOrMissing({ kind: 'url', url: 'x' }, subject)).toEqual({ kind: 'url', url: 'x' });
