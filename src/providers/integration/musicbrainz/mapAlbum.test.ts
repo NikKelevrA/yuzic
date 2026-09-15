@@ -35,7 +35,8 @@ describe('mapAlbum', () => {
         nativeId: '056e4f3e-d505-4dad-8ec1-d04f521cbb56',
         externalIds: { mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' },
         name: 'Daft Punk',
-        cover: { kind: 'none' },
+        // No picture from MusicBrainz; the gap names the artist for a backup.
+        cover: { kind: 'none', subject: { kind: 'artist', name: 'Daft Punk', mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' } },
       },
       year: 2001,
       // 'YYYY-MM-DD' is finer than a year, so it is carried alongside it.

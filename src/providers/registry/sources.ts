@@ -76,6 +76,10 @@ const sourceUse = (source: SourceId, purpose: SourcePurpose): SourceUse => ({
  * competing for the same field except album covers, and there the answer is
  * not a matter of taste: Cover Art Archive matches the exact release by
  * MusicBrainz id, Deezer matches by name, so the exact match goes first.
+ *
+ * Artwork uses are backups for any picture an item's own source lacks —
+ * a server gap and a similar-artist tile alike — applied by
+ * `features/artwork/coverResolution` after the library's own copy.
  */
 export const SOURCE_USES: readonly SourceUse[] = [
   sourceUse('lastfm', 'artistInfo'),

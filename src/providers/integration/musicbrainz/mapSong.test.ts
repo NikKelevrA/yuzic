@@ -35,7 +35,7 @@ describe('mapSong', () => {
         nativeId: '056e4f3e-d505-4dad-8ec1-d04f521cbb56',
         externalIds: { mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' },
         name: 'Daft Punk',
-        cover: { kind: 'none' },
+        cover: { kind: 'none', subject: { kind: 'artist', name: 'Daft Punk', mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' } },
       },
       album: {
         localId: 'local:album:ext:musicbrainz:e0be0716-0d95-3007-a562-e6e86fdbcc37',

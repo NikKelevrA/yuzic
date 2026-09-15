@@ -1,5 +1,6 @@
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 import type { Song } from '@/domain/entities/Song';
+import { albumCoverSubject, artistCoverSubject, missingCover } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 
@@ -72,6 +73,7 @@ function mapTrack(track: JspfTrack): Song | null {
   // shape used, so a track missing an mbid still gets a stable, distinct id
   // rather than colliding with every other id-less track.
   const nativeId = mbid ?? `${track.creator}:${track.title}`;
+  const albumCover = missingCover(albumCoverSubject(track.album, track.creator));
   return {
     localId: makeLocalId('song', PROVENANCE, nativeId),
     nativeId,
@@ -85,7 +87,7 @@ function mapTrack(track: JspfTrack): Song | null {
       nativeId: '',
       externalIds: {},
       name: track.creator,
-      cover: { kind: 'none' },
+      cover: missingCover(artistCoverSubject(track.creator)),
     },
     album: {
       localId: makeLocalId('album', PROVENANCE, track.album ?? ''),
@@ -93,9 +95,11 @@ function mapTrack(track: JspfTrack): Song | null {
       nativeId: '',
       externalIds: {},
       title: track.album ?? '',
-      cover: { kind: 'none' },
+      cover: albumCover,
     },
-    cover: { kind: 'none' },
+    // A playlist entry has no artwork; it names the album, which is enough to
+    // find the album's cover.
+    cover: albumCover,
     durationSeconds: track.duration ? Math.round(track.duration / 1000) : 0,
     contentKind: 'song',
     genres: [],

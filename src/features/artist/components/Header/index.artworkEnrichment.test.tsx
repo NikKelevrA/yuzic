@@ -1,17 +1,18 @@
 import React from 'react'
-import { render } from '@testing-library/react-native'
+import { act, render, waitFor } from '@testing-library/react-native'
 
 import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel'
+import type { Artist } from '@/domain/entities/Artist'
+import type { CoverSource } from '@/domain/entities/Cover'
+import { setCoverResolutionContext } from '@/features/artwork/coverResolution'
 import ArtistHeader from './'
 
 /**
- * `ArtistHeader` takes the screen model directly, so these drive it with a model
- * built by hand instead of mocking the resolver's network boundary —
- * `resolveArtistDetails.test.ts` and `enrichmentBroker.test.ts` cover the
- * resolution itself (ordered first-hit fallback, a disabled source
- * contributing nothing); what stays to verify here is what the header does
- * with the result: the server/own cover must always win when present, and
- * the enriched cover must only ever appear to fill a real gap.
+ * The header draws the artist's picture through cover resolution, the same
+ * rule every tile uses — `coverResolution.test.ts` covers the rule itself.
+ * What stays to verify here is the header's part: it shows what resolution
+ * answers, and credits a backup's picture (never the artist's own, nor the
+ * library's copy of the same artist).
  */
 
 jest.mock('react-i18next', () => ({
@@ -40,9 +41,7 @@ jest.mock('@/components/DetailHeader', () => ({
   DetailHeaderIconButton: 'DetailHeaderIconButton',
 }))
 
-// The one thing these tests care about: which cover `MediaImage` is asked to
-// render. Mocked to a plain text stub that dumps its `cover` prop's `kind`
-// (and `url` when present) so the assertions below can read it back.
+// Which cover `MediaImage` is asked to render, as `kind:url`.
 jest.mock('@/components/MediaImage', () => {
   const { Text: RNText } = require('react-native')
   return {
@@ -51,6 +50,17 @@ jest.mock('@/components/MediaImage', () => {
     ),
   }
 })
+
+// One backup, answering from a table the tests fill in.
+jest.mock('@/providers/registry/coverBackups', () => ({
+  coverBackupFor: (source: string) => source === 'deezer'
+    ? {
+        source,
+        handles: () => true,
+        lookup: async (subject: { name?: string }) => mockPictures[subject.name ?? ''] ?? null,
+      }
+    : null,
+}))
 
 jest.mock('@/providers/registry/covers', () => ({
   buildCover: (cover: { kind: string; url?: string }) => (cover.kind === 'url' ? cover.url : null),
@@ -72,82 +82,85 @@ jest.mock('@/state/redux/selectors/serversSelectors', () => ({ selectActiveServe
 jest.mock('react-redux', () => ({ useSelector: () => undefined }))
 jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({}) }))
 jest.mock('@/components/toast', () => ({ notify: { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() } }))
-jest.mock('@/providers/registry/enrichmentBroker', () => ({
-  metadataSourceNameKey: (id: string) => `provider.${id}`,
-}))
 
-const baseArtist: NonNullable<ArtistScreenModel['artist']> = {
-  localId: 'local:artist:ext:deezer:ext-1' as never,
-  nativeId: 'ext-1',
-  provenance: { origin: 'integration', providerId: 'deezer' },
-  externalIds: { mbid: 'mbid-1' },
-  libraryState: 'external',
-  name: 'Radiohead',
-  cover: { kind: 'none' },
-  tags: [],
-  albumIds: [],
+/* eslint-disable no-var -- hoisted for the jest.mock factory above */
+var mockPictures: Record<string, CoverSource> = {}
+/* eslint-enable no-var */
+
+function artistNamed(name: string, cover: CoverSource = { kind: 'none', subject: { kind: 'artist', name } }): Artist {
+  return {
+    localId: `local:artist:ext:listenbrainz:${name}` as never,
+    nativeId: name,
+    provenance: { origin: 'integration', providerId: 'listenbrainz' },
+    externalIds: {},
+    libraryState: 'external',
+    name,
+    cover,
+    tags: [],
+    albumIds: [],
+  }
 }
 
-function baseModel(overrides: Partial<ArtistScreenModel> = {}): ArtistScreenModel {
+function modelFor(artist: Artist): ArtistScreenModel {
   return {
     status: 'ready',
     isLocal: false,
-    artist: baseArtist,
+    artist,
     degraded: false,
     resolved: null,
     topTracks: [],
     similarArtists: [],
     discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [] },
     counts: { albums: 0, songs: 0 },
-    ...overrides,
   }
 }
 
-describe('ArtistHeader artwork enrichment wiring', () => {
-  it('shows the enriched cover only when the artist has no cover of its own (gap case)', async () => {
-    const model = baseModel({
-      resolved: {
-        entity: baseArtist,
-        cover: { value: { kind: 'url', url: 'https://example.com/enriched.jpg' }, sourceId: 'deezer' },
-      },
-    })
+const shownCover = (view: Awaited<ReturnType<typeof render>>) =>
+  view.getByTestId('media-image-cover').props.children
 
-    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
-
-    expect(view.getByTestId('media-image-cover').props.children).toBe('url:https://example.com/enriched.jpg')
+describe('ArtistHeader artwork', () => {
+  beforeEach(() => {
+    mockPictures = {}
+    setCoverResolutionContext({ artists: [], albums: [], backups: ['deezer'], online: true })
   })
 
-  it('keeps the server cover unchanged when the artist already has artwork (no gap)', async () => {
-    const model = baseModel({
-      artist: { ...baseArtist, cover: { kind: 'url', url: 'https://example.com/server.jpg' } },
-      resolved: {
-        entity: baseArtist,
-        // Even if a stale/different resolution were present, the artist's
-        // own cover must still win — enrichment is gap-only.
-        cover: { value: { kind: 'url', url: 'https://example.com/enriched.jpg' }, sourceId: 'deezer' },
-      },
-    })
+  it("shows the artist's own picture and credits nobody", async () => {
+    const own = artistNamed('Own Cover', { kind: 'url', url: 'https://example.com/server.jpg' })
+    mockPictures['Own Cover'] = { kind: 'url', url: 'https://example.com/backup.jpg' }
 
-    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
+    const view = await render(<ArtistHeader model={modelFor(own)} showNavigation={false} />)
 
-    expect(view.getByTestId('media-image-cover').props.children).toBe('url:https://example.com/server.jpg')
+    expect(shownCover(view)).toBe('url:https://example.com/server.jpg')
+    expect(view.queryByText(/^via /)).toBeNull()
   })
 
-  it('restores the placeholder when artwork enrichment is off (or hasn\'t resolved yet)', async () => {
-    const model = baseModel({ resolved: null })
+  it("fills a gap from an enabled backup and credits it", async () => {
+    mockPictures['Backup Filled'] = { kind: 'url', url: 'https://example.com/backup.jpg' }
 
-    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
+    const view = await render(<ArtistHeader model={modelFor(artistNamed('Backup Filled'))} showNavigation={false} />)
 
-    expect(view.getByTestId('media-image-cover').props.children).toBe('none:')
+    await waitFor(() => expect(shownCover(view)).toBe('url:https://example.com/backup.jpg'))
+    expect(view.getByText('via settings.sources.deezer.name')).toBeTruthy()
   })
 
-  it('restores the placeholder when every enrichment source misses', async () => {
-    const model = baseModel({
-      resolved: { entity: baseArtist, cover: { value: { kind: 'none' }, sourceId: 'deezer' } },
-    })
+  it("uses the library's copy of the same artist without crediting a source", async () => {
+    const library = artistNamed('In Library', { kind: 'url', url: 'https://example.com/library.jpg' })
+    mockPictures['In Library'] = { kind: 'url', url: 'https://example.com/backup.jpg' }
+    await act(async () => { setCoverResolutionContext({ artists: [library] }) })
 
-    const view = await render(<ArtistHeader model={model} showNavigation={false} />)
+    const view = await render(<ArtistHeader model={modelFor(artistNamed('In Library'))} showNavigation={false} />)
 
-    expect(view.getByTestId('media-image-cover').props.children).toBe('none:')
+    expect(shownCover(view)).toBe('url:https://example.com/library.jpg')
+    expect(view.queryByText(/^via /)).toBeNull()
+  })
+
+  it('shows the placeholder while no backup is switched on', async () => {
+    mockPictures['Backups Off'] = { kind: 'url', url: 'https://example.com/backup.jpg' }
+    await act(async () => { setCoverResolutionContext({ backups: [] }) })
+
+    const view = await render(<ArtistHeader model={modelFor(artistNamed('Backups Off'))} showNavigation={false} />)
+
+    expect(shownCover(view)).toBe('none:')
+    expect(view.queryByText(/^via /)).toBeNull()
   })
 })

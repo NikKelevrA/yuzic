@@ -16,16 +16,13 @@ import { serverProvenance } from '@/domain/identity/Provenance';
 // modules' import chains reach `expo-constants`, which Jest cannot parse
 // outside the app's own transform pipeline.
 jest.mock('@/providers/integration/deezer', () => ({
-  resolveDeezerArtistByName: jest.fn(),
-  getDeezerArtist: jest.fn(),
-  resolveDeezerAlbum: jest.fn(),
   getDeezerAlbum: jest.fn(),
   searchDeezerArtists: jest.fn(),
   searchDeezerAlbums: jest.fn(),
 }));
 jest.mock('@/providers/integration/musicbrainz', () => ({
   searchArtist: jest.fn(),
-  searchReleaseGroup: jest.fn(),
+  searchReleaseGroupByTitle: jest.fn(),
   getReleaseGroup: jest.fn(),
   getTracksForReleaseGroup: jest.fn(),
 }));
@@ -112,19 +109,12 @@ function makeSong(over: Partial<Song> = {}): Song {
 
 describe('deezer provider', () => {
   it('calls its own api module for every declared capability', async () => {
-    (deezerApi.resolveDeezerArtistByName as jest.Mock).mockResolvedValue(makeArtist({ nativeId: 'd-artist' }));
-    (deezerApi.getDeezerArtist as jest.Mock).mockResolvedValue(makeArtist({ nativeId: 'd-artist' }));
-    (deezerApi.resolveDeezerAlbum as jest.Mock).mockResolvedValue(makeAlbum({ nativeId: 'd-album' }));
     (deezerApi.getDeezerAlbum as jest.Mock).mockResolvedValue({ album: makeAlbum(), songs: [] });
     (deezerApi.searchDeezerArtists as jest.Mock).mockResolvedValue([makeArtist()]);
     (deezerApi.searchDeezerAlbums as jest.Mock).mockResolvedValue([makeAlbum()]);
 
-    await deezerProvider.capabilities['artist.enrich']?.(makeArtist());
-    expect(deezerApi.resolveDeezerArtistByName).toHaveBeenCalledWith('Test Artist');
-    expect(deezerApi.getDeezerArtist).toHaveBeenCalledWith('d-artist');
-
-    await deezerProvider.capabilities['album.enrich']?.(makeAlbum());
-    expect(deezerApi.resolveDeezerAlbum).toHaveBeenCalledWith('Test Artist', 'Test Album');
+    // Pictures are not a capability: they fill gaps through `coverBackups.ts`.
+    expect(deezerProvider.capabilities).not.toHaveProperty('artist.enrich');
 
     await deezerProvider.capabilities['catalogue.album']?.('d-album');
     expect(deezerApi.getDeezerAlbum).toHaveBeenCalledWith('d-album');
@@ -144,18 +134,16 @@ describe('deezer provider', () => {
 
 describe('musicbrainz provider', () => {
   it('calls its own api module for every declared capability', async () => {
-    (mbApi.searchArtist as jest.Mock).mockResolvedValue([{ id: 'mb-artist', name: 'Test Artist', annotation: 'bio' }]);
-    (mbApi.searchReleaseGroup as jest.Mock).mockResolvedValue([{ id: 'mb-rg', title: 'Test Album' }]);
+    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
     (mbApi.getReleaseGroup as jest.Mock).mockResolvedValue({ id: 'mb-rg', title: 'Test Album' });
     (mbApi.getTracksForReleaseGroup as jest.Mock).mockResolvedValue([]);
     (mapMbSong as jest.Mock).mockReturnValue(makeSong());
     (mapMbAlbum as jest.Mock).mockReturnValue(makeAlbum());
 
-    await musicbrainzProvider.capabilities['artist.enrich']?.(makeArtist());
-    expect(mbApi.searchArtist).toHaveBeenCalledWith('Test Artist', 1);
-
-    await musicbrainzProvider.capabilities['album.enrich']?.(makeAlbum());
-    expect(mbApi.searchReleaseGroup).toHaveBeenCalledWith('Test Artist', 'Test Album', 1);
+    await musicbrainzProvider.capabilities['catalogue.search']?.('query', { artists: true, albums: true });
+    expect(mbApi.searchArtist).toHaveBeenCalledWith('query', 4);
+    expect(mbApi.searchReleaseGroupByTitle).toHaveBeenCalledWith('query', 6);
 
     await musicbrainzProvider.capabilities['catalogue.album']?.('mb-rg');
     expect(mbApi.getReleaseGroup).toHaveBeenCalledWith('mb-rg');
@@ -199,7 +187,7 @@ describe('the keyless integrations, assembled together', () => {
     // against a clean slate only if it is not preceded by an invocation in
     // the same test.
     expect(deezerApi.getDeezerAlbum).not.toHaveBeenCalled();
-    expect(deezerApi.resolveDeezerArtistByName).not.toHaveBeenCalled();
+    expect(deezerApi.searchDeezerArtists).not.toHaveBeenCalled();
     expect(mbApi.searchArtist).not.toHaveBeenCalled();
     expect(lastfmApi.getLastFmArtistInfo).not.toHaveBeenCalled();
   });

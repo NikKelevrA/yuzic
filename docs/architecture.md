@@ -375,7 +375,7 @@ answer that, and which one a job uses depends on how many providers can do it.
 
 - **Typed capabilities, served by a broker**, for jobs more than one provider
   can do. `providers/contracts/Capabilities.ts` is a map of capability name to
-  the function a provider supplies — `artist.enrich`, `album.enrich`, `lyrics`,
+  the function a provider supplies — `artist.enrich` (biography and tags),
   `catalogue.album`, `catalogue.search`. A provider
   (`providers/contracts/Provider.ts`) declares `Partial<CapabilityMap>` plus
   its presentation, auth tier and `testConnection`. `providers/registry/capabilityBroker.ts`
@@ -383,8 +383,26 @@ answer that, and which one a job uses depends on how many providers can do it.
   capability, be reachable, and be allowed by the user's policy for that
   feature, and enumeration never invokes one. The declared providers today are
   the keyless integrations in `providers/registry/keyless.ts` (Deezer,
-  MusicBrainz, Last.fm, LRCLIB); `enrichmentBroker.ts` orders them for artist
-  and album enrichment.
+  MusicBrainz, Last.fm, LRCLIB); `enrichmentBroker.ts` serves Last.fm for artist
+  biography and tags.
+- **Pictures are one rule, not a capability.** Every artist and album image,
+  wherever it is drawn (tile, row, hero, player, CarPlay), goes through
+  `features/artwork/coverResolution.ts`: (1) the item's own source — mappers
+  put it on the cover, or write a gap as `{ kind: 'none', subject }` naming who
+  the image is of (`coverOrMissing`/`missingCover` in `domain/entities/Cover.ts`);
+  (2) the library's copy of the same item, matched by MBID then name; (3) the
+  Metadata › Artwork backups declared in `providers/registry/coverBackups.ts`,
+  in `sources.ts` order (Cover Art Archive by MBID, then Deezer by name);
+  (4) the placeholder. `buildCover` applies steps 1–2 and remembered answers
+  synchronously; `MediaImage` (via `useResolvedCover`) asks the backups and
+  re-renders when an answer lands. `CoverResolutionHost` feeds it the library,
+  the enabled backups and online state. Answers are remembered per source and
+  subject in MMKV (misses for a week, hits for a month, failures not at all) —
+  never written onto the entity, so switching a backup off restores the
+  placeholder at once. A mapper must say "no image" honestly: Jellyfin/Emby
+  check `ImageTags` (`itemCover`), Deezer's empty-hash silhouette is no picture
+  (`imageCover`), Navidrome 0.64+ omits `coverArt`. No list, fetcher or screen
+  looks pictures up itself.
 - **Feature-owned registries**, for jobs with one provider each and behaviour
   no shared contract carries. Downloads are `features/downloaders/registry.ts`
   (`DownloaderDefinition`: `downloadAlbum`/`downloadTrack` with per-call
@@ -469,13 +487,15 @@ route leaf registered in `settings/_layout.tsx` with a row on the settings root.
   external source: `none`-tier, no key, *one* source that prefers synced and
   falls back to plain internally. Off by default → server-only behaviour is
   unchanged until a user enables it.
-- **Metadata** (`features/settings/metadata/`, `providers/registry/enrichmentBroker.ts`) — independent
-  **Artist-information** and **Artwork** controls, each its own ordered
-  enabled-source chain (`resolveArtistInfo`, `resolveArtwork`). **Display-only and
-  gaps-only**: the resolvers never write to any server and only fill a field the
-  server left empty, so disabling instantly restores the server view. Launch
-  sources: Last.fm `artist.getInfo`; Deezer artist images + Cover Art Archive
-  covers. A small "via X" line, never per-item badges.
+- **Metadata** (`features/settings/metadata/`) — backups the user switches on
+  for what the server lacks: **Artist info** (Last.fm `artist.getInfo` bio and
+  tags, through `enrichmentBroker.ts`/`resolveArtistDetails`), **Artwork**
+  (Cover Art Archive, Deezer — the cover resolution rule in §7, for every
+  picture including outside artists') and **Lyrics** (LRCLIB). The server's own
+  value always goes first (Navidrome's `getArtistInfo2` bio, Jellyfin's
+  Overview and Genres, Plex's summary and Genre). **Display-only and
+  gaps-only**: nothing is written to any server or onto an entity, so disabling
+  instantly restores the server view. A small "via X" line, never per-item badges.
 - **Search** (`features/settings/search/`, `features/search/searchLegs.ts`) — a segmented
   **Your Library** (default, no external calls) / **Other sources** scope with a
   Filters sheet for search-enabled sources and entity types. `planSearchLegs`

@@ -9,6 +9,7 @@ import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { SERVER_PROVIDERS } from './serverConnections';
 import { withServerCredentials } from './serverCredentials';
 import { normalizeImageUrlForSize } from '@/features/artwork/normalizeImageUrl';
+import { resolveCoverNow } from '@/features/artwork/coverResolution';
 
 export function buildCoverArtArchiveUrl(
   mbid: string,
@@ -26,10 +27,13 @@ export function buildCoverArtArchiveUrl(
 }
 
 export function buildCoverCacheKey(
-  cover: CoverSource,
+  source: CoverSource,
   size: 'thumb' | 'grid' | 'detail' | 'background'
 ): string | null {
   const px = COVER_PX[size];
+  // A gap is filled from the library or a remembered backup before anything
+  // is built, so every surface that asks for a URL gets the same picture.
+  const cover = source ? resolveCoverNow(source).cover : source;
 
   if (!cover || cover.kind === 'none' || cover.kind === 'special') return null;
 
@@ -50,10 +54,11 @@ export function buildCoverCacheKey(
 }
 
 export function buildCover(
-  cover: CoverSource,
+  source: CoverSource,
   size: 'thumb' | 'grid' | 'detail' | 'background'
 ): string | null {
   const px = COVER_PX[size];
+  const cover = source ? resolveCoverNow(source).cover : source;
 
   if (!cover || cover.kind === 'none') return null;
 

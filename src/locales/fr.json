@@ -539,10 +539,10 @@
         "recommendations": "Trouve des artistes proches de ceux d'une playlist."
       },
       "coverartarchive": {
-        "artwork": "Pochettes, associées à la sortie exacte."
+        "artwork": "Pochettes absentes de votre bibliothèque, associées par identifiant MusicBrainz."
       },
       "deezer": {
-        "artwork": "Photos d'artistes, et pochettes absentes de votre serveur.",
+        "artwork": "Photos d'artistes et pochettes manquantes, associées par nom.",
         "similarArtists": "Artistes associés sur Deezer.",
         "popularTracks": "Les titres les plus populaires d'un artiste.",
         "previews": "Extraits de 30 secondes des titres que vous ne possédez pas.",

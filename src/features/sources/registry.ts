@@ -24,7 +24,7 @@ import type { Song } from '@/domain/entities/Song'
 import type { AlbumDetail } from '@/domain/entities/Detail'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { integrationProvenance } from '@/domain/identity/Provenance'
-import type { CoverSource } from '@/domain/entities/Cover'
+import { artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover'
 import { sourceColor } from '@/constants/design'
 import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
 
@@ -160,7 +160,7 @@ function stubDeezerArtist(artistId: string, artistName: string): Artist {
     externalIds: artistId ? { deezerId: artistId } : {},
     libraryState: 'external',
     name: artistName,
-    cover: { kind: 'none' },
+    cover: missingCover(artistCoverSubject(artistName)),
     tags: [],
     albumIds: [],
   }
@@ -329,7 +329,7 @@ const musicbrainzSource: SourceDefinition = {
         id: artist.id,
         name: artist.name,
         subtitle: '',
-        cover: { kind: 'none' },
+        cover: missingCover(artistCoverSubject(artist.name, { mbid: artist.id })),
       })),
       albums: releaseGroups.map(rg => ({
         source: 'musicbrainz',

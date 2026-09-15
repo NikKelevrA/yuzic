@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import type { Playlist } from '@/domain/entities/Playlist';
+import type { CoverSource } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import GetReviewSheet from '@/components/options/GetReviewSheet';
@@ -46,20 +47,17 @@ type Props = {
   showNavigation?: boolean;
 };
 
+const NO_COVER: CoverSource = { kind: 'none' };
+
 function isCountLikeAlbumText(value?: string | null): boolean {
   return /^\s*\d+\s+albums?\s*$/i.test(value ?? '');
 }
 
 const AlbumHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
-  const { album, isLocal, resolved, songs } = model;
+  const { album, isLocal, songs } = model;
   const displayTitle = album?.title ?? '';
-  const hasOwnCover = album ? album.cover.kind !== 'none' : true;
-  // The album's own cover always wins — `resolveAlbumDetails` enrichment is
-  // only ever consulted for the gap, and its result is
-  // `null` both while it's off and while it hasn't settled — either way
-  // this falls back to the bare `album.cover`, so nothing flashes a wrong
-  // cover ahead of the real one.
-  const displayCover = hasOwnCover ? (album?.cover ?? { kind: 'none' as const }) : (resolved?.cover.value ?? { kind: 'none' as const });
+  // A missing cover is filled where it is drawn, by the same rule as every tile.
+  const displayCover = album?.cover ?? NO_COVER;
 
   return (
     <DetailHeader

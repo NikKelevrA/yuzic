@@ -12,7 +12,6 @@ type Input = {
 
 type Result = {
   topTracks: Song[]
-  biography?: string
   similarArtists: Artist[]
   isLoading: boolean
 }
@@ -33,7 +32,6 @@ export function useArtistTopTracks({ name, mbid, enabled }: Input): Result {
 
   return {
     topTracks: query.data?.topTracks ?? [],
-    biography: query.data?.artist.biography,
     similarArtists: query.data?.similarArtists ?? [],
     isLoading: query.isLoading,
   }

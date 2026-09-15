@@ -6,7 +6,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { albumCoverSubject, artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import { artistRef } from './mapRefs';
 import { mbidOf } from './externalIds';
 import type { PlexMetadata } from './types';
@@ -33,14 +33,19 @@ interface MapAlbumContext {
 export function mapAlbum(dto: PlexMetadata, context: MapAlbumContext): Album {
   const { provenance } = context;
   const nativeId = id(dto.ratingKey);
-  const cover: CoverSource = dto.thumb ? { kind: 'plex', path: dto.thumb } : { kind: 'none' };
-  const artistCover: CoverSource = dto.parentThumb ? { kind: 'plex', path: dto.parentThumb } : { kind: 'none' };
+  const externalIds = externalIdsOf(dto);
+  const cover: CoverSource = dto.thumb
+    ? { kind: 'plex', path: dto.thumb }
+    : missingCover(albumCoverSubject(dto.title, dto.parentTitle, externalIds));
+  const artistCover: CoverSource = dto.parentThumb
+    ? { kind: 'plex', path: dto.parentThumb }
+    : missingCover(artistCoverSubject(dto.parentTitle));
 
   return {
     localId: makeLocalId('album', provenance, nativeId),
     nativeId,
     provenance,
-    externalIds: externalIdsOf(dto),
+    externalIds,
     libraryState: 'in-library',
     title: dto.title ?? 'Unknown Album',
     cover,

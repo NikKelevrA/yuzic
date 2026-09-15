@@ -37,7 +37,10 @@ describe('normalizeAlbum', () => {
   it('gives emby albums a cover only when an image tag is present', () => {
     const client = makeClient({ brand: EMBY_BRAND });
     expect(normalizeAlbum(rawAlbum, client)?.cover).toEqual({ kind: 'emby', itemId: 'album-1', tag: 'tag-abc' });
-    expect(normalizeAlbum({ ...rawAlbum, ImageTags: undefined }, client)?.cover).toEqual({ kind: 'none' });
+    expect(normalizeAlbum({ ...rawAlbum, ImageTags: undefined }, client)?.cover).toEqual({
+      kind: 'none',
+      subject: { kind: 'album', title: 'Album One', artistName: 'Artist One' },
+    });
   });
 
   it('returns null when the album has no Id', () => {

@@ -11,7 +11,7 @@
 import type { AlbumRef, ArtistRef } from '@/domain/entities/EntityRef';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import type { MbReleaseGroup } from './';
 
 /** The `artist-credit` entry shape MusicBrainz embeds on releases and tracks. */
@@ -26,7 +26,7 @@ export function artistRef(provenance: Provenance, credits: MbArtistCredit[] | un
     externalIds: nativeId ? { mbid: nativeId } : {},
     name: credit?.name ?? credit?.artist.name ?? 'Unknown Artist',
     // MusicBrainz's search/lookup responses used here carry no artist image.
-    cover: { kind: 'none' },
+    cover: missingCover(artistCoverSubject(credit?.name ?? credit?.artist.name, nativeId ? { mbid: nativeId } : {})),
   };
 }
 

@@ -22,7 +22,6 @@ export type DeezerArtist = DeezerImageEntity & {
   name: string;
   nb_album?: number;
   nb_fan?: number;
-  description?: string;
 };
 
 export type DeezerAlbum = DeezerImageEntity & {

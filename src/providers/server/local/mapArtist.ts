@@ -7,6 +7,7 @@
  * mapper's input, playing the role a server's artist DTO plays elsewhere.
  */
 import type { Artist } from '@/domain/entities/Artist';
+import { artistCoverSubject, missingCover } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
@@ -39,7 +40,8 @@ export function mapArtist(group: LocalArtistGroup, provenance: Provenance): Arti
     // A file the user imported is, by definition, in their library.
     libraryState: 'in-library',
     name,
-    cover: { kind: 'none' },
+    // Imported files carry album art at most; the gap names the artist.
+    cover: missingCover(artistCoverSubject(name)),
     tags: [],
     albumIds,
   };

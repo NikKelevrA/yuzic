@@ -49,9 +49,25 @@ describe('mapArtist', () => {
     expect(artist.cover).toEqual({ kind: 'emby', itemId: 'ar-7', tag: 'tag-1' });
   });
 
-  it('has no cover on Emby without an image tag, since the image endpoint 404s otherwise', () => {
+  it('has no cover on Emby without an image tag, since the image endpoint 404s otherwise — and names the artist', () => {
     const artist = mapArtist({ ...fullDto, ImageTags: undefined }, { provenance, brand: EMBY_BRAND });
-    expect(artist.cover).toEqual({ kind: 'none' });
+    expect(artist.cover).toEqual({
+      kind: 'none',
+      subject: { kind: 'artist', name: 'Radiohead', mbid: 'artist-mbid' },
+    });
+  });
+
+  it('reads a Jellyfin payload whose image tags have no primary as no picture, rather than a URL that 404s', () => {
+    const artist = mapArtist({ ...fullDto, ImageTags: {} }, { provenance, brand: JELLYFIN_BRAND });
+    expect(artist.cover).toEqual({
+      kind: 'none',
+      subject: { kind: 'artist', name: 'Radiohead', mbid: 'artist-mbid' },
+    });
+  });
+
+  it("takes the server's genres as the artist's tags", () => {
+    const artist = mapArtist({ ...fullDto, Genres: ['Rock;Alternative'] }, { provenance, brand: JELLYFIN_BRAND });
+    expect(artist.tags).toEqual(['Rock', 'Alternative']);
   });
 
   it('produces a valid artist from an all-but-empty DTO rather than throwing', () => {

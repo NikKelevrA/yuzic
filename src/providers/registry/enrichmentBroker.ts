@@ -1,81 +1,42 @@
 /**
- * The `metadata.enrich` broker: adapts the user's existing artist-info /
- * artwork settings (`features/settings/metadata/state.ts`) into the
- * `BrokerInput` shape `resolveArtistDetails`/`resolveAlbumDetails`
- * (`features/artist`, `features/album`) consult.
+ * The `artist.enrich` broker: adapts the user's Metadata › Artist info switch
+ * (`features/settings/sources`) into the `BrokerInput` shape
+ * `resolveArtistDetails` (`features/artist`) consults.
  *
  * This is where a provider is named for policy purposes — deciding which
- * provider serves which settings toggle — so it lives in the registry
- * alongside every other provider declaration, per this directory's own
- * "where a provider declares itself" role (see `providers.ts`'s file
- * comment). Feature code asks for `useMetadataEnrichmentBroker()` and never
- * sees a provider id.
+ * provider serves which settings switch — so it lives in the registry
+ * alongside every other provider declaration. Feature code asks for
+ * `useMetadataEnrichmentBroker()` and never sees a provider id.
  *
- * Only providers the OLD fetcher-based resolvers this replaces
- * (`features/metadata/resolveArtistInfo.ts`, `resolveArtwork.ts` — deleted
- * alongside this file's introduction) actually used for a given field are
- * ever allowed to serve it here, so the migration changes no observable
- * behaviour:
- *  - `artist.enrich` biography/tags: Last.fm only (the old
- *    `ALL_ARTIST_INFO_SOURCES` was `['lastfm']` — MusicBrainz's own
- *    `artist.enrich` can also return a biography, but the old artist-info
- *    chain never called MusicBrainz, so it stays disallowed here too, to
- *    avoid silently adding a source nothing has ever tested against).
- *  - `artist.enrich` cover: Deezer only (the old artwork chain's
- *    `coverartarchive` fetcher only ever resolved a "release" or
- *    "release-group" mbid, which an artist lookup never has — see the old
- *    `enrichmentFetchers.ts`'s guard — so it never contributed to an
- *    artist's cover in practice).
- *  - `album.enrich` cover: Deezer and MusicBrainz (Cover Art Archive is
- *    implemented as `musicbrainzProvider['album.enrich']` — see
- *    `resolveAlbumDetails.ts`'s doc comment).
+ * Only a biography and tags are enriched here, and only by Last.fm. Pictures
+ * are not enrichment: every artist and album image, whoever supplied the
+ * item, goes through `features/artwork/coverResolution`, whose backups are the
+ * Metadata › Artwork list.
  */
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { lastfmProvider } from './lastfm';
-import { deezerProvider } from './deezer';
-import { musicbrainzProvider } from './musicbrainz';
 import type { BrokerInput } from './capabilityBroker';
 import type { CapabilityName } from '../contracts/Capabilities';
 import type { Provider, ProviderId } from '../contracts/Provider';
 import { selectSourceUse } from '@/features/settings/sources/state';
 
-const PROVIDERS: readonly Provider[] = [lastfmProvider, deezerProvider, musicbrainzProvider];
+const PROVIDERS: readonly Provider[] = [lastfmProvider];
+
+const ORDER: readonly ProviderId[] = [lastfmProvider.id];
 
 /**
- * The fixed try-order, strongest first, following `SOURCE_USES`: Last.fm for
- * artist info, then Cover Art Archive (served through MusicBrainz's
- * `album.enrich` — not a provider of its own) before Deezer for covers, since
- * an exact release match beats a match by name.
- */
-const ORDER: readonly ProviderId[] = [lastfmProvider.id, musicbrainzProvider.id, deezerProvider.id];
-
-/**
- * One ordered, policy-gated broker over Last.fm/Deezer/MusicBrainz, for
- * `resolveArtistDetails`/`resolveAlbumDetails` to consult. These are all
- * keyless integrations, so each is treated as always reachable — same as
- * each one's own `testConnection` — and self-guards on its own missing
- * credential (e.g. Last.fm's bundled key) inside its capability.
+ * One policy-gated broker over the artist-info sources, for
+ * `resolveArtistDetails` to consult. Last.fm is keyless from the user's side,
+ * so it is treated as always reachable — same as its own `testConnection` —
+ * and self-guards on its bundled key inside its capability.
  */
 export function useMetadataEnrichmentBroker(): BrokerInput {
-  const bioSourceEnabled = useSelector(selectSourceUse('lastfm.artistInfo'));
-  const artworkIntegrationEnabled = useSelector(selectSourceUse('deezer.artwork'));
-  const coverArtArchiveEnabled = useSelector(selectSourceUse('coverartarchive.artwork'));
+  const artistInfoEnabled = useSelector(selectSourceUse('lastfm.artistInfo'));
 
   return useMemo<BrokerInput>(() => {
-    const isAllowed = (id: ProviderId, capability: CapabilityName): boolean => {
-      if (capability === 'artist.enrich') {
-        if (id === lastfmProvider.id) return bioSourceEnabled;
-        if (id === deezerProvider.id) return artworkIntegrationEnabled;
-        return false;
-      }
-      if (capability === 'album.enrich') {
-        if (id === deezerProvider.id) return artworkIntegrationEnabled;
-        if (id === musicbrainzProvider.id) return coverArtArchiveEnabled;
-        return false;
-      }
-      return false;
-    };
+    const isAllowed = (id: ProviderId, capability: CapabilityName): boolean =>
+      capability === 'artist.enrich' && id === lastfmProvider.id && artistInfoEnabled;
 
     return {
       providers: PROVIDERS,
@@ -83,15 +44,14 @@ export function useMetadataEnrichmentBroker(): BrokerInput {
       isAllowed,
       order: ORDER,
     };
-  }, [bioSourceEnabled, artworkIntegrationEnabled, coverArtArchiveEnabled]);
+  }, [artistInfoEnabled]);
 }
 
 /**
  * The i18n key for a `metadata.enrich` provider's display name (for the
  * small "via …" source line a resolved field's UI draws) — reuses each
  * provider's own `presentation.nameKey` rather than a second copy of the
- * label, and keeps the provider id itself out of caller code: a caller
- * holds only the opaque key string, never a name to match against.
+ * label, and keeps the provider id itself out of caller code.
  * `null` for an id this broker doesn't recognize.
  */
 export function metadataSourceNameKey(providerId: ProviderId): string | null {

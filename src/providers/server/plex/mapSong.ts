@@ -9,7 +9,7 @@ import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { albumCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import { albumRef, artistRef } from './mapRefs';
 import { mbidOf } from './externalIds';
 import type { PlexMetadata } from './types';
@@ -38,7 +38,7 @@ export function mapSong(dto: PlexMetadata, context: MapSongContext): Song {
     ? { kind: 'plex', path: dto.thumb }
     : dto.parentThumb
       ? { kind: 'plex', path: dto.parentThumb }
-      : context.cover ?? { kind: 'none' };
+      : context.cover ?? missingCover(albumCoverSubject(dto.parentTitle, dto.grandparentTitle));
 
   const media = dto.Media?.[0];
   const part = media?.Part?.[0];

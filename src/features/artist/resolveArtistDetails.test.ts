@@ -41,7 +41,7 @@ function broker(providers: Provider[], order?: string[]): BrokerInput {
 
 describe('resolveArtistDetails', () => {
   it('zero provider calls when the origin already answered every field', async () => {
-    const artist = makeArtist({ biography: 'A band.', tags: ['rock'], cover: { kind: 'url', url: 'x' } });
+    const artist = makeArtist({ biography: 'A band.', tags: ['rock'] });
     const invoke = jest.fn();
     const input: ResolveArtistDetailsInput = { artist, broker: broker([provider('lastfm', invoke)]) };
 
@@ -50,7 +50,16 @@ describe('resolveArtistDetails', () => {
     expect(invoke).not.toHaveBeenCalled();
     expect(result.biography).toEqual({ value: 'A band.', sourceId: 'srv-1' });
     expect(result.tags).toEqual({ value: ['rock'], sourceId: 'srv-1' });
-    expect(result.cover).toEqual({ value: { kind: 'url', url: 'x' }, sourceId: 'srv-1' });
+  });
+
+  it('asks for tags when the server gave a biography but no tags', async () => {
+    const artist = makeArtist({ biography: 'A band.' });
+    const invoke = jest.fn().mockResolvedValue({ biography: 'Other bio', tags: ['alt'] });
+
+    const result = await resolveArtistDetails({ artist, broker: broker([provider('lastfm', invoke)]) });
+
+    expect(result.biography).toEqual({ value: 'A band.', sourceId: 'srv-1' });
+    expect(result.tags).toEqual({ value: ['alt'], sourceId: 'lastfm' });
   });
 
   it('zero calls when the capability is disabled for every provider', async () => {
@@ -64,7 +73,6 @@ describe('resolveArtistDetails', () => {
     expect(invoke).not.toHaveBeenCalled();
     expect(result.biography).toBeUndefined();
     expect(result.tags).toBeUndefined();
-    expect(result.cover).toEqual({ value: { kind: 'none' }, sourceId: 'srv-1' });
   });
 
   it('fills missing fields from the first enabled offer, attributed to it', async () => {
@@ -79,50 +87,35 @@ describe('resolveArtistDetails', () => {
 
   it('zero calls to later providers once every missing field is filled', async () => {
     const artist = makeArtist();
-    const first = jest.fn().mockResolvedValue({
-      biography: 'Bio',
-      tags: ['tag'],
-      cover: { kind: 'url', url: 'x' },
-    });
+    const first = jest.fn().mockResolvedValue({ biography: 'Bio', tags: ['tag'] });
     const second = jest.fn();
 
     await resolveArtistDetails({
       artist,
-      broker: broker([provider('lastfm', first), provider('deezer', second)], ['lastfm', 'deezer']),
+      broker: broker([provider('first', first), provider('second', second)], ['first', 'second']),
     });
 
     expect(first).toHaveBeenCalledTimes(1);
     expect(second).not.toHaveBeenCalled();
   });
 
-  it('resolves independent fields from different offers — a bio hit does not block a later cover hit', async () => {
+  it('resolves independent fields from different offers — a bio hit does not block later tags', async () => {
     const artist = makeArtist();
-    const lastfm = jest.fn().mockResolvedValue({ biography: 'Bio', tags: ['tag'] });
-    const deezer = jest.fn().mockResolvedValue({ cover: { kind: 'url', url: 'cover.jpg' } });
+    const first = jest.fn().mockResolvedValue({ biography: 'Bio' });
+    const second = jest.fn().mockResolvedValue({ tags: ['tag'] });
 
     const result = await resolveArtistDetails({
       artist,
-      broker: broker([provider('lastfm', lastfm), provider('deezer', deezer)], ['lastfm', 'deezer']),
+      broker: broker([provider('first', first), provider('second', second)], ['first', 'second']),
     });
 
-    expect(lastfm).toHaveBeenCalledTimes(1);
-    expect(deezer).toHaveBeenCalledTimes(1);
-    expect(result.biography).toEqual({ value: 'Bio', sourceId: 'lastfm' });
-    expect(result.cover).toEqual({ value: { kind: 'url', url: 'cover.jpg' }, sourceId: 'deezer' });
-  });
-
-  it('falls back to a "none" cover attributed to the origin when nothing fills it', async () => {
-    const artist = makeArtist();
-    const invoke = jest.fn().mockResolvedValue(null);
-
-    const result = await resolveArtistDetails({ artist, broker: broker([provider('lastfm', invoke)]) });
-
-    expect(result.cover).toEqual({ value: { kind: 'none' }, sourceId: 'srv-1' });
+    expect(result.biography).toEqual({ value: 'Bio', sourceId: 'first' });
+    expect(result.tags).toEqual({ value: ['tag'], sourceId: 'second' });
   });
 
   it('never writes anything onto the artist entity — the input object is untouched', async () => {
     const artist = makeArtist();
-    const invoke = jest.fn().mockResolvedValue({ biography: 'Bio', tags: ['tag'], cover: { kind: 'url', url: 'x' } });
+    const invoke = jest.fn().mockResolvedValue({ biography: 'Bio', tags: ['tag'] });
     const snapshot = JSON.parse(JSON.stringify(artist));
 
     const result = await resolveArtistDetails({ artist, broker: broker([provider('lastfm', invoke)]) });

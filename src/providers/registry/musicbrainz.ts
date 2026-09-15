@@ -42,25 +42,6 @@ export const musicbrainzProvider: IntegrationProvider = {
         })),
       };
     },
-    'artist.enrich': async artist => {
-      const results = await mb.searchArtist(artist.name, 1);
-      const best = results[0];
-      if (!best) return null;
-      const biography = best.annotation?.trim();
-      return {
-        biography: biography || undefined,
-        externalIds: { mbid: best.id },
-      };
-    },
-    'album.enrich': async album => {
-      const results = await mb.searchReleaseGroup(album.artist.name, album.title, 1);
-      const best = results[0];
-      if (!best) return null;
-      return {
-        cover: { kind: 'coverartarchive', mbid: best.id, mbidType: 'release-group' },
-        externalIds: { mbid: best.id, mbidType: 'release-group' },
-      };
-    },
     'catalogue.album': async nativeId => {
       const rg = await mb.getReleaseGroup(nativeId);
       const tracks = await mb.getTracksForReleaseGroup(nativeId);

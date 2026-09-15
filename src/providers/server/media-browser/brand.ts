@@ -1,4 +1,5 @@
-import { CoverSource } from "@/domain/entities/Cover";
+import { coverOrMissing, missingCover, type CoverSource, type CoverSubject } from "@/domain/entities/Cover";
+import type { MediaBrowserItem } from "./types";
 
 /**
  * Jellyfin and Emby speak the same MediaBrowser-derived API and differ only
@@ -52,6 +53,24 @@ export function buildCoverWithTag(
 ): CoverSource {
   if (brand.kind === "jellyfin") return buildCover(brand, itemId);
   return itemId && tag ? { kind: "emby", itemId, tag } : { kind: "none" };
+}
+
+/**
+ * An artist's or album's own cover, or a gap naming it.
+ *
+ * Jellyfin will build an image URL from any item id, so an id alone says
+ * nothing about whether a picture exists. The item's `ImageTags` does: when
+ * the payload carries the map and it has no `Primary`, the server has no
+ * image, and the gap is handed on for a backup to fill. A payload without the
+ * map at all (some list endpoints) is taken at its id, as before.
+ */
+export function itemCover(
+  brand: MediaBrowserBrand,
+  dto: Pick<MediaBrowserItem, "Id" | "ImageTags">,
+  subject: CoverSubject | undefined
+): CoverSource {
+  if (dto.ImageTags && !dto.ImageTags.Primary) return missingCover(subject);
+  return coverOrMissing(buildCoverWithTag(brand, dto.Id, dto.ImageTags?.Primary), subject);
 }
 
 /**

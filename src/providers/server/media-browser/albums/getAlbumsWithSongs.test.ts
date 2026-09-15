@@ -53,13 +53,14 @@ describe('getAlbumsWithSongs', () => {
   it('gives jellyfin the nested artist cover but gives emby none', async () => {
     // Jellyfin resolves artist art from the item id alone, so the album payload
     // already carries everything the cover needs; Emby requires an image tag
-    // this endpoint does not return, and honestly has none. The distinction
-    // matters because `{ kind: 'none' }` is not nullish: a consumer written as
+    // this endpoint does not return, and honestly has none — naming the artist,
+    // so a backup can fill it. The distinction matters because
+    // `{ kind: 'none' }` is not nullish: a consumer written as
     // `album.artist.cover ?? song.cover` does not fall through it.
     const jellyfinDetails = await getAlbumsWithSongs(makeClient(JELLYFIN_BRAND));
     expect(jellyfinDetails[0].album.artist.cover).toEqual({ kind: 'jellyfin', itemId: 'artist-1' });
 
     const embyDetails = await getAlbumsWithSongs(makeClient(EMBY_BRAND));
-    expect(embyDetails[0].album.artist.cover).toEqual({ kind: 'none' });
+    expect(embyDetails[0].album.artist.cover).toEqual({ kind: 'none', subject: { kind: 'artist', name: 'Artist One' } });
   });
 });

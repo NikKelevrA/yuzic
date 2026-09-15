@@ -24,19 +24,16 @@ import type { Artist } from '@/domain/entities/Artist';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/domain/entities/Cover';
 
-/** Fields an integration can contribute to an artist it recognises. */
+/**
+ * Fields an integration can contribute to an artist it recognises.
+ *
+ * No picture: every image goes through cover resolution
+ * (`features/artwork/coverResolution`), whichever item it belongs to.
+ */
 interface ArtistEnrichment {
   biography?: string;
   tags?: string[];
-  cover?: CoverSource;
-  externalIds?: ExternalIds;
-}
-
-/** Fields an integration can contribute to an album it recognises. */
-interface AlbumEnrichment {
-  cover?: CoverSource;
   externalIds?: ExternalIds;
 }
 
@@ -65,10 +62,8 @@ interface CatalogueSearchResults {
  * implementation, and the feature calls it without knowing whose it is.
  */
 export interface CapabilityMap {
-  /** Fill gaps in an artist record — biography, tags, artwork. */
+  /** Fill gaps in an artist record — biography and tags. */
   'artist.enrich': (artist: Artist) => Promise<ArtistEnrichment | null>;
-  /** Fill gaps in an album record. Cover Art Archive needs a release id. */
-  'album.enrich': (album: Album) => Promise<AlbumEnrichment | null>;
   /** Browse a catalogue this provider holds but the user does not own. */
   'catalogue.album': (nativeId: string) => Promise<AlbumDetail | null>;
   /**

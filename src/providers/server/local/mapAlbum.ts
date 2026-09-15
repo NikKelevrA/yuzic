@@ -7,6 +7,7 @@
  * mapper's input, playing the role a server's album DTO plays elsewhere.
  */
 import type { Album, ReleaseType } from '@/domain/entities/Album';
+import { albumCoverSubject, coverOrMissing } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
@@ -43,7 +44,7 @@ export function mapAlbum(group: LocalAlbumGroup, context: MapAlbumContext): Albu
     // A file the user imported is, by definition, in their library.
     libraryState: 'in-library',
     title: first?.albumTitle ?? 'Unknown Album',
-    cover: first?.cover ?? { kind: 'none' },
+    cover: coverOrMissing(first?.cover ?? { kind: 'none' }, albumCoverSubject(first?.albumTitle, first?.artist)),
     artist: artistRef(provenance, first?.artistId, first?.artist),
     year: first?.year,
     // Imported files carry no release-type tag; everything is presented as

@@ -10,7 +10,9 @@
 import type { Artist } from '@/domain/entities/Artist';
 import type { Provenance } from '@/domain/identity/Provenance';
 import { makeLocalId } from '@/domain/identity/LocalId';
-import { buildCoverWithTag, type MediaBrowserBrand } from './brand';
+import { artistCoverSubject } from '@/domain/entities/Cover';
+import { itemCover, type MediaBrowserBrand } from './brand';
+import { normalizeGenres } from './utils/normalizeGenres';
 import type { MediaBrowserItem } from './types';
 
 interface MapArtistContext {
@@ -22,19 +24,21 @@ interface MapArtistContext {
 export function mapArtist(dto: MediaBrowserItem, context: MapArtistContext): Artist {
   const { provenance, brand } = context;
   const nativeId = dto.Id ?? '';
-  const cover = buildCoverWithTag(brand, dto.Id, dto.ImageTags?.Primary);
+  const externalIds = dto.ProviderIds?.MusicBrainz ? { mbid: dto.ProviderIds.MusicBrainz } : {};
+  const cover = itemCover(brand, dto, artistCoverSubject(dto.Name, externalIds));
 
   return {
     localId: makeLocalId('artist', provenance, nativeId),
     nativeId,
     provenance,
-    externalIds: dto.ProviderIds?.MusicBrainz ? { mbid: dto.ProviderIds.MusicBrainz } : {},
+    externalIds,
     // Anything the user's own server returned is, by definition, in their library.
     libraryState: 'in-library',
     name: dto.Name ?? 'Unknown Artist',
     cover,
     biography: dto.Overview,
-    tags: [],
+    // The server's own genres for the artist are its tags, ahead of any backup's.
+    tags: normalizeGenres(dto.Genres) ?? [],
     albumIds: [],
   };
 }

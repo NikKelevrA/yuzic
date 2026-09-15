@@ -6,6 +6,7 @@
  * mapper must be callable from a fixture test with no client at all.
  */
 import type { Artist } from '@/domain/entities/Artist';
+import { artistCoverSubject, missingCover } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { MbArtist } from './';
@@ -24,8 +25,8 @@ export function mapArtist(dto: MbArtist, provenance: Provenance): Artist {
     libraryState: 'external',
     name: dto.name ?? 'Unknown Artist',
     // MusicBrainz's artist lookup/search responses used by this adapter carry
-    // no picture of their own.
-    cover: { kind: 'none' },
+    // no picture of their own; the gap names the artist for a backup.
+    cover: missingCover(artistCoverSubject(dto.name, nativeId ? { mbid: nativeId } : {})),
     biography: dto.annotation || undefined,
     // No tag data is requested by this adapter (would need `inc=tags`).
     tags: [],

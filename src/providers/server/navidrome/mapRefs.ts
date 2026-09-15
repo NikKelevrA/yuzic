@@ -9,13 +9,13 @@
 import type { AlbumRef, ArtistRef } from '@/domain/entities/EntityRef';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 
 export function artistRef(
   provenance: Provenance,
   nativeId: string | undefined,
   name: string | undefined,
-  cover: CoverSource = { kind: 'none' }
+  cover: CoverSource = missingCover(artistCoverSubject(name))
 ): ArtistRef {
   const id = nativeId ?? '';
   return {

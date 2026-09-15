@@ -28,14 +28,8 @@ import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/domain/entities/Cover';
-import { albumRef, artistRef } from './mapRefs';
+import { albumCover, albumRef, artistRef } from './mapRefs';
 import type { DeezerAlbum, DeezerTrack, DeezerPreviewTrack } from './types';
-
-function albumCover(album: DeezerAlbum): CoverSource {
-  const url = album.cover_xl ?? album.cover_big ?? album.cover_medium;
-  return url ? { kind: 'url', url } : { kind: 'none' };
-}
 
 function externalIdsOf(dto: DeezerTrack): ExternalIds {
   const ids: ExternalIds = {};

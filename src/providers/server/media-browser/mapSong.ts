@@ -9,7 +9,7 @@ import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { albumCoverSubject, coverOrMissing, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import { buildSongCover, type MediaBrowserBrand } from './brand';
 import { normalizeGenres } from './utils/normalizeGenres';
 import { albumRef, artistRef } from './mapRefs';
@@ -21,6 +21,23 @@ const TICKS_PER_SECOND = 10_000_000;
 function externalIdsOf(dto: MediaBrowserItem): ExternalIds {
   const trackMbid = dto.ProviderIds?.MusicBrainzTrack;
   return trackMbid ? { mbid: trackMbid } : {};
+}
+
+/**
+ * A song's own art, or a gap naming its album. Only a payload that says the
+ * song has no image and its album has none either counts as a gap — Jellyfin
+ * serves a song's art by its own id, which is not proof of anything alone.
+ */
+function songCover(
+  dto: MediaBrowserItem,
+  brand: MediaBrowserBrand,
+  albumId: string | undefined,
+  artistName: string | undefined,
+  albumTitle: string | undefined
+): CoverSource {
+  const subject = albumCoverSubject(albumTitle, artistName);
+  if (dto.ImageTags && !dto.ImageTags.Primary && !dto.AlbumPrimaryImageTag) return missingCover(subject);
+  return coverOrMissing(buildSongCover(brand, dto.Id, albumId, dto.AlbumPrimaryImageTag), subject);
 }
 
 interface MapSongContext {
@@ -38,8 +55,8 @@ export function mapSong(dto: MediaBrowserItem, context: MapSongContext): Song {
   const { provenance, brand } = context;
   const nativeId = dto.Id ?? '';
   const albumId = dto.AlbumId ?? context.albumId;
-  const cover = context.cover ?? buildSongCover(brand, dto.Id, albumId, dto.AlbumPrimaryImageTag);
   const artistItem = dto.ArtistItems?.[0];
+  const cover = context.cover ?? songCover(dto, brand, albumId, artistItem?.Name ?? dto.AlbumArtist, context.albumTitle);
   const mediaSource = dto.MediaSources?.[0];
   const audioStream = mediaSource?.MediaStreams?.find(stream => stream.Type === 'Audio');
   const ticks = dto.RunTimeTicks ?? mediaSource?.RunTimeTicks ?? 0;

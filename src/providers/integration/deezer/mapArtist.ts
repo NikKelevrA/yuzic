@@ -9,13 +9,9 @@
 import type { Artist } from '@/domain/entities/Artist';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { artistCoverSubject } from '@/domain/entities/Cover';
+import { imageCover } from './imageCover';
 import type { DeezerArtist } from './types';
-
-function coverOf(dto: DeezerArtist): CoverSource {
-  const url = dto.picture_xl ?? dto.picture_big ?? dto.picture_medium;
-  return url ? { kind: 'url', url } : { kind: 'none' };
-}
 
 export function mapArtist(dto: DeezerArtist, provenance: Provenance): Artist {
   const nativeId = dto.id != null ? String(dto.id) : '';
@@ -31,9 +27,8 @@ export function mapArtist(dto: DeezerArtist, provenance: Provenance): Artist {
     // mapper has neither, and must not guess. See LibraryState.
     libraryState: 'external',
     name: dto.name ?? 'Unknown Artist',
-    cover: coverOf(dto),
-    biography: dto.description || undefined,
-    // Deezer's artist object carries no tag/genre list of its own.
+    cover: imageCover([dto.picture_xl, dto.picture_big, dto.picture_medium], artistCoverSubject(dto.name)),
+    // Deezer's public artist object has no biography, and no tag/genre list.
     tags: [],
     albumIds: [],
   };

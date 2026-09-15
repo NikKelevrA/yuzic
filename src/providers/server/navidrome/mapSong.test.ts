@@ -73,7 +73,7 @@ describe('mapSong', () => {
       nativeId: 'ar-7',
       externalIds: {},
       name: 'Radiohead',
-      cover: { kind: 'none' },
+      cover: { kind: 'none', subject: { kind: 'artist', name: 'Radiohead' } },
     });
     expect(song.album.localId).toBe('local:album:srv:srv-1:al-3');
     expect(song.album.title).toBe('Kid A');
@@ -104,6 +104,15 @@ describe('mapSong', () => {
     });
     expect(song.artist.name).toBe('Unknown Artist');
     expect(song.cover).toEqual({ kind: 'none' });
+  });
+
+  it("names the song's album on a missing cover, so a backup can find it", () => {
+    const { coverArt: _omitted, ...withoutArt } = fullDto;
+    void _omitted;
+    expect(mapSong(withoutArt, { provenance }).cover).toEqual({
+      kind: 'none',
+      subject: { kind: 'album', title: 'Kid A', artistName: 'Radiohead' },
+    });
   });
 
   it('falls back to the album cover and title when the song carries neither', () => {

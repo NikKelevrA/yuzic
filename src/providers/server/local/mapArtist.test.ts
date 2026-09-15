@@ -31,7 +31,7 @@ describe('mapArtist', () => {
       tags: [],
     });
     expect(artist.externalIds).toEqual({});
-    expect(artist.cover).toEqual({ kind: 'none' });
+    expect(artist.cover).toEqual({ kind: 'none', subject: { kind: 'artist', name: 'Radiohead' } });
   });
 
   it('derives distinct album ids from every distinct albumId among its tracks', () => {

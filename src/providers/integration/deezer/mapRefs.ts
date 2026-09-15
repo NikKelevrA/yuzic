@@ -10,19 +10,21 @@
 import type { AlbumRef, ArtistRef } from '@/domain/entities/EntityRef';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { albumCoverSubject, artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
+import { imageCover } from './imageCover';
 import type { DeezerAlbum, DeezerArtist } from './types';
 
-/** Deezer's largest-first artist picture, as a plain hosted URL. */
+/** Deezer's largest-first artist picture, or a gap naming the artist. */
 function artistCover(artist: DeezerArtist): CoverSource {
-  const url = artist.picture_xl ?? artist.picture_big ?? artist.picture_medium;
-  return url ? { kind: 'url', url } : { kind: 'none' };
+  return imageCover([artist.picture_xl, artist.picture_big, artist.picture_medium], artistCoverSubject(artist.name));
 }
 
-/** Deezer's largest-first album cover, as a plain hosted URL. */
-function albumCover(album: DeezerAlbum): CoverSource {
-  const url = album.cover_xl ?? album.cover_big ?? album.cover_medium;
-  return url ? { kind: 'url', url } : { kind: 'none' };
+/** Deezer's largest-first album cover, or a gap naming the album. */
+export function albumCover(album: DeezerAlbum): CoverSource {
+  return imageCover(
+    [album.cover_xl, album.cover_big, album.cover_medium],
+    albumCoverSubject(album.title, album.artist?.name)
+  );
 }
 
 export function artistRef(provenance: Provenance, artist: DeezerArtist | undefined): ArtistRef {
@@ -32,7 +34,7 @@ export function artistRef(provenance: Provenance, artist: DeezerArtist | undefin
     nativeId,
     externalIds: nativeId ? { deezerId: nativeId } : {},
     name: artist?.name ?? 'Unknown Artist',
-    cover: artist ? artistCover(artist) : { kind: 'none' },
+    cover: artist ? artistCover(artist) : missingCover(undefined),
   };
 }
 
@@ -43,6 +45,6 @@ export function albumRef(provenance: Provenance, album: DeezerAlbum | undefined)
     nativeId,
     externalIds: nativeId ? { deezerId: nativeId } : {},
     title: album?.title ?? 'Unknown Album',
-    cover: album ? albumCover(album) : { kind: 'none' },
+    cover: album ? albumCover(album) : missingCover(undefined),
   };
 }

@@ -6,14 +6,10 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import type { Provenance } from '@/domain/identity/Provenance';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { albumCoverSubject } from '@/domain/entities/Cover';
+import { imageCover } from './imageCover';
 import { artistRef } from './mapRefs';
 import type { DeezerAlbum } from './types';
-
-function coverOf(dto: DeezerAlbum): CoverSource {
-  const url = dto.cover_xl ?? dto.cover_big ?? dto.cover_medium;
-  return url ? { kind: 'url', url } : { kind: 'none' };
-}
 
 function externalIdsOf(dto: DeezerAlbum): ExternalIds {
   const ids: ExternalIds = {};
@@ -62,7 +58,10 @@ export function mapAlbum(dto: DeezerAlbum, context: MapAlbumContext): Album {
     // mapArtist's comment on why this mapper never guesses further than that.
     libraryState: 'external',
     title: dto.title ?? 'Unknown Album',
-    cover: coverOf(dto),
+    cover: imageCover(
+      [dto.cover_xl, dto.cover_big, dto.cover_medium],
+      albumCoverSubject(dto.title, dto.artist?.name, externalIdsOf(dto))
+    ),
     artist: artistRef(provenance, dto.artist),
     year: yearOf(dto.release_date),
     releaseDate: dto.release_date ?? undefined,

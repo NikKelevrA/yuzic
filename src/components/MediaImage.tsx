@@ -7,6 +7,7 @@ import { CoverSource } from '@/domain/entities/Cover';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { useTheme } from '@/features/theme/useTheme';
+import { useResolvedCover } from '@/features/artwork/useResolvedCover';
 import {
   hasImageUrlFailed,
   IMAGE_CACHE_POLICY,
@@ -30,18 +31,21 @@ export function MediaImage({
   // some other state (e.g. list data) causes a re-render.
   const activeServerId = useSelector(selectActiveServerId);
   const { colors } = useTheme();
+  // A gap is filled here the same way everywhere: the library's copy, then
+  // the artwork backups the user has switched on. Asking a backup starts here.
+  const { cover: resolved } = useResolvedCover(cover);
   const uri = useMemo(() => {
     void activeServerId;
-    return buildCover(cover, size);
-  }, [cover, size, activeServerId]);
+    return buildCover(resolved, size);
+  }, [resolved, size, activeServerId]);
   const cacheKey = useMemo(() => {
     void activeServerId;
-    return buildCoverCacheKey(cover, size);
-  }, [cover, size, activeServerId]);
+    return buildCoverCacheKey(resolved, size);
+  }, [resolved, size, activeServerId]);
   const fallbackUri = useMemo(() => {
-    if (cover.kind !== 'coverartarchive' || cover.mbidType !== 'unknown') return null;
-    return buildCoverArtArchiveUrl(cover.mbid, 'release', size);
-  }, [cover, size]);
+    if (resolved.kind !== 'coverartarchive' || resolved.mbidType !== 'unknown') return null;
+    return buildCoverArtArchiveUrl(resolved.mbid, 'release', size);
+  }, [resolved, size]);
   const [useFallback, setUseFallback] = useState(false);
   const [failedVersion, setFailedVersion] = useState(0);
   const primaryFailed = hasImageUrlFailed(uri);

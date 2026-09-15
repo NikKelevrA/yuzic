@@ -41,7 +41,7 @@ describe('mapSong (full catalogue track)', () => {
         nativeId: '27',
         externalIds: { deezerId: '27' },
         name: 'Daft Punk',
-        cover: { kind: 'none' },
+        cover: { kind: 'none', subject: { kind: 'artist', name: 'Daft Punk' } },
       },
       album: {
         localId: 'local:album:ext:deezer:302127',
@@ -136,7 +136,7 @@ describe('mapPreviewTrack (30-second clip)', () => {
         nativeId: '27',
         externalIds: { deezerId: '27' },
         name: 'Daft Punk',
-        cover: { kind: 'none' },
+        cover: { kind: 'none', subject: { kind: 'artist', name: 'Daft Punk' } },
       },
       album: {
         localId: 'local:album:ext:deezer:302127',

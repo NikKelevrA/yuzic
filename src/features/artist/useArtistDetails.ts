@@ -1,7 +1,7 @@
 /**
  * `resolveArtistDetails` behind a `useQuery`, wired to the real
  * `metadata.enrich` broker: one attributed resolution for an artist's
- * biography and cover.
+ * biography and tags.
  */
 import { useQuery } from '@tanstack/react-query';
 import { resolveArtistDetails, type ResolvedArtist } from './resolveArtistDetails';
@@ -21,7 +21,7 @@ export function useArtistDetails(artist: Artist | null): ResolvedArtist | null {
       QueryKeys.ArtistDetailsResolution,
       artist?.localId ?? null,
       artist?.biography ?? null,
-      artist?.cover.kind === 'none' ? 'none' : 'has-cover',
+      artist?.tags.length ?? 0,
       broker.order?.join(',') ?? '',
     ],
     enabled: !!artist,

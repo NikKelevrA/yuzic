@@ -11,9 +11,6 @@ import {
   searchDeezerArtists,
   searchDeezerAlbums,
   getDeezerAlbum,
-  getDeezerArtist,
-  resolveDeezerAlbum,
-  resolveDeezerArtistByName,
 } from '@/providers/integration/deezer';
 import { sourceColor } from '@/constants/design';
 import type { IntegrationProvider } from '../contracts/Provider';
@@ -27,19 +24,8 @@ export const deezerProvider: IntegrationProvider = {
   // real asset, rather than inventing one.
   presentation: { nameKey: 'settings.sources.deezer.name', icon: 0, color: sourceColor.deezer },
   auth: { tier: 'none' },
+  // Its pictures fill gaps through `coverBackups.ts`, not a capability here.
   capabilities: {
-    'artist.enrich': async artist => {
-      const resolved = await resolveDeezerArtistByName(artist.name);
-      if (!resolved) return null;
-      const full = await getDeezerArtist(resolved.nativeId);
-      if (!full) return null;
-      return { cover: full.cover, externalIds: full.externalIds };
-    },
-    'album.enrich': async album => {
-      const resolved = await resolveDeezerAlbum(album.artist.name, album.title);
-      if (!resolved) return null;
-      return { cover: resolved.cover, externalIds: resolved.externalIds };
-    },
     'catalogue.search': async (query, kinds) => {
       const [artists, albums] = await Promise.all([
         kinds.artists ? searchDeezerArtists(query, 4) : Promise.resolve([]),

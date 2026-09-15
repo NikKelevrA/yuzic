@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font';
 import { QueryClient, QueryCache, onlineManager } from '@tanstack/react-query';
 import { ToastHost, notify } from '@/components/toast';
 import SourceUsePromptHost from '@/features/settings/sources/SourceUsePromptHost';
+import CoverResolutionHost from '@/features/artwork/CoverResolutionHost';
 import ConnectDownloaderPromptHost from '@/features/downloaders/ConnectDownloaderPromptHost';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -241,6 +242,9 @@ function AppShell() {
 
                 {/* Asks to turn a source use on from wherever it was needed. */}
                 <SourceUsePromptHost />
+
+                {/* Feeds cover resolution the library and artwork backups. */}
+                <CoverResolutionHost />
 
                 {/* Offers to connect a downloader when a Get needs one. */}
                 <ConnectDownloaderPromptHost />

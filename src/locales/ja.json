@@ -538,10 +538,10 @@
         "recommendations": "プレイリストのアーティストに似たアーティストを探します。"
       },
       "coverartarchive": {
-        "artwork": "リリースに正確に一致するアルバムアート。"
+        "artwork": "ライブラリにないアルバムアートを、MusicBrainz IDで照合します。"
       },
       "deezer": {
-        "artwork": "アーティスト写真と、サーバーにないアルバムアート。",
+        "artwork": "足りないアーティスト写真とアルバムアートを、名前で照合します。",
         "similarArtists": "Deezerの関連アーティスト。",
         "popularTracks": "アーティストの人気曲。",
         "previews": "持っていない曲の30秒サンプル。",

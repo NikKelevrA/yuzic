@@ -39,21 +39,11 @@ export type ArtistScreenModel = {
   /** True when a local artist is showing persisted-cache data because the
    *  server couldn't be reached. */
   degraded: boolean;
-  /** Attributed cover enrichment — the cover, gap-filled from the
-   *  first enabled `artist.enrich` offer. `null` until the artist itself is
-   *  known and its resolution has settled.
-   *
-   *  `resolved.biography` is present when an `artist.enrich` provider
-   *  (Last.fm) filled it, but is NOT the whole story for a local artist's
-   *  displayed bio: the pre-existing "Deezer Top Tracks" source
-   *  (`useArtistTopTracks`, gated by its own Home toggle, unrelated to
-   *  `metadata.enrich`) has always been the *first* place a library
-   *  artist's bio comes from. This model deliberately does not depend on
-   *  that Deezer toggle (see `classifyDiscography`'s neighbour
-   *  `screens/artist/components/Content/index.tsx`'s `BioSectionView`,
-   *  which folds both sources together for display) — read that
-   *  component's output for the artist's actual shown biography in local
-   *  mode, not this field alone. */
+  /** The artist's biography and tags, each the artist's own or — where it
+   *  has none — filled from the first enabled `artist.enrich` offer, with
+   *  who supplied it. `null` until the artist is known and its resolution
+   *  has settled. The picture is not here: covers resolve where they are
+   *  drawn (`features/artwork/coverResolution`). */
   resolved: ResolvedArtist | null;
   /** External mode only — a library artist's popular tracks come from
    *  `useArtistTopTracks`, called directly by the section that needs them. */

@@ -2,7 +2,7 @@ import type { AlbumDetail } from "@/domain/entities/Detail";
 import type { Provenance } from "@/domain/identity/Provenance";
 import type { NavidromeClient } from "../client";
 import { getAlbumList } from "./getAlbumList";
-import { mapAlbum } from "../mapAlbum";
+import { albumCoverOf, mapAlbum } from "../mapAlbum";
 import { mapAlbumSongs } from "./mapAlbumSongs";
 import { SubsonicResponse } from "../types";
 
@@ -29,9 +29,7 @@ export async function getAlbumsWithSongs(
       const raw = result.value?.["subsonic-response"]?.album;
       if (!raw) continue;
 
-      const cover = raw.coverArt
-        ? { kind: "navidrome" as const, coverArtId: raw.coverArt }
-        : { kind: "none" as const };
+      const cover = albumCoverOf(raw);
       // The full ID3 payload from this batched getAlbum.view call is used
       // directly rather than the summary entry from the list — it carries
       // everything the summary does plus the track list.

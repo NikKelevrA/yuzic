@@ -11,7 +11,8 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import { buildCoverWithTag, type MediaBrowserBrand } from './brand';
+import { albumCoverSubject, artistCoverSubject, coverOrMissing } from '@/domain/entities/Cover';
+import { buildCoverWithTag, itemCover, type MediaBrowserBrand } from './brand';
 import { artistRef } from './mapRefs';
 import type { MediaBrowserItem } from './types';
 
@@ -40,14 +41,16 @@ interface MapAlbumContext {
 export function mapAlbum(dto: MediaBrowserItem, context: MapAlbumContext): Album {
   const { provenance, brand } = context;
   const nativeId = dto.Id ?? '';
-  const cover = buildCoverWithTag(brand, dto.Id, dto.ImageTags?.Primary);
   const artistItem = dto.ArtistItems?.[0];
+  const artistName = artistItem?.Name ?? dto.AlbumArtist;
+  const externalIds = externalIdsOf(dto);
+  const cover = itemCover(brand, dto, albumCoverSubject(dto.Name, artistName, externalIds));
 
   return {
     localId: makeLocalId('album', provenance, nativeId),
     nativeId,
     provenance,
-    externalIds: externalIdsOf(dto),
+    externalIds,
     libraryState: 'in-library',
     title: dto.Name ?? 'Unknown Album',
     cover,
@@ -60,8 +63,8 @@ export function mapAlbum(dto: MediaBrowserItem, context: MapAlbumContext): Album
     artist: artistRef(
       provenance,
       artistItem?.Id,
-      artistItem?.Name ?? dto.AlbumArtist,
-      buildCoverWithTag(brand, artistItem?.Id, undefined)
+      artistName,
+      coverOrMissing(buildCoverWithTag(brand, artistItem?.Id, undefined), artistCoverSubject(artistName))
     ),
     year: dto.ProductionYear,
     releaseDate: dto.PremiereDate,

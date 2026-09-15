@@ -1,5 +1,5 @@
 /**
- * Route params -> one canonical album -> one `ResolvedAlbum`.
+ * Route params -> one canonical album.
  *
  * Replaces the album screen's old `localAlbum`/`externalAlbum` pair and the
  * two body components (`LocalAlbumBody`/`ExternalAlbumBody`) that branched
@@ -11,7 +11,6 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
-import type { ResolvedAlbum } from './resolveAlbumDetails';
 import type { TrackPlayability } from './trackPlayability';
 import { classifyTrackPlayability } from './trackPlayability';
 import { useAlbum } from '@/features/album/useAlbum';
@@ -22,7 +21,6 @@ import { useExternalAlbumStatus, type ExternalAlbumStatus } from '@/features/dow
 import { matchAlbumToLibrary } from '@/features/library/matchToLibrary';
 import { ALL_SOURCES, useEnabledExternalSources } from '@/features/sources/registry';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { useAlbumDetails } from './useAlbumDetails';
 
 export type AlbumRouteParams = {
   id?: string;
@@ -38,7 +36,6 @@ export type AlbumScreenModel = {
   isLocal: boolean;
   album: Album | null;
   degraded: boolean;
-  resolved: ResolvedAlbum | null;
   songs: Song[];
   songsLoading: boolean;
   /** Per-track playback-availability decision, keyed by `Song.localId` —
@@ -116,8 +113,6 @@ export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel 
   const songs: Song[] = isLocal ? local.songs : (external.data?.songs ?? NO_SONGS);
   const songsLoading = isLocal ? local.songsLoading : external.isLoading;
 
-  const resolved = useAlbumDetails(album);
-
   const previews = useExternalAlbumPreviews(isLocal ? null : album, songs);
   const playability = useMemo(
     () => classifyTrackPlayability(songs, isLocal, previews),
@@ -149,7 +144,6 @@ export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel 
     isLocal,
     album,
     degraded: isLocal ? local.degraded : false,
-    resolved,
     songs,
     songsLoading,
     playability,

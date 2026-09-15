@@ -48,9 +48,18 @@ describe('mapAlbum', () => {
     expect(mapAlbum(listDto, { provenance }).title).toBe('Amnesiac');
   });
 
-  it('records the album MBID as a release group, which is what Navidrome reports', () => {
+  it('records the album MBID as a release, which is what Navidrome reports (MbzAlbumID)', () => {
     expect(mapAlbum(id3Dto, { provenance }).externalIds)
-      .toEqual({ mbid: 'rg-mbid', mbidType: 'release-group' });
+      .toEqual({ mbid: 'rg-mbid', mbidType: 'release' });
+  });
+
+  it('names the album on a missing cover, so a backup can find it', () => {
+    const { coverArt: _omitted, ...withoutArt } = id3Dto;
+    void _omitted;
+    expect(mapAlbum(withoutArt, { provenance }).cover).toEqual({
+      kind: 'none',
+      subject: { kind: 'album', title: 'Kid A', artistName: 'Radiohead', mbid: 'rg-mbid', mbidType: 'release' },
+    });
   });
 
   it('leaves external ids empty when the server reports none', () => {
@@ -63,7 +72,7 @@ describe('mapAlbum', () => {
       nativeId: 'ar-7',
       externalIds: {},
       name: 'Radiohead',
-      cover: { kind: 'none' },
+      cover: { kind: 'none', subject: { kind: 'artist', name: 'Radiohead' } },
     });
   });
 
@@ -94,9 +103,10 @@ describe('embedded artist cover', () => {
     expect(album.artist.cover).toEqual({ kind: 'navidrome', coverArtId: 'ar-7' });
   });
 
-  it('falls back to none when the caller has no artist cover to give', () => {
+  it('falls back to a gap naming the artist when the caller has no artist cover to give', () => {
     // Subsonic's album payload names the artist but carries no artwork for
     // them, so a caller that did not fetch the artist genuinely has none.
-    expect(mapAlbum(id3Dto, { provenance }).artist.cover).toEqual({ kind: 'none' });
+    expect(mapAlbum(id3Dto, { provenance }).artist.cover)
+      .toEqual({ kind: 'none', subject: { kind: 'artist', name: 'Radiohead' } });
   });
 });

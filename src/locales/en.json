@@ -539,10 +539,10 @@
         "recommendations": "Finds artists like the ones in a playlist."
       },
       "coverartarchive": {
-        "artwork": "Album covers, matched to the exact release."
+        "artwork": "Album covers your library is missing, matched by MusicBrainz id."
       },
       "deezer": {
-        "artwork": "Artist photos, and album covers your server is missing.",
+        "artwork": "Artist photos and album covers anything is missing, matched by name.",
         "similarArtists": "Related artists from Deezer.",
         "popularTracks": "An artist's most popular tracks.",
         "previews": "30-second samples of tracks you don't own.",

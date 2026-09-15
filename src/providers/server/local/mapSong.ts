@@ -11,6 +11,7 @@
  * for local files that "stream" is just the private file URI.
  */
 import type { Song } from '@/domain/entities/Song';
+import { albumCoverSubject, coverOrMissing } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
@@ -31,6 +32,8 @@ interface MapSongContext {
 export function mapSong(dto: LocalTrack, context: MapSongContext): Song {
   const { provenance } = context;
   const nativeId = dto.id;
+  // A file with no embedded art names its album, for a backup to fill.
+  const cover = coverOrMissing(dto.cover, albumCoverSubject(dto.albumTitle, dto.artist));
 
   return {
     localId: makeLocalId('song', provenance, nativeId),
@@ -41,8 +44,8 @@ export function mapSong(dto: LocalTrack, context: MapSongContext): Song {
     libraryState: 'in-library',
     title: dto.title,
     artist: artistRef(provenance, dto.artistId, dto.artist),
-    album: albumRef(provenance, dto.albumId, dto.albumTitle, dto.cover),
-    cover: dto.cover,
+    album: albumRef(provenance, dto.albumId, dto.albumTitle, cover),
+    cover,
     // The metadata reader used at import time is tags-only and does not
     // report duration; `duration` is a placeholder ('0') until the playback
     // engine loads the file and reports the real value — see store.ts.

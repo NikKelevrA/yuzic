@@ -9,7 +9,6 @@ const fullDto = {
   name: 'Daft Punk',
   nb_album: 12,
   nb_fan: 12_345_678,
-  description: 'French electronic duo.',
   picture_xl: 'https://api.deezer.com/artist/27/image-xl.jpg',
   picture_big: 'https://api.deezer.com/artist/27/image-big.jpg',
 };
@@ -24,7 +23,6 @@ describe('mapArtist', () => {
       libraryState: 'external',
       name: 'Daft Punk',
       cover: { kind: 'url', url: 'https://api.deezer.com/artist/27/image-xl.jpg' },
-      biography: 'French electronic duo.',
       tags: [],
       albumIds: [],
     });
@@ -43,6 +41,11 @@ describe('mapArtist', () => {
       .toBe('local:artist:ext:deezer:27');
   });
 
+  it("reads Deezer's empty-hash silhouette as no picture, naming the artist", () => {
+    expect(mapArtist({ id: 2, name: 'Faceless', picture_xl: 'https://e-cdns-images.dzcdn.net/images/artist//1000x1000-000000-80-0-0.jpg' }, provenance).cover)
+      .toEqual({ kind: 'none', subject: { kind: 'artist', name: 'Faceless' } });
+  });
+
   it('prefers the largest picture available, falling back down the list', () => {
     expect(mapArtist({ ...fullDto, picture_xl: null }, provenance).cover)
       .toEqual({ kind: 'url', url: 'https://api.deezer.com/artist/27/image-big.jpg' });
@@ -56,8 +59,7 @@ describe('mapArtist', () => {
       externalIds: { deezerId: '1' },
       libraryState: 'external',
       name: 'Solo Artist',
-      cover: { kind: 'none' },
-      biography: undefined,
+      cover: { kind: 'none', subject: { kind: 'artist', name: 'Solo Artist' } },
       tags: [],
       albumIds: [],
     });

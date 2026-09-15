@@ -538,10 +538,10 @@
         "recommendations": "查找与歌单中艺人相似的艺人。"
       },
       "coverartarchive": {
-        "artwork": "与具体发行版精确匹配的专辑封面。"
+        "artwork": "资料库缺少的专辑封面，按 MusicBrainz ID 匹配。"
       },
       "deezer": {
-        "artwork": "艺人照片，以及服务器缺少的专辑封面。",
+        "artwork": "缺少的艺人照片和专辑封面，按名称匹配。",
         "similarArtists": "Deezer 上的相关艺人。",
         "popularTracks": "艺人最受欢迎的歌曲。",
         "previews": "你未拥有歌曲的 30 秒片段。",

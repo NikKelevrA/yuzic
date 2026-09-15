@@ -10,12 +10,12 @@ import { searchArtist } from '@/providers/integration/musicbrainz';
 import { LASTFM_API_KEY } from '@/constants/keys';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
+import { artistCoverSubject, missingCover } from '@/domain/entities/Cover';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import shuffleArray from '@/features/playback/shuffleArray';
 import type { SourceUseId } from './sources';
-import { withArtistArtwork } from './artistArtwork';
 
 /** The switch each of these reads. */
 export const PREVIEWS_USE: SourceUseId = 'deezer.previews';
@@ -74,8 +74,7 @@ export async function fetchAlbumPreviews(album: Album, songs: Song[]): Promise<R
 export async function fetchSimilarArtistsFromScrobbles(
   name: string,
   excludeName: string | undefined,
-  limit: number,
-  options: { withArtwork?: boolean } = {}
+  limit: number
 ): Promise<Artist[]> {
   const candidates = await getLastFmSimilarArtists(LASTFM_API_KEY, name, limit * 3);
   if (!candidates.length) return [];
@@ -84,7 +83,7 @@ export async function fetchSimilarArtistsFromScrobbles(
   const seen = new Set<string>();
   const provenance = integrationProvenance('lastfm');
 
-  const artists = candidates
+  return candidates
     .filter(c => {
       const key = c.name.trim().toLowerCase();
       if (!key || seen.has(key)) return false;
@@ -104,13 +103,13 @@ export async function fetchSimilarArtistsFromScrobbles(
         externalIds: c.mbid ? { mbid: c.mbid } : {},
         libraryState: 'external',
         name: c.name,
-        cover: { kind: 'none' },
+        // Scrobblers' similar artists carry no pictures of their own; the gap
+        // names who each is, for cover resolution to fill.
+        cover: missingCover(artistCoverSubject(c.name, c.mbid ? { mbid: c.mbid } : {})),
         tags: [],
         albumIds: [],
       };
     });
-  // Scrobblers' similar artists carry no pictures of their own.
-  return options.withArtwork ? withArtistArtwork(artists) : artists;
 }
 
 /** An artist's MusicBrainz id, looked up by name, or null when nothing matches. */

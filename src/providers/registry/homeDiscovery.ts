@@ -15,6 +15,7 @@ import { getCreatedForPlaylists, type CreatedForMixType } from '@/providers/inte
 import { sourceColor } from '@/constants/design';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
+import { artistCoverSubject, missingCover } from '@/domain/entities/Cover';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
@@ -28,7 +29,6 @@ import {
 import { selectListenBrainzUsername } from '@/state/redux/selectors/listenbrainzSelectors';
 import type { RootState } from '@/state/redux/store';
 import type { SourceId, SourceUseId } from './sources';
-import { withArtistArtwork } from './artistArtwork';
 
 export type { CreatedForMixType };
 
@@ -216,13 +216,12 @@ export async function fetchAlbumsForGenre(
 export async function fetchSimilarArtistsFromListeners(
   mbid: string,
   limit: number,
-  excludeName?: string,
-  options: { withArtwork?: boolean } = {}
+  excludeName?: string
 ): Promise<Artist[]> {
   const raw = await getLBSimilarArtists(mbid, limit);
   const provenance = integrationProvenance('listenbrainz');
   const exclude = excludeName?.trim().toLowerCase();
-  const artists = raw
+  return raw
     .filter(artist => !exclude || artist.name.trim().toLowerCase() !== exclude)
     .map((artist): Artist => ({
       localId: makeLocalId('artist', provenance, artist.artistMbid),
@@ -231,12 +230,12 @@ export async function fetchSimilarArtistsFromListeners(
       externalIds: { mbid: artist.artistMbid },
       libraryState: 'external',
       name: artist.name,
-      cover: { kind: 'none' },
+      // The graph names artists and has no pictures; the gap says who each is,
+      // and cover resolution fills it the same way it fills any other.
+      cover: missingCover(artistCoverSubject(artist.name, { mbid: artist.artistMbid })),
       tags: [],
       albumIds: [],
     }));
-  // The graph names artists and nothing more, so every tile was a placeholder.
-  return options.withArtwork ? withArtistArtwork(artists) : artists;
 }
 
 /** One of the account's made-for-you mixes, or no tracks if it has none. */

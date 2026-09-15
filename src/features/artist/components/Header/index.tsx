@@ -22,10 +22,14 @@ import {
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel';
-import { metadataSourceNameKey } from '@/providers/registry/enrichmentBroker';
+import type { CoverSource } from '@/domain/entities/Cover';
+import { useResolvedCover } from '@/features/artwork/useResolvedCover';
+import { SOURCES } from '@/providers/registry/sources';
 import ArtistMetaRow from './ArtistMetaRow';
 import LocalActionRow from './LocalActionRow';
 import LocalOptionsButton from './LocalOptionsButton';
+
+const NO_COVER: CoverSource = { kind: 'none' };
 
 type Props = {
   model: ArtistScreenModel;
@@ -43,19 +47,12 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
   const barInset = useDetailHeaderInset();
   const onTitleLayout = useDetailHeroTitleLayout();
 
-  const { artist, isLocal, resolved, counts } = model;
+  const { artist, isLocal, counts } = model;
   const displayName = artist?.name ?? '';
-  // The artist's own cover is authoritative — `resolveArtistDetails` is only
-  // ever consulted for the gap, so its result is used only when the artist
-  // itself has none. Its result is also `null` both while enrichment is off
-  // and while it hasn't settled yet, so this never flashes a wrong cover
-  // ahead of the real one, and turning enrichment off restores the server's.
-  const hasOwnCover = artist ? artist.cover.kind !== 'none' : true;
-  const displayCover = hasOwnCover ? (artist?.cover ?? { kind: 'none' as const }) : (resolved?.cover.value ?? { kind: 'none' as const });
-  const showsEnrichedArtworkLine = !hasOwnCover && !!resolved && resolved.cover.value.kind !== 'none';
-  const enrichedArtworkSourceNameKey = showsEnrichedArtworkLine
-    ? metadataSourceNameKey(resolved!.cover.sourceId)
-    : null;
+  // The same rule as every tile: its own picture, the library's copy, then a
+  // backup — and only a backup's picture is credited.
+  const { cover: displayCover, from } = useResolvedCover(artist?.cover ?? NO_COVER);
+  const enrichedArtworkSourceNameKey = from === 'own' || from === 'library' ? null : SOURCES[from].nameKey;
 
   const coverUri = buildCover(displayCover, 'background');
 

@@ -9,7 +9,7 @@ import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
-import type { CoverSource } from '@/domain/entities/Cover';
+import { albumCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import { albumRef, artistRef } from './mapRefs';
 import type { SubsonicSong } from './types';
 
@@ -47,7 +47,7 @@ export function mapSong(dto: SubsonicSong, context: MapSongContext): Song {
   const nativeId = dto.id ?? '';
   const cover: CoverSource = dto.coverArt
     ? { kind: 'navidrome', coverArtId: dto.coverArt }
-    : context.cover ?? { kind: 'none' };
+    : context.cover ?? missingCover(albumCoverSubject(dto.album ?? context.albumTitle, dto.artist));
 
   return {
     localId: makeLocalId('song', provenance, nativeId),

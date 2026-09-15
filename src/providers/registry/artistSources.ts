@@ -14,20 +14,15 @@ export type SourceBadge = { letter: string; color: string };
  * The outside services an artist page draws from, declared here so the page
  * itself names none of them.
  *
- * The catalogue is the service whose charts give an artist's popular tracks,
- * whose related artists fill an external artist's similar row, and whose
- * artist record supplies a library artist's missing biography.
+ * The catalogue is the service whose charts give an artist's popular tracks
+ * and whose related artists fill an external artist's similar row.
  */
 export const ARTIST_CATALOGUE = {
   badge: { letter: 'D', color: sourceColor.deezer } satisfies SourceBadge,
   popularTracksTitleKey: 'artist.sections.popularOnDeezer',
 };
 
-/**
- * Whether the catalogue's popular tracks may be fetched right now. The
- * artist record that fills a missing biography arrives in the same lookup,
- * so it follows the same switch rather than a second one for the same request.
- */
+/** Whether the catalogue's popular tracks may be fetched right now. */
 export function useArtistCatalogueEnabled(): boolean {
   return useSourceUse('deezer.popularTracks');
 }

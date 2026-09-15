@@ -64,6 +64,15 @@ A Jellyfin user never sees a Radio row rather than seeing one that goes
 nowhere — the Library index builds its rows from what the adapter offers
 (`src/features/library/LibraryEntryRows.tsx`).
 
+**Artist info and pictures come from the server first.** Servers already fetch
+a lot of this themselves, so the app reads it before any Metadata backup:
+Navidrome's artist page asks `getArtistInfo2.view` (`count=0`) alongside
+`getArtist.view` for the biography its agents found; Jellyfin/Emby give
+`Overview` and `Genres`; Plex gives `summary` and `Genre`. For pictures, a
+mapper reports a real gap rather than a URL that 404s — Navidrome 0.64+ omits
+`coverArt`, Jellyfin/Emby report no `ImageTags.Primary` — and names the item,
+so cover resolution can try the library's copy and then the Artwork backups.
+
 ### Client certificates (mTLS)
 
 For a server behind a reverse proxy that asks the *client* to prove who it is.
@@ -153,8 +162,9 @@ use to resolve a release precisely instead of by fuzzy name match.
 `src/providers/integration/lastfm/` · **Settings → Integrations → Last.fm**
 
 Read-only with a bundled API key — no account, no signing, no session. Used for
-similar artists and to seed playlist recommendations. Artist names are sent to
-Last.fm to look them up, which is why it's a switch rather than always-on.
+similar artists, to seed playlist recommendations, and — under Metadata › Artist
+info — for a biography and tags when the server has none. Artist names are sent
+to Last.fm to look them up, which is why each use is a switch rather than always-on.
 
 ### ListenBrainz
 
@@ -271,8 +281,8 @@ No auth. `src/providers/integration/deezer/`.
 
 | Endpoint | Used for | Cache |
 | --- | --- | --- |
-| `GET /search/artist` | Resolving an artist by name; Deezer results in search | 12h |
-| `GET /search/album` | Resolving an album; Deezer results in search; preview lookup | 12h |
+| `GET /search/artist` | Resolving an artist by name; Deezer results in search; Metadata › Artwork backup for an artist photo (used only on a same-name match) | 12h |
+| `GET /search/album` | Resolving an album; Deezer results in search; preview lookup; Metadata › Artwork backup for an album cover (same title and artist only) | 12h |
 | `GET /artist/{id}` | External artist page | 7d |
 | `GET /artist/{id}/albums` | Discography on an external artist page | 1d |
 | `GET /artist/{id}/related` | Similar artists | 7d |
@@ -292,12 +302,21 @@ No auth, `User-Agent` identifies the app. `src/providers/integration/musicbrainz
 | --- | --- |
 | `GET /artist?query=` | Resolving an artist by name |
 | `GET /artist/{mbid}?inc=release-groups` | External artist page + discography |
-| `GET /release-group?query=` | Resolving an album by artist + title |
+| `GET /release-group?query=` | Resolving an album by artist + title (never to find a cover) |
 | `GET /release-group/{mbid}?inc=artist-credits` | External album page |
 | `GET /release?release-group={mbid}&inc=recordings+artist-credits` | Track list for an album |
 
 Cover art comes from `https://coverartarchive.org/release-group/{mbid}/front-500`,
-built as a URL rather than requested by us.
+built as a URL rather than requested by us — for a MusicBrainz album that is
+its own cover.
+
+As a Metadata › Artwork backup (`src/providers/registry/coverBackups.ts`), for an
+album whose own source has no cover but carries an MBID, the listing is asked
+first: `GET https://coverartarchive.org/{release-group|release}/{mbid}` — the
+kind the server stated, then the other — and the cover is used only when the
+listing has a front image. A 404/400 is a remembered "none" (re-asked after a
+week); any other failure is not remembered. No name search is ever made for a
+cover.
 
 ### Last.fm — `https://ws.audioscrobbler.com/2.0/`
 
@@ -306,6 +325,7 @@ Bundled `api_key`, no signing, no session. `src/providers/integration/lastfm/`.
 | Endpoint | Used for |
 | --- | --- |
 | `POST artist.getsimilar` | Similar artists on an artist page; seeding playlist recommendations |
+| `POST artist.getinfo` | Metadata › Artist info backup: biography and tags for an artist whose server has none |
 
 Nothing else on the Last.fm API is called — see
 [what we deliberately don't call](#what-we-dont-call).

@@ -27,7 +27,7 @@ import { getAlbum } from "./albums/getAlbum";
 import { getAlbumList } from "./albums/getAlbumList";
 import { getAlbumsWithSongs } from "./albums/getAlbumsWithSongs";
 
-import { getArtist } from "./artists/getArtist";
+import { getArtistWithBiography } from "./artists/getArtist";
 import { getArtists } from "./artists/getArtists";
 
 import { getPlaylists } from "./playlists/getPlaylists";
@@ -188,7 +188,7 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
   const artists: ArtistsApi = {
     list: async () => fromFolders(c => getArtists(c, provenance), (a) => a.nativeId),
     get: async (id: string) => {
-      const artist = await getArtist(client, id, provenance);
+      const artist = await getArtistWithBiography(client, id, provenance);
       if (!artist) throw new Error("Artist not found");
       return artist;
     },

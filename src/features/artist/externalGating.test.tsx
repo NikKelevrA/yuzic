@@ -188,24 +188,21 @@ describe('external metadata gating', () => {
     expect(getLastFmSimilarArtists).toHaveBeenCalled()
   })
 
-  it('looks up pictures for similar artists only once artist artwork is enabled', async () => {
+  it('builds similar-artist lists without looking any pictures up, even with artwork backups on', async () => {
     const store = makeStore()
     const settle = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
     await act(async () => { store.dispatch(setSourceUse({ use: 'listenbrainz.similarArtists', enabled: true })) })
     await act(async () => { store.dispatch(setSourceUse({ use: 'lastfm.similarArtists', enabled: true })) })
-
-    await renderHook(() => useLBSimilarArtists({ mbid: 'mbid-1' }, 8), { wrapper: wrapperFor(store) })
-    await renderHook(() => useSimilarArtists({ name: 'Boards of Canada', limit: 8 }), { wrapper: wrapperFor(store) })
-    await settle()
-    // The lists were fetched, but no names went out for their pictures.
-    expect(getLBSimilarArtists).toHaveBeenCalled()
-    expect(resolveDeezerArtistByName).not.toHaveBeenCalled()
-
     await act(async () => { store.dispatch(setSourceUse({ use: 'deezer.artwork', enabled: true })) })
+
     await renderHook(() => useLBSimilarArtists({ mbid: 'mbid-1' }, 8), { wrapper: wrapperFor(store) })
     await renderHook(() => useSimilarArtists({ name: 'Boards of Canada', limit: 8 }), { wrapper: wrapperFor(store) })
     await settle()
 
-    expect(resolveDeezerArtistByName).toHaveBeenCalledWith('Bibio')
+    // Pictures are cover resolution's job, asked for where a tile is drawn —
+    // building the list sends no names anywhere for them.
+    expect(getLBSimilarArtists).toHaveBeenCalled()
+    expect(getLastFmSimilarArtists).toHaveBeenCalled()
+    expect(resolveDeezerArtistByName).not.toHaveBeenCalled()
   })
 })
