@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Image } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
-import { buildCover, buildCoverArtArchiveUrl, buildCoverCacheKey } from '@/providers/registry/covers';
+import { buildCover, buildCoverCacheKey } from '@/providers/registry/covers';
 import { CoverSource } from '@/domain/entities/Cover';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
@@ -42,26 +42,16 @@ export function MediaImage({
     void activeServerId;
     return buildCoverCacheKey(resolved, size);
   }, [resolved, size, activeServerId]);
-  const fallbackUri = useMemo(() => {
-    if (resolved.kind !== 'coverartarchive' || resolved.mbidType !== 'unknown') return null;
-    return buildCoverArtArchiveUrl(resolved.mbid, 'release', size);
-  }, [resolved, size]);
-  const [useFallback, setUseFallback] = useState(false);
   const [failedVersion, setFailedVersion] = useState(0);
   const primaryFailed = hasImageUrlFailed(uri);
-  const fallbackFailed = hasImageUrlFailed(fallbackUri);
   const sourceUri = useMemo(() => {
     void failedVersion;
-    if (useFallback && fallbackUri && !fallbackFailed) return fallbackUri;
-    if (uri && !primaryFailed) return uri;
-    if (fallbackUri && !fallbackFailed) return fallbackUri;
-    return null;
-  }, [failedVersion, fallbackFailed, fallbackUri, primaryFailed, uri, useFallback]);
+    return uri && !primaryFailed ? uri : null;
+  }, [failedVersion, primaryFailed, uri]);
 
   useEffect(() => {
-    setUseFallback(false);
     setFailedVersion(version => version + 1);
-  }, [uri, fallbackUri]);
+  }, [uri]);
 
   if (uri === 'heart-icon') {
     return (
@@ -103,7 +93,6 @@ export function MediaImage({
         onFailure={() => {
           markImageUrlFailed(sourceUri);
           setFailedVersion(version => version + 1);
-          if (fallbackUri && !useFallback) setUseFallback(true);
         }}
       />
     </View>

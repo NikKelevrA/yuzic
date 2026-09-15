@@ -59,13 +59,14 @@ function harness(over: Partial<{
   originalQueue: PlayableResource[] | null;
   isPlaying: boolean;
   position: number;
+  segments: QueueSegment[];
   onInject: () => void;
 }> = {}) {
   let queue = over.queue ?? of(['1', '2', '3', '4']);
   let currentIndex = over.currentIndex ?? 0;
   let mode: ShuffleMode = over.mode ?? 'off';
   let originalQueue = over.originalQueue ?? null;
-  let segments: QueueSegment[] = [];
+  let segments: QueueSegment[] = over.segments ?? [];
   const loaded: { ids: string[]; startIndex: number; play: boolean; seek: number }[] = [];
   const injected: { wasPlaying: boolean; savedPosition: number }[] = [];
 
@@ -77,6 +78,7 @@ function harness(over: Partial<{
     backend: () => backend,
     queue: () => queue,
     setQueue: next => { queue = next; },
+    segments: () => segments,
     setSegments: next => { segments = next; },
     currentIndex: () => currentIndex,
     setCurrentIndex: index => { currentIndex = index; },
@@ -97,12 +99,21 @@ function harness(over: Partial<{
     },
     injectSmartShuffleTracks: async (wasPlaying, savedPosition) => {
       injected.push({ wasPlaying, savedPosition });
+      // What the real inject does to the segments: one collection-less mix.
+      segments = [{
+        startIndex: 0,
+        length: queue.length,
+        source: { kind: 'user', contextId: 'smart-shuffled', contextType: 'adhoc' },
+      }];
       over.onInject?.();
     },
   };
 
   return {
     controller: createShuffleController(deps),
+    /** A track added to the live queue, as add-to-queue does while shuffled. */
+    append: (nativeId: string) => { queue = [...queue, resource(nativeId)]; },
+    replaceSnapshot: (next: PlayableResource[]) => { originalQueue = next; },
     loaded,
     injected,
     get queue() { return queue; },
@@ -277,5 +288,78 @@ describe('tapping faster than the queue reloads', () => {
     await h.controller.cycleShuffleMode();
 
     expect(h.mode).toBe('smart');
+  });
+});
+
+describe('crediting plays to the playlist being shuffled', () => {
+  // Plays count for the playlist a track's segment names. Relabelling a
+  // shuffled playlist ad hoc is what stopped it reaching Recently Played.
+  const fromPlaylist = { kind: 'user', contextId: 'pl-1', contextType: 'playlist' } as const;
+  const wholePlaylist: QueueSegment[] = [{ startIndex: 0, length: 4, source: fromPlaylist }];
+
+  it('keeps a shuffled playlist attributed to that playlist', async () => {
+    const h = harness({ segments: wholePlaylist });
+
+    await h.controller.cycleShuffleMode();
+
+    expect(h.segments).toEqual([{ startIndex: 0, length: 4, source: fromPlaylist }]);
+  });
+
+  it('makes a queue mixing sources ad hoc, since the shuffle hides which track was which', async () => {
+    const h = harness({
+      segments: [
+        { startIndex: 0, length: 2, source: fromPlaylist },
+        { startIndex: 2, length: 2, source: { kind: 'user', contextId: 's3', contextType: 'adhoc' } },
+      ],
+    });
+
+    await h.controller.cycleShuffleMode();
+
+    expect(h.segments).toEqual([
+      { startIndex: 0, length: 4, source: { kind: 'user', contextId: 'shuffled', contextType: 'adhoc' } },
+    ]);
+  });
+
+  it('credits the playlist again once Smart Shuffle is turned off', async () => {
+    // Smart Shuffle's own segment claims no collection, so the controller has
+    // to remember where the snapshot came from.
+    const h = harness({ segments: wholePlaylist });
+
+    await h.controller.cycleShuffleMode();
+    await h.controller.cycleShuffleMode();
+    expect(h.segments[0].source).toMatchObject({ contextId: 'smart-shuffled' });
+    await h.controller.cycleShuffleMode();
+
+    expect(h.mode).toBe('off');
+    expect(h.segments).toEqual([{ startIndex: 0, length: 4, source: fromPlaylist }]);
+  });
+
+  it('leaves tracks added while shuffled out of the playlist', async () => {
+    const h = harness({ segments: wholePlaylist });
+
+    await h.controller.cycleShuffleMode();
+    await h.controller.cycleShuffleMode();
+    h.append('99');
+    await h.controller.cycleShuffleMode();
+
+    expect(ids(h.queue)).toEqual(['1', '2', '3', '4', '99']);
+    expect(h.segments).toEqual([
+      { startIndex: 0, length: 4, source: fromPlaylist },
+      { startIndex: 4, length: 1, source: { kind: 'user', contextId: 'restored', contextType: 'adhoc' } },
+    ]);
+  });
+
+  it('does not carry the playlist onto a snapshot taken for another queue', async () => {
+    const h = harness({ segments: wholePlaylist });
+
+    await h.controller.cycleShuffleMode();
+    await h.controller.cycleShuffleMode();
+    // A new selection started with shuffle on takes its own snapshot.
+    h.replaceSnapshot(of(['4', '3', '2', '1']));
+    await h.controller.cycleShuffleMode();
+
+    expect(h.segments).toEqual([
+      { startIndex: 0, length: 4, source: { kind: 'user', contextId: 'restored', contextType: 'adhoc' } },
+    ]);
   });
 });

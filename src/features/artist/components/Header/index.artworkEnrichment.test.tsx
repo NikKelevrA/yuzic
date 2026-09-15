@@ -64,7 +64,6 @@ jest.mock('@/providers/registry/coverBackups', () => ({
 
 jest.mock('@/providers/registry/covers', () => ({
   buildCover: (cover: { kind: string; url?: string }) => (cover.kind === 'url' ? cover.url : null),
-  buildCoverArtArchiveUrl: jest.fn(),
   buildCoverCacheKey: jest.fn(),
 }))
 jest.mock('react-native-turbo-image', () => 'TurboImage')

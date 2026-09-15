@@ -10,7 +10,7 @@
 import * as deezer from '@/providers/integration/deezer';
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 import type { CoverSource, CoverSubject } from '@/domain/entities/Cover';
-import { normalizeName } from '@/domain/identity/matching';
+import { leadArtistName, normalizeName } from '@/domain/identity/matching';
 import type { SourceId } from './sources';
 
 interface CoverBackup {
@@ -61,25 +61,32 @@ const coverArtArchive: CoverBackup = {
   },
 };
 
+/** Two credits name the same lead artist. */
+const sameLeadArtist = (a: string, b: string) =>
+  normalizeName(leadArtistName(a)) === normalizeName(leadArtistName(b));
+
 /**
  * Deezer by name. A name search always finds somebody, so the result is used
  * only when it is the same name — a placeholder is better than a stranger's
- * photo.
+ * photo. Names are compared by lead artist, whichever service credited a
+ * featured one: "A feat. B" and Deezer's "A" are the same album's artist.
  */
 const deezerCatalogue: CoverBackup = {
   source: 'deezer',
   handles: () => true,
   async lookup(subject) {
     if (subject.kind === 'artist') {
-      const match = await deezer.resolveDeezerArtistByName(subject.name);
-      if (!match || normalizeName(match.name) !== normalizeName(subject.name)) return null;
+      const name = leadArtistName(subject.name);
+      const match = await deezer.resolveDeezerArtistByName(name);
+      if (!match || !sameLeadArtist(match.name, name)) return null;
       return match.cover.kind === 'none' ? null : match.cover;
     }
-    const match = await deezer.resolveDeezerAlbum(subject.artistName, subject.title);
+    const artistName = leadArtistName(subject.artistName);
+    const match = await deezer.resolveDeezerAlbum(artistName, subject.title);
     if (!match) return null;
     const sameAlbum =
       normalizeName(match.title) === normalizeName(subject.title) &&
-      normalizeName(match.artist.name) === normalizeName(subject.artistName);
+      sameLeadArtist(match.artist.name, artistName);
     return sameAlbum && match.cover.kind !== 'none' ? match.cover : null;
   },
 };

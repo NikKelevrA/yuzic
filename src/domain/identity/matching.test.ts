@@ -1,4 +1,4 @@
-import { findMatch, normalizeName, sharedIdentifier } from './matching';
+import { findMatch, leadArtistName, normalizeName, sharedIdentifier } from './matching';
 import type { Matchable, NameKey } from './matching';
 import type { ExternalIds } from './ExternalIds';
 import type { LocalId } from './LocalId';
@@ -96,6 +96,28 @@ describe('normalizeName', () => {
 
   it('does not strip parenthesised suffixes', () => {
     expect(normalizeName('Song')).not.toBe(normalizeName('Song (Live)'));
+  });
+});
+
+describe('leadArtistName', () => {
+  it('drops featured artists however the credit marks them', () => {
+    expect(leadArtistName('Ben Böhmer feat. lau.ra')).toBe('Ben Böhmer');
+    expect(leadArtistName('Drake ft. Rihanna')).toBe('Drake');
+    expect(leadArtistName('Calvin Harris featuring Ellie Goulding')).toBe('Calvin Harris');
+    expect(leadArtistName('Kanye West (feat. Jay-Z)')).toBe('Kanye West');
+    expect(leadArtistName('Kanye West [Feat. Jay-Z]')).toBe('Kanye West');
+  });
+
+  it('leaves names that only look like joins alone', () => {
+    expect(leadArtistName('Simon & Garfunkel')).toBe('Simon & Garfunkel');
+    expect(leadArtistName('Lil Baby & Gunna')).toBe('Lil Baby & Gunna');
+    expect(leadArtistName('Earth, Wind & Fire')).toBe('Earth, Wind & Fire');
+    expect(leadArtistName('Little Feat')).toBe('Little Feat');
+    expect(leadArtistName('Loft')).toBe('Loft');
+  });
+
+  it('keeps a credit that is nothing but a marker rather than naming nobody', () => {
+    expect(leadArtistName('  feat. Someone ')).toBe('feat. Someone');
   });
 });
 

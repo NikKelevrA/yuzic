@@ -167,6 +167,10 @@ must never be the old shared literal `yuzic-device`.
 I was doing" true on every provider, not just Navidrome. It carries:
 
 - `queueSongIds[]`, `currentIndex`, `positionMs`
+- `queueContexts[]` — aligned with `queueSongIds`: the album or playlist each
+  song was queued from, by `nativeId`. Restoring the queue rebuilds its
+  segments from these, so a playlist heard after a relaunch still counts as
+  played. State saved without them restores ad hoc.
 - `repeatMode`, `shuffleMode`
 - `activeServerId` — the server whose id namespace the queue belongs to;
   changing servers invalidates the slice
@@ -442,7 +446,10 @@ answer that, and which one a job uses depends on how many providers can do it.
   (2) the library's copy of the same item, matched by MBID then name; (3) the
   Metadata › Artwork backups declared in `providers/registry/coverBackups.ts`,
   in `sources.ts` order (Cover Art Archive by MBID, then Deezer by name);
-  (4) the placeholder. `buildCover` applies steps 1–2 and remembered answers
+  (4) the placeholder. A subject names a credit's lead artist
+  (`leadArtistName`: "A feat. B" is A, "Simon & Garfunkel" stays whole), so a
+  featured credit from any service or server matches its library copy and the
+  catalogue alike. `buildCover` applies steps 1–2 and remembered answers
   synchronously; `MediaImage` (via `useResolvedCover`) asks the backups and
   re-renders when an answer lands. `CoverResolutionHost` feeds it the library,
   the enabled backups and online state. Answers are remembered per source and

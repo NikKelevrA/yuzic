@@ -3,7 +3,6 @@ import {
   artistCoverSubject,
   coverOrMissing,
   coverSubjectKey,
-  hasCoverImage,
   missingCover,
 } from './Cover';
 
@@ -26,15 +25,18 @@ describe('cover subjects', () => {
     });
   });
 
+  it('names the lead artist of a credit line, from whichever source it came', () => {
+    expect(artistCoverSubject('Drake feat. Rihanna', { mbid: 'm' })).toEqual({ kind: 'artist', name: 'Drake', mbid: 'm' });
+    expect(albumCoverSubject('Begin Again', 'Ben Böhmer feat. lau.ra')).toEqual({
+      kind: 'album', title: 'Begin Again', artistName: 'Ben Böhmer',
+    });
+  });
+
   it("keeps a source's own picture and only names a gap", () => {
     const subject = artistCoverSubject('Bibio');
     expect(coverOrMissing({ kind: 'url', url: 'x' }, subject)).toEqual({ kind: 'url', url: 'x' });
     expect(coverOrMissing({ kind: 'none' }, subject)).toEqual({ kind: 'none', subject });
     expect(missingCover(undefined)).toEqual({ kind: 'none' });
-  });
-
-  it('still reads a named gap as having no image, so fallback chains fall through it', () => {
-    expect(hasCoverImage(missingCover(artistCoverSubject('Bibio')))).toBe(false);
   });
 
   it('keys a subject by MusicBrainz id when it has one, else by normalised name', () => {

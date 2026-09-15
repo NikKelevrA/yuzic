@@ -9,12 +9,14 @@ import {
   selectPersistedPlaybackCurrentIndex,
   selectPersistedPlaybackPositionMs,
   selectPersistedPlaybackQueue,
+  selectPersistedPlaybackQueueContexts,
   selectPersistedPlaybackRepeatMode,
   selectPersistedPlaybackShuffleMode,
 } from '@/state/redux/selectors/playbackSelectors';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import type { PlaybackSession } from './playbackSession';
 import type { PlayableResource } from './playableResource';
+import { segmentsFromContexts } from './playingQueue';
 import { buildRestoredQueue, decideRestore } from './restoreQueue';
 import type { LoadQueue } from './usePlaybackEngine';
 
@@ -32,6 +34,7 @@ export function useRestorePersistedQueue(
   loadQueue: MutableRefObject<LoadQueue>
 ): void {
   const persistedIds = useSelector(selectPersistedPlaybackQueue);
+  const persistedContexts = useSelector(selectPersistedPlaybackQueueContexts);
   const persistedIndex = useSelector(selectPersistedPlaybackCurrentIndex);
   const persistedPositionMs = useSelector(selectPersistedPlaybackPositionMs);
   const persistedRepeatMode = useSelector(selectPersistedPlaybackRepeatMode);
@@ -66,8 +69,9 @@ export function useRestorePersistedQueue(
     }
 
     doneRef.current = true;
-    const { queue, index } = buildRestoredQueue({
+    const { queue, contexts, index } = buildRestoredQueue({
       persistedIds,
+      persistedContexts,
       persistedIndex,
       libraryTracks,
       resolve: resolve.current,
@@ -79,11 +83,9 @@ export function useRestorePersistedQueue(
     session.setRepeatMode(persistedRepeatMode);
     session.setShuffleMode(persistedShuffleMode);
     session.setQueue(queue);
-    session.setSegments([{
-      startIndex: 0,
-      length: queue.length,
-      source: { kind: 'user', contextId: 'restored', contextType: 'adhoc' },
-    }]);
+    // Rebuilt from what each track was queued from, so the rest of a playlist
+    // heard after a relaunch still counts as playing that playlist.
+    session.setSegments(segmentsFromContexts(contexts, 'restored'));
     session.setActive(index, active);
     loadQueue.current(queue, index, false, Math.floor(persistedPositionMs / 1000)).catch(error => {
       console.warn('[player] restoring the persisted queue failed', error);
@@ -92,6 +94,7 @@ export function useRestorePersistedQueue(
     activeServerId,
     libraryTracks,
     loadQueue,
+    persistedContexts,
     persistedIds,
     persistedIndex,
     persistedPositionMs,

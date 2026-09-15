@@ -114,6 +114,7 @@ describe('usePlaybackPersistence', () => {
           resource('pod-1', 'podcastEpisode'),
         ],
         currentIndex: 3,
+        segments: [],
         repeatMode: 'off',
         shuffleMode: 'off',
       })
@@ -141,6 +142,7 @@ describe('usePlaybackPersistence', () => {
           resource('s4'),
         ],
         currentIndex: 2,
+        segments: [],
         repeatMode: 'off',
         shuffleMode: 'off',
       })
@@ -151,6 +153,33 @@ describe('usePlaybackPersistence', () => {
       ['s1', 's2', 's3', 's4'].map((id) => resource(id).song.localId)
     )
     expect(state.queueSongIds[state.currentIndex]).toBe(resource('s2').song.localId)
+  })
+
+  it('remembers which playlist each saved song was queued from', async () => {
+    const store = makeStore({ activeServerId: 'server-A' })
+    const { result } = await renderHook(() => usePlaybackPersistence(), { wrapper: wrapperFor(store) })
+
+    // The radio stream isn't saved, and its context has to drop out with it
+    // rather than shift every later song onto the wrong collection.
+    await act(async () => {
+      result.current.persistQueue({
+        queue: [resource('radio-1', 'liveStream'), resource('s1'), resource('s2'), resource('s3')],
+        segments: [
+          { startIndex: 0, length: 1, source: { kind: 'user', contextId: 'radio', contextType: 'adhoc' } },
+          { startIndex: 1, length: 2, source: { kind: 'user', contextId: 'pl-1', contextType: 'playlist' } },
+          { startIndex: 3, length: 1, source: { kind: 'autoplay-fill', contextId: 'autoplay-3' } },
+        ],
+        currentIndex: 1,
+        repeatMode: 'off',
+        shuffleMode: 'off',
+      })
+    })
+
+    expect(store.getState().playback.queueContexts).toEqual([
+      { contextId: 'pl-1', contextType: 'playlist' },
+      { contextId: 'pl-1', contextType: 'playlist' },
+      null,
+    ])
   })
 
   it('throttles persistPosition writes and honors force', async () => {

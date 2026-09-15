@@ -200,7 +200,10 @@ const slskdDownloadTrack = (config: DownloaderConfig, req: TrackDownloadRequest)
 
 const slskdDownloader: DownloaderDefinition = {
   id: 'slskd',
-  label: 'Soulseek',
+  // Named for the server the listener runs, like Lidarr and SoulSync.
+  // "Soulseek" is the network, and copy uses it only where the network is
+  // what failed (nobody sharing a release, a search timing out).
+  label: 'slskd',
   descriptionKey: 'externalAlbum.download.slskdDesc',
   albumAddedKey: 'externalAlbum.download.addedToSlskd',
   trackAddedKey: 'externalAlbum.download.addedTrackToSlskd',

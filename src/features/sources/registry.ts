@@ -25,6 +25,7 @@ import type { AlbumDetail } from '@/domain/entities/Detail'
 import { makeLocalId } from '@/domain/identity/LocalId'
 import { integrationProvenance } from '@/domain/identity/Provenance'
 import { artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover'
+import { buildCover } from '@/providers/registry/covers'
 import { sourceColor } from '@/constants/design'
 import type { AuthDescriptor, Health } from '@/providers/contracts/Provider'
 
@@ -280,7 +281,7 @@ const musicbrainzSource: SourceDefinition = {
       id: album.nativeId,
       title: album.title,
       artist,
-      coverUrl: mb.coverArtArchiveUrl(album.nativeId),
+      coverUrl: buildCover(album.cover, 'grid') ?? undefined,
     }
   },
 

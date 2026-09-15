@@ -1,6 +1,6 @@
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 import type { Song } from '@/domain/entities/Song';
-import { albumCoverSubject, artistCoverSubject, missingCover } from '@/domain/entities/Cover';
+import { albumCoverSubject, artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 
@@ -27,6 +27,16 @@ type JspfTrack = {
   album?: string;
   identifier?: string | string[];
   duration?: number;
+  extension?: {
+    'https://musicbrainz.org/doc/jspf#track'?: {
+      additional_metadata?: {
+        /** The credited artists, lead first; `creator` is them joined into one line. */
+        artists?: { artist_mbid?: string }[];
+        /** The release ListenBrainz found front art for on Cover Art Archive. */
+        caa_release_mbid?: string;
+      };
+    };
+  };
 };
 
 type JspfPlaylist = {
@@ -73,7 +83,15 @@ function mapTrack(track: JspfTrack): Song | null {
   // shape used, so a track missing an mbid still gets a stable, distinct id
   // rather than colliding with every other id-less track.
   const nativeId = mbid ?? `${track.creator}:${track.title}`;
-  const albumCover = missingCover(albumCoverSubject(track.album, track.creator));
+  const metadata = track.extension?.['https://musicbrainz.org/doc/jspf#track']?.additional_metadata;
+  const releaseMbid = metadata?.caa_release_mbid;
+  const leadMbid = metadata?.artists?.[0]?.artist_mbid;
+  const albumIds = releaseMbid ? { mbid: releaseMbid, mbidType: 'release' as const } : {};
+  // ListenBrainz names the release it has Cover Art Archive art for, so that
+  // is this track's own picture; a track without one is a gap for the backups.
+  const albumCover: CoverSource = releaseMbid
+    ? { kind: 'coverartarchive', mbid: releaseMbid, mbidType: 'release' }
+    : missingCover(albumCoverSubject(track.album, track.creator, albumIds));
   return {
     localId: makeLocalId('song', PROVENANCE, nativeId),
     nativeId,
@@ -87,18 +105,16 @@ function mapTrack(track: JspfTrack): Song | null {
       nativeId: '',
       externalIds: {},
       name: track.creator,
-      cover: missingCover(artistCoverSubject(track.creator)),
+      cover: missingCover(artistCoverSubject(track.creator, leadMbid ? { mbid: leadMbid } : {})),
     },
     album: {
       localId: makeLocalId('album', PROVENANCE, track.album ?? ''),
       // Same — JSPF names the album, not its id.
       nativeId: '',
-      externalIds: {},
+      externalIds: albumIds,
       title: track.album ?? '',
       cover: albumCover,
     },
-    // A playlist entry has no artwork; it names the album, which is enough to
-    // find the album's cover.
     cover: albumCover,
     durationSeconds: track.duration ? Math.round(track.duration / 1000) : 0,
     contentKind: 'song',

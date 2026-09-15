@@ -50,12 +50,12 @@ type DownloadTrackResult = DownloadAlbumResult;
 
 const errorMessages: Record<SlskdDownloadErrorCode, string> = {
   missing_identity: 'Missing album or artist name',
-  search_failed: 'Soulseek search failed',
+  search_failed: 'slskd could not start the search',
   search_timeout: 'Soulseek search timed out before completing',
   no_matching_release: 'No matching release found on Soulseek',
   no_matching_track: 'No matching track found on Soulseek',
-  enqueue_failed: 'Could not queue the download on Soulseek',
-  request_failed: 'Could not reach Soulseek',
+  enqueue_failed: 'Could not queue the download on slskd',
+  request_failed: 'Could not reach slskd',
 };
 
 function failure(code: SlskdDownloadErrorCode): DownloadAlbumResult {

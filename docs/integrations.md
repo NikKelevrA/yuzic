@@ -341,8 +341,8 @@ No auth. `src/providers/integration/deezer/`.
 
 | Endpoint | Used for | Cache |
 | --- | --- | --- |
-| `GET /search/artist` | Resolving an artist by name; Deezer results in search; Metadata › Artwork backup for an artist photo (used only on a same-name match) | 12h |
-| `GET /search/album` | Resolving an album; Deezer results in search; preview lookup; Metadata › Artwork backup for an album cover (same title and artist only) | 12h |
+| `GET /search/artist` | Resolving an artist by name; Deezer results in search; Metadata › Artwork backup for an artist photo (used only when the lead artist's name matches — "A feat. B" looks up A) | 12h |
+| `GET /search/album` | Resolving an album; Deezer results in search; preview lookup; Metadata › Artwork backup for an album cover (same title and lead artist only) | 12h |
 | `GET /artist/{id}` | External artist page | 7d |
 | `GET /artist/{id}/albums` | Discography on an external artist page | 1d |
 | `GET /artist/{id}/related` | Similar artists | 7d |

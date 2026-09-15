@@ -48,6 +48,8 @@ export interface SortStats {
   albumPlays: StatsMap
   artistLastPlayed: StatsMap
   artistPlays: StatsMap
+  playlistLastPlayed: StatsMap
+  playlistPlays: StatsMap
 }
 
 /**
@@ -62,6 +64,8 @@ export const EMPTY_SORT_STATS: SortStats = {
   albumPlays: {},
   artistLastPlayed: {},
   artistPlays: {},
+  playlistLastPlayed: {},
+  playlistPlays: {},
 }
 
 /** Sort orders that read play statistics, and so need the live stats object. */
@@ -82,15 +86,16 @@ function releaseYear(item: LibraryItem): number {
 
 // The stats maps (`SortStats`) are keyed by the origin's own id — see
 // `useScrobbling`'s `incrementPlay` dispatch, which records `song.nativeId`/
-// `album.nativeId`/`artist.nativeId` — so lookups here read `nativeId` too,
-// never `localId`.
+// `album.nativeId`/`artist.nativeId` and the playlist's `nativeId` from the
+// queue's `CollectionContext` — so lookups here read `nativeId` too, never
+// `localId`. Playlists sort by when they were played, like everything else:
+// Home's Recently Played shelf opens this order, and sorting playlists by
+// their last edit instead made the list disagree with the shelf.
 function lastPlayedAt(item: LibraryItem, stats: SortStats): number {
   if (item.kind === 'album') return stats.albumLastPlayed[item.data.nativeId] ?? 0
   if (item.kind === 'track') return stats.songLastPlayed[item.data.nativeId] ?? 0
   if (item.kind === 'artist') return stats.artistLastPlayed[item.data.nativeId] ?? 0
-  if (item.kind === 'playlist') {
-    return item.data.updatedAt ?? 0
-  }
+  if (item.kind === 'playlist') return stats.playlistLastPlayed[item.data.nativeId] ?? 0
   return 0
 }
 
@@ -98,6 +103,7 @@ function playCount(item: LibraryItem, stats: SortStats): number {
   if (item.kind === 'track') return stats.songPlays[item.data.nativeId] ?? 0
   if (item.kind === 'album') return stats.albumPlays[item.data.nativeId] ?? 0
   if (item.kind === 'artist') return stats.artistPlays[item.data.nativeId] ?? 0
+  if (item.kind === 'playlist') return stats.playlistPlays[item.data.nativeId] ?? 0
   return 0
 }
 

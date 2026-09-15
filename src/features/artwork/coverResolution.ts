@@ -50,7 +50,12 @@ interface ResolutionContext {
 
 type Remembered = { cover: CoverSource | null; at: number };
 
-const STORAGE_PREFIX = 'cover-backup:v1:';
+/**
+ * v2: backups match by lead artist. A v1 miss may be a featured credit the old
+ * exact-name match turned away, and would stand for a week — so v1 is dropped.
+ */
+const STORAGE_PREFIX = 'cover-backup:v2:';
+const RETIRED_STORAGE_PREFIXES = ['cover-backup:v1:'];
 /** A source that had nothing is asked again after a week — archives grow. */
 const MISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 /** A picture is re-checked monthly, in case it was replaced or taken down. */
@@ -95,7 +100,19 @@ export function setCoverResolutionContext(next: Partial<ResolutionContext>): voi
 
 const storageKey = (source: SourceId, subjectKey: string) => `${STORAGE_PREFIX}${source}:${subjectKey}`;
 
+let retiredAnswersDropped = false;
+
+/** Removes answers kept under an earlier matching rule, once per launch. */
+function dropRetiredAnswers(): void {
+  if (retiredAnswersDropped) return;
+  retiredAnswersDropped = true;
+  for (const key of mmkv.getAllKeys()) {
+    if (RETIRED_STORAGE_PREFIXES.some(prefix => key.startsWith(prefix))) mmkv.remove(key);
+  }
+}
+
 function readRemembered(source: SourceId, subjectKey: string): Remembered | null {
+  dropRetiredAnswers();
   const key = storageKey(source, subjectKey);
   let entry = remembered.get(key);
   if (entry === undefined) {

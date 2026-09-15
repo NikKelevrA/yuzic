@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import type { CollectionContext } from '@/domain/playback/CollectionContext';
 import type { ContentKind } from '@/domain/playback/ContentKind';
 import type { CoverSource } from '@/domain/entities/Cover';
 import type { RepeatModeState, ShuffleMode } from '@/domain/playback/PlaybackModes';
@@ -55,6 +56,14 @@ export interface BookmarkSnapshot {
 interface PlaybackState {
   activeServerId: string | null;
   queueSongIds: string[];
+  /**
+   * The album or playlist each queued song was chosen from (null for none),
+   * aligned with `queueSongIds`. Restoring the queue rebuilds its segments
+   * from these, so the rest of a playlist heard after a relaunch still counts
+   * as a play of that playlist. Absent from state saved before it existed;
+   * the restore treats a misaligned list as all-null.
+   */
+  queueContexts?: (CollectionContext | null)[];
   currentIndex: number;
   positionMs: number;
   repeatMode: RepeatModeState;
@@ -96,6 +105,7 @@ interface PlaybackState {
 const initialState: PlaybackState = {
   activeServerId: null,
   queueSongIds: [],
+  queueContexts: [],
   currentIndex: 0,
   positionMs: 0,
   repeatMode: 'off',
@@ -115,6 +125,7 @@ const playbackSlice = createSlice({
       action: PayloadAction<{
         activeServerId: string | null;
         queueSongIds: string[];
+        queueContexts?: (CollectionContext | null)[];
         currentIndex: number;
         repeatMode: RepeatModeState;
         shuffleMode: ShuffleMode;
@@ -122,6 +133,7 @@ const playbackSlice = createSlice({
     ) {
       state.activeServerId = action.payload.activeServerId;
       state.queueSongIds = action.payload.queueSongIds;
+      state.queueContexts = action.payload.queueContexts ?? [];
       state.currentIndex = action.payload.currentIndex;
       state.repeatMode = action.payload.repeatMode;
       state.shuffleMode = action.payload.shuffleMode;
@@ -207,6 +219,7 @@ const playbackSlice = createSlice({
     resetPlaybackForServer(state, action: PayloadAction<{ activeServerId: string | null }>) {
       state.activeServerId = action.payload.activeServerId;
       state.queueSongIds = [];
+      state.queueContexts = [];
       state.currentIndex = 0;
       state.positionMs = 0;
       state.repeatMode = 'off';

@@ -5,8 +5,10 @@ import type { ShuffleMode } from '@/domain/playback/PlaybackModes';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { segmentAt, type QueueSegment } from './playingQueue';
+import type { PlayableCollection } from './playingTypes';
 import {
   createPlaybackStarters,
+  startableCollection,
   type PlaybackStarterDeps,
   type StartableCollection,
 } from './playbackStarters';
@@ -310,5 +312,24 @@ describe('appendCollection', () => {
       contextId: 'album-1',
       contextType: 'album',
     });
+  });
+});
+
+describe('startableCollection', () => {
+  // Plays are recorded under the queue's context id, and Recently Played looks
+  // playlists up by `nativeId`. Naming the queue by `localId` made every
+  // playlist play unfindable, so the shelf never showed one.
+  it('names a playlist by its own id', () => {
+    const playlist = { localId: makeLocalId('playlist', provenance, 'pl-1'), nativeId: 'pl-1' };
+
+    expect(startableCollection({ playlist, songs: [] } as unknown as PlayableCollection))
+      .toMatchObject({ contextId: 'pl-1', contextType: 'playlist' });
+  });
+
+  it('names an album by its own id', () => {
+    const album = { localId: makeLocalId('album', provenance, 'al-1'), nativeId: 'al-1' };
+
+    expect(startableCollection({ album, songs: [] } as unknown as PlayableCollection))
+      .toMatchObject({ contextId: 'al-1', contextType: 'album' });
   });
 });

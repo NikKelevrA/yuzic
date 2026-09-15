@@ -28,6 +28,37 @@ function song(nativeId: string): Song {
 /** What the app actually does: build a fresh stream URL for the song. */
 const resolve = (s: Song): PlayableResource | null => ({ song: s, streamUrl: `https://server.test/stream/${s.nativeId}` });
 
+describe('buildRestoredQueue — where each track was queued from', () => {
+  const fromPlaylist = { contextId: 'pl-1', contextType: 'playlist' } as const;
+
+  it('keeps each track’s own context when a song before it has gone missing', () => {
+    // 'a' came from the playlist and is gone. Its context has to go with it,
+    // not shift onto 'b', which was queued on its own.
+    const { queue, contexts } = buildRestoredQueue({
+      persistedIds: [localIdOf('a'), localIdOf('b'), localIdOf('c')],
+      persistedContexts: [fromPlaylist, null, fromPlaylist],
+      persistedIndex: 1,
+      libraryTracks: [song('b'), song('c')],
+      resolve,
+    });
+
+    expect(queue.map((r) => r.song.nativeId)).toEqual(['b', 'c']);
+    expect(contexts).toEqual([null, fromPlaylist]);
+  });
+
+  it('restores a queue saved before contexts were recorded as ad hoc', () => {
+    const { contexts } = buildRestoredQueue({
+      persistedIds: [localIdOf('a'), localIdOf('b')],
+      persistedContexts: [],
+      persistedIndex: 0,
+      libraryTracks: [song('a'), song('b')],
+      resolve,
+    });
+
+    expect(contexts).toEqual([null, null]);
+  });
+});
+
 describe('buildRestoredQueue', () => {
   it('gives every restored song a playable URL', () => {
     // The library copy carries no URL — ids are all that is persisted, and the
