@@ -1360,7 +1360,22 @@
     "expiresOn": "Expire le {{date}}",
     "visits_one": "{{count}} visite",
     "visits_other": "{{count}} visites",
-    "revoke": "Révoquer"
+    "revoke": "Révoquer",
+    "edit": "Modifier le lien",
+    "editTitle": "Modifier le lien partagé",
+    "updated": "Lien mis à jour",
+    "updateFailed": "Impossible de mettre à jour le lien",
+    "field": {
+      "description": "Description"
+    },
+    "expiry": {
+      "label": "Expiration",
+      "keep": "Ne pas changer",
+      "never": "Jamais",
+      "day": "Dans 1 jour",
+      "week": "Dans 1 semaine",
+      "month": "Dans 30 jours"
+    }
   },
   "radio": {
     "title": "Radio",

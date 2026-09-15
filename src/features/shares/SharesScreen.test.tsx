@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ServerFeatureUnavailableError, type Share } from '@/providers/contracts/ServerAdapter';
 import SharesScreen from './SharesScreen';
 
-const mockShares = { list: jest.fn(), remove: jest.fn() };
+const mockShares = { list: jest.fn(), remove: jest.fn(), update: jest.fn() };
 let mockReachable = true;
 const mockShareItem = jest.fn();
 
@@ -33,6 +33,21 @@ jest.mock('@/components/DetailHeader', () => {
 jest.mock('@/components/Touchable', () => {
   const { Pressable } = require('react-native');
   return { __esModule: true, default: (props: any) => <Pressable {...props} /> };
+});
+jest.mock('@/components/options/RadioMark', () => 'RadioMark');
+jest.mock('@/components/FormSheet', () => {
+  const { Text, TextInput, View } = require('react-native');
+  return {
+    FormSheet: ({ children, canSubmit, onSubmit }: any) => (
+      <View testID="edit-share-sheet">
+        {children}
+        <Text testID="edit-share-save" onPress={canSubmit ? onSubmit : undefined}>save</Text>
+      </View>
+    ),
+    FormSheetField: ({ value, onChangeText }: any) => (
+      <TextInput testID="share-description" value={value} onChangeText={onChangeText} />
+    ),
+  };
 });
 jest.mock('@/components/EmptyState', () => {
   const { Text, View } = require('react-native');
@@ -111,6 +126,41 @@ describe('SharesScreen', () => {
 
     await waitFor(() => expect(view.getByText('shares.empty')).toBeTruthy());
     expect(mockShares.remove).toHaveBeenCalledWith('s1');
+  });
+
+  it("renames a share and clears its expiry without changing the link", async () => {
+    mockShares.list.mockResolvedValue([{ ...share, expires: '2030-01-01T00:00:00Z' }]);
+    mockShares.update.mockResolvedValue(undefined);
+    const view = await render(
+      <QueryClientProvider client={(client = new QueryClient({ defaultOptions: { queries: { retry: false } } }))}>
+        <SharesScreen />
+      </QueryClientProvider>
+    );
+
+    await fireEvent.press(await view.findByLabelText('shares.edit'));
+    await fireEvent.changeText(view.getByTestId('share-description'), '  Summer trip ');
+    await fireEvent.press(view.getByTestId('share-expiry-never'));
+    await fireEvent.press(view.getByTestId('edit-share-save'));
+
+    await waitFor(() => expect(mockShares.update).toHaveBeenCalledWith({
+      id: 's1',
+      description: 'Summer trip',
+      expiresAtMs: null,
+    }));
+  });
+
+  it('leaves the expiry alone unless one is chosen', async () => {
+    mockShares.list.mockResolvedValue([share]);
+    mockShares.update.mockResolvedValue(undefined);
+    const view = await renderScreen();
+
+    await fireEvent.press(await view.findByLabelText('shares.edit'));
+    await fireEvent.changeText(view.getByTestId('share-description'), 'New name');
+    await fireEvent.press(view.getByTestId('edit-share-save'));
+
+    await waitFor(() => expect(mockShares.update).toHaveBeenCalledWith(
+      expect.objectContaining({ description: 'New name', expiresAtMs: undefined })
+    ));
   });
 
   it('says sharing is off on the server instead of offering a retry that cannot help', async () => {

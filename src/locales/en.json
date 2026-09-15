@@ -1389,7 +1389,22 @@
     "expiresOn": "Expires {{date}}",
     "visits_one": "{{count}} visit",
     "visits_other": "{{count}} visits",
-    "revoke": "Revoke"
+    "revoke": "Revoke",
+    "edit": "Edit link",
+    "editTitle": "Edit shared link",
+    "updated": "Link updated",
+    "updateFailed": "Could not update the link",
+    "field": {
+      "description": "Description"
+    },
+    "expiry": {
+      "label": "Expires",
+      "keep": "Keep as it is",
+      "never": "Never",
+      "day": "In 1 day",
+      "week": "In 1 week",
+      "month": "In 30 days"
+    }
   },
   "a11y": {
     "detail": {

@@ -1355,7 +1355,22 @@
     "expiresOn": "{{date}} に期限切れ",
     "visits_one": "{{count}} 回の閲覧",
     "visits_other": "{{count}} 回の閲覧",
-    "revoke": "取り消す"
+    "revoke": "取り消す",
+    "edit": "リンクを編集",
+    "editTitle": "共有リンクを編集",
+    "updated": "リンクを更新しました",
+    "updateFailed": "リンクを更新できませんでした",
+    "field": {
+      "description": "説明"
+    },
+    "expiry": {
+      "label": "有効期限",
+      "keep": "変更しない",
+      "never": "無期限",
+      "day": "1 日後",
+      "week": "1 週間後",
+      "month": "30 日後"
+    }
   },
   "radio": {
     "title": "ラジオ",

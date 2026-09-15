@@ -1,10 +1,10 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
-import { CloudOff, Link2, Share2, Trash2 } from 'lucide-react-native';
+import { CloudOff, Link2, Pencil, Share2, Trash2 } from 'lucide-react-native';
 
 import { useApi } from '@/providers/registry/useApi';
 import type { Share } from '@/providers/contracts/ServerAdapter';
@@ -12,6 +12,8 @@ import { DetailHeaderBar } from '@/components/DetailHeader';
 import Touchable from '@/components/Touchable';
 import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
+import { FormSheet, FormSheetField } from '@/components/FormSheet';
+import RadioMark from '@/components/options/RadioMark';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useListDensity } from '@/features/theme/useListDensity';
@@ -20,6 +22,19 @@ import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { shareItem } from '@/features/shares/share';
 import { isUnavailableOnServer } from '@/features/library/useServerSurface';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** What an edit does to a share's expiry: leave it, clear it, or set it this far out. */
+const EXPIRY_CHOICES = [
+  { id: 'keep', labelKey: 'shares.expiry.keep' },
+  { id: 'never', labelKey: 'shares.expiry.never' },
+  { id: 'day', labelKey: 'shares.expiry.day', days: 1 },
+  { id: 'week', labelKey: 'shares.expiry.week', days: 7 },
+  { id: 'month', labelKey: 'shares.expiry.month', days: 30 },
+] as const;
+
+type ExpiryChoice = (typeof EXPIRY_CHOICES)[number]['id'];
 
 function formatDate(value: string | undefined): string {
   if (!value) return '';
@@ -49,6 +64,7 @@ export default function SharesScreen() {
   const api = useApi();
   const queryClient = useQueryClient();
   const serverReachable = useServerReachable();
+  const [editing, setEditing] = useState<Share | null>(null);
 
   const sharesQuery = useQuery<Share[]>({
     queryKey: [QueryKeys.Shares],
@@ -130,6 +146,15 @@ export default function SharesScreen() {
             <Share2 size={iconSize.row} color={colors.subtext} />
           </Touchable>
           <Touchable
+            onPress={() => setEditing(item)}
+            hitSlop={hitSlopFor(18)}
+            style={styles.actionBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t('shares.edit')}
+          >
+            <Pencil size={iconSize.row} color={colors.subtext} />
+          </Touchable>
+          <Touchable
             onPress={() => handleDelete(item)}
             hitSlop={hitSlopFor(18)}
             style={styles.actionBtn}
@@ -188,7 +213,75 @@ export default function SharesScreen() {
           renderItem={renderShare}
         />
       )}
+
+      {editing && <EditShareSheet share={editing} onClose={() => setEditing(null)} />}
     </SafeAreaView>
+  );
+}
+
+/**
+ * Renames a share and changes when it stops working.
+ *
+ * The server could always do both (`updateShare`); the app could only revoke
+ * a link and make a new one, which changes its address for everyone it was
+ * sent to.
+ */
+function EditShareSheet({ share, onClose }: { share: Share; onClose: () => void }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const api = useApi();
+  const queryClient = useQueryClient();
+  const [description, setDescription] = useState(share.description ?? '');
+  const [expiry, setExpiry] = useState<ExpiryChoice>('keep');
+
+  const expiresAtMs = (): number | null | undefined => {
+    const choice = EXPIRY_CHOICES.find(option => option.id === expiry);
+    if (!choice || choice.id === 'keep') return undefined;
+    if (choice.id === 'never') return null;
+    return Date.now() + choice.days * DAY_MS;
+  };
+
+  const changed = description.trim() !== (share.description ?? '') || expiry !== 'keep';
+
+  return (
+    <FormSheet
+      title={t('shares.editTitle')}
+      submitLabel={t('common.save')}
+      canSubmit={changed && Boolean(api.shares)}
+      onSubmit={async () => {
+        try {
+          await api.shares!.update({ id: share.id, description: description.trim(), expiresAtMs: expiresAtMs() });
+          await queryClient.invalidateQueries({ queryKey: [QueryKeys.Shares] });
+          notify.success(t('shares.updated'));
+          return true;
+        } catch {
+          notify.error(t('shares.updateFailed'));
+          return false;
+        }
+      }}
+      onClose={onClose}
+    >
+      <FormSheetField
+        label={t('shares.field.description')}
+        value={description}
+        onChangeText={setDescription}
+        placeholder={share.url}
+      />
+      <Text style={[styles.expiryLabel, { color: colors.subtext }]}>{t('shares.expiry.label')}</Text>
+      {EXPIRY_CHOICES.map(option => (
+        <Touchable
+          key={option.id}
+          testID={`share-expiry-${option.id}`}
+          accessibilityRole="radio"
+          accessibilityState={{ selected: expiry === option.id }}
+          onPress={() => setExpiry(option.id)}
+          style={styles.expiryRow}
+        >
+          <Text style={[styles.expiryText, { color: colors.secondary }]}>{t(option.labelKey)}</Text>
+          <RadioMark selected={expiry === option.id} />
+        </Touchable>
+      ))}
+    </FormSheet>
   );
 }
 
@@ -203,4 +296,12 @@ const styles = StyleSheet.create({
   meta: { ...typography.caption, marginTop: spacing.xxs },
   actions: { flexDirection: 'row', gap: spacing.sm },
   actionBtn: { padding: spacing.sm },
+  expiryLabel: { ...typography.caption, marginTop: spacing.sm },
+  expiryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+  },
+  expiryText: { ...typography.body },
 });

@@ -1355,7 +1355,22 @@
     "expiresOn": "{{date}} 过期",
     "visits_one": "{{count}} 次访问",
     "visits_other": "{{count}} 次访问",
-    "revoke": "撤销"
+    "revoke": "撤销",
+    "edit": "编辑链接",
+    "editTitle": "编辑共享链接",
+    "updated": "链接已更新",
+    "updateFailed": "无法更新链接",
+    "field": {
+      "description": "描述"
+    },
+    "expiry": {
+      "label": "过期时间",
+      "keep": "保持不变",
+      "never": "永不",
+      "day": "1 天后",
+      "week": "1 周后",
+      "month": "30 天后"
+    }
   },
   "radio": {
     "title": "电台",
