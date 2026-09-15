@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 
@@ -15,6 +15,7 @@ import { backendRepeatMode, clampVolume, nextRepeatMode } from './playingPolicie
 import type { PlayableCollection, PlayingActionsType } from './playingTypes';
 import { createQueueController } from './queueController';
 import shuffleArray from './shuffleArray';
+import { createSettlingSender } from './settlingSender';
 import { createShuffleController } from './shuffleController';
 import { clampSpeed, speedProfileFor } from './speedProfile';
 import { createTransportController } from './transportController';
@@ -22,6 +23,9 @@ import { useLatestRef } from './useLatestRef';
 import type { PlaybackEngine } from './usePlaybackEngine';
 import type { PlaybackResources } from './usePlaybackResources';
 import type { PlaybackServices } from './usePlaybackServices';
+
+/** How long a volume drag rests before the jukebox is told where it ended. */
+const JUKEBOX_GAIN_SETTLE_MS = 250;
 
 /** An album or playlist as the starters want it: the tracks and where they came from. */
 function startable(collection: PlayableCollection): StartableCollection {
@@ -144,11 +148,26 @@ export function usePlayingCommands(
     getBackend().setRepeatMode(backendRepeatMode(next));
   }, [session]);
 
+  // While the server's speakers play, the phone plays nothing, so the volume
+  // slider moved a silent player's volume and nothing anyone could hear. The
+  // jukebox has a gain of its own, and that is where the slider goes then.
+  const jukeboxGain = useMemo(() => createSettlingSender<number>(gain => {
+    void api.jukebox?.setGain(gain).catch(() => {
+      // Not worth a toast: the jukebox poll reports the gain it really has,
+      // and the slider shows that.
+    });
+  }, JUKEBOX_GAIN_SETTLE_MS), [api]);
+  useEffect(() => () => jukeboxGain.cancel(), [jukeboxGain]);
+
   const setVolume = useCallback((next: number) => {
     const volume = clampVolume(next);
+    if (sinkRef.current.kind === 'jukebox') {
+      jukeboxGain.push(volume);
+      return;
+    }
     session.setVolume(volume);
     getBackend().setVolume(volume);
-  }, [session]);
+  }, [jukeboxGain, session, sinkRef]);
 
   const setPlaybackSpeed = useCallback((speed: number) => {
     const clamped = clampSpeed(speed);

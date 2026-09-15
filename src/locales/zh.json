@@ -943,6 +943,8 @@
     }
   },
   "playing": {
+    "volume": "音量",
+    "volumeOnServer": "服务器音量",
     "output": {
       "title": "连接",
       "thisDevice": "本机",

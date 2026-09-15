@@ -1,11 +1,13 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Volume2, VolumeX, Volume1 } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import { selectThemeColor } from '@/features/settings/appearance/state';
 import { usePlayingActions, usePlayingState } from '@/features/playback/PlayingContext';
+import { usePlaybackSink } from '@/features/player/PlaybackSinkContext';
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { selection } from '@/components/haptics';
@@ -14,21 +16,34 @@ type Props = { contentWidth: number };
 
 /**
  * In-app volume slider — controls the player's own gain (0..1), independent
- * of the device's system volume. The player already exposes `setVolume` via
- * TrackPlayer; this card exposes it to users. Off by default so the standard
- * player looks unchanged; enable under Settings › Player.
+ * of the device's system volume. Off by default so the standard player looks
+ * unchanged; enable under Settings › Player.
+ *
+ * While the server's own speakers play (the jukebox), it is the jukebox's
+ * gain instead: the slider shows the gain the server reports, and a drag
+ * shows where the finger is until it lets go, so a poll landing mid-drag does
+ * not pull the thumb back.
  */
 export default function VolumeCard({ contentWidth }: Props) {
+  const { t } = useTranslation();
   const themeColor = useSelector(selectThemeColor);
   const rad = useRadius();
-  const { volume } = usePlayingState();
+  const { volume: playerVolume } = usePlayingState();
   const { setVolume } = usePlayingActions();
+  const { sink, jukeboxState } = usePlaybackSink();
+  const [dragging, setDragging] = useState<number | null>(null);
+
+  const onServer = sink.kind === 'jukebox';
+  const reported = onServer && jukeboxState ? jukeboxState.gain : playerVolume;
+  const volume = dragging ?? reported;
 
   const handleChange = useCallback((next: number) => {
+    setDragging(next);
     setVolume(next);
   }, [setVolume]);
 
   const handleSlidingComplete = useCallback(() => {
+    setDragging(null);
     selection();
   }, []);
 
@@ -46,7 +61,7 @@ export default function VolumeCard({ contentWidth }: Props) {
       <View style={styles.headerRow}>
         <Icon size={iconSize.inline} color={isMuted ? themeColor : 'rgba(255,255,255,0.5)'} />
         <Text style={[styles.label, isMuted && { color: themeColor }]}>
-          Volume
+          {t(onServer ? 'playing.volumeOnServer' : 'playing.volume')}
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.percent}>{percent}%</Text>
@@ -63,6 +78,7 @@ export default function VolumeCard({ contentWidth }: Props) {
         minimumTrackTintColor={themeColor}
         maximumTrackTintColor="rgba(255,255,255,0.15)"
         thumbTintColor={themeColor}
+        accessibilityLabel={t(onServer ? 'playing.volumeOnServer' : 'playing.volume')}
       />
     </View>
   );

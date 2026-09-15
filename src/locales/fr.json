@@ -946,6 +946,8 @@
     }
   },
   "playing": {
+    "volume": "Volume",
+    "volumeOnServer": "Volume du serveur",
     "output": {
       "title": "Connexion",
       "thisDevice": "Cet appareil",

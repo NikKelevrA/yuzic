@@ -943,6 +943,8 @@
     }
   },
   "playing": {
+    "volume": "音量",
+    "volumeOnServer": "サーバーの音量",
     "output": {
       "title": "接続",
       "thisDevice": "このデバイス",

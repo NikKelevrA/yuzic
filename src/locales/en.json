@@ -948,6 +948,8 @@
     }
   },
   "playing": {
+    "volume": "Volume",
+    "volumeOnServer": "Server volume",
     "output": {
       "title": "Connect",
       "thisDevice": "This device",
