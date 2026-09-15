@@ -37,6 +37,11 @@ export interface PlaylistActionContext extends BaseActionContext {
 }
 
 type Ctx = PlaylistActionContext;
+
+/** Whether this account may change the playlist's songs and name. */
+export function canEditPlaylist(playlist: Playlist): boolean {
+  return playlist.canEdit ?? playlist.isOwned;
+}
 const sz = iconSize.loader;
 
 export const playlistActions: ActionDef<Ctx>[] = [
@@ -120,7 +125,7 @@ export const playlistActions: ActionDef<Ctx>[] = [
     label: ctx => ctx.t('playlistOptions.actions.rename'),
     icon: ctx => React.createElement(Pencil, { size: sz, color: ctx.colors.secondary }),
     // Another account's playlist is visible, not changeable; the server refuses.
-    visible: ctx => !ctx.isFavorites && ctx.playlist.isOwned,
+    visible: ctx => !ctx.isFavorites && canEditPlaylist(ctx.playlist),
     invoke: ctx => ctx.handlers.rename(),
   },
   {
@@ -128,7 +133,7 @@ export const playlistActions: ActionDef<Ctx>[] = [
     label: ctx => ctx.t('playlistOptions.actions.delete'),
     icon: () => React.createElement(Trash2, { size: sz, color: statusColor.destructive }),
     labelColor: () => statusColor.destructive,
-    // Another account's playlist is visible, not changeable; the server refuses.
+    // Deleting is the owner's alone, even for an account shared with edit rights.
     visible: ctx => !ctx.isFavorites && ctx.playlist.isOwned,
     enabled: ctx => !ctx.isDeleting,
     loading: ctx => ctx.isDeleting,

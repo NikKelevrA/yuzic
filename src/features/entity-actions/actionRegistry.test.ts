@@ -250,6 +250,13 @@ describe('playlistActions', () => {
     expect(ids).not.toContain('delete');
   });
 
+  it('lets an account shared with edit rights rename but not delete', () => {
+    const shared = { isOwned: false, canEdit: true } as PlaylistActionContext['playlist'];
+    const ids = resolveActions(playlistActions, playlistCtx({ playlist: shared })).map(a => a.id);
+    expect(ids).toContain('rename');
+    expect(ids).not.toContain('delete');
+  });
+
   it('offers Edit songs only when the context says the songs can be edited', () => {
     expect(resolveActions(playlistActions, playlistCtx()).map(a => a.id)).not.toContain('editSongs');
     expect(resolveActions(playlistActions, playlistCtx({ canEditSongs: true })).map(a => a.id)).toContain('editSongs');

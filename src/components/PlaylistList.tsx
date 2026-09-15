@@ -36,6 +36,7 @@ import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { FAVORITES_ID } from '@/constants/favorites';
+import { canEditPlaylist } from '@/features/entity-actions/registry/playlistActions';
 
 type PlaylistListProps = {
   selectedSong: Song | null;
@@ -58,8 +59,11 @@ const PlaylistList = forwardRef<BottomSheetModal, PlaylistListProps>(
     // browsable collection in the Library; it just isn't a target you pick.
     const playlists = useMemo(
       // FAVORITES_ID is the synthetic playlist's id at the origin, so the
-      // comparison is against nativeId rather than on-device identity.
-      () => allPlaylists.filter(p => p.nativeId !== FAVORITES_ID),
+      // comparison is against nativeId rather than on-device identity. A
+      // playlist this account may not change is no place to add a song to:
+      // another account's public playlist was offered here, and the server
+      // refused the add.
+      () => allPlaylists.filter(p => p.nativeId !== FAVORITES_ID && canEditPlaylist(p)),
       [allPlaylists]
     );
     const createPlaylist = useCreatePlaylist();

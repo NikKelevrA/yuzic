@@ -2,6 +2,7 @@ import type { PlaylistDetail } from "@/domain/entities/Detail";
 import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapPlaylist } from "../mapPlaylist";
 import { getPlaylistItems } from "./getPlaylistItems";
+import { getPlaylistPermissions } from "./getPlaylistPermissions";
 import { MediaBrowserItemsResponse } from "../types";
 
 type GetPlaylistResult = PlaylistDetail | null;
@@ -24,12 +25,19 @@ export async function getPlaylist(
   if (!dto) return null;
 
   const provenance = requireProvenance(client);
-  const songs = await getPlaylistItems(client, playlistId);
-  const playlist = mapPlaylist(dto, {
-    provenance,
-    brand: client.brand,
-    songIds: songs.map((s) => s.localId),
-  });
+  const [songs, permissions] = await Promise.all([
+    getPlaylistItems(client, playlistId),
+    getPlaylistPermissions(client, playlistId),
+  ]);
+  const playlist = {
+    ...mapPlaylist(dto, {
+      provenance,
+      brand: client.brand,
+      songIds: songs.map((s) => s.localId),
+    }),
+    // Only the detail asks: one lookup per playlist would be one per row on a list.
+    ...(permissions ?? {}),
+  };
 
   return { playlist, songs };
 }

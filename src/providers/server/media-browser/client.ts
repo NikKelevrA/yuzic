@@ -5,6 +5,7 @@ import { serverProvenance, type Provenance } from '@/domain/identity/Provenance'
 import { MediaBrowserBrand } from './brand';
 import { mediaBrowserClientHeader } from './clientHeader';
 import { serverFetch } from '@/features/mtls/serverFetch';
+import { MediaBrowserRequestError } from './requestError';
 
 
 export interface MediaBrowserClientConfig {
@@ -96,7 +97,7 @@ export function createMediaBrowserClient(config: MediaBrowserClientConfig, brand
     return withFailover(async (url) => {
       const res = await callOne(url, path, headers, fetchOptions);
       if (!res.ok) {
-        throw new Error(`${brand.label} API error (${res.status}): ${await res.text()}`);
+        throw new MediaBrowserRequestError(brand.label, res.status, await res.text());
       }
       if (res.status === 204 || res.headers.get("content-length") === "0") {
         return {} as T;

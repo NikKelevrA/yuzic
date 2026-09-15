@@ -14,7 +14,7 @@ import { useLazyPlaylistDetail } from '@/components/options/useLazyCollectionDet
 import { useShareAction } from '../shared/shareActions';
 import { useCollectionPlaybackActions } from '../shared/playbackActions';
 import { resolveActions } from '../types';
-import { playlistActions, type PlaylistActionContext } from '../registry/playlistActions';
+import { canEditPlaylist, playlistActions, type PlaylistActionContext } from '../registry/playlistActions';
 import { confirmDestructive } from '../shared/starActions';
 
 export function usePlaylistOptionsActions(
@@ -55,11 +55,14 @@ export function usePlaylistOptionsActions(
   }
 
   const onEditSongs = opts.onEditSongs;
+  // The detail knows who may change the playlist where a list row cannot, so
+  // it decides what is offered once it has loaded.
+  const current = playlistWithSongs?.playlist ?? playlist;
   const ctx: PlaylistActionContext = {
-    kind: 'playlist', origin: 'library', playlist, t, colors, close: opts.close,
+    kind: 'playlist', origin: 'library', playlist: current, t, colors, close: opts.close,
     playbackDisabled, songsLoading, isDownloaded, isDownloading, isSharing, canShare,
     isFavorites, isDeleting: deletePlaylist.isPending, hideGoToPlaylist: opts.hideGoToPlaylist,
-    canEditSongs: !!onEditSongs && !isFavorites && playlist.isOwned,
+    canEditSongs: !!onEditSongs && !isFavorites && canEditPlaylist(current),
     handlers: {
       editSongs: () => {
         opts.close();

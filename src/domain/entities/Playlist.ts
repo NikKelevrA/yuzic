@@ -18,6 +18,12 @@ export interface Playlist extends EntityCore {
   description?: string;
   /** Owned by the user on the origin, rather than shared or generated. */
   isOwned: boolean;
+  /**
+   * May change its songs and name. Absent means the same as `isOwned`; set
+   * where a server shares playlists with edit rights, so one can be edited
+   * without being owned. Deleting stays the owner's.
+   */
+  canEdit?: boolean;
   createdAt?: number;
   updatedAt?: number;
   /** Tracks that have been loaded, in playlist order, as references. */
