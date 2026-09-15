@@ -1,5 +1,7 @@
 import { Stack } from 'expo-router';
 
+export { default as ErrorBoundary } from '@/components/RouteErrorBoundary';
+
 // Declares this stack's root. A deep link straight to a sub-page
 // (/settings/serverView) pushes `index` underneath it first, so the back
 // arrow always has somewhere to go — without it the header's router.back()

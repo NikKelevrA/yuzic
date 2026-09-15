@@ -619,7 +619,9 @@
     "error": {
       "unexpected": "Une erreur inattendue s'est produite",
       "details": "Erreur : {{name}} {{message}}",
-      "restart": "Redémarrer"
+      "restart": "Redémarrer",
+      "crashTitle": "Un problème est survenu",
+      "crashBody": "Cette partie de l’app a rencontré une erreur. Réessayez, ou redémarrez si cela se reproduit."
     },
     "more": "Plus",
     "less": "Moins",

@@ -622,7 +622,9 @@
     "error": {
       "unexpected": "Unexpected error occurred",
       "details": "Error: {{name}} {{message}}",
-      "restart": "Restart"
+      "restart": "Restart",
+      "crashTitle": "Something went wrong",
+      "crashBody": "This part of the app hit an error. Try again, or restart if it keeps happening."
     },
     "serverUnreachableBanner": "Can't reach your server — showing local library data",
     "searchPlaceholder": "Search…",

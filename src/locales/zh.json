@@ -618,7 +618,9 @@
     "error": {
       "unexpected": "发生意外错误",
       "details": "错误：{{name}} {{message}}",
-      "restart": "重启"
+      "restart": "重启",
+      "crashTitle": "出现了问题",
+      "crashBody": "应用的这一部分出错了。请重试，如果反复出现请重启应用。"
     },
     "more": "更多",
     "less": "收起",

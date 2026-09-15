@@ -1,5 +1,7 @@
 import { Stack } from 'expo-router';
 
+export { default as ErrorBoundary } from '@/components/RouteErrorBoundary';
+
 // Declares this stack's root rather than letting expo-router infer one from
 // the group name. A deep link straight to a detail route (an album, an artist)
 // pushes `index` underneath it first, so there is always something to go back
