@@ -40,13 +40,23 @@ type ResolveLyricsInput = {
  * external source ships off — this behaves exactly like the bare
  * `api.lyrics.getBySongId()` call it replaces: server-only, no external
  * network calls at all.
+ *
+ * A server whose lookup fails does not stop the outside sources being asked:
+ * the failure used to escape before any of them ran, so an unreachable or
+ * refusing server hid lyrics LRCLIB had. If nothing else finds any, the
+ * server's failure is what rejects — a failure is not "no lyrics".
  */
 export async function resolveLyrics(input: ResolveLyricsInput): Promise<LyricsResult | null> {
   const { song, getServerLyrics, enabledExternalSourcesInOrder, fetchers } = input;
 
-  const serverResult = await getServerLyrics(song.songId);
-  if (serverResult && serverResult.lines.length > 0) {
-    return serverResult;
+  let serverFailure: unknown = null;
+  try {
+    const serverResult = await getServerLyrics(song.songId);
+    if (serverResult && serverResult.lines.length > 0) {
+      return serverResult;
+    }
+  } catch (error) {
+    serverFailure = error;
   }
 
   for (const sourceId of enabledExternalSourcesInOrder) {
@@ -59,5 +69,6 @@ export async function resolveLyrics(input: ResolveLyricsInput): Promise<LyricsRe
     }
   }
 
+  if (serverFailure) throw serverFailure;
   return null;
 }

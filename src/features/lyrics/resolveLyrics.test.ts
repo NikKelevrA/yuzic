@@ -87,6 +87,31 @@ describe("resolveLyrics", () => {
     expect(result).toEqual(lrclibResult);
   });
 
+  it("still asks an enabled outside source when the server's lookup fails", async () => {
+    const getServerLyrics = jest.fn().mockRejectedValue(new Error("server unreachable"));
+    const lrclibFetcher = jest.fn().mockResolvedValue(lrclibResult);
+
+    const result = await resolveLyrics({
+      song,
+      getServerLyrics,
+      enabledExternalSourcesInOrder: ["lrclib"],
+      fetchers: { lrclib: lrclibFetcher },
+    });
+
+    expect(result).toEqual(lrclibResult);
+  });
+
+  it("rejects with the server's failure when nothing else finds lyrics either", async () => {
+    const getServerLyrics = jest.fn().mockRejectedValue(new Error("server unreachable"));
+
+    await expect(resolveLyrics({
+      song,
+      getServerLyrics,
+      enabledExternalSourcesInOrder: ["lrclib"],
+      fetchers: { lrclib: jest.fn().mockResolvedValue(null) },
+    })).rejects.toThrow("server unreachable");
+  });
+
   it("returns null when server and every external source miss", async () => {
     const getServerLyrics = jest.fn().mockResolvedValue(null);
     const lrclibFetcher = jest.fn().mockResolvedValue(null);
