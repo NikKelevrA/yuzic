@@ -266,10 +266,12 @@ artwork URL.
 | `DELETE /playlists/{id}/items/{playlistItemID}` | Removing one entry |
 | `PUT /playlists/{id}/items/{playlistItemID}/move?after={playlistItemID}` | Moving an entry (no `after` moves it first) |
 | `PUT /:/rate`, `GET /:/scrobble`, `GET /:/timeline` | Favourites and playback events |
+| `GET /library/streams/{id}` | A track's lyrics: the media part's stream with `streamType` 4, read as LRC when timed and plain lines otherwise |
+| `GET /library/metadata/{id}/nearest?limit=&maxDistance=` | Sonically similar tracks; a 404 (library without sonic analysis) is no similar tracks, not a failure |
 
 Plex answers writes with an empty body, which the client reads as success
-rather than failing to parse. Lyrics and server-provided similar tracks are not
-advertised as supported.
+rather than failing to parse. Neither lyrics streams nor `nearest` have been
+checked against a live Plex server yet.
 
 **Playlist entries on every server** are addressed by position, not song id,
 because a playlist can hold a song twice (`providers/server/playlistEntries.ts`).

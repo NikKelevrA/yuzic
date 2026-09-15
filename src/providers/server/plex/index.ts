@@ -6,6 +6,7 @@ import type {
   DiscoveryApi,
   GenresApi,
   LyricsApi,
+  LyricsResult,
   PlaylistsApi,
   SearchApi,
   SimilarApi,
@@ -26,9 +27,24 @@ import { mapAlbum } from './mapAlbum';
 import { mapArtist } from './mapArtist';
 import { mapPlaylist } from './mapPlaylist';
 import { entryIndex, movedOrder } from '@/providers/server/playlistEntries';
+import { parseLrc } from '@/providers/integration/lrclib/parseLrc';
+import { PlexRequestError } from './requestError';
 
 const FAVORITE_RATING = 10;
 const PAGE_SIZE = 200;
+/** Plex's stream type for lyrics, beside 1 video, 2 audio and 3 subtitles. */
+const LYRICS_STREAM_TYPE = 4;
+const SIMILAR_LIMIT = 50;
+/** How far, in sonic distance, a track may be and still count as similar — Plex's own default. */
+const SIMILAR_MAX_DISTANCE = 0.25;
+
+/** LRC when the text carries timestamps; otherwise plain lines to read along with. */
+function lyricsFromText(text: string): LyricsResult | null {
+  const synced = parseLrc(text);
+  if (synced.length > 0) return { synced: true, lines: synced };
+  const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => ({ startMs: 0, text: line }));
+  return lines.length > 0 ? { synced: false, lines } : null;
+}
 
 function metadata(response: PlexResponse): PlexMetadata[] {
   return response.MediaContainer?.Metadata ?? [];
@@ -279,8 +295,36 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     },
   };
 
-  const similar: SimilarApi = { getSimilarSongs: async () => [] };
-  const lyrics: LyricsApi = { getBySongId: async () => null };
+  const similar: SimilarApi = {
+    // Sonically similar tracks. Plex has them only for libraries it has run
+    // sonic analysis on; elsewhere the endpoint is absent, which is "none"
+    // rather than a failure. Any other error still rejects.
+    getSimilarSongs: async (songId) => {
+      try {
+        const response = await client.request<PlexResponse>(
+          `/library/metadata/${encodeURIComponent(songId)}/nearest?limit=${SIMILAR_LIMIT}&maxDistance=${SIMILAR_MAX_DISTANCE}`
+        );
+        return mapTracks(metadata(response)).filter(song => song.nativeId !== songId);
+      } catch (error) {
+        if (error instanceof PlexRequestError && error.status === 404) return [];
+        throw error;
+      }
+    },
+  };
+
+  const lyrics: LyricsApi = {
+    // Lyrics are a stream on the track's media part — a sidecar file or
+    // Plex's own lyrics — fetched as text from the stream's key.
+    getBySongId: async (songId) => {
+      const track = await item(songId);
+      const stream = (track?.Media ?? [])
+        .flatMap(media => media.Part ?? [])
+        .flatMap(part => part.Stream ?? [])
+        .find(candidate => candidate.streamType === LYRICS_STREAM_TYPE && candidate.key);
+      if (!stream?.key) return null;
+      return lyricsFromText(await client.requestText(stream.key));
+    },
+  };
   const search: SearchApi = {
     search: async (query) => {
       if (!query.trim()) return { albums: [], artists: [], songs: [] };

@@ -2,13 +2,17 @@ import type { Server } from '@/providers/contracts/Server';
 
 
 const mockRequest = jest.fn();
+const mockRequestText = jest.fn();
 const mockBuildStreamUrl = jest.fn((path: string) => `https://plex.example${path}`);
 
 jest.mock('./client', () => ({
-  createPlexClient: jest.fn(() => ({ request: mockRequest, buildStreamUrl: mockBuildStreamUrl, buildImageUrl: jest.fn() })),
+  createPlexClient: jest.fn(() => ({
+    request: mockRequest, requestText: mockRequestText, buildStreamUrl: mockBuildStreamUrl, buildImageUrl: jest.fn(),
+  })),
 }));
 
 import { createPlexAdapter } from './';
+import { PlexRequestError } from './requestError';
 
 const server: Server = {
   id: 'plex',
@@ -69,6 +73,64 @@ describe('Plex adapter', () => {
     });
   });
 
+
+  describe("lyrics", () => {
+    const trackWith = (streams: object[]) => ({
+      MediaContainer: { Metadata: [{ type: "track", ratingKey: "7", Media: [{ Part: [{ key: "/library/parts/7", Stream: streams }] }] }] },
+    });
+
+    beforeEach(() => mockRequestText.mockReset());
+
+    it("reads a timed lyrics stream as synced lines", async () => {
+      mockRequest.mockResolvedValue(trackWith([{ streamType: 2 }, { streamType: 4, key: "/library/streams/9", format: "lrc" }]));
+      mockRequestText.mockResolvedValue("[00:01.00] First\n[00:04.50] Second");
+
+      await expect(createPlexAdapter(server).lyrics.getBySongId("7")).resolves.toEqual({
+        synced: true,
+        lines: [{ startMs: 1000, text: "First" }, { startMs: 4500, text: "Second" }],
+      });
+      expect(mockRequestText).toHaveBeenCalledWith("/library/streams/9");
+    });
+
+    it("reads untimed lyrics as plain lines", async () => {
+      mockRequest.mockResolvedValue(trackWith([{ streamType: 4, key: "/library/streams/9", format: "txt" }]));
+      mockRequestText.mockResolvedValue("First\n\nSecond\n");
+
+      await expect(createPlexAdapter(server).lyrics.getBySongId("7")).resolves.toEqual({
+        synced: false,
+        lines: [{ startMs: 0, text: "First" }, { startMs: 0, text: "Second" }],
+      });
+    });
+
+    it("has none for a track without a lyrics stream, without asking for one", async () => {
+      mockRequest.mockResolvedValue(trackWith([{ streamType: 2 }]));
+
+      await expect(createPlexAdapter(server).lyrics.getBySongId("7")).resolves.toBeNull();
+      expect(mockRequestText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("similar songs", () => {
+    it("maps sonically similar tracks, leaving out the seed", async () => {
+      mockRequest.mockResolvedValue({ MediaContainer: { Metadata: [
+        { type: "track", ratingKey: "7", title: "Seed" },
+        { type: "track", ratingKey: "8", title: "Near" },
+      ] } });
+
+      const songs = await createPlexAdapter(server).similar.getSimilarSongs("7");
+
+      expect(songs.map(song => song.nativeId)).toEqual(["8"]);
+      expect(mockRequest).toHaveBeenCalledWith(expect.stringMatching(/^\/library\/metadata\/7\/nearest\?/));
+    });
+
+    it("has none on a library without sonic analysis, but still rejects a real failure", async () => {
+      mockRequest.mockRejectedValueOnce(new PlexRequestError(404));
+      await expect(createPlexAdapter(server).similar.getSimilarSongs("7")).resolves.toEqual([]);
+
+      mockRequest.mockRejectedValueOnce(new PlexRequestError(500));
+      await expect(createPlexAdapter(server).similar.getSimilarSongs("7")).rejects.toThrow("Plex request failed (500)");
+    });
+  });
 
   describe("playlist writes", () => {
     const entries = [

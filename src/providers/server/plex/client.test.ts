@@ -24,11 +24,18 @@ describe('Plex client bodies', () => {
     await expect(client.request('/:/rate?key=1&rating=10', { method: 'PUT' })).resolves.toEqual({});
   });
 
-  it('still rejects a refused request', async () => {
+  it('still rejects a refused request, with its status', async () => {
     mockServerFetch.mockResolvedValueOnce({ ok: false, status: 401, text: async () => '' });
     const client = createPlexClient({ serverUrl: 'https://home.example', token: 't' });
 
-    await expect(client.request('/playlists')).rejects.toThrow('Plex request failed (401)');
+    await expect(client.request('/playlists')).rejects.toMatchObject({ status: 401, message: 'Plex request failed (401)' });
+  });
+
+  it('hands back a body that is not JSON as text', async () => {
+    mockServerFetch.mockResolvedValueOnce({ ok: true, text: async () => '[00:01.00] Line' });
+    const client = createPlexClient({ serverUrl: 'https://home.example', token: 't' });
+
+    await expect(client.requestText('/library/streams/9')).resolves.toBe('[00:01.00] Line');
   });
 });
 

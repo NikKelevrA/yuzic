@@ -3,6 +3,7 @@ import { getInstallationId } from '@/providers/server/installationId';
 import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
 import type { PlexResponse } from './types';
+import { PlexRequestError } from './requestError';
 
 type PlexClientConfig = {
   serverUrl: string;
@@ -58,31 +59,31 @@ export function createPlexClient(config: PlexClientConfig) {
     failoverHint ? tryWithFailover(failoverHint, attempt) : attempt(baseUrl);
   const reachableBaseUrl = () => failoverHint ? orderedUrls(failoverHint)[0] ?? baseUrl : baseUrl;
 
-  /**
-   * Plex answers a write (`/:/rate`, a playlist edit) with 200 and no body.
-   * Parsing that as JSON threw, so a write the server had applied rejected.
-   */
-  async function readBody<T>(response: Response): Promise<T> {
-    if (!response.ok) throw new Error(`Plex request failed (${response.status})`);
-    const text = await response.text();
-    return (text.trim() ? JSON.parse(text) : {}) as T;
-  }
-
-  async function request<T = PlexResponse>(path: string, init: RequestInit = {}): Promise<T> {
-    if (path.startsWith('http')) {
-      const response = await serverFetch(path, {
-        ...init,
-        headers: { ...plexHeaders(config.token, config.basicAuth), ...init.headers },
-      });
-      return readBody<T>(response);
-    }
-    return withFailover(async (url) => {
+  /** The response body as text, through failover unless `path` is already absolute. */
+  async function send(path: string, init: RequestInit): Promise<string> {
+    const attempt = async (url: string) => {
       const response = await serverFetch(`${url}${path}`, {
         ...init,
         headers: { ...plexHeaders(config.token, config.basicAuth), ...init.headers },
       });
-      return readBody<T>(response);
-    });
+      if (!response.ok) throw new PlexRequestError(response.status);
+      return response.text();
+    };
+    return path.startsWith('http') ? attempt('') : withFailover(attempt);
+  }
+
+  /**
+   * Plex answers a write (`/:/rate`, a playlist edit) with 200 and no body.
+   * Parsing that as JSON threw, so a write the server had applied rejected.
+   */
+  async function request<T = PlexResponse>(path: string, init: RequestInit = {}): Promise<T> {
+    const text = await send(path, init);
+    return (text.trim() ? JSON.parse(text) : {}) as T;
+  }
+
+  /** A body that is not JSON — a lyrics stream's LRC or plain text. */
+  function requestText(path: string, init: RequestInit = {}): Promise<string> {
+    return send(path, init);
   }
 
   /** Direct-play path built from the part key preserved as Song.streamId. */
@@ -100,7 +101,7 @@ export function createPlexClient(config: PlexClientConfig) {
     return `${reachableBaseUrl()}${path}${token}`;
   }
 
-  return { baseUrl, request, buildStreamUrl, buildImageUrl };
+  return { baseUrl, request, requestText, buildStreamUrl, buildImageUrl };
 }
 
 export type PlexClient = ReturnType<typeof createPlexClient>;

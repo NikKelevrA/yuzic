@@ -12,6 +12,17 @@ type PlexGenre = { tag?: string };
  */
 type PlexGuid = { id?: string };
 
+/** One stream in a media part: audio (2), lyrics (4) and so on, by `streamType`. */
+type PlexStream = {
+  id?: number | string;
+  streamType?: number;
+  /** For a lyrics stream, where its text is fetched from. */
+  key?: string;
+  /** `lrc` or `txt` for lyrics. */
+  format?: string;
+  codec?: string;
+};
+
 type PlexPart = {
   id?: number | string;
   key?: string;
@@ -19,6 +30,7 @@ type PlexPart = {
   file?: string;
   size?: number;
   container?: string;
+  Stream?: PlexStream[];
 };
 
 type PlexMedia = {
