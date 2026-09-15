@@ -1,7 +1,9 @@
-Plex support, protected artwork, easier local imports, and connection fixes.
+Edit playlists, podcasts that keep up, and a rebuilt, steadier app.
 
-- Play from Plex servers, including those behind a Basic-auth reverse proxy
-- Lock-screen and Now Playing artwork now loads from authenticated servers
-- Import local audio files any time from Settings > Library
-- Fixed signing in to Jellyfin 12 servers
-- Complete Plex libraries with correct pagination across albums and playlists
+- Remove and reorder songs in a playlist, Plex included
+- Podcasts show the latest episodes; delete downloaded ones
+- Sleep timer in a track's options, and it can stop at the track's end
+- Home shelves from Jellyfin, Emby and Plex servers
+- Plex lyrics and similar tracks
+- One Downloads screen for offline files and downloaders
+- Fixed playlists missing from Recently Played
