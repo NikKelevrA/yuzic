@@ -50,7 +50,7 @@ function fakeApi(overrides: Partial<ApiAdapter> = {}): ApiAdapter {
     albums: { list: jest.fn(), get: jest.fn() },
     artists: { list: jest.fn(), get: jest.fn() },
     genres: { list: jest.fn() },
-    playlists: { list: jest.fn(), get: jest.fn(), create: jest.fn(), rename: jest.fn(), addSong: jest.fn(), removeSong: jest.fn(), delete: jest.fn() },
+    playlists: { list: jest.fn(), get: jest.fn(), create: jest.fn(), rename: jest.fn(), addSong: jest.fn(), removeSong: jest.fn(), moveSong: jest.fn(), delete: jest.fn() },
     starred: { list: jest.fn(), add: jest.fn(), remove: jest.fn() },
     songs: { get: jest.fn(async () => null), scrobble: jest.fn(), buildStreamUrl: jest.fn() },
     tracks: { list: jest.fn(), get: jest.fn() },

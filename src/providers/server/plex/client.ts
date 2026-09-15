@@ -58,22 +58,30 @@ export function createPlexClient(config: PlexClientConfig) {
     failoverHint ? tryWithFailover(failoverHint, attempt) : attempt(baseUrl);
   const reachableBaseUrl = () => failoverHint ? orderedUrls(failoverHint)[0] ?? baseUrl : baseUrl;
 
+  /**
+   * Plex answers a write (`/:/rate`, a playlist edit) with 200 and no body.
+   * Parsing that as JSON threw, so a write the server had applied rejected.
+   */
+  async function readBody<T>(response: Response): Promise<T> {
+    if (!response.ok) throw new Error(`Plex request failed (${response.status})`);
+    const text = await response.text();
+    return (text.trim() ? JSON.parse(text) : {}) as T;
+  }
+
   async function request<T = PlexResponse>(path: string, init: RequestInit = {}): Promise<T> {
     if (path.startsWith('http')) {
       const response = await serverFetch(path, {
         ...init,
         headers: { ...plexHeaders(config.token, config.basicAuth), ...init.headers },
       });
-      if (!response.ok) throw new Error(`Plex request failed (${response.status})`);
-      return response.json() as Promise<T>;
+      return readBody<T>(response);
     }
     return withFailover(async (url) => {
       const response = await serverFetch(`${url}${path}`, {
         ...init,
         headers: { ...plexHeaders(config.token, config.basicAuth), ...init.headers },
       });
-      if (!response.ok) throw new Error(`Plex request failed (${response.status})`);
-      return response.json() as Promise<T>;
+      return readBody<T>(response);
     });
   }
 

@@ -256,15 +256,26 @@ artwork URL.
 | `POST https://plex.tv/api/v2/pins?strong=true` | Starting browser PIN sign-in |
 | `GET https://plex.tv/api/v2/pins/{id}` | Polling PIN approval |
 | `GET https://plex.tv/api/v2/user` | Account display name after approval |
-| `GET /identity` | Server reachability/token check |
+| `GET /identity` | Server reachability/token check; its `machineIdentifier` roots the item URIs playlist writes send |
 | `GET /library/sections`, `/library/sections/{id}/all`, `/library/metadata/{id}` | Music catalog and item children |
 | `GET /hubs/search?query=` | Library search |
 | `GET /playlists?playlistType=audio`, `/playlists/{id}/items` | Reading audio playlists |
+| `POST /playlists?type=audio&smart=0&title=&uri=server://{machine}/com.plexapp.plugins.library` | Creating a playlist |
+| `PUT /playlists/{id}?title=`, `DELETE /playlists/{id}` | Renaming and deleting a playlist |
+| `PUT /playlists/{id}/items?uri=…/library/metadata/{ratingKey}` | Adding a track |
+| `DELETE /playlists/{id}/items/{playlistItemID}` | Removing one entry |
+| `PUT /playlists/{id}/items/{playlistItemID}/move?after={playlistItemID}` | Moving an entry (no `after` moves it first) |
 | `PUT /:/rate`, `GET /:/scrobble`, `GET /:/timeline` | Favourites and playback events |
 
-Plex playlist editing, lyrics, and server-provided similar tracks are not
-advertised as supported: their UI actions fail explicitly rather than being
-approximated with unrelated API calls.
+Plex answers writes with an empty body, which the client reads as success
+rather than failing to parse. Lyrics and server-provided similar tracks are not
+advertised as supported.
+
+**Playlist entries on every server** are addressed by position, not song id,
+because a playlist can hold a song twice (`providers/server/playlistEntries.ts`).
+Navidrome removes by `songIndexToRemove`; it has no move, so a move rewrites the
+playlist from the first changed position with one `updatePlaylist` call.
+Jellyfin and Emby move with `POST /Playlists/{id}/Items/{PlaylistItemId}/Move/{index}`.
 
 ### Local files
 

@@ -37,7 +37,7 @@ import { createPlaylist } from "./playlists/createPlaylist";
 import { deletePlaylist } from "./playlists/deletePlaylist";
 import { renamePlaylist } from "./playlists/renamePlaylist";
 import { addSongToPlaylist } from "./playlists/addSongToPlaylist";
-import { removeSongFromPlaylist } from "./playlists/removeSongFromPlaylist";
+import { movePlaylistEntry, removePlaylistEntry } from "./playlists/updatePlaylistEntries";
 
 import { getStarredItems } from "./starred/getStarredItems";
 import { star } from "./starred/star";
@@ -228,21 +228,24 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
     addSong: async (playlistId, songId) => {
       if (playlistId === FAVORITES_ID) {
         await star(client, songId);
-        return { success: true };
+        return;
       }
-      return addSongToPlaylist(client, playlistId, songId);
+      await addSongToPlaylist(client, playlistId, songId);
     },
 
-    removeSong: async (playlistId, songId) => {
+    removeSong: async (playlistId, songId, position) => {
       if (playlistId === FAVORITES_ID) {
         await unstar(client, songId);
-        return { success: true };
+        return;
       }
-      const detail = await getPlaylist(client, playlistId, provenance);
-      if (!detail) throw new Error("Playlist not found");
-      const index = detail.songs.findIndex((s) => s.nativeId === songId);
-      if (index === -1) throw new Error("Song not found in playlist");
-      return removeSongFromPlaylist(client, playlistId, index.toString());
+      await removePlaylistEntry(client, provenance, playlistId, songId, position);
+    },
+
+    moveSong: async (playlistId, move) => {
+      if (playlistId === FAVORITES_ID) {
+        throw new Error("Favorites has no order to change");
+      }
+      await movePlaylistEntry(client, provenance, playlistId, move);
     },
 
     rename: async (id: string, newName: string) => {

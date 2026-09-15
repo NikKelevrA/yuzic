@@ -16,11 +16,27 @@ beforeEach(() => {
   mockServerFetch.mockReset();
 });
 
+describe('Plex client bodies', () => {
+  it('resolves a write Plex answers with an empty body', async () => {
+    mockServerFetch.mockResolvedValueOnce({ ok: true, text: async () => '' });
+    const client = createPlexClient({ serverUrl: 'https://home.example', token: 't' });
+
+    await expect(client.request('/:/rate?key=1&rating=10', { method: 'PUT' })).resolves.toEqual({});
+  });
+
+  it('still rejects a refused request', async () => {
+    mockServerFetch.mockResolvedValueOnce({ ok: false, status: 401, text: async () => '' });
+    const client = createPlexClient({ serverUrl: 'https://home.example', token: 't' });
+
+    await expect(client.request('/playlists')).rejects.toThrow('Plex request failed (401)');
+  });
+});
+
 describe('Plex client failover', () => {
   it('uses the reachable fallback for subsequent direct-play and image URLs', async () => {
     mockServerFetch
       .mockRejectedValueOnce(new TypeError('Network request failed'))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ MediaContainer: {} }) });
+      .mockResolvedValueOnce({ ok: true, text: async () => JSON.stringify({ MediaContainer: {} }) });
     const client = createPlexClient({
       serverUrl: 'https://home.example',
       serverId: 'plex-1',

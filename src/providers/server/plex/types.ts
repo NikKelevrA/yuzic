@@ -66,6 +66,8 @@ export type PlexMetadata = {
   Guid?: PlexGuid[];
   /** On a `/status/sessions` entry: the account playing it. */
   User?: { title?: string };
+  /** On a `/playlists/{id}/items` entry: the entry's own id, which edits address. */
+  playlistItemID?: string | number;
 };
 
 type PlexDirectory = {
@@ -86,6 +88,8 @@ type PlexMediaContainer = {
   Metadata?: PlexMetadata[];
   Directory?: PlexDirectory[];
   Hub?: PlexHub[];
+  /** On `/identity`: the server's id, which item URIs are built from. */
+  machineIdentifier?: string;
 };
 
 export type PlexResponse = { MediaContainer?: PlexMediaContainer };

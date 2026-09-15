@@ -57,7 +57,7 @@ function makeApi(): ApiAdapter {
   return {
     playlists: {
       create: jest.fn(async () => 'p1'),
-      addSong: jest.fn(async () => ({ success: true })),
+      addSong: jest.fn(async () => undefined),
     },
   } as unknown as ApiAdapter;
 }
@@ -79,7 +79,7 @@ describe('generateSimilarPlaylistForSong', () => {
   it('adds tracks one at a time, so a track the service knows and the library does not is skipped', async () => {
     const api = makeApi();
     (api.playlists.addSong as jest.Mock)
-      .mockResolvedValueOnce({ success: true })
+      .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error('not in library'));
 
     const result = await generateSimilarPlaylistForSong(api, similarity, song('s1', 'Track One'));

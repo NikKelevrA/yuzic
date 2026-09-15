@@ -10,10 +10,14 @@ import type { PlaylistDetail } from '@/domain/entities/Detail';
 import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/features/offline/offlineMutations';
+import { withoutEntry } from './playlistCache';
+import { PLAYLIST_EDIT_SCOPE } from './playlistEditScope';
 
 type RemoveSongArgs = {
   playlistId: string;
   songId: string;
+  /** The entry's index as shown, for a song the playlist holds more than once. */
+  position?: number;
 };
 
 export function useRemoveSongFromPlaylist() {
@@ -24,7 +28,8 @@ export function useRemoveSongFromPlaylist() {
   const isOffline = useIsOffline();
 
   return useMutation({
-    mutationFn: async ({ playlistId, songId }: RemoveSongArgs) => {
+    scope: PLAYLIST_EDIT_SCOPE,
+    mutationFn: async ({ playlistId, songId, position }: RemoveSongArgs) => {
       if (isOffline) {
         if (!activeServer?.id) throw new Error('No active server.');
         // The queue is keyed by identity so a queued add and a later remove of
@@ -37,29 +42,22 @@ export function useRemoveSongFromPlaylist() {
           type: 'removeSongFromPlaylist',
           playlistId,
           songId: queuedSongId,
+          position,
           createdAt: Date.now(),
         }));
         return;
       }
 
-      await api.playlists.removeSong(playlistId, songId);
+      await api.playlists.removeSong(playlistId, songId, position);
     },
-    onSuccess: (_, { playlistId, songId }) => {
+    onSuccess: (_, { playlistId, songId, position }) => {
       // Patch the cache directly instead of relying solely on invalidation —
       // invalidateQueries alone does nothing observable while offline (the
       // query stays disabled until reconnect), so a removal while offline
       // left the song visibly still in the playlist with no feedback at all.
       queryClient.setQueryData<PlaylistDetail | null>(
         [QueryKeys.Playlist, activeServer?.id, playlistId],
-        (old) => {
-          if (!old) return old;
-          // The playlist's references and the detail's songs stay in step.
-          const removed = old.songs.filter(s => s.nativeId !== songId);
-          return {
-            playlist: { ...old.playlist, songIds: removed.map(s => s.localId) },
-            songs: removed,
-          };
-        }
+        (old) => old ? withoutEntry(old, songId, position) : old
       );
       queryClient.setQueryData<Playlist[]>(
         [QueryKeys.Playlists, activeServer?.id],

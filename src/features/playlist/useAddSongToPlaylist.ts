@@ -10,6 +10,8 @@ import { useIsOffline } from '@/features/connectivity/useIsOffline';
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
 import { enqueueOfflineMutationAction } from '@/state/redux/slices/offlineMutationsSlice';
 import { createOfflineMutationId } from '@/features/offline/offlineMutations';
+import { withAppendedSong } from './playlistCache';
+import { PLAYLIST_EDIT_SCOPE } from './playlistEditScope';
 
 type AddSongArgs = {
   playlistId: string;
@@ -26,6 +28,7 @@ export function useAddSongToPlaylist() {
   const { resolvePlayableSong } = usePlayableSongResolver();
 
   return useMutation({
+    scope: PLAYLIST_EDIT_SCOPE,
     mutationFn: async ({ playlistId, songId, song: inputSong }: AddSongArgs) => {
       const resolvedSongId = songId ?? inputSong?.nativeId;
       if (!resolvedSongId) throw new Error('Missing song id.');
@@ -53,23 +56,17 @@ export function useAddSongToPlaylist() {
     onSuccess: (result, { playlistId }) => {
       if (result.song) {
         const song = result.song;
-        // Membership is an identity comparison: the same recording reached
-        // from two origins is not the same track.
-        const addToCache = (old: PlaylistDetail | null | undefined): PlaylistDetail | null | undefined => {
-          if (!old) return old;
-          if (old.songs.some(s => s.localId === song.localId)) return old;
-          // The playlist's own references and the detail's songs have to stay
-          // in agreement, so both grow together.
-          return {
-            playlist: { ...old.playlist, songIds: [...old.playlist.songIds, song.localId] },
-            songs: [...old.songs, song],
-          };
-        };
-
+        // Appended as the server appends — a second copy included. Skipping a
+        // song already cached left the screen one entry short of the server,
+        // and a later positional edit then addressed the wrong entry.
         queryClient.setQueryData<PlaylistDetail | null>(
           [QueryKeys.Playlist, activeServer?.id, playlistId],
-          addToCache
+          (old) => old ? withAppendedSong(old, song) : old
         );
+        // Some servers decline a duplicate instead; the reload settles which.
+        if (!isOffline) {
+          void queryClient.invalidateQueries({ queryKey: [QueryKeys.Playlist, activeServer?.id, playlistId] });
+        }
         queryClient.setQueryData<Playlist[]>(
           [QueryKeys.Playlists, activeServer?.id],
           (old) => old?.map(playlist =>

@@ -10,6 +10,7 @@ import type { LocalAlbumGroup } from './mapAlbum';
 import { mapArtist } from './mapArtist';
 import type { LocalArtistGroup } from './mapArtist';
 import { mapPlaylist } from './mapPlaylist';
+import { entryIndex, movedOrder } from '@/providers/server/playlistEntries';
 
 function groupBy(tracks: LocalTrack[], key: 'albumId' | 'artistId'): Map<string, LocalTrack[]> {
   const groups = new Map<string, LocalTrack[]>();
@@ -116,15 +117,18 @@ export function createLocalAdapter(server: Server): ApiAdapter {
       const entry = readLocalLibrary().playlists.find(item => item.id === playlistId);
       if (!entry) throw new Error('Playlist not found');
       updateLocalPlaylist(playlistId, { trackIds: [...entry.trackIds, songId] });
-      return { success: true };
     },
-    removeSong: async (playlistId, songId) => {
+    removeSong: async (playlistId, songId, position) => {
       const entry = readLocalLibrary().playlists.find(item => item.id === playlistId);
       if (!entry) throw new Error('Playlist not found');
-      const index = entry.trackIds.indexOf(songId);
-      if (index < 0) return { success: false, message: 'Song not found in playlist.' };
+      const index = entryIndex(entry.trackIds, songId, position);
       updateLocalPlaylist(playlistId, { trackIds: entry.trackIds.filter((_, i) => i !== index) });
-      return { success: true };
+    },
+    moveSong: async (playlistId, move) => {
+      const entry = readLocalLibrary().playlists.find(item => item.id === playlistId);
+      if (!entry) throw new Error('Playlist not found');
+      const index = entryIndex(entry.trackIds, move.songId, move.from);
+      updateLocalPlaylist(playlistId, { trackIds: movedOrder(entry.trackIds, index, move.to) });
     },
     delete: async (id) => removeLocalPlaylist(id),
   };

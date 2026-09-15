@@ -78,6 +78,7 @@ async function replayMutation(ctx: ReplayContext, mutation: OfflineMutation) {
       await api.playlists.removeSong(
         mutation.playlistId,
         parseLocalId(mutation.songId)?.nativeId ?? mutation.songId,
+        mutation.position,
       );
       break;
     case 'deletePlaylist':

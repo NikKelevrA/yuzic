@@ -35,6 +35,7 @@ const EMPTY_ADAPTER: ApiAdapter = {
     rename: empty,
     addSong: empty,
     removeSong: empty,
+    moveSong: empty,
     delete: empty,
   },
   starred: {

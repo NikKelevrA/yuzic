@@ -2,6 +2,7 @@ import type { AudioQuality } from '@/domain/playback/AudioFormat';
 import { qualityToStreamParams } from '@/providers/server/streamQuality';
 import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
+import { ServerFeatureUnavailableError } from '@/providers/contracts/ServerAdapter';
 
 // md5 does not ship TypeScript declarations in this project.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -25,8 +26,6 @@ const CLIENT_NAME = "Yuzic";
 
 export type NavidromeClient = ReturnType<typeof createNavidromeClient>;
 
-import { ServerFeatureUnavailableError } from '@/providers/contracts/ServerAdapter';
-
 /** A request the server answered and refused — `status: "failed"` in a 200 body. */
 export class SubsonicRequestError extends Error {
   constructor(readonly code: number | undefined, message: string | undefined) {
@@ -49,22 +48,25 @@ export function buildTokenParams(username: string, password: string): {
   return { u: username, t: token, s: salt };
 }
 
+/** A query value; an array repeats the key, which is how Subsonic takes a list. */
+type ParamValue = string | number | readonly (string | number)[];
+
 function buildParams(
   auth: { u: string; t: string; s: string },
-  extra: Record<string, string | number> = {},
+  extra: Record<string, ParamValue> = {},
   opts?: { format?: "json" | null }
 ): string {
-  const combined = {
+  const params = new URLSearchParams({
     ...auth,
     v: API_VERSION,
     c: CLIENT_NAME,
     ...(opts?.format === null ? {} : { f: "json" }),
-    ...Object.fromEntries(
-      Object.entries(extra).map(([k, v]) => [k, String(v)])
-    ),
-  };
-
-  return new URLSearchParams(combined).toString();
+  });
+  for (const [key, value] of Object.entries(extra)) {
+    if (Array.isArray(value)) value.forEach(item => params.append(key, String(item)));
+    else params.set(key, String(value));
+  }
+  return params.toString();
 }
 
 export function createNavidromeClient(config: NavidromeClientConfig) {
@@ -79,7 +81,7 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
 
   async function request<T>(
     endpoint: string,
-    extraParams: Record<string, string | number> = {},
+    extraParams: Record<string, ParamValue> = {},
     options: { method?: "GET" | "POST" } = {}
   ): Promise<T> {
     const auth = buildTokenParams(username, password);

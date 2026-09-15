@@ -6,16 +6,6 @@ import type { AlbumDetail, PlaylistDetail } from "@/domain/entities/Detail";
 import type { CoverSource } from "@/domain/entities/Cover";
 import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat';
 
-/** What a server answers when a song is added to one of its playlists. */
-export interface AddSongToPlaylistResult {
-  success: boolean;
-}
-
-/** What a server answers when a song is removed from one of its playlists. */
-export interface RemoveSongFromPlaylistResult {
-  success: boolean;
-}
-
 export type Library = {
   id: string;
   name: string;
@@ -291,6 +281,15 @@ export class ServerFeatureUnavailableError extends Error {
   }
 }
 
+/** A playlist edit's song is no longer where it said — the playlist changed
+ *  elsewhere. Refused rather than guessed at; the caller reloads. */
+export class PlaylistChangedError extends Error {
+  constructor(message = 'The playlist changed since it was loaded') {
+    super(message);
+    this.name = 'PlaylistChangedError';
+  }
+}
+
 interface SharesApi {
   list(): Promise<Share[]>;
   /** Creates a public share URL for an album/playlist/track id and returns
@@ -341,10 +340,17 @@ export interface PlaylistsApi {
   get(id: string): Promise<PlaylistDetail>;
   create(name: string): Promise<string>;
   rename(id: string, newName: string): Promise<void>;
-  addSong(playlistId: string, songId: string): Promise<AddSongToPlaylistResult>;
-  removeSong(playlistId: string, songId: string): Promise<RemoveSongFromPlaylistResult>;
+  /** Writes reject when the server refuses; none resolves with a failure to read. */
+  addSong(playlistId: string, songId: string): Promise<void>;
+  /** Removes one entry; `position` picks which copy of a repeated song
+   *  (`providers/server/playlistEntries.ts` has the rule). */
+  removeSong(playlistId: string, songId: string, position?: number): Promise<void>;
+  /** Moves the entry at `from`, which must still be `songId`, to index `to`. */
+  moveSong(playlistId: string, move: PlaylistMove): Promise<void>;
   delete(id: string): Promise<void>;
 }
+
+export type PlaylistMove = { songId: string; from: number; to: number };
 
 export type StarredItemType = 'song' | 'album';
 

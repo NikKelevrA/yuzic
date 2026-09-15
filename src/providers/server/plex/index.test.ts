@@ -70,6 +70,76 @@ describe('Plex adapter', () => {
   });
 
 
+  describe("playlist writes", () => {
+    const entries = [
+      { type: "track", ratingKey: "a", playlistItemID: 11 },
+      { type: "track", ratingKey: "b", playlistItemID: 12 },
+      { type: "track", ratingKey: "a", playlistItemID: 13 },
+    ];
+
+    beforeEach(() => {
+      mockRequest.mockImplementation(async (path: string) => {
+        if (path === "/identity") return { MediaContainer: { machineIdentifier: "mid" } };
+        if (path.startsWith("/playlists/p1/items") && !path.includes("/move") && !/items\/\d/.test(path)) {
+          return { MediaContainer: { totalSize: entries.length, Metadata: entries } };
+        }
+        if (path.startsWith("/playlists?")) return { MediaContainer: { Metadata: [{ ratingKey: 99, type: "playlist" }] } };
+        return {};
+      });
+    });
+
+    const calls = () => mockRequest.mock.calls.filter(([, init]) => init?.method);
+
+    it("creates an audio playlist under this server's library and returns its id", async () => {
+      await expect(createPlexAdapter(server).playlists.create("Road trip")).resolves.toBe("99");
+
+      const [path, init] = calls()[0];
+      expect(init).toEqual({ method: "POST" });
+      expect(path).toContain("type=audio");
+      expect(path).toContain("title=Road%20trip");
+      expect(decodeURIComponent(path)).toContain("uri=server://mid/com.plexapp.plugins.library");
+    });
+
+    it("adds a song by its library URI", async () => {
+      await createPlexAdapter(server).playlists.addSong("p1", "42");
+
+      expect(calls()).toEqual([[
+        `/playlists/p1/items?uri=${encodeURIComponent("server://mid/com.plexapp.plugins.library/library/metadata/42")}`,
+        { method: "PUT" },
+      ]]);
+    });
+
+    it("removes the entry at the position by its playlist item id", async () => {
+      await createPlexAdapter(server).playlists.removeSong("p1", "a", 2);
+
+      expect(calls()).toEqual([["/playlists/p1/items/13", { method: "DELETE" }]]);
+    });
+
+    it("moves an entry after the one that will precede it, or to the top with none", async () => {
+      const adapter = createPlexAdapter(server);
+
+      await adapter.playlists.moveSong("p1", { songId: "a", from: 0, to: 1 });
+      await adapter.playlists.moveSong("p1", { songId: "a", from: 2, to: 0 });
+
+      expect(calls()).toEqual([
+        ["/playlists/p1/items/11/move?after=12", { method: "PUT" }],
+        ["/playlists/p1/items/13/move", { method: "PUT" }],
+      ]);
+    });
+
+    it("renames and deletes", async () => {
+      const adapter = createPlexAdapter(server);
+
+      await adapter.playlists.rename("p1", "New name");
+      await adapter.playlists.delete("p1");
+
+      expect(calls()).toEqual([
+        ["/playlists/p1?title=New%20name", { method: "PUT" }],
+        ["/playlists/p1", { method: "DELETE" }],
+      ]);
+    });
+  });
+
   describe("discovery", () => {
     const track = (id: string, genres: string[] = []) => ({
       type: "track", ratingKey: id, title: id, Genre: genres.map(tag => ({ tag })), Media: [{ Part: [{ key: `/library/parts/${id}` }] }],

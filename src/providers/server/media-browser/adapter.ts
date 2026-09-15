@@ -27,7 +27,9 @@ import { getAlbumsWithSongs } from "./albums/getAlbumsWithSongs";
 import { getArtists } from "./artists/getArtists";
 import { getPlaylists } from "./playlists/getPlaylists";
 import { getPlaylist } from "./playlists/getPlaylist";
-import { getPlaylistEntryIdForSong } from "./playlists/getPlaylistItems";
+import { getPlaylistEntries } from "./playlists/getPlaylistItems";
+import { movePlaylistItem } from "./playlists/movePlaylistItem";
+import { entryIndex } from "@/providers/server/playlistEntries";
 import { createPlaylist } from "./playlists/createPlaylist";
 import { deletePlaylist } from "./playlists/deletePlaylist";
 import { updatePlaylistName } from "./playlists/updatePlaylistName";
@@ -179,21 +181,30 @@ export const createMediaBrowserAdapter = (
     addSong: async (playlistId: string, songId: string) => {
       if (playlistId === FAVORITES_ID) {
         await star(client, songId);
-        return { success: true };
+        return;
       }
       await addPlaylistItems(client, playlistId, [songId]);
-      return { success: true };
     },
 
-    removeSong: async (playlistId: string, songId: string) => {
+    removeSong: async (playlistId, songId, position) => {
       if (playlistId === FAVORITES_ID) {
         await unstar(client, songId);
-        return { success: true };
+        return;
       }
-      const entryId = await getPlaylistEntryIdForSong(client, playlistId, songId);
-      if (!entryId) throw new Error("Song not found in playlist");
-      await removePlaylistItems(client, playlistId, [entryId]);
-      return { success: true };
+      const entries = await getPlaylistEntries(client, playlistId);
+      const index = entryIndex(entries.map(entry => entry.songId), songId, position);
+      await removePlaylistItems(client, playlistId, [entries[index].entryId]);
+    },
+
+    moveSong: async (playlistId, move) => {
+      if (playlistId === FAVORITES_ID) {
+        throw new Error("Favorites has no order to change");
+      }
+      const entries = await getPlaylistEntries(client, playlistId);
+      const index = entryIndex(entries.map(entry => entry.songId), move.songId, move.from);
+      const to = Math.max(0, Math.min(move.to, entries.length - 1));
+      if (to === index) return;
+      await movePlaylistItem(client, playlistId, entries[index].entryId, to);
     },
 
     rename: async (id: string, newName: string) => {

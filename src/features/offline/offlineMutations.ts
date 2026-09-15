@@ -43,6 +43,8 @@ export type OfflineMutation =
       playlistId: string;
       /** Identity, matching `addSongToPlaylist`'s song, so the pair collapses. */
       songId: LocalId;
+      /** Which entry, for a song the playlist held more than once when removed. */
+      position?: number;
     })
   | (OfflineMutationBase & {
       type: 'deletePlaylist';

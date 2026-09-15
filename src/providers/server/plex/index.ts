@@ -25,6 +25,7 @@ import { mapSong } from './mapSong';
 import { mapAlbum } from './mapAlbum';
 import { mapArtist } from './mapArtist';
 import { mapPlaylist } from './mapPlaylist';
+import { entryIndex, movedOrder } from '@/providers/server/playlistEntries';
 
 const FAVORITE_RATING = 10;
 const PAGE_SIZE = 200;
@@ -105,6 +106,29 @@ export function createPlexAdapter(server: Server): ApiAdapter {
 
   async function itemTracks(id: string): Promise<PlexMetadata[]> {
     return pagedMetadata(client, `/library/metadata/${encodeURIComponent(id)}/children`);
+  }
+
+  let machineIdentifier: Promise<string> | null = null;
+
+  /**
+   * The root every Plex item URI hangs off — `server://<machine id>/…`.
+   * Playlist writes name items by URI rather than by rating key alone.
+   * Asked once; a failed ask is forgotten so the next write asks again.
+   */
+  function libraryUri(): Promise<string> {
+    machineIdentifier ??= client.request<PlexResponse>('/identity').then(response => {
+      const id = response.MediaContainer?.machineIdentifier;
+      if (!id) throw new Error('Plex did not say which server it is');
+      return id;
+    });
+    machineIdentifier.catch(() => { machineIdentifier = null; });
+    return machineIdentifier.then(id => `server://${id}/com.plexapp.plugins.library`);
+  }
+
+  /** A playlist's track entries in order — the same ones `playlists.get` shows, so positions agree. */
+  async function playlistEntries(playlistId: string): Promise<PlexMetadata[]> {
+    const entries = await pagedMetadata(client, `/playlists/${encodeURIComponent(playlistId)}/items`);
+    return entries.filter(entry => entry.type === 'track');
   }
 
   function mapTracks(items: PlexMetadata[]): Song[] {
@@ -212,11 +236,47 @@ export function createPlexAdapter(server: Server): ApiAdapter {
       const playlist = mapPlaylist(base, { provenance, songIds: songs.map(song => song.localId) });
       return { playlist, songs };
     },
-    create: async () => { throw new Error('Creating Plex playlists is not available yet.'); },
-    rename: async () => { throw new Error('Renaming Plex playlists is not available yet.'); },
-    addSong: async () => ({ success: false, message: 'Editing Plex playlists is not available yet.' }),
-    removeSong: async () => ({ success: false, message: 'Editing Plex playlists is not available yet.' }),
-    delete: async () => { throw new Error('Deleting Plex playlists is not available yet.'); },
+    create: async (name) => {
+      const created = metadata(await client.request<PlexResponse>(
+        `/playlists?type=audio&smart=0&title=${encodeURIComponent(name)}&uri=${encodeURIComponent(await libraryUri())}`,
+        { method: 'POST' },
+      ))[0];
+      if (created?.ratingKey == null) throw new Error('Plex did not create the playlist');
+      return String(created.ratingKey);
+    },
+    rename: async (id, newName) => {
+      await client.request(`/playlists/${encodeURIComponent(id)}?title=${encodeURIComponent(newName)}`, { method: 'PUT' });
+    },
+    addSong: async (playlistId, songId) => {
+      await client.request(
+        `/playlists/${encodeURIComponent(playlistId)}/items?uri=${encodeURIComponent(`${await libraryUri()}/library/metadata/${songId}`)}`,
+        { method: 'PUT' },
+      );
+    },
+    removeSong: async (playlistId, songId, position) => {
+      const entries = await playlistEntries(playlistId);
+      const entry = entries[entryIndex(entries.map(e => String(e.ratingKey)), songId, position)];
+      await client.request(
+        `/playlists/${encodeURIComponent(playlistId)}/items/${encodeURIComponent(String(entry.playlistItemID))}`,
+        { method: 'DELETE' },
+      );
+    },
+    moveSong: async (playlistId, move) => {
+      const entries = await playlistEntries(playlistId);
+      const from = entryIndex(entries.map(e => String(e.ratingKey)), move.songId, move.from);
+      const reordered = movedOrder(entries, from, move.to);
+      const to = reordered.indexOf(entries[from]);
+      if (to === from) return;
+      // Plex places an entry after another; with none named it goes first.
+      const after = to > 0 ? `?after=${encodeURIComponent(String(reordered[to - 1].playlistItemID))}` : '';
+      await client.request(
+        `/playlists/${encodeURIComponent(playlistId)}/items/${encodeURIComponent(String(entries[from].playlistItemID))}/move${after}`,
+        { method: 'PUT' },
+      );
+    },
+    delete: async (id) => {
+      await client.request(`/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    },
   };
 
   const similar: SimilarApi = { getSimilarSongs: async () => [] };

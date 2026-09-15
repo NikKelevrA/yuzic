@@ -23,14 +23,17 @@ export async function getPlaylistItems(
   return items.map((s) => mapSong(s, { provenance, brand: client.brand }));
 }
 
-/** Resolve song ID to the server's PlaylistItemId (required for remove). */
-export async function getPlaylistEntryIdForSong(
+/**
+ * The playlist's entries in order: each song's id beside the entry id the
+ * server addresses edits by. One song can be several entries.
+ */
+export async function getPlaylistEntries(
   client: MediaBrowserClient,
-  playlistId: string,
-  songId: string
-): Promise<string | null> {
+  playlistId: string
+): Promise<{ songId: string; entryId: string }[]> {
   const raw = await fetchGetPlaylistItems(client, playlistId);
-  const items = raw?.Items ?? [];
-  const item = items.find((s) => s.Id === songId);
-  return item?.PlaylistItemId ?? null;
+  return (raw?.Items ?? []).map((item) => ({
+    songId: item.Id ?? "",
+    entryId: item.PlaylistItemId ?? "",
+  }));
 }
