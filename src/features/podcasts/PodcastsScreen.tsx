@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +15,7 @@ import { notify } from '@/components/toast';
 import { AlertTriangle, CloudOff, Plus, Podcast as PodcastIcon, RefreshCw, Trash2 } from 'lucide-react-native';
 
 import { useApi } from '@/providers/registry/useApi';
-import type { PodcastChannel } from '@/providers/contracts/ServerAdapter';
+import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/ServerAdapter';
 import { DetailHeaderBar, DetailHeaderIconButton } from '@/components/DetailHeader';
 import { FormSheet, FormSheetField } from '@/components/FormSheet';
 import MediaListRow from '@/components/MediaListRow';
@@ -24,10 +25,13 @@ import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
-import { hitSlopFor, iconSize, spacing, statusColor } from '@/constants/design';
+import { hitSlopFor, iconSize, spacing, statusColor, typography } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { isUnavailableOnServer } from '@/features/library/useServerSurface';
+
+/** Enough to see what is new without pushing the shows themselves off the screen. */
+const LATEST_EPISODE_COUNT = 5;
 
 export default function PodcastsScreen() {
   const { t } = useTranslation();
@@ -76,6 +80,38 @@ export default function PodcastsScreen() {
   }, [api.podcasts, queryClient, refreshing, t]);
 
   const channelCount = channelsQuery.data?.length ?? 0;
+
+  // What arrived last across every show. The server keeps this list; without
+  // it, a new episode meant opening each channel in turn to look for one.
+  const newestQuery = useQuery<PodcastEpisode[]>({
+    queryKey: [QueryKeys.Podcasts, 'newest'],
+    queryFn: async () => (await api.podcasts?.newestEpisodes(LATEST_EPISODE_COUNT)) ?? [],
+    enabled: Boolean(api.podcasts) && serverReachable && channelCount > 0,
+    staleTime: 1000 * 60 * 15,
+    // A shortcut above the list, not the list: a failed read leaves it out.
+    retry: false,
+  });
+  const channelTitles = useMemo(
+    () => new Map((channelsQuery.data ?? []).map(channel => [channel.id, channel.title])),
+    [channelsQuery.data]
+  );
+  const latestEpisodes = newestQuery.data ?? [];
+  const latestHeader = latestEpisodes.length > 0 ? (
+    <View style={styles.latest}>
+      <Text style={[styles.sectionTitle, { color: colors.secondary }]}>{t('podcasts.latest')}</Text>
+      {latestEpisodes.map(episode => (
+        <MediaListRow
+          key={episode.id}
+          title={episode.title}
+          subtitle={channelTitles.get(episode.channelId) ?? ''}
+          cover={episode.cover}
+          onPress={episode.channelId
+            ? () => navigation.push('podcastChannel', { channelId: episode.channelId })
+            : undefined}
+        />
+      ))}
+    </View>
+  ) : null;
 
   const handleDelete = useCallback((channel: PodcastChannel) => {
     Alert.alert(
@@ -204,6 +240,7 @@ export default function PodcastsScreen() {
           keyExtractor={(c) => c.id}
           contentContainerStyle={[styles.listContent, { paddingBottom: scrollClearance }]}
           ItemSeparatorComponent={renderSeparator}
+          ListHeaderComponent={latestHeader}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -288,4 +325,10 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.page,
   },
   rowAction: { padding: spacing.xs },
+  latest: { paddingBottom: spacing.md },
+  sectionTitle: {
+    ...typography.sectionTitle,
+    paddingHorizontal: spacing.page,
+    marginBottom: spacing.sm,
+  },
 });

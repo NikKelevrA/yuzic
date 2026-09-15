@@ -8,6 +8,7 @@ import PodcastsScreen from './PodcastsScreen';
 
 const mockPodcasts = {
   list: jest.fn(),
+  newestEpisodes: jest.fn(),
   subscribe: jest.fn(),
   unsubscribe: jest.fn(),
   refreshAll: jest.fn(),
@@ -126,6 +127,30 @@ describe('PodcastsScreen', () => {
 
     fireEvent.press(view.getByText('Show a'));
     expect(mockPush).toHaveBeenCalledWith('podcastChannel', { channelId: 'a' });
+  });
+
+  it("lists the latest episodes across shows, named by their show, and opens an episode's show", async () => {
+    mockPodcasts.list.mockResolvedValue([channel('a'), channel('b')]);
+    mockPodcasts.newestEpisodes.mockResolvedValue([
+      { id: 'e9', channelId: 'b', title: 'Brand new', status: 'new', streamId: null, playableStreamId: null, cover: { kind: 'none' } },
+    ]);
+    const view = await renderScreen();
+
+    await waitFor(() => expect(view.getByText('podcasts.latest')).toBeTruthy());
+    expect(mockPodcasts.newestEpisodes).toHaveBeenCalledWith(5);
+    expect(view.getAllByText('Show b').length).toBeGreaterThan(1);
+
+    fireEvent.press(view.getByText('Brand new'));
+    expect(mockPush).toHaveBeenCalledWith('podcastChannel', { channelId: 'b' });
+  });
+
+  it('leaves the latest-episodes section out when there are none', async () => {
+    mockPodcasts.list.mockResolvedValue([channel('a')]);
+    mockPodcasts.newestEpisodes.mockResolvedValue([]);
+    const view = await renderScreen();
+
+    await waitFor(() => expect(view.getByText('Show a')).toBeTruthy());
+    expect(view.queryByText('podcasts.latest')).toBeNull();
   });
 
   it('unsubscribes only after confirming', async () => {

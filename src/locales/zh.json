@@ -1388,7 +1388,11 @@
     "play": "播放单集",
     "download": "下载单集",
     "downloadStarted": "已开始下载",
-    "unsubscribe": "取消订阅"
+    "unsubscribe": "取消订阅",
+    "latest": "最新单集",
+    "deleteEpisode": "删除单集",
+    "deleteEpisodeTitle": "删除这个单集？",
+    "deleteEpisodeBody": "“{{title}}”将从你的服务器中删除，之后可以重新下载。"
   },
   "a11y": {
     "detail": {

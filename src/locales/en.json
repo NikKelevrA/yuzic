@@ -1367,7 +1367,11 @@
     "play": "Play episode",
     "download": "Download episode",
     "downloadStarted": "Download started",
-    "unsubscribe": "Unsubscribe"
+    "unsubscribe": "Unsubscribe",
+    "latest": "Latest episodes",
+    "deleteEpisode": "Delete episode",
+    "deleteEpisodeTitle": "Delete this episode?",
+    "deleteEpisodeBody": "\"{{title}}\" will be removed from your server. You can download it again later."
   },
   "shares": {
     "title": "Shared links",

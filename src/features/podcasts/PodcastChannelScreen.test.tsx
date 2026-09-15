@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/ServerAdapter';
 import PodcastChannelScreen from './PodcastChannelScreen';
 
-const mockPodcasts = { list: jest.fn(), downloadEpisode: jest.fn() };
+const mockPodcasts = { list: jest.fn(), downloadEpisode: jest.fn(), deleteEpisode: jest.fn() };
 const mockPlaySong = jest.fn();
 
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_, key) => (key === '__esModule' ? true : () => null) }));
@@ -96,6 +96,23 @@ describe('PodcastChannelScreen', () => {
 
     expect(mockPodcasts.downloadEpisode).toHaveBeenCalledWith('e1');
     await waitFor(() => expect(view.getByText('downloading')).toBeTruthy());
+  });
+
+  it('deletes a downloaded episode from the server only after confirming', async () => {
+    const { Alert } = require('react-native');
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockPodcasts.list.mockResolvedValue([channel([episode('e1', { status: 'completed', playableStreamId: 'st1' })])]);
+    mockPodcasts.deleteEpisode.mockResolvedValue(undefined);
+    const view = await renderScreen();
+
+    fireEvent.press(await view.findByLabelText('podcasts.deleteEpisode'));
+    expect(mockPodcasts.deleteEpisode).not.toHaveBeenCalled();
+
+    const buttons = alert.mock.calls[0][2] as { style?: string; onPress?: () => void }[];
+    buttons.find(button => button.style === 'destructive')?.onPress?.();
+
+    await waitFor(() => expect(mockPodcasts.deleteEpisode).toHaveBeenCalledWith('e1'));
+    alert.mockRestore();
   });
 
   it('says so when the channel is gone', async () => {

@@ -1388,7 +1388,11 @@
     "play": "エピソードを再生",
     "download": "エピソードをダウンロード",
     "downloadStarted": "ダウンロードを開始しました",
-    "unsubscribe": "登録解除"
+    "unsubscribe": "登録解除",
+    "latest": "最新のエピソード",
+    "deleteEpisode": "エピソードを削除",
+    "deleteEpisodeTitle": "このエピソードを削除しますか？",
+    "deleteEpisodeBody": "「{{title}}」をサーバーから削除します。後でもう一度ダウンロードできます。"
   },
   "a11y": {
     "detail": {

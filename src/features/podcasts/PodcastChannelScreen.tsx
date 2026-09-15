@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
-import { ArrowDownCircle, CheckCircle, Play, Podcast as PodcastIcon } from 'lucide-react-native';
+import { ArrowDownCircle, CheckCircle, Play, Podcast as PodcastIcon, Trash2 } from 'lucide-react-native';
 
 import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
@@ -92,6 +92,32 @@ export default function PodcastChannelScreen() {
     }
   }, [api.podcasts, queryClient, t]);
 
+  // A downloaded episode takes space on the server. The server could always
+  // delete one; the app gave no way to ask, so a finished show stayed on disk.
+  const handleDelete = useCallback((episode: PodcastEpisode) => {
+    const podcasts = api.podcasts;
+    if (!podcasts) return;
+    Alert.alert(
+      t('podcasts.deleteEpisodeTitle'),
+      t('podcasts.deleteEpisodeBody', { title: episode.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await podcasts.deleteEpisode(episode.id);
+              await queryClient.invalidateQueries({ queryKey: [QueryKeys.Podcasts] });
+            } catch {
+              notify.error(t('common.error.unexpected'));
+            }
+          },
+        },
+      ]
+    );
+  }, [api.podcasts, queryClient, t]);
+
   const renderSeparator = useCallback(
     () => <View style={[styles.separator, { backgroundColor: colors.border }]} />,
     [colors.border]
@@ -122,14 +148,24 @@ export default function PodcastChannelScreen() {
             {isDownloading ? (
               <SpinningLoaderCircle size={iconSize.row} color={colors.subtext} />
             ) : playable ? (
-              <Touchable
-                onPress={() => handlePlay(item)}
-                accessibilityRole="button"
-                accessibilityLabel={t('podcasts.play')}
-                hitSlop={hitSlopFor(22)}
-              >
-                <Play size={iconSize.secondary} color={colors.themeColor} fill={colors.themeColor} />
-              </Touchable>
+              <View style={styles.episodeActions}>
+                <Touchable
+                  onPress={() => handleDelete(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('podcasts.deleteEpisode')}
+                  hitSlop={hitSlopFor(22)}
+                >
+                  <Trash2 size={iconSize.row} color={colors.subtext} />
+                </Touchable>
+                <Touchable
+                  onPress={() => handlePlay(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('podcasts.play')}
+                  hitSlop={hitSlopFor(22)}
+                >
+                  <Play size={iconSize.secondary} color={colors.themeColor} fill={colors.themeColor} />
+                </Touchable>
+              </View>
             ) : item.status === 'completed' ? (
               <CheckCircle size={iconSize.secondary} color={colors.subtext} />
             ) : (
@@ -146,7 +182,7 @@ export default function PodcastChannelScreen() {
         </View>
       );
     },
-    [colors.secondary, colors.subtext, colors.themeColor, handlePlay, handleDownload, t, density.rowPadding]
+    [colors.secondary, colors.subtext, colors.themeColor, handlePlay, handleDownload, handleDelete, t, density.rowPadding]
   );
 
   return (
@@ -206,4 +242,5 @@ const styles = StyleSheet.create({
   meta: { ...typography.caption, marginTop: spacing.xxs },
   description: { ...typography.caption, marginTop: spacing.xxs },
   action: { padding: spacing.sm },
+  episodeActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
 });

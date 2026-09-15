@@ -1393,7 +1393,11 @@
     "play": "Lire l’épisode",
     "download": "Télécharger l’épisode",
     "downloadStarted": "Téléchargement démarré",
-    "unsubscribe": "Se désabonner"
+    "unsubscribe": "Se désabonner",
+    "latest": "Derniers épisodes",
+    "deleteEpisode": "Supprimer l’épisode",
+    "deleteEpisodeTitle": "Supprimer cet épisode ?",
+    "deleteEpisodeBody": "« {{title}} » sera supprimé de votre serveur. Vous pourrez le télécharger à nouveau."
   },
   "a11y": {
     "detail": {
