@@ -13,6 +13,7 @@ import {
   findNextBoundaryIndex,
   QueueSegment,
 } from './playingQueue'
+import { rememberResource } from './knownResources'
 
 const song = (id: string) => ({ id })
 const getId = (item: { id: string }) => item.id
@@ -306,6 +307,17 @@ describe('resourcesFromPlayerQueue', () => {
     expect(next).toHaveLength(1);
     expect(next[0].song.nativeId).toBe('1');
     expect(next[0].song.provenance).toEqual(provenance);
+  });
+
+  it('knows a song offered to the car in full, even though the app never queued it', () => {
+    // A CarPlay selection queues natively. The player item carries only a
+    // title; the song the browse tree was built from carries album and cover.
+    const offered = resourceFor('car-1', 'https://server.test/stream/car-1');
+    rememberResource(offered);
+
+    const next = resourcesFromPlayerQueue([playerItem('car-1')], []);
+
+    expect(next[0]).toBe(offered);
   });
 
   it('drops only what cannot be identified at all', () => {

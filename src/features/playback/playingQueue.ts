@@ -2,6 +2,7 @@ import type { MediaItem } from '@/features/player/mediaItem'
 import type { PlayableResource } from '@/features/playback/playableResource'
 import { resourceFromPlayerItem } from '@/features/playback/playableResource'
 import { getMediaItemId, getMediaItemUrl } from './playableMedia'
+import { knownResource } from './knownResources'
 
 /**
  * `resourceFromPlayerItem` wants a plain string url; `MediaItem.url` is the
@@ -234,7 +235,9 @@ export function resourcesFromPlayerQueue(
   return items
     .map(item => {
       const id = getMediaItemId(item);
-      return byId.get(id) ?? resourceFromMediaItem(item);
+      // A song offered to the car is known in full even when the app never
+      // queued it; the player's own item is the last resort.
+      return byId.get(id) ?? knownResource(id) ?? resourceFromMediaItem(item);
     })
     .filter((resource): resource is PlayableResource => Boolean(resource));
 }

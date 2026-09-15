@@ -61,6 +61,14 @@ const item = (id: string, over: Partial<MediaItem> = {}): MediaItem => ({
 const named = (name: string) => mockCalls.filter(call => call.name === name);
 
 /**
+ * The commands sent, without the queue reads. Setup reads the engine's queue
+ * once (so a queue the car started while the app was asleep is not lost); the
+ * gate tests are about commands being held and ordered, which a read is not.
+ */
+const QUEUE_READS = new Set(['getQueue', 'getActiveIndex']);
+const commands = () => mockCalls.map(c => c.name).filter(name => !QUEUE_READS.has(name));
+
+/**
  * Drain the microtask queue.
  *
  * Needed because the backend fires commands without awaiting them: a rejection
@@ -198,12 +206,12 @@ describe('the cold-launch race', () => {
     backend.play();
 
     await Promise.resolve();
-    expect(mockCalls.map(c => c.name)).toEqual(['setup']);
+    expect(commands()).toEqual(['setup']);
 
     openTheGate();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(mockCalls.map(c => c.name)).toEqual(['setup', 'setQueue', 'play']);
+    expect(commands()).toEqual(['setup', 'setQueue', 'play']);
   });
 
   /**
@@ -231,7 +239,7 @@ describe('the cold-launch race', () => {
     backend.setup();
     await flush();
 
-    expect(mockCalls.map(c => c.name)).toEqual(['setup', 'setQueue']);
+    expect(commands()).toEqual(['setup', 'setQueue']);
   });
 
   /** Order is preserved once the gate opens — a play must not overtake a queue. */
@@ -250,7 +258,7 @@ describe('the cold-launch race', () => {
     openTheGate();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(mockCalls.map(c => c.name)).toEqual(['setup', 'setQueue', 'seekTo', 'play']);
+    expect(commands()).toEqual(['setup', 'setQueue', 'seekTo', 'play']);
   });
 
   /**
@@ -411,6 +419,93 @@ describe('queueChange', () => {
     // answer available — and a thrown error here would surface as a playback
     // failure the listener's music never had.
     expect(seen).toEqual([]);
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['a']);
+  });
+});
+
+describe('a queue the car started', () => {
+  /**
+   * A CarPlay or Android Auto selection plays natively: the engine replaces
+   * its queue with the tracks under the chosen row, starts one, and only then
+   * announces the queue change. The app never queued any of it, so it has to
+   * learn both what is playing and what each track is from the engine.
+   */
+  it('reports the track change only once the shadow holds the tracks the car queued', async () => {
+    const backend = createEngineBackend();
+    const seen: { type: string; active?: string }[] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'trackChange' || event.type === 'queueChange') {
+        seen.push({ type: event.type, active: backend.getActiveMediaItem()?.mediaId });
+      }
+    });
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('old1'), item('old2')], 0);
+    mockReturns.getQueue = [
+      { id: 'car1', uri: 'https://example/car1', title: 'Car One', artist: 'Driver', durationSec: 180, headers: { Authorization: 'Basic y' } },
+      { id: 'car2', uri: 'https://example/car2', title: 'Car Two' },
+    ];
+    mockReturns.getActiveIndex = 0;
+
+    // The native order: the track starts, then the queue change is announced.
+    mockListener?.({ type: 'trackChange', index: 0, id: 'car1' });
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    expect(seen.find(event => event.type === 'trackChange')?.active).toBe('car1');
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['car1', 'car2']);
+  });
+
+  it("takes each unknown track's details from the engine's own record rather than an empty stub", async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setMediaItems([item('old1')], 0);
+    mockReturns.getQueue = [
+      { id: 'car1', uri: 'https://example/car1', title: 'Car One', artist: 'Driver', durationSec: 180, headers: { Authorization: 'Basic y' } },
+    ];
+    mockReturns.getActiveIndex = 0;
+
+    mockListener?.({ type: 'queueChange' });
+    await flush();
+
+    expect(backend.getQueue()[0]).toMatchObject({
+      mediaId: 'car1',
+      url: 'https://example/car1',
+      title: 'Car One',
+      artist: 'Driver',
+      duration: 180,
+      headers: { Authorization: 'Basic y' },
+    });
+  });
+
+  it('takes a queue the engine already holds when the app starts listening', async () => {
+    // The car played while the app's JavaScript was asleep, so no event
+    // reached it. Waking up believing nothing was queued is what let the
+    // persisted-queue restore load last session's queue over the car's.
+    mockReturns.getQueue = [{ id: 'car1', uri: 'https://example/car1', title: 'Car One' }];
+    mockReturns.getActiveIndex = 0;
+    const backend = createEngineBackend();
+
+    backend.setup();
+    await flush();
+
+    expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['car1']);
+  });
+
+  it('does not let an engine that has not received the app queue yet wipe it at setup', async () => {
+    // The app's own setQueue is held until setup finishes and replayed right
+    // after the setup-time read goes out, so "empty" here may just be early.
+    mockReturns.getQueue = [];
+    mockReturns.getActiveIndex = 0;
+    const backend = createEngineBackend();
+
+    backend.setMediaItems([item('a')], 0);
+    backend.setup();
+    await flush();
+
     expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['a']);
   });
 });

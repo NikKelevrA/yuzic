@@ -5,6 +5,7 @@ import {
   applyEvent,
   createShadow,
   reconcileQueue,
+  shadowNamesTrack,
   toBrowseNode,
   toEngineTrack,
   toPlaybackProgress,
@@ -167,15 +168,47 @@ export function createEngineBackend(): PlayerBackend {
    * better to offer, while a thrown error here would surface as a playback
    * failure the listener's music never actually had.
    */
-  async function reconcileWithEngine(): Promise<void> {
+  async function reconcileWithEngine(
+    { onlyIntoEmptyShadow = false }: { onlyIntoEmptyShadow?: boolean } = {}
+  ): Promise<void> {
     try {
       const api = load();
       const [tracks, activeIndex] = await Promise.all([api.getQueue(), api.getActiveIndex()]);
-      shadow = reconcileQueue(shadow, tracks.map(track => track.id), activeIndex);
+      // See `adoptEngineQueue` below for why a setup-time read may only fill
+      // a shadow that is still empty.
+      if (onlyIntoEmptyShadow && (shadow.queue.length > 0 || tracks.length === 0)) return;
+      shadow = reconcileQueue(shadow, tracks, activeIndex);
     } catch {
       return;
     }
     emit({ type: 'queueChange' });
+  }
+
+  /**
+   * Take a queue the engine already holds when this context starts listening.
+   *
+   * The car can start playback before the app's JavaScript hears anything —
+   * a selection plays natively, and its events reach no listener while the
+   * runtime is asleep. Without this the app woke up believing nothing was
+   * queued, and the persisted-queue restore then loaded last session's queue
+   * over the one the car was playing.
+   *
+   * Only into an empty shadow, and only a non-empty answer: calls the app
+   * made before setup finished are replayed right after this read goes out,
+   * so an engine that answers "empty" here may simply not have received them
+   * yet, and taking that answer would wipe a queue the app is about to set.
+   */
+  function adoptEngineQueue() {
+    void reconcileWithEngine({ onlyIntoEmptyShadow: true });
+  }
+
+  /** Report a track change once the shadow can say what the track is — see `shadowNamesTrack`. */
+  function reportTrackChange(index: number, id: string | null | undefined) {
+    if (shadowNamesTrack(shadow, index, id)) {
+      emit({ type: 'trackChange', index });
+      return;
+    }
+    void reconcileWithEngine().then(() => emit({ type: 'trackChange', index: shadow.activeIndex }));
   }
 
   return {
@@ -207,7 +240,7 @@ export function createEngineBackend(): PlayerBackend {
               });
             }
             if (event.type === 'trackChange') {
-              emit({ type: 'trackChange', index: event.index });
+              reportTrackChange(event.index, event.id);
             }
             if (event.type === 'error') {
               emit({ type: 'error', code: event.code, message: event.message });
@@ -216,6 +249,7 @@ export function createEngineBackend(): PlayerBackend {
               void reconcileWithEngine();
             }
           });
+          adoptEngineQueue();
         }
       });
     },

@@ -6,6 +6,7 @@ import type { ContentKind } from '@/domain/playback/ContentKind';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { createPlaybackCoordinator, type PlaybackCoordinatorDeps } from './playbackCoordinator';
+import { rememberResource } from './knownResources';
 
 const provenance = serverProvenance('srv-1');
 
@@ -248,6 +249,19 @@ describe('finding the track that started', () => {
     h.coordinator.onActiveTrackChanged(itemFor('77'));
 
     expect(h.active).toEqual([{ index: 0, id: '77' }]);
+  });
+
+  it('uses the full song for a track the car queued, not a title-only rebuild', () => {
+    // The car plays without the app; the song the browse tree offered is what
+    // the app should show, scrobble and sync.
+    const offered = resource('55');
+    rememberResource(offered);
+    const h = harness({ nativeIndex: -1, current: null, queue: [] });
+
+    h.coordinator.onActiveTrackChanged(itemFor('55'));
+
+    expect(h.active).toEqual([{ index: 0, id: '55' }]);
+    expect(h.queue[0]).toBe(offered);
   });
 
   it('stops rather than guessing when the item carries no url either', () => {

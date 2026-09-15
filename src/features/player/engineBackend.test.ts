@@ -2,6 +2,7 @@ import {
   applyEvent,
   createShadow,
   reconcileQueue,
+  shadowNamesTrack,
   toEngineTrack,
   toMediaItem,
   toPlaybackProgress,
@@ -184,17 +185,19 @@ describe('reconcileQueue', () => {
     queue,
     activeIndex,
   });
+  /** The engine's own record of a track, as `getQueue()` returns it. */
+  const records = (...ids: string[]) => ids.map(id => ({ id, uri: `https://engine/${id}`, title: `engine ${id}` }));
 
   it('takes order and membership from the engine', () => {
     // The engine applied a move the app predicted differently. It is what
     // actually plays, so it wins.
-    const next = reconcileQueue(shadowOf([item('a'), item('b'), item('c')]), ['c', 'a', 'b'], 0);
+    const next = reconcileQueue(shadowOf([item('a'), item('b'), item('c')]), records('c', 'a', 'b'), 0);
 
     expect(next.queue.map(i => i.mediaId)).toEqual(['c', 'a', 'b']);
   });
 
   it('drops a track the engine no longer has', () => {
-    const next = reconcileQueue(shadowOf([item('a'), item('b'), item('c')]), ['a', 'c'], 0);
+    const next = reconcileQueue(shadowOf([item('a'), item('b'), item('c')]), records('a', 'c'), 0);
 
     expect(next.queue.map(i => i.mediaId)).toEqual(['a', 'c']);
   });
@@ -205,34 +208,55 @@ describe('reconcileQueue', () => {
     // protected server stops playing the moment the queue is reconciled.
     const withAuth = item('a', { headers: { Authorization: 'Basic x' } });
 
-    const next = reconcileQueue(shadowOf([withAuth]), ['a'], 0);
+    const next = reconcileQueue(shadowOf([withAuth]), records('a'), 0);
 
     expect(next.queue[0]).toBe(withAuth);
   });
 
-  it('stubs an id the app has never seen rather than dropping it', () => {
-    // Reachable when a queue is restored into a fresh JavaScript context.
-    // Dropping it instead would leave the two queues different lengths, which
-    // makes every index after it wrong — the one outcome worse than a stub.
-    const next = reconcileQueue(shadowOf([item('a')]), ['a', 'restored'], 0);
+  it("takes a track the app never queued from the engine's own record, rather than dropping or stubbing it", () => {
+    // A CarPlay selection queues tracks natively, and a queue can outlive the
+    // JavaScript context that set it. A stub with no URL could neither be
+    // played nor named; dropping it would make every later index wrong.
+    const next = reconcileQueue(shadowOf([item('a')]), [
+      ...records('a'),
+      { id: 'car', uri: 'https://engine/car', title: 'From the car', artist: 'Driver', durationSec: 90, headers: { Authorization: 'Basic y' } },
+    ], 0);
 
-    expect(next.queue.map(i => i.mediaId)).toEqual(['a', 'restored']);
-    expect(next.queue[1]).toEqual({ mediaId: 'restored', url: '' });
+    expect(next.queue.map(i => i.mediaId)).toEqual(['a', 'car']);
+    expect(next.queue[1]).toMatchObject({
+      url: 'https://engine/car',
+      title: 'From the car',
+      artist: 'Driver',
+      duration: 90,
+      headers: { Authorization: 'Basic y' },
+    });
   });
 
   it('clamps an index that points past the end', () => {
     // An index past the end makes `getActiveMediaItem` undefined and every
     // caller of it wrong at once.
-    const next = reconcileQueue(shadowOf([item('a'), item('b')], 1), ['a'], 5);
+    const next = reconcileQueue(shadowOf([item('a'), item('b')], 1), records('a'), 5);
 
     expect(next.activeIndex).toBe(0);
   });
 
   it('answers zero for an emptied queue rather than a negative index', () => {
-    const next = reconcileQueue(shadowOf([item('a')], 0), [], -1);
+    const next = reconcileQueue(shadowOf([item('a')], 0), records(), -1);
 
     expect(next.queue).toEqual([]);
     expect(next.activeIndex).toBe(0);
+  });
+
+  it('says whether the shadow already names the track that started', () => {
+    const shadow = shadowOf([item('a'), item('b')]);
+
+    expect(shadowNamesTrack(shadow, 1, 'b')).toBe(true);
+    // A car selection replaced the queue: the engine names a track the shadow
+    // does not hold at that index, so the backend must re-read first.
+    expect(shadowNamesTrack(shadow, 0, 'car1')).toBe(false);
+    expect(shadowNamesTrack(shadow, 5, 'b')).toBe(false);
+    // No id to check against: taken at its index, as before.
+    expect(shadowNamesTrack(shadow, 1, undefined)).toBe(true);
   });
 
   it('leaves progress and playing-ness alone', () => {
@@ -240,7 +264,7 @@ describe('reconcileQueue', () => {
     // the progress bar jumping on an insert the listener made while playing.
     const before = { ...shadowOf([item('a')]), playing: true, progress: { positionSec: 30, durationSec: 100, bufferedSec: 40 } };
 
-    const next = reconcileQueue(before, ['a'], 0);
+    const next = reconcileQueue(before, records('a'), 0);
 
     expect(next.playing).toBe(true);
     expect(next.progress.positionSec).toBe(30);

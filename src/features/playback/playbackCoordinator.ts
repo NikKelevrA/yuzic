@@ -6,6 +6,7 @@ import { sameQueue } from '@/features/playback/playableResource';
 import { isAutoplaySeed } from '@/domain/playback/ContentKind';
 import { shouldFillQueue } from './autoplayFill';
 import { resourceFromMediaItem, resourcesFromPlayerQueue } from './playingQueue';
+import { knownResource } from './knownResources';
 
 /**
  * Everything that follows from a track starting.
@@ -96,11 +97,11 @@ export function createPlaybackCoordinator(
     const queued = index >= 0 ? deps.queue()[index] : undefined;
     if (queued) return { index, resource: queued, queued: true };
 
-    // The queue does not hold this track, so rebuild it from what the player
-    // echoed — the media id carries provenance and the origin's own id.
-    // Reached when a queue survives into a fresh JavaScript context that has
-    // lost it.
-    const rebuilt = item.url ? resourceFromMediaItem(item) : null;
+    // The queue does not hold this track. A song offered to the car is known
+    // in full; otherwise rebuild it from what the player echoed — the media id
+    // carries provenance and the origin's own id. Reached when a queue
+    // survives into a fresh JavaScript context that has lost it.
+    const rebuilt = knownResource(mediaId) ?? (item.url ? resourceFromMediaItem(item) : null);
     return rebuilt ? { index: 0, resource: rebuilt, queued: false } : null;
   };
 

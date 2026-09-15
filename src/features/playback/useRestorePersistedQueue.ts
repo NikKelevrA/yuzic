@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 
 import type { Song } from '@/domain/entities/Song';
 import { useTracks } from '@/features/song/useTracks';
+import { getBackend } from '@/features/player/activeBackend';
 import {
   selectPersistedPlaybackActiveServerId,
   selectPersistedPlaybackCurrentIndex,
@@ -50,7 +51,9 @@ export function useRestorePersistedQueue(
       activeServerId,
       persistedCount: persistedIds.length,
       persistedServerId,
-      queueLoaded: session.queue().length > 0,
+      // The player's queue counts too: one the car started natively is a queue
+      // the listener chose, even before the app's own copy has caught up.
+      queueLoaded: session.queue().length > 0 || getBackend().getQueue().length > 0,
       libraryHydrated: libraryTracks.length > 0,
     });
     if (decision.kind === 'skip') {

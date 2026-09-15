@@ -14,6 +14,7 @@ import type { CoverSource } from '@/domain/entities/Cover';
 import { buildCover } from '@/providers/registry/covers';
 import { toEngineBoundaryTrack } from '@/features/playback/engineBoundary';
 import type { PlayableResource } from '@/features/playback/playableResource';
+import { rememberResource } from '@/features/playback/knownResources';
 import { mediaHeadersForSong } from '@/features/player/mediaHeaders';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
@@ -82,6 +83,9 @@ function toPlayableBrowseItemFromDomainSong(
   // different headers than the Now Playing screen for the same track is that
   // this file built its own row by hand instead of going through it.
   const resource: PlayableResource = { song, streamUrl };
+  // A selection in the car plays without the app; remembering the song is
+  // what lets the app show and scrobble the real track once it hears.
+  rememberResource(resource);
   // The song's own provenance says which server it came from, so the mixed-queue
   // check is exact rather than a server-type comparison.
   const track = toEngineBoundaryTrack(resource, mediaHeadersForSong(server, resource));

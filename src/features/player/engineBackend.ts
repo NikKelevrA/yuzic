@@ -107,16 +107,19 @@ export function applyEvent(shadow: Shadow, event: EngineEvent): Shadow {
  * not announce itself, it showed up later as the wrong song playing after a
  * remove, or an index pointing one track off.
  *
- * An id the app has never seen becomes a stub carrying only its identity,
- * which is genuinely all the engine said about it. That is not a normal case —
- * every track in the engine's queue was put there by this app — but a restore
- * after the JavaScript context reloaded can reach it, and dropping the item
- * instead would leave the two queues different lengths, which is the one
- * outcome that makes every index after it wrong.
+ * A track the app has never seen is taken from the engine's own record — its
+ * URL, title, artist, artwork and headers, which is everything it was handed
+ * when it was queued. That is a normal case, not a corner: a CarPlay or
+ * Android Auto selection queues the tracks under the chosen row natively,
+ * without the app, and a queue can outlive the JavaScript context that set
+ * it. It used to become a stub carrying only its id, which nothing downstream
+ * could play or name, so the app went on showing its old queue while the car
+ * played another. Dropping it would be worse still: the two queues would be
+ * different lengths, which makes every index after it wrong.
  */
 export function reconcileQueue(
   shadow: Shadow,
-  engineIds: string[],
+  engineTracks: Track[],
   activeIndex: number
 ): Shadow {
   const known = new Map<string, MediaItem>();
@@ -124,7 +127,7 @@ export function reconcileQueue(
     if (item.mediaId != null && !known.has(item.mediaId)) known.set(item.mediaId, item);
   }
 
-  const queue = engineIds.map(id => known.get(id) ?? { mediaId: id, url: '' });
+  const queue = engineTracks.map(track => known.get(track.id) ?? toMediaItem(track));
   // Clamped rather than trusted: an index past the end would make
   // `getActiveMediaItem` undefined and every caller of it wrong at once.
   const clamped = queue.length === 0
@@ -132,6 +135,19 @@ export function reconcileQueue(
     : Math.min(Math.max(activeIndex, 0), queue.length - 1);
 
   return { ...shadow, queue, activeIndex: clamped };
+}
+
+/**
+ * Whether the shadow already names the track the engine says just started.
+ *
+ * When it does not, the queue changed under the app — a car selection plays
+ * natively and announces the new queue only after the track has started — and
+ * the backend has to re-read the engine before telling the app, or the app
+ * looks the index up in its old queue and shows another song. An event with
+ * no id cannot be checked and is taken at its index, as before.
+ */
+export function shadowNamesTrack(shadow: Shadow, index: number, id: string | null | undefined): boolean {
+  return !id || shadow.queue[index]?.mediaId === id;
 }
 
 /**
