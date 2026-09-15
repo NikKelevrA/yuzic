@@ -24,6 +24,8 @@ import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 
+const DOWNLOAD_POLL_MS = 5_000;
+
 function formatDate(publishDate: string | undefined): string {
   if (!publishDate) return '';
   try {
@@ -57,6 +59,13 @@ export default function PodcastChannelScreen() {
     queryFn: async () => (await api.podcasts?.list(true)) ?? [],
     enabled: Boolean(api.podcasts),
     staleTime: 1000 * 60 * 5,
+    // Asked again while one of this channel's episodes is downloading. A
+    // single re-read five seconds after the request left any episode that took
+    // longer spinning until the screen was left and opened again.
+    refetchInterval: query =>
+      (query.state.data ?? []).some(c => c.id === channelId && c.episodes.some(e => e.status === 'downloading'))
+        ? DOWNLOAD_POLL_MS
+        : false,
   });
 
   const channel = useMemo(
@@ -76,9 +85,8 @@ export default function PodcastChannelScreen() {
     try {
       await api.podcasts.downloadEpisode(episode.id);
       notify.info(t('podcasts.downloadStarted'));
-      setTimeout(() => {
-        void queryClient.invalidateQueries({ queryKey: [QueryKeys.Podcasts, 'withEpisodes'] });
-      }, 5_000);
+      // Re-read now to pick up the "downloading" status; the query polls from there.
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.Podcasts, 'withEpisodes'] });
     } catch {
       notify.error(t('common.error.unexpected'));
     }
