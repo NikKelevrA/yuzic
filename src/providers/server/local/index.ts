@@ -82,7 +82,12 @@ export function createLocalAdapter(server: Server): ApiAdapter {
     },
   };
 
-  const genres: GenresApi = { list: async () => [] };
+  // The tags read at import. This returned nothing, so an imported library
+  // had no genres to browse however well its files were tagged.
+  const genres: GenresApi = {
+    list: async () => [...new Set(readLocalLibrary().tracks.flatMap(track => track.genres ?? []).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b)),
+  };
 
   const starred: StarredApi = {
     list: async () => {

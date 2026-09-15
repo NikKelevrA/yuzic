@@ -16,7 +16,7 @@ import type { LocalTrack } from './store';
 
 export interface LocalAlbumGroup {
   albumId: string;
-  /** All imported tracks on this album; only the first's tags are read. */
+  /** All imported tracks on this album; the first's tags name it, every track's genres count. */
   tracks: LocalTrack[];
 }
 
@@ -50,7 +50,8 @@ export function mapAlbum(group: LocalAlbumGroup, context: MapAlbumContext): Albu
     // Imported files carry no release-type tag; everything is presented as
     // an album unless a provider that knows better says otherwise.
     releaseType: 'album' satisfies ReleaseType,
-    genres: [],
+    // Every genre any of its tracks is tagged with, in first-seen order.
+    genres: [...new Set(group.tracks.flatMap(track => track.genres ?? []).filter(Boolean))],
     addedAt: first?.dateAdded ? Date.parse(first.dateAdded) || undefined : undefined,
     songIds: context.songIds ?? [],
   };
