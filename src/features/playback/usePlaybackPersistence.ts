@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { RepeatModeState, ShuffleMode } from '@/domain/playback/PlaybackModes';
 import type { PlayableResource } from '@/features/playback/playableResource';
+import { collectionContextOf, segmentAt, type QueueSegment } from '@/features/playback/playingQueue';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import {
   selectPersistedPlaybackActiveServerId,
@@ -51,6 +52,7 @@ export function usePlaybackPersistence() {
 
   const persistQueue = useCallback((args: {
     queue: PlayableResource[];
+    segments: QueueSegment[];
     currentIndex: number;
     repeatMode: RepeatModeState;
     shuffleMode: ShuffleMode;
@@ -64,9 +66,16 @@ export function usePlaybackPersistence() {
     // after the app restarts, once the library may have moved on, and only
     // `localId` is guaranteed to still mean the same track (see the identity
     // note on `PlayableResource`).
-    const ids = args.queue
-      .filter((r) => r.song.contentKind === 'song')
-      .map((r) => r.song.localId);
+    const kept = args.queue
+      .map((resource, position) => ({ resource, position }))
+      .filter(({ resource }) => resource.song.contentKind === 'song');
+    const ids = kept.map(({ resource }) => resource.song.localId);
+    // Which album or playlist each kept song was queued from, so its plays
+    // still count for that playlist after a relaunch. Looked up by the song's
+    // position in the live queue, which is what segments index.
+    const queueContexts = kept.map(({ position }) =>
+      collectionContextOf(segmentAt(args.segments, position)?.source)
+    );
     // Dropping those items shifts everything after them, so the index has to
     // be re-found rather than clamped: the current song's own id is what says
     // where it ended up. It has no place in the saved list only when it is
@@ -76,6 +85,7 @@ export function usePlaybackPersistence() {
     dispatch(setPlaybackQueue({
       activeServerId,
       queueSongIds: ids,
+      queueContexts,
       currentIndex: mappedIndex >= 0
         ? mappedIndex
         : Math.min(args.currentIndex, Math.max(0, ids.length - 1)),

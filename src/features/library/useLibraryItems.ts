@@ -13,6 +13,8 @@ import {
   selectAlbumPlayCounts,
   selectArtistLastPlayedAt,
   selectArtistPlayCounts,
+  selectPlaylistLastPlayedAt,
+  selectPlaylistPlayCounts,
 } from '@/state/redux/selectors/statsSelectors'
 import {
   EMPTY_SORT_STATS,
@@ -47,6 +49,8 @@ export function useLibraryItems(
   const albumPlays = useSelector(selectAlbumPlayCounts)
   const artistLastPlayed = useSelector(selectArtistLastPlayedAt)
   const artistPlays = useSelector(selectArtistPlayCounts)
+  const playlistLastPlayed = useSelector(selectPlaylistLastPlayedAt)
+  const playlistPlays = useSelector(selectPlaylistPlayCounts)
 
   const { albums, isLoading: albumsLoading } = useAlbums()
   const { artists, isLoading: artistsLoading } = useArtists()
@@ -55,8 +59,14 @@ export function useLibraryItems(
   const { getAllDownloadedCollections, getAllDownloadedTracks } = useDownload()
 
   const stats = useMemo<SortStats>(
-    () => ({ songLastPlayed, songPlays, albumLastPlayed, albumPlays, artistLastPlayed, artistPlays }),
-    [songLastPlayed, songPlays, albumLastPlayed, albumPlays, artistLastPlayed, artistPlays],
+    () => ({
+      songLastPlayed, songPlays, albumLastPlayed, albumPlays,
+      artistLastPlayed, artistPlays, playlistLastPlayed, playlistPlays,
+    }),
+    [
+      songLastPlayed, songPlays, albumLastPlayed, albumPlays,
+      artistLastPlayed, artistPlays, playlistLastPlayed, playlistPlays,
+    ],
   )
 
   // Orders that ignore play data get the stable empty constant, so the list

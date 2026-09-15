@@ -9,10 +9,10 @@ import { usePlaybackSink } from '@/features/player/PlaybackSinkContext';
 import { ownsPlayback } from '@/features/player/playbackSink';
 import { setPlaybackSpeedForProfile } from '@/features/settings/playback/state';
 import type { PlaybackSession } from './playbackSession';
-import { createPlaybackStarters, type StartableCollection } from './playbackStarters';
+import { createPlaybackStarters, startableCollection } from './playbackStarters';
 import { playableOnly, type PlayableResource } from './playableResource';
 import { backendRepeatMode, clampVolume, nextRepeatMode } from './playingPolicies';
-import type { PlayableCollection, PlayingActionsType } from './playingTypes';
+import type { PlayingActionsType } from './playingTypes';
 import { createQueueController } from './queueController';
 import shuffleArray from './shuffleArray';
 import { createSettlingSender } from './settlingSender';
@@ -26,13 +26,6 @@ import type { PlaybackServices } from './usePlaybackServices';
 
 /** How long a volume drag rests before the jukebox is told where it ended. */
 const JUKEBOX_GAIN_SETTLE_MS = 250;
-
-/** An album or playlist as the starters want it: the tracks and where they came from. */
-function startable(collection: PlayableCollection): StartableCollection {
-  return 'album' in collection
-    ? { songs: collection.songs, contextId: collection.album.localId, contextType: 'album' }
-    : { songs: collection.songs, contextId: collection.playlist.localId, contextType: 'playlist' };
-}
 
 /**
  * Everything the app can ask playback to do, as one stable command set.
@@ -108,6 +101,7 @@ export function usePlayingCommands(
     backend: getBackend,
     queue: session.queue,
     setQueue: session.setQueue,
+    segments: session.segments,
     setSegments: session.setSegments,
     currentIndex: session.currentIndex,
     setCurrentIndex: session.setCurrentIndex,
@@ -204,9 +198,9 @@ export function usePlayingCommands(
     playSong,
     playSongs,
     playSongInCollection: (selectedSong, collection, shuffleOn = false) =>
-      starters.playCollection(selectedSong, startable(collection), shuffleOn),
-    addCollectionToQueue: collection => starters.appendCollection(startable(collection), false),
-    shuffleCollectionToQueue: collection => starters.appendCollection(startable(collection), true),
+      starters.playCollection(selectedSong, startableCollection(collection), shuffleOn),
+    addCollectionToQueue: collection => starters.appendCollection(startableCollection(collection), false),
+    shuffleCollectionToQueue: collection => starters.appendCollection(startableCollection(collection), true),
     moveTrack: queue.moveTrack,
     addToQueue: queue.addToQueue,
     playNext: queue.playNext,

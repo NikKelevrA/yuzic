@@ -7,6 +7,7 @@ import { assertPlayable, isPlayable, playableOnly } from '@/features/playback/pl
 import shuffleArray from '@/features/playback/shuffleArray';
 import { clampStartIndex, trimQueueAroundIndex } from './adhocQueue';
 import { tagSegment, type QueueSegment, type QueueSegmentSource } from './playingQueue';
+import type { PlayableCollection } from './playingTypes';
 
 /**
  * The commands that *begin* playback, as opposed to editing a queue that is
@@ -49,6 +50,17 @@ export interface StartableCollection {
   songs: Song[];
   contextId: string;
   contextType: 'album' | 'playlist';
+}
+
+/**
+ * An album or playlist as the starters want it: the tracks and where they
+ * came from. Named by the origin's own id, because plays are recorded under
+ * the queue's context id and read back by `nativeId` — see `CollectionContext`.
+ */
+export function startableCollection(collection: PlayableCollection): StartableCollection {
+  return 'album' in collection
+    ? { songs: collection.songs, contextId: collection.album.nativeId, contextType: 'album' }
+    : { songs: collection.songs, contextId: collection.playlist.nativeId, contextType: 'playlist' };
 }
 
 interface PlaybackStarters {

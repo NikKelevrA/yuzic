@@ -1,6 +1,7 @@
 import type { Song } from '@/domain/entities/Song';
 import type { PlayableResource } from '@/features/playback/playableResource';
-import { playableOnly } from '@/features/playback/playableResource';
+import { isPlayable } from '@/features/playback/playableResource';
+import type { CollectionContext } from '@/domain/playback/CollectionContext';
 
 /**
  * Whether the persisted queue should be restored now, and if not, what that
@@ -72,27 +73,35 @@ export function decideRestore(state: {
  */
 export function buildRestoredQueue(args: {
   persistedIds: string[];
+  /** The album or playlist each persisted id was queued from, aligned with
+   * `persistedIds`. Ignored when it is not aligned — a queue saved before
+   * these were recorded — so every track restores ad hoc instead. */
+  persistedContexts?: (CollectionContext | null)[];
   persistedIndex: number;
   libraryTracks: Song[];
   /** Gives a song a stream URL — local file, or a freshly built one. Null
    * when neither is possible (e.g. the server can no longer build one). */
   resolve: (song: Song) => PlayableResource | null;
-}): { queue: PlayableResource[]; index: number } {
-  const { persistedIds, persistedIndex, libraryTracks, resolve } = args;
+}): { queue: PlayableResource[]; contexts: (CollectionContext | null)[]; index: number } {
+  const { persistedIds, persistedContexts, persistedIndex, libraryTracks, resolve } = args;
+  const aligned = persistedContexts?.length === persistedIds.length;
 
   // Keyed by plain `string`, not `LocalId`: persisted ids come back from
   // storage/Redux as unbranded strings, and re-asserting the brand on read
   // would need a cast this migration avoids.
   const byId = new Map<string, Song>(libraryTracks.map((track) => [track.localId, track]));
-  const queue = playableOnly(
-    persistedIds
-      .map((id) => byId.get(id))
-      .filter((song): song is Song => Boolean(song))
-      .map(resolve)
-      .filter((resource): resource is PlayableResource => Boolean(resource))
-  );
+  // Each track keeps its context through the drops, so a missing song cannot
+  // shift the next one onto its neighbour's playlist.
+  const restored = persistedIds.flatMap((id, position) => {
+    const song = byId.get(id);
+    const resource = song ? resolve(song) : null;
+    if (!resource || !isPlayable(resource)) return [];
+    return [{ resource, context: aligned ? persistedContexts[position] ?? null : null }];
+  });
+  const queue = restored.map((entry) => entry.resource);
+  const contexts = restored.map((entry) => entry.context);
 
-  if (queue.length === 0) return { queue: [], index: 0 };
+  if (queue.length === 0) return { queue: [], contexts: [], index: 0 };
 
   // Follow the remembered song by id rather than by position. The positional
   // fallback is only for the case where that song is itself one of the ones
@@ -101,5 +110,5 @@ export function buildRestoredQueue(args: {
   const found = rememberedId ? queue.findIndex((resource) => resource.song.localId === rememberedId) : -1;
   const index = found >= 0 ? found : Math.min(Math.max(persistedIndex, 0), queue.length - 1);
 
-  return { queue, index };
+  return { queue, contexts, index };
 }

@@ -83,6 +83,7 @@ export function usePlaybackPersistenceSync({
     if (snapshot.queueVersion === 0) return;
     persistence.current.persistQueue({
       queue: session.queue(),
+      segments: session.segments(),
       currentIndex: session.currentIndex(),
       repeatMode: session.repeatMode(),
       shuffleMode: session.shuffleMode(),

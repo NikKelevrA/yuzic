@@ -119,6 +119,10 @@ must never be the old shared literal `yuzic-device`.
 I was doing" true on every provider, not just Navidrome. It carries:
 
 - `queueSongIds[]`, `currentIndex`, `positionMs`
+- `queueContexts[]` — aligned with `queueSongIds`: the album or playlist each
+  song was queued from, by `nativeId`. Restoring the queue rebuilds its
+  segments from these, so a playlist heard after a relaunch still counts as
+  played. State saved without them restores ad hoc.
 - `repeatMode`, `shuffleMode`
 - `activeServerId` — the server whose id namespace the queue belongs to;
   changing servers invalidates the slice

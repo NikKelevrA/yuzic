@@ -1,4 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
+import { parseLocalId } from "@/domain/identity/LocalId";
 import { RootState } from "@/state/redux/store";
 
 const PREFIX = (serverId: string) => `${serverId}:`;
@@ -92,9 +93,33 @@ export const selectArtistPlayCounts = createSelector(
   (map, serverId) => filterByServer(map, serverId)
 );
 
+/**
+ * Playlist stats keyed by the playlist's own id.
+ *
+ * For a while the queue named a playlist by its `localId`, so its plays were
+ * recorded under that while every reader looked playlists up by `nativeId` —
+ * saved, and never found. Those entries are folded back in on read rather
+ * than rewritten in storage: counts for the same playlist add up, and
+ * last-played times keep the later one.
+ */
+function byPlaylistNativeId(map: Record<string, number>, combine: (a: number, b: number) => number) {
+  const out: Record<string, number> = {};
+  for (const [id, value] of Object.entries(map)) {
+    const parsed = parseLocalId(id);
+    const key = parsed?.kind === "playlist" ? parsed.nativeId : id;
+    out[key] = key in out ? combine(out[key], value) : value;
+  }
+  return out;
+}
+
 export const selectPlaylistLastPlayedAt = createSelector(
   [(s: RootState) => s.stats.playlistLastPlayedAt, (s: RootState) => s.servers.activeServerId],
-  (map, serverId) => filterByServer(map, serverId)
+  (map, serverId) => byPlaylistNativeId(filterByServer(map, serverId), Math.max)
+);
+
+export const selectPlaylistPlayCounts = createSelector(
+  [(s: RootState) => s.stats.playlistPlays, (s: RootState) => s.servers.activeServerId],
+  (map, serverId) => byPlaylistNativeId(filterByServer(map, serverId), (a, b) => a + b)
 );
 
 export const selectSongPlayCount =

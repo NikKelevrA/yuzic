@@ -9,6 +9,9 @@ import {
   shiftSegmentsAfterInsert,
   shiftSegmentsAfterRemove,
   segmentAt,
+  collectionContextOf,
+  soleCollectionContext,
+  segmentsFromContexts,
   isContextBoundary,
   findNextBoundaryIndex,
   QueueSegment,
@@ -331,3 +334,47 @@ describe('resourcesFromPlayerQueue', () => {
     expect(next.map(r => r.song.nativeId)).toEqual(['1']);
   });
 });
+
+describe('collection contexts', () => {
+  const playlist = { kind: 'user', contextId: 'pl-1', contextType: 'playlist' } as const
+  const album = { kind: 'user', contextId: 'al-1', contextType: 'album' } as const
+  const restored = { kind: 'user', contextId: 'restored', contextType: 'adhoc' } as const
+
+  it('names the collection a segment came from, and none for ad hoc or autoplay', () => {
+    expect(collectionContextOf(playlist)).toEqual({ contextId: 'pl-1', contextType: 'playlist' })
+    expect(collectionContextOf(restored)).toBeNull()
+    expect(collectionContextOf({ kind: 'autoplay-fill', contextId: 'autoplay-3' })).toBeNull()
+    expect(collectionContextOf(undefined)).toBeNull()
+  })
+
+  it('finds the one collection a whole queue came from', () => {
+    expect(soleCollectionContext([
+      { startIndex: 0, length: 2, source: playlist },
+      { startIndex: 2, length: 1, source: playlist },
+    ])).toEqual({ contextId: 'pl-1', contextType: 'playlist' })
+  })
+
+  it('finds none when the queue mixes collections or holds anything else', () => {
+    expect(soleCollectionContext([
+      { startIndex: 0, length: 2, source: playlist },
+      { startIndex: 2, length: 1, source: album },
+    ])).toBeNull()
+    expect(soleCollectionContext([
+      { startIndex: 0, length: 2, source: playlist },
+      { startIndex: 2, length: 1, source: { kind: 'autoplay-fill', contextId: 'autoplay-2' } },
+    ])).toBeNull()
+    expect(soleCollectionContext([])).toBeNull()
+  })
+
+  it('rebuilds one segment per run of tracks from the same place', () => {
+    const pl = { contextId: 'pl-1', contextType: 'playlist' } as const
+    const al = { contextId: 'al-1', contextType: 'album' } as const
+
+    expect(segmentsFromContexts([pl, pl, null, null, al, pl], 'restored')).toEqual([
+      { startIndex: 0, length: 2, source: playlist },
+      { startIndex: 2, length: 2, source: restored },
+      { startIndex: 4, length: 1, source: album },
+      { startIndex: 5, length: 1, source: playlist },
+    ])
+  })
+})

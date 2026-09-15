@@ -1,3 +1,4 @@
+import type { CollectionContext } from '@/domain/playback/CollectionContext'
 import type { MediaItem } from '@/features/player/mediaItem'
 import type { PlayableResource } from '@/features/playback/playableResource'
 import { resourceFromPlayerItem } from '@/features/playback/playableResource'
@@ -182,6 +183,60 @@ export function shiftSegmentsAfterRemove(
 
 export function segmentAt(segments: QueueSegment[], index: number): QueueSegment | undefined {
   return segments.find(seg => index >= seg.startIndex && index < seg.startIndex + seg.length)
+}
+
+/** The album or playlist a segment's tracks were chosen from, if any. */
+export function collectionContextOf(source: QueueSegmentSource | undefined): CollectionContext | null {
+  if (source?.kind !== 'user' || source.contextType === 'adhoc') return null
+  return { contextId: source.contextId, contextType: source.contextType }
+}
+
+const sameContext = (a: CollectionContext | null, b: CollectionContext | null) =>
+  a?.contextId === b?.contextId && a?.contextType === b?.contextType
+
+/** A segment for tracks from `context`, or an ad-hoc one when they came from none. */
+export function collectionSegment(
+  startIndex: number,
+  length: number,
+  context: CollectionContext | null,
+  adhocContextId: string,
+): QueueSegment {
+  return {
+    startIndex,
+    length,
+    source: context
+      ? { kind: 'user', ...context }
+      : { kind: 'user', contextId: adhocContextId, contextType: 'adhoc' },
+  }
+}
+
+// The one album or playlist every segment of a queue came from, or null when
+// the queue holds anything else. A reorder that erases segment boundaries — a
+// shuffle — can carry this across, because every track still came from it; a
+// mixed queue cannot, since after the reorder nothing says which track was which.
+export function soleCollectionContext(segments: QueueSegment[]): CollectionContext | null {
+  const first = collectionContextOf(segments[0]?.source)
+  if (!first) return null
+  return segments.every(seg => sameContext(collectionContextOf(seg.source), first)) ? first : null
+}
+
+// Segments for a queue whose tracks each remember their collection, as a
+// persisted queue does: consecutive tracks from the same collection share a
+// segment, and consecutive tracks from none share one ad-hoc segment.
+export function segmentsFromContexts(
+  contexts: (CollectionContext | null)[],
+  adhocContextId: string,
+): QueueSegment[] {
+  const segments: QueueSegment[] = []
+  contexts.forEach((context, index) => {
+    const last = segments[segments.length - 1]
+    if (last && sameContext(collectionContextOf(last.source), context)) {
+      last.length += 1
+      return
+    }
+    segments.push(collectionSegment(index, 1, context, adhocContextId))
+  })
+  return segments
 }
 
 export function isContextBoundary(segments: QueueSegment[], index: number): boolean {
