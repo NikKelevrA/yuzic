@@ -6,6 +6,7 @@ import {
   albumLibraryActions, type AlbumLibraryActionContext,
   albumExternalActions, type AlbumExternalActionContext,
   artistActions, type ArtistActionContext,
+  artistExternalActions, type ArtistExternalActionContext,
   playlistActions, type PlaylistActionContext,
 } from './actionRegistry';
 
@@ -29,10 +30,14 @@ describe('actionRegistrySummary', () => {
       'favorite', 'play', 'shuffle', 'addToNext', 'addToEnd', 'shuffleToQueue',
       'generatePlaylist', 'goToAlbum', 'viewExternal', 'share', 'download',
     ]);
-    expect(actionRegistrySummary['album.external']).toEqual(['inLibrary', 'downloading', 'want', 'get', 'noServiceConnected']);
+    expect(actionRegistrySummary['album.external']).toEqual([
+      'inLibrary', 'downloading', 'want', 'get', 'noServiceConnected',
+      'goToArtist', 'share', 'openInSource',
+    ]);
     expect(actionRegistrySummary.artist).toEqual([
       'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'generatePlaylist', 'download', 'goToArtist', 'viewExternal',
     ]);
+    expect(actionRegistrySummary['artist.external']).toEqual(['share', 'openInSource']);
     expect(actionRegistrySummary.playlist).toEqual([
       'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'goToPlaylist', 'download', 'share', 'editSongs', 'rename', 'delete',
     ]);
@@ -173,7 +178,10 @@ function albumExternalCtx(overrides: Partial<AlbumExternalActionContext> = {}): 
     album: { localId: 'local:album:ext:deezer:1' } as AlbumExternalActionContext['album'],
     t, colors: { secondary: '#000', muted: '#333', placeholder: '#999' }, close: noop,
     status: { kind: 'none' }, isWanted: false, canDownload: false,
-    handlers: { toggleWant: noop, openGet: noop },
+    // Nothing identifies this stub publicly and it names no artist, so the
+    // three record-level rows stay out unless a test asks for them.
+    webSourceNameKey: null, canGoToArtist: false,
+    handlers: { toggleWant: noop, openGet: noop, goToArtist: noop, share: noop, openInSource: noop },
     ...overrides,
   };
 }
@@ -196,6 +204,57 @@ describe('albumExternalActions', () => {
     const ids = resolveActions(albumExternalActions, albumExternalCtx({ canDownload: false })).map(a => a.id);
     expect(ids).toContain('noServiceConnected');
     expect(ids).not.toContain('get');
+  });
+
+  /**
+   * Where to go next and how to take the record out of the app are facts about
+   * the album, not about whether you own it — so unlike Want/Get they survive
+   * the `status` branch above.
+   */
+  it('offers the artist and the source page regardless of ownership', () => {
+    const ctx = albumExternalCtx({
+      status: { kind: 'in_library' },
+      canGoToArtist: true,
+      webSourceNameKey: 'settings.sources.deezer.name',
+    });
+    const ids = resolveActions(albumExternalActions, ctx).map(a => a.id);
+
+    expect(ids).toEqual(['inLibrary', 'goToArtist', 'share', 'openInSource']);
+  });
+
+  it('leaves Share and Open in … out when no source addresses the album', () => {
+    const ids = resolveActions(albumExternalActions, albumExternalCtx({ canGoToArtist: true })).map(a => a.id);
+
+    expect(ids).toContain('goToArtist');
+    expect(ids).not.toContain('share');
+    expect(ids).not.toContain('openInSource');
+  });
+});
+
+describe('artistExternalActions', () => {
+  const artistExternalCtx = (
+    overrides: Partial<ArtistExternalActionContext> = {}
+  ): ArtistExternalActionContext => ({
+    kind: 'artist', origin: 'external',
+    artist: { localId: 'local:artist:ext:deezer:9' } as ArtistExternalActionContext['artist'],
+    t, colors: { secondary: '#000' }, close: noop,
+    webSourceNameKey: 'settings.sources.deezer.name',
+    handlers: { share: noop, openInSource: noop },
+    ...overrides,
+  });
+
+  it('carries none of the library actions a browsed artist cannot do', () => {
+    const ids = resolveActions(artistExternalActions, artistExternalCtx()).map(a => a.id);
+
+    expect(ids).toEqual(['share', 'openInSource']);
+    expect(ids).not.toContain('play');
+    expect(ids).not.toContain('download');
+  });
+
+  it('is empty when no source addresses the artist', () => {
+    const ids = resolveActions(artistExternalActions, artistExternalCtx({ webSourceNameKey: null })).map(a => a.id);
+
+    expect(ids).toEqual([]);
   });
 });
 

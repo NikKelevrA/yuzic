@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -21,6 +22,9 @@ import { useCollectionPlaybackActions } from '../shared/playbackActions';
 import { useGeneratePlaylistAction } from '../shared/generatePlaylistAction';
 import { resolveActions } from '../types';
 import { artistActions, type ArtistActionContext } from '../registry/artistActions';
+import { artistExternalActions, type ArtistExternalActionContext } from '../registry/artistExternalActions';
+import { artistWebLink } from '@/features/sources/sourceWebUrl';
+import { shareItem } from '@/features/shares/share';
 
 export function useArtistOptionsActions(
   artist: Artist | null, opts: { hideGoToArtist: boolean; isSheetOpen: boolean; close: () => void }
@@ -105,4 +109,35 @@ export function useArtistOptionsActions(
   };
 
   return { actions: resolveActions(artistActions, ctx), songsLoading, artistAlbums, playCount };
+}
+
+/**
+ * A browsed artist's actions. A separate hook rather than a branch inside the
+ * one above for the usual reason — the library set calls the artist's albums,
+ * songs, download and similarity hooks, and every one of those would fire a
+ * server request for an artist the server has never heard of.
+ */
+export function useArtistExternalActions(artist: Artist, opts: { close: () => void }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const webLink = useMemo(() => artistWebLink(artist), [artist]);
+
+  const ctx: ArtistExternalActionContext = {
+    kind: 'artist', origin: 'external', artist, t, colors, close: opts.close,
+    webSourceNameKey: webLink?.sourceNameKey ?? null,
+    handlers: {
+      share: () => {
+        if (!webLink) return;
+        opts.close();
+        void shareItem({ url: webLink.url, title: artist.name, message: artist.name });
+      },
+      openInSource: () => {
+        if (!webLink) return;
+        opts.close();
+        void Linking.openURL(webLink.url);
+      },
+    },
+  };
+
+  return { actions: resolveActions(artistExternalActions, ctx) };
 }

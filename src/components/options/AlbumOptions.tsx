@@ -115,7 +115,9 @@ type ExternalAlbumOptionsSheetProps = {
 const ExternalAlbumOptionsSheet = forwardRef<BottomSheetModal, ExternalAlbumOptionsSheetProps>(
   ({ album }, ref) => {
     const { colors } = useTheme();
-    const snapPoints = useMemo(() => ['30%'], []);
+    // Taller than the original two rows: the sheet now also carries where to
+    // go next and the two ways out of the app (see `albumExternalActions`).
+    const snapPoints = useMemo(() => ['45%', '70%'], []);
     const sheetBg = useOptionSheetBackground();
     const close = () => dismissSheetRef(ref);
     const downloadSheetRef = useSheetRef();

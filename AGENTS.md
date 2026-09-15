@@ -276,6 +276,20 @@ because both halves of each pair look reasonable in isolation.
   Anything drawn above the items — a header, the sort row — cancels that
   padding with a negative margin and keeps `spacing.page`, so all of it lines
   up on one edge.
+- **Options live behind a `⋯`**: every detail-style screen — album, artist
+  (browsed as well as owned), playlist, genre, radio, podcasts, shares, wants —
+  puts its actions in an options sheet opened from a `⋯` on the right of
+  `DetailHeader`/`DetailHeaderBar`, and every row or tile puts its own behind a
+  `⋯` (a tile, having no room for one, answers a long press —
+  `features/home/OptionsTile`). Sheets are built on `EntityOptionsSheet` and
+  `OptionSheetPrimitives`; an entity kind's rows come from
+  `features/entity-actions/registry`, and a screen-level list (radio stations,
+  podcasts) builds `ResolvedAction`s directly, since a station is not a domain
+  entity. Bare icon buttons on a row are how this drifts back: radio drew a
+  pencil and a bin, shares three icons, podcasts a bin — one stray tap from the
+  row you press to play, and each screen answering "what can I do with this"
+  differently. A primary action may stay on the row (play an episode, download
+  one); everything else, and anything destructive, goes in the sheet.
 - **Collection actions**: a screen led by artwork uses `DetailHeader`'s centred
   circle-and-pill pair. A screen without artwork uses
   `features/library/CollectionActions` — two square-shouldered halves of the

@@ -1115,7 +1115,8 @@
       "arrived": "{{title}} がライブラリに追加されました",
       "inLibrary": "ライブラリ内",
       "downloading": "サーバーにダウンロード中… {{progress}}%",
-      "noServiceConnected": "ダウンロードするには設定でダウンローダーを接続してください"
+      "noServiceConnected": "ダウンロードするには設定でダウンローダーを接続してください",
+      "goToArtist": "アーティストへ移動"
     },
     "review": {
       "targetServer": "対象サーバー",
@@ -1190,7 +1191,8 @@
   "wants": {
     "title": "ウォンツ",
     "empty": "まだ何も保存されていません。",
-    "searchAction": "音楽を検索"
+    "searchAction": "音楽を検索",
+    "remove": "削除"
   },
   "manualAddWant": {
     "title": "ウォンツに追加",
@@ -1295,7 +1297,8 @@
       "downloaded": "ダウンロード済み",
       "goToArtist": "アーティストへ",
       "viewExternal": "外部で表示",
-      "generatePlaylist": "これでプレイリストを作成"
+      "generatePlaylist": "これでプレイリストを作成",
+      "share": "共有"
     },
     "sections": {
       "info": "アーティスト情報"
@@ -1387,7 +1390,12 @@
       "name": "名前",
       "streamUrl": "ストリーム URL",
       "homepage": "ホームページ（任意）"
-    }
+    },
+    "play": "再生",
+    "openHomepage": "ホームページを開く",
+    "delete": "ラジオ局を削除",
+    "refresh": "更新",
+    "openFailed": "このページを開けませんでした"
   },
   "podcasts": {
     "title": "ポッドキャスト",
@@ -1524,5 +1532,8 @@
       "offline": "この端末に保存",
       "downloaders": "サーバー転送"
     }
+  },
+  "externalOptions": {
+    "openInSource": "{{source}} で開く"
   }
 }

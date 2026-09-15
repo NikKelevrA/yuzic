@@ -1,5 +1,9 @@
 import { renderHook } from '@testing-library/react-native';
 
+jest.mock('@/features/sources/useMatchedNavigation', () => ({
+  useMatchedNavigation: () => ({ navigateToAlbum: jest.fn(), navigateToArtist: jest.fn() }),
+}));
+jest.mock('@/features/shares/share', () => ({ shareItem: jest.fn() }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000', subtext: '#666', muted: '#333', placeholder: '#999' }, isDarkMode: false }),

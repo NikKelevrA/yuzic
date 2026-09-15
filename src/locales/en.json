@@ -1122,7 +1122,8 @@
       "arrived": "{{title}} is now in your library",
       "inLibrary": "In Library",
       "downloading": "Downloading to server… {{progress}}%",
-      "noServiceConnected": "Connect a downloader in Settings to download"
+      "noServiceConnected": "Connect a downloader in Settings to download",
+      "goToArtist": "Go to Artist"
     },
     "review": {
       "targetServer": "Target server",
@@ -1207,7 +1208,8 @@
   "wants": {
     "title": "Wants",
     "empty": "Nothing saved yet.",
-    "searchAction": "Search music"
+    "searchAction": "Search music",
+    "remove": "Remove"
   },
   "albumOptions": {
     "actions": {
@@ -1317,7 +1319,8 @@
       "downloaded": "Downloaded",
       "goToArtist": "Go to Artist",
       "viewExternal": "View External",
-      "generatePlaylist": "Make a playlist from this"
+      "generatePlaylist": "Make a playlist from this",
+      "share": "Share"
     },
     "sections": {
       "info": "Artist Info"
@@ -1351,7 +1354,12 @@
       "name": "Name",
       "streamUrl": "Stream URL",
       "homepage": "Homepage (optional)"
-    }
+    },
+    "play": "Play",
+    "openHomepage": "Open homepage",
+    "delete": "Delete station",
+    "refresh": "Refresh",
+    "openFailed": "Could not open that page"
   },
   "podcasts": {
     "title": "Podcasts",
@@ -1529,5 +1537,8 @@
     "albumLoadFailed": "Couldn't load album. Check your connection.",
     "artistLoadFailed": "Couldn't load artist. Check your connection.",
     "playlistLoadFailed": "Couldn't load playlist. Check your connection."
+  },
+  "externalOptions": {
+    "openInSource": "Open in {{source}}"
   }
 }

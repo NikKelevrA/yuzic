@@ -38,6 +38,27 @@ jest.mock('@/components/MediaImage', () => {
   return { MediaImage: () => <View testID="media-image-mock" /> };
 });
 
+jest.mock('@/components/DetailHeader', () => {
+  const { Text, View } = require('react-native');
+  return {
+    DetailHeaderBar: ({ title, subtitle }: any) => (
+      <View><Text>{title}</Text>{subtitle ? <Text>{subtitle}</Text> : null}</View>
+    ),
+  };
+});
+
+jest.mock('@/components/options/WantOptions', () => {
+  const { Text, View } = require('react-native');
+  return {
+    WantOptions: ({ onSearch, onRemove }: any) => (
+      <View testID="want-options-sheet">
+        <Text testID="want-option-search" onPress={onSearch}>search</Text>
+        <Text testID="want-option-remove" onPress={onRemove}>remove</Text>
+      </View>
+    ),
+  };
+});
+
 jest.mock('@/components/EmptyState', () => {
   const { Text, View } = require('react-native');
   return {
@@ -107,7 +128,8 @@ describe('WantsScreen', () => {
     ];
     const view = await render(<WantsScreen />);
 
-    fireEvent.press(view.getByLabelText('a11y.wants.remove:My Title'));
+    await fireEvent.press(view.getByTestId('want-options'));
+    await fireEvent.press(view.getByTestId('want-option-remove'));
 
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'wants/removeWant',

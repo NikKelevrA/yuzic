@@ -77,6 +77,8 @@ jest.mock('./useLazyCollectionDetails', () => ({
 
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
 
+jest.mock('@/features/shares/share', () => ({ shareItem: jest.fn() }));
+
 jest.mock('@/components/options/OptionSheetPrimitives', () => {
   const { Text: RNText, View: RNView } = require('react-native');
   return {
@@ -129,5 +131,46 @@ describe('ArtistOptions', () => {
     mockCanGeneratePlaylist.mockReturnValue(true);
     const view = await render(<ArtistOptions ref={null as any} artist={artist} />);
     expect(view.getByText('artistOptions.actions.generatePlaylist')).toBeTruthy();
+  });
+
+  /**
+   * A browsed artist cannot be played, downloaded or queued from anyone's
+   * library, so the library set would be a sheet of dead rows. What it gets is
+   * what applies to the record itself — and, once artist wants land, Want.
+   */
+  describe('a browsed artist', () => {
+    const external: Artist = {
+      ...artist,
+      localId: 'local:artist:ext:deezer:9' as Artist['localId'],
+      nativeId: '9',
+      provenance: { origin: 'integration', providerId: 'deezer' },
+      libraryState: 'external',
+      externalIds: { deezerId: '9' },
+    };
+
+    it('shares and opens the source page instead of the library actions', async () => {
+      const { shareItem } = jest.requireMock('@/features/shares/share') as { shareItem: jest.Mock };
+      shareItem.mockClear();
+
+      const view = await render(<ArtistOptions ref={null as any} artist={external} />);
+
+      expect(view.queryByText('artistOptions.actions.play')).toBeNull();
+      expect(view.queryByText('artistOptions.actions.download')).toBeNull();
+      expect(view.getByText('externalOptions.openInSource')).toBeTruthy();
+
+      view.getByText('artistOptions.actions.share').props.onPress();
+      expect(shareItem).toHaveBeenCalledWith(
+        expect.objectContaining({ url: 'https://www.deezer.com/artist/9' })
+      );
+    });
+
+    it('offers nothing to take out of the app when no source identifies them', async () => {
+      const view = await render(
+        <ArtistOptions ref={null as any} artist={{ ...external, externalIds: {} }} />
+      );
+
+      expect(view.queryByText('artistOptions.actions.share')).toBeNull();
+      expect(view.queryByText('externalOptions.openInSource')).toBeNull();
+    });
   });
 });
