@@ -677,7 +677,10 @@
       "hint": "Ajoutez un port si nécessaire, ex. : votre-serveur.com:4533",
       "schemeTitle": "Protocole",
       "httpsDesc": "Chiffré (recommandé)",
-      "httpDesc": "Non chiffré"
+      "httpDesc": "Non chiffré",
+      "unreachable": "Impossible de joindre un serveur à cette adresse. Vérifiez-la, ainsi que le port éventuel.",
+      "notThisServer": "Quelque chose répond à cette adresse, mais ce n’est pas {{server}}.",
+      "continueAnyway": "Continuer quand même"
     },
     "credentials": {
       "title": "Saisissez vos identifiants",

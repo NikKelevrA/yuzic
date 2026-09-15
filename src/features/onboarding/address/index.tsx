@@ -15,7 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
 import { useSheetRef } from '@/components/useSheetRef';
 import Touchable from '@/components/Touchable';
-import { iconSize, onDark, spacing, typography } from '@/constants/design';
+import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
+import { getServerProvider } from '@/providers/registry/serverConnections';
+import { iconSize, onDark, spacing, statusColor, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 
 type Scheme = 'https' | 'http';
@@ -28,19 +30,41 @@ export default function Address() {
 
     const [scheme, setScheme] = useState<Scheme>('https');
     const [host, setHost] = useState('');
+    const [checking, setChecking] = useState(false);
+    const [problem, setProblem] = useState<'unreachable' | 'notThisServer' | null>(null);
+    const provider = type ? getServerProvider(type) : undefined;
 
     const schemeSheetRef = useSheetRef();
     const snapPoints = useMemo(() => ['28%'], []);
 
-    const handleNext = () => {
+    const serverUrl = `${scheme}://${host.trim()}`;
+    const goToCredentials = () => {
+        setProblem(null);
+        router.push({ pathname: '/(onboarding)/credentials', params: { type, serverUrl } });
+    };
+
+    // The address is asked about before the password is. A wrong address used
+    // to surface only after credentials, as a sign-in failure that read like a
+    // wrong password; the server's public endpoint can tell the two apart.
+    const handleNext = async () => {
         if (!host.trim()) {
             notify.error(t('onboarding.address.enterUrl'));
             return;
         }
-        router.push({
-            pathname: '/(onboarding)/credentials',
-            params: { type, serverUrl: `${scheme}://${host.trim()}` },
-        });
+        if (checking) return;
+        if (provider?.probeAddress) {
+            setChecking(true);
+            try {
+                const result = await provider.probeAddress(serverUrl);
+                if (result.kind !== 'ok') {
+                    setProblem(result.kind);
+                    return;
+                }
+            } finally {
+                setChecking(false);
+            }
+        }
+        goToCredentials();
     };
 
     return (
@@ -65,7 +89,10 @@ export default function Address() {
                                 placeholder="your-server.com"
                                 placeholderTextColor={onDark.mutedText}
                                 value={host}
-                                onChangeText={setHost}
+                                onChangeText={(text) => {
+                                    setHost(text);
+                                    setProblem(null);
+                                }}
                                 autoCapitalize="none"
                                 autoCorrect={false}
                                 keyboardAppearance="dark"
@@ -77,11 +104,30 @@ export default function Address() {
                         </View>
 
                         <Text style={styles.hint}>{t('onboarding.address.hint')}</Text>
+
+                        {problem && (
+                            <View testID="address-problem" style={styles.problem}>
+                                <Text style={styles.problemText}>
+                                    {t(`onboarding.address.${problem}`, { server: provider?.label })}
+                                </Text>
+                                {/* The check can be wrong about an unusual setup, so it never has the last word. */}
+                                <Touchable testID="address-continue-anyway" onPress={goToCredentials}>
+                                    <Text style={styles.continueText}>{t('onboarding.address.continueAnyway')}</Text>
+                                </Touchable>
+                            </View>
+                        )}
                     </View>
 
                     <View style={styles.buttonContainer}>
-                        <Touchable style={[styles.nextButton, { borderRadius: rad.pill }]} onPress={handleNext}>
-                            <Text style={styles.nextButtonText}>{t('common.next')}</Text>
+                        <Touchable
+                            testID="address-next"
+                            style={[styles.nextButton, { borderRadius: rad.pill }]}
+                            onPress={() => void handleNext()}
+                            disabled={checking}
+                        >
+                            {checking
+                                ? <SpinningLoaderCircle size={iconSize.row} color={onDark.background} />
+                                : <Text style={styles.nextButtonText}>{t('common.next')}</Text>}
                         </Touchable>
 
                         <Touchable style={[styles.backButton, { borderRadius: rad.pill }]} onPress={() => router.back()}>
@@ -111,6 +157,7 @@ export default function Address() {
                                 style={[styles.schemeOption, { borderRadius: rad.md }, isSelected && styles.schemeOptionSelected]}
                                 onPress={() => {
                                     setScheme(s);
+                                    setProblem(null);
                                     schemeSheetRef.current?.dismiss();
                                 }}
                             >
@@ -191,6 +238,19 @@ const styles = StyleSheet.create({
     hint: {
         ...typography.caption,
         color: onDark.mutedText,
+    },
+    problem: {
+        marginTop: spacing.md,
+        gap: spacing.xs,
+    },
+    problemText: {
+        ...typography.caption,
+        color: statusColor.warningText,
+    },
+    continueText: {
+        ...typography.caption,
+        color: onDark.text,
+        textDecorationLine: 'underline',
     },
     buttonContainer: {
         padding: spacing.roomy,

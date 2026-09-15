@@ -4,6 +4,7 @@ import { createNavidromeClient, buildTokenParams } from '@/providers/server/navi
 import { ping as pingNavidrome } from '@/providers/server/navidrome/auth/ping';
 import { connect as connectNavidrome } from '@/providers/server/navidrome/auth/connect';
 import { getMusicFolders } from '@/providers/server/navidrome/auth/getMusicFolders';
+import { probeAddress as probeSubsonicAddress } from '@/providers/server/navidrome/auth/probeAddress';
 import { createNavidromeAdapter } from '@/providers/server/navidrome';
 import type { ServerProviderConfig } from '@/providers/registry/serverProviderTypes';
 import i18n from '@/i18n';
@@ -30,6 +31,7 @@ export const navidromeProvider: ServerProviderConfig = {
   },
   libraryScope: { key: 'musicFolderIds', legacyKey: 'musicFolderId' },
   listLibraries: (server) => getMusicFolders(server),
+  probeAddress: (url) => probeSubsonicAddress(url),
   ping: async (url, username, auth, basicAuth) => {
     const password = auth.password as string;
     if (!username || !password) return false;

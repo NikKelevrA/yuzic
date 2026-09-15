@@ -676,7 +676,10 @@
       "hint": "如需指定端口，请在地址后添加，例如：your-server.com:4533",
       "schemeTitle": "协议",
       "httpsDesc": "加密（推荐）",
-      "httpDesc": "未加密"
+      "httpDesc": "未加密",
+      "unreachable": "无法连接到此地址的服务器。请检查地址以及是否需要端口。",
+      "notThisServer": "此地址有响应，但不是 {{server}}。",
+      "continueAnyway": "仍然继续"
     },
     "credentials": {
       "title": "输入你的凭证",

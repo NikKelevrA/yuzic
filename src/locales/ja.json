@@ -676,7 +676,10 @@
       "hint": "必要に応じてポートを含めてください（例：your-server.com:4533）",
       "schemeTitle": "プロトコル",
       "httpsDesc": "暗号化（推奨）",
-      "httpDesc": "非暗号化"
+      "httpDesc": "非暗号化",
+      "unreachable": "このアドレスのサーバーに接続できませんでした。アドレスとポートを確認してください。",
+      "notThisServer": "このアドレスは応答しましたが、{{server}} ではありません。",
+      "continueAnyway": "このまま続ける"
     },
     "credentials": {
       "title": "認証情報を入力",

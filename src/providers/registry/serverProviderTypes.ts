@@ -109,6 +109,14 @@ export type ServerProviderIcon =
   | { kind: 'image'; source: number }
   | { kind: 'glyph'; Glyph: ComponentType<{ size?: number; color?: string }> };
 
+/**
+ * What an address answered before anyone signed in: a server of this type,
+ * something that is not one (a web page, a different server), or nothing.
+ * A proxy asking for its own sign-in counts as reachable — that is the
+ * credentials step's to ask for.
+ */
+type AddressProbe = { kind: 'ok' | 'unreachable' | 'notThisServer' };
+
 export type ServerProviderConfig = {
   type: ServerType;
   label: string;
@@ -118,6 +126,11 @@ export type ServerProviderConfig = {
   libraryScope: LibraryScope;
   /** The libraries/folders this server offers to scope the app to. */
   listLibraries: (server: Server) => Promise<Library[]>;
+  /**
+   * Checks an address before credentials are asked for, through the server's
+   * public endpoint. Absent for a type with no address (local files).
+   */
+  probeAddress?: (url: string) => Promise<AddressProbe>;
   ping: (
     url: string,
     username: string,

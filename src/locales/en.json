@@ -677,7 +677,10 @@
       "hint": "Include a port if needed, e.g. your-server.com:4533",
       "schemeTitle": "Protocol",
       "httpsDesc": "Encrypted (recommended)",
-      "httpDesc": "Unencrypted"
+      "httpDesc": "Unencrypted",
+      "unreachable": "Couldn't reach a server at this address. Check it, and whether it needs a port.",
+      "notThisServer": "Something answered at this address, but it isn't {{server}}.",
+      "continueAnyway": "Continue anyway"
     },
     "credentials": {
       "title": "Enter Your Credentials",

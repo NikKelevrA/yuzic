@@ -6,6 +6,7 @@ import { getMusicLibraries } from '@/providers/server/media-browser/auth/getMusi
 import { ping as pingMediaBrowser } from '@/providers/server/media-browser/auth/ping';
 import { connect as connectMediaBrowser } from '@/providers/server/media-browser/auth/connect';
 import { EMBY_BRAND } from '@/providers/server/media-browser/brand';
+import { probeAddress as probeMediaBrowserAddress } from '@/providers/server/media-browser/auth/probeAddress';
 import type { ServerProviderConfig } from '@/providers/registry/serverProviderTypes';
 import i18n from '@/i18n';
 
@@ -19,6 +20,7 @@ export const embyProvider: ServerProviderConfig = {
   },
   libraryScope: { key: 'parentIds', legacyKey: 'parentId' },
   listLibraries: (server) => getMusicLibraries(server),
+  probeAddress: (url) => probeMediaBrowserAddress(EMBY_BRAND, url),
   ping: async (url, username, auth, basicAuth) => {
     const token = auth.token as string;
     const userId = auth.userId as string;

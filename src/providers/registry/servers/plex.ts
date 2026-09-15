@@ -3,6 +3,7 @@ import PlexIcon from '@assets/images/plex.png';
 import { createPlexClient, plexBasicAuthHeader } from '@/providers/server/plex/client';
 import { createPlexAdapter } from '@/providers/server/plex';
 import { beginPlexPin, pollPlexPin } from '@/providers/server/plex/auth/pin';
+import { probeAddress as probePlexAddress } from '@/providers/server/plex/auth/probeAddress';
 import type { ServerProviderConfig } from '@/providers/registry/serverProviderTypes';
 import i18n from '@/i18n';
 
@@ -27,6 +28,7 @@ export const plexProvider: ServerProviderConfig = {
       .filter((section: any) => section.type === 'artist')
       .map((section: any) => ({ id: String(section.key), name: section.title ?? 'Music' }));
   },
+  probeAddress: (url) => probePlexAddress(url),
   ping: async (url, _username, auth, basicAuth) => {
     const token = auth.token as string | undefined;
     if (!token) return false;
