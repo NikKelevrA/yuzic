@@ -70,12 +70,13 @@ integrations requires a self-hosted instance you point the app at.
 No API keys or `.env` are required to build the app. Every outside service is
 optional and configured at runtime in Settings, not at build time:
 
-- Deezer, MusicBrainz, and Last.fm are read-only and need no account — the
-  Last.fm key is bundled.
-- ListenBrainz scrobbling and AudioMuse-AI are authenticated per-user in
-  **Settings → Integrations**.
-- The Lidarr and slskd downloaders point at your own self-hosted instances
-  (**Settings → Downloaders**). Downloaded audio is transcoded server-side by
+- Deezer, MusicBrainz, Cover Art Archive, Last.fm, and LRCLIB are read-only
+  and need no account — the Last.fm key is bundled. Each use is a switch on
+  **Settings → Metadata**, **Pages**, **Search**, or **Home**.
+- ListenBrainz and AudioMuse-AI are authenticated per-user in
+  **Settings → Connections**.
+- The Lidarr, slskd, and SoulSync downloaders point at your own self-hosted
+  instances (also **Settings → Connections**). Downloaded audio is transcoded server-side by
   your music server via the stream URL, so testing a download-related change
   needs a real server but no extra service.
 

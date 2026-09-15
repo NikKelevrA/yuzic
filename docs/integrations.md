@@ -49,16 +49,16 @@ The base surface — auth, albums, artists, genres, playlists, starred, songs,
 tracks, similar, lyrics, search — works everywhere. These are optional, and the
 UI shows them only when the active server's adapter provides them:
 
-| Capability | `ApiAdapter` field | Navidrome | Jellyfin / Emby |
-| --- | --- | --- | --- |
-| Internet radio stations | `radio` | ✅ | — |
-| Jukebox (play on the server) | `jukebox` | ✅ (off by default server-side) | — |
-| Public share links | `shares` | ✅ | — |
-| Resume positions / bookmarks | `bookmarks` | ✅ (native endpoint) | ✅ (from `PlaybackPositionTicks`) |
-| Server-side play queue sync | `queue` | ✅ | — |
-| Random songs + who else is listening | `discovery` | ✅ | — |
-| Podcasts | `podcasts` | ✅ | — |
-| Account avatar | `user` | ✅ (`getAvatar`) | ✅ (`/Users/{id}/Images/Primary`) |
+| Capability | `ApiAdapter` field | Navidrome | Jellyfin / Emby | Plex | Local files |
+| --- | --- | --- | --- | --- | --- |
+| Internet radio stations | `radio` | ✅ | — | — | — |
+| Jukebox (play on the server) | `jukebox` | ✅ (off by default server-side) | — | — | — |
+| Public share links | `shares` | ✅ | — | — | — |
+| Resume positions / bookmarks | `bookmarks` | ✅ (native endpoint) | ✅ (from `PlaybackPositionTicks`) | — | — |
+| Server-side play queue sync | `queue` | ✅ | — | — | — |
+| Random songs + who else is listening | `discovery` | ✅ | ✅ (`SortBy=Random`; listeners from `/Sessions`) | — | — |
+| Podcasts | `podcasts` | ✅ | — | — | — |
+| Account avatar | `user` | ✅ (`getAvatar`) | ✅ (`/Users/{id}/Images/Primary`) | — | — |
 
 A Jellyfin user never sees a Radio row rather than seeing one that goes
 nowhere — the Library index builds its rows from what the adapter offers
@@ -85,7 +85,8 @@ The user imports a PKCS#12 bundle (`.p12`/`.pfx`) plus its password under
   only path to it and nothing else keeps a copy.
 - **It reaches both transports on both native platforms.** `applyClientCertificate`
   calls `YuzicEngine.setClientCertificate`, which points the engine's audio and
-  plain-request transports at the same identity: on iOS, the audio
+  plain-request transports at the same identity (these native paths are in the
+  yuzic-engine repository): on iOS, the audio
   `URLSession` (`ios/Core/HTTPTrackReaderFactory.swift`) and
   `ClientCertificateHTTP` (`ios/Core/ClientCertificateHTTP.swift`); on Android,
   Media3's `OkHttpDataSource` and `ClientCertificateTransport`. The app's server
@@ -113,45 +114,60 @@ The user imports a PKCS#12 bundle (`.p12`/`.pfx`) plus its password under
 
 ## Integrations
 
-All of these live under **Settings → Integrations**, and every one of them is
-off until you turn it on. Nothing here is required for the app to work.
+Every one of these is off until you turn it on. Nothing here is required for
+the app to work.
+
+Where they are set up depends on whether there is anything to sign in to:
+
+- **Accounts and self-hosted services** — ListenBrainz and AudioMuse-AI — are
+  under **Settings → Connections**, with the downloaders.
+- **Keyless sources** have no screen of their own. Settings are organised by
+  what the data is for, so each *use* of a source is one switch on that
+  purpose's screen: **Metadata** (artist info, artwork, lyrics), **Pages**
+  (similar artists, popular tracks, previews, recommendations), **Search**, and
+  **Home** (discovery shelves). `src/providers/registry/sources.ts` declares
+  every use, and the order they are tried in.
 
 | Integration | Account needed | What it adds |
 | --- | --- | --- |
-| [Deezer](#deezer) | No | Discovery shelves, search results, external artist/album pages, top tracks, similar artists, recommendations, 30s preview samples |
-| [MusicBrainz](#musicbrainz) | No | Canonical artist/album metadata for things not in your library |
-| [Last.fm](#lastfm) | No | Similar artists and playlist-recommendation seeds |
-| [ListenBrainz](#listenbrainz) | Token, for scrobbling | Scrobbling + now-playing; and, separately, the public similar-artist graph for discovery |
+| [Deezer](#deezer) | No | Artwork backup, similar artists, popular tracks, 30s previews, recommendations, Home shelves, search, external artist/album pages |
+| [MusicBrainz](#musicbrainz) | No | Search results and canonical artist/album pages for things not in your library; MBIDs for downloaders |
+| [Cover Art Archive](#cover-art-archive) | No | Album covers matched by MBID, as an artwork backup |
+| [Last.fm](#lastfm) | No | Artist biography and tags, similar artists, playlist-recommendation seeds |
+| [LRCLIB](#lrclib) | No | Synced or plain lyrics when the server has none |
+| [ListenBrainz](#listenbrainz) | Token, for scrobbling and mixes | Scrobbling + now-playing, made-for-you mixes on Home; and, keyless, the public similar-artist graph |
 | [AudioMuse-AI](#audiomuse-ai) | Self-hosted instance | Acoustic-similarity autoplay ("Smart Shuffle") and playlist generation |
 
-Scrobbling to Last.fm on a Navidrome server is a **server-side** setting, not
-an app one: Navidrome forwards scrobbles itself. **Settings → Server** is where
-the app's own scrobble/now-playing switches live.
+**Scrobbling** is chosen per destination, per server, under **Settings →
+Scrobbling**: off, through the server (Navidrome forwards scrobbles to Last.fm
+or ListenBrainz itself), or direct from Yuzic (ListenBrainz only). One route per
+destination, so a listen is never sent twice.
 
 ### Deezer
 
-`src/providers/integration/deezer/` · **Settings → Integrations → Deezer**
+`src/providers/integration/deezer/` · **Metadata**, **Pages**, **Search**, **Home**
 
-Read-only, unauthenticated public API. Three switches, one per place the data
-shows up:
+Read-only, unauthenticated public API. One switch per use, each on the screen
+for what it is for:
 
-- **Discovery** — Deezer charts, genre artists, and recommendations on Home.
-  Off by default, and absent when offline.
-- **Search** — include Deezer results alongside your library's.
-- **External artist & album data** — fill in artist and album screens for
-  things your server doesn't have: top tracks, similar artists, track lists,
-  and 30-second preview samples.
+- **Metadata › Artwork** — an artist photo or album cover the server lacks,
+  used only on a same-name match (after Cover Art Archive for albums).
+- **Pages** — similar artists, popular tracks, 30-second previews, and
+  recommendations on artist, album and playlist screens.
+- **Search** — Deezer results under Other sources.
+- **Home** — charts and genre shelves. Off by default, and absent when offline.
 
-There used to be a per-surface switch for each of those last four. They were
-retired into the switch above them and the persisted keys are stripped by a
-store migration (`src/state/redux/store.ts`) — don't reintroduce them.
+This replaced a single "discovery" switch that turned on things nobody had
+asked about. Existing installs keep whatever they had on:
+`src/providers/registry/legacySourceSettings.ts` turns each old switch into the
+uses it covered, once.
 
 Deezer is also one of the two external **sources** (with MusicBrainz) behind
 artist/album resolution — see `src/features/sources/registry.ts`.
 
 ### MusicBrainz
 
-`src/providers/integration/musicbrainz/` · **Settings → Integrations → MusicBrainz**
+`src/providers/integration/musicbrainz/` · **Search**
 
 Read-only, no account. Fills in artist and album pages with canonical metadata
 when the entity isn't in your library, and supplies MBIDs that the downloaders
@@ -159,7 +175,7 @@ use to resolve a release precisely instead of by fuzzy name match.
 
 ### Last.fm
 
-`src/providers/integration/lastfm/` · **Settings → Integrations → Last.fm**
+`src/providers/integration/lastfm/` · **Metadata › Artist info**, **Pages**
 
 Read-only with a bundled API key — no account, no signing, no session. Used for
 similar artists, to seed playlist recommendations, and — under Metadata › Artist
@@ -168,18 +184,35 @@ to Last.fm to look them up, which is why each use is a switch rather than always
 
 ### ListenBrainz
 
-`src/providers/integration/listenbrainz/` · **Settings → Integrations → ListenBrainz**
+`src/providers/integration/listenbrainz/` · **Settings → Connections → ListenBrainz**; keyless uses on **Pages** and **Home**
 
-Two independent things behind one row:
+Two independent things:
 
-- **Discovery** reads the public similar-artist graph and takes no account, so
-  it sits above the credentials and is off until switched on.
-- **Scrobbling + now-playing** needs your ListenBrainz username and user token,
-  entered in the app. Now-playing follows the scrobble switch.
+- **Discovery** reads the public similar-artist graph and takes no account —
+  similar artists on Pages and a Home shelf, each off until switched on.
+- **The account** — your ListenBrainz username and user token, entered in the
+  app — enables direct scrobbling and now-playing (routed under Settings →
+  Scrobbling), and the made-for-you mixes (daily jams, weekly jams, weekly
+  exploration) as their own Home shelves.
+
+### Cover Art Archive
+
+`src/providers/registry/coverBackups.ts` · **Metadata › Artwork**
+
+No account. The first artwork backup for an album the server has no cover
+for: matched exactly by the MBID the server's tags carry, never by name.
+
+### LRCLIB
+
+`src/providers/integration/lrclib/` · **Metadata › Lyrics**
+
+No account. Lyrics for a track whose server has none, looked up by artist,
+title, album and duration. One source that prefers synced lyrics and falls back
+to plain ones, rather than two switches.
 
 ### AudioMuse-AI
 
-`src/providers/integration/audiomuse/`, `src/providers/registry/similarityService.ts` · **Settings → Integrations → AudioMuse-AI**
+`src/providers/integration/audiomuse/`, `src/providers/registry/similarityService.ts` · **Settings → Connections → AudioMuse-AI**
 
 A self-hosted service you point at the same music server. Needs a server URL
 and API token. When connected and enabled, it becomes the queue-fill provider
@@ -192,7 +225,7 @@ seed track (`src/features/playlist/generateSimilarPlaylist.ts`).
 
 ## Downloaders
 
-**Settings → Downloaders**. Each takes a server URL and an API key, is
+**Settings → Connections**, under Downloaders. Each takes a server URL and an API key, is
 per-server, and shows its own live transfer queue in the app. When a transfer
 finishes, the app nudges your music server to rescan so the new music appears
 without a manual pull (`src/features/downloaders/DownloadersQueueContext.tsx`).
@@ -366,7 +399,17 @@ Nothing else on the Last.fm API is called — see
 | `GET /validate-token` | Testing the token when you connect, and on reconnect |
 | `POST /submit-listens` (`listen_type: single`) | Scrobbling a completed track |
 | `POST /submit-listens` (`listen_type: playing_now`) | Now-playing |
-| `GET https://labs.api.listenbrainz.org/similar-artists/json` | The Home "similar to what you play" shelf. No auth — this is the public graph, and it's the Discovery switch rather than the account |
+| `GET /user/{user}/playlists/createdfor` | Finding the account's made-for-you mixes for their Home shelves |
+| `GET /playlist/{mbid}` | Reading one mix's tracks |
+| `GET https://labs.api.listenbrainz.org/similar-artists/json` | The Home "similar to what you play" shelf and similar artists on Pages. No auth — this is the public graph, and it's the Discovery switch rather than the account |
+
+### LRCLIB — `https://lrclib.net/api`
+
+No auth, `User-Agent` identifies the app. `src/providers/integration/lrclib/`.
+
+| Endpoint | Used for |
+| --- | --- |
+| `GET /get?artist_name=&track_name=&album_name=&duration=` | Metadata › Lyrics backup for a track whose server has none |
 
 ### AudioMuse-AI — your instance
 
@@ -441,7 +484,7 @@ it.
 | --- | --- | --- |
 | Last.fm | Scrobbling (`track.scrobble`, `track.updateNowPlaying`, `auth.getSession`) | Would need an api_secret, MD5 signing, and a per-user session. On Navidrome the server already forwards scrobbles to Last.fm; the app doesn't duplicate that. |
 | Deezer | Everything behind OAuth — user playlists, favourites, full-length streams | Deezer's public read API needs no account, and adding OAuth would mean shipping an app secret and asking users to log into a service that isn't hosting their music. Samples are the 30-second previews the public API returns. |
-| ListenBrainz | `GET /cf/recommendation/user/{user}/recording` and `GET /user/{user}/playlists/recommendations` | Clients for both existed, exported and called by nothing, and were deleted rather than surfaced — the Home shelf gets its recommendations from the labs similar-artists endpoint instead. |
+| ListenBrainz | `GET /cf/recommendation/user/{user}/recording` and `GET /user/{user}/playlists/recommendations` | Raw collaborative-filtering output. The made-for-you mixes (`playlists/createdfor`) are the finished form of it — ListenBrainz built the mix, the app renders it — so the raw endpoints are not built. |
 | Deezer | Album previews by album id | `getAlbumEmbeddedPreviews` was the same story and went the same way. `searchAlbumPreviews` is the path samples actually take. |
 | MusicBrainz | Submitting anything (tags, ratings, edits) | The app is a read-only consumer of MusicBrainz. |
 | Lidarr | Everything outside the add-artist → monitor-album → search flow: quality profiles, indexers, history, calendar, import lists | The app is a request button, not a Lidarr client. Configure Lidarr in Lidarr. |
