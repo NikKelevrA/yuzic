@@ -951,6 +951,8 @@
       "addManually": "手动添加设备",
       "addManuallyTitle": "添加设备",
       "addManuallyBody": "输入你的 DLNA 设备的 IP 地址",
+      "addManuallyField": "IP 地址",
+      "addManuallySubmit": "添加",
       "connectFailed": "无法连接到该设备。",
       "notFoundAtAddress": "该地址上未找到 DLNA 设备。",
       "playOnServer": "在 {{server}} 上播放",
@@ -1001,6 +1003,13 @@
     "empty": "此播放列表暂无歌曲。",
     "originShared": "共享",
     "originExternal": "来自 {{provider}}",
+    "edit": {
+      "title": "正在编辑歌曲",
+      "offlineReorder": "重新排序需要联网",
+      "removeFailed": "无法移除歌曲",
+      "moveFailed": "无法移动歌曲",
+      "changed": "此播放列表已在别处更改，已重新加载"
+    },
     "recommended": {
       "title": "推荐",
       "local": "来自您的音乐库",
@@ -1238,7 +1247,8 @@
       "downloaded": "已下载",
       "delete": "删除播放列表",
       "rename": "重命名",
-      "share": "共享"
+      "share": "共享",
+      "editSongs": "编辑歌曲"
     },
     "sections": {
       "info": "播放列表信息"
@@ -1440,6 +1450,8 @@
     "playlist": {
       "addSong": "将{{title}}添加到此播放列表",
       "songAdded": "{{title}}已添加",
+      "removeSong": "从此播放列表中移除{{title}}",
+      "reorderSong": "移动{{title}}",
       "downloadSong": "下载{{title}}",
       "create": "创建播放列表"
     },

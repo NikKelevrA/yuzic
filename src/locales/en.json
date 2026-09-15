@@ -956,6 +956,8 @@
       "addManually": "Add device manually",
       "addManuallyTitle": "Add device",
       "addManuallyBody": "Enter the IP address of your DLNA device",
+      "addManuallyField": "IP address",
+      "addManuallySubmit": "Add",
       "connectFailed": "Could not connect to that device.",
       "notFoundAtAddress": "No DLNA device found at that address.",
       "playOnServer": "Play on {{server}}",
@@ -1008,6 +1010,13 @@
     "empty": "This playlist has no songs yet.",
     "originShared": "Shared",
     "originExternal": "From {{provider}}",
+    "edit": {
+      "title": "Editing songs",
+      "offlineReorder": "Reordering needs a connection",
+      "removeFailed": "Could not remove the song",
+      "moveFailed": "Could not move the song",
+      "changed": "This playlist changed elsewhere, so it was reloaded"
+    },
     "recommended": {
       "title": "Recommended",
       "local": "From your library",
@@ -1260,7 +1269,8 @@
       "downloaded": "Downloaded",
       "rename": "Rename",
       "delete": "Delete playlist",
-      "share": "Share"
+      "share": "Share",
+      "editSongs": "Edit songs"
     },
     "sections": {
       "info": "Playlist Info"
@@ -1435,6 +1445,8 @@
     "playlist": {
       "addSong": "Add {{title}} to this playlist",
       "songAdded": "{{title}} already added",
+      "removeSong": "Remove {{title}} from this playlist",
+      "reorderSong": "Move {{title}}",
       "downloadSong": "Download {{title}}",
       "create": "Create playlist"
     },

@@ -24,7 +24,7 @@ export async function getPlaylist(
   return {
     // Songs are mapped first so their localIds can be threaded into the
     // playlist's songIds — the two must agree, per PlaylistDetail's contract.
-    playlist: mapPlaylist(playlist, { provenance, songIds: songs.map((s) => s.localId) }),
+    playlist: mapPlaylist(playlist, { provenance, songIds: songs.map((s) => s.localId), username: client.username }),
     songs,
   };
 }

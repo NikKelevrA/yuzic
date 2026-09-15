@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,6 @@ import { notify } from '@/components/toast';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useDownload } from '@/features/offline/DownloadContext';
 import { useDeletePlaylist } from '@/features/playlist/useDeletePlaylist';
-import { useRenamePlaylist } from '@/features/playlist/useRenamePlaylist';
 import { FAVORITES_ID } from '@/constants/favorites';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { useLazyPlaylistDetail } from '@/components/options/useLazyCollectionDetails';
@@ -19,7 +18,14 @@ import { playlistActions, type PlaylistActionContext } from '../registry/playlis
 import { confirmDestructive } from '../shared/starActions';
 
 export function usePlaylistOptionsActions(
-  playlist: Playlist | null, opts: { hideGoToPlaylist: boolean; isSheetOpen: boolean; close: () => void }
+  playlist: Playlist | null,
+  opts: {
+    hideGoToPlaylist: boolean;
+    isSheetOpen: boolean;
+    close: () => void;
+    /** Opens the screen's edit mode; absent where there is no playlist screen to edit on. */
+    onEditSongs?: () => void;
+  }
 ) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -28,7 +34,7 @@ export function usePlaylistOptionsActions(
   const playingActions = usePlayingActions();
   const { downloadPlaylistById, removeDownloadByCollectionId, getCollectionDownloadState } = useDownload();
   const deletePlaylist = useDeletePlaylist();
-  const renamePlaylist = useRenamePlaylist();
+  const [isRenaming, setIsRenaming] = useState(false);
 
   const { playlistWithSongs, songs, songsLoading } = useLazyPlaylistDetail(playlist, opts.isSheetOpen);
   const songIds = useMemo(() => songs.map(s => s.localId), [songs]);
@@ -42,15 +48,23 @@ export function usePlaylistOptionsActions(
     failedKey: 'playlistOptions.toasts.shareFailed', close: opts.close,
   });
 
+  const renaming = { isOpen: isRenaming, close: () => setIsRenaming(false) };
+
   if (!playlist) {
-    return { actions: [], songsLoading: false, playlistWithSongs: null, songs: [] };
+    return { actions: [], songsLoading: false, playlistWithSongs: null, songs: [], renaming };
   }
 
+  const onEditSongs = opts.onEditSongs;
   const ctx: PlaylistActionContext = {
     kind: 'playlist', origin: 'library', playlist, t, colors, close: opts.close,
     playbackDisabled, songsLoading, isDownloaded, isDownloading, isSharing, canShare,
     isFavorites, isDeleting: deletePlaylist.isPending, hideGoToPlaylist: opts.hideGoToPlaylist,
+    canEditSongs: !!onEditSongs && !isFavorites && playlist.isOwned,
     handlers: {
+      editSongs: () => {
+        opts.close();
+        onEditSongs?.();
+      },
       play: () => playback.play(playlistWithSongs, songs, false, opts.close),
       shuffle: () => playback.play(playlistWithSongs, songs, true, opts.close),
       addToQueue: () => playback.addToQueueOrPlay(playlistWithSongs, songs, opts.close),
@@ -81,18 +95,8 @@ export function usePlaylistOptionsActions(
       share: () => void share(),
       rename: () => {
         if (isFavorites) return;
-        Alert.prompt(
-          t('playlistOptions.rename.title'), undefined,
-          async (newName?: string) => {
-            const trimmed = newName?.trim();
-            if (!trimmed || trimmed === playlist.title) return;
-            try {
-              await renamePlaylist.mutateAsync({ id: playlist.nativeId, newName: trimmed });
-              notify.success(t('playlistOptions.toasts.renamed'));
-            } catch { notify.error(t('playlistOptions.toasts.renameFailed')); }
-          },
-          'plain-text', playlist.title, t('playlistOptions.rename.placeholder')
-        );
+        opts.close();
+        setIsRenaming(true);
       },
       delete: () => {
         if (isFavorites) return;
@@ -117,5 +121,5 @@ export function usePlaylistOptionsActions(
     },
   };
 
-  return { actions: resolveActions(playlistActions, ctx), songsLoading, playlistWithSongs, songs };
+  return { actions: resolveActions(playlistActions, ctx), songsLoading, playlistWithSongs, songs, renaming };
 }

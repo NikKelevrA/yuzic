@@ -98,6 +98,8 @@ export interface SubsonicPlaylist {
   coverArt?: string;
   changed?: string;
   created?: string;
+  /** The account that owns it. Public playlists of other accounts are listed too. */
+  owner?: string;
   entry?: SubsonicSong[];
 }
 

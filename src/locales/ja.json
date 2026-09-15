@@ -951,6 +951,8 @@
       "addManually": "デバイスを手動で追加",
       "addManuallyTitle": "デバイスを追加",
       "addManuallyBody": "DLNA デバイスの IP アドレスを入力してください",
+      "addManuallyField": "IP アドレス",
+      "addManuallySubmit": "追加",
       "connectFailed": "そのデバイスに接続できませんでした。",
       "notFoundAtAddress": "そのアドレスに DLNA デバイスは見つかりません。",
       "playOnServer": "{{server}} で再生",
@@ -1001,6 +1003,13 @@
     "empty": "このプレイリストにはまだ曲がありません。",
     "originShared": "共有",
     "originExternal": "{{provider}}から",
+    "edit": {
+      "title": "曲を編集中",
+      "offlineReorder": "並べ替えには接続が必要です",
+      "removeFailed": "曲を削除できませんでした",
+      "moveFailed": "曲を移動できませんでした",
+      "changed": "このプレイリストは別の場所で変更されたため、再読み込みしました"
+    },
     "recommended": {
       "title": "おすすめ",
       "local": "ライブラリから",
@@ -1238,7 +1247,8 @@
       "downloaded": "ダウンロード済み",
       "delete": "プレイリストを削除",
       "rename": "名前を変更",
-      "share": "共有"
+      "share": "共有",
+      "editSongs": "曲を編集"
     },
     "sections": {
       "info": "プレイリスト情報"
@@ -1440,6 +1450,8 @@
     "playlist": {
       "addSong": "{{title}}をこのプレイリストに追加",
       "songAdded": "{{title}}は追加済み",
+      "removeSong": "{{title}}をこのプレイリストから削除",
+      "reorderSong": "{{title}}を移動",
       "downloadSong": "{{title}}をダウンロード",
       "create": "プレイリストを作成"
     },

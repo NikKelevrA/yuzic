@@ -34,7 +34,7 @@ describe('actionRegistrySummary', () => {
       'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'generatePlaylist', 'download', 'goToArtist', 'viewExternal',
     ]);
     expect(actionRegistrySummary.playlist).toEqual([
-      'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'goToPlaylist', 'download', 'share', 'rename', 'delete',
+      'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'goToPlaylist', 'download', 'share', 'editSongs', 'rename', 'delete',
     ]);
   });
 });
@@ -221,11 +221,12 @@ describe('artistActions', () => {
 function playlistCtx(overrides: Partial<PlaylistActionContext> = {}): PlaylistActionContext {
   return {
     kind: 'playlist', origin: 'library',
-    playlist: {} as PlaylistActionContext['playlist'],
+    playlist: { isOwned: true } as PlaylistActionContext['playlist'],
     t, colors: { secondary: '#000', subtext: '#666' }, close: noop,
     playbackDisabled: false, songsLoading: false, isDownloaded: false, isDownloading: false,
     isSharing: false, canShare: false, isFavorites: false, isDeleting: false, hideGoToPlaylist: false,
-    handlers: { play: noop, shuffle: noop, addToQueue: noop, shuffleToQueue: noop, goToPlaylist: noop, download: noop, share: noop, rename: noop, delete: noop },
+    canEditSongs: false,
+    handlers: { editSongs: noop, play: noop, shuffle: noop, addToQueue: noop, shuffleToQueue: noop, goToPlaylist: noop, download: noop, share: noop, rename: noop, delete: noop },
     ...overrides,
   };
 }
@@ -241,6 +242,17 @@ describe('playlistActions', () => {
     const ids = resolveActions(playlistActions, playlistCtx({ isFavorites: false })).map(a => a.id);
     expect(ids).toContain('rename');
     expect(ids).toContain('delete');
+  });
+
+  it("hides rename/delete for another account's playlist", () => {
+    const ids = resolveActions(playlistActions, playlistCtx({ playlist: { isOwned: false } as PlaylistActionContext['playlist'] })).map(a => a.id);
+    expect(ids).not.toContain('rename');
+    expect(ids).not.toContain('delete');
+  });
+
+  it('offers Edit songs only when the context says the songs can be edited', () => {
+    expect(resolveActions(playlistActions, playlistCtx()).map(a => a.id)).not.toContain('editSongs');
+    expect(resolveActions(playlistActions, playlistCtx({ canEditSongs: true })).map(a => a.id)).toContain('editSongs');
   });
 
   it('marks delete as destructive-styled (red label) and disables it mid-delete', () => {

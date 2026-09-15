@@ -13,5 +13,5 @@ export async function getPlaylists(
   const raw = await client.request<SubsonicResponse>("getPlaylists.view", { size: 500 });
   const list = raw?.["subsonic-response"]?.playlists?.playlist ?? [];
 
-  return list.map((pl) => mapPlaylist(pl, { provenance }));
+  return list.map((pl) => mapPlaylist(pl, { provenance, username: client.username }));
 }

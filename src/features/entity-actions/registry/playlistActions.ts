@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListEnd, Play, Shuffle, List, Trash2, Pencil, Share2 } from 'lucide-react-native';
+import { ArrowUpDown, ListEnd, Play, Shuffle, List, Trash2, Pencil, Share2 } from 'lucide-react-native';
 import type { Playlist } from '@/domain/entities/Playlist';
 import { iconSize, statusColor } from '@/constants/design';
 import type { ActionDef, BaseActionContext } from '../types';
@@ -20,7 +20,10 @@ export interface PlaylistActionContext extends BaseActionContext {
   isFavorites: boolean;
   isDeleting: boolean;
   hideGoToPlaylist: boolean;
+  /** On the playlist's own screen, for a playlist this user may change. */
+  canEditSongs: boolean;
   handlers: {
+    editSongs: () => void;
     play: () => void;
     shuffle: () => void;
     addToQueue: () => void;
@@ -105,10 +108,19 @@ export const playlistActions: ActionDef<Ctx>[] = [
     invoke: ctx => ctx.handlers.share(),
   },
   {
+    id: 'editSongs',
+    label: ctx => ctx.t('playlistOptions.actions.editSongs'),
+    icon: ctx => React.createElement(ArrowUpDown, { size: sz, color: ctx.colors.secondary }),
+    visible: ctx => ctx.canEditSongs,
+    testID: () => 'playlist-options-edit-songs',
+    invoke: ctx => ctx.handlers.editSongs(),
+  },
+  {
     id: 'rename',
     label: ctx => ctx.t('playlistOptions.actions.rename'),
     icon: ctx => React.createElement(Pencil, { size: sz, color: ctx.colors.secondary }),
-    visible: ctx => !ctx.isFavorites,
+    // Another account's playlist is visible, not changeable; the server refuses.
+    visible: ctx => !ctx.isFavorites && ctx.playlist.isOwned,
     invoke: ctx => ctx.handlers.rename(),
   },
   {
@@ -116,7 +128,8 @@ export const playlistActions: ActionDef<Ctx>[] = [
     label: ctx => ctx.t('playlistOptions.actions.delete'),
     icon: () => React.createElement(Trash2, { size: sz, color: statusColor.destructive }),
     labelColor: () => statusColor.destructive,
-    visible: ctx => !ctx.isFavorites,
+    // Another account's playlist is visible, not changeable; the server refuses.
+    visible: ctx => !ctx.isFavorites && ctx.playlist.isOwned,
     enabled: ctx => !ctx.isDeleting,
     loading: ctx => ctx.isDeleting,
     dimLabel: ctx => ctx.isDeleting,

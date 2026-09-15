@@ -954,6 +954,8 @@
       "addManually": "Ajouter un appareil manuellement",
       "addManuallyTitle": "Ajouter un appareil",
       "addManuallyBody": "Saisissez l’adresse IP de votre appareil DLNA",
+      "addManuallyField": "Adresse IP",
+      "addManuallySubmit": "Ajouter",
       "connectFailed": "Connexion à cet appareil impossible.",
       "notFoundAtAddress": "Aucun appareil DLNA trouvé à cette adresse.",
       "playOnServer": "Lire sur {{server}}",
@@ -1006,6 +1008,13 @@
     "empty": "Cette liste de lecture n'a pas encore de morceaux.",
     "originShared": "Partagée",
     "originExternal": "Depuis {{provider}}",
+    "edit": {
+      "title": "Modification des morceaux",
+      "offlineReorder": "Le réordonnancement nécessite une connexion",
+      "removeFailed": "Impossible de retirer le morceau",
+      "moveFailed": "Impossible de déplacer le morceau",
+      "changed": "Cette liste de lecture a été modifiée ailleurs et a été rechargée"
+    },
     "recommended": {
       "title": "Recommandé",
       "local": "De votre bibliothèque",
@@ -1243,7 +1252,8 @@
       "downloaded": "Téléchargé",
       "delete": "Supprimer la liste de lecture",
       "rename": "Renommer",
-      "share": "Partager"
+      "share": "Partager",
+      "editSongs": "Modifier les morceaux"
     },
     "sections": {
       "info": "Informations sur la liste de lecture"
@@ -1445,6 +1455,8 @@
     "playlist": {
       "addSong": "Ajouter {{title}} à cette playlist",
       "songAdded": "{{title}} déjà ajouté",
+      "removeSong": "Retirer {{title}} de cette liste de lecture",
+      "reorderSong": "Déplacer {{title}}",
       "downloadSong": "Télécharger {{title}}",
       "create": "Créer une playlist"
     },

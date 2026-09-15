@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { useStarredSongs } from '@/features/library/useStarredSongs';
 
 import Header, { PlaylistHeaderBar } from '../Header';
 import RecommendedSection from '../RecommendedSection';
+import PlaylistEditList from '../EditList';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import { DetailScreen } from '@/components/DetailHeader';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
@@ -31,6 +32,9 @@ const PlaylistContent: React.FC<Props> = ({ playlist, songs, songsLoading }) => 
   const { t } = useTranslation();
   const { songs: starredSongs } = useStarredSongs();
   const optionsRef = useRef<BottomSheetModal>(null);
+  const [editing, setEditing] = useState(false);
+  const startEditing = useCallback(() => setEditing(true), []);
+  const stopEditing = useCallback(() => setEditing(false), []);
   const starredSongIds = useMemo(
     () => new Set(starredSongs.map(song => song.localId)),
     [starredSongs]
@@ -58,6 +62,10 @@ const PlaylistContent: React.FC<Props> = ({ playlist, songs, songsLoading }) => 
     );
   }, [starredSongIds, playlist, songs]);
 
+  if (editing && !songsLoading) {
+    return <PlaylistEditList playlist={playlist} songs={songs} onDone={stopEditing} />;
+  }
+
   return (
     <DetailScreen
       bar={<PlaylistHeaderBar playlist={playlist} onOptions={() => optionsRef.current?.present()} />}
@@ -75,7 +83,7 @@ const PlaylistContent: React.FC<Props> = ({ playlist, songs, songsLoading }) => 
         showsVerticalScrollIndicator={false}
         {...scroll}
       />
-      <PlaylistOptions ref={optionsRef} playlist={playlist} hideGoToPlaylist />
+      <PlaylistOptions ref={optionsRef} playlist={playlist} hideGoToPlaylist onEditSongs={startEditing} />
         </>
       )}
     </DetailScreen>

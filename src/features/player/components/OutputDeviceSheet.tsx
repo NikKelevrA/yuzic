@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   Platform,
-  Alert,
 } from 'react-native';
+import { FormSheet, FormSheetField } from '@/components/FormSheet';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Airplay, Cast, Check, Plus, RotateCcw, Server, Smartphone } from 'lucide-react-native';
 import IconActionButton from '@/components/IconActionButton';
@@ -78,22 +78,16 @@ const OutputDeviceSheet = forwardRef<BottomSheetModal>((_, ref) => {
     }
   }, [selectJukebox, serverName, ref, t]);
 
-  const handleManualEntry = useCallback(() => {
-    Alert.prompt(
-      t('playing.output.addManuallyTitle'),
-      t('playing.output.addManuallyBody'),
-      async (ip) => {
-        if (!ip?.trim()) return;
-        const device = await probeManual(ip);
-        if (!device) notify.error(t('playing.output.notFoundAtAddress'));
-      },
-      'plain-text',
-      '',
-      'decimal-pad',
-    );
-  }, [probeManual, t]);
+  // A sheet rather than `Alert.prompt`, which exists only on iOS — on Android
+  // the row did nothing.
+  const [isAddingManually, setIsAddingManually] = useState(false);
+  const handleManualEntry = useCallback(() => setIsAddingManually(true), []);
 
   return (
+    <>
+    {isAddingManually && (
+      <ManualDeviceSheet probe={probeManual} onClose={() => setIsAddingManually(false)} />
+    )}
     <BottomSheetModal
       ref={ref}
       snapPoints={['55%', '80%']}
@@ -253,11 +247,46 @@ const OutputDeviceSheet = forwardRef<BottomSheetModal>((_, ref) => {
 
       </BottomSheetView>
     </BottomSheetModal>
+    </>
   );
 });
 
 OutputDeviceSheet.displayName = 'OutputDeviceSheet';
 export default OutputDeviceSheet;
+
+function ManualDeviceSheet({ probe, onClose }: {
+  probe: (address: string) => Promise<DiscoveredDevice | null>;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const [address, setAddress] = useState('');
+
+  return (
+    <FormSheet
+      title={t('playing.output.addManuallyTitle')}
+      description={t('playing.output.addManuallyBody')}
+      submitLabel={t('playing.output.addManuallySubmit')}
+      canSubmit={address.trim().length > 0}
+      onSubmit={async () => {
+        const device = await probe(address.trim());
+        if (!device) notify.error(t('playing.output.notFoundAtAddress'));
+        return !!device;
+      }}
+      onClose={onClose}
+    >
+      <FormSheetField
+        label={t('playing.output.addManuallyField')}
+        value={address}
+        onChangeText={setAddress}
+        placeholder="192.168.1.20"
+        keyboardType="decimal-pad"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoFocus
+      />
+    </FormSheet>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {

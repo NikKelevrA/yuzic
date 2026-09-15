@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 
 import PlaylistOptions from './PlaylistOptions';
 import type { Playlist } from '@/domain/entities/Playlist';
@@ -43,6 +43,10 @@ const mockDeleteMutateAsync = jest.fn().mockResolvedValue(undefined);
 const mockRenameMutateAsync = jest.fn().mockResolvedValue(undefined);
 jest.mock('@/features/playlist/useDeletePlaylist', () => ({ useDeletePlaylist: () => ({ mutateAsync: mockDeleteMutateAsync, isPending: false }) }));
 jest.mock('@/features/playlist/useRenamePlaylist', () => ({ useRenamePlaylist: () => ({ mutateAsync: mockRenameMutateAsync }) }));
+jest.mock('@/features/playlist/RenamePlaylistSheet', () => {
+  const { Text: RNText } = require('react-native');
+  return { __esModule: true, default: ({ playlist }: any) => <RNText>rename-sheet:{playlist.title}</RNText> };
+});
 
 jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: jest.fn() }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
@@ -132,5 +136,39 @@ describe('PlaylistOptions', () => {
   it('renders no options-sheet rows for null playlist while it loads', async () => {
     const view = await render(<PlaylistOptions ref={null as any} playlist={null} />);
     expect(view.queryByText('playlistOptions.actions.play')).toBeNull();
+  });
+
+  it('asks for the new name in a sheet, which works on Android too, instead of an iOS-only prompt', async () => {
+    const view = await render(<PlaylistOptions ref={null as any} playlist={ownedPlaylist} />);
+    expect(view.queryByText('rename-sheet:My Mix')).toBeNull();
+
+    await act(async () => {
+      view.getByText('playlistOptions.actions.rename').props.onPress();
+    });
+
+    expect(view.getByText('rename-sheet:My Mix')).toBeTruthy();
+  });
+
+  it('offers Edit songs only where the screen can edit, and it opens the edit mode', async () => {
+    const onEditSongs = jest.fn();
+    const withoutEditor = await render(<PlaylistOptions ref={null as any} playlist={ownedPlaylist} />);
+    expect(withoutEditor.queryByText('playlistOptions.actions.editSongs')).toBeNull();
+
+    const view = await render(<PlaylistOptions ref={null as any} playlist={ownedPlaylist} onEditSongs={onEditSongs} />);
+    view.getByText('playlistOptions.actions.editSongs').props.onPress();
+    expect(onEditSongs).toHaveBeenCalled();
+
+    const favorites = await render(<PlaylistOptions ref={null as any} playlist={favoritesPlaylist} onEditSongs={onEditSongs} />);
+    expect(favorites.queryByText('playlistOptions.actions.editSongs')).toBeNull();
+  });
+
+  it("offers no changes to another account's playlist", async () => {
+    const shared = { ...ownedPlaylist, isOwned: false };
+    const view = await render(<PlaylistOptions ref={null as any} playlist={shared} onEditSongs={jest.fn()} />);
+
+    expect(view.getByText('playlistOptions.actions.play')).toBeTruthy();
+    expect(view.queryByText('playlistOptions.actions.editSongs')).toBeNull();
+    expect(view.queryByText('playlistOptions.actions.rename')).toBeNull();
+    expect(view.queryByText('playlistOptions.actions.delete')).toBeNull();
   });
 });

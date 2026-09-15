@@ -16,6 +16,14 @@ interface MapPlaylistContext {
   provenance: Provenance;
   /** Ids of the playlist's tracks, in playlist order, where they were mapped. */
   songIds?: LocalId[];
+  /** The signed-in account, to tell its playlists from other accounts' public ones. */
+  username?: string;
+}
+
+/** Owned unless the server names a different owner; usernames ignore case on Navidrome. */
+function ownedBy(owner: string | undefined, username: string | undefined): boolean {
+  if (!owner || !username) return true;
+  return owner.toLowerCase() === username.toLowerCase();
 }
 
 export function mapPlaylist(dto: SubsonicPlaylist, context: MapPlaylistContext): Playlist {
@@ -33,9 +41,9 @@ export function mapPlaylist(dto: SubsonicPlaylist, context: MapPlaylistContext):
     libraryState: 'in-library',
     title: dto.name ?? 'Untitled playlist',
     cover,
-    // Subsonic's playlist listing does not distinguish owned from shared, and
-    // Navidrome only returns the caller's own playlists plus public ones.
-    isOwned: true,
+    // Navidrome lists the caller's own playlists and other accounts' public
+    // ones; only the owner may edit, so the others must not offer to.
+    isOwned: ownedBy(dto.owner, context.username),
     createdAt: dto.created ? Date.parse(dto.created) || undefined : undefined,
     updatedAt: dto.changed ? Date.parse(dto.changed) || undefined : undefined,
     songIds: context.songIds ?? [],

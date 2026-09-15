@@ -30,6 +30,13 @@ describe('mapPlaylist', () => {
     expect(mapPlaylist({ id: 'pl-2' }, { provenance, songIds }).songIds).toEqual(songIds);
   });
 
+  it("marks another account's public playlist as not owned", () => {
+    expect(mapPlaylist({ id: 'pl-3', owner: 'sam' }, { provenance, username: 'ari' }).isOwned).toBe(false);
+    expect(mapPlaylist({ id: 'pl-4', owner: 'Ari' }, { provenance, username: 'ari' }).isOwned).toBe(true);
+    // A server that does not say who owns it keeps the playlist editable.
+    expect(mapPlaylist({ id: 'pl-5' }, { provenance, username: 'ari' }).isOwned).toBe(true);
+  });
+
   it('leaves timestamps absent rather than zero when the server sends none', () => {
     const playlist = mapPlaylist({ id: 'pl-2' }, { provenance });
 
