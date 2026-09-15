@@ -7,6 +7,54 @@ downloaders, and every outside endpoint the app calls — see
 Four load-bearing patterns hold the app together. Everything else is a leaf on
 one of these trunks.
 
+## Why, and the principles behind it
+
+**The niche.** The recurring "tried for months to replace Spotify, crawled
+back" thread on r/selfhosted names the same three failures: discovery dies (no
+"similar to this", no rotating shelves), music you don't own is a multi-tool
+chore away instead of a tap, and the glue between an 8–10 service stack
+(server, Lidarr, slskd, AudioMuse, …) breaks silently. Yuzic's aim is to be
+that whole stack's front end — your server plays it, your tools fetch it, yuzic
+makes it feel like one service. It works alone; every integration adds a
+capability; none is required.
+
+These principles are why the sections below look the way they do:
+
+- **P1 — Local-first, stable identity.** An entity's identity is a local id
+  assigned on device from where it came from, never a network call and never
+  normalised metadata. Matching (are these the same work?) is a separate
+  concern. External ids (MBID, Deezer id) are attributes that arrive, never
+  lookups made so an entity can exist. See §6.
+- **P2 — Outside services are intentional.** A use nobody switched on makes no
+  request, and the feature above it hides or degrades. Discovery is off by
+  default: people self-host because they want to know where their data goes.
+  Holding a credential authenticates a connection; it never switches a feature
+  on. Read requests count as disclosures too.
+- **P3 — Ask, don't guess.** An ambiguous match is surfaced, never silently
+  accepted — a wrong file in the library is worse than a tap. Nothing starts a
+  download from a hidden default (§8).
+- **P4 — Features own composition.** Each feature decides whether its sources
+  are selected, blended, a fallback, or gap-fill only. For metadata the server's
+  own value goes first and outside sources fill gaps, display-only (§9).
+- **P5 — Integrations are leaf modules.** A new source or downloader is one
+  module plus one registry entry; screens and the router do not change (§7).
+- **Clean code is an acceptance criterion.** One owner per concern, and a
+  superseded path is removed after migration rather than left beside its
+  replacement. Build the abstraction the real providers need, not one for
+  providers that do not exist.
+
+**Non-goals.** Deliberately out, so they are not re-proposed by accident:
+
+- **Playlist import** — no local playlist framework, pending-import workflow or
+  placeholder UI. If a connection ever offers real playlist transfer, it is
+  designed then.
+- **Chasing every downloader.** Adding one is a leaf module; demand pulls them in.
+- **Cross-server library merging.** Wants, library and downloader setup stay
+  scoped to the active server.
+- **Deferred:** smart-playlist/filter engines, any new mix-generating
+  algorithm (Home mixes reuse play stats, a daily seed and server similarity),
+  playlist following, and artist-subscription wants.
+
 ## 1. `ApiAdapter` — optional feature capabilities
 
 Every server yuzic supports (Navidrome, Jellyfin, Emby, Plex, and local files)
@@ -334,11 +382,11 @@ not a `local` type shadowed by a parallel `External` type. This replaced four
 duplicated pairs (Album/Song rows, Album/Song options) and two album-screen
 bodies' worth of divergence.
 
-- **`LibraryState`** (`types/LibraryState.ts`) —
+- **`LibraryState`** (`domain/library/LibraryState.ts`) —
   `'in-library' | 'wanted' | 'acquirable' | 'external'`. It is a *property* of
   an entity, not a screen it lives on. The same `AlbumRow`/`SongRow` renders
   any state; only the badge and primary action differ.
-- **`LocalId`** (`types/EntityId.ts`) — a stable, on-device identity built by
+- **`LocalId`** (`domain/identity/LocalId.ts`) — a stable, on-device identity built by
   `makeLocalId()` from *origin* ids (server+item, or externalSource+nativeId),
   **never** from display metadata. Identity is deliberately separate from
   *matching* (`features/library/matchToLibrary.ts`, which is mbid-first then normalized
@@ -348,10 +396,11 @@ bodies' worth of divergence.
   entity types, so adapters populate them incrementally without breaking
   construction sites; server adapters stamp them from `client.serverId`
   (guarded — a missing server id yields no id rather than a wrong one).
-- **`resolveLibraryState(facts)`** (`features/library/resolveLibraryState.ts`)
+- **`resolveLibraryState(facts)`** (`domain/library/LibraryState.ts`)
   is the *pure* single source of truth for the state — precedence
   in-library > wanted > acquirable > external, fallthrough to `external` (never
-  silently claims ownership). `useLibraryState()` assembles the facts.
+  silently claims ownership). `useLibraryState()`
+  (`features/library/useLibraryState.ts`) assembles the facts.
   `isWanted` reads `selectIsWanted` — the Wants system exists
   (`features/wants/`, and `want` is its own action in the entity-action
   registry, distinct from `get`).
@@ -481,9 +530,10 @@ route leaf registered in `settings/_layout.tsx` with a row on the settings root.
   (direct needs a signed session — sequenced out). `useScrobbling` routes by the
   enum; a duplicate-risk note shows on `through-server` (yuzic can't verify
   server forwarding).
-- **Lyrics** (`features/settings/lyrics/`, `features/lyrics/resolveLyrics.ts`) —
-  server-embedded first, then user-ordered external sources; `resolveLyrics`
-  returns the first non-empty result. **LRCLIB** (`api/lrclib/`) is the launch
+- **Lyrics** (a list on the Metadata screen, `features/lyrics/resolveLyrics.ts`) —
+  server-embedded first, then the enabled external sources in the fixed order
+  `providers/registry/sources.ts` declares; `resolveLyrics`
+  returns the first non-empty result. **LRCLIB** (`providers/integration/lrclib/`) is the launch
   external source: `none`-tier, no key, *one* source that prefers synced and
   falls back to plain internally. Off by default → server-only behaviour is
   unchanged until a user enables it.
