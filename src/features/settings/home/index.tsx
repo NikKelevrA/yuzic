@@ -3,6 +3,7 @@ import {
     ScrollView,
     View,
     Text,
+    Image,
     StyleSheet,
     Alert,
     Linking,
@@ -22,7 +23,7 @@ import SettingsDivider from '../components/SettingsDivider';
 import SettingsRow from '../components/SettingsRow';
 import Touchable from '@/components/Touchable';
 import UserAvatar from '@/components/UserAvatar';
-import { controlSize, iconSize, radius, spacing, typography } from '@/constants/design';
+import { controlSize, iconSize, radius, spacing, stateLayer, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 
@@ -228,9 +229,24 @@ export default function Settings() {
                     />
                 </SettingsCard>
 
-                <Text style={[styles.versionText, { color: colors.subtext }]}>
-                    Yuzic {appVersion}
-                </Text>
+                {/*
+                  The mark above the version, tinted to the same grey as the
+                  text under it — it is a signature at the foot of the screen,
+                  not a logo being shown off. `splash.png` is the mark with no
+                  square behind it, so a tint is all it takes to sit right in
+                  either theme; the app icon would have put a coral tile here.
+                */}
+                <View style={styles.versionBlock}>
+                    <Image
+                        source={require('@assets/images/splash.png')}
+                        style={[styles.versionLogo, { tintColor: colors.subtext }]}
+                        resizeMode="contain"
+                        accessible={false}
+                    />
+                    <Text style={[styles.versionText, { color: colors.subtext }]}>
+                        Yuzic {appVersion}
+                    </Text>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -287,10 +303,19 @@ const styles = StyleSheet.create({
         ...typography.caption,
         flex: 1,
     },
+    versionBlock: {
+        alignItems: 'center',
+        marginTop: spacing.xxl,
+        marginBottom: spacing.headerOffset,
+    },
+    versionLogo: {
+        width: 56,
+        height: 20,
+        opacity: stateLayer.mutedOpacity,
+        marginBottom: spacing.sm,
+    },
     versionText: {
         ...typography.caption,
         textAlign: 'center',
-        marginTop: spacing.xxl,
-        marginBottom: spacing.headerOffset,
     },
 });
