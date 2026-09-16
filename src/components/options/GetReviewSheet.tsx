@@ -39,6 +39,7 @@ import {
   OptionSheetSectionLabel,
   optionSheetStyles,
   useOptionSheetBackground,
+  useOptionSheetContentStyle,
 } from './OptionSheetPrimitives';
 import RadioMark from './RadioMark';
 import Touchable from '@/components/Touchable';
@@ -111,6 +112,7 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
   const [loading, setLoading] = useState(false);
 
   const sheetBg = useOptionSheetBackground();
+  const sheetContent = useOptionSheetContentStyle();
 
   const selected = available.find((d) => d.def.id === selectedId) ?? null;
 
@@ -220,7 +222,7 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
       backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
       onDismiss={onDismiss}
     >
-      <BottomSheetScrollView style={sheetBg} contentContainerStyle={styles.content}>
+      <BottomSheetScrollView style={sheetBg} contentContainerStyle={sheetContent}>
         <OptionSheetHeader cover={album.cover} title={headerTitle} subtitle={headerSubtext} />
 
         <OptionSheetDivider />
@@ -338,10 +340,6 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
 export default GetReviewSheet;
 
 const styles = StyleSheet.create({
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.generous,
-  },
   qualityLoading: {
     paddingVertical: spacing.roomy,
     alignItems: 'center',

@@ -290,6 +290,20 @@ because both halves of each pair look reasonable in isolation.
   row you press to play, and each screen answering "what can I do with this"
   differently. A primary action may stay on the row (play an episode, download
   one); everything else, and anything destructive, goes in the sheet.
+- **Sheets are one sheet**: anything that comes up from the bottom is a
+  `BottomSheetModal` wearing the shared scaffold — `useOptionSheetBackground`
+  for the surface (which is what makes its corners follow the user's radius
+  preset), `renderBackdrop` (which is also what gives it Android's back
+  button), a handle, `stackBehavior="push"`, and `useOptionSheetContentStyle`
+  for padding that clears the home indicator. Height comes from the content:
+  `enableDynamicSizing` for a fixed stack of rows, snap points only for a list
+  whose length the sheet cannot know (an options sheet over a long info
+  section, lyrics, the output picker while it scans). A percentage like `'40%'`
+  on a sheet of five rows is the caller guessing at a height it does not lay
+  out, and `sheetConventions.test.ts` fails on any sheet that skips the
+  scaffold. Three are deliberately their own design and named in that test:
+  `PlaylistList`, `SelectionBottomSheet`, and onboarding's scheme sheet, which
+  is dark because the flow around it is.
 - **Collection actions**: a screen led by artwork uses `DetailHeader`'s centred
   circle-and-pill pair. A screen without artwork uses
   `features/library/CollectionActions` — two square-shouldered halves of the

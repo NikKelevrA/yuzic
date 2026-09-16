@@ -10,6 +10,7 @@ import {
   OptionSheetRow,
   optionSheetStyles,
   useOptionSheetBackground,
+  useOptionSheetContentStyle,
 } from '@/components/options/OptionSheetPrimitives';
 import { useSheetRef } from '@/components/useSheetRef';
 import { spacing, typography } from '@/constants/design';
@@ -30,6 +31,7 @@ export default function ConnectDownloaderPromptHost() {
   const { colors } = useTheme();
   const router = useRouter();
   const sheetBg = useOptionSheetBackground();
+  const sheetContent = useOptionSheetContentStyle();
   const sheetRef = useSheetRef();
   const unit = usePendingDownloaderPrompt();
 
@@ -57,7 +59,7 @@ export default function ConnectDownloaderPromptHost() {
       backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
       onDismiss={dismissConnectDownloaderPrompt}
     >
-      <BottomSheetView style={[optionSheetStyles.sheetContent, sheetBg]}>
+      <BottomSheetView style={[sheetContent, sheetBg]}>
         {unit && (
           <>
             <Text style={[styles.title, { color: colors.secondary }]}>
