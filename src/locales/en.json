@@ -36,7 +36,9 @@
       "appearance": "Appearance",
       "github": "Github",
       "privacyPolicy": "Privacy Policy",
-      "termsOfUse": "Terms of Use"
+      "termsOfUse": "Terms of Use",
+      "changelog": "What's New",
+      "website": "Website"
     },
     "profile": {
       "unknownUser": "Unknown User",

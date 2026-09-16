@@ -36,7 +36,9 @@
       "appearance": "外観",
       "github": "GitHub",
       "privacyPolicy": "プライバシーポリシー",
-      "termsOfUse": "利用規約"
+      "termsOfUse": "利用規約",
+      "changelog": "新着情報",
+      "website": "ウェブサイト"
     },
     "profile": {
       "unknownUser": "不明なユーザー",

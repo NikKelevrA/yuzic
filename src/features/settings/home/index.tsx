@@ -9,7 +9,7 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Server, Library, Volume2, Palette, Puzzle, Github, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
+import { Server, Library, Volume2, Palette, Puzzle, Github, Globe, Newspaper, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
@@ -210,6 +210,26 @@ export default function Settings() {
                     {t('settings.sections.about')}
                 </Text>
                 <SettingsCard>
+                    {/*
+                      What this version brought, and where the app lives. The
+                      release notes were written for every release and readable
+                      only on the web, so the one screen that says which version
+                      you are running could not say what came with it.
+                    */}
+                    <SettingsRow
+                        testID="settings-row-changelog"
+                        label={t('settings.rows.changelog')}
+                        leftIcon={<Newspaper size={iconSize.secondary} color={colors.secondary} />}
+                        onPress={() => openLink('https://yuzicapp.github.io/yuzic-web/changelog/')}
+                    />
+                    <SettingsDivider />
+                    <SettingsRow
+                        testID="settings-row-website"
+                        label={t('settings.rows.website')}
+                        leftIcon={<Globe size={iconSize.secondary} color={colors.secondary} />}
+                        onPress={() => openLink('https://yuzicapp.github.io/yuzic-web/')}
+                    />
+                    <SettingsDivider />
                     <SettingsRow
                         label={t('settings.rows.github')}
                         leftIcon={<Github size={iconSize.secondary} color={colors.secondary} />}

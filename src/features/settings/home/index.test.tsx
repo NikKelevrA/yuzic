@@ -52,6 +52,18 @@ describe('Settings home', () => {
     expect(view.queryByText('downloads.title')).toBeNull();
   });
 
+  /**
+   * The screen says which version you are running; About is where it can also
+   * say what that version brought, and where the app lives. Both open on the
+   * web, beside the policy links that already do.
+   */
+  it('offers the release notes and the site next to the version', async () => {
+    const view = await render(<Settings />);
+
+    expect(view.getByText('settings.rows.changelog')).toBeTruthy();
+    expect(view.getByText('settings.rows.website')).toBeTruthy();
+  });
+
   it('organises outside sources by purpose, with no page per company and no separate Lyrics page', async () => {
     const view = await render(<Settings />);
 

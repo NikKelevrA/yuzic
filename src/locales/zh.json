@@ -36,7 +36,9 @@
       "appearance": "外观",
       "github": "Github",
       "privacyPolicy": "隐私政策",
-      "termsOfUse": "使用条款"
+      "termsOfUse": "使用条款",
+      "changelog": "更新内容",
+      "website": "官方网站"
     },
     "profile": {
       "unknownUser": "未知用户",
