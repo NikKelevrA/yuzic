@@ -1,10 +1,10 @@
-import React, { forwardRef } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
+import { useSheetRef } from '@/components/useSheetRef';
 import {
   OptionSheetRow,
   optionSheetStyles,
@@ -14,73 +14,92 @@ import {
 import { iconSize, spacing, typography } from '@/constants/design';
 import { useTheme } from '@/features/theme/useTheme';
 
-export type WantsFilterOption = {
+export type WantsPickOption = {
   value: string;
   label: string;
+  Icon?: React.ComponentType<{ size: number; color: string }>;
 };
 
 type Props = {
+  title: string;
   selected: string;
-  options: WantsFilterOption[];
+  options: WantsPickOption[];
   onSelect: (value: string) => void;
+  onClose: () => void;
+  testID?: string;
 };
 
 /**
- * Which kinds of want the list shows.
+ * Pick one option — which kinds of want to show, or how to order them.
  *
- * A sheet rather than a row of chips, the way Search puts its filters behind
- * one control: the chips spent a whole line of the screen saying "All ·
- * Albums · Artists" above a list that is mostly one kind anyway, and grew
- * with every kind a want can be. The pill that opens this says what is
- * filtered, which is the part worth a line.
+ * **Mounted only while it is open, and it presents itself**, which is the
+ * pattern every options sheet in this app already follows
+ * (`WantOptions`, `RadioStationOptions`). Held mounted the whole time
+ * instead, a sheet on this screen would begin dismissing on a backdrop tap
+ * and then snap back open: Wants re-renders behind it — it reads the library
+ * index and the downloader queue to say what each row's status is — and a
+ * live modal re-measuring mid-animation cancels its own dismissal. Unmounting
+ * on close means there is nothing left to resurrect.
  *
- * Dismisses itself on a pick. A sheet that stays up after answering its own
- * question leaves the reader tapping the backdrop to get back to the list
- * they just filtered.
+ * `onClose` fires on dismissal however it happened — backdrop, pan-down, or a
+ * pick — so the screen drops it and the next open is a fresh mount.
  */
-const WantsFiltersSheet = forwardRef<BottomSheetModal, Props>(
-  ({ selected, options, onSelect }, ref) => {
-    const { t } = useTranslation();
-    const { colors } = useTheme();
-    const sheetBg = useOptionSheetBackground();
-    const sheetContent = useOptionSheetContentStyle();
+export default function WantsPickSheet({
+  title,
+  selected,
+  options,
+  onSelect,
+  onClose,
+  testID,
+}: Props) {
+  const { colors } = useTheme();
+  const sheetRef = useSheetRef();
+  const sheetBg = useOptionSheetBackground();
+  const sheetContent = useOptionSheetContentStyle();
 
-    return (
-      <BottomSheetModal
-        ref={ref}
-        enableDynamicSizing
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        stackBehavior="push"
-        backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
-        handleIndicatorStyle={{ backgroundColor: colors.border }}
-      >
-        <BottomSheetView testID="wants-filters-sheet" style={[sheetBg, sheetContent]}>
-          <Text style={[styles.title, { color: colors.secondary }]}>
-            {t('wants.filters.title')}
-          </Text>
-          {options.map(option => (
-            <OptionSheetRow
-              key={option.value}
-              testID={`wants-filter-${option.value}`}
-              label={option.label}
-              onPress={() => onSelect(option.value)}
-              trailing={
-                option.value === selected
-                  ? <Check size={iconSize.secondary} color={colors.themeColor} />
-                  : undefined
-              }
-            />
-          ))}
-        </BottomSheetView>
-      </BottomSheetModal>
-    );
-  }
-);
+  useEffect(() => { sheetRef.current?.present(); }, [sheetRef]);
 
-WantsFiltersSheet.displayName = 'WantsFiltersSheet';
-
-export default WantsFiltersSheet;
+  return (
+    <BottomSheetModal
+      ref={sheetRef}
+      enableDynamicSizing
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
+      stackBehavior="push"
+      backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
+      handleIndicatorStyle={{ backgroundColor: colors.border }}
+      onChange={index => { if (index === -1) onClose(); }}
+    >
+      <BottomSheetView testID={testID} style={[sheetBg, sheetContent]}>
+        <Text style={[styles.title, { color: colors.secondary }]}>{title}</Text>
+        {options.map(option => (
+          <OptionSheetRow
+            key={option.value}
+            testID={`wants-pick-${option.value}`}
+            label={option.label}
+            icon={
+              option.Icon
+                ? <option.Icon size={iconSize.row} color={colors.subtext} />
+                : undefined
+            }
+            // Dismiss first, then answer: the list being reordered or filtered
+            // is behind the sheet, and a sheet that stays up after answering
+            // its own question leaves the reader tapping the backdrop.
+            onPress={() => {
+              sheetRef.current?.dismiss();
+              onSelect(option.value);
+            }}
+            trailing={
+              option.value === selected
+                ? <Check size={iconSize.secondary} color={colors.themeColor} />
+                : undefined
+            }
+          />
+        ))}
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+}
 
 const styles = StyleSheet.create({
   title: {

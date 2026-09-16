@@ -9,9 +9,7 @@ import { ArrowDownAZ, CalendarPlus, Search } from 'lucide-react-native';
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import EmptyState from '@/components/EmptyState';
 import ListControls from '@/components/ListControls';
-import SingleSelectBottomSheet, { type SingleSelectOption } from '@/components/SingleSelectBottomSheet';
-import WantsFiltersSheet, { type WantsFilterOption } from './WantsFiltersSheet';
-import { useSheetRef } from '@/components/useSheetRef';
+import WantsPickSheet, { type WantsPickOption } from './WantsFiltersSheet';
 import { WantOptions } from '@/components/options/WantOptions';
 import LibraryItem from '@/features/library/components/Items/LibraryItem';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from '@/features/library/layout';
@@ -78,8 +76,17 @@ const WantsScreen: React.FC = () => {
   const [getFor, setGetFor] = useState<Want | null>(null);
   const [sort, setSort] = useState<WantSort>('recentlyAdded');
   const [filter, setFilter] = useState<WantFilter>('all');
-  const sortSheetRef = useSheetRef();
-  const filterSheetRef = useSheetRef();
+  /**
+   * Which picker is open, if either.
+   *
+   * State rather than a ref to a permanently-mounted sheet: this screen
+   * re-renders behind its sheets — it reads the library index and the
+   * downloader queue for every row's status — and a mounted modal
+   * re-measuring mid-animation cancels its own dismissal, which is a sheet
+   * that starts to close and springs back. Mounted only while open, there is
+   * nothing to spring back.
+   */
+  const [picking, setPicking] = useState<'sort' | 'filter' | null>(null);
 
   const gutter = libraryGutter(isGridView, GRID_SPACING);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
@@ -92,9 +99,9 @@ const WantsScreen: React.FC = () => {
    * entirely when one kind is all there is, since filtering to it changes
    * nothing.
    */
-  const filters = useMemo<WantsFilterOption[]>(() => {
+  const filters = useMemo<WantsPickOption[]>(() => {
     const present = new Set(wants.map(want => want.unit));
-    const rows: WantsFilterOption[] = [{ value: 'all', label: t('common.all') }];
+    const rows: WantsPickOption[] = [{ value: 'all', label: t('common.all') }];
     if (present.has('album')) rows.push({ value: 'album', label: t('home.filters.albums') });
     if (present.has('artist')) rows.push({ value: 'artist', label: t('home.filters.artists') });
     if (present.has('track')) rows.push({ value: 'track', label: t('home.filters.tracks') });
@@ -119,7 +126,7 @@ const WantsScreen: React.FC = () => {
     ? t('home.sort.alphabetical')
     : t('home.sort.recentlyAdded');
 
-  const sortOptions = useMemo<SingleSelectOption[]>(() => [
+  const sortOptions = useMemo<WantsPickOption[]>(() => [
     { value: 'recentlyAdded', label: t('home.sort.recentlyAdded'), Icon: CalendarPlus },
     { value: 'title', label: t('home.sort.alphabetical'), Icon: ArrowDownAZ },
   ], [t]);
@@ -202,7 +209,7 @@ const WantsScreen: React.FC = () => {
             <View style={{ marginHorizontal: -gutter }}>
               <ListControls
                 sortLabel={sortLabel}
-                onSortPress={() => sortSheetRef.current?.present()}
+                onSortPress={() => setPicking('sort')}
                 isGridView={isGridView}
                 onToggleView={() => dispatch(
                   setLibraryViewMode({ collection: 'wants', isGridView: !isGridView })
@@ -210,7 +217,7 @@ const WantsScreen: React.FC = () => {
                 // One kind is not a choice: filtering to it changes nothing,
                 // so the control stays away until there is something to pick.
                 filterLabel={filters.length > 1 ? filterLabel : undefined}
-                onFilterPress={filters.length > 1 ? () => filterSheetRef.current?.present() : undefined}
+                onFilterPress={filters.length > 1 ? () => setPicking('filter') : undefined}
               />
             </View>
           }
@@ -218,29 +225,29 @@ const WantsScreen: React.FC = () => {
         />
       )}
 
-      <SingleSelectBottomSheet
-        ref={sortSheetRef}
-        testID="wants-sort-sheet"
-        selected={sort}
-        options={sortOptions}
-        title={t('home.sortSheet.title')}
-        // Dismissed here rather than left up: the sheet asked one question and
-        // has its answer, and the list it reorders is behind it.
-        onSelect={value => {
-          setSort(value as WantSort);
-          sortSheetRef.current?.dismiss();
-        }}
-      />
+      {/* Each mounted only while it is open — the sheet presents itself and
+          reports its own dismissal. See `WantsPickSheet`. */}
+      {picking === 'sort' && (
+        <WantsPickSheet
+          testID="wants-sort-sheet"
+          title={t('home.sortSheet.title')}
+          selected={sort}
+          options={sortOptions}
+          onSelect={value => setSort(value as WantSort)}
+          onClose={() => setPicking(null)}
+        />
+      )}
 
-      <WantsFiltersSheet
-        ref={filterSheetRef}
-        selected={filter}
-        options={filters}
-        onSelect={value => {
-          setFilter(value as WantFilter);
-          filterSheetRef.current?.dismiss();
-        }}
-      />
+      {picking === 'filter' && (
+        <WantsPickSheet
+          testID="wants-filters-sheet"
+          title={t('wants.filters.title')}
+          selected={filter}
+          options={filters}
+          onSelect={value => setFilter(value as WantFilter)}
+          onClose={() => setPicking(null)}
+        />
+      )}
 
       {optionsFor && (
         <WantOptions

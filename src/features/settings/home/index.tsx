@@ -9,7 +9,7 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Server, Library, Volume2, Palette, Puzzle, Github, Globe, Newspaper, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
+import { Server, Library, Volume2, Palette, Puzzle, Github, Newspaper, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
@@ -224,13 +224,6 @@ export default function Settings() {
                     />
                     <SettingsDivider />
                     <SettingsRow
-                        testID="settings-row-website"
-                        label={t('settings.rows.website')}
-                        leftIcon={<Globe size={iconSize.secondary} color={colors.secondary} />}
-                        onPress={() => openLink('https://yuzicapp.github.io/yuzic-web/')}
-                    />
-                    <SettingsDivider />
-                    <SettingsRow
                         label={t('settings.rows.github')}
                         leftIcon={<Github size={iconSize.secondary} color={colors.secondary} />}
                         onPress={() => openLink('https://github.com/yuzicapp/yuzic')}
@@ -333,8 +326,8 @@ const styles = StyleSheet.create({
         // *and* dimmed twice — tinted to `subtext` and then faded again — so
         // the mark read as a smudge beside the version rather than as the mark.
         // The tint alone is what makes it sit right in either theme.
-        width: 88,
-        height: 32,
+        width: 132,
+        height: 48,
         marginTop: spacing.sm,
     },
     versionText: {

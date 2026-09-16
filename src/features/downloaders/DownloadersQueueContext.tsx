@@ -193,9 +193,22 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
     }
   }, [connectedStates]);
 
+  /**
+   * Stable for the life of the provider, deliberately.
+   *
+   * `pollOne` and `connectedStates` are rebuilt whenever what they close over
+   * changes, and a `refresh` that changed with them would change this
+   * context's `value` — re-rendering every consumer of the queue on every
+   * provider render. The consumers are whole screens (Wants, Downloads), and
+   * one of them was hosting a bottom sheet at the time. Reading the current
+   * pair off a ref keeps the identity fixed while still calling the latest.
+   */
+  const pollRef = useRef({ connectedStates, pollOne });
+  pollRef.current = { connectedStates, pollOne };
   const refresh = useCallback(() => {
-    for (const state of connectedStates) void pollOne(state);
-  }, [connectedStates, pollOne]);
+    const { connectedStates: states, pollOne: poll } = pollRef.current;
+    for (const state of states) void poll(state);
+  }, []);
 
   const value = useMemo<ContextValue>(() => ({
     queues,
