@@ -1,9 +1,5 @@
-Radio that plays, a wishlist worth keeping, and the same options everywhere.
+New music finds its way in on its own again, and menus open when you tap them.
 
-- Internet radio plays, and stations keep their homepage
-- Wants: artwork, a way in, and downloads you ask for
-- Want an artist, not just an album
-- Your own copy plays instead of a preview, wherever it appears
-- Every screen and sheet carries the same options menu
-- No more stalls at the end of a song
-- Music comes back after a call or another app takes the audio
+- Music you add to your server now appears by itself, without a manual rescan
+- The sort and filter pills on Wants open every time
+- The Downloads menu opens every time
