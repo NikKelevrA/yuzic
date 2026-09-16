@@ -8,13 +8,12 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Server, Library, Volume2, Palette, Puzzle, CloudDownload, Github, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
+import { Server, Library, Volume2, Palette, Puzzle, Github, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
-import { useAnyDownloaderConnected } from '@/features/downloaders/registry';
 import { useSourceScreenSummary } from '../sources/useSourceScreenSummary';
 import { useTheme } from '@/features/theme/useTheme';
 import Header from '../components/Header';
@@ -31,10 +30,6 @@ export default function Settings() {
     const { t } = useTranslation();
     const router = useRouter();
     const activeServer = useSelector(selectActiveServer);
-    // The queue screen has nothing to show without a downloader behind it —
-    // the row led to "No downloaders connected. Add one in Settings", from
-    // Settings, one row below the place that adds one.
-    const hasDownloader = useAnyDownloaderConnected();
     const metadataSummary = useSourceScreenSummary('metadata');
     const pagesSummary = useSourceScreenSummary('pages');
     const searchSummary = useSourceScreenSummary('search');
@@ -189,6 +184,14 @@ export default function Settings() {
                   Downloaders reading as either the tail of General or as
                   nothing. They are neither — they are the things Yuzic talks
                   to besides your server.
+
+                  It used to carry a second row straight to the Downloads
+                  screen. That screen is a library collection — it lives on the
+                  Library tab with the other ways of browsing what you have,
+                  and a duplicate entry in Settings put the same screen in a
+                  place that configures things rather than opens them. Nothing
+                  was configured here; the row was a link, so removing it drops
+                  a way in and no setting.
                 */}
                 <Text style={[styles.sectionTitle, { color: colors.subtext }]}>
                     {t('settings.sections.connections')}
@@ -199,16 +202,6 @@ export default function Settings() {
                         leftIcon={<Puzzle size={iconSize.secondary} color={colors.secondary} />}
                         onPress={() => router.push('/settings/connectionsView')}
                     />
-                    {hasDownloader && (
-                        <>
-                            <SettingsDivider />
-                            <SettingsRow
-                                label={t('downloads.title')}
-                                leftIcon={<CloudDownload size={iconSize.secondary} color={colors.secondary} />}
-                                onPress={() => router.push('/downloadsView')}
-                            />
-                        </>
-                    )}
                 </SettingsCard>
 
                 {/* About */}
