@@ -28,7 +28,7 @@ const sz = iconSize.loader;
  * 30-second interval, which is right for a background count and far too long
  * to sit watching after asking a downloader for something.
  */
-export function DownloadsListOptions({
+function DownloadsListOptionsImpl({
   title,
   subtitle,
   onClose,
@@ -78,3 +78,14 @@ export function DownloadsListOptions({
     />
   );
 }
+
+/**
+ * Memoised, and given stable callbacks by the screen.
+ *
+ * Downloads reads the queue it is showing, so it re-renders on every poll —
+ * and a live `BottomSheetModal` re-rendered mid-dismiss re-measures its
+ * content and cancels the dismissal, which is a sheet that will not close.
+ * That is the bug Wants had; this is the same shape, so it gets the same
+ * treatment rather than waiting to be reported.
+ */
+export const DownloadsListOptions = React.memo(DownloadsListOptionsImpl);

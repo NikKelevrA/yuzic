@@ -44,7 +44,7 @@ type Props = {
  * `onClose` fires on dismissal however it happened — backdrop, pan-down, or a
  * pick — so the screen drops it and the next open is a fresh mount.
  */
-export default function WantsPickSheet({
+function WantsPickSheet({
   title,
   selected,
   options,
@@ -100,6 +100,19 @@ export default function WantsPickSheet({
     </BottomSheetModal>
   );
 }
+
+/**
+ * Memoised, and every prop it is given is stable — see `WantsScreen`.
+ *
+ * Wants re-renders on every downloader poll: the queue snapshot is rebuilt
+ * unconditionally, so the context value changes and this screen with it. A
+ * live `BottomSheetModal` re-rendered mid-dismiss re-measures its own content
+ * under `enableDynamicSizing` and cancels the dismissal, which is a sheet that
+ * starts to close and springs straight back open. It never remounted — one
+ * mount, no unmount, a re-render per poll — so keeping the element identical
+ * across those renders is the whole fix.
+ */
+export default React.memo(WantsPickSheet);
 
 const styles = StyleSheet.create({
   title: {

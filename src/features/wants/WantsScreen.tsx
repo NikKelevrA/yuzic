@@ -131,6 +131,17 @@ const WantsScreen: React.FC = () => {
     { value: 'title', label: t('home.sort.alphabetical'), Icon: ArrowDownAZ },
   ], [t]);
 
+  /**
+   * Stable, so the picker sheet's props never change identity.
+   *
+   * An inline arrow here is a new function on every render, and this screen
+   * re-renders on every downloader poll — which re-rendered the open sheet
+   * and cancelled its own dismiss animation. See `WantsPickSheet`.
+   */
+  const closePicker = useCallback(() => setPicking(null), []);
+  const selectSort = useCallback((value: string) => setSort(value as WantSort), []);
+  const selectFilter = useCallback((value: string) => setFilter(value as WantFilter), []);
+
   const handleRemove = useCallback((want: Want) => {
     if (!activeServerId) return;
     dispatch(removeWant({ serverId: activeServerId, localId: want.localId }));
@@ -233,8 +244,8 @@ const WantsScreen: React.FC = () => {
           title={t('home.sortSheet.title')}
           selected={sort}
           options={sortOptions}
-          onSelect={value => setSort(value as WantSort)}
-          onClose={() => setPicking(null)}
+          onSelect={selectSort}
+          onClose={closePicker}
         />
       )}
 
@@ -244,8 +255,8 @@ const WantsScreen: React.FC = () => {
           title={t('wants.filters.title')}
           selected={filter}
           options={filters}
-          onSelect={value => setFilter(value as WantFilter)}
-          onClose={() => setPicking(null)}
+          onSelect={selectFilter}
+          onClose={closePicker}
         />
       )}
 

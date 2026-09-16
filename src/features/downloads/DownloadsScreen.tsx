@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +40,10 @@ const DownloadsScreen: React.FC = () => {
   const connected = states.filter(state => state.isConnected);
   const { queues, refresh } = useDownloadersQueue();
   const [listOptionsOpen, setListOptionsOpen] = useState(false);
+  // Stable, so the open sheet's props don't change on every queue poll —
+  // see `DownloadsListOptions`.
+  const closeListOptions = useCallback(() => setListOptionsOpen(false), []);
+  const openConnections = useCallback(() => router.push('/settings/connectionsView'), [router]);
   const inFlight = queues.reduce((sum, queue) => sum + queue.items.length, 0);
 
   return (
@@ -96,9 +100,9 @@ const DownloadsScreen: React.FC = () => {
         <DownloadsListOptions
           title={t('downloads.title')}
           subtitle={inFlight > 0 ? t('library.count.items', { count: inFlight }) : undefined}
-          onClose={() => setListOptionsOpen(false)}
+          onClose={closeListOptions}
           onRefresh={refresh}
-          onManage={() => router.push('/settings/connectionsView')}
+          onManage={openConnections}
         />
       )}
     </SafeAreaView>
