@@ -28,4 +28,25 @@ export interface Playlist extends EntityCore {
   updatedAt?: number;
   /** Tracks that have been loaded, in playlist order, as references. */
   songIds: LocalId[];
+  /**
+   * How many tracks the playlist holds, as the origin reported it.
+   *
+   * `songIds` is only what has been *mapped*, and a listing endpoint maps no
+   * tracks at all — so a playlist from `playlists.list` has an empty
+   * `songIds` however many songs it really has. Every surface that drew a
+   * count off the length said "0 songs" for every playlist on the screen.
+   * The count travels separately because it is the one fact about the tracks
+   * a listing does give us.
+   */
+  songCount?: number;
+}
+
+/**
+ * How many songs a playlist has, for a surface that wants to say so.
+ *
+ * The origin's own count where it gave one, else what has been loaded — a
+ * locally generated playlist has no count but does have its tracks.
+ */
+export function playlistSongCount(playlist: Playlist): number {
+  return playlist.songCount ?? playlist.songIds.length;
 }

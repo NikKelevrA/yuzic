@@ -37,7 +37,13 @@ describe('SourceUseList', () => {
     const { view } = await renderList(makeStore(), 'artwork');
 
     const ids = view.getAllByRole('switch').map(node => node.props.testID);
-    expect(ids).toEqual(['source-use-coverartarchive.artwork', 'source-use-deezer.artwork']);
+    expect(ids).toEqual([
+      'source-use-coverartarchive.artwork',
+      'source-use-deezer.artwork',
+      // Answers only for radio stations, which neither of the two above can,
+      // so its place at the end costs an album or artist lookup nothing.
+      'source-use-radiobrowser.artwork',
+    ]);
   });
 
   it('turns a use on at once, without asking again, and leaves the source’s other uses alone', async () => {

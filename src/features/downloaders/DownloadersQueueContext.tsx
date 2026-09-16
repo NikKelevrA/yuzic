@@ -48,12 +48,22 @@ type ContextValue = {
   totalInFlight: number;
   /** Items that left a queue since the last read, for whoever wants to react. */
   recentlyFinished: DownloaderQueueItem[];
+  /**
+   * Read every connected downloader again, now.
+   *
+   * The poll is on a 30-second interval, which is right for a background
+   * count and far too long to watch after asking for something. This is the
+   * same read the interval performs, not a second one — an in-flight
+   * downloader is skipped rather than asked twice.
+   */
+  refresh: () => void;
 };
 
 const DownloadersQueueContext = createContext<ContextValue>({
   queues: [],
   totalInFlight: 0,
   recentlyFinished: [],
+  refresh: () => {},
 });
 
 /**
@@ -183,11 +193,16 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
     }
   }, [connectedStates]);
 
+  const refresh = useCallback(() => {
+    for (const state of connectedStates) void pollOne(state);
+  }, [connectedStates, pollOne]);
+
   const value = useMemo<ContextValue>(() => ({
     queues,
     totalInFlight: queues.reduce((sum, q) => sum + q.count, 0),
     recentlyFinished,
-  }), [queues, recentlyFinished]);
+    refresh,
+  }), [queues, recentlyFinished, refresh]);
 
   return (
     <DownloadersQueueContext.Provider value={value}>

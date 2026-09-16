@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import type { Playlist } from '@/domain/entities/Playlist';
+import { playlistSongCount, type Playlist } from '@/domain/entities/Playlist';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { prefetchCovers } from '@/features/artwork/imageCache';
@@ -50,7 +50,7 @@ const PlaylistItem: React.FC<ItemProps> = ({
         testID="library-playlist-item"
         cover={playlist.cover}
         title={playlist.title}
-        subtext={showTypeLabel ? t('playlist.subtext', { count: playlist.songIds.length }) : undefined}
+        subtext={showTypeLabel ? t('playlist.subtext', { count: playlistSongCount(playlist) }) : undefined}
         isGridView={isGridView}
         gridWidth={gridWidth}
         gridSpacing={gridSpacing}

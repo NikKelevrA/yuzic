@@ -522,6 +522,10 @@
         "name": "LRCLIB",
         "sends": "Envoie les titres et noms d'artistes pour trouver les paroles. Aucun compte requis."
       },
+      "radiobrowser": {
+        "name": "Radio Browser",
+        "sends": "Envoie le nom et l'URL du flux d'une station pour trouver son logo. Aucun compte requis."
+      },
       "usedFor": "Utilisé pour",
       "stopUsing": "Ne plus utiliser {{name}}",
       "off": "Désactivé",
@@ -549,6 +553,9 @@
       },
       "lrclib": {
         "lyrics": "Paroles synchronisées quand votre serveur n'en a pas."
+      },
+      "radiobrowser": {
+        "artwork": "Logos des stations de radio, depuis l'annuaire communautaire."
       },
       "listenbrainz": {
         "similarArtists": "Artistes similaires d'après ce que les gens écoutent.",
@@ -634,7 +641,8 @@
     "saving": "Enregistrement…",
     "dismiss": "Ignorer",
     "retry": "Réessayer",
-    "loadFailed": "Chargement impossible. Vérifiez votre connexion."
+    "loadFailed": "Chargement impossible. Vérifiez votre connexion.",
+    "all": "Tout"
   },
   "onboarding": {
     "home": {
@@ -1415,7 +1423,10 @@
     "openHomepage": "Ouvrir le site web",
     "delete": "Supprimer la station",
     "refresh": "Actualiser",
-    "openFailed": "Impossible d’ouvrir cette page"
+    "openFailed": "Impossible d’ouvrir cette page",
+    "sort": {
+      "serverOrder": "Ordre du serveur"
+    }
   },
   "podcasts": {
     "title": "Podcasts",
@@ -1551,7 +1562,9 @@
     "section": {
       "offline": "Enregistré sur cet appareil",
       "downloaders": "Transferts du serveur"
-    }
+    },
+    "refresh": "Actualiser",
+    "manageDownloaders": "Gérer les téléchargeurs"
   },
   "externalOptions": {
     "openInSource": "Ouvrir dans {{source}}"

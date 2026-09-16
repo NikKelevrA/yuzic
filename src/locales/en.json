@@ -522,6 +522,10 @@
         "name": "LRCLIB",
         "sends": "Sends song titles and artist names to find lyrics. No account needed."
       },
+      "radiobrowser": {
+        "name": "Radio Browser",
+        "sends": "Sends a station's name and stream URL to find its logo. No account needed."
+      },
       "usedFor": "Used for",
       "stopUsing": "Stop using {{name}}",
       "off": "Off",
@@ -549,6 +553,9 @@
       },
       "lrclib": {
         "lyrics": "Synced lyrics when your server has none."
+      },
+      "radiobrowser": {
+        "artwork": "Logos for radio stations, from the community directory."
       },
       "listenbrainz": {
         "similarArtists": "Similar artists from what people listen to.",
@@ -634,7 +641,8 @@
     "saving": "Saving…",
     "dismiss": "Dismiss",
     "retry": "Retry",
-    "loadFailed": "Couldn't load. Check your connection."
+    "loadFailed": "Couldn't load. Check your connection.",
+    "all": "All"
   },
   "onboarding": {
     "home": {
@@ -1374,7 +1382,10 @@
     "openHomepage": "Open homepage",
     "delete": "Delete station",
     "refresh": "Refresh",
-    "openFailed": "Could not open that page"
+    "openFailed": "Could not open that page",
+    "sort": {
+      "serverOrder": "Server order"
+    }
   },
   "podcasts": {
     "title": "Podcasts",
@@ -1541,7 +1552,9 @@
     "section": {
       "offline": "Saved on this device",
       "downloaders": "Server transfers"
-    }
+    },
+    "refresh": "Refresh",
+    "manageDownloaders": "Manage downloaders"
   },
   "media": {
     "albumNotFound": "Album not found",

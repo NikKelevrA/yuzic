@@ -36,5 +36,7 @@ export function mapPlaylist(dto: LocalPlaylist, context: MapPlaylistContext): Pl
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     songIds: context.songIds ?? [],
+    // The on-device record holds its track ids whether or not they were mapped.
+    songCount: dto.trackIds.length,
   };
 }

@@ -66,6 +66,14 @@ jest.mock('@/components/options/WantOptions', () => {
   };
 });
 
+// Stands in for the sort sheet, as every other heavy component here does.
+// The real one reaches @gorhom/bottom-sheet and from there into
+// react-native-gesture-handler, which this preset does not transform.
+jest.mock('@/components/SingleSelectBottomSheet', () => {
+  const { View } = require('react-native');
+  return { __esModule: true, default: () => <View testID="sort-sheet" /> };
+});
+
 const mockGetSheet = jest.fn();
 jest.mock('./WantGetSheet', () => {
   const { View } = require('react-native');
@@ -109,8 +117,14 @@ jest.mock('@/components/EmptyState', () => {
 
 let mockWants: any[] = [];
 const mockDispatch = jest.fn();
+// The wants selectors are mocked below and ignore state; the appearance ones
+// are real, and read the slice the screen's sort/grid controls live on.
+const mockState = {
+  __mockWants: true,
+  settingsAppearance: { libraryViewModes: {}, gridColumns: 3, isGridView: false },
+};
 jest.mock('react-redux', () => ({
-  useSelector: (selector: any) => selector({ __mockWants: true }),
+  useSelector: (selector: any) => selector(mockState),
   useDispatch: () => mockDispatch,
 }));
 

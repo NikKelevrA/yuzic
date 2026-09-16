@@ -51,6 +51,26 @@ export function buildCoverCacheKey(
   return null;
 }
 
+/**
+ * The covers the app draws rather than fetches, as the sentinels `buildCover`
+ * returns for them. Not URLs — see `isDrawnCover`.
+ */
+export const DRAWN_COVER = {
+  heart: 'heart-icon',
+  radio: 'radio-icon',
+} as const;
+
+/**
+ * Whether what `buildCover` returned is a drawn cover rather than a URL.
+ *
+ * Every surface that fetches the value instead of rendering it has to ask:
+ * handed to the engine it becomes a now-playing artwork URI that resolves to
+ * nothing, which is a blank cover on the lock screen and in the car.
+ */
+export function isDrawnCover(uri: string | null | undefined): boolean {
+  return uri === DRAWN_COVER.heart || uri === DRAWN_COVER.radio;
+}
+
 export function buildCover(
   source: CoverSource,
   size: 'thumb' | 'grid' | 'detail' | 'background'
@@ -58,10 +78,21 @@ export function buildCover(
   const px = COVER_PX[size];
   const cover = source ? resolveCoverNow(source).cover : source;
 
-  if (!cover || cover.kind === 'none') return null;
+  if (!cover || cover.kind === 'none') {
+    // A station nobody had a logo for. The missing-artwork glyph is the sign
+    // for *broken*, which a stream playing perfectly well is not — so this
+    // gap draws the radio mark instead of the torn-picture one.
+    return cover?.kind === 'none' && cover.subject?.kind === 'station'
+      ? DRAWN_COVER.radio
+      : null;
+  }
 
+  // Artwork the app draws rather than fetches. These are sentinels, not URLs:
+  // `MediaImage` recognises them and renders a component. Anything that hands
+  // this value to something expecting a real URL — the engine's now-playing
+  // artwork, notably — has to check `isDrawnCover` first.
   if (cover.kind === 'special' && cover.name === 'heart') {
-    return 'heart-icon';
+    return DRAWN_COVER.heart;
   }
 
   if (cover.kind === 'url') {

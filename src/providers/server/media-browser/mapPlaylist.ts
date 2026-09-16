@@ -38,5 +38,7 @@ export function mapPlaylist(dto: MediaBrowserItem, context: MapPlaylistContext):
     createdAt: dto.DateCreated ? Date.parse(dto.DateCreated) || undefined : undefined,
     updatedAt: dto.DateLastMediaAdded ? Date.parse(dto.DateLastMediaAdded) || undefined : undefined,
     songIds: context.songIds ?? [],
+    // The listing maps no tracks, but reports the playlist's own child count.
+    songCount: dto.ChildCount,
   };
 }

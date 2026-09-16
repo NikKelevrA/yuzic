@@ -28,7 +28,18 @@ import {
  */
 
 const LIBRARY_BADGE: SourceBadge = { letter: 'L', color: statusColor.success }
-const SERVER_BADGE: SourceBadge = { letter: 'S', color: statusColor.success }
+
+/**
+ * Your server's badge, in the app's own accent — the same answer Home's
+ * `Explore` gives: a server is yours, not an outside brand, so it borrows no
+ * outside brand's colour. It used to share Library's green, which left the
+ * two rows a reader cannot tell apart wearing the only thing that
+ * distinguishes them.
+ */
+function useServerBadge(): SourceBadge {
+  const { colors } = useTheme()
+  return useMemo(() => ({ letter: 'S', color: colors.themeColor }), [colors.themeColor])
+}
 
 /** Tile size for a row of round artist tiles, fitting about two and a half across. */
 function useArtistTileSize(): number {
@@ -97,6 +108,7 @@ export function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
   const { navigateToArtist } = useMatchedNavigation()
   const { albums: libraryAlbums } = useAlbums()
   const externalRows = useExternalSimilarArtistRows(artist)
+  const serverBadge = useServerBadge()
 
   const localSimilar = useMemo(
     () => findArtistsWithSharedGenres(artist.localId, libraryAlbums),
@@ -136,7 +148,7 @@ export function LocalSimilarArtistsSection({ artist }: { artist: Artist }) {
           data={dedupedServerSimilar}
           itemSize={itemSize}
           keyPrefix="server"
-          badge={SERVER_BADGE}
+          badge={serverBadge}
           onPressItem={item => navigation.push('artistView', { id: item.nativeId })}
           keyOf={item => item.localId}
           subtitleOf={artistLabel}

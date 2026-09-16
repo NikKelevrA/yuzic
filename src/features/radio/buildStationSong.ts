@@ -1,5 +1,6 @@
 import type { InternetRadioStation } from '@/providers/contracts/ServerAdapter';
 import type { Song } from '@/domain/entities/Song';
+import { missingCover, stationCoverSubject, type CoverSource } from '@/domain/entities/Cover';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 
@@ -20,6 +21,15 @@ const LIVE_STREAM_ID_PREFIX = 'radio:';
  * for a track it does not have. That is how the resolver knows to play this
  * exactly as given rather than rebuilding it.
  */
+/**
+ * A station's artwork: its logo where a directory has one, the radio mark
+ * where none does. Exported so the Radio list and the player draw the same
+ * picture for the same station rather than each inventing a stand-in.
+ */
+export function stationCover(station: InternetRadioStation): CoverSource {
+  return missingCover(stationCoverSubject(station.name, station.streamUrl));
+}
+
 export function stationToSong(station: InternetRadioStation, serverId: string): Song {
   const provenance = serverProvenance(serverId);
   const placeholderRef = (kind: 'artist' | 'album', name: string) => ({
@@ -39,7 +49,10 @@ export function stationToSong(station: InternetRadioStation, serverId: string): 
     title: station.name,
     artist: placeholderRef('artist', 'Live Radio') as Song['artist'],
     album: placeholderRef('album', '') as Song['album'],
-    cover: { kind: 'none' },
+    // A gap naming the station, so the one picture rule can fill it from a
+    // station directory exactly as it fills any other gap — and draws the
+    // radio mark rather than the broken-image glyph when nothing has a logo.
+    cover: stationCover(station),
     durationSeconds: 0,
     contentKind: 'liveStream',
     streamId: station.streamUrl,

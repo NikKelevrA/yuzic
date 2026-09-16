@@ -143,7 +143,10 @@ function libraryCopy(subject: CoverSubject, subjectKey: string): CoverSource | n
   if (known !== undefined) return known;
 
   let copy: CoverSource | null = null;
-  if (subject.kind === 'artist') {
+  if (subject.kind === 'station') {
+    // A library holds music, not stations — there is no copy of one to find.
+    copy = null;
+  } else if (subject.kind === 'artist') {
     const match = matchArtistToLibrary(
       { name: subject.name, externalIds: subject.mbid ? { mbid: subject.mbid } : {} },
       context.artists

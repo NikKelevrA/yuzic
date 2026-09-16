@@ -23,7 +23,7 @@ import SettingsDivider from '../components/SettingsDivider';
 import SettingsRow from '../components/SettingsRow';
 import Touchable from '@/components/Touchable';
 import UserAvatar from '@/components/UserAvatar';
-import { controlSize, iconSize, radius, spacing, stateLayer, typography } from '@/constants/design';
+import { controlSize, iconSize, radius, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 
@@ -329,9 +329,12 @@ const styles = StyleSheet.create({
         marginBottom: spacing.headerOffset,
     },
     versionLogo: {
-        width: 56,
-        height: 20,
-        opacity: stateLayer.mutedOpacity,
+        // Drawn at the size a signature is actually legible at. It was 56×20
+        // *and* dimmed twice — tinted to `subtext` and then faded again — so
+        // the mark read as a smudge above the version rather than as the mark.
+        // The tint alone is what makes it sit right in either theme.
+        width: 88,
+        height: 32,
         marginBottom: spacing.sm,
     },
     versionText: {

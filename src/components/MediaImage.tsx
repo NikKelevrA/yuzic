@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Image } from 'react-native';
 import TurboImage from 'react-native-turbo-image';
 import { useSelector } from 'react-redux';
-import { buildCover, buildCoverCacheKey } from '@/providers/registry/covers';
+import { buildCover, buildCoverCacheKey, DRAWN_COVER } from '@/providers/registry/covers';
 import { CoverSource } from '@/domain/entities/Cover';
 import ThemedHeartCover from '@/components/ThemedHeartCover';
+import ThemedRadioCover from '@/components/ThemedRadioCover';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { useTheme } from '@/features/theme/useTheme';
 import { useResolvedCover } from '@/features/artwork/useResolvedCover';
@@ -53,10 +54,18 @@ export function MediaImage({
     setFailedVersion(version => version + 1);
   }, [uri]);
 
-  if (uri === 'heart-icon') {
+  if (uri === DRAWN_COVER.heart) {
     return (
       <View style={[style, { overflow: 'hidden' }]}>
         <ThemedHeartCover />
+      </View>
+    );
+  }
+
+  if (uri === DRAWN_COVER.radio) {
+    return (
+      <View style={[style, { overflow: 'hidden' }]}>
+        <ThemedRadioCover />
       </View>
     );
   }

@@ -54,7 +54,29 @@ jest.mock('./DownloaderQueueSection', () => {
 
 jest.mock('@/components/DetailHeader', () => {
   const { Text: RNText } = require('react-native');
-  return { DetailHeaderBar: ({ title }: { title: string }) => <RNText>{title}</RNText> };
+  return {
+    DetailHeaderBar: ({ title, rightAction }: { title: string; rightAction?: React.ReactNode }) => (
+      <RNText>{title}{rightAction}</RNText>
+    ),
+    DetailHeaderIconButton: ({ onPress, accessibilityLabel, children }: any) => (
+      <RNText onPress={onPress} accessibilityLabel={accessibilityLabel}>{children}</RNText>
+    ),
+  };
+});
+
+// The list-level sheet, stubbed as its actions: the real one reaches
+// @gorhom/bottom-sheet and from there react-native-gesture-handler, which
+// this preset does not transform.
+jest.mock('@/components/options/DownloadsOptions', () => {
+  const { Text: RNText, View } = require('react-native');
+  return {
+    DownloadsListOptions: ({ onRefresh, onManage }: any) => (
+      <View testID="downloads-list-options-sheet">
+        <RNText testID="downloads-option-refresh" onPress={onRefresh}>refresh</RNText>
+        <RNText testID="downloads-option-manage" onPress={onManage}>manage</RNText>
+      </View>
+    ),
+  };
 });
 
 jest.mock('@/providers/integration/lidarr', () => ({ cancelQueueItem: jest.fn() }));
