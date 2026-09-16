@@ -250,22 +250,22 @@ export default function Settings() {
                 </SettingsCard>
 
                 {/*
-                  The mark above the version, tinted to the same grey as the
-                  text under it — it is a signature at the foot of the screen,
+                  The mark under the version, tinted to the same grey as the
+                  text above it — it is a signature at the foot of the screen,
                   not a logo being shown off. `splash.png` is the mark with no
                   square behind it, so a tint is all it takes to sit right in
                   either theme; the app icon would have put a coral tile here.
                 */}
                 <View style={styles.versionBlock}>
+                    <Text style={[styles.versionText, { color: colors.subtext }]}>
+                        Yuzic {appVersion}
+                    </Text>
                     <Image
                         source={require('@assets/images/splash.png')}
                         style={[styles.versionLogo, { tintColor: colors.subtext }]}
                         resizeMode="contain"
                         accessible={false}
                     />
-                    <Text style={[styles.versionText, { color: colors.subtext }]}>
-                        Yuzic {appVersion}
-                    </Text>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -331,11 +331,11 @@ const styles = StyleSheet.create({
     versionLogo: {
         // Drawn at the size a signature is actually legible at. It was 56×20
         // *and* dimmed twice — tinted to `subtext` and then faded again — so
-        // the mark read as a smudge above the version rather than as the mark.
+        // the mark read as a smudge beside the version rather than as the mark.
         // The tint alone is what makes it sit right in either theme.
         width: 88,
         height: 32,
-        marginBottom: spacing.sm,
+        marginTop: spacing.sm,
     },
     versionText: {
         ...typography.caption,

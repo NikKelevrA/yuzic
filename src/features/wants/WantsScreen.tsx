@@ -8,8 +8,9 @@ import { ArrowDownAZ, CalendarPlus, Search } from 'lucide-react-native';
 
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import EmptyState from '@/components/EmptyState';
-import ListControls, { type ListFilterOption } from '@/components/ListControls';
+import ListControls from '@/components/ListControls';
 import SingleSelectBottomSheet, { type SingleSelectOption } from '@/components/SingleSelectBottomSheet';
+import WantsFiltersSheet, { type WantsFilterOption } from './WantsFiltersSheet';
 import { useSheetRef } from '@/components/useSheetRef';
 import { WantOptions } from '@/components/options/WantOptions';
 import LibraryItem from '@/features/library/components/Items/LibraryItem';
@@ -78,6 +79,7 @@ const WantsScreen: React.FC = () => {
   const [sort, setSort] = useState<WantSort>('recentlyAdded');
   const [filter, setFilter] = useState<WantFilter>('all');
   const sortSheetRef = useSheetRef();
+  const filterSheetRef = useSheetRef();
 
   const gutter = libraryGutter(isGridView, GRID_SPACING);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
@@ -90,14 +92,17 @@ const WantsScreen: React.FC = () => {
    * entirely when one kind is all there is, since filtering to it changes
    * nothing.
    */
-  const filters = useMemo<ListFilterOption<WantFilter>[]>(() => {
+  const filters = useMemo<WantsFilterOption[]>(() => {
     const present = new Set(wants.map(want => want.unit));
-    const chips: ListFilterOption<WantFilter>[] = [{ value: 'all', label: t('common.all') }];
-    if (present.has('album')) chips.push({ value: 'album', label: t('home.filters.albums') });
-    if (present.has('artist')) chips.push({ value: 'artist', label: t('home.filters.artists') });
-    if (present.has('track')) chips.push({ value: 'track', label: t('home.filters.tracks') });
-    return chips;
+    const rows: WantsFilterOption[] = [{ value: 'all', label: t('common.all') }];
+    if (present.has('album')) rows.push({ value: 'album', label: t('home.filters.albums') });
+    if (present.has('artist')) rows.push({ value: 'artist', label: t('home.filters.artists') });
+    if (present.has('track')) rows.push({ value: 'track', label: t('home.filters.tracks') });
+    return rows;
   }, [wants, t]);
+
+  /** What the filter pill says: the kind in force, or that nothing is filtered. */
+  const filterLabel = filters.find(option => option.value === filter)?.label ?? t('common.all');
 
   const visible = useMemo(() => {
     const kept = filter === 'all' ? wants : wants.filter(want => want.unit === filter);
@@ -202,9 +207,10 @@ const WantsScreen: React.FC = () => {
                 onToggleView={() => dispatch(
                   setLibraryViewMode({ collection: 'wants', isGridView: !isGridView })
                 )}
-                filters={filters}
-                activeFilter={filter}
-                onFilterChange={setFilter}
+                // One kind is not a choice: filtering to it changes nothing,
+                // so the control stays away until there is something to pick.
+                filterLabel={filters.length > 1 ? filterLabel : undefined}
+                onFilterPress={filters.length > 1 ? () => filterSheetRef.current?.present() : undefined}
               />
             </View>
           }
@@ -218,7 +224,22 @@ const WantsScreen: React.FC = () => {
         selected={sort}
         options={sortOptions}
         title={t('home.sortSheet.title')}
-        onSelect={value => setSort(value as WantSort)}
+        // Dismissed here rather than left up: the sheet asked one question and
+        // has its answer, and the list it reorders is behind it.
+        onSelect={value => {
+          setSort(value as WantSort);
+          sortSheetRef.current?.dismiss();
+        }}
+      />
+
+      <WantsFiltersSheet
+        ref={filterSheetRef}
+        selected={filter}
+        options={filters}
+        onSelect={value => {
+          setFilter(value as WantFilter);
+          filterSheetRef.current?.dismiss();
+        }}
       />
 
       {optionsFor && (

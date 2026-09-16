@@ -1232,6 +1232,9 @@
       "downloading": "Downloading · {{progress}}%",
       "failed": "Didn't arrive",
       "arrived": "In your library"
+    },
+    "filters": {
+      "title": "Filter"
     }
   },
   "albumOptions": {

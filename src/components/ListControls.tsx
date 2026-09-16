@@ -18,127 +18,95 @@ import { useTheme } from '@/features/theme/useTheme'
  * it without pretending a station is one of those. The controls are not the
  * part that cared what the items were; the list is.
  *
+ * Sort and filter are both pills that open a sheet, which is how Search
+ * already does it: the control says what is chosen, and the choosing happens
+ * somewhere with room for it. Filters were a row of chips here first, which
+ * spent a line of the screen listing options instead of naming the one in
+ * force, and grew with every kind that could be filtered.
+ *
  * Every control is optional, because not every list earns all three: a grid
  * of stations that have no logo is a grid of identical squares, and a filter
  * over one kind of thing is a control with one option.
  */
 
-export type ListFilterOption<T extends string> = {
-  value: T
-  label: string
-}
-
-type Props<T extends string> = {
+type Props = {
   /** The current order, named. Omitted for a list with one sensible order. */
   sortLabel?: string
   onSortPress?: () => void
+  /** The filter in force, named. Omitted where there is nothing to filter. */
+  filterLabel?: string
+  onFilterPress?: () => void
   /** Grid/list toggle. Omitted where a grid would say nothing a row doesn't. */
   isGridView?: boolean
   onToggleView?: () => void
-  /** Filter chips, shown only when there is more than one thing to choose. */
-  filters?: readonly ListFilterOption<T>[]
-  activeFilter?: T
-  onFilterChange?: (value: T) => void
 }
 
-export default function ListControls<T extends string>({
+export default function ListControls({
   sortLabel,
   onSortPress,
+  filterLabel,
+  onFilterPress,
   isGridView,
   onToggleView,
-  filters,
-  activeFilter,
-  onFilterChange,
-}: Props<T>) {
+}: Props) {
   const { t } = useTranslation()
   const { colors } = useTheme()
   const rad = useRadius()
 
   const showSort = Boolean(sortLabel && onSortPress)
+  const showFilter = Boolean(filterLabel && onFilterPress)
   const showToggle = isGridView !== undefined && Boolean(onToggleView)
-  // One option is not a choice, and drawing it as one invites a tap that
-  // changes nothing.
-  const showFilters = Boolean(filters && filters.length > 1 && onFilterChange)
 
-  if (!showSort && !showToggle && !showFilters) return null
+  if (!showSort && !showFilter && !showToggle) return null
+
+  const pill = {
+    backgroundColor: colors.muted,
+    borderRadius: rad.pillFor(controlSize.inlineControl),
+  }
 
   return (
-    <View>
-      <View style={styles.row}>
-        {showSort ? (
+    <View style={styles.row}>
+      <View style={styles.group}>
+        {showSort && (
           <Touchable
             testID="list-sort-button"
-            style={[
-              styles.sortButton,
-              { backgroundColor: colors.muted, borderRadius: rad.pillFor(controlSize.inlineControl) },
-            ]}
+            style={[styles.pill, pill]}
             onPress={onSortPress}
             accessibilityRole="button"
           >
             <ArrowUpDown size={iconSize.row} color={colors.secondary} />
-            <Text style={[styles.sortLabel, { color: colors.secondary }]}>{sortLabel}</Text>
+            <Text style={[styles.pillLabel, { color: colors.secondary }]}>{sortLabel}</Text>
           </Touchable>
-        ) : (
-          // Holds the toggle at the right-hand end on a list with no sort,
-          // rather than letting it slide over to where the sort pill sits.
-          <View />
         )}
 
-        {showToggle && (
+        {showFilter && (
           <Touchable
-            testID="list-view-toggle"
-            style={[
-              styles.gridButton,
-              { backgroundColor: colors.muted, borderRadius: rad.pillFor(controlSize.inlineControl) },
-            ]}
-            hitSlop={hitSlopFor(controlSize.inlineControl)}
-            onPress={onToggleView}
+            testID="list-filter-button"
+            style={[styles.pill, pill]}
+            onPress={onFilterPress}
             accessibilityRole="button"
-            accessibilityLabel={
-              isGridView ? t('library.view.switchToList') : t('library.view.switchToGrid')
-            }
           >
-            {isGridView
-              ? <List size={iconSize.row} color={colors.secondary} />
-              : <Grid2x2 size={iconSize.row} color={colors.secondary} />}
+            <ListFilter size={iconSize.row} color={colors.secondary} />
+            <Text style={[styles.pillLabel, { color: colors.secondary }]}>{filterLabel}</Text>
           </Touchable>
         )}
       </View>
 
-      {showFilters && (
-        <View style={styles.filterRow}>
-          <ListFilter size={iconSize.row} color={colors.subtext} />
-          {filters!.map(option => {
-            const active = option.value === activeFilter
-            return (
-              <Touchable
-                key={option.value}
-                testID={`list-filter-${option.value}`}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: active ? colors.themeColor : colors.muted,
-                    borderRadius: rad.pillFor(controlSize.inlineControl),
-                  },
-                ]}
-                onPress={() => onFilterChange!(option.value)}
-                accessibilityRole="button"
-                // Which one is chosen is state, not a different button — a
-                // label that changed with selection reads as a new control.
-                accessibilityState={{ selected: active }}
-              >
-                <Text
-                  style={[
-                    styles.chipLabel,
-                    { color: active ? colors.onThemeColor : colors.secondary },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Touchable>
-            )
-          })}
-        </View>
+      {showToggle && (
+        <Touchable
+          testID="list-view-toggle"
+          style={[styles.gridButton, pill]}
+          hitSlop={hitSlopFor(controlSize.inlineControl)}
+          onPress={onToggleView}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isGridView ? t('library.view.switchToList') : t('library.view.switchToGrid')
+          }
+        >
+          {isGridView
+            ? <List size={iconSize.row} color={colors.secondary} />
+            : <Grid2x2 size={iconSize.row} color={colors.secondary} />}
+        </Touchable>
       )}
     </View>
   )
@@ -153,31 +121,24 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
   },
-  sortButton: {
+  group: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.inlineGap,
+    flexShrink: 1,
+  },
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.inlineGap,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  sortLabel: { ...typography.caption },
+  pillLabel: { ...typography.caption },
   gridButton: {
     width: controlSize.inlineControl,
     height: controlSize.inlineControl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: spacing.inlineGap,
-    paddingHorizontal: spacing.page,
-    paddingBottom: spacing.md,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.tight,
-  },
-  chipLabel: { ...typography.caption },
 })

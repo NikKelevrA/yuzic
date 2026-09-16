@@ -1215,6 +1215,9 @@
       "downloading": "ダウンロード中 · {{progress}}%",
       "failed": "届きませんでした",
       "arrived": "ライブラリにあります"
+    },
+    "filters": {
+      "title": "絞り込み"
     }
   },
   "manualAddWant": {

@@ -1220,6 +1220,9 @@
       "downloading": "Téléchargement · {{progress}} %",
       "failed": "Non reçu",
       "arrived": "Dans votre bibliothèque"
+    },
+    "filters": {
+      "title": "Filtrer"
     }
   },
   "manualAddWant": {

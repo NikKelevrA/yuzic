@@ -290,7 +290,12 @@ export default function RadioScreen() {
         selected={sort}
         options={sortOptions}
         title={t('home.sortSheet.title')}
-        onSelect={value => setSort(value as StationSort)}
+        // Dismissed here rather than left up: the sheet asked one question and
+        // has its answer, and the list it reorders is behind it.
+        onSelect={value => {
+          setSort(value as StationSort);
+          sortSheetRef.current?.dismiss();
+        }}
       />
 
       {listOptionsOpen && (

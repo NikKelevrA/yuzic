@@ -73,6 +73,12 @@ jest.mock('@/components/SingleSelectBottomSheet', () => {
   const { View } = require('react-native');
   return { __esModule: true, default: () => <View testID="sort-sheet" /> };
 });
+// Same reason as the sort sheet above: the real one reaches
+// @gorhom/bottom-sheet and from there react-native-gesture-handler.
+jest.mock('./WantsFiltersSheet', () => {
+  const { View } = require('react-native');
+  return { __esModule: true, default: () => <View testID="wants-filters-sheet" /> };
+});
 
 const mockGetSheet = jest.fn();
 jest.mock('./WantGetSheet', () => {

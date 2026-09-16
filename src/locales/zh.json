@@ -1215,6 +1215,9 @@
       "downloading": "正在下载 · {{progress}}%",
       "failed": "未能获取",
       "arrived": "已在音乐库中"
+    },
+    "filters": {
+      "title": "筛选"
     }
   },
   "manualAddWant": {
