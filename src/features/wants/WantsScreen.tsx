@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { ArrowDownAZ, CalendarPlus, Search } from 'lucide-react-native';
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import EmptyState from '@/components/EmptyState';
 import ListControls from '@/components/ListControls';
-import WantsPickSheet, { type WantsPickOption } from './WantsFiltersSheet';
+import WantsPickSheet, { type WantsPickHandle, type WantsPickOption } from './WantsFiltersSheet';
 import { WantOptions } from '@/components/options/WantOptions';
 import LibraryItem from '@/features/library/components/Items/LibraryItem';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from '@/features/library/layout';
@@ -77,16 +77,17 @@ const WantsScreen: React.FC = () => {
   const [sort, setSort] = useState<WantSort>('recentlyAdded');
   const [filter, setFilter] = useState<WantFilter>('all');
   /**
-   * Which picker is open, if either.
+   * The pickers are opened through their own handles rather than by flipping
+   * a piece of state that decides whether they are mounted.
    *
-   * State rather than a ref to a permanently-mounted sheet: this screen
-   * re-renders behind its sheets — it reads the library index and the
-   * downloader queue for every row's status — and a mounted modal
-   * re-measuring mid-animation cancels its own dismissal, which is a sheet
-   * that starts to close and springs back. Mounted only while open, there is
-   * nothing to spring back.
+   * That state could already hold the value a press was about to set — a
+   * sheet dismissing after a pick only clears it once the animation ends —
+   * and React bails out of an identical state, so nothing re-mounted and
+   * nothing presented. The press vanished. `present()` has no such
+   * precondition. See `WantsPickSheet`.
    */
-  const [picking, setPicking] = useState<'sort' | 'filter' | null>(null);
+  const sortSheetRef = useRef<WantsPickHandle>(null);
+  const filterSheetRef = useRef<WantsPickHandle>(null);
 
   const gutter = libraryGutter(isGridView, GRID_SPACING);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
@@ -138,7 +139,6 @@ const WantsScreen: React.FC = () => {
    * re-renders on every downloader poll — which re-rendered the open sheet
    * and cancelled its own dismiss animation. See `WantsPickSheet`.
    */
-  const closePicker = useCallback(() => setPicking(null), []);
   const selectSort = useCallback((value: string) => setSort(value as WantSort), []);
   const selectFilter = useCallback((value: string) => setFilter(value as WantFilter), []);
 
@@ -220,7 +220,7 @@ const WantsScreen: React.FC = () => {
             <View style={{ marginHorizontal: -gutter }}>
               <ListControls
                 sortLabel={sortLabel}
-                onSortPress={() => setPicking('sort')}
+                onSortPress={() => sortSheetRef.current?.present()}
                 isGridView={isGridView}
                 onToggleView={() => dispatch(
                   setLibraryViewMode({ collection: 'wants', isGridView: !isGridView })
@@ -228,7 +228,7 @@ const WantsScreen: React.FC = () => {
                 // One kind is not a choice: filtering to it changes nothing,
                 // so the control stays away until there is something to pick.
                 filterLabel={filters.length > 1 ? filterLabel : undefined}
-                onFilterPress={filters.length > 1 ? () => setPicking('filter') : undefined}
+                onFilterPress={filters.length > 1 ? () => filterSheetRef.current?.present() : undefined}
               />
             </View>
           }
@@ -236,29 +236,26 @@ const WantsScreen: React.FC = () => {
         />
       )}
 
-      {/* Each mounted only while it is open — the sheet presents itself and
-          reports its own dismissal. See `WantsPickSheet`. */}
-      {picking === 'sort' && (
-        <WantsPickSheet
-          testID="wants-sort-sheet"
-          title={t('home.sortSheet.title')}
-          selected={sort}
-          options={sortOptions}
-          onSelect={selectSort}
-          onClose={closePicker}
-        />
-      )}
+      {/* Mounted for as long as the screen is, and opened through their
+          handles — see `WantsPickSheet` for why presenting imperatively is
+          what makes the pills reliable. */}
+      <WantsPickSheet
+        ref={sortSheetRef}
+        testID="wants-sort-sheet"
+        title={t('home.sortSheet.title')}
+        selected={sort}
+        options={sortOptions}
+        onSelect={selectSort}
+      />
 
-      {picking === 'filter' && (
-        <WantsPickSheet
-          testID="wants-filters-sheet"
-          title={t('wants.filters.title')}
-          selected={filter}
-          options={filters}
-          onSelect={selectFilter}
-          onClose={closePicker}
-        />
-      )}
+      <WantsPickSheet
+        ref={filterSheetRef}
+        testID="wants-filters-sheet"
+        title={t('wants.filters.title')}
+        selected={filter}
+        options={filters}
+        onSelect={selectFilter}
+      />
 
       {optionsFor && (
         <WantOptions

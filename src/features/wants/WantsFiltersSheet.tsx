@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
@@ -20,44 +20,54 @@ export type WantsPickOption = {
   Icon?: React.ComponentType<{ size: number; color: string }>;
 };
 
+/** What the screen can do to this sheet: open it. */
+export type WantsPickHandle = {
+  present: () => void;
+};
+
 type Props = {
   title: string;
   selected: string;
   options: WantsPickOption[];
   onSelect: (value: string) => void;
-  onClose: () => void;
   testID?: string;
 };
 
 /**
  * Pick one option — which kinds of want to show, or how to order them.
  *
- * **Mounted only while it is open, and it presents itself**, which is the
- * pattern every options sheet in this app already follows
- * (`WantOptions`, `RadioStationOptions`). Held mounted the whole time
- * instead, a sheet on this screen would begin dismissing on a backdrop tap
- * and then snap back open: Wants re-renders behind it — it reads the library
- * index and the downloader queue to say what each row's status is — and a
- * live modal re-measuring mid-animation cancels its own dismissal. Unmounting
- * on close means there is nothing left to resurrect.
+ * **Opened imperatively, and mounted for as long as the screen is.**
  *
- * `onClose` fires on dismissal however it happened — backdrop, pan-down, or a
- * pick — so the screen drops it and the next open is a fresh mount.
+ * It used to mount only while open and present itself from an effect, which
+ * made opening depend on a *state change*: the screen flipped `picking` to
+ * `'filter'` and the new mount presented. That silently failed whenever
+ * `picking` was already `'filter'` — press an option and the sheet starts
+ * dismissing, but `picking` only clears when that animation *finishes*, so a
+ * press landing in between set the state to the value it already held. React
+ * bails out of an identical state, nothing re-mounted, nothing presented, and
+ * the press did nothing at all. That is the filter pill that sometimes does
+ * not open.
+ *
+ * `present()` has no such precondition — it opens the sheet whatever the
+ * screen last did — so there is no transition left to miss.
+ *
+ * Staying mounted is only safe because this is memoised and every prop it
+ * takes is stable: a live `BottomSheetModal` that re-renders mid-dismiss
+ * re-measures its content under `enableDynamicSizing` and cancels its own
+ * dismissal. See `WantsScreen` for where that stability comes from.
  */
-function WantsPickSheet({
-  title,
-  selected,
-  options,
-  onSelect,
-  onClose,
-  testID,
-}: Props) {
+const WantsPickSheet = forwardRef<WantsPickHandle, Props>(function WantsPickSheet(
+  { title, selected, options, onSelect, testID },
+  ref
+) {
   const { colors } = useTheme();
   const sheetRef = useSheetRef();
   const sheetBg = useOptionSheetBackground();
   const sheetContent = useOptionSheetContentStyle();
 
-  useEffect(() => { sheetRef.current?.present(); }, [sheetRef]);
+  useImperativeHandle(ref, () => ({
+    present: () => sheetRef.current?.present(),
+  }), [sheetRef]);
 
   return (
     <BottomSheetModal
@@ -68,7 +78,6 @@ function WantsPickSheet({
       stackBehavior="push"
       backgroundStyle={[optionSheetStyles.sheetBackground, sheetBg]}
       handleIndicatorStyle={{ backgroundColor: colors.border }}
-      onChange={index => { if (index === -1) onClose(); }}
     >
       <BottomSheetView testID={testID} style={[sheetBg, sheetContent]}>
         <Text style={[styles.title, { color: colors.secondary }]}>{title}</Text>
@@ -99,7 +108,7 @@ function WantsPickSheet({
       </BottomSheetView>
     </BottomSheetModal>
   );
-}
+});
 
 /**
  * Memoised, and every prop it is given is stable — see `WantsScreen`.
@@ -108,9 +117,8 @@ function WantsPickSheet({
  * unconditionally, so the context value changes and this screen with it. A
  * live `BottomSheetModal` re-rendered mid-dismiss re-measures its own content
  * under `enableDynamicSizing` and cancels the dismissal, which is a sheet that
- * starts to close and springs straight back open. It never remounted — one
- * mount, no unmount, a re-render per poll — so keeping the element identical
- * across those renders is the whole fix.
+ * starts to close and springs straight back open. Keeping the element
+ * identical across those renders is what stops it.
  */
 export default React.memo(WantsPickSheet);
 

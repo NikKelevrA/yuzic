@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { Download, Ellipsis } from 'lucide-react-native';
 
 import { DetailHeaderBar, DetailHeaderIconButton } from '@/components/DetailHeader';
-import { DownloadsListOptions } from '@/components/options/DownloadsOptions';
+import DownloadsListOptions, { type DownloadsOptionsHandle } from '@/components/options/DownloadsOptions';
 import EmptyState from '@/components/EmptyState';
 import { useDownloaderStates } from '@/features/downloaders/registry';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
@@ -39,10 +39,10 @@ const DownloadsScreen: React.FC = () => {
   const states = useDownloaderStates();
   const connected = states.filter(state => state.isConnected);
   const { queues, refresh } = useDownloadersQueue();
-  const [listOptionsOpen, setListOptionsOpen] = useState(false);
-  // Stable, so the open sheet's props don't change on every queue poll —
-  // see `DownloadsListOptions`.
-  const closeListOptions = useCallback(() => setListOptionsOpen(false), []);
+  // Opened through its handle rather than by flipping a boolean that may
+  // already hold the value a press would set — see `DownloadsListOptions`.
+  const listSheetRef = useRef<DownloadsOptionsHandle>(null);
+  // Stable, so the open sheet's props don't change on every queue poll.
   const openConnections = useCallback(() => router.push('/settings/connectionsView'), [router]);
   const inFlight = queues.reduce((sum, queue) => sum + queue.items.length, 0);
 
@@ -59,7 +59,7 @@ const DownloadsScreen: React.FC = () => {
         // offers to refresh nothing.
         rightAction={connected.length > 0 ? (
           <DetailHeaderIconButton
-            onPress={() => setListOptionsOpen(true)}
+            onPress={() => listSheetRef.current?.present()}
             accessibilityLabel={t('a11y.common.moreOptions')}
           >
             <Ellipsis size={iconSize.header} color={colors.secondary} />
@@ -96,15 +96,14 @@ const DownloadsScreen: React.FC = () => {
         </ScrollView>
       )}
 
-      {listOptionsOpen && (
-        <DownloadsListOptions
-          title={t('downloads.title')}
-          subtitle={inFlight > 0 ? t('library.count.items', { count: inFlight }) : undefined}
-          onClose={closeListOptions}
-          onRefresh={refresh}
-          onManage={openConnections}
-        />
-      )}
+      {/* Mounted for as long as the screen is, opened through its handle. */}
+      <DownloadsListOptions
+        ref={listSheetRef}
+        title={t('downloads.title')}
+        subtitle={inFlight > 0 ? t('library.count.items', { count: inFlight }) : undefined}
+        onRefresh={refresh}
+        onManage={openConnections}
+      />
     </SafeAreaView>
   );
 };

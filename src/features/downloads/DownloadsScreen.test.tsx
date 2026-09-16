@@ -67,15 +67,22 @@ jest.mock('@/components/DetailHeader', () => {
 // The list-level sheet, stubbed as its actions: the real one reaches
 // @gorhom/bottom-sheet and from there react-native-gesture-handler, which
 // this preset does not transform.
+// A default export that forwards a ref now: the screen opens the sheet by
+// calling `present()` on it rather than by mounting it.
 jest.mock('@/components/options/DownloadsOptions', () => {
+  const ReactActual = require('react');
   const { Text: RNText, View } = require('react-native');
   return {
-    DownloadsListOptions: ({ onRefresh, onManage }: any) => (
-      <View testID="downloads-list-options-sheet">
-        <RNText testID="downloads-option-refresh" onPress={onRefresh}>refresh</RNText>
-        <RNText testID="downloads-option-manage" onPress={onManage}>manage</RNText>
-      </View>
-    ),
+    __esModule: true,
+    default: ReactActual.forwardRef(({ onRefresh, onManage }: any, ref: any) => {
+      ReactActual.useImperativeHandle(ref, () => ({ present: () => {} }), []);
+      return (
+        <View testID="downloads-list-options-sheet">
+          <RNText testID="downloads-option-refresh" onPress={onRefresh}>refresh</RNText>
+          <RNText testID="downloads-option-manage" onPress={onManage}>manage</RNText>
+        </View>
+      );
+    }),
   };
 });
 
