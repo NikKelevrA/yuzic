@@ -21,7 +21,7 @@
  * decides on its own what a header or an artwork URI *is*.
  */
 import type { ContentKind } from '@/domain/playback/ContentKind';
-import { buildCover } from '@/providers/registry/covers';
+import { buildCover, isDrawnCover } from '@/providers/registry/covers';
 import type { RequestHeaders } from '@/features/player/mediaHeaders';
 import type { PlayableResource } from './playableResource';
 
@@ -31,6 +31,11 @@ import type { PlayableResource } from './playableResource';
  * local copy — see `PlayableResource.filePath` — so `file://` is the only
  * scheme this needs to add.
  */
+/** An artwork URI the engine can actually fetch, or nothing. */
+function drawnOrUrl(uri: string | null): string | undefined {
+  return !uri || isDrawnCover(uri) ? undefined : uri;
+}
+
 function normalizeMediaUrl(url: string): string {
   if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return url;
   if (url.startsWith('/')) return `file://${url}`;
@@ -80,7 +85,10 @@ export function toEngineBoundaryTrack(
     title: song.title,
     artist: song.artist.name,
     album: song.album.title || undefined,
-    artworkUri: buildCover(song.cover, 'grid') ?? undefined,
+    // A drawn cover is a sentinel the app renders itself, not something the
+    // engine could fetch — sent as an artwork URI it is a blank cover on the
+    // lock screen and in the car, which is worse than none at all.
+    artworkUri: drawnOrUrl(buildCover(song.cover, 'grid')),
     durationSec: song.durationSeconds || undefined,
     contentKind: song.contentKind,
     ...(headers ? { headers } : {}),

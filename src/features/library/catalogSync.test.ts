@@ -68,7 +68,7 @@ describe('runCatalogSync', () => {
   it('writes each resource into the cache entry the screens already read', async () => {
     const queryClient = client();
 
-    await runCatalogSync({ queryClient, api: makeApi(), serverId: SERVER, force: true });
+    await runCatalogSync({ queryClient, api: makeApi(), serverId: SERVER });
 
     // The sync is the screens' own fetch performed early — not a pipeline
     // feeding some other store.
@@ -76,11 +76,30 @@ describe('runCatalogSync', () => {
     expect(queryClient.getQueryData([QueryKeys.Genres, SERVER])).toEqual(['Rock']);
   });
 
+  it('asks the server again even when the cache entry is already populated', async () => {
+    // The regression that hid newly added music. Each catalog resource is read
+    // by screens at `staleTime: Infinity` — right for them, since a mounted
+    // screen should render the persisted copy rather than a spinner — and the
+    // sync used to pass that same value to `fetchQuery` for any run that
+    // wasn't forced. A persisted entry is never stale under it, so app start,
+    // foreground and server switch all resolved from the restored cache
+    // without a request, and an album added since the last forced sync stayed
+    // invisible until someone hit the manual refresh in Settings.
+    const queryClient = client();
+    queryClient.setQueryData([QueryKeys.Albums, SERVER], [album('before')]);
+    const list = jest.fn(async () => [album('before'), album('after')]);
+
+    await runCatalogSync({ queryClient, api: makeApi({ albums: { list } }), serverId: SERVER });
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData([QueryKeys.Albums, SERVER])).toHaveLength(2);
+  });
+
   it('keeps going when one resource fails, and names the one that did', async () => {
     const queryClient = client();
     const api = makeApi({ genres: { list: jest.fn(async () => { throw new Error('down'); }) } });
 
-    const result = await runCatalogSync({ queryClient, api, serverId: SERVER, force: true });
+    const result = await runCatalogSync({ queryClient, api, serverId: SERVER });
 
     expect(result.failed).toEqual(['genres']);
     expect(queryClient.getQueryData([QueryKeys.Albums, SERVER])).toHaveLength(1);
@@ -92,7 +111,7 @@ describe('runCatalogSync', () => {
     queryClient.setQueryData([QueryKeys.Genres, SERVER], ['Jazz']);
     const api = makeApi({ genres: { list: jest.fn(async () => { throw new Error('down'); }) } });
 
-    const result = await runCatalogSync({ queryClient, api, serverId: SERVER, force: true });
+    const result = await runCatalogSync({ queryClient, api, serverId: SERVER });
 
     expect(result.genres).toEqual(['Jazz']);
   });
@@ -102,7 +121,7 @@ describe('runCatalogSync', () => {
     // "this origin does not report them". The caller must be able to tell,
     // because the action it feeds replaces a server's whole stats namespace.
     const result = await runCatalogSync({
-      queryClient: client(), api: makeApi(), serverId: SERVER, force: true,
+      queryClient: client(), api: makeApi(), serverId: SERVER,
     });
 
     expect(result.albumStats).toEqual([]);
@@ -111,7 +130,7 @@ describe('runCatalogSync', () => {
   it('reports stats for the entities that do carry a count', async () => {
     const api = makeApi({ albums: { list: jest.fn(async () => [album('al1', 7), album('al2')]) } });
 
-    const result = await runCatalogSync({ queryClient: client(), api, serverId: SERVER, force: true });
+    const result = await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
 
     expect(result.albumStats).toEqual([{ id: 'al1', playCount: 7, lastPlayedAt: 1_000 }]);
   });
@@ -122,7 +141,7 @@ describe('runCatalogSync', () => {
       genres: { list: jest.fn(async () => []) },
     });
 
-    const result = await runCatalogSync({ queryClient: client(), api, serverId: SERVER, force: true });
+    const result = await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
 
     expect(result.hasData).toBe(false);
   });

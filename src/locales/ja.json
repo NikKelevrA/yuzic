@@ -37,8 +37,7 @@
       "github": "GitHub",
       "privacyPolicy": "プライバシーポリシー",
       "termsOfUse": "利用規約",
-      "changelog": "新着情報",
-      "website": "ウェブサイト"
+      "changelog": "新着情報"
     },
     "profile": {
       "unknownUser": "不明なユーザー",
@@ -521,6 +520,10 @@
         "name": "LRCLIB",
         "sends": "歌詞を探すために曲名とアーティスト名を送信します。アカウントは不要です。"
       },
+      "radiobrowser": {
+        "name": "Radio Browser",
+        "sends": "ロゴを探すために放送局名とストリーム URL を送信します。アカウントは不要です。"
+      },
       "usedFor": "用途",
       "stopUsing": "{{name}}の使用をやめる",
       "off": "オフ",
@@ -548,6 +551,9 @@
       },
       "lrclib": {
         "lyrics": "サーバーに歌詞がないときの同期歌詞。"
+      },
+      "radiobrowser": {
+        "artwork": "コミュニティ ディレクトリによるラジオ局のロゴ。"
       },
       "listenbrainz": {
         "similarArtists": "みんなが聴いている音楽から見つけた似たアーティスト。",
@@ -633,7 +639,8 @@
     "saving": "保存中…",
     "dismiss": "閉じる",
     "retry": "再試行",
-    "loadFailed": "読み込めませんでした。接続を確認してください。"
+    "loadFailed": "読み込めませんでした。接続を確認してください。",
+    "all": "すべて"
   },
   "onboarding": {
     "home": {
@@ -1207,6 +1214,9 @@
       "downloading": "ダウンロード中 · {{progress}}%",
       "failed": "届きませんでした",
       "arrived": "ライブラリにあります"
+    },
+    "filters": {
+      "title": "絞り込み"
     }
   },
   "manualAddWant": {
@@ -1410,7 +1420,10 @@
     "openHomepage": "ホームページを開く",
     "delete": "ラジオ局を削除",
     "refresh": "更新",
-    "openFailed": "このページを開けませんでした"
+    "openFailed": "このページを開けませんでした",
+    "sort": {
+      "serverOrder": "サーバーの順序"
+    }
   },
   "podcasts": {
     "title": "ポッドキャスト",
@@ -1546,7 +1559,9 @@
     "section": {
       "offline": "この端末に保存",
       "downloaders": "サーバー転送"
-    }
+    },
+    "refresh": "更新",
+    "manageDownloaders": "ダウンローダーを管理"
   },
   "externalOptions": {
     "openInSource": "{{source}} で開く"

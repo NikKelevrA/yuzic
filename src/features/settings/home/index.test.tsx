@@ -54,14 +54,16 @@ describe('Settings home', () => {
 
   /**
    * The screen says which version you are running; About is where it can also
-   * say what that version brought, and where the app lives. Both open on the
-   * web, beside the policy links that already do.
+   * say what that version brought, beside the policy links that already open
+   * on the web. The site itself is not a row: the changelog, the source and
+   * the policies are all on it, so it was a link to the front door of a house
+   * whose every room was already listed.
    */
-  it('offers the release notes and the site next to the version', async () => {
+  it('offers the release notes next to the version, and no site row', async () => {
     const view = await render(<Settings />);
 
     expect(view.getByText('settings.rows.changelog')).toBeTruthy();
-    expect(view.getByText('settings.rows.website')).toBeTruthy();
+    expect(view.queryByText('settings.rows.website')).toBeNull();
   });
 
   it('organises outside sources by purpose, with no page per company and no separate Lyrics page', async () => {

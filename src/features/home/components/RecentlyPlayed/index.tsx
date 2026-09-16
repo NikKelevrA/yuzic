@@ -11,7 +11,7 @@ import { SECTION_H_PADDING } from '../sectionStyles';
 import { useTranslation } from 'react-i18next';
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers';
 import type { Album } from '@/domain/entities/Album';
-import type { Playlist } from '@/domain/entities/Playlist';
+import { playlistSongCount, type Playlist } from '@/domain/entities/Playlist';
 import AlbumOptions from '@/components/options/AlbumOptions';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import { useSheetRef } from '@/components/useSheetRef';
@@ -83,7 +83,7 @@ const RecentTile = memo(function RecentTile({ item, itemWidth }: TileProps) {
   // `showTypeLabel`).
   const subtitle = item.kind === 'album'
     ? t('library.albumTypeLabel', { artist: item.data.artist.name })
-    : t('playlist.subtext', { count: item.data.songIds.length });
+    : t('playlist.subtext', { count: playlistSongCount(item.data) });
 
   return (
     <>

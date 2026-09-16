@@ -39,5 +39,7 @@ export function mapPlaylist(dto: PlexMetadata, context: MapPlaylistContext): Pla
     createdAt: dto.addedAt ? dto.addedAt * 1000 : undefined,
     updatedAt: dto.updatedAt ? dto.updatedAt * 1000 : dto.addedAt ? dto.addedAt * 1000 : undefined,
     songIds: context.songIds ?? [],
+    // Plex counts a playlist's tracks as its leaves.
+    songCount: dto.leafCount,
   };
 }

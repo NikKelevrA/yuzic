@@ -10,7 +10,7 @@ async function fetchGetPlaylists(client: MediaBrowserClient) {
     `/Users/${client.userId}/Items` +
     `?IncludeItemTypes=Playlist` +
     `&Recursive=true` +
-    `&Fields=Id,Name,PrimaryImageTag,DateCreated,DateLastMediaAdded`;
+    `&Fields=Id,Name,PrimaryImageTag,DateCreated,DateLastMediaAdded,ChildCount`;
   return client.request<MediaBrowserItemsResponse>(path);
 }
 

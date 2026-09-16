@@ -27,6 +27,13 @@ interface CoverBackup {
 
 const COVER_ART_ARCHIVE = 'https://coverartarchive.org';
 
+/** One of the directory's mirrors; they all serve the same data. */
+const RADIO_BROWSER = 'https://de1.api.radio-browser.info';
+const RADIO_BROWSER_AGENT = 'yuzic';
+
+/** As much of a Radio Browser station as a logo lookup reads. */
+type RadioBrowserStation = { name?: string; favicon?: string };
+
 /**
  * Cover Art Archive by MusicBrainz id: an exact match, never a guess.
  *
@@ -73,7 +80,9 @@ const sameLeadArtist = (a: string, b: string) =>
  */
 const deezerCatalogue: CoverBackup = {
   source: 'deezer',
-  handles: () => true,
+  // Everything it has a catalogue for, which is music — a music service knows
+  // nothing about radio stations.
+  handles: subject => subject.kind !== 'station',
   async lookup(subject) {
     if (subject.kind === 'artist') {
       const name = leadArtistName(subject.name);
@@ -81,6 +90,7 @@ const deezerCatalogue: CoverBackup = {
       if (!match || !sameLeadArtist(match.name, name)) return null;
       return match.cover.kind === 'none' ? null : match.cover;
     }
+    if (subject.kind !== 'album') return null;
     const artistName = leadArtistName(subject.artistName);
     const match = await deezer.resolveDeezerAlbum(artistName, subject.title);
     if (!match) return null;
@@ -91,9 +101,58 @@ const deezerCatalogue: CoverBackup = {
   },
 };
 
+/**
+ * Radio Browser, the community station directory, for station logos.
+ *
+ * The only backup that answers for a station, and the only subject it
+ * answers for — a directory of streams knows nothing about albums.
+ *
+ * Matched by stream URL first, which is exact, then by name, which is not:
+ * a name search always returns somebody, so the result is kept only when the
+ * name really matches, the same rule the catalogue backup follows. Plenty of
+ * stations are listed with `favicon: ""` — an empty string is "no logo", not
+ * a URL, and saying so is what lets the radio mark be drawn instead.
+ */
+const radioBrowser: CoverBackup = {
+  source: 'radiobrowser',
+  handles: subject => subject.kind === 'station',
+  async lookup(subject) {
+    if (subject.kind !== 'station') return null;
+
+    const ask = async (path: string): Promise<RadioBrowserStation[]> => {
+      const res = await fetchWithTimeout(`${RADIO_BROWSER}/json/stations/${path}`, {
+        // The directory asks callers to identify themselves rather than
+        // arriving anonymously.
+        headers: { Accept: 'application/json', 'User-Agent': RADIO_BROWSER_AGENT },
+      });
+      if (!res.ok) throw new Error(`Radio Browser error (${res.status})`);
+      const body = (await res.json()) as unknown;
+      return Array.isArray(body) ? (body as RadioBrowserStation[]) : [];
+    };
+
+    const logoOf = (station: RadioBrowserStation | undefined): CoverSource | null => {
+      const favicon = station?.favicon?.trim();
+      return favicon ? { kind: 'url', url: favicon } : null;
+    };
+
+    if (subject.streamUrl) {
+      const [exact] = await ask(`byurl?url=${encodeURIComponent(subject.streamUrl)}`);
+      const logo = logoOf(exact);
+      if (logo) return logo;
+    }
+
+    const byName = await ask(`search?limit=5&name=${encodeURIComponent(subject.name)}`);
+    const named = byName.find(
+      station => station.name && normalizeName(station.name) === normalizeName(subject.name)
+    );
+    return logoOf(named);
+  },
+};
+
 const BACKUPS: Partial<Record<SourceId, CoverBackup>> = {
   coverartarchive: coverArtArchive,
   deezer: deezerCatalogue,
+  radiobrowser: radioBrowser,
 };
 
 /** The backup an artwork source provides, or null for a source that is not one. */

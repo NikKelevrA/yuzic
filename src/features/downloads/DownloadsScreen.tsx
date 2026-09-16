@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
-import { Download } from 'lucide-react-native';
+import { Download, Ellipsis } from 'lucide-react-native';
 
-import { DetailHeaderBar } from '@/components/DetailHeader';
+import { DetailHeaderBar, DetailHeaderIconButton } from '@/components/DetailHeader';
+import DownloadsListOptions, { type DownloadsOptionsHandle } from '@/components/options/DownloadsOptions';
 import EmptyState from '@/components/EmptyState';
 import { useDownloaderStates } from '@/features/downloaders/registry';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
@@ -37,7 +38,13 @@ const DownloadsScreen: React.FC = () => {
   const scrollClearance = useScrollClearance();
   const states = useDownloaderStates();
   const connected = states.filter(state => state.isConnected);
-  const { queues } = useDownloadersQueue();
+  const { queues, refresh } = useDownloadersQueue();
+  // Opened through its handle rather than by flipping a boolean that may
+  // already hold the value a press would set — see `DownloadsListOptions`.
+  const listSheetRef = useRef<DownloadsOptionsHandle>(null);
+  // Stable, so the open sheet's props don't change on every queue poll.
+  const openConnections = useCallback(() => router.push('/settings/connectionsView'), [router]);
+  const inFlight = queues.reduce((sum, queue) => sum + queue.items.length, 0);
 
   return (
     <SafeAreaView
@@ -45,7 +52,20 @@ const DownloadsScreen: React.FC = () => {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <DetailHeaderBar title={t('downloads.title')} />
+      <DetailHeaderBar
+        title={t('downloads.title')}
+        subtitle={inFlight > 0 ? t('library.count.items', { count: inFlight }) : undefined}
+        // Only where there is a queue to act on: a "…" over an empty screen
+        // offers to refresh nothing.
+        rightAction={connected.length > 0 ? (
+          <DetailHeaderIconButton
+            onPress={() => listSheetRef.current?.present()}
+            accessibilityLabel={t('a11y.common.moreOptions')}
+          >
+            <Ellipsis size={iconSize.header} color={colors.secondary} />
+          </DetailHeaderIconButton>
+        ) : undefined}
+      />
       {connected.length === 0 ? (
         <EmptyState
           icon={<Download size={iconSize.emptyState} color={colors.subtext} />}
@@ -75,6 +95,15 @@ const DownloadsScreen: React.FC = () => {
           })}
         </ScrollView>
       )}
+
+      {/* Mounted for as long as the screen is, opened through its handle. */}
+      <DownloadsListOptions
+        ref={listSheetRef}
+        title={t('downloads.title')}
+        subtitle={inFlight > 0 ? t('library.count.items', { count: inFlight }) : undefined}
+        onRefresh={refresh}
+        onManage={openConnections}
+      />
     </SafeAreaView>
   );
 };

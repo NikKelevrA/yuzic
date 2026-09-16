@@ -56,19 +56,29 @@ export async function runCatalogSync({
   queryClient,
   api,
   serverId,
-  force,
 }: {
   queryClient: QueryClient;
   api: ApiAdapter;
   serverId: string;
-  force: boolean;
 }): Promise<CatalogSyncResult> {
   const settled = await Promise.allSettled(
     CATALOG_RESOURCES.map(resource =>
       queryClient.fetchQuery({
         queryKey: resource.queryKey(serverId),
         queryFn: () => resource.fetch(api),
-        staleTime: force ? 0 : resource.staleTime,
+        // A sync always asks the server. `fetchQuery` resolves straight from
+        // cache when the entry is not stale, and the catalog's entries carry
+        // `staleTime: Infinity` for the screens that read them — so passing
+        // that value through here, as this once did, meant a populated cache
+        // entry could never be refreshed by a sync at all. The persisted cache
+        // survives restarts, so after the first successful sync every app
+        // start, foreground and server switch resolved from disk without a
+        // request, and music added to the server stayed invisible until
+        // someone pressed the manual refresh in Settings.
+        //
+        // Rate limiting belongs to the caller, not here: `useSync` throttles
+        // at 30 minutes and drops a run while another is in flight.
+        staleTime: 0,
       })
     )
   );

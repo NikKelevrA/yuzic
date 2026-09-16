@@ -47,5 +47,7 @@ export function mapPlaylist(dto: SubsonicPlaylist, context: MapPlaylistContext):
     createdAt: dto.created ? Date.parse(dto.created) || undefined : undefined,
     updatedAt: dto.changed ? Date.parse(dto.changed) || undefined : undefined,
     songIds: context.songIds ?? [],
+    // `getPlaylists` maps no tracks, but it does report how many there are.
+    songCount: dto.songCount,
   };
 }

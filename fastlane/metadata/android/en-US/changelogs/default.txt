@@ -1,9 +1,8 @@
-Radio that plays, a wishlist worth keeping, and the same options everywhere.
+Radio with real artwork, playlists that count, and new music that finds you.
 
-- Internet radio plays, and stations keep their homepage
-- Wants: artwork, a way in, and downloads you ask for
-- Want an artist, not just an album
-- Your own copy plays instead of a preview, wherever it appears
-- Every screen and sheet carries the same options menu
-- No more stalls at the end of a song
-- Music comes back after a call or another app takes the audio
+- Music added to your server appears by itself, no manual rescan
+- Radio stations show their logo, in the app, the bar and CarPlay
+- Playlists show how many songs they hold instead of "0 songs"
+- Sort, filter and grid views on Wants and Radio
+- Downloads gets its own menu, with a real refresh
+- Menus and pickers open every time you tap them

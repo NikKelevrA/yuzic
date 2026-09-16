@@ -18,16 +18,52 @@ jest.mock('react-native-safe-area-context', () => {
   const { View } = require('react-native');
   return { SafeAreaView: View, useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) };
 });
-jest.mock('react-redux', () => ({ useSelector: () => ({ id: 'srv' }) }));
+// The appearance selectors are real — they back the screen's sort and grid
+// controls — so `useSelector` runs them against the slice they read.
+const mockAppearanceState = {
+  settingsAppearance: { libraryViewModes: {}, gridColumns: 3, isGridView: false },
+};
+jest.mock('react-redux', () => ({
+  useSelector: (selector: any) => selector(mockAppearanceState),
+  useDispatch: () => jest.fn(),
+}));
+jest.mock('@/state/redux/selectors/serversSelectors', () => ({
+  selectActiveServer: () => ({ id: 'srv' }),
+}));
 jest.mock('@/providers/registry/useApi', () => ({ useApi: () => ({ radio: mockRadio }) }));
 jest.mock('@/features/connectivity/useServerReachable', () => ({ useServerReachable: () => mockReachable }));
 jest.mock('@/features/playback/PlayingContext', () => ({ usePlayingActions: () => ({ playSong: mockPlaySong }) }));
 jest.mock('@/features/theme/useTheme', () => ({ useTheme: () => ({ colors: {} }) }));
-jest.mock('@/features/theme/useRadius', () => ({ useRadius: () => ({ thumb: 6 }) }));
+// `pillFor` included: the list controls draw their sort pill and view toggle
+// with it, and a radius mock missing it throws inside the list header.
+jest.mock('@/features/theme/useRadius', () => ({
+  useRadius: () => ({ thumb: 6, pillFor: (size: number) => size / 2 }),
+}));
 jest.mock('@/features/theme/useScrollClearance', () => ({ useScrollClearance: () => 0 }));
 jest.mock('@/components/haptics', () => ({ __esModule: true, default: { primary: jest.fn() } }));
 jest.mock('@/components/toast', () => ({ notify: { error: jest.fn() } }));
 jest.mock('@/components/SkeletonListRow', () => 'SkeletonListRow');
+// Stands in for the sort sheet: the real one reaches @gorhom/bottom-sheet and
+// from there into react-native-gesture-handler, which this preset does not
+// transform.
+jest.mock('@/components/SingleSelectBottomSheet', () => {
+  const { View } = require('react-native');
+  return { __esModule: true, default: () => <View testID="sort-sheet" /> };
+});
+// The grid tile, stubbed for the same reason the rest are: the real one
+// reaches MediaImage and from there the whole provider registry, which pulls
+// the app's i18n bootstrap into a file that has mocked react-i18next.
+jest.mock('@/features/library/components/Items/LibraryItem', () => {
+  const { Text, View } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ title, onPress, onLongPress, testID }: any) => (
+      <View testID={testID}>
+        <Text onPress={onPress} onLongPress={onLongPress}>{title}</Text>
+      </View>
+    ),
+  };
+});
 jest.mock('@/components/DetailHeader', () => {
   const { Text, View } = require('react-native');
   return {

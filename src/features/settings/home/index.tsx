@@ -9,7 +9,7 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Server, Library, Volume2, Palette, Puzzle, Github, Globe, Newspaper, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
+import { Server, Library, Volume2, Palette, Puzzle, Github, Newspaper, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
@@ -23,7 +23,7 @@ import SettingsDivider from '../components/SettingsDivider';
 import SettingsRow from '../components/SettingsRow';
 import Touchable from '@/components/Touchable';
 import UserAvatar from '@/components/UserAvatar';
-import { controlSize, iconSize, radius, spacing, stateLayer, typography } from '@/constants/design';
+import { controlSize, iconSize, radius, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 
@@ -224,13 +224,6 @@ export default function Settings() {
                     />
                     <SettingsDivider />
                     <SettingsRow
-                        testID="settings-row-website"
-                        label={t('settings.rows.website')}
-                        leftIcon={<Globe size={iconSize.secondary} color={colors.secondary} />}
-                        onPress={() => openLink('https://yuzicapp.github.io/yuzic-web/')}
-                    />
-                    <SettingsDivider />
-                    <SettingsRow
                         label={t('settings.rows.github')}
                         leftIcon={<Github size={iconSize.secondary} color={colors.secondary} />}
                         onPress={() => openLink('https://github.com/yuzicapp/yuzic')}
@@ -250,22 +243,22 @@ export default function Settings() {
                 </SettingsCard>
 
                 {/*
-                  The mark above the version, tinted to the same grey as the
-                  text under it — it is a signature at the foot of the screen,
+                  The mark under the version, tinted to the same grey as the
+                  text above it — it is a signature at the foot of the screen,
                   not a logo being shown off. `splash.png` is the mark with no
                   square behind it, so a tint is all it takes to sit right in
                   either theme; the app icon would have put a coral tile here.
                 */}
                 <View style={styles.versionBlock}>
+                    <Text style={[styles.versionText, { color: colors.subtext }]}>
+                        Yuzic {appVersion}
+                    </Text>
                     <Image
                         source={require('@assets/images/splash.png')}
                         style={[styles.versionLogo, { tintColor: colors.subtext }]}
                         resizeMode="contain"
                         accessible={false}
                     />
-                    <Text style={[styles.versionText, { color: colors.subtext }]}>
-                        Yuzic {appVersion}
-                    </Text>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -329,10 +322,13 @@ const styles = StyleSheet.create({
         marginBottom: spacing.headerOffset,
     },
     versionLogo: {
-        width: 56,
-        height: 20,
-        opacity: stateLayer.mutedOpacity,
-        marginBottom: spacing.sm,
+        // Drawn at the size a signature is actually legible at. It was 56×20
+        // *and* dimmed twice — tinted to `subtext` and then faded again — so
+        // the mark read as a smudge beside the version rather than as the mark.
+        // The tint alone is what makes it sit right in either theme.
+        width: 132,
+        height: 48,
+        marginTop: spacing.sm,
     },
     versionText: {
         ...typography.caption,

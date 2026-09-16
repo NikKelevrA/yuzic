@@ -12,6 +12,16 @@ import { leadArtistName, normalizeName } from '../identity/matching';
  */
 export type CoverSubject =
   | { kind: 'artist'; name: string; mbid?: string }
+  /**
+   * A radio station. Named by its stream URL first and its name second,
+   * which is the order a station directory can actually match on: the URL is
+   * exact, the name is what people spell differently.
+   *
+   * A station has no release behind it, so no album or artist subject
+   * describes one — but it does have a logo, and that is a picture like any
+   * other once something can be asked for it.
+   */
+  | { kind: 'station'; name: string; streamUrl?: string }
   | {
       kind: 'album';
       title: string;
@@ -80,6 +90,19 @@ export function coverOrMissing(cover: CoverSource, subject: CoverSubject | undef
   return subject ? { kind: 'none', subject } : { kind: 'none' };
 }
 
+/**
+ * The subject of a radio station's picture, or none for an unnamed station.
+ */
+export function stationCoverSubject(
+  name: string | undefined,
+  streamUrl?: string
+): CoverSubject | undefined {
+  if (!name?.trim()) return undefined;
+  return streamUrl?.trim()
+    ? { kind: 'station', name: name.trim(), streamUrl: streamUrl.trim() }
+    : { kind: 'station', name: name.trim() };
+}
+
 /** A gap naming who it is of, or a plain gap when nothing names anyone. */
 export const missingCover = (subject: CoverSubject | undefined): CoverSource =>
   coverOrMissing({ kind: 'none' }, subject);
@@ -92,6 +115,13 @@ export const missingCover = (subject: CoverSubject | undefined): CoverSource =>
  * what a name lookup is keyed on.
  */
 export function coverSubjectKey(subject: CoverSubject): string {
+  if (subject.kind === 'station') {
+    // The stream URL identifies a station across every way its name is
+    // punctuated; the name is all there is without one.
+    return subject.streamUrl
+      ? `station:url:${subject.streamUrl}`
+      : `station:name:${normalizeName(subject.name)}`;
+  }
   if (subject.kind === 'artist') {
     return subject.mbid ? `artist:mbid:${subject.mbid}` : `artist:name:${normalizeName(subject.name)}`;
   }

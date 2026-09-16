@@ -101,6 +101,12 @@ export interface SubsonicPlaylist {
   /** The account that owns it. Public playlists of other accounts are listed too. */
   owner?: string;
   entry?: SubsonicSong[];
+  /**
+   * How many tracks it holds. Reported by `getPlaylists`, which returns no
+   * `entry` at all — so this is the only thing a listing can say about the
+   * tracks, and dropping it is what made every playlist read "0 songs".
+   */
+  songCount?: number;
 }
 
 interface SubsonicMusicFolder {

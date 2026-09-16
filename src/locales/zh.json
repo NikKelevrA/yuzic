@@ -37,8 +37,7 @@
       "github": "Github",
       "privacyPolicy": "隐私政策",
       "termsOfUse": "使用条款",
-      "changelog": "更新内容",
-      "website": "官方网站"
+      "changelog": "更新内容"
     },
     "profile": {
       "unknownUser": "未知用户",
@@ -521,6 +520,10 @@
         "name": "LRCLIB",
         "sends": "发送歌曲名和艺人名以查找歌词。无需账户。"
       },
+      "radiobrowser": {
+        "name": "Radio Browser",
+        "sends": "发送电台名称和流媒体地址以查找其标志。无需账户。"
+      },
       "usedFor": "用于",
       "stopUsing": "停止使用 {{name}}",
       "off": "关闭",
@@ -548,6 +551,9 @@
       },
       "lrclib": {
         "lyrics": "服务器没有歌词时提供同步歌词。"
+      },
+      "radiobrowser": {
+        "artwork": "来自社区目录的电台标志。"
       },
       "listenbrainz": {
         "similarArtists": "根据大家收听内容得出的相似艺人。",
@@ -633,7 +639,8 @@
     "saving": "正在保存…",
     "dismiss": "忽略",
     "retry": "重试",
-    "loadFailed": "加载失败。请检查网络连接。"
+    "loadFailed": "加载失败。请检查网络连接。",
+    "all": "全部"
   },
   "onboarding": {
     "home": {
@@ -1207,6 +1214,9 @@
       "downloading": "正在下载 · {{progress}}%",
       "failed": "未能获取",
       "arrived": "已在音乐库中"
+    },
+    "filters": {
+      "title": "筛选"
     }
   },
   "manualAddWant": {
@@ -1410,7 +1420,10 @@
     "openHomepage": "打开主页",
     "delete": "删除电台",
     "refresh": "刷新",
-    "openFailed": "无法打开该页面"
+    "openFailed": "无法打开该页面",
+    "sort": {
+      "serverOrder": "服务器顺序"
+    }
   },
   "podcasts": {
     "title": "播客",
@@ -1546,7 +1559,9 @@
     "section": {
       "offline": "已保存到本机",
       "downloaders": "服务器传输"
-    }
+    },
+    "refresh": "刷新",
+    "manageDownloaders": "管理下载器"
   },
   "externalOptions": {
     "openInSource": "在 {{source}} 中打开"

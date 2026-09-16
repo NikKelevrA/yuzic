@@ -1,13 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native'
+import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { useDispatch, useSelector } from 'react-redux'
-import { useTranslation } from 'react-i18next'
-import { ArrowUpDown, Grid2x2, List } from 'lucide-react-native'
 
-import { useTheme } from '@/features/theme/useTheme'
-import { controlSize, hitSlopFor, iconSize, spacing, typography } from '@/constants/design'
-import { useRadius } from '@/features/theme/useRadius'
+import ListControls from '@/components/ListControls'
 import { selectLibraryViewMode, selectGridColumns, setIsGridView, setLibraryViewMode } from '@/features/settings/appearance/state';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from './layout'
 import AlbumItem from './components/Items/AlbumItem'
@@ -17,7 +13,6 @@ import TrackItem from './components/Items/TrackItem'
 import SortBottomSheet from './components/SortBottomSheet'
 import { useSheetRef } from '@/components/useSheetRef'
 import type { LibraryCollectionType, LibraryItem, SortOrder } from './librarySort'
-import Touchable from '@/components/Touchable'
 import { useScrollClearance } from '@/features/theme/useScrollClearance'
 
 type Props = {
@@ -46,10 +41,7 @@ const LibraryList: React.FC<Props> = ({
   header,
   collection = null,
 }) => {
-  const { t } = useTranslation()
   const scrollClearance = useScrollClearance()
-  const { colors } = useTheme()
-  const rad = useRadius()
   const dispatch = useDispatch()
   const isGridView = useSelector(selectLibraryViewMode(collection))
   const gridColumns = useSelector(selectGridColumns)
@@ -136,34 +128,16 @@ const LibraryList: React.FC<Props> = ({
           // app's own page inset, so give that back before it is applied twice.
           <View style={{ marginHorizontal: -gutter }}>
             {header}
-            <View style={styles.sortRow}>
-              <Touchable
-                style={[styles.sortButton, { backgroundColor: colors.muted, borderRadius: rad.pillFor(controlSize.inlineControl) }]}
-                onPress={() => sortSheetRef.current?.present()}
-                accessibilityRole="button"
-              >
-                <ArrowUpDown size={iconSize.row} color={colors.secondary} />
-                <Text style={[styles.sortLabel, { color: colors.secondary }]}>
-                  {sortLabel}
-                </Text>
-              </Touchable>
-              <Touchable
-                style={[styles.gridButton, { backgroundColor: colors.muted, borderRadius: rad.pillFor(controlSize.inlineControl) }]}
-                hitSlop={hitSlopFor(controlSize.inlineControl)}
-                onPress={() => dispatch(
-                  collection
-                    ? setLibraryViewMode({ collection, isGridView: !isGridView })
-                    : setIsGridView(!isGridView)
-                )}
-                accessibilityRole="button"
-                accessibilityLabel={isGridView ? t('library.view.switchToList') : t('library.view.switchToGrid')}
-              >
-                {isGridView
-                  ? <List size={iconSize.row} color={colors.secondary} />
-                  : <Grid2x2 size={iconSize.row} color={colors.secondary} />
-                }
-              </Touchable>
-            </View>
+            <ListControls
+              sortLabel={sortLabel}
+              onSortPress={() => sortSheetRef.current?.present()}
+              isGridView={isGridView}
+              onToggleView={() => dispatch(
+                collection
+                  ? setLibraryViewMode({ collection, isGridView: !isGridView })
+                  : setIsGridView(!isGridView)
+              )}
+            />
           </View>
         }
         contentContainerStyle={[
@@ -186,26 +160,4 @@ export default LibraryList
 
 const styles = StyleSheet.create({
   list: { paddingTop: 0 },
-  sortRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.page,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  sortButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.inlineGap,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  sortLabel: { ...typography.caption },
-  gridButton: {
-    width: controlSize.inlineControl,
-    height: controlSize.inlineControl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 })

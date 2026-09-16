@@ -13,7 +13,9 @@ type LibraryViewKey =
   | 'albums'
   | 'artists'
   | 'tracks'
-  | 'downloaded';
+  | 'downloaded'
+  | 'wants'
+  | 'radio';
 
 /**
  * What each collection shows before the user says otherwise.
@@ -29,6 +31,14 @@ const LIBRARY_VIEW_DEFAULTS: Record<LibraryViewKey, boolean> = {
   artists: true,
   tracks: false,
   downloaded: false,
+  // A want is a title you are waiting on, and its row carries the status of
+  // the thing you actually want to know — whether it is on its way. A grid
+  // caption has no room for that, so this opens as rows.
+  wants: false,
+  // Stations have logos now, so a grid of them says something — but only for
+  // the ones a directory had a logo for, and plenty have none. Rows first,
+  // where a station that fell back to the radio mark still reads fine.
+  radio: false,
 };
 
 export type PlayingBarAction = 'none' | 'skip' | 'favorite' | 'randomAlbum' | 'addToPlaylist' | 'cast';

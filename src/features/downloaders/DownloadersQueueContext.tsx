@@ -48,12 +48,22 @@ type ContextValue = {
   totalInFlight: number;
   /** Items that left a queue since the last read, for whoever wants to react. */
   recentlyFinished: DownloaderQueueItem[];
+  /**
+   * Read every connected downloader again, now.
+   *
+   * The poll is on a 30-second interval, which is right for a background
+   * count and far too long to watch after asking for something. This is the
+   * same read the interval performs, not a second one — an in-flight
+   * downloader is skipped rather than asked twice.
+   */
+  refresh: () => void;
 };
 
 const DownloadersQueueContext = createContext<ContextValue>({
   queues: [],
   totalInFlight: 0,
   recentlyFinished: [],
+  refresh: () => {},
 });
 
 /**
@@ -183,11 +193,29 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
     }
   }, [connectedStates]);
 
+  /**
+   * Stable for the life of the provider, deliberately.
+   *
+   * `pollOne` and `connectedStates` are rebuilt whenever what they close over
+   * changes, and a `refresh` that changed with them would change this
+   * context's `value` — re-rendering every consumer of the queue on every
+   * provider render. The consumers are whole screens (Wants, Downloads), and
+   * one of them was hosting a bottom sheet at the time. Reading the current
+   * pair off a ref keeps the identity fixed while still calling the latest.
+   */
+  const pollRef = useRef({ connectedStates, pollOne });
+  pollRef.current = { connectedStates, pollOne };
+  const refresh = useCallback(() => {
+    const { connectedStates: states, pollOne: poll } = pollRef.current;
+    for (const state of states) void poll(state);
+  }, []);
+
   const value = useMemo<ContextValue>(() => ({
     queues,
     totalInFlight: queues.reduce((sum, q) => sum + q.count, 0),
     recentlyFinished,
-  }), [queues, recentlyFinished]);
+    refresh,
+  }), [queues, recentlyFinished, refresh]);
 
   return (
     <DownloadersQueueContext.Provider value={value}>

@@ -13,7 +13,7 @@
  * code can refer to a use without naming the company behind it.
  */
 
-export type SourceId = 'deezer' | 'listenbrainz' | 'lastfm' | 'musicbrainz' | 'coverartarchive' | 'lrclib';
+export type SourceId = 'deezer' | 'listenbrainz' | 'lastfm' | 'musicbrainz' | 'coverartarchive' | 'lrclib' | 'radiobrowser';
 
 /** What the data is for. Each purpose is one list on one settings screen. */
 export type SourcePurpose =
@@ -57,6 +57,7 @@ export const SOURCES: Record<SourceId, SourceDeclaration> = {
   musicbrainz: declare('musicbrainz'),
   coverartarchive: declare('coverartarchive'),
   lrclib: declare('lrclib'),
+  radiobrowser: declare('radiobrowser'),
 };
 
 // Not `use`: that name is React's hook, and the hooks lint rule treats a call
@@ -85,6 +86,9 @@ export const SOURCE_USES: readonly SourceUse[] = [
   sourceUse('lastfm', 'artistInfo'),
   sourceUse('coverartarchive', 'artwork'),
   sourceUse('deezer', 'artwork'),
+  // Only answers for radio stations, which neither of the two above can — so
+  // its place in the order never costs an album or artist lookup anything.
+  sourceUse('radiobrowser', 'artwork'),
   sourceUse('lrclib', 'lyrics'),
   // Similar artists are shown as one row per source, never merged, so this
   // order is only the order of the rows.

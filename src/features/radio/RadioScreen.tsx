@@ -1,27 +1,36 @@
-import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Linking, StyleSheet, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Alert, FlatList, Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
-import { CloudOff, Ellipsis, Radio as RadioIcon } from 'lucide-react-native';
+import { ArrowDownAZ, CloudOff, Ellipsis, ListOrdered, Radio as RadioIcon } from 'lucide-react-native';
 
 import { useApi } from '@/providers/registry/useApi';
 import type { InternetRadioStation } from '@/providers/contracts/ServerAdapter';
-import { stationToSong } from '@/features/radio/buildStationSong';
+import { stationCover, stationToSong } from '@/features/radio/buildStationSong';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { DetailHeaderBar, DetailHeaderIconButton } from '@/components/DetailHeader';
-import { FormSheet, FormSheetField } from '@/components/FormSheet';
+import StationEditor from './StationEditor';
 import { RadioListOptions, RadioStationOptions } from '@/components/options/RadioOptions';
 import MediaListRow from '@/components/MediaListRow';
+import ListControls from '@/components/ListControls';
+import SingleSelectBottomSheet, { type SingleSelectOption } from '@/components/SingleSelectBottomSheet';
+import { useSheetRef } from '@/components/useSheetRef';
+import LibraryItem from '@/features/library/components/Items/LibraryItem';
+import { gridItemWidth, libraryGutter, GRID_SPACING } from '@/features/library/layout';
+import {
+  selectGridColumns,
+  selectLibraryViewMode,
+  setLibraryViewMode,
+} from '@/features/settings/appearance/state';
 import Touchable from '@/components/Touchable';
 import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { controlSize, hitSlopFor, iconSize, spacing } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
-import { useRadius } from '@/features/theme/useRadius';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useTheme } from '@/features/theme/useTheme';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
@@ -30,6 +39,15 @@ import haptics from '@/components/haptics';
 type Editing =
   | { mode: 'add' }
   | { mode: 'edit'; station: InternetRadioStation };
+
+/**
+ * How the stations are ordered.
+ *
+ * `serverOrder` is the order the server returned them in — which is the one
+ * the user arranged, so it is the default and it is named rather than being
+ * an unlabelled "no sort".
+ */
+type StationSort = 'serverOrder' | 'title';
 
 /**
  * Radio browsing surface — Navidrome only (the empty adapter's `api.radio` is
@@ -55,6 +73,15 @@ export default function RadioScreen() {
   const [editing, setEditing] = useState<Editing | null>(null);
   const [optionsFor, setOptionsFor] = useState<InternetRadioStation | null>(null);
   const [listOptionsOpen, setListOptionsOpen] = useState(false);
+  const [sort, setSort] = useState<StationSort>('serverOrder');
+  const dispatch = useDispatch();
+  const isGridView = useSelector(selectLibraryViewMode('radio'));
+  const gridColumns = useSelector(selectGridColumns);
+  const { width: screenWidth } = useWindowDimensions();
+  const sortSheetRef = useSheetRef();
+
+  const gutter = libraryGutter(isGridView, GRID_SPACING);
+  const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
 
   const stationsQuery = useQuery({
     queryKey: [QueryKeys.Radio],
@@ -62,6 +89,24 @@ export default function RadioScreen() {
     enabled: Boolean(api.radio) && serverReachable,
     staleTime: 1000 * 60 * 5,
   });
+
+  /**
+   * The stations as they will be drawn.
+   *
+   * Sorted into a copy — the query cache hands back its own array, and
+   * ordering it in place would reorder what every other reader sees.
+   */
+  const stations = useMemo(() => {
+    const list = stationsQuery.data ?? [];
+    return sort === 'title'
+      ? [...list].sort((a, b) => a.name.localeCompare(b.name))
+      : list;
+  }, [stationsQuery.data, sort]);
+
+  const sortOptions = useMemo<SingleSelectOption[]>(() => [
+    { value: 'serverOrder', label: t('radio.sort.serverOrder'), Icon: ListOrdered },
+    { value: 'title', label: t('home.sort.alphabetical'), Icon: ArrowDownAZ },
+  ], [t]);
 
   const handlePlay = useCallback((station: InternetRadioStation) => {
     if (!activeServer?.id) return;
@@ -114,31 +159,49 @@ export default function RadioScreen() {
 
   const renderStation = useCallback(
     ({ item }: { item: InternetRadioStation }) => (
-      <MediaListRow
-        testID="radio-station-row"
-        title={item.name}
-        subtitle={item.homepageUrl || item.streamUrl}
-        cover={{ kind: 'none' }}
-        showCover={false}
-        variant="compact"
-        onPress={() => handlePlay(item)}
-        leading={<StationIcon />}
-        trailing={
-          <Touchable
-            testID="radio-station-options"
-            onPress={() => setOptionsFor(item)}
-            hitSlop={hitSlopFor(iconSize.row)}
-            style={styles.rowAction}
-            feedback="control"
-            accessibilityRole="button"
-            accessibilityLabel={t('a11y.rows.options', { title: item.name })}
-          >
-            <Ellipsis size={iconSize.row} color={colors.subtext} />
-          </Touchable>
-        }
-      />
+      isGridView ? (
+        // A grid earns its place now that a station can have a logo: it is
+        // artwork to scan. The ones no directory had a logo for fall back to
+        // the radio mark, which still reads as a station rather than as a
+        // failure.
+        <LibraryItem
+          testID="radio-station-tile"
+          cover={stationCover(item)}
+          title={item.name}
+          isGridView
+          gridWidth={gridWidth}
+          gridSpacing={GRID_SPACING}
+          onPress={() => handlePlay(item)}
+          onLongPress={() => setOptionsFor(item)}
+        />
+      ) : (
+        <MediaListRow
+          testID="radio-station-row"
+          title={item.name}
+          subtitle={item.homepageUrl || item.streamUrl}
+          // The station's own logo where the directory has one, the radio mark
+          // where it doesn't — either way a real cover, drawn like every other
+          // row's, rather than a glyph standing in for artwork.
+          cover={stationCover(item)}
+          variant="compact"
+          onPress={() => handlePlay(item)}
+          trailing={
+            <Touchable
+              testID="radio-station-options"
+              onPress={() => setOptionsFor(item)}
+              hitSlop={hitSlopFor(iconSize.row)}
+              style={styles.rowAction}
+              feedback="control"
+              accessibilityRole="button"
+              accessibilityLabel={t('a11y.rows.options', { title: item.name })}
+            >
+              <Ellipsis size={iconSize.row} color={colors.subtext} />
+            </Touchable>
+          }
+        />
+      )
     ),
-    [handlePlay, colors.subtext, t]
+    [handlePlay, colors.subtext, t, isGridView, gridWidth]
   );
 
   const stationCount = stationsQuery.data?.length ?? 0;
@@ -189,13 +252,51 @@ export default function RadioScreen() {
         />
       ) : (
         <FlatList
-          data={stationsQuery.data}
+          // Changing the column count needs a new list; FlatList keeps the
+          // old layout otherwise.
+          key={isGridView ? `grid-${gridColumns}` : 'list'}
+          data={stations}
           keyExtractor={(s) => s.id}
-          contentContainerStyle={[styles.listContent, { paddingBottom: scrollClearance }]}
-          ItemSeparatorComponent={renderSeparator}
+          numColumns={isGridView ? gridColumns : 1}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingHorizontal: gutter, paddingBottom: scrollClearance },
+          ]}
+          // A rule between rows separates them; between grid cells it would
+          // cut across the artwork.
+          ItemSeparatorComponent={isGridView ? undefined : renderSeparator}
+          ListHeaderComponent={
+            // The gutter is sized for the items; the controls above them keep
+            // the app's own page inset, so give that back before it is
+            // applied twice.
+            <View style={{ marginHorizontal: -gutter }}>
+              <ListControls
+                sortLabel={sort === 'title' ? t('home.sort.alphabetical') : t('radio.sort.serverOrder')}
+                onSortPress={() => sortSheetRef.current?.present()}
+                isGridView={isGridView}
+                onToggleView={() => dispatch(
+                  setLibraryViewMode({ collection: 'radio', isGridView: !isGridView })
+                )}
+              />
+            </View>
+          }
           renderItem={renderStation}
         />
       )}
+
+      <SingleSelectBottomSheet
+        ref={sortSheetRef}
+        testID="radio-sort-sheet"
+        selected={sort}
+        options={sortOptions}
+        title={t('home.sortSheet.title')}
+        // Dismissed here rather than left up: the sheet asked one question and
+        // has its answer, and the list it reorders is behind it.
+        onSelect={value => {
+          setSort(value as StationSort);
+          sortSheetRef.current?.dismiss();
+        }}
+      />
 
       {listOptionsOpen && (
         <RadioListOptions
@@ -231,97 +332,6 @@ export default function RadioScreen() {
   );
 }
 
-/** The stand-in for artwork a stream does not have. Sized like the thumbnail
- *  it replaces so the titles line up with every other compact row. */
-function StationIcon() {
-  const { colors } = useTheme();
-  const rad = useRadius();
-  return (
-    <View style={[styles.iconWrap, { backgroundColor: colors.muted, borderRadius: rad.thumb }]}>
-      <RadioIcon size={iconSize.control} color={colors.secondary} />
-    </View>
-  );
-}
-
-function StationEditor({
-  initial,
-  onClose,
-  onSaved,
-}: {
-  initial: InternetRadioStation | null;
-  onClose: () => void;
-  onSaved: () => Promise<void>;
-}) {
-  const { t } = useTranslation();
-  const api = useApi();
-  const [name, setName] = useState(initial?.name ?? '');
-  const [streamUrl, setStreamUrl] = useState(initial?.streamUrl ?? '');
-  const [homepageUrl, setHomepageUrl] = useState(initial?.homepageUrl ?? '');
-
-  const canSave = name.trim().length > 0 && /^https?:\/\//i.test(streamUrl.trim());
-
-  const handleSave = useCallback(async () => {
-    if (!api.radio) return false;
-    try {
-      const trimmedHomepage = homepageUrl.trim();
-      if (initial) {
-        // Sent even when empty — that is how clearing a homepage reaches the
-        // server; see `updateInternetRadioStation`.
-        await api.radio.update({
-          id: initial.id,
-          name: name.trim(),
-          streamUrl: streamUrl.trim(),
-          homepageUrl: trimmedHomepage,
-        });
-      } else {
-        await api.radio.create({
-          name: name.trim(),
-          streamUrl: streamUrl.trim(),
-          homepageUrl: trimmedHomepage || undefined,
-        });
-      }
-      await onSaved();
-      return true;
-    } catch {
-      notify.error(t('common.error.unexpected'));
-      return false;
-    }
-  }, [api.radio, homepageUrl, initial, name, onSaved, streamUrl, t]);
-
-  return (
-    <FormSheet
-      title={initial ? t('radio.editTitle') : t('radio.addTitle')}
-      submitLabel={t('common.save')}
-      canSubmit={canSave}
-      onSubmit={handleSave}
-      onClose={onClose}
-    >
-      <FormSheetField
-        label={t('radio.field.name')}
-        value={name}
-        onChangeText={setName}
-        placeholder="Radio Paradise"
-      />
-      <FormSheetField
-        label={t('radio.field.streamUrl')}
-        value={streamUrl}
-        onChangeText={setStreamUrl}
-        placeholder="https://stream.radioparadise.com/aac-320"
-        autoCapitalize="none"
-        keyboardType="url"
-      />
-      <FormSheetField
-        label={t('radio.field.homepage')}
-        value={homepageUrl}
-        onChangeText={setHomepageUrl}
-        placeholder="https://radioparadise.com"
-        autoCapitalize="none"
-        keyboardType="url"
-      />
-    </FormSheet>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContent: { paddingVertical: spacing.md },
@@ -331,15 +341,6 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginVertical: spacing.xs,
     marginHorizontal: spacing.page,
-  },
-  iconWrap: {
-    width: controlSize.compactMediaRowArt,
-    height: controlSize.compactMediaRowArt,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // A row with no cover gives its text no left margin, because the usual
-    // such row has nothing in front of the text at all.
-    marginRight: spacing.rowGap,
   },
   rowAction: { padding: spacing.xs },
 });

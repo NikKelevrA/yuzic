@@ -72,6 +72,8 @@ export interface MediaBrowserItem {
   IndexNumber?: number;
   PlaylistItemId?: string;
   CollectionType?: string;
+  /** Tracks in a playlist, where the listing was asked for it. */
+  ChildCount?: number;
   /**
    * Free-text artist bio. `getArtists.ts` already requests it via
    * `Fields=Overview` but nothing previously read it back off the DTO.

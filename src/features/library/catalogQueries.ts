@@ -6,10 +6,14 @@
  * screen read the one store rather than two: a sync is not a separate
  * pipeline that copies data somewhere, it is the same fetch the screen would
  * have done, performed early.
+ *
+ * Deliberately no `staleTime` here. The screens' hooks carry one — `Infinity`,
+ * so a mounted screen renders the persisted copy instead of a spinner — and a
+ * resource that shared it with the sync could never be refreshed by one. See
+ * `runCatalogSync`.
  */
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { staleTime } from '@/state/query/staleTime';
 import type { QueryKey } from '@tanstack/react-query';
 
 interface CatalogResource {
@@ -17,8 +21,6 @@ interface CatalogResource {
   name: 'albums' | 'artists' | 'playlists' | 'tracks' | 'starred' | 'genres';
   queryKey: (serverId: string) => QueryKey;
   fetch: (api: ApiAdapter) => Promise<unknown>;
-  /** How long a cached copy stays acceptable when the sync is not forced. */
-  staleTime: number;
 }
 
 export const CATALOG_RESOURCES: readonly CatalogResource[] = [
@@ -26,37 +28,31 @@ export const CATALOG_RESOURCES: readonly CatalogResource[] = [
     name: 'albums',
     queryKey: serverId => [QueryKeys.Albums, serverId],
     fetch: api => api.albums.list(),
-    staleTime: staleTime.albums,
   },
   {
     name: 'artists',
     queryKey: serverId => [QueryKeys.Artists, serverId],
     fetch: api => api.artists.list(),
-    staleTime: staleTime.artists,
   },
   {
     name: 'playlists',
     queryKey: serverId => [QueryKeys.Playlists, serverId],
     fetch: api => api.playlists.list(),
-    staleTime: staleTime.playlists,
   },
   {
     name: 'tracks',
     queryKey: serverId => [QueryKeys.Tracks, serverId],
     fetch: api => api.tracks.list(),
-    staleTime: staleTime.tracks,
   },
   {
     name: 'starred',
     queryKey: serverId => [QueryKeys.Starred, serverId],
     fetch: api => api.starred.list(),
-    staleTime: staleTime.starred,
   },
   {
     name: 'genres',
     queryKey: serverId => [QueryKeys.Genres, serverId],
     fetch: api => api.genres.list(),
-    staleTime: staleTime.genres,
   },
 ];
 
