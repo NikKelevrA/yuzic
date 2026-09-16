@@ -14,7 +14,7 @@ import { segmentAt, type QueueSegment } from './playingQueue';
  */
 export const OUTGOING_SCROBBLE_DELAY_MS = 1000;
 
-export type ScrobbleOptions = { listenedSeconds: number; startTime: number; playlistId?: string };
+type ScrobbleOptions = { listenedSeconds: number; startTime: number; playlistId?: string };
 
 interface OutgoingScrobbleSource {
   segments: () => QueueSegment[];
