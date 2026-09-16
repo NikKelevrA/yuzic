@@ -1,5 +1,8 @@
-New music finds its way in on its own again, and menus open when you tap them.
+Radio with real artwork, playlists that count, and new music that finds you.
 
-- Music you add to your server now appears by itself, without a manual rescan
-- The sort and filter pills on Wants open every time
-- The Downloads menu opens every time
+- Music added to your server appears by itself, no manual rescan
+- Radio stations show their logo, in the app, the bar and CarPlay
+- Playlists show how many songs they hold instead of "0 songs"
+- Sort, filter and grid views on Wants and Radio
+- Downloads gets its own menu, with a real refresh
+- Menus and pickers open every time you tap them
