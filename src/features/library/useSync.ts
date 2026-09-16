@@ -44,8 +44,7 @@ export function useSync() {
 
   const syncMutation = useMutation({
     mutationKey: serverId ? catalogSyncKey(serverId) : ['catalog-sync'],
-    mutationFn: ({ force }: { force: boolean }) =>
-      runCatalogSync({ queryClient, api, serverId: serverId!, force }),
+    mutationFn: () => runCatalogSync({ queryClient, api, serverId: serverId! }),
     onSuccess: async result => {
       if (!serverId) return
       // Genres need nothing here: the sync's fetch wrote them into the same
@@ -63,11 +62,16 @@ export function useSync() {
   const sync = useCallback(async (force = false) => {
     if (!isConnected || !serverId) return
     const lastSync = lastSyncedAtRef.current
+    // `force` bypasses this throttle and nothing else — a run that gets past
+    // it always refetches every resource. It used to mean more: it was handed
+    // to the run, which used it to choose a `staleTime`, and an unforced run
+    // asked for the catalog's own `Infinity`. That made every throttle-passing
+    // sync a read of the persisted cache rather than of the server.
     if (!force && lastSync !== null && Date.now() - lastSync < SYNC_THROTTLE_MS) return
     // The client is the one that knows whether a run is already in flight,
     // across every instance of this hook.
     if (queryClient.isMutating({ mutationKey: catalogSyncKey(serverId) }) > 0) return
-    await syncMutation.mutateAsync({ force })
+    await syncMutation.mutateAsync()
   }, [isConnected, serverId, queryClient, syncMutation])
 
   /**

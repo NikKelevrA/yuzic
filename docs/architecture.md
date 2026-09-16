@@ -355,11 +355,15 @@ date" path routes through here:
 - Server switch (`HomeLayout` clears library slices and fires `sync()`)
 - Post-download completion (`DownloadersQueueContext` fires `sync(true)` twice
   after a rescan nudge)
-- Manual pull-to-refresh (Home)
+- Manual refresh (Settings → Library → last-synced row, `sync(true)`)
+
+Home's pull-to-refresh is *not* one of them: it bumps a `refreshKey` that
+reshuffles Home's own shelves and never touches the catalog.
 
 `sync(force?: boolean)` throttles at 30 minutes by default; `force=true`
-bypasses it. `syncPlaylists()` refreshes only the playlist list — cheaper for
-"user added a song, list needs to reflect it" cases.
+bypasses that throttle, and bypasses nothing else — every run that gets past it
+refetches all six resources. `syncPlaylists()` refreshes only the playlist list
+— cheaper for "user added a song, list needs to reflect it" cases.
 
 **Server-scoped state**. Everything the sync writes is keyed by `activeServerId`
 somewhere — album ids, playlist ids, stats. A server switch clears the slices
@@ -367,11 +371,18 @@ so ids from server A don't confuse a query against server B.
 
 ### Adding a new library-shaped resource
 
-Fetch it inside `sync()` on the phase-1 `Promise.allSettled` block, then
-dispatch it into a slice like the others. If it's per-server, key by
-`activeServerId`. If the resource has real invalidation cost (e.g. large
-payload), gate the fetch behind a stale-time check via `queryClient.fetchQuery`
-so a re-sync inside the 30-min window returns the cached value.
+Add it to `CATALOG_RESOURCES` in `catalogQueries.ts` — a cache key and a fetch,
+nothing else — and read the result out of `runCatalogSync` by name. If it's
+per-server, key by `activeServerId`.
+
+**Do not give it a `staleTime`.** The sync fetches with `staleTime: 0`
+deliberately, and the temptation to reuse the screens' value is the bug this
+section used to recommend: those are `Infinity`, the query cache is persisted
+across restarts, and under them `fetchQuery` resolves from disk without ever
+asking the server. The catalog then froze at whatever the last forced sync
+found — new albums on the server never appeared. The 30-minute throttle in
+`useSync` is what keeps re-syncs cheap; that is the only rate limit this
+pipeline gets.
 
 ## 5. Reachability — offline, and the server being gone
 
