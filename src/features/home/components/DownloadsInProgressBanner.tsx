@@ -31,7 +31,15 @@ export function DownloadsInProgressBanner() {
     router.push('/downloadsView');
   };
 
+  // Only the downloaders actually carrying something. A connected downloader
+  // keeps its entry whether or not anything is queued — an empty queue is a
+  // real answer, and the Downloads screen needs it to tell "nothing is
+  // transferring" apart from "not read yet". A banner about work in progress
+  // is not that surface: naming an idle one there said "0 on slskd" beside a
+  // heading counting eleven downloads. Safe against an empty subtitle, since
+  // a nonzero total means at least one of these is nonzero.
   const summary = queues
+    .filter((q) => q.count > 0)
     .map((q) => t('home.downloadsBanner.summaryItem', {
       label: q.label,
       count: q.count,
