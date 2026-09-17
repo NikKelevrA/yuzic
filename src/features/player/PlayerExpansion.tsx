@@ -7,11 +7,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import type { CoverSource } from '@/domain/entities/Cover';
-import {
-  enterCoverSlideWhenTrackChanges,
-  type CoverSlide,
-  type CoverSlideDirection,
-} from '@/features/player/coverTransition';
+import type { CoverSlideDirection } from '@/features/player/coverTransition';
 import {
   useAnimatedReaction,
   useSharedValue,
@@ -74,9 +70,30 @@ export function coverHandedOver(
   return expansion > CLOSED_EPSILON && bar.size > 0 && full.size > 0;
 }
 
-type CoverSlideState = CoverSlide & {
-  /** The old image remains visible until playback has actually changed tracks. */
-  outgoingCover: CoverSource | null;
+/**
+ * The artwork the player draws: the playing track's, and the two a swipe can
+ * reach. Rendered as one row, so dragging reveals the real neighbour instead
+ * of empty space — which is what makes it a carousel rather than a recoil.
+ */
+export type CoverStrip = {
+  previous: CoverSource | null;
+  current: CoverSource | null;
+  next: CoverSource | null;
+};
+
+export const EMPTY_COVER_STRIP: CoverStrip = { previous: null, current: null, next: null };
+
+type CoverSlideState = {
+  direction: CoverSlideDirection;
+  /** The track that was playing when the finger let go. */
+  outgoingSongId: string;
+  /**
+   * The covers as they were at that moment, held still until playback has
+   * actually changed track. The queue moves under us the instant the skip
+   * commits, and re-deriving the row mid-flight would swap the picture the
+   * user is watching slide.
+   */
+  strip: CoverStrip;
 };
 
 type PlayerExpansionValue = {
@@ -108,10 +125,18 @@ type PlayerExpansionValue = {
    * host owns the *view*, so the offset has to cross between them.
    */
   coverSwipeX: SharedValue<number>;
-  /** The two-stage visual state for an accepted track swipe. */
+  /**
+   * Where the host draws the cover from, in window coordinates.
+   *
+   * Both slots are measured with `measureInWindow`, but the cover is drawn
+   * inside the host's own view — so the two only agree where that view starts
+   * at the window's origin. Subtracting this makes the rects mean the same
+   * thing on every platform instead of relying on that being true.
+   */
+  hostOrigin: SharedValue<{ x: number; y: number }>;
+  /** The frozen row for a skip that is in flight, or null between swipes. */
   coverSlide: CoverSlideState | null;
-  beginCoverSlide: (direction: CoverSlideDirection, songId: string, cover: CoverSource | null) => void;
-  enterCoverSlide: (currentSongId: string | undefined) => void;
+  beginCoverSlide: (direction: CoverSlideDirection, songId: string, strip: CoverStrip) => void;
   finishCoverSlide: () => void;
   expand: () => void;
   collapse: () => void;
@@ -148,23 +173,18 @@ export const PlayerExpansionProvider: React.FC<{ children: ReactNode }> = ({ chi
   const scrollY = useSharedValue(0);
   const coverVisibility = useSharedValue(1);
   const coverSwipeX = useSharedValue(0);
+  const hostOrigin = useSharedValue({ x: 0, y: 0 });
 
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const [coverSlide, setCoverSlide] = useState<CoverSlideState | null>(null);
 
   const beginCoverSlide = useCallback(
-    (direction: CoverSlideDirection, songId: string, cover: CoverSource | null) => {
-      setCoverSlide({ direction, phase: 'exiting', outgoingSongId: songId, outgoingCover: cover });
+    (direction: CoverSlideDirection, songId: string, strip: CoverStrip) => {
+      setCoverSlide({ direction, outgoingSongId: songId, strip });
     },
     [],
   );
-  const enterCoverSlide = useCallback((currentSongId: string | undefined) => {
-    setCoverSlide(slide => slide && {
-      ...slide,
-      ...enterCoverSlideWhenTrackChanges(slide, currentSongId),
-    });
-  }, []);
   const finishCoverSlide = useCallback(() => setCoverSlide(null), []);
 
   // One place decides what "open" means, so a tap, a drag that never
@@ -197,9 +217,9 @@ export const PlayerExpansionProvider: React.FC<{ children: ReactNode }> = ({ chi
       scrollY,
       coverVisibility,
       coverSwipeX,
+      hostOrigin,
       coverSlide,
       beginCoverSlide,
-      enterCoverSlide,
       finishCoverSlide,
       expand,
       collapse,
@@ -209,7 +229,7 @@ export const PlayerExpansionProvider: React.FC<{ children: ReactNode }> = ({ chi
     }),
     [
       expansion, barCover, fullCover, scrollY, coverVisibility, coverSwipeX,
-      coverSlide, beginCoverSlide, enterCoverSlide, finishCoverSlide,
+      hostOrigin, coverSlide, beginCoverSlide, finishCoverSlide,
       expand, collapse, isOpen, hasOpened, prepare,
     ],
   );

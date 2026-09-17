@@ -1,28 +1,37 @@
-import { motion, onDark, radius } from '@/constants/design';
-import React, { useCallback, useEffect, useState } from 'react';
+import { onDark, radius } from '@/constants/design';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   interpolate,
-  runOnJS,
   useAnimatedStyle,
-  withTiming,
   Extrapolation,
 } from 'react-native-reanimated';
 import ImageColors from 'react-native-image-colors';
 import { useSelector } from 'react-redux';
 
 import { ACCENT_CACHE_MAX, createAccentCache, pickAccent, toWashAccent } from '@/features/theme/coverAccent';
-import { usePlayingState } from '@/features/playback/PlayingContext';
+import {
+  usePlayingActions,
+  usePlayingQueueVersion,
+  usePlayingState,
+} from '@/features/playback/PlayingContext';
 import { MediaImage } from '@/components/MediaImage';
 import { buildCover } from '@/providers/registry/covers';
+import { prefetchCovers } from '@/features/artwork/imageCache';
 import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
 import PlayingScreen from '@/features/player/PlayingScreen';
 import PlayingBackground from '@/features/player/components/PlayingBackground';
 import { useRadius } from '@/features/theme/useRadius';
 
-import { coverSlideOffset } from '@/features/player/coverTransition';
+import { coverNeighbours } from '@/features/player/coverNeighbours';
+import { coverScale, coverSlideSettled } from '@/features/player/coverTransition';
 
-import { coverHandedOver, usePlayerExpansion } from './PlayerExpansion';
+import {
+  coverHandedOver,
+  EMPTY_COVER_STRIP,
+  usePlayerExpansion,
+  type CoverStrip,
+} from './PlayerExpansion';
 
 const gradientCache = createAccentCache<[string, string]>(ACCENT_CACHE_MAX);
 
@@ -44,40 +53,55 @@ const NEUTRAL_GRADIENT: [string, string] = ['#121212', onDark.background];
  */
 export default function PlayerHost() {
   const {
-    expansion, barCover, fullCover, scrollY, coverVisibility, coverSwipeX,
-    coverSlide, enterCoverSlide, finishCoverSlide, isOpen, hasOpened, collapse,
+    expansion, barCover, fullCover, scrollY, coverVisibility, coverSwipeX, hostOrigin,
+    coverSlide, finishCoverSlide, isOpen, hasOpened, collapse,
   } = usePlayerExpansion();
   const { height, width } = useWindowDimensions();
   // The travelling cover is laid out once at a fixed size and only ever
   // scaled, so its width and height stay static styles rather than becoming
   // per-frame layout work.
   const REFERENCE_SIZE = width;
-  const { currentSong } = usePlayingState();
+  const { currentSong, currentIndex, repeatMode } = usePlayingState();
+  const { getQueue } = usePlayingActions();
+  const queueVersion = usePlayingQueueVersion();
   const coverAccentEnabled = useSelector(selectCoverAccentEnabled);
   const rad = useRadius();
 
   const [currentGradient, setCurrentGradient] = useState<[string, string]>([onDark.background, onDark.background]);
   const [nextGradient, setNextGradient] = useState<[string, string]>([onDark.background, onDark.background]);
 
-  // A queue command changes React state asynchronously. Keep the old artwork
-  // on screen while it leaves, then place the replacement beyond the opposite
-  // edge before animating it in. A single image with its offset reset to zero
-  // can only ever look like a recoil — it cannot show both halves of a swipe.
-  useEffect(() => {
-    if (
-      !coverSlide || coverSlide.phase !== 'exiting' ||
-      !currentSong?.localId || currentSong.localId === coverSlide.outgoingSongId
-    ) return;
+  // The artwork on either side of the playing track, drawn beside it so a drag
+  // reveals the real neighbour. A single image could only ever recoil: there
+  // was nothing in the space it left behind.
+  const liveStrip = useMemo<CoverStrip>(
+    () => (currentSong
+      ? { current: currentSong.cover, ...coverNeighbours(getQueue(), currentIndex, repeatMode) }
+      : EMPTY_COVER_STRIP),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `queueVersion` is what says the queue changed
+    [currentSong, currentIndex, repeatMode, getQueue, queueVersion],
+  );
+  // Held still while a skip is in flight: playback moves the queue the instant
+  // it takes the command, and re-deriving the row then would swap the picture
+  // the finger is dragging.
+  const strip = coverSlide?.strip ?? liveStrip;
 
-    coverSwipeX.value = coverSlideOffset(coverSlide.direction, 'entering', width);
-    enterCoverSlide(currentSong.localId);
-    const frame = requestAnimationFrame(() => {
-      coverSwipeX.value = withTiming(0, { duration: motion.swipe }, finished => {
-        if (finished) runOnJS(finishCoverSlide)();
-      });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [coverSlide, coverSwipeX, currentSong?.localId, enterCoverSlide, finishCoverSlide, width]);
+  // Both neighbours, at the size the player draws them, before the finger asks
+  // for one. Without this the incoming cover only starts downloading once the
+  // track has already changed, which is why a swipe landed on a blank square
+  // and faded the artwork in late.
+  useEffect(() => {
+    prefetchCovers([liveStrip.previous, liveStrip.next], 'detail');
+  }, [liveStrip]);
+
+  // The skip has committed, so the row is one place out of date: the cover the
+  // user pulled in becomes the middle one and the offset returns to zero in
+  // the same commit. Together, or the old row is drawn at the new offset for a
+  // frame and the artwork appears to snap back.
+  useEffect(() => {
+    if (!coverSlide || !coverSlideSettled(coverSlide.outgoingSongId, currentSong?.localId)) return;
+    coverSwipeX.value = 0;
+    finishCoverSlide();
+  }, [coverSlide, coverSwipeX, currentSong?.localId, finishCoverSlide]);
 
   const extractColors = useCallback(async (uri: string) => {
     const cached = gradientCache.get(uri);
@@ -131,6 +155,17 @@ export default function PlayerHost() {
     return () => subscription.remove();
   }, [isOpen, collapse]);
 
+  // Where this host starts in the window, so the two measured slots can be
+  // read in its coordinates. Measured rather than assumed to be the window's
+  // origin: that assumption is what puts the cover out of its slot wherever
+  // the host does not start at the very top of the window.
+  const rootRef = useRef<View>(null);
+  const measureHostOrigin = useCallback(() => {
+    rootRef.current?.measureInWindow((x, y) => {
+      hostOrigin.value = { x, y };
+    });
+  }, [hostOrigin]);
+
   const surfaceStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: (1 - expansion.value) * height }],
   }));
@@ -143,7 +178,7 @@ export default function PlayerHost() {
     opacity: interpolate(expansion.value, [0.15, 0.7], [0, 1], Extrapolation.CLAMP),
   }));
 
-  // Resolved on the JS side and captured by the worklet below: the corner the
+  // Resolved on the JS side and captured by the worklets below: the corner the
   // bar draws its thumbnail with, and the one the player draws its cover with.
   const barRadius = radius.sm;
   const cardRadius = rad.card;
@@ -158,34 +193,25 @@ export default function PlayerHost() {
     // transform below permanently unapplied — the cover was positioned, sized
     // and simply never drawn.
     const ready = coverHandedOver(e, from, to);
+    const scale = ready ? coverScale(from.size, to.size, e, REFERENCE_SIZE) : 1;
 
-    // The eye reads a square by its area, not by its edge, and interpolating
-    // the edge linearly makes the growth accelerate: halfway up the drag the
-    // cover has taken barely a quarter of the area it will end up covering, so
-    // most of the growth happens in the last third and the artwork appears to
-    // run away from the finger near the top. Interpolating the area and taking
-    // the root back out spends the growth evenly across the travel.
-    const area = interpolate(
-      e,
-      [0, 1],
-      [from.size * from.size, to.size * to.size],
-      Extrapolation.CLAMP
-    );
-    const size = Math.sqrt(area);
-    const scale = ready ? size / REFERENCE_SIZE : 1;
+    // Both slots were measured against the window, and the row is drawn inside
+    // this host. Subtracting where the host itself begins is what makes the
+    // two agree: where it does not start at the window's origin, a raw window
+    // rect lands the cover exactly that far out of its slot.
+    const origin = hostOrigin.value;
 
     // The slot is measured with the player scrolled to the top, which is where
     // it always is when the player opens. Collapsing from a scrolled position
     // — the artist link, the hardware back button — would otherwise fly the
     // cover back from where the slot used to be rather than where it is.
-    const toY = to.y - scrollY.value;
+    const toY = to.y - origin.y - scrollY.value;
 
     return {
       // `ready` is about the handover; coverVisibility is about whether the
       // screen underneath is showing the player at all. The queue is a list
       // that wants the whole screen, so the cover steps out of its way.
       opacity: ready ? coverVisibility.value : 0,
-      borderRadius: interpolate(e, [0, 1], [barRadius, cardRadius], Extrapolation.CLAMP) / scale,
       transform: [
         {
           // The swipe offset is scaled by `e` so it is at full strength on the
@@ -194,21 +220,69 @@ export default function PlayerHost() {
           // Divided by `scale` because it is applied inside the scaled frame,
           // so a raw value would move by scale-times the distance the finger did.
           translateX:
-            interpolate(e, [0, 1], [from.x, to.x], Extrapolation.CLAMP) +
+            interpolate(e, [0, 1], [from.x - origin.x, to.x - origin.x], Extrapolation.CLAMP) +
             (coverSwipeX.value * e) / scale,
         },
-        { translateY: interpolate(e, [0, 1], [from.y, toY], Extrapolation.CLAMP) },
+        { translateY: interpolate(e, [0, 1], [from.y - origin.y, toY], Extrapolation.CLAMP) },
         { scale },
       ],
     };
   });
 
-  const displayedCover = coverSlide?.phase === 'exiting'
-    ? coverSlide.outgoingCover
-    : currentSong?.cover;
+  // The corner radius belongs to each cover rather than to the row, because
+  // the row must not clip: its neighbours sit outside it until a drag pulls
+  // one in. Undone by the scale they are drawn inside, so the corner reads the
+  // same size at both ends of the travel.
+  const coverRadius = (expansionValue: number, scale: number) => {
+    'worklet';
+    return interpolate(expansionValue, [0, 1], [barRadius, cardRadius], Extrapolation.CLAMP) / scale;
+  };
+
+  // A neighbour rests a full window width away, not a cover width: the cover
+  // is inset from the screen edges, so covers laid edge to edge would leave a
+  // sliver of the next one showing beside the slot. Expressed in the scaled
+  // frame's units, which is what the row is laid out in.
+  const neighbourOffset = (scale: number) => {
+    'worklet';
+    return width / scale;
+  };
+
+  const boxScale = (expansionValue: number) => {
+    'worklet';
+    const from = barCover.value;
+    const to = fullCover.value;
+    return coverHandedOver(expansionValue, from, to)
+      ? coverScale(from.size, to.size, expansionValue, REFERENCE_SIZE)
+      : 1;
+  };
+
+  const currentCoverStyle = useAnimatedStyle(() => {
+    const e = expansion.value;
+    return { borderRadius: coverRadius(e, boxScale(e)) };
+  });
+
+  const previousCoverStyle = useAnimatedStyle(() => {
+    const e = expansion.value;
+    const scale = boxScale(e);
+    return {
+      borderRadius: coverRadius(e, scale),
+      transform: [{ translateX: -neighbourOffset(scale) }],
+    };
+  });
+
+  const nextCoverStyle = useAnimatedStyle(() => {
+    const e = expansion.value;
+    const scale = boxScale(e);
+    return {
+      borderRadius: coverRadius(e, scale),
+      transform: [{ translateX: neighbourOffset(scale) }],
+    };
+  });
 
   return (
     <View
+      ref={rootRef}
+      onLayout={measureHostOrigin}
       style={StyleSheet.absoluteFill}
       pointerEvents={isOpen ? 'auto' : 'none'}
       // The dock underneath has to stay reachable whenever the player is not
@@ -234,16 +308,30 @@ export default function PlayerHost() {
         * shows the same placeholder when there is nothing to show. Building a
         * URL here by hand meant the host missed the server subscription that
         * makes those URLs resolve at all. */}
-      {displayedCover && (
+      {strip.current && (
         <Animated.View
           style={[
-            styles.travellingCover,
+            styles.coverRow,
             { width: REFERENCE_SIZE, height: REFERENCE_SIZE },
             coverStyle,
           ]}
           pointerEvents="none"
         >
-          <MediaImage cover={displayedCover} size="detail" style={styles.coverFill} />
+          {strip.previous && (
+            <Animated.View style={[styles.coverBox, previousCoverStyle]}>
+              <MediaImage cover={strip.previous} size="detail" style={styles.coverFill} />
+            </Animated.View>
+          )}
+
+          <Animated.View style={[styles.coverBox, currentCoverStyle]}>
+            <MediaImage cover={strip.current} size="detail" style={styles.coverFill} />
+          </Animated.View>
+
+          {strip.next && (
+            <Animated.View style={[styles.coverBox, nextCoverStyle]}>
+              <MediaImage cover={strip.next} size="detail" style={styles.coverFill} />
+            </Animated.View>
+          )}
         </Animated.View>
       )}
     </View>
@@ -255,13 +343,19 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  travellingCover: {
+  coverRow: {
     position: 'absolute',
     left: 0,
     top: 0,
-    overflow: 'hidden',
     // Anchored top-left so translate places the square's corner exactly where
     // it was measured, and scale grows it away from that corner.
     transformOrigin: 'top left',
+  },
+  // Each cover fills the row and clips its own corners. The row itself cannot
+  // clip, or the neighbours would be invisible until they were already inside
+  // the slot — which is the swipe having nothing to show that this replaced.
+  coverBox: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
   },
 });

@@ -4,12 +4,20 @@ import {
   View,
   Text,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import { useAnimatedReaction, runOnJS, withSpring, withTiming } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 
-import { usePlayingState, usePlayingProgress, usePlayingActions } from '@/features/playback/PlayingContext';
+import {
+  usePlayingState,
+  usePlayingProgress,
+  usePlayingActions,
+  usePlayingQueueVersion,
+} from '@/features/playback/PlayingContext';
+import { coverNeighbours } from '../coverNeighbours';
+import type { CoverStrip } from '@/features/player/PlayerExpansion';
 import { SeekableProgressBar } from './SeekableProgressBar';
 import { useSelector } from 'react-redux';
 import { selectShowQualityBadge } from '@/features/settings/appearance/state';
@@ -89,7 +97,23 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   const currentSongId = currentSong?.localId;
   const currentCover = currentSong?.cover ?? null;
   const queueLength = getQueue().length;
+  const queueVersion = usePlayingQueueVersion();
+  // How far the row travels to bring a neighbour in. A window width, not a
+  // cover width: the cover is inset from the screen edges, so that is where
+  // the host rests the next one — and a shorter travel would land it beside
+  // the slot rather than in it.
+  const { width: windowWidth } = useWindowDimensions();
   const rad = useRadius();
+
+  // Handed to the host as the swipe is accepted, so the row it is drawing is
+  // held still while the skip commits: the queue moves the instant playback
+  // takes the command, and re-deriving it mid-flight would change the picture
+  // under the finger.
+  const strip = useMemo<CoverStrip>(
+    () => ({ current: currentCover, ...coverNeighbours(getQueue(), currentIndex, repeatMode) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `queueVersion` is what says the queue changed
+    [currentCover, currentIndex, repeatMode, getQueue, queueVersion],
+  );
   const showQualityBadge = useSelector(selectShowQualityBadge);
   const { expansion, fullCover, scrollY, coverSwipeX, beginCoverSlide } = usePlayerExpansion();
 
@@ -145,23 +169,23 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
             coverSwipeX.value = withSpring(0, { damping: 18, stiffness: 220 });
             return;
           }
-          // The old image gets its own exit. Only after that finishes can the
-          // queue select the next track; PlayerHost then puts that new image on
-          // the opposite edge and brings it in. Calling skip immediately was
-          // why the old implementation merely recoiled instead of becoming a
-          // real carousel transition.
-          runOnJS(beginCoverSlide)(outcome, currentSongId, currentCover);
+          // Freeze the row first, then carry it exactly one cover across, so
+          // the neighbour the finger already pulled into view is the one that
+          // lands. The skip follows the animation rather than racing it: the
+          // queue moving mid-slide is what made the old implementation recoil
+          // instead of reading as a carousel.
+          runOnJS(beginCoverSlide)(outcome, currentSongId, strip);
           coverSwipeX.value = withTiming(
-            outcome === 'next' ? -width : width,
-            { duration: motion.quick },
+            outcome === 'next' ? -windowWidth : windowWidth,
+            { duration: motion.swipe },
             finished => {
               if (finished) runOnJS(outcome === 'next' ? skipToNext : skipToPrevious)();
             },
           );
         }),
     [
-      beginCoverSlide, coverSwipeX, currentCover, currentIndex, currentSongId,
-      queueLength, repeatMode, skipToNext, skipToPrevious, width,
+      beginCoverSlide, coverSwipeX, strip, currentIndex, currentSongId,
+      queueLength, repeatMode, skipToNext, skipToPrevious, width, windowWidth,
     ],
   );
 
