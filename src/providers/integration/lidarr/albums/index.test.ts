@@ -282,6 +282,9 @@ describe('downloadAlbum', () => {
       ok: status >= 200 && status < 300,
       status,
       json: async () => body,
+      // The client reads the body as text and parses it, so that it can tell
+      // an empty reply from a JSON one.
+      text: async () => JSON.stringify(body),
     }) as unknown as Promise<Response>;
 
   beforeEach(() => {
