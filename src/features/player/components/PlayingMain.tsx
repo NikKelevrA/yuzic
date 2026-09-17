@@ -128,14 +128,19 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
     });
   }, [fullCover]);
 
-  // Re-measure once the player has settled open: the lyrics preview and the
+  // Re-measure whenever the player comes to rest: the lyrics preview and the
   // optional cards arrive after the first layout and can move this. Only from
   // the top, so the stored rect always means "where the slot sits unscrolled"
   // — which is the assumption the host's scroll correction is built on.
+  //
+  // Closed counts as rest too, and it is the more useful of the two: a rect
+  // that changed since the last open is corrected while the cover is still a
+  // thumbnail in the dock, instead of the correction arriving under the eye at
+  // the exact moment the artwork lands.
   useAnimatedReaction(
-    () => expansion.value >= 1 && scrollY.value <= 0,
-    (settled, wasSettled) => {
-      if (settled && settled !== wasSettled) runOnJS(measureCoverSlot)();
+    () => (expansion.value >= 1 && scrollY.value <= 0) || expansion.value <= 0.001,
+    (atRest, wasAtRest) => {
+      if (atRest && atRest !== wasAtRest) runOnJS(measureCoverSlot)();
     },
     [measureCoverSlot],
   );

@@ -85,12 +85,16 @@ export default function PlayerHost() {
   // the finger is dragging.
   const strip = coverSlide?.strip ?? liveStrip;
 
-  // Both neighbours, at the size the player draws them, before the finger asks
-  // for one. Without this the incoming cover only starts downloading once the
-  // track has already changed, which is why a swipe landed on a blank square
-  // and faded the artwork in late.
+  // The whole row at the size the player draws it, before anything asks for
+  // one. The neighbours are for the swipe; the *current* one is for the open,
+  // and leaving it out is why the first open of a session animated differently
+  // from every one after it. The bar draws `thumb` and the player draws
+  // `detail`, so opening it cold fetched an image the bar had never needed —
+  // and the handover hides the bar's thumbnail as soon as both slots are
+  // measured, so what rose was `MediaImage`'s plain surface with the artwork
+  // fading in behind it. Every later open found it cached and looked right.
   useEffect(() => {
-    prefetchCovers([liveStrip.previous, liveStrip.next], 'detail');
+    prefetchCovers([liveStrip.current, liveStrip.previous, liveStrip.next], 'detail');
   }, [liveStrip]);
 
   // The skip has committed, so the row is one place out of date: the cover the
