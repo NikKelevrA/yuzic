@@ -27,7 +27,10 @@ export class SoulSyncError extends Error {
 }
 
 export function createSoulSyncClient(config: SoulSyncConfig) {
-  const { serverUrl, apiKey } = config;
+  // See the same note in the Lidarr client: trimmed so an address or key stored
+  // with invisible whitespace works without being re-entered.
+  const serverUrl = config.serverUrl?.trim() ?? '';
+  const apiKey = config.apiKey?.trim() ?? '';
 
   if (!serverUrl || !apiKey) {
     throw new Error('SoulSync not configured');
