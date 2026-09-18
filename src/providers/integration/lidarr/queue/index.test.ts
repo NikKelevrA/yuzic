@@ -64,6 +64,26 @@ describe('cancelQueueItem', () => {
     await expect(cancelQueueItem(config, { rawIds: [1, 2] })).rejects.toBeInstanceOf(Error);
   });
 
+  it('treats a 200 with an empty body as the successful cancel it is', async () => {
+    // Lidarr answers `DELETE /queue/{id}` with **200 and an empty body**, not
+    // the 204 the client checked for, so the reply went to `res.json()` and
+    // threw on a zero-length body. Every delete "failed", `cancelQueueItem`
+    // threw, and the screen said "Couldn't cancel that download" — about a
+    // cancel the server had already carried out, which is why the row then
+    // vanished on the next poll. The slskd client has always handled this,
+    // which is why cancelling there was quiet.
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      // What a real empty body does on the JSON path.
+      json: async () => { throw new SyntaxError('Unexpected end of JSON input'); },
+      text: async () => '',
+    }) as unknown as Response) as unknown as typeof fetch;
+
+    await expect(cancelQueueItem(config, { rawIds: [11] })).resolves.toBeUndefined();
+  });
+
   it('is content with a partial success', async () => {
     // Lidarr sometimes 500s on one entry that was already removed elsewhere;
     // treat "at least one worked" as done so the UI keeps moving.

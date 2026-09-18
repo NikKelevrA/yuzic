@@ -1,5 +1,7 @@
 import { Server } from '@/providers/contracts/Server';
 import { MediaBrowserItemsResponse } from '../types';
+import { EMBY_BRAND, JELLYFIN_BRAND } from '../brand';
+import { mediaBrowserAuthHeaders } from '../clientHeader';
 import { serverFetch } from '@/features/mtls/serverFetch';
 
 export async function getMusicLibraries(server: Server): Promise<{ id: string; name: string }[]> {
@@ -9,8 +11,15 @@ export async function getMusicLibraries(server: Server): Promise<{ id: string; n
   if (!serverUrl || !token || !userId) return [];
 
   try {
+    // `X-Emby-Token` alone is the legacy form, and Jellyfin 12 stops reading
+    // it — this ran during setup, so an upgraded server reported "no music
+    // libraries" at exactly the moment a new user is deciding whether the app
+    // works. The brand is derived from the server's own type rather than
+    // threaded in, because this is the one call site that has a `Server` and
+    // not a built client.
+    const brand = server.type === 'emby' ? EMBY_BRAND : JELLYFIN_BRAND;
     const res = await serverFetch(`${serverUrl}/Users/${encodeURIComponent(userId)}/Views`, {
-      headers: { 'X-Emby-Token': token },
+      headers: mediaBrowserAuthHeaders(brand, { token }),
     });
     // A refused or errored response is not a server without music. Returning
     // an empty list here rendered a bad token, an expired session and an

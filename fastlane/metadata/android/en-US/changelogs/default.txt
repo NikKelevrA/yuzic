@@ -1,8 +1,6 @@
-Radio with real artwork, playlists that count, and new music that finds you.
+Music that does not cut out, and Jellyfin sign-in that works again.
 
-- Music added to your server appears by itself, no manual rescan
-- Radio stations show their logo, in the app, the bar and CarPlay
-- Playlists show how many songs they hold instead of "0 songs"
-- Sort, filter and grid views on Wants and Radio
-- Downloads gets its own menu, with a real refresh
-- Menus and pickers open every time you tap them
+- Streaming now buffers far further ahead, so a patchy connection no longer drops the audio mid-song
+- Jellyfin sign-in works again on servers updated to Jellyfin 12
+- Cover art settles into place without a late jump
+- Clearer errors and steadier lists when setting up a downloader

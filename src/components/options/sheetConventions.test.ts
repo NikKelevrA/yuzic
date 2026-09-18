@@ -34,11 +34,22 @@ function rendersASheet(source: string): boolean {
   return /<BottomSheetModal\s*$/m.test(source) || /<BottomSheetModal\s+\w+=/.test(source);
 }
 
-const sheets = sourceFiles(SRC)
+/**
+ * `path.relative` answers in the platform's separator, and the exemption list
+ * above is written with `/` like every other path in this repository. On
+ * Windows the two never matched, so all three deliberately-distinct sheets
+ * were asserted against the shared scaffold and the suite failed four tests
+ * that CI — on Linux — reported green. A check that is red only on one
+ * person's machine is a check they learn to scroll past.
+ */
+const posix = (file: string) => file.split(path.sep).join('/');
+
+const allSheets = sourceFiles(SRC)
   .filter(file => rendersASheet(fs.readFileSync(file, 'utf8')))
-  .map(file => path.relative(SRC, file))
-  .filter(file => !DELIBERATELY_DISTINCT.includes(file))
+  .map(file => posix(path.relative(SRC, file)))
   .sort();
+
+const sheets = allSheets.filter(file => !DELIBERATELY_DISTINCT.includes(file));
 
 const read = (file: string) => fs.readFileSync(path.join(SRC, file), 'utf8');
 
@@ -56,6 +67,18 @@ const read = (file: string) => fs.readFileSync(path.join(SRC, file), 'utf8');
 describe('bottom sheet conventions', () => {
   it('finds the sheets to check', () => {
     expect(sheets.length).toBeGreaterThan(10);
+  });
+
+  /**
+   * The exemption list has to keep naming real files, or it is a guard that
+   * guards nothing — which is how this suite came to fail on Windows while
+   * passing in CI. A renamed or deleted sheet makes its entry dead, and a dead
+   * entry is indistinguishable from a working one until the sheet it was
+   * meant to cover comes back under a new name and is quietly held to a
+   * scaffold it was deliberately excused from.
+   */
+  it.each(DELIBERATELY_DISTINCT)('%s is still a sheet worth excusing', file => {
+    expect(allSheets).toContain(file);
   });
 
   it.each(sheets)('%s draws the shared surface', file => {

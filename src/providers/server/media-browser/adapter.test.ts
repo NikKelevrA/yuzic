@@ -53,7 +53,7 @@ describe('mediaBrowser adapter', () => {
     const jellyfin = createMediaBrowserAdapter(serverOf('jellyfin'), JELLYFIN_BRAND);
     const emby = createMediaBrowserAdapter(serverOf('emby'), EMBY_BRAND);
 
-    expect(jellyfin.songs.buildStreamUrl('s1', 'high')).toContain('X-Emby-Token=tok');
+    expect(jellyfin.songs.buildStreamUrl('s1', 'high')).toContain('ApiKey=tok');
     expect(emby.songs.buildStreamUrl('s1', 'high')).toContain('api_key=tok');
   });
 

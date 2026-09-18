@@ -17,6 +17,20 @@ import { setCredential, forgetCredentials } from '@/state/credentialCache';
 /** Debounce before auto-testing typed credentials, so each keystroke isn't a request. */
 const AUTO_CONNECT_DELAY_MS = 500;
 
+/**
+ * The downloader's failure label plus what the transport actually reported.
+ *
+ * Every failure used to read identically: a 401 from a wrong key, a 400 from
+ * reaching an HTTPS port over http://, an unparseable URL that never left the
+ * device, and a timeout all became "connection failed". That is not enough to
+ * act on — the reason is the whole difference between "fix the key" and "fix
+ * the address", and it was already in hand when the error was discarded.
+ */
+function failureMessage(label: string, error: unknown): string {
+  const detail = error instanceof Error ? error.message : String(error ?? '');
+  return detail ? `${label}: ${detail}` : label;
+}
+
 export type DownloaderConfig = { serverUrl: string; apiKey: string };
 
 /**
@@ -51,15 +65,27 @@ export function useDownloaderConnection(
   const translate = useRef(t);
   translate.current = t;
 
+  // Both fields are trimmed on the way in. A URL or key pasted from a password
+  // manager or a web page routinely carries a trailing newline or space, and
+  // neither is visible in the input — the URL then fails as an unparseable
+  // address ("Network request failed", so nothing ever reaches the server) and
+  // the key is sent verbatim and rejected with a 401. Both surfaced as a bare
+  // "connection failed" against a form that looked perfectly correct.
   const setServerUrl = useCallback(
-    (value: string) => dispatch(setDownloaderServerUrl({ serverId, downloader: id, value })),
+    (value: string) => dispatch(setDownloaderServerUrl({ serverId, downloader: id, value: value.trim() })),
     [dispatch, id, serverId]
   );
   const setApiKey = useCallback(
     (value: string) => {
-      setLocalApiKey(value);
+      const key = value.trim();
+      setLocalApiKey(key);
       dispatch(setDownloaderAuthenticated({ serverId, downloader: id, value: false }));
-      void setCredential(downloaderCredentialScope(id, serverId), 'apiKey', value);
+      // A rejected keystore write used to be discarded by `void`, which left the
+      // key absent from both the Keychain and the in-memory cache with nothing
+      // said — the field looked filled until the screen remounted blank.
+      setCredential(downloaderCredentialScope(id, serverId), 'apiKey', key).catch(() => {
+        notify.error(translate.current(`settings.downloaders.${id}.connectionFailed`));
+      });
     },
     [dispatch, id, serverId]
   );
@@ -79,10 +105,10 @@ export function useDownloaderConnection(
           await testConnection(config);
           if (!cancelled) dispatch(connectDownloader({ serverId, downloader: id }));
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
           dispatch(setDownloaderAuthenticated({ serverId, downloader: id, value: false }));
-          notify.error(translate.current(`settings.downloaders.${id}.connectionFailed`));
+          notify.error(failureMessage(translate.current(`settings.downloaders.${id}.connectionFailed`), error));
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -101,9 +127,9 @@ export function useDownloaderConnection(
     try {
       await testConnection(config);
       dispatch(connectDownloader({ serverId, downloader: id }));
-    } catch {
+    } catch (error) {
       dispatch(setDownloaderAuthenticated({ serverId, downloader: id, value: false }));
-      notify.error(t(`settings.downloaders.${id}.connectionFailed`));
+      notify.error(failureMessage(t(`settings.downloaders.${id}.connectionFailed`), error));
     } finally {
       setIsLoading(false);
     }

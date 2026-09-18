@@ -144,6 +144,24 @@ describe('Downloader settings', () => {
     expect(JSON.stringify(store.getState())).not.toContain('typed-key');
   });
 
+  // A URL or key pasted from a password manager or a web page routinely carries
+  // a trailing newline. Neither is visible in the field: the untrimmed address
+  // is unparseable so no request ever leaves the device, and the untrimmed key
+  // is sent verbatim and rejected — both reported as a bare "connection failed"
+  // against a form that looked correct.
+  it('trims whitespace pasted into the URL and key before testing or storing them', async () => {
+    const store = makeStore();
+    const view = await renderScreen(store, <SlskdView />);
+
+    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.serverUrlPlaceholder.slskd'), ' http://slskd\n');
+    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.apiKeyPlaceholder'), 'typed-key\n');
+    await afterConnectionPause();
+
+    expect(mockSlskdTest).toHaveBeenCalledWith({ serverUrl: 'http://slskd', apiKey: 'typed-key' });
+    expect(entry(store, 'slskd')?.serverUrl).toBe('http://slskd');
+    expect(getCredentials(downloaderCredentialScope('slskd', SERVER_ID)).apiKey).toBe('typed-key');
+  });
+
   it('stays disconnected and says so when the connection test fails', async () => {
     mockSlskdTest.mockRejectedValue(new Error('refused'));
     const store = makeStore();
@@ -154,7 +172,9 @@ describe('Downloader settings', () => {
     await afterConnectionPause();
 
     expect(entry(store, 'slskd')?.isAuthenticated).toBe(false);
-    expect(notify.error).toHaveBeenCalledWith('settings.downloaders.slskd.connectionFailed');
+    // The reason is now carried alongside the label — a 401, a 400 from the
+    // wrong scheme and an unparseable address used to be indistinguishable.
+    expect(notify.error).toHaveBeenCalledWith('settings.downloaders.slskd.connectionFailed: refused');
   });
 
   it('offers slskd search preferences only once connected, and writes the chosen format', async () => {

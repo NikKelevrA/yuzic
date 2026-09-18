@@ -1,6 +1,6 @@
 import { cappedTypography, fontScaleCap, hitSlopFor, iconSize, radius, spacing } from '@/constants/design';
-import React, { useCallback, useMemo, useRef } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { InteractionManager, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Music, Play, Pause } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -87,6 +87,25 @@ export default function PlayingBarBase() {
       if (width > 0) barCover.value = { x, y, size: width };
     });
   }, [barCover]);
+
+  // Build the player screen once there is something to open, rather than at
+  // the touch that opens it.
+  //
+  // `prepare` also runs from the press and the drag, but both of those are
+  // touch-down: the screen mounts as the gesture starts, so its cover slot is
+  // still unmeasured for the first frames and `coverHandedOver` stays false
+  // until the measurement lands mid-drag. That is why the first open of a
+  // session animated differently from every one after it — by the second, the
+  // slot had been measured and the handover could start from the first frame.
+  //
+  // After interactions, so it never competes with the track that has just
+  // started playing; a track change is the one place this tree must stay cheap.
+  const hasSong = currentSong != null;
+  useEffect(() => {
+    if (!hasSong) return;
+    const task = InteractionManager.runAfterInteractions(() => prepare());
+    return () => task.cancel();
+  }, [hasSong, prepare]);
 
   const handlePlayPause = async () => {
     if (!currentSong) return;

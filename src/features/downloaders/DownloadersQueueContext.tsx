@@ -130,7 +130,12 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
         hasError: existing?.hasError ?? false,
         ...patch,
       };
-      return [...prev.filter((q) => q.id !== state.def.id), next];
+      // Replaced where it already sits, rather than appended. Moving the
+      // downloader that just answered to the end reordered the list on every
+      // poll — see the ordering note on `value` below.
+      return existing
+        ? prev.map((q) => (q.id === next.id ? next : q))
+        : [...prev, next];
     });
   }, []);
 
@@ -210,12 +215,27 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
     for (const state of states) void poll(state);
   }, []);
 
+  /**
+   * Registry order, which is the one thing here that does not depend on the
+   * network. Poll order does: two downloaders answer whenever their servers
+   * get round to it, and the list used to be built in that order — so the Home
+   * banner swapped "11 on Lidarr · 0 on slskd" for "0 on slskd · 11 on Lidarr"
+   * and back, on a loop, without a single count ever changing. Sorting here
+   * rather than at the banner keeps every surface reading one order.
+   */
+  const orderedQueues = useMemo(() => {
+    const byId = new Map(queues.map((q) => [q.id, q]));
+    return connectedStates
+      .map((state) => byId.get(state.def.id))
+      .filter((q): q is DownloaderQueueSnapshot => q !== undefined);
+  }, [connectedStates, queues]);
+
   const value = useMemo<ContextValue>(() => ({
-    queues,
-    totalInFlight: queues.reduce((sum, q) => sum + q.count, 0),
+    queues: orderedQueues,
+    totalInFlight: orderedQueues.reduce((sum, q) => sum + q.count, 0),
     recentlyFinished,
     refresh,
-  }), [queues, recentlyFinished, refresh]);
+  }), [orderedQueues, recentlyFinished, refresh]);
 
   return (
     <DownloadersQueueContext.Provider value={value}>
