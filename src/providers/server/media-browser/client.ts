@@ -3,7 +3,7 @@ import { qualityToStreamParams } from '@/providers/server/streamQuality';
 import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverProvenance, type Provenance } from '@/domain/identity/Provenance';
 import { MediaBrowserBrand } from './brand';
-import { mediaBrowserClientHeader } from './clientHeader';
+import { mediaBrowserAuthHeaders } from './clientHeader';
 import { serverFetch } from '@/features/mtls/serverFetch';
 import { MediaBrowserRequestError } from './requestError';
 
@@ -50,20 +50,17 @@ export function createMediaBrowserClient(config: MediaBrowserClientConfig, brand
   const failoverHint = serverId
     ? { id: serverId, serverUrl: baseUrl, fallbackUrls }
     : null;
-  const proxyHeader: Record<string, string> = basicAuth
-    ? { Authorization: 'Basic ' + btoa(`${basicAuth.username}:${basicAuth.password ?? ''}`) }
-    : {};
+  const defaultHeaders: Record<string, string> = mediaBrowserAuthHeaders(brand, {
+    token,
+    basicAuth,
+  });
 
-  const defaultHeaders: Record<string, string> = {
-    "X-Emby-Token": token,
-    "X-Emby-Authorization": `${mediaBrowserClientHeader()}, Token="${token}"`,
-    ...proxyHeader,
-  };
-
-  const tokenOnlyHeaders: Record<string, string> = {
-    "X-Emby-Token": token,
-    ...proxyHeader,
-  };
+  // Was `X-Emby-Token` alone. That header is gated behind Jellyfin 12's
+  // `EnableLegacyAuthorization` like the rest of the legacy set, so "token
+  // only" now means the same credentials in whichever header the brand reads —
+  // the distinction these two ever had was the client identity, and there is
+  // no version where sending it costs anything.
+  const tokenOnlyHeaders: Record<string, string> = defaultHeaders;
 
   async function callOne(url: string, path: string, headers: Record<string, string>, fetchOptions: RequestInit): Promise<Response> {
     const controller = new AbortController();

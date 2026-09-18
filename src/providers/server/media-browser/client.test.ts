@@ -17,7 +17,7 @@ describe('createMediaBrowserClient', () => {
     const jellyfin = createMediaBrowserClient(baseConfig, JELLYFIN_BRAND);
     const emby = createMediaBrowserClient(baseConfig, EMBY_BRAND);
 
-    expect(jellyfin.buildStreamUrl('song-1', 'high', 'mp3')).toContain('X-Emby-Token=tok-123');
+    expect(jellyfin.buildStreamUrl('song-1', 'high', 'mp3')).toContain('ApiKey=tok-123');
     expect(emby.buildStreamUrl('song-1', 'high', 'mp3')).toContain('api_key=tok-123');
   });
 
@@ -26,7 +26,7 @@ describe('createMediaBrowserClient', () => {
     const emby = new URL(createMediaBrowserClient(baseConfig, EMBY_BRAND).buildAvatarUrl());
 
     expect(jellyfin.pathname).toBe('/Users/user-1/Images/Primary');
-    expect(jellyfin.searchParams.get('X-Emby-Token')).toBe('tok-123');
+    expect(jellyfin.searchParams.get('ApiKey')).toBe('tok-123');
     expect(emby.searchParams.get('api_key')).toBe('tok-123');
   });
 

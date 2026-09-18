@@ -10,8 +10,27 @@ import type { MediaBrowserItem } from "./types";
 export interface MediaBrowserBrand {
   kind: "jellyfin" | "emby";
   label: "Jellyfin" | "Emby";
-  /** Query-param name used to pass the access token on stream URLs. */
-  streamTokenParam: "X-Emby-Token" | "api_key";
+  /**
+   * Query-param name used to pass the access token on stream and image URLs.
+   *
+   * `ApiKey` for Jellyfin, and it has to be: its `AuthorizationContext` reads
+   * `ApiKey` unconditionally and `api_key` only when legacy authorization is
+   * enabled, which Jellyfin 12 turns off. `X-Emby-Token` — what this said
+   * before — is not a query parameter Jellyfin has ever read, on any version
+   * checked; those URLs were authenticated by their headers, and worked only
+   * because the headers were still being honoured.
+   */
+  streamTokenParam: "ApiKey" | "api_key";
+  /**
+   * Whether the client identity goes in the standard `Authorization` header.
+   *
+   * Jellyfin 12 reads `Authorization` and falls back to `X-Emby-Authorization`
+   * only when `EnableLegacyAuthorization` is set — and it ships a migration
+   * that turns that off on upgrade. Emby is left on the legacy header, which
+   * is what it asks for; there is no reported problem there and no reason to
+   * take the risk of changing it.
+   */
+  usesStandardAuthHeader: boolean;
   /** Emby's /System/Ping returns a non-JSON body; Jellyfin's is JSON. */
   pingAsText: boolean;
 }
@@ -19,7 +38,8 @@ export interface MediaBrowserBrand {
 export const JELLYFIN_BRAND: MediaBrowserBrand = {
   kind: "jellyfin",
   label: "Jellyfin",
-  streamTokenParam: "X-Emby-Token",
+  streamTokenParam: "ApiKey",
+  usesStandardAuthHeader: true,
   pingAsText: false,
 };
 
@@ -27,6 +47,7 @@ export const EMBY_BRAND: MediaBrowserBrand = {
   kind: "emby",
   label: "Emby",
   streamTokenParam: "api_key",
+  usesStandardAuthHeader: false,
   pingAsText: true,
 };
 

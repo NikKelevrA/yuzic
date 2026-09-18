@@ -31,6 +31,45 @@ server also carries optional **fallback URLs** (tried in order when the primary
 is unreachable — e.g. a Tailscale address away from home) and optional HTTP
 basic auth in front of the server.
 
+### How Jellyfin and Emby are authenticated
+
+Both are MediaBrowser-derived and take the same credentials string —
+`MediaBrowser Client="Yuzic", Device="Mobile", DeviceId="…", Version="…"`,
+with `Token="…"` appended once signed in. What differs is the header carrying
+it, and getting that wrong is not a soft failure.
+
+| | Jellyfin | Emby |
+| --- | --- | --- |
+| Identity header | `Authorization` **and** `X-Emby-Authorization` | `X-Emby-Authorization` |
+| Token query param (streams, images) | `ApiKey` | `api_key` |
+
+**Jellyfin 12 stopped reading the legacy headers.** Its `AuthorizationContext`
+reads `Authorization`, and falls back to `X-Emby-Authorization` — and to the
+`X-Emby-Token` / `X-MediaBrowser-Token` headers and the `api_key` query
+parameter — only when `EnableLegacyAuthorization` is set. That setting defaults
+to false, and 12 ships a migration (`DisableLegacyAuthorization`) that turns it
+off on upgrade. So a server that upgraded stopped seeing any identity from this
+app at all: `POST /Users/AuthenticateByName` threw
+`System.ArgumentNullException: Value cannot be null. (Parameter 'request.App')`
+before looking at the password, and had login somehow succeeded every
+authenticated request after it would have failed the same way.
+
+`request.App` comes from `Client=` in the header and has never been a field of
+the `AuthenticateUserByName` body. An `App` field was added to that body while
+this was being diagnosed, reading the exception literally; it cannot have
+helped and has been removed.
+
+Both headers are sent to Jellyfin, so one build serves 12 and everything older
+without asking which is running. `ApiKey` is likewise read by 10.10 and 12
+alike, while `X-Emby-Token` is not a query parameter Jellyfin reads on *any*
+version — those URLs were being authenticated by their headers.
+
+**The one case this cannot serve** is a Jellyfin 12 behind a reverse proxy
+demanding HTTP basic auth. Basic auth occupies `Authorization` and there is
+only one of it, so those installs fall back to `X-Emby-Authorization` and need
+`EnableLegacyAuthorization` switched back on server-side. There is no header
+that satisfies both.
+
 Provider registry: `src/providers/registry/serverConnections.ts` — which also holds the
 per-provider facts that aren't API calls (demo credentials, cover URLs, and
 which `auth` key stores the chosen libraries). Adapters: `src/providers/server/navidrome/`
