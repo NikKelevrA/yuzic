@@ -25,6 +25,7 @@ import { hasDuration } from '@/domain/playback/ContentKind';
 import { CirclePlus } from 'lucide-react-native';
 import { usePlayerExpansion } from '@/features/player/PlayerExpansion';
 import { resolveCoverSwipe } from '../coverSwipe';
+import { SETTLE_EPSILON, measurementHeldStill, restingSlotY } from '../coverSlotMeasurement';
 import { canStartCoverSlide } from '../coverTransition';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
@@ -123,6 +124,10 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   // job of telling the host where that hole is.
   const coverSlotRef = useRef<View>(null);
   const measureCoverSlot = useCallback(() => {
+    // Where the surface was when the question was asked. The undo below has
+    // to be against this expansion rather than whatever it has become by the
+    // time the answer comes back.
+    const askedAt = expansion.value;
     coverSlotRef.current?.measureInWindow((x, y, slotWidth) => {
       if (slotWidth <= 0) return;
       // `measureInWindow` reports where the slot is *right now*, and right now
@@ -137,8 +142,21 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
       //
       // Undo both, so the rect always means "where the slot sits when the
       // player is open and unscrolled" no matter when it was taken.
-      const surfaceOffset = (1 - expansion.value) * windowHeight;
-      fullCover.value = { x, y: y - surfaceOffset + scrollY.value, size: slotWidth };
+      //
+      // Only if `y` and the expansion it is undone against are the same
+      // moment, though. `measureInWindow` answers a frame or more later, and
+      // the spring is at its fastest exactly as it passes 1 — so a
+      // measurement taken across any movement is skewed by the surface travel
+      // between the two, which is points rather than rounding. Drop it and
+      // let the reaction below take another once the spring is still; that is
+      // the small correction that used to land under the eye as the artwork
+      // settled.
+      if (!measurementHeldStill(askedAt, expansion.value)) return;
+      fullCover.value = {
+        x,
+        y: restingSlotY(y, expansion.value, windowHeight, scrollY.value),
+        size: slotWidth,
+      };
     });
   }, [fullCover, expansion, scrollY, windowHeight]);
 
@@ -147,8 +165,16 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   // Safe at both ends now that the measurement undoes the surface offset
   // itself — before that, measuring while closed stored a slot a screen too
   // low and broke the very next open.
+  //
+  // "At rest" is a band around each end, not `>= 1`: `PLAYER_SPRING` does not
+  // clamp its overshoot, so the player passes 1 at its highest speed and
+  // stays above it for the whole ring-down. Treating that as arrived measured
+  // the slot mid-flight — and since the spring crosses back through the band
+  // on its way to settling, the accurate measurement arrived second and moved
+  // the artwork after it had apparently landed.
   useAnimatedReaction(
-    () => expansion.value >= 1 || expansion.value <= 0.001,
+    () =>
+      Math.abs(expansion.value - 1) <= SETTLE_EPSILON || expansion.value <= SETTLE_EPSILON,
     (atRest, wasAtRest) => {
       if (atRest && atRest !== wasAtRest) runOnJS(measureCoverSlot)();
     },
