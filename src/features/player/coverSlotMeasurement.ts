@@ -25,8 +25,15 @@ export const SETTLE_EPSILON = 0.001;
  * so that test is satisfied for the whole of the overshoot — the exact window
  * in which a measurement is least trustworthy.
  */
-export const isAtRest = (expansion: number): boolean =>
-  Math.abs(expansion - 1) <= SETTLE_EPSILON || expansion <= SETTLE_EPSILON;
+export function isAtRest(expansion: number): boolean {
+  // A worklet because its only production caller is a `useAnimatedReaction`
+  // predicate, which runs on the UI thread — the same reason `coverScale` and
+  // `canStartCoverSlide` next door are worklets. Without it the reaction has
+  // to inline the expression, which is how the test below came to be pinning
+  // a copy of the rule rather than the rule.
+  'worklet';
+  return Math.abs(expansion - 1) <= SETTLE_EPSILON || expansion <= SETTLE_EPSILON;
+}
 
 /**
  * Did the surface hold still between a measurement being asked for and the

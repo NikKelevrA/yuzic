@@ -25,7 +25,7 @@ import { hasDuration } from '@/domain/playback/ContentKind';
 import { CirclePlus } from 'lucide-react-native';
 import { usePlayerExpansion } from '@/features/player/PlayerExpansion';
 import { resolveCoverSwipe } from '../coverSwipe';
-import { SETTLE_EPSILON, measurementHeldStill, restingSlotY } from '../coverSlotMeasurement';
+import { isAtRest, measurementHeldStill, restingSlotY } from '../coverSlotMeasurement';
 import { canStartCoverSlide } from '../coverTransition';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
@@ -173,8 +173,7 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   // on its way to settling, the accurate measurement arrived second and moved
   // the artwork after it had apparently landed.
   useAnimatedReaction(
-    () =>
-      Math.abs(expansion.value - 1) <= SETTLE_EPSILON || expansion.value <= SETTLE_EPSILON,
+    () => isAtRest(expansion.value),
     (atRest, wasAtRest) => {
       if (atRest && atRest !== wasAtRest) runOnJS(measureCoverSlot)();
     },
