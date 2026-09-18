@@ -102,7 +102,7 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   // cover width: the cover is inset from the screen edges, so that is where
   // the host rests the next one — and a shorter travel would land it beside
   // the slot rather than in it.
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const rad = useRadius();
 
   // Handed to the host as the swipe is accepted, so the row it is drawing is
@@ -124,21 +124,31 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
   const coverSlotRef = useRef<View>(null);
   const measureCoverSlot = useCallback(() => {
     coverSlotRef.current?.measureInWindow((x, y, slotWidth) => {
-      if (slotWidth > 0) fullCover.value = { x, y, size: slotWidth };
+      if (slotWidth <= 0) return;
+      // `measureInWindow` reports where the slot is *right now*, and right now
+      // the player's surface is usually somewhere it will not stay: it is
+      // translated down by a whole screen height while closed, and the list
+      // under it may be scrolled. Taken raw, a measurement made at any moment
+      // but a settled, unscrolled open stored a slot roughly one screen below
+      // where the cover would be drawn — so the artwork flew off the screen
+      // and only snapped into place once the player landed and re-measured.
+      // That is the first open of a session, which never had a corrected rect
+      // to use, and it is why every later open looked right.
+      //
+      // Undo both, so the rect always means "where the slot sits when the
+      // player is open and unscrolled" no matter when it was taken.
+      const surfaceOffset = (1 - expansion.value) * windowHeight;
+      fullCover.value = { x, y: y - surfaceOffset + scrollY.value, size: slotWidth };
     });
-  }, [fullCover]);
+  }, [fullCover, expansion, scrollY, windowHeight]);
 
-  // Re-measure whenever the player comes to rest: the lyrics preview and the
-  // optional cards arrive after the first layout and can move this. Only from
-  // the top, so the stored rect always means "where the slot sits unscrolled"
-  // — which is the assumption the host's scroll correction is built on.
-  //
-  // Closed counts as rest too, and it is the more useful of the two: a rect
-  // that changed since the last open is corrected while the cover is still a
-  // thumbnail in the dock, instead of the correction arriving under the eye at
-  // the exact moment the artwork lands.
+  // Re-measure when the player comes to rest at either end: the lyrics preview
+  // and the optional cards arrive after the first layout and can move this.
+  // Safe at both ends now that the measurement undoes the surface offset
+  // itself — before that, measuring while closed stored a slot a screen too
+  // low and broke the very next open.
   useAnimatedReaction(
-    () => (expansion.value >= 1 && scrollY.value <= 0) || expansion.value <= 0.001,
+    () => expansion.value >= 1 || expansion.value <= 0.001,
     (atRest, wasAtRest) => {
       if (atRest && atRest !== wasAtRest) runOnJS(measureCoverSlot)();
     },
