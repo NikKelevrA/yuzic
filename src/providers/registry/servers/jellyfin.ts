@@ -77,7 +77,10 @@ export const jellyfinProvider: ServerProviderConfig = {
     if (cover.kind !== 'jellyfin') return null;
     const token = server.auth?.token as string | undefined;
     if (!server.serverUrl || !token) return null;
-    const params = new URLSearchParams({ quality: '90', maxWidth: String(px), maxHeight: String(px), 'X-Emby-Token': token });
+    // `ApiKey`, not `X-Emby-Token`: the latter is not a query parameter
+    // Jellyfin reads on any version, and `api_key` is gated behind 12's
+    // legacy-authorization switch. See `MediaBrowserBrand.streamTokenParam`.
+    const params = new URLSearchParams({ quality: '90', maxWidth: String(px), maxHeight: String(px), ApiKey: token });
     return `${server.serverUrl}/Items/${cover.itemId}/Images/Primary?${params}`;
   },
 };
