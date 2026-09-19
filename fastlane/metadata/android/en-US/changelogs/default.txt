@@ -1,6 +1,6 @@
-Music that does not cut out, and Jellyfin sign-in that works again.
+Rate your music, and turn your phone on its side.
 
-- Streaming now buffers far further ahead, so a patchy connection no longer drops the audio mid-song
-- Jellyfin sign-in works again on servers updated to Jellyfin 12
-- Cover art settles into place without a late jump
-- Clearer errors and steadier lists when setting up a downloader
+- Five stars on the player, in song and album options, and as a library sort order — kept on your server, wherever your server keeps ratings
+- The app lays itself out for the window it is in. Landscape, iPad Split View and foldables get their own layout instead of a stretched portrait one, and the player has a second shape on its side
+- A wider window shows more artwork, not bigger
+- Screen readers name controls they used to skip
