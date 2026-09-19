@@ -18,12 +18,10 @@ import { STALE_DEEZER_DISCOVERY } from '@/features/home/constants'
 import MediaTile from '@/features/home/components/MediaTile'
 import type { Album } from '@/domain/entities/Album'
 import {
-  ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
-  ALBUM_RECOMMENDATION_TILE_GAP,
-  ALBUM_RECOMMENDATION_VISIBLE_TILES,
   ALBUM_RECOMMENDATION_RELATED_LIMIT,
   ALBUM_RECOMMENDATION_TARGET_ALBUMS,
 } from '@/features/album/constants';
+import { SHELF_GAP, SHELF_INSET, shelfItemWidth } from '@/features/layout/shelf';
 import { useRadius } from '@/features/theme/useRadius';
 
 type Props = {
@@ -41,7 +39,7 @@ export default function AlbumRecommendedSection({ artistName, excludeAlbumId }: 
   const { artists } = useArtists()
   const { navigateToAlbum } = useMatchedNavigation()
 
-  const tileWidth = (screenWidth - ALBUM_RECOMMENDATION_HORIZONTAL_PADDING * 2 - ALBUM_RECOMMENDATION_TILE_GAP * 2) / ALBUM_RECOMMENDATION_VISIBLE_TILES
+  const tileWidth = shelfItemWidth(screenWidth)
 
   const libraryArtistNames = useMemo(
     () => new Set(artists.map(a => a.name.toLowerCase())),
@@ -108,7 +106,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
+    paddingHorizontal: SHELF_INSET,
     marginBottom: spacing.md,
   },
   badge: {
@@ -126,7 +124,7 @@ const styles = StyleSheet.create({
     ...typography.sectionTitle,
   },
   scroll: {
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
-    gap: ALBUM_RECOMMENDATION_TILE_GAP,
+    paddingHorizontal: SHELF_INSET,
+    gap: SHELF_GAP,
   },
 })

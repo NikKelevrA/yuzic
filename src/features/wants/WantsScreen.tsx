@@ -89,7 +89,7 @@ const WantsScreen: React.FC = () => {
   const sortSheetRef = useRef<WantsPickHandle>(null);
   const filterSheetRef = useRef<WantsPickHandle>(null);
 
-  const gutter = libraryGutter(isGridView, GRID_SPACING);
+  const gutter = libraryGutter(isGridView, GRID_SPACING, screenWidth);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
 
   /**

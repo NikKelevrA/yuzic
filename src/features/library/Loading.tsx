@@ -35,7 +35,7 @@ const LoadingLibraryList: React.FC<{ collection?: LibraryCollectionType | null }
 
   const rows = useMemo(() => Array.from({ length: PLACEHOLDER_ROWS }), [])
 
-  const gutter = libraryGutter(isGridView, GRID_SPACING)
+  const gutter = libraryGutter(isGridView, GRID_SPACING, width)
 
   return (
     <ScrollView

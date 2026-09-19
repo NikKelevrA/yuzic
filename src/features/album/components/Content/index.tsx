@@ -22,10 +22,8 @@ import { playableSongs } from '@/features/album/trackPlayability';
 import {
   ALBUM_ESTIMATED_ROW_HEIGHT,
   ALBUM_DISC_HEADER_HEIGHT,
-  ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
-  ALBUM_RECOMMENDATION_TILE_GAP,
-  ALBUM_RECOMMENDATION_VISIBLE_TILES,
 } from '@/features/album/constants';
+import { SHELF_GAP, SHELF_INSET, shelfItemWidth } from '@/features/layout/shelf';
 import { formatDuration } from '@/components/formatDuration';
 import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
@@ -64,7 +62,7 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
   const { songs: starredSongs } = useStarredSongs();
   const albumPlayCount = useSelector(selectAlbumPlayCount(model.album?.nativeId ?? ''));
   const { width: screenWidth } = useWindowDimensions();
-  const tileWidth = (screenWidth - ALBUM_RECOMMENDATION_HORIZONTAL_PADDING * 2 - ALBUM_RECOMMENDATION_TILE_GAP * 2) / ALBUM_RECOMMENDATION_VISIBLE_TILES;
+  const tileWidth = shelfItemWidth(screenWidth);
   const starredSongIds = useMemo(() => new Set(starredSongs.map(song => song.localId)), [starredSongs]);
 
   const { album, songs, songsLoading, playability, isLocal, moreAlbums } = model;
@@ -257,12 +255,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   statsHeader: {
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
+    paddingHorizontal: SHELF_INSET,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xs,
   },
   statsFooter: {
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
+    paddingHorizontal: SHELF_INSET,
     paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
   },
@@ -275,12 +273,12 @@ const styles = StyleSheet.create({
   },
   moreSectionTitle: {
     ...typography.sectionTitle,
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
+    paddingHorizontal: SHELF_INSET,
     marginBottom: spacing.md,
   },
   moreTileRow: {
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
-    gap: ALBUM_RECOMMENDATION_TILE_GAP,
+    paddingHorizontal: SHELF_INSET,
+    gap: SHELF_GAP,
   },
 });
 

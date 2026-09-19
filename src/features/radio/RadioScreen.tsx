@@ -80,7 +80,7 @@ export default function RadioScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const sortSheetRef = useSheetRef();
 
-  const gutter = libraryGutter(isGridView, GRID_SPACING);
+  const gutter = libraryGutter(isGridView, GRID_SPACING, screenWidth);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
 
   const stationsQuery = useQuery({

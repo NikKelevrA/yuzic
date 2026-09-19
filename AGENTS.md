@@ -300,7 +300,11 @@ because both halves of each pair look reasonable in isolation.
 - **The window, not the device**: the app rotates, and every size that used
   to come from `useWindowDimensions` now comes from `features/layout` —
   `useWindowLayout` for the window itself, `useGridColumns` for a grid,
-  `useContentInset` for a list of rows, `playerLayout` for the player. None of
+  `shelfItemWidth` for a horizontal shelf of covers (Home's and the album
+  screen's alike; `getSectionItemWidth` is the same function under the name
+  Home's shelves already called it), `useContentInset` for a list of rows,
+  `libraryGutter` for the library-shaped lists that spell the same cap as
+  padding, `playerLayout` for the player. None of
   them asks what device it is on: a phone on its side, an iPad in Split View
   at a third of the screen and a half-open foldable are each a *window*, and
   `Platform.isPad` answers none of them. Two rules keep the results honest.

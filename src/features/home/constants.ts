@@ -1,16 +1,15 @@
-import { spacing } from '@/constants/design'
-
 /**
- * Shared layout constants for horizontal explore section grids.
+ * The shelf scale, under the names Home's fifteen call sites already use.
  *
- * `SECTION_H_PADDING` is the one home inset. It had three definitions — this
- * one as a literal 16, `sectionStyles`' as `spacing.page`, and a 12 that
- * QuickPicks and the section empty state each declared for themselves — so an
- * empty shelf sat 4pt further in than the shelf it replaced. The lint rule
- * could not see any of it: it reads a literal, not an identifier.
+ * `SECTION_H_PADDING` had three definitions once — this one as a literal 16,
+ * `sectionStyles`' as `spacing.page`, and a 12 that QuickPicks and the
+ * section empty state each declared for themselves — so an empty shelf sat
+ * 4pt further in than the shelf it replaced. The lint rule could not see any
+ * of it: it reads a literal, not an identifier. It then gained a fourth on
+ * the album screen. There is one now, in `features/layout/shelf`, because
+ * Home is not the only screen with shelves on it.
  */
-export const SECTION_H_PADDING = spacing.page
-export const SECTION_GRID_GAP = spacing.md
+export { SHELF_INSET as SECTION_H_PADDING, SHELF_GAP as SECTION_GRID_GAP } from '@/features/layout/shelf'
 
 /**
  * Shared stale-time values for Deezer explore section queries.

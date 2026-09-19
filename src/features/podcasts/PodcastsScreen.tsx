@@ -25,7 +25,7 @@ import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
-import { hitSlopFor, iconSize, spacing, statusColor, typography } from '@/constants/design';
+import { contentWidth, hitSlopFor, iconSize, spacing, statusColor, typography } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { isUnavailableOnServer } from '@/features/library/useServerSurface';
@@ -327,7 +327,14 @@ function SubscribeSheet({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { paddingVertical: spacing.md },
+  listContent: {
+    paddingVertical: spacing.md,
+    // A column of rows, capped and centred like every other one. A
+    // `FlatList` takes a width here, unlike a `FlashList`.
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
+  },
   // Inset to match `MediaListRow`'s own page padding, so the rule starts where
   // the row's content does rather than running to the screen edge.
   separator: {

@@ -6,8 +6,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import ListControls from '@/components/ListControls'
 import { selectLibraryViewMode, setIsGridView, setLibraryViewMode } from '@/features/settings/appearance/state';
 import { useGridColumns } from '@/features/layout/useGridColumns';
-import { centringInset } from '@/features/layout/windowClass';
-import { contentWidth } from '@/constants/design';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from './layout'
 import AlbumItem from './components/Items/AlbumItem'
 import ArtistItem from './components/Items/ArtistItem'
@@ -52,14 +50,7 @@ const LibraryList: React.FC<Props> = ({
 
   const sortSheetRef = useSheetRef()
 
-  // A grid fills the window — that is what the extra columns are for. A list
-  // is a column of rows, and a row 1300pt wide puts the title and the
-  // duration at opposite ends of an iPad with nothing in between, so it is
-  // capped and the leftover room becomes the gutter that centres it. On a
-  // phone the leftover is zero and this is the gutter it always was.
-  const gutter =
-    libraryGutter(isGridView, GRID_SPACING) +
-    (isGridView ? 0 : centringInset(screenWidth, contentWidth.readable))
+  const gutter = libraryGutter(isGridView, GRID_SPACING, screenWidth)
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter)
 
   /**

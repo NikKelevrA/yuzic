@@ -9,6 +9,7 @@ import type { Album } from '@/domain/entities/Album'
 import AlbumRow from '@/components/rows/AlbumRow'
 import Header, { ArtistHeaderBar } from '../Header'
 import { DetailScreen } from '@/components/DetailHeader'
+import { useContentInset } from '@/features/layout/useContentInset'
 import { useTheme } from '@/features/theme/useTheme'
 import { useTranslation } from 'react-i18next'
 import { releaseYearLabel } from '@/features/artist/discography'
@@ -39,10 +40,21 @@ type ArtistContentItem =
   | { kind: 'similar'; id: string }
   | { kind: 'bio'; id: string }
 
+/**
+ * The item kinds that are blocks rather than rows.
+ *
+ * Each carries a horizontal shelf or a paragraph of its own and spans the
+ * window; everything else in this list is an album row, and rows are capped.
+ */
+const ARTIST_FULL_BLEED = new Set<ArtistContentItem['kind']>([
+  'mostPlayed', 'topSongs', 'popularTracks', 'bio', 'similar',
+])
+
 const INITIAL_RELEASE_ROWS = 3
 
 export default function ArtistContent({ model }: Props) {
   const scrollClearance = useScrollClearance()
+  const { listInset, fullBleed } = useContentInset()
   const navigation = useNavigation<any>()
   const { navigateToAlbum } = useMatchedNavigation()
   const { colors } = useTheme()
@@ -134,7 +146,7 @@ export default function ArtistContent({ model }: Props) {
     return rows
   }, [artist, isLocal, ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, model.similarArtists, visibleAlbumsCount, visibleSinglesCount, showUnownedAlbums, showUnownedSingles, t])
 
-  const renderItem = useCallback(({ item }: { item: ArtistContentItem }) => {
+  const renderContent = useCallback((item: ArtistContentItem) => {
     if (item.kind === 'mostPlayed') {
       return artist ? <MostPlayedSection artist={artist} /> : null
     }
@@ -221,18 +233,35 @@ export default function ArtistContent({ model }: Props) {
     )
   }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, setVisibleAlbumsCount, setVisibleSinglesCount, setShowUnownedAlbums, setShowUnownedSingles, t])
 
+  // The list is mostly a column of album rows, so it is capped and centred
+  // like every other column of rows — but five of its item kinds are not
+  // rows at all: they are blocks with their own horizontal shelves inside,
+  // and those span the window. Same pair of numbers as the library gutter,
+  // applied per item because here the two kinds are interleaved rather than
+  // split into a header and a body.
+  const renderItem = useCallback(({ item }: { item: ArtistContentItem }) => {
+    const content = renderContent(item)
+    if (!ARTIST_FULL_BLEED.has(item.kind) || content === null) return content
+    return <View style={fullBleed}>{content}</View>
+  }, [renderContent, fullBleed])
+
   return (
     <DetailScreen bar={<ArtistHeaderBar model={model} />}>
       {scroll => (
       <FlashList
         data={items}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={<Header model={model} showNavigation={false} />}
+        ListHeaderComponent={
+          <View style={fullBleed}>
+            <Header model={model} showNavigation={false} />
+          </View>
+        }
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: scrollClearance,
           backgroundColor: colors.background,
+          ...listInset,
         }}
         {...scroll}
       />
