@@ -29,7 +29,9 @@ jest.mock('@/components/haptics', () => ({
 jest.mock('@/components/toast', () => ({
   notify: Object.assign(jest.fn(), { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() }),
 }));
-jest.mock('react-redux', () => ({ useSelector: (selector: any) => selector({}), useDispatch: () => jest.fn() }));
+// The rating row reads the real `selectRatingOverrides`, so the fake state
+// has to carry the slice, empty.
+jest.mock('react-redux', () => ({ useSelector: (selector: any) => selector({ ratings: { byServer: {} } }), useDispatch: () => jest.fn() }));
 jest.mock('@/state/redux/selectors/statsSelectors', () => ({
   selectSongPlayCount: () => () => 0, selectAlbumPlayCount: () => () => 0, selectArtistPlayCount: () => () => 0,
 }));
@@ -150,7 +152,7 @@ describe('useEntityActions', () => {
   const close = jest.fn();
 
   it('useSongLibraryActions resolves the library song action set', async () => {
-    const { result } = await renderHook(() => useSongLibraryActions(song, { onAddToPlaylist: jest.fn(), close }));
+    const { result } = await renderHook(() => useSongLibraryActions(song, { onAddToPlaylist: jest.fn(), onRating: jest.fn(), close }));
     expect(result.current.actions.map(a => a.id)).toContain('favorite');
     expect(result.current.actions.map(a => a.id)).toContain('instantMix');
   });
@@ -163,7 +165,7 @@ describe('useEntityActions', () => {
   });
 
   it('useAlbumLibraryActions resolves the library album action set', async () => {
-    const { result } = await renderHook(() => useAlbumLibraryActions(album, { hideGoToAlbum: false, isSheetOpen: false, close }));
+    const { result } = await renderHook(() => useAlbumLibraryActions(album, { hideGoToAlbum: false, isSheetOpen: false, onRating: jest.fn(), close }));
     expect(result.current.actions.map(a => a.id)).toContain('addToNext');
   });
 

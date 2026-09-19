@@ -1097,7 +1097,8 @@
       "downloading": "Downloading…",
       "downloaded": "Downloaded",
       "generatePlaylist": "Make a playlist from this",
-      "sleepTimer": "Sleep timer"
+      "sleepTimer": "Sleep timer",
+      "rating": "Rating"
     },
     "sections": {
       "media": "Media",
@@ -1279,7 +1280,8 @@
       "unfavorite": "Unfavorite",
       "viewExternal": "View External",
       "share": "Share",
-      "generatePlaylist": "Make a playlist from this"
+      "generatePlaylist": "Make a playlist from this",
+      "rating": "Rating"
     },
     "toasts": {
       "addedNext": "Playing {{title}} next",
@@ -1605,8 +1607,10 @@
     "openInSource": "Open in {{source}}"
   },
   "ratings": {
-    "label": "Rating",
     "offline": "Can't change a rating while the server is out of reach",
-    "failed": "That rating didn't save"
+    "failed": "That rating didn't save",
+    "title": "Rating",
+    "clear": "Clear rating",
+    "notRated": "Not rated"
   }
 }

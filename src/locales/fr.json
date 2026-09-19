@@ -1095,7 +1095,8 @@
       "downloaded": "Téléchargé",
       "goToArtist": "Voir l'artiste",
       "generatePlaylist": "Créer une playlist à partir de ce titre",
-      "sleepTimer": "Minuteur de veille"
+      "sleepTimer": "Minuteur de veille",
+      "rating": "Note"
     },
     "sections": {
       "media": "Média",
@@ -1277,7 +1278,8 @@
       "favorite": "Ajouter aux favoris",
       "unfavorite": "Retirer des favoris",
       "share": "Partager",
-      "generatePlaylist": "Créer une liste de lecture à partir de ceci"
+      "generatePlaylist": "Créer une liste de lecture à partir de ceci",
+      "rating": "Note"
     },
     "toasts": {
       "addedNext": "Lecture de {{title}} ensuite",
@@ -1605,8 +1607,10 @@
     "openInSource": "Ouvrir dans {{source}}"
   },
   "ratings": {
-    "label": "Note",
     "offline": "Impossible de modifier une note tant que le serveur est injoignable",
-    "failed": "Cette note n'a pas été enregistrée"
+    "failed": "Cette note n'a pas été enregistrée",
+    "title": "Note",
+    "clear": "Effacer la note",
+    "notRated": "Sans note"
   }
 }

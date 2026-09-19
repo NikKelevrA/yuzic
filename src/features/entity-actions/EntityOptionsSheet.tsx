@@ -37,15 +37,6 @@ interface EntityOptionsSheetProps {
    */
   header: EntityOptionsSheetHeader | null;
   actions?: ResolvedAction[];
-  /**
-   * Rendered between the header and the actions.
-   *
-   * For the one thing a sheet shows that is neither a heading nor something
-   * that happens when pressed: the rating strip, whose live parts are five
-   * targets of its own. `infoSection` is the other end of the sheet and
-   * would have buried it under every action.
-   */
-  aboveActions?: ReactNode;
   /** Media/album/playlist/artist info rows — pure display, not actions, so not part of the registry. */
   infoSection?: ReactNode;
   onChange?: (index: number) => void;
@@ -63,7 +54,7 @@ interface EntityOptionsSheetProps {
  */
 export const EntityOptionsSheet = forwardRef<BottomSheetModal, EntityOptionsSheetProps>(
   (
-    { snapPoints, header, actions = [], aboveActions, infoSection, onChange, stackBehavior = 'push', enablePanDownToClose = true, testID },
+    { snapPoints, header, actions = [], infoSection, onChange, stackBehavior = 'push', enablePanDownToClose = true, testID },
     ref
   ) => {
     const { colors } = useTheme();
@@ -93,8 +84,6 @@ export const EntityOptionsSheet = forwardRef<BottomSheetModal, EntityOptionsShee
             contentContainerStyle={sheetContent}
           >
             <OptionSheetHeader cover={header.cover} title={header.title} subtitle={header.subtitle} titleLines={header.titleLines} />
-
-            {aboveActions}
 
             <OptionSheetDivider />
 

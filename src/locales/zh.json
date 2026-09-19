@@ -1090,7 +1090,8 @@
       "downloaded": "已下载",
       "goToArtist": "前往艺术家",
       "generatePlaylist": "以此创建播放列表",
-      "sleepTimer": "睡眠定时器"
+      "sleepTimer": "睡眠定时器",
+      "rating": "评分"
     },
     "sections": {
       "media": "媒体信息",
@@ -1272,7 +1273,8 @@
       "favorite": "加入收藏",
       "unfavorite": "移出收藏",
       "share": "共享",
-      "generatePlaylist": "以此生成播放列表"
+      "generatePlaylist": "以此生成播放列表",
+      "rating": "评分"
     },
     "sections": {
       "albumInfo": "专辑信息"
@@ -1599,8 +1601,10 @@
     "openInSource": "在 {{source}} 中打开"
   },
   "ratings": {
-    "label": "评分",
     "offline": "服务器无法连接，暂时无法修改评分",
-    "failed": "评分未能保存"
+    "failed": "评分未能保存",
+    "title": "评分",
+    "clear": "清除评分",
+    "notRated": "未评分"
   }
 }

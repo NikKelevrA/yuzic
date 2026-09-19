@@ -13,7 +13,7 @@ import {
   OptionSheetSectionLabel,
 } from './OptionSheetPrimitives';
 import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet';
-import RatingStrip from '@/features/ratings/RatingStrip';
+import RatingSheet from '@/features/ratings/RatingSheet';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import {
   useSongLibraryActions,
@@ -103,10 +103,18 @@ const LibrarySongOptionsSheet = forwardRef<BottomSheetModal, LibrarySongOptionsP
     const { t } = useTranslation();
     const snapPoints = useMemo(() => ['55%', '90%'], []);
     const close = () => dismissSheetRef(ref);
+    const ratingSheetRef = useSheetRef();
 
-    const { actions, playCount } = useSongLibraryActions(selectedSong, { onAddToPlaylist, onSleepTimer, onNavigate, close });
+    const { actions, playCount } = useSongLibraryActions(selectedSong, {
+      onAddToPlaylist,
+      onRating: () => ratingSheetRef.current?.present(),
+      onSleepTimer,
+      onNavigate,
+      close,
+    });
 
     return (
+      <>
       <EntityOptionsSheet
         ref={ref}
         testID="song-options-sheet"
@@ -117,7 +125,6 @@ const LibrarySongOptionsSheet = forwardRef<BottomSheetModal, LibrarySongOptionsP
           subtitle: selectedSong.artist.name || t('songOptions.unknownArtist'),
         }}
         actions={actions}
-        aboveActions={<RatingStrip entity={selectedSong} />}
         infoSection={
           <>
             <OptionSheetDivider />
@@ -167,6 +174,8 @@ const LibrarySongOptionsSheet = forwardRef<BottomSheetModal, LibrarySongOptionsP
           </>
         }
       />
+      <RatingSheet ref={ratingSheetRef} entity={selectedSong} />
+      </>
     );
   }
 );

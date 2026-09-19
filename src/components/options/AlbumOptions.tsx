@@ -18,7 +18,7 @@ import {
   useOptionSheetContentStyle,
 } from './OptionSheetPrimitives';
 import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet';
-import RatingStrip from '@/features/ratings/RatingStrip';
+import RatingSheet from '@/features/ratings/RatingSheet';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import { useAlbumLibraryActions, useAlbumExternalActions } from '@/features/entity-actions/hooks/useAlbumActions';
 
@@ -69,19 +69,23 @@ const LibraryAlbumOptionsSheet = forwardRef<BottomSheetModal, LibraryAlbumOption
     const snapPoints = useMemo(() => ['55%', '90%'], []);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const close = () => dismissSheetRef(ref);
+    const ratingSheetRef = useSheetRef();
 
     const { actions, songs, playCount } = useAlbumLibraryActions(album, {
-      hideGoToAlbum: !!hideGoToAlbum, isSheetOpen, close,
+      hideGoToAlbum: !!hideGoToAlbum,
+      isSheetOpen,
+      onRating: () => ratingSheetRef.current?.present(),
+      close,
     });
 
     return (
+      <>
       <EntityOptionsSheet
         ref={ref}
         snapPoints={snapPoints}
         onChange={index => setIsSheetOpen(index >= 0)}
         header={album ? { cover: album.cover, title: album.title, subtitle: album.artist?.name ?? '', titleLines: 2 } : null}
         actions={actions}
-        aboveActions={<RatingStrip entity={album} />}
         infoSection={album && (
           <>
             <OptionSheetDivider />
@@ -98,6 +102,8 @@ const LibraryAlbumOptionsSheet = forwardRef<BottomSheetModal, LibraryAlbumOption
           </>
         )}
       />
+      <RatingSheet ref={ratingSheetRef} entity={album} />
+      </>
     );
   }
 );

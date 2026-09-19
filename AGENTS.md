@@ -357,16 +357,23 @@ because both halves of each pair look reasonable in isolation.
   Anything drawn above the items — a header, the sort row — cancels that
   padding with a negative margin and keeps `spacing.page`, so all of it lines
   up on one edge.
-- **A sheet's rating strip is not an action**: `EntityOptionsSheet` has an
-  `aboveActions` slot, between the header and the first row, and the five-star
-  strip is what it is for. An action row does something when pressed; a row
-  whose only live parts are five small targets on its right does nothing when
-  a finger lands anywhere else on it. The actions stay a list of things that
-  happen. Everything about ratings is presence-gated on the adapter's
-  `ratings` surface rather than on a provider name — strip, player stars,
-  Appearance switch and the "Rating" sort order all disappear together on a
-  server without them; `docs/integrations.md` says which servers those are and
-  why Plex is one of them.
+- **A row is one accessibility element, so nothing tappable goes inside one**:
+  `OptionSheetRow` wraps its whole contents — the `trailing` slot included —
+  in a single `Touchable`, and React Native's `Pressable` is an accessibility
+  element unless told otherwise. Five stars in a row's trailing slot would be
+  five controls a screen reader can see and never reach, which is why the only
+  other `trailing` in the app is inert text. Rating therefore has the sleep
+  timer's shape: an ordinary registry row showing the current value
+  (`RatingValue`, deliberately not pressable) that opens `RatingSheet`, where
+  the stars are direct children of the sheet and are five radios again. It
+  sits next to Favourite, which is the pair those two rows are meant to be —
+  a favourite says "keep this where I can find it" (it builds the Favourites
+  playlist and the CarPlay category, and it survives being offline), a rating
+  says how much you like it. Everything about ratings is presence-gated on the
+  adapter's `ratings` surface rather than on a provider name — row, player
+  stars, Appearance switch and the "Rating" sort order all disappear together
+  on a server without them; `docs/integrations.md` says which servers those
+  are and why Plex is one of them.
 - **Options live behind a `⋯`**: every detail-style screen — album, artist
   (browsed as well as owned), playlist, genre, radio, podcasts, shares, wants —
   puts its actions in an options sheet opened from a `⋯` on the right of

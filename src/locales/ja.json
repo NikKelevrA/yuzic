@@ -1090,7 +1090,8 @@
       "downloaded": "ダウンロード済み",
       "goToArtist": "アーティストへ移動",
       "generatePlaylist": "この曲からプレイリストを作成",
-      "sleepTimer": "スリープタイマー"
+      "sleepTimer": "スリープタイマー",
+      "rating": "評価"
     },
     "sections": {
       "media": "メディア",
@@ -1272,7 +1273,8 @@
       "favorite": "お気に入り",
       "unfavorite": "お気に入り解除",
       "share": "共有",
-      "generatePlaylist": "これでプレイリストを作成"
+      "generatePlaylist": "これでプレイリストを作成",
+      "rating": "評価"
     },
     "toasts": {
       "addedNext": "{{title}}を次に再生",
@@ -1599,8 +1601,10 @@
     "openInSource": "{{source}} で開く"
   },
   "ratings": {
-    "label": "評価",
     "offline": "サーバーに接続できないため、評価を変更できません",
-    "failed": "評価を保存できませんでした"
+    "failed": "評価を保存できませんでした",
+    "title": "評価",
+    "clear": "評価を削除",
+    "notRated": "未評価"
   }
 }
