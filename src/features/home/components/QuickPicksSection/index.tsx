@@ -32,7 +32,7 @@ import {
   QUICK_PICKS_PEEK,
   SECTION_H_PADDING,
 } from '@/features/home/constants';
-import { iconSize, spacing, typography } from '@/constants/design';
+import { contentWidth, iconSize, spacing, typography } from '@/constants/design';
 
 function useQuickPicks(refreshKey: number, itemCount: number): Song[] {
   const songsById = useSongsById();
@@ -75,6 +75,12 @@ export default function QuickPicksSection({ refreshKey = 0 }: Props) {
   // Stable while the picks are unchanged; see `useStableList`.
   const picks = useStableList(useQuickPicks(refreshKey, itemCount));
   const { width: screenWidth } = useWindowDimensions();
+  // A page is a column of four track rows, so it is capped like any other
+  // column of rows rather than following the window: a 1366pt page put the
+  // title and the ⋯ a foot apart with nothing in between. The peek is what
+  // says there is another page, and it only has a job while the page is the
+  // width of the window.
+  const pageWidth = Math.min(screenWidth - QUICK_PICKS_PEEK, contentWidth.readable);
   const { openSongOptions } = useSongActionSheets();
 
   const inFlightRef = useRef<string | null>(null);
@@ -120,11 +126,11 @@ export default function QuickPicksSection({ refreshKey = 0 }: Props) {
         horizontal
         showsHorizontalScrollIndicator={false}
         decelerationRate="fast"
-        snapToInterval={screenWidth - QUICK_PICKS_PEEK}
+        snapToInterval={pageWidth}
         snapToAlignment="start"
       >
         {pages.map((page, pageIdx) => (
-          <View key={pageIdx} style={[styles.page, { width: screenWidth - QUICK_PICKS_PEEK }]}>
+          <View key={pageIdx} style={[styles.page, { width: pageWidth }]}>
             {page.map(song => (
               <MediaListRow
                 key={song.localId}

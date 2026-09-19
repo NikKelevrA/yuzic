@@ -12,5 +12,6 @@ export function useSortLabels(): Record<SortOrder, string> {
     title: t('home.sort.alphabetical'),
     year: t('home.sort.releaseYear'),
     userplays: t('home.sort.mostPlayed'),
+    rating: t('home.sort.rating'),
   }), [t])
 }

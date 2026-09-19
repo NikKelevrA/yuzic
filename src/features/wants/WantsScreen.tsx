@@ -13,12 +13,12 @@ import WantsPickSheet, { type WantsPickHandle, type WantsPickOption } from './Wa
 import { WantOptions } from '@/components/options/WantOptions';
 import LibraryItem from '@/features/library/components/Items/LibraryItem';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from '@/features/library/layout';
+import { useGridColumns } from '@/features/layout/useGridColumns';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { iconSize } from '@/constants/design';
 import {
-  selectGridColumns,
   selectLibraryViewMode,
   setLibraryViewMode,
 } from '@/features/settings/appearance/state';
@@ -27,6 +27,7 @@ import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { removeWant, type Want, type WantUnit } from '@/state/redux/slices/wantsSlice';
 import WantRow from './WantRow';
 import WantGetSheet from './WantGetSheet';
+import WantArtistGetSheet from './WantArtistGetSheet';
 import { useWantRowStatus } from './useWantRowStatus';
 import { wantAlbum, wantArtist } from './wantEntity';
 
@@ -68,7 +69,7 @@ const WantsScreen: React.FC = () => {
   const wants = useSelector(selectWantsForActiveServer);
   const activeServerId = useSelector(selectActiveServerId);
   const isGridView = useSelector(selectLibraryViewMode('wants'));
-  const gridColumns = useSelector(selectGridColumns);
+  const gridColumns = useGridColumns();
   const { width: screenWidth } = useWindowDimensions();
   const statusOf = useWantRowStatus();
   const { navigateToAlbum, navigateToArtist } = useMatchedNavigation();
@@ -89,7 +90,7 @@ const WantsScreen: React.FC = () => {
   const sortSheetRef = useRef<WantsPickHandle>(null);
   const filterSheetRef = useRef<WantsPickHandle>(null);
 
-  const gutter = libraryGutter(isGridView, GRID_SPACING);
+  const gutter = libraryGutter(isGridView, GRID_SPACING, screenWidth);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
 
   /**
@@ -269,11 +270,17 @@ const WantsScreen: React.FC = () => {
         />
       )}
 
-      {/* Album and track Gets go through the app's normal review sheet; an
-          artist Get is dispatched from the options sheet itself, since there
-          is no release to review. */}
+      {/* Every unit is reviewed before it is asked for. A release goes through
+          the app's normal Get sheet; an artist has no release to review and its
+          own sheet instead, which asks what to watch and whether to go looking.
+          An artist used to be dispatched straight from the options sheet — the
+          one acquisition in the app that happened without a confirm step. */}
       {getFor && getFor.unit !== 'artist' && (
         <WantGetSheet want={getFor} onClose={() => setGetFor(null)} />
+      )}
+
+      {getFor && getFor.unit === 'artist' && (
+        <WantArtistGetSheet want={getFor} onClose={() => setGetFor(null)} />
       )}
     </SafeAreaView>
   );

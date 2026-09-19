@@ -297,6 +297,35 @@ because both halves of each pair look reasonable in isolation.
   style as a broken layout rather than as a default. Under the `default` option
   each hook returns exactly the number the app used before the setting existed,
   so adding one moves nothing until the user asks it to.
+- **The window, not the device**: the app rotates, and every size that used
+  to come from `useWindowDimensions` now comes from `features/layout` —
+  `useWindowLayout` for the window itself, `useGridColumns` for a grid,
+  `shelfItemWidth` for a horizontal shelf of covers (Home's and the album
+  screen's alike; `getSectionItemWidth` is the same function under the name
+  Home's shelves already called it), `useContentInset` for a list of rows,
+  `libraryGutter` for the library-shaped lists that spell the same cap as
+  padding, `playerLayout` for the player. None of
+  them asks what device it is on: a phone on its side, an iPad in Split View
+  at a third of the screen and a half-open foldable are each a *window*, and
+  `Platform.isPad` answers none of them. Two rules keep the results honest.
+  **A cap, not a stretch** — a row is the one shape that gets worse as it gets
+  wider, so a column of them stops at `contentWidth.readable` and the leftover
+  room becomes the padding that centres it (`centringInset`; a `FlashList`
+  takes padding in `contentContainerStyle` and rejects everything else, which
+  is why the cap is spelled that way). Anything full-bleed above or below the
+  rows — a hero and its colour wash, a shelf of covers — gives the padding
+  back with a negative margin, exactly as the library gutter already did.
+  **More artwork, not bigger** — a grid or a shelf answers a wider window with
+  more tiles, sized by `artworkScaleFor`, which grows with the square root of
+  the window and stops at half again. Every one of these returns *exactly* the
+  number the app drew before it existed at or below `REFERENCE_WIDTH`, which
+  is the widest phone rather than the typical one, so no phone moved. A square
+  is bounded by the window's height as well as its width (`squareArtSize`):
+  sizing artwork off width alone is correct in portrait and asks for an 800pt
+  cover in a 390pt-tall window the moment the phone is turned, which is what
+  pushed the player's transport off the screen. The player has two shapes
+  rather than one that stretches — see `playerLayout`, where landscape decides
+  it, not the size class.
 - **Home vs Library**: Home is what changes, Library is what's complete. A view
   that moves on its own — recently added, most played, what you were listening
   to — is a Home shelf; the stable, exhaustive, sortable list is a Library
@@ -328,6 +357,23 @@ because both halves of each pair look reasonable in isolation.
   Anything drawn above the items — a header, the sort row — cancels that
   padding with a negative margin and keeps `spacing.page`, so all of it lines
   up on one edge.
+- **A row is one accessibility element, so nothing tappable goes inside one**:
+  `OptionSheetRow` wraps its whole contents — the `trailing` slot included —
+  in a single `Touchable`, and React Native's `Pressable` is an accessibility
+  element unless told otherwise. Five stars in a row's trailing slot would be
+  five controls a screen reader can see and never reach, which is why the only
+  other `trailing` in the app is inert text. Rating therefore has the sleep
+  timer's shape: an ordinary registry row showing the current value
+  (`RatingValue`, deliberately not pressable) that opens `RatingSheet`, where
+  the stars are direct children of the sheet and are five radios again. It
+  sits next to Favourite, which is the pair those two rows are meant to be —
+  a favourite says "keep this where I can find it" (it builds the Favourites
+  playlist and the CarPlay category, and it survives being offline), a rating
+  says how much you like it. Everything about ratings is presence-gated on the
+  adapter's `ratings` surface rather than on a provider name — row, player
+  stars, Appearance switch and the "Rating" sort order all disappear together
+  on a server without them; `docs/integrations.md` says which servers those
+  are and why Plex is one of them.
 - **Options live behind a `⋯`**: every detail-style screen — album, artist
   (browsed as well as owned), playlist, genre, radio, podcasts, shares, wants —
   puts its actions in an options sheet opened from a `⋯` on the right of

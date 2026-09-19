@@ -1,5 +1,5 @@
 import { hitSlopFor, iconSize, motion, onDark, spacing, typography } from '@/constants/design';
-import React, { memo, useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, type ReactNode } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,13 @@ import { useTranslation } from 'react-i18next';
 
 import {
   usePlayingState,
-  usePlayingProgress,
   usePlayingActions,
   usePlayingQueueVersion,
 } from '@/features/playback/PlayingContext';
 import { coverNeighbours } from '../coverNeighbours';
+import PlayingProgressSection from './PlayingProgress';
+import PlayingRating from './PlayingRating';
 import type { CoverStrip } from '@/features/player/PlayerExpansion';
-import { SeekableProgressBar } from './SeekableProgressBar';
 import { useSelector } from 'react-redux';
 import { selectShowQualityBadge } from '@/features/settings/appearance/state';
 import { hasDuration } from '@/domain/playback/ContentKind';
@@ -29,12 +29,28 @@ import { isAtRest, measurementHeldStill, restingSlotY } from '../coverSlotMeasur
 import { canStartCoverSlide } from '../coverTransition';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
+import type { PlayerLayout } from '../playerLayout';
 
 type PlayingMainProps = {
-  width: number;
+  /**
+   * Where the artwork and the column beside it go — see `playerLayout`.
+   * Everything this component sizes comes from here rather than from the
+   * window, so the one screen that decides the shape is the one that knows
+   * what is above and below it.
+   */
+  layout: PlayerLayout;
   onPressArtist?: () => void;
   onPressOptions?: () => void;
   onPressAdd?: () => void;
+  /**
+   * The transport row, handed in rather than rendered here.
+   *
+   * It belongs under the title in both shapes, and in the split one "under
+   * the title" is inside the right-hand column — so the column has to own it.
+   * The alternative was for the screen to place it and for the two of them to
+   * agree about the column's width twice.
+   */
+  children?: ReactNode;
 };
 
 // A swipe is unreachable with a screen reader on, so the same two outcomes are
@@ -46,52 +62,15 @@ const SWIPE_A11Y_ACTIONS = [
   { name: 'decrement' as const },
 ];
 
-const formatTime = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-};
-
-// Isolated so the once-a-second progress tick only re-renders the seek bar
-// and timestamps, not the cover art / title / artist / add button above it —
-// same reasoning as ProgressBarStrip in the mini player (PlayingBarBase).
-const PlayingProgressSection: React.FC<{ songDuration: number }> = memo(({ songDuration }) => {
-  const { seekSong } = usePlayingActions();
-  const progress = usePlayingProgress();
-  const nativeDuration = progress.duration;
-  const duration = nativeDuration > 0 ? nativeDuration : songDuration;
-  const position = Math.min(progress.position, duration);
-
-  return (
-    <>
-      <SeekableProgressBar
-        value={position}
-        duration={duration}
-        onSeek={seekSong}
-        fillColor={onDark.text}
-        trackColor={onDark.mutedText}
-        style={styles.progressBar}
-      />
-
-      <View style={styles.timestamps}>
-        <Text style={styles.timestamp}>
-          {formatTime(position)}
-        </Text>
-        <Text style={styles.timestamp}>
-          -{formatTime(duration - position)}
-        </Text>
-      </View>
-    </>
-  );
-});
-PlayingProgressSection.displayName = 'PlayingProgressSection';
-
 const PlayingMain: React.FC<PlayingMainProps> = ({
-  width,
+  layout,
   onPressArtist,
   onPressOptions,
-  onPressAdd
+  onPressAdd,
+  children
 }) => {
+  const { coverSize, columnWidth, rowWidth, columnGap } = layout;
+  const split = layout.mode === 'split';
   const { t } = useTranslation();
   const { currentSong, currentIndex, repeatMode } = usePlayingState();
   const { skipToNext, skipToPrevious, getQueue } = usePlayingActions();
@@ -201,7 +180,7 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
           coverSwipeX.value = event.translationX;
         })
         .onEnd(event => {
-          const outcome = resolveCoverSwipe(event.translationX, event.velocityX, width);
+          const outcome = resolveCoverSwipe(event.translationX, event.velocityX, coverSize);
           if (
             !currentSongId || outcome === 'cancel' ||
             !canStartCoverSlide(outcome, currentIndex, queueLength, repeatMode)
@@ -225,7 +204,7 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
         }),
     [
       beginCoverSlide, coverSwipeX, strip, currentIndex, currentSongId,
-      queueLength, repeatMode, skipToNext, skipToPrevious, width, windowWidth,
+      queueLength, repeatMode, skipToNext, skipToPrevious, coverSize, windowWidth,
     ],
   );
 
@@ -244,28 +223,37 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
     return parts.join(' · ') || null;
   })();
 
-  return (
-    <View style={[styles.root, { width }]}>
-      <GestureDetector gesture={swipe}>
-        <View
-          ref={coverSlotRef}
-          onLayout={measureCoverSlot}
-          // Keeps its surface colour rather than going transparent: the
-          // travelling cover lands exactly on top of it, and a song whose
-          // artwork will not load still has the plain square it always had
-          // instead of a hole where the cover should be.
-          style={[styles.cover, { width, height: width, borderRadius: rad.card }]}
-          // The square is what the finger swipes, but the cover the eye
-          // follows is drawn by the host with pointerEvents="none" — so this
-          // is also what a screen reader finds. Name it for what it does.
-          accessible
-          accessibilityRole="adjustable"
-          accessibilityLabel={t('a11y.player.coverArt')}
-          accessibilityActions={SWIPE_A11Y_ACTIONS}
-          onAccessibilityAction={handleAccessibilityAction}
-        />
-      </GestureDetector>
+  const cover = (
+    <GestureDetector gesture={swipe}>
+      <View
+        ref={coverSlotRef}
+        onLayout={measureCoverSlot}
+        // Keeps its surface colour rather than going transparent: the
+        // travelling cover lands exactly on top of it, and a song whose
+        // artwork will not load still has the plain square it always had
+        // instead of a hole where the cover should be.
+        style={[
+          styles.cover,
+          // Stacked, the gap below the artwork is the gap before the title.
+          // Split, the title is beside it and the gap is the column's, so a
+          // margin here would only push the square off centre.
+          split ? styles.coverBeside : styles.coverAbove,
+          { width: coverSize, height: coverSize, borderRadius: rad.card },
+        ]}
+        // The square is what the finger swipes, but the cover the eye
+        // follows is drawn by the host with pointerEvents="none" — so this
+        // is also what a screen reader finds. Name it for what it does.
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={t('a11y.player.coverArt')}
+        accessibilityActions={SWIPE_A11Y_ACTIONS}
+        onAccessibilityAction={handleAccessibilityAction}
+      />
+    </GestureDetector>
+  );
 
+  const details = (
+    <View style={{ width: columnWidth }}>
       <View style={styles.titleRow}>
         <View style={styles.textContainer}>
           <Text style={styles.title} numberOfLines={2}>
@@ -301,6 +289,8 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
         </View>
       </View>
 
+      <PlayingRating song={currentSong} />
+
       {showQualityBadge && qualityLabel && (
         <Text style={styles.qualityBadge} numberOfLines={1}>
           {qualityLabel}
@@ -313,6 +303,24 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
       {hasDuration(currentSong.contentKind) && (
         <PlayingProgressSection songDuration={currentSong.durationSeconds} />
       )}
+
+      {children}
+    </View>
+  );
+
+  // Two shapes of the same four things. The row is centred on the taller of
+  // its two halves rather than stretched: in a short window the column is
+  // what sets the height, and a cover stretched to match it would no longer
+  // be square.
+  return split ? (
+    <View style={[styles.splitRoot, { width: rowWidth, columnGap }]}>
+      {cover}
+      {details}
+    </View>
+  ) : (
+    <View style={[styles.root, { width: rowWidth }]}>
+      {cover}
+      {details}
     </View>
   );
 };
@@ -321,9 +329,19 @@ const styles = StyleSheet.create({
   root: {
     alignSelf: 'center',
   },
+  splitRoot: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   cover: {
-    marginBottom: spacing.lg,
     backgroundColor: onDark.surface,
+  },
+  coverAbove: {
+    marginBottom: spacing.lg,
+  },
+  coverBeside: {
+    marginBottom: 0,
   },
   titleRow: {
     flexDirection: 'row',
@@ -352,18 +370,6 @@ const styles = StyleSheet.create({
   },
   optionsButton: {
     padding: spacing.tight,
-  },
-  progressBar: {
-    marginTop: spacing.sm,
-  },
-  timestamps: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.controlGap,
-  },
-  timestamp: {
-    ...typography.caption,
-    color: onDark.subtext,
   },
 });
 

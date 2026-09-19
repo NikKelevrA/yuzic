@@ -22,13 +22,15 @@ import { toggleFavorite, confirmDestructive } from '../shared/starActions';
 import { useWantToggle } from '../shared/wantActions';
 import { useGeneratePlaylistAction } from '../shared/generatePlaylistAction';
 import { useSleepTimer } from '@/features/player/sleepTimer';
+import { useRating } from '@/features/ratings/useRatings';
+import { useRatingsAvailable } from '@/features/ratings/useRatingsAvailable';
 import { resolveActions } from '../types';
 import { songLibraryActions, type SongLibraryActionContext } from '../registry/songLibraryActions';
 import { songExternalActions, type SongExternalActionContext } from '../registry/songExternalActions';
 
 export function useSongLibraryActions(
   song: Song,
-  opts: { onAddToPlaylist: () => void; onSleepTimer?: () => void; onNavigate?: () => void; close: () => void }
+  opts: { onAddToPlaylist: () => void; onRating: () => void; onSleepTimer?: () => void; onNavigate?: () => void; close: () => void }
 ) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -39,6 +41,8 @@ export function useSongLibraryActions(
   const similarPlaylistAvailable = similarity !== null;
   const { currentSong } = usePlayingState();
   const sleepTimer = useSleepTimer();
+  const ratingsAvailable = useRatingsAvailable();
+  const rating = useRating(song);
   const { addToQueue, playNext, playSimilar } = usePlayingActions();
   const instantMixInFlightRef = useRef(false);
 
@@ -63,7 +67,8 @@ export function useSongLibraryActions(
 
   const ctx: SongLibraryActionContext = {
     kind: 'song', origin: 'library', song, t, colors, close: opts.close,
-    isStarred, isDownloaded, isDownloading, isGeneratingPlaylist, similarPlaylistAvailable,
+    isStarred, ratingsAvailable, rating,
+    isDownloaded, isDownloading, isGeneratingPlaylist, similarPlaylistAvailable,
     sleepTimer, sleepTimerAvailable: Boolean(opts.onSleepTimer),
     handlers: {
       toggleFavorite: () => void toggleFavorite({
@@ -90,6 +95,10 @@ export function useSongLibraryActions(
         } catch { notify.error(t('songOptions.toasts.addToQueueFailed')); } finally { opts.close(); }
       },
       addToPlaylist: () => { opts.close(); requestAnimationFrame(opts.onAddToPlaylist); },
+      // Closed first, then the next sheet on the frame after — the same
+      // handover the playlist picker and the sleep timer make, so two sheets
+      // are never on screen at once.
+      rating: () => { opts.close(); requestAnimationFrame(opts.onRating); },
       sleepTimer: () => { opts.close(); if (opts.onSleepTimer) requestAnimationFrame(opts.onSleepTimer); },
       download: async () => {
         if (isDownloading) return;

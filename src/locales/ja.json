@@ -343,7 +343,9 @@
         "onSubtext": "曲間を{{seconds}}秒でフェード。スキップは即切替。",
         "seguesLabel": "連続した曲もフェードする",
         "seguesSubtext": "連続再生の繋ぎは即切替のまま。オンで全てフェード。"
-      }
+      },
+      "showRating": "評価を表示",
+      "showRatingSubtext": "プレーヤーのタイトルの下に5つ星を表示します"
     },
     "listenBrainz": {
       "title": "ListenBrainz",
@@ -529,7 +531,8 @@
       "off": "オフ",
       "promptTitle": "{{name}}の{{use}}をオンにしますか？",
       "turnOn": "オンにする",
-      "notNow": "今はしない"
+      "notNow": "今はしない",
+      "alwaysFirst": "最初"
     },
     "sourceUses": {
       "lastfm": {
@@ -858,7 +861,8 @@
       "mostRecent": "最近再生",
       "mostPlayed": "よく再生",
       "releaseYear": "リリース年",
-      "recentlyAdded": "最近追加"
+      "recentlyAdded": "最近追加",
+      "rating": "評価"
     },
     "sortSheet": {
       "title": "並び替え"
@@ -977,7 +981,8 @@
     },
     "sources": {
       "server": "サーバー内"
-    }
+    },
+    "offlineBanner": "オフライン — 発見は一時停止中ですが、ライブラリはご利用いただけます"
   },
   "playing": {
     "volume": "音量",
@@ -1087,7 +1092,8 @@
       "downloaded": "ダウンロード済み",
       "goToArtist": "アーティストへ移動",
       "generatePlaylist": "この曲からプレイリストを作成",
-      "sleepTimer": "スリープタイマー"
+      "sleepTimer": "スリープタイマー",
+      "rating": "評価"
     },
     "sections": {
       "media": "メディア",
@@ -1209,7 +1215,9 @@
       "soulsyncDesc": "SoulSync 経由で Soulseek を検索",
       "addedToSoulsync": "SoulSync にリクエストしました。",
       "addedTrackToSoulsync": "SoulSync にリクエストしました。",
-      "monitoringOnLidarr": "Lidarr が {{artist}} を追跡しています。"
+      "monitoringOnLidarr": "Lidarr が {{artist}} を追跡しています。",
+      "sending": "{{title}} を {{downloader}} に送信しています…",
+      "progress": "{{total}} 曲中 {{done}} 曲をリクエストしました…"
     },
     "header": {
       "songs": "{{count}} 曲",
@@ -1242,6 +1250,22 @@
     },
     "filters": {
       "title": "絞り込み"
+    },
+    "getSheet": {
+      "monitor": "監視するアルバム",
+      "policy": {
+        "future": "今後のアルバム",
+        "all": "すべてのアルバム",
+        "missing": "不足しているアルバム",
+        "existing": "既存のアルバム",
+        "first": "最初のアルバム",
+        "latest": "最新のアルバム",
+        "none": "なし"
+      },
+      "searchNow": "今すぐ検索",
+      "searchNowHint": "設定が終わり次第検索を開始します",
+      "nothingToSearch": "まだ検索対象はありません — 今後のリリースのみを監視します。",
+      "confirm": "このアーティストをフォロー"
     }
   },
   "manualAddWant": {
@@ -1269,7 +1293,8 @@
       "favorite": "お気に入り",
       "unfavorite": "お気に入り解除",
       "share": "共有",
-      "generatePlaylist": "これでプレイリストを作成"
+      "generatePlaylist": "これでプレイリストを作成",
+      "rating": "評価"
     },
     "toasts": {
       "addedNext": "{{title}}を次に再生",
@@ -1484,10 +1509,14 @@
       "download": "ダウンロード",
       "cancelDownload": "ダウンロードをキャンセル",
       "downloaded": "ダウンロード済み",
-      "downloading": "ダウンロード中"
+      "downloading": "ダウンロード中",
+      "getArtist": "このアーティストを取得",
+      "want": "ウォント",
+      "wanted": "ウォント済み"
     },
     "rows": {
-      "options": "{{title}}のオプション"
+      "options": "{{title}}のオプション",
+      "titleAndSubtitle": "{{title}}、{{subtitle}}"
     },
     "searchInput": "検索",
     "queueBackToPlayer": "プレーヤーに戻る",
@@ -1568,6 +1597,10 @@
     },
     "wants": {
       "remove": "「{{title}}」をウォンツから削除"
+    },
+    "rating": {
+      "label": "評価",
+      "star_other": "星{{count}}つ"
     }
   },
   "tabs": {
@@ -1590,5 +1623,12 @@
   },
   "externalOptions": {
     "openInSource": "{{source}} で開く"
+  },
+  "ratings": {
+    "offline": "サーバーに接続できないため、評価を変更できません",
+    "failed": "評価を保存できませんでした",
+    "title": "評価",
+    "clear": "評価を削除",
+    "notRated": "未評価"
   }
 }

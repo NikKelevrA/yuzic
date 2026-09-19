@@ -21,13 +21,16 @@ const t = (key: string) => key;
  */
 describe('actionRegistrySummary', () => {
   it('lists a stable id set per entity kind/origin', () => {
+    // Rating sits beside Favourite on purpose: one says "keep this where I
+    // can find it", the other says how much you like it, and next to each
+    // other they read as two questions rather than two answers to one.
     expect(actionRegistrySummary['song.library']).toEqual([
-      'favorite', 'addToQueue', 'addToEnd', 'addToPlaylist', 'sleepTimer', 'download',
+      'favorite', 'rating', 'addToQueue', 'addToEnd', 'addToPlaylist', 'sleepTimer', 'download',
       'goToAlbum', 'goToArtist', 'instantMix', 'generatePlaylist',
     ]);
     expect(actionRegistrySummary['song.external']).toEqual(['play', 'inLibrary', 'want', 'getSong', 'get']);
     expect(actionRegistrySummary['album.library']).toEqual([
-      'favorite', 'play', 'shuffle', 'addToNext', 'addToEnd', 'shuffleToQueue',
+      'favorite', 'rating', 'play', 'shuffle', 'addToNext', 'addToEnd', 'shuffleToQueue',
       'generatePlaylist', 'goToAlbum', 'viewExternal', 'share', 'download',
     ]);
     expect(actionRegistrySummary['album.external']).toEqual([
@@ -53,10 +56,11 @@ function songLibraryCtx(overrides: Partial<SongLibraryActionContext> = {}): Song
     kind: 'song', origin: 'library',
     song: { album: { nativeId: 'a1' }, artist: { nativeId: 'ar1' } } as SongLibraryActionContext['song'],
     t, colors: { secondary: '#000', subtext: '#666' }, close: noop,
-    isStarred: false, isDownloaded: false, isDownloading: false, isGeneratingPlaylist: false, similarPlaylistAvailable: false,
+    isStarred: false, ratingsAvailable: false, rating: undefined,
+    isDownloaded: false, isDownloading: false, isGeneratingPlaylist: false, similarPlaylistAvailable: false,
     sleepTimer: { mode: 'off' }, sleepTimerAvailable: false,
     handlers: {
-      toggleFavorite: noop, addToQueue: noop, addToEndQueue: noop, addToPlaylist: noop, sleepTimer: noop, download: noop,
+      toggleFavorite: noop, rating: noop, addToQueue: noop, addToEndQueue: noop, addToPlaylist: noop, sleepTimer: noop, download: noop,
       goToAlbum: noop, goToArtist: noop, instantMix: noop, generatePlaylist: noop,
     },
     ...overrides,
@@ -155,11 +159,12 @@ function albumLibraryCtx(overrides: Partial<AlbumLibraryActionContext> = {}): Al
     kind: 'album', origin: 'library',
     album: { artist: { name: 'Some Artist' } } as AlbumLibraryActionContext['album'],
     t, colors: { secondary: '#000', subtext: '#666' }, close: noop,
-    isStarred: false, playbackDisabled: false, songsLoading: false, isDownloaded: false, isDownloading: false,
+    isStarred: false, ratingsAvailable: false, rating: undefined,
+    playbackDisabled: false, songsLoading: false, isDownloaded: false, isDownloading: false,
     isSharing: false, canShare: false, isGeneratingPlaylist: false, canGeneratePlaylist: false,
     hasExternalSources: false, hideGoToAlbum: false,
     handlers: {
-      toggleFavorite: noop, play: noop, shuffle: noop, addToNext: noop, addToEnd: noop, shuffleToQueue: noop,
+      toggleFavorite: noop, rating: noop, play: noop, shuffle: noop, addToNext: noop, addToEnd: noop, shuffleToQueue: noop,
       generatePlaylist: noop, goToAlbum: noop, viewExternal: noop, share: noop, download: noop,
     },
     ...overrides,

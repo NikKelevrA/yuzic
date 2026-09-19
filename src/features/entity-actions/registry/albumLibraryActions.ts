@@ -1,9 +1,10 @@
 import React from 'react';
-import { Heart, Play, Shuffle, ListStart, ListEnd, Disc, Globe, Share2, Sparkles } from 'lucide-react-native';
+import { Heart, Play, Shuffle, ListStart, ListEnd, Disc, Globe, Share2, Sparkles, Star } from 'lucide-react-native';
 import type { Album } from '@/domain/entities/Album';
 import { iconSize, statusColor } from '@/constants/design';
 import type { ActionDef, BaseActionContext } from '../types';
 import { downloadRowIcon, downloadRowLabel } from '../shared/downloadActions';
+import RatingValue from '@/features/ratings/RatingValue';
 
 export interface AlbumLibraryActionContext extends BaseActionContext {
   kind: 'album';
@@ -12,6 +13,10 @@ export interface AlbumLibraryActionContext extends BaseActionContext {
   t: (key: string, opts?: Record<string, unknown>) => string;
   colors: { secondary: string; subtext: string };
   isStarred: boolean;
+  /** Whether this server keeps a rating at all — presence, never a provider name. */
+  ratingsAvailable: boolean;
+  /** Out of five, or undefined where the server carries none for this album. */
+  rating: number | undefined;
   playbackDisabled: boolean;
   songsLoading: boolean;
   isDownloaded: boolean;
@@ -24,6 +29,7 @@ export interface AlbumLibraryActionContext extends BaseActionContext {
   hideGoToAlbum: boolean;
   handlers: {
     toggleFavorite: () => void;
+    rating: () => void;
     play: () => void;
     shuffle: () => void;
     addToNext: () => void;
@@ -47,6 +53,20 @@ export const albumLibraryActions: ActionDef<Ctx>[] = [
     icon: ctx => React.createElement(Heart, { size: sz, color: statusColor.favorite, fill: ctx.isStarred ? statusColor.favorite : 'none' }),
     visible: () => true,
     invoke: ctx => ctx.handlers.toggleFavorite(),
+  },
+  {
+    id: 'rating',
+    label: ctx => ctx.t('albumOptions.actions.rating'),
+    icon: ctx => React.createElement(Star, { size: sz, color: ctx.colors.secondary }),
+    // Absent where the server keeps no rating, like every other surface this
+    // feature has. `docs/integrations.md` says which servers those are.
+    visible: ctx => ctx.ratingsAvailable,
+    // The value, not a second control: the five stars that set it live in the
+    // sheet this row opens, because a row is one accessibility element and
+    // anything tappable inside it is unreachable.
+    trailing: ctx => React.createElement(RatingValue, { value: ctx.rating }),
+    testID: () => 'options-rating',
+    invoke: ctx => ctx.handlers.rating(),
   },
   {
     id: 'play',

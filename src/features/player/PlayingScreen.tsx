@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   StatusBar,
-  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlayingState, usePlayingProgress } from '@/features/playback/PlayingContext';
@@ -36,7 +35,10 @@ import { usePlayingTransitions, type PlayingViewMode } from './usePlayingTransit
 import { ChevronDown, Ellipsis } from 'lucide-react-native';
 import { useSheetRef } from '@/components/useSheetRef';
 import Touchable from '@/components/Touchable';
-import { hitSlopFor, iconSize, onDark, spacing } from '@/constants/design';
+import { contentWidth, hitSlopFor, iconSize, onDark, spacing } from '@/constants/design';
+import { useWindowLayout } from '@/features/layout/useWindowLayout';
+import { cappedContentWidth } from '@/features/layout/windowClass';
+import { playerLayout } from './playerLayout';
 
 interface PlayingScreenProps {
     onClose: () => void;
@@ -116,10 +118,14 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
         setMode(next);
     }, []);
 
-    const { width, height } = useWindowDimensions();
-    const isTablet = width >= 768;
-    const layoutWidth = width - 24;
-    const contentWidth = isTablet ? 500 : width - 48;
+    const { width, height, landscape } = useWindowLayout();
+    const layout = playerLayout({ width, height, landscape });
+    // Everything under the player — the lyrics preview, the speed and volume
+    // cards, the artist card — lines up with the player above it, which in
+    // the split shape is the cover and the column together rather than just
+    // the column.
+    const columnWidth = layout.rowWidth;
+    const queueWidth = cappedContentWidth(width - spacing.xl, contentWidth.readable);
     const playerMinHeight = height - insets.top - insets.bottom;
 
     const dragToClose = useDragToClose(expansion, scrollY, height);
@@ -164,7 +170,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                         >
                             <Queue
                                 onBack={() => changeMode("player")}
-                                width={layoutWidth}
+                                width={queueWidth}
                             />
                         </Animated.View>
                     )}
@@ -189,7 +195,19 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                             showsVerticalScrollIndicator={false}
                         >
                             <View style={[styles.playerSection, { minHeight: playerMinHeight }]}>
-                                <View style={[styles.header, { paddingTop: insets.top }]}>
+                                {/* The 40pt step under the header is right
+                                    when there is a screen of height beneath
+                                    it and a quarter of a landscape window
+                                    when there is not. */}
+                                <View
+                                    style={[
+                                        styles.header,
+                                        {
+                                            paddingTop: insets.top,
+                                            paddingBottom: landscape ? spacing.md : spacing.xxxl,
+                                        },
+                                    ]}
+                                >
                                     <Touchable
                                         testID="playing-close"
                                         accessibilityRole="button"
@@ -223,22 +241,20 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
 
                                 <View style={styles.centerContent}>
                                     <PlayingMain
-                                        width={contentWidth}
+                                        layout={layout}
                                         onPressArtist={navigateToArtist}
                                         onPressOptions={() => songOptionsRef.current?.present()}
                                         onPressAdd={() => playlistRef.current?.present()}
-                                    />
-
-                                    <View style={{ width: contentWidth }}>
+                                    >
                                         <Controls />
-                                    </View>
+                                    </PlayingMain>
                                 </View>
 
                                 <View
                                     style={[
                                         styles.bottomControlsRow,
                                         {
-                                            width: contentWidth,
+                                            width: columnWidth,
                                             paddingBottom: insets.bottom + spacing.md,
                                         },
                                     ]}
@@ -258,23 +274,23 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
                             {lyricsAvailable && lyrics?.synced && (
                                 <LyricsPreviewCardResolver
                                     lyrics={lyrics}
-                                    contentWidth={contentWidth}
+                                    contentWidth={columnWidth}
                                     onPress={openLyricsSheet}
                                 />
                             )}
 
                             {showPlaybackSpeed && (
-                                <PlaybackSpeedCard contentWidth={contentWidth} />
+                                <PlaybackSpeedCard contentWidth={columnWidth} />
                             )}
 
                             {showVolumeSlider && (
-                                <VolumeCard contentWidth={contentWidth} />
+                                <VolumeCard contentWidth={columnWidth} />
                             )}
 
                             <AboutTheArtistCard
                                 artistName={currentSong.artist.name}
                                 artistCover={currentSong.artist.cover}
-                                contentWidth={contentWidth}
+                                contentWidth={columnWidth}
                                 onPress={artistId ? navigateToArtist : undefined}
                             />
                         </Animated.ScrollView>
@@ -344,7 +360,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: spacing.lg,
-        paddingBottom: spacing.xxxl,
     },
     headerButton: {
         width: 40,

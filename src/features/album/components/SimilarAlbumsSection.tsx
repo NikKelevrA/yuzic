@@ -12,11 +12,7 @@ import { usePrefetchCovers } from '@/features/library/usePrefetchCovers'
 import { prefetchCovers } from '@/features/artwork/imageCache'
 import MediaTile from '@/features/home/components/MediaTile'
 import type { Album } from '@/domain/entities/Album'
-import {
-  ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
-  ALBUM_RECOMMENDATION_TILE_GAP,
-  ALBUM_RECOMMENDATION_VISIBLE_TILES,
-} from '@/features/album/constants'
+import { SHELF_GAP, SHELF_INSET, shelfItemWidth } from '@/features/layout/shelf'
 import { spacing, typography } from '@/constants/design'
 
 const SIMILAR_ALBUM_LIMIT = 10
@@ -49,11 +45,7 @@ export default function SimilarAlbumsSection({ albumId }: Props) {
 
   const getSimilarAlbums = api.similar.getSimilarAlbums
 
-  const tileWidth =
-    (screenWidth
-      - ALBUM_RECOMMENDATION_HORIZONTAL_PADDING * 2
-      - ALBUM_RECOMMENDATION_TILE_GAP * 2)
-    / ALBUM_RECOMMENDATION_VISIBLE_TILES
+  const tileWidth = shelfItemWidth(screenWidth)
 
   const { data: albums } = useQuery<Album[]>({
     queryKey: [QueryKeys.ServerSimilarAlbums, albumId],
@@ -109,11 +101,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.sectionTitle,
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
+    paddingHorizontal: SHELF_INSET,
     marginBottom: spacing.md,
   },
   scroll: {
-    paddingHorizontal: ALBUM_RECOMMENDATION_HORIZONTAL_PADDING,
-    gap: ALBUM_RECOMMENDATION_TILE_GAP,
+    paddingHorizontal: SHELF_INSET,
+    gap: SHELF_GAP,
   },
 })

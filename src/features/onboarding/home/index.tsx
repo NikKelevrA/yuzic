@@ -16,6 +16,21 @@ import { setHasSeenGetStarted, selectHasSeenGetStarted } from '@/features/settin
 import { selectThemeColor } from '@/features/settings/appearance/state';
 import { useTranslation } from 'react-i18next';
 import { useRadius } from '@/features/theme/useRadius';
+import { useWindowLayout } from '@/features/layout/useWindowLayout';
+import { squareArtSize } from '@/features/layout/windowClass';
+
+/** The mark on the welcome screen, at the size it has always been drawn. */
+const WELCOME_ICON_SIZE = 150;
+
+/**
+ * How much of a short window the mark may take.
+ *
+ * The screen is a fixed column between a centred hero and a button pinned to
+ * the bottom, and it adds up to about 410pt — six more than a phone on its
+ * side has. Nothing in it shrinks on its own, so the icon is what gives, and
+ * only when the window is short enough to ask.
+ */
+const WELCOME_ICON_HEIGHT_SHARE = 0.22;
 
 export default function Home() {
     const { t } = useTranslation();
@@ -24,6 +39,11 @@ export default function Home() {
     const dispatch = useDispatch();
     const rad = useRadius();
     const [isPressed, setIsPressed] = useState(false);
+    const { height } = useWindowLayout();
+    const iconSize = squareArtSize(
+        WELCOME_ICON_SIZE,
+        height * WELCOME_ICON_HEIGHT_SHARE
+    );
 
     const hasSeenGetStarted = useSelector(selectHasSeenGetStarted);
 
@@ -52,7 +72,7 @@ export default function Home() {
             <View style={styles.content}>
                 <Image
                     source={require('@assets/images/logo.png')}
-                    style={[styles.appIcon, { borderRadius: rad.md }]}
+                    style={[styles.appIcon, { width: iconSize, height: iconSize, borderRadius: rad.md }]}
                     contentFit="contain"
                     cachePolicy="memory-disk"
                 />
@@ -108,8 +128,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     appIcon: {
-        width: 150,
-        height: 150,
         marginBottom: spacing.xxl,
     },
     appName: {

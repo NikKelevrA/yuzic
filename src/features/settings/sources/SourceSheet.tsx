@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { StyleSheet, Switch, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,11 +9,12 @@ import {
   OptionSheetDivider,
   OptionSheetRow,
   OptionSheetSectionLabel,
+  OptionSheetSwitchRow,
   optionSheetStyles,
   useOptionSheetBackground,
   useOptionSheetContentStyle,
 } from '@/components/options/OptionSheetPrimitives';
-import { onDark, spacing, statusColor, typography } from '@/constants/design';
+import { spacing, statusColor, typography } from '@/constants/design';
 import { useTheme } from '@/features/theme/useTheme';
 import { SOURCES, usesOf, type SourceId } from '@/providers/registry/sources';
 import { selectSourceUses, setSourceUse, stopUsingSource } from './state';
@@ -59,19 +60,13 @@ const SourceSheet = forwardRef<BottomSheetModal, Props>(({ source, onDone }, ref
 
             <OptionSheetSectionLabel label={t('settings.sources.usedFor')} />
             {usesOf(source).map(entry => (
-              <OptionSheetRow
+              <OptionSheetSwitchRow
                 key={entry.id}
+                testID={`source-sheet-use-${entry.id}`}
                 label={t(`settings.sourcePurposes.${entry.purpose}`)}
                 description={t(entry.subtextKey)}
-                trailing={(
-                  <Switch
-                    testID={`source-sheet-use-${entry.id}`}
-                    value={uses[entry.id] ?? false}
-                    onValueChange={enabled => { dispatch(setSourceUse({ use: entry.id, enabled })); }}
-                    trackColor={{ true: colors.themeColor }}
-                    thumbColor={onDark.text}
-                  />
-                )}
+                value={uses[entry.id] ?? false}
+                onValueChange={enabled => { dispatch(setSourceUse({ use: entry.id, enabled })); }}
               />
             ))}
             {inUse && (

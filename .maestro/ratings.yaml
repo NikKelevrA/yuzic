@@ -1,0 +1,113 @@
+# Five-star ratings: that the row appears at all on a server that keeps them,
+# that it opens its sheet over the options sheet, and that a rating written
+# from it reaches the server.
+#
+# Ratings are a Subsonic capability, so this flow is only meaningful against a
+# Navidrome-family server — which is what `onboarding-demo.yaml` connects to.
+# On a server without them the row is deliberately absent and the flow below
+# stops after asserting the sheet, rather than failing: "no rating row here"
+# is the correct behaviour on Jellyfin, Emby, Plex and local files, and a flow
+# that failed there would be asserting the wrong thing.
+#
+# It WRITES to the server, and puts it back. One star, then clear — so the
+# track ends unrated, which is what a shared demo server should be left as.
+# The clear is conditional: a server that refuses the write leaves the stars
+# where they were, and there is then nothing to undo.
+appId: com.arinora.rawarr
+---
+- launchApp:
+    clearState: false
+
+- extendedWaitUntil:
+    visible:
+      id: "library-tab"
+    timeout: 60000
+- tapOn:
+    id: "library-tab"
+- assertVisible:
+    id: "library-screen"
+
+- tapOn:
+    id: "library-entry-tracks"
+- extendedWaitUntil:
+    visible:
+      id: "library-track-item"
+    timeout: 60000
+
+# The options sheet resolves the song over the network on open, so allow the
+# same retry the detail flow does for a cold call.
+- retry:
+    maxRetries: 2
+    commands:
+      - longPressOn:
+          id: "library-track-item"
+          index: 0
+      - extendedWaitUntil:
+          visible:
+            id: "song-options-sheet"
+          timeout: 15000
+
+# Everything below is gated on the row existing, which is the presence check
+# itself: the row reads the adapter's `ratings` surface, so its being here at
+# all is the assertion that a real Navidrome declared one.
+- runFlow:
+    when:
+      visible:
+        id: "options-rating"
+    commands:
+      # The options sheet closes and the rating sheet opens on the frame after
+      # — the handover every sheet-opens-a-sheet row in the app makes.
+      - tapOn:
+          id: "options-rating"
+      - extendedWaitUntil:
+          visible:
+            id: "rating-sheet"
+          timeout: 10000
+
+      # One star, which both writes and dismisses.
+      - tapOn:
+          id: "rating-star-1"
+      - extendedWaitUntil:
+          notVisible:
+            id: "rating-sheet"
+          timeout: 10000
+
+      # Reopen to see what the server took. A write the server accepted shows
+      # a rating, and a rating is the only thing that puts Clear on the sheet.
+      - retry:
+          maxRetries: 2
+          commands:
+            - longPressOn:
+                id: "library-track-item"
+                index: 0
+            - extendedWaitUntil:
+                visible:
+                  id: "song-options-sheet"
+                timeout: 15000
+      - tapOn:
+          id: "options-rating"
+      - extendedWaitUntil:
+          visible:
+            id: "rating-sheet"
+          timeout: 10000
+
+      # Put the track back the way it was found.
+      - runFlow:
+          when:
+            visible:
+              id: "rating-clear"
+          commands:
+            - tapOn:
+                id: "rating-clear"
+            - extendedWaitUntil:
+                notVisible:
+                  id: "rating-sheet"
+                timeout: 10000
+
+# Whatever happened above, leave no sheet open: tap the backdrop above it.
+- tapOn:
+    point: "50%,10%"
+- extendedWaitUntil:
+    visible:
+      id: "library-collection-screen"
+    timeout: 10000

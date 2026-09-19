@@ -1,6 +1,7 @@
-import { onDark, spacing, typography } from '@/constants/design';
+import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { StyleSheet, ScrollView, View, Text, RefreshControl } from 'react-native'
+import { CloudOff } from 'lucide-react-native'
 import { useScrollToTop } from '@react-navigation/native'
 import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
@@ -30,6 +31,7 @@ import LBSimilarForYouSection from './components/LBSimilarForYouSection'
 import LBCreatedForSection from './components/LBCreatedForSection'
 import ContinuePlayingSection from './components/ContinuePlayingSection'
 import SourceGroup from './components/SourceGroup'
+import StatusBanner from '@/components/StatusBanner'
 import { ResumeQueueBanner } from './components/ResumeQueueBanner'
 import { DownloadsInProgressBanner } from './components/DownloadsInProgressBanner'
 import { RefreshSettler } from './components/RefreshSettler'
@@ -211,6 +213,17 @@ export default function Home() {
       }
     >
       {isRefreshing && <RefreshSettler onSettled={clearRefreshing} />}
+      {/* Library and Search both say when the server is out of reach; Home was
+          the one tab that changed silently, and it is the tab where the change
+          is largest — every discovery shelf goes, because each is a request. */}
+      {isOffline && (
+        <StatusBanner
+          icon={<CloudOff size={iconSize.badge} color={colors.subtext} />}
+          text={t('explore.offlineBanner')}
+          style={styles.offlineBanner}
+          testID="home-offline-banner"
+        />
+      )}
       <ResumeQueueBanner />
       <DownloadsInProgressBanner />
 
@@ -236,6 +249,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: {
     paddingTop: spacing.md,
+  },
+  // The same inset Library's banner takes, so the two tabs put it in the
+  // same place rather than each finding its own.
+  offlineBanner: {
+    marginHorizontal: spacing.page,
+    marginBottom: spacing.sm,
   },
   sourceHeader: {
     flexDirection: 'row',

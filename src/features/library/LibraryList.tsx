@@ -4,7 +4,8 @@ import { FlashList } from '@shopify/flash-list'
 import { useDispatch, useSelector } from 'react-redux'
 
 import ListControls from '@/components/ListControls'
-import { selectLibraryViewMode, selectGridColumns, setIsGridView, setLibraryViewMode } from '@/features/settings/appearance/state';
+import { selectLibraryViewMode, setIsGridView, setLibraryViewMode } from '@/features/settings/appearance/state';
+import { useGridColumns } from '@/features/layout/useGridColumns';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from './layout'
 import AlbumItem from './components/Items/AlbumItem'
 import ArtistItem from './components/Items/ArtistItem'
@@ -44,12 +45,12 @@ const LibraryList: React.FC<Props> = ({
   const scrollClearance = useScrollClearance()
   const dispatch = useDispatch()
   const isGridView = useSelector(selectLibraryViewMode(collection))
-  const gridColumns = useSelector(selectGridColumns)
+  const gridColumns = useGridColumns()
   const { width: screenWidth } = useWindowDimensions()
 
   const sortSheetRef = useSheetRef()
 
-  const gutter = libraryGutter(isGridView, GRID_SPACING)
+  const gutter = libraryGutter(isGridView, GRID_SPACING, screenWidth)
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter)
 
   /**

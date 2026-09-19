@@ -2,6 +2,7 @@ import type { Album } from '@/domain/entities/Album'
 import type { Artist } from '@/domain/entities/Artist'
 import type { Playlist } from '@/domain/entities/Playlist'
 import type { Song } from '@/domain/entities/Song'
+import { effectiveRating } from '@/features/ratings/effectiveRating'
 
 /**
  * Ordering for the library's mixed entity list.
@@ -37,7 +38,7 @@ export type LibraryCollectionType =
   | 'tracks'
   | 'downloaded'
 
-export type SortOrder = 'title' | 'recent' | 'userplays' | 'year' | 'recentlyAdded'
+export type SortOrder = 'title' | 'recent' | 'userplays' | 'year' | 'recentlyAdded' | 'rating'
 
 type StatsMap = Record<string, number>
 
@@ -73,6 +74,14 @@ export function usesPlayStats(order: SortOrder): boolean {
   return order === 'recent' || order === 'userplays'
 }
 
+/** The one order that reads what the user rated things, and so needs the overlay. */
+export function usesRatings(order: SortOrder): boolean {
+  return order === 'rating'
+}
+
+/** Stable empty overlay, for the same reason as `EMPTY_SORT_STATS`. */
+export const EMPTY_RATINGS: StatsMap = {}
+
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
 
 function displayName(item: LibraryItem): string {
@@ -107,6 +116,20 @@ function playCount(item: LibraryItem, stats: SortStats): number {
   return 0
 }
 
+/**
+ * What the user rated this, for ordering — the catalog's value unless this
+ * device has written a newer one, exactly as the screens read it.
+ *
+ * Unrated is 0, which puts it below one star. That is the right end for it:
+ * "sort by rating" is a request to see the good ones, and a library where
+ * most things are unrated would otherwise open on the part the user has not
+ * had an opinion about.
+ */
+function ratingOf(item: LibraryItem, ratings: StatsMap): number {
+  if (item.kind !== 'album' && item.kind !== 'track') return 0
+  return effectiveRating(item.data.userRating, ratings[item.data.nativeId]) ?? 0
+}
+
 function addedAt(item: LibraryItem): number {
   if (item.kind === 'album') return item.data.addedAt ?? 0
   if (item.kind === 'playlist') return item.data.createdAt ?? 0
@@ -117,10 +140,20 @@ function addedAt(item: LibraryItem): number {
 export function sortItems(
   items: LibraryItem[],
   order: SortOrder,
-  stats: SortStats
+  stats: SortStats,
+  ratings: StatsMap = EMPTY_RATINGS
 ): LibraryItem[] {
   const sorted = [...items]
   switch (order) {
+    // Ties broken by name, unlike every other order here. Five stars is a
+    // scale with six values over a library of thousands, so the ties are the
+    // list: without the second key a "sort by rating" is a shuffle within
+    // each band that reorders itself on every render.
+    case 'rating':
+      return sorted.sort((a, b) =>
+        ratingOf(b, ratings) - ratingOf(a, ratings) ||
+        collator.compare(displayName(a), displayName(b))
+      )
     case 'title':
       return sorted.sort((a, b) => collator.compare(displayName(a), displayName(b)))
     case 'year':

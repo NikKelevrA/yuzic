@@ -1,4 +1,4 @@
-import { hitSlopFor, iconSize, onDark, spacing, typography } from '@/constants/design';
+import { coverFade, hitSlopFor, iconSize, onDark, shade, spacing, typography } from '@/constants/design';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -26,6 +26,7 @@ import type { CoverSource } from '@/domain/entities/Cover';
 import { useResolvedCover } from '@/features/artwork/useResolvedCover';
 import { SOURCES } from '@/providers/registry/sources';
 import ArtistMetaRow from './ArtistMetaRow';
+import ExternalActionRow from './ExternalActionRow';
 import LocalActionRow from './LocalActionRow';
 import ArtistOptionsButton from './ArtistOptionsButton';
 
@@ -80,12 +81,8 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
         <LinearGradient
           colors={
             isDarkMode
-              ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,1)']
-              : [
-                'rgba(255,255,255,0)',
-                'rgba(255,255,255,0.7)',
-                'rgba(255,255,255,1)',
-              ]
+              ? coverFade.onDark
+              : coverFade.onLight
           }
           style={StyleSheet.absoluteFill}
         />
@@ -138,7 +135,11 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
         </View>
       </View>
 
-      {isLocal && artist ? <LocalActionRow artist={artist} /> : null}
+      {artist
+        ? isLocal
+          ? <LocalActionRow artist={artist} />
+          : <ExternalActionRow artist={artist} />
+        : null}
     </>
   );
 };
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   backButton: {
     width: 36,
     height: 36,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: shade.scrim,
     alignItems: 'center',
     justifyContent: 'center',
   },

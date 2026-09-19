@@ -71,6 +71,7 @@ export interface ApiAdapter {
 
   radio?: RadioApi;         // Subsonic (Navidrome) only today
   shares?: SharesApi;       // Subsonic only today
+  ratings?: RatingsApi;     // Subsonic only — integrations.md says why
   bookmarks?: BookmarksApi; // Subsonic + mediaBrowser via PlaybackPositionTicks
   queue?: QueueApi;         // Subsonic only
   discovery?: DiscoveryApi; // getRandomSongs + getNowPlaying (Subsonic)
@@ -95,6 +96,32 @@ that owns it, and read the same way:
 - `songs.scrobbleKind` — `'scrobble'` where the call is a listen the server may
   forward onward, `'markPlayed'` where it only moves a play count. The Server
   screen words its one switch from this instead of asking who the server is.
+
+**A capability that would have to share a field with another is not one.**
+`ratings` is the case: Plex has a `userRating` and an endpoint that writes it,
+which looks like everything the surface needs — except that a Plex favourite
+*is* `userRating = 10`, so the app is already spending that field on
+`starred`. Declaring `ratings` there would give the user two controls over one
+number, each silently undoing the other. Presence means the server can back the
+feature *independently*, not that it has an endpoint with the right name.
+
+**A rating the server cannot keep is not offered.** The other half of the same
+rule: MediaBrowser has `Likes` and no star count, and the tempting answer is to
+store stars on the device. A rating that never reaches the server the user
+chose to self-host is one they lose on the next install, and the app would be
+the only thing that knew about it — so `ratings` is absent for Jellyfin and
+Emby and every surface above it disappears with it.
+
+**What a rating is, once it has been written.** It is a field on the entity —
+`Song.userRating`, `Album.userRating` — arriving with the catalog like
+`serverPlayCount` does, and every screen reads it there. The gap that needs
+filling is only the one between the tap and the next sync: that entity is
+already sitting in a dozen caches, and rewriting all of them is not a thing a
+rating should have to do. So `state/redux/slices/ratingsSlice` holds an overlay
+of what *this device* wrote, `features/ratings/effectiveRating` says the overlay
+wins, and `commitSyncResult` drops it the moment a sync has brought the
+catalog back carrying the server's own answer. Absent and zero are kept apart
+throughout: a server without ratings is not a server where nothing is rated.
 
 `api/capabilities.test.ts` pins what each adapter declares, because these are
 read by screens that no longer have any other way to find out.

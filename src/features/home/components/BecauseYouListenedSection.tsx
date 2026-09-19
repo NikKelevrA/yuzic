@@ -15,10 +15,10 @@ import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
-  SECTION_VISIBLE_ITEMS,
   STALE_DEEZER_DISCOVERY,
   HOME_RELATED_ARTIST_LIMIT,
 } from '@/features/home/constants'
+import { getSectionItemWidth } from './sectionStyles'
 import { CATALOGUE_HOME_USE, fetchAlbumsLikeArtist } from '@/providers/registry/homeDiscovery'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
@@ -50,7 +50,7 @@ export default function BecauseYouListenedSection({ artistName, refreshKey = 0 }
   const [selectedArtist, setSelectedArtist] = React.useState<string>(artistName)
 
   const gridItemWidth = useMemo(
-    () => (screenWidth - H_PADDING * 2 - SECTION_GRID_GAP * 2) / SECTION_VISIBLE_ITEMS,
+    () => getSectionItemWidth(screenWidth),
     [screenWidth]
   )
 

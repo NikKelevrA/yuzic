@@ -1,4 +1,4 @@
-import { iconSize, onDark, spacing, stateLayer, typography } from '@/constants/design';
+import { iconSize, onDark, onDarkAlpha, spacing, stateLayer, typography, veil } from '@/constants/design';
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Gauge } from 'lucide-react-native';
@@ -66,7 +66,7 @@ export default function PlaybackSpeedCard({ contentWidth }: Props) {
       <View style={styles.headerRow}>
         <Gauge
           size={iconSize.inline}
-          color={isAltered ? themeColor : 'rgba(255,255,255,0.5)'}
+          color={isAltered ? themeColor : onDarkAlpha.quiet}
         />
         <Text style={[styles.label, isAltered && { color: themeColor }]}>
           {t(isSpoken ? 'playing.speed.spokenTitle' : 'playing.speed.title')}
@@ -88,8 +88,8 @@ export default function PlaybackSpeedCard({ contentWidth }: Props) {
             styles.resetButton,
             { borderRadius: rad.card },
             isAltered
-              ? { borderColor: 'rgba(255,255,255,0.3)' }
-              : { borderColor: 'rgba(255,255,255,0.12)' },
+              ? { borderColor: veil.borderSelected }
+              : { borderColor: veil.border },
           ]}
         >
           <Text style={[styles.resetLabel, !isAltered && { opacity: stateLayer.disabledTextOpacity }]}>
@@ -120,7 +120,7 @@ export default function PlaybackSpeedCard({ contentWidth }: Props) {
 const styles = StyleSheet.create({
   card: {
     marginTop: spacing.lg,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: veil.card,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.roomy,
     paddingBottom: spacing.xl,
@@ -142,11 +142,11 @@ const styles = StyleSheet.create({
   label: {
     ...typography.caption,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    color: onDarkAlpha.quiet,
   },
   bigValue: {
     ...typography.hero,
-    color: 'rgba(255,255,255,0.3)',
+    color: onDarkAlpha.faint,
     marginBottom: spacing.roomy,
   },
   bigUnit: {
@@ -172,13 +172,13 @@ const styles = StyleSheet.create({
   stepButton: {
     flex: 1,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: veil.cardInner,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepLabel: {
     ...typography.sectionTitle,
     fontWeight: '400',
-    color: 'rgba(255,255,255,0.45)',
+    color: onDarkAlpha.quieter,
   },
 });

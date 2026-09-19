@@ -1,7 +1,8 @@
-import { fixedColor, iconSize, onDark, spacing, stateLayer, statusColor, typography } from '@/constants/design';
+import { iconSize, onDark, spacing, statusColor } from '@/constants/design';
+import { styles } from './styles';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  StyleSheet,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -140,7 +141,15 @@ export default function Credentials() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={{ flex: 1 }}>
+            {/* The column still fills the screen when it fits, so nothing
+                moves; it scrolls only once it cannot. A phone on its side is
+                390pt tall and the keyboard takes half of that, which used to
+                leave the button that submits the form below both. */}
+            <ScrollView
+                contentContainerStyle={styles.form}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>{t('onboarding.credentials.title')}</Text>
                     <Text style={styles.subtitle}>{t('onboarding.credentials.subtitle')}</Text>
@@ -294,105 +303,7 @@ export default function Credentials() {
                         </Text>
                     </Touchable>
                 </View>
-            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: onDark.background },
-    mainContent: { flexGrow: 1, paddingHorizontal: spacing.roomy, marginTop: spacing.xxxl },
-    buttonContainer: { padding: spacing.roomy, backgroundColor: onDark.background, alignItems: 'center' },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: onDark.muted,
-        borderWidth: 1,
-        borderColor: onDark.mutedText,
-        marginBottom: spacing.lg,
-        paddingHorizontal: spacing.md,
-        height: 50,
-    },
-    inputIcon: { marginRight: spacing.controlGap },
-    input: { ...typography.body, flex: 1, color: onDark.text },
-    title: { ...typography.display, color: onDark.text, marginBottom: spacing.controlGap },
-    subtitle: { ...typography.body, color: onDark.mutedText, marginBottom: spacing.roomy },
-    proxyToggle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: spacing.controlGap,
-        paddingHorizontal: spacing.md,
-        marginBottom: spacing.xs,
-    },
-    codeAuthToggle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: spacing.controlGap,
-        paddingHorizontal: spacing.md,
-        marginTop: spacing.sm,
-    },
-    proxyToggleIcon: { marginRight: spacing.tight },
-    proxyToggleText: { ...typography.rowSubtitle, flex: 1, color: onDark.mutedText },
-    proxySection: { marginTop: spacing.xs, marginBottom: spacing.sm },
-    warningRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        backgroundColor: fixedColor.onboardingWarningSurface,
-        borderWidth: 1,
-        borderColor: fixedColor.onboardingWarningBorder,
-        padding: spacing.controlGap,
-        marginBottom: spacing.md,
-        gap: spacing.sm,
-    },
-    warningText: { ...typography.caption, flex: 1, color: statusColor.warningText },
-    // Code sign-in panel
-    codeAuthPanel: {
-        alignItems: 'center',
-        paddingVertical: spacing.xl,
-        gap: spacing.page,
-    },
-    codeAuthLabel: {
-        ...typography.body,
-        color: onDark.mutedText,
-        textAlign: 'center',
-    },
-    codeAuthCode: {
-        ...typography.hero,
-        fontWeight: '700',
-        color: onDark.text,
-        letterSpacing: 8,
-    },
-    codeAuthWaiting: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.sm,
-    },
-    codeAuthWaitingText: {
-        ...typography.rowSubtitle,
-        color: onDark.mutedText,
-    },
-    codeAuthHint: {
-        ...typography.caption,
-        color: onDark.mutedText,
-        textAlign: 'center',
-        paddingHorizontal: spacing.md,
-    },
-    // Buttons
-    nextButton: {
-        backgroundColor: onDark.text,
-        paddingVertical: spacing.lg,
-        alignItems: 'center',
-        width: '100%',
-        marginBottom: spacing.md,
-    },
-    nextButtonDisabled: { opacity: stateLayer.pressedOpacity },
-    nextButtonText: { ...typography.sheetTitle, color: onDark.background },
-    backButton: {
-        backgroundColor: onDark.border,
-        paddingVertical: spacing.lg,
-        alignItems: 'center',
-        width: '100%',
-        marginBottom: spacing.xs,
-    },
-    backButtonText: { ...typography.sheetTitle, color: onDark.text },
-});

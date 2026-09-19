@@ -1,4 +1,4 @@
-import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
+import { contentWidth, hitSlopFor, iconSize, spacing, tinted, typography } from '@/constants/design';
 import React, { useRef } from 'react';
 import { View, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { CloudOff, SlidersHorizontal, Search as SearchIcon, X } from 'lucide-react-native';
@@ -80,7 +80,7 @@ const Search = () => {
           accessibilityState={{ selected: m.isOtherScope }}
           style={[
             styles.filtersButton,
-            { backgroundColor: m.isOtherScope ? colors.themeColor + '26' : colors.muted, borderRadius: rad.md },
+            { backgroundColor: m.isOtherScope ? tinted(colors.themeColor, 'selected') : colors.muted, borderRadius: rad.md },
           ]}
           onPress={() => filtersSheetRef.current?.present()}
         >
@@ -171,5 +171,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: spacing.sm,
     paddingBottom: 0,
+    // Results are rows; rows are capped and centred like every other column
+    // of them. The field above stays the width of the window.
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
   },
 });

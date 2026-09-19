@@ -5,7 +5,8 @@ import { useSelector } from 'react-redux'
 import SkeletonGrid from '@/components/SkeletonGrid'
 import SkeletonListRow from '@/components/SkeletonListRow'
 import { spacing } from '@/constants/design'
-import { selectGridColumns, selectLibraryViewMode } from '@/features/settings/appearance/state';
+import { selectLibraryViewMode } from '@/features/settings/appearance/state';
+import { useGridColumns } from '@/features/layout/useGridColumns';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from './layout'
 import type { LibraryCollectionType } from './librarySort'
 
@@ -29,12 +30,12 @@ const LoadingLibraryList: React.FC<{ collection?: LibraryCollectionType | null }
   collection = null,
 }) => {
   const isGridView = useSelector(selectLibraryViewMode(collection))
-  const gridColumns = useSelector(selectGridColumns)
+  const gridColumns = useGridColumns()
   const { width } = useWindowDimensions()
 
   const rows = useMemo(() => Array.from({ length: PLACEHOLDER_ROWS }), [])
 
-  const gutter = libraryGutter(isGridView, GRID_SPACING)
+  const gutter = libraryGutter(isGridView, GRID_SPACING, width)
 
   return (
     <ScrollView

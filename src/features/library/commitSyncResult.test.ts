@@ -31,7 +31,16 @@ describe('commitSyncResult', () => {
     });
 
     await Promise.resolve();
-    expect(log).toEqual(['stats/setServerAlbumStats', 'stats/setServerSongStats', 'flush']);
+    expect(log).toEqual([
+      'stats/setServerAlbumStats',
+      'stats/setServerSongStats',
+      // The catalog that just arrived carries the server's own ratings, so
+      // the overlay of the ones this device wrote is dropped — before the
+      // flush, like the stats, so a kill cannot leave the timestamp ahead of
+      // the data.
+      'ratings/clearServerRatings',
+      'flush',
+    ]);
 
     releaseFlush();
     await expect(done).resolves.toBe(42);
@@ -57,6 +66,6 @@ describe('commitSyncResult', () => {
       serverId: 'srv',
       result: result({ albumStats: [], songStats: [] }),
     });
-    expect(log).toEqual(['settingsSync/setLastSyncedAt']);
+    expect(log).toEqual(['ratings/clearServerRatings', 'settingsSync/setLastSyncedAt']);
   });
 });

@@ -343,7 +343,9 @@
         "onSubtext": "曲目间淡入淡出 {{seconds}} 秒，切歌直接切换。",
         "seguesLabel": "连贯曲目也淡入淡出",
         "seguesSubtext": "专辑无缝衔接仍直切；开启则一并淡化。"
-      }
+      },
+      "showRating": "显示评分",
+      "showRatingSubtext": "在播放器标题下方显示五星评分"
     },
     "listenBrainz": {
       "title": "ListenBrainz",
@@ -529,7 +531,8 @@
       "off": "关闭",
       "promptTitle": "开启来自 {{name}} 的{{use}}？",
       "turnOn": "开启",
-      "notNow": "暂不"
+      "notNow": "暂不",
+      "alwaysFirst": "第一"
     },
     "sourceUses": {
       "lastfm": {
@@ -858,7 +861,8 @@
       "mostRecent": "最新添加",
       "mostPlayed": "播放最多",
       "releaseYear": "发行年份",
-      "recentlyAdded": "最近添加"
+      "recentlyAdded": "最近添加",
+      "rating": "评分"
     },
     "sortSheet": {
       "title": "排序方式"
@@ -977,7 +981,8 @@
     },
     "sources": {
       "server": "在你的服务器上"
-    }
+    },
+    "offlineBanner": "离线 — 发现已暂停，你的音乐库仍可使用"
   },
   "playing": {
     "volume": "音量",
@@ -1087,7 +1092,8 @@
       "downloaded": "已下载",
       "goToArtist": "前往艺术家",
       "generatePlaylist": "以此创建播放列表",
-      "sleepTimer": "睡眠定时器"
+      "sleepTimer": "睡眠定时器",
+      "rating": "评分"
     },
     "sections": {
       "media": "媒体信息",
@@ -1209,7 +1215,9 @@
       "soulsyncDesc": "通过 SoulSync 搜索 Soulseek",
       "addedToSoulsync": "已向 SoulSync 发起请求。",
       "addedTrackToSoulsync": "已向 SoulSync 发起请求。",
-      "monitoringOnLidarr": "Lidarr 正在关注 {{artist}}。"
+      "monitoringOnLidarr": "Lidarr 正在关注 {{artist}}。",
+      "sending": "正在将《{{title}}》发送至 {{downloader}}…",
+      "progress": "已请求 {{total}} 首中的 {{done}} 首…"
     },
     "header": {
       "songs": "{{count}} 首曲目",
@@ -1242,6 +1250,22 @@
     },
     "filters": {
       "title": "筛选"
+    },
+    "getSheet": {
+      "monitor": "要关注的专辑",
+      "policy": {
+        "future": "今后的专辑",
+        "all": "全部专辑",
+        "missing": "缺失的专辑",
+        "existing": "已有的专辑",
+        "first": "首张专辑",
+        "latest": "最新专辑",
+        "none": "不关注"
+      },
+      "searchNow": "立即搜索",
+      "searchNowHint": "设置完成后立即开始查找",
+      "nothingToSearch": "暂无可搜索的内容 — 仅关注今后的发行。",
+      "confirm": "关注此艺人"
     }
   },
   "manualAddWant": {
@@ -1269,7 +1293,8 @@
       "favorite": "加入收藏",
       "unfavorite": "移出收藏",
       "share": "共享",
-      "generatePlaylist": "以此生成播放列表"
+      "generatePlaylist": "以此生成播放列表",
+      "rating": "评分"
     },
     "sections": {
       "albumInfo": "专辑信息"
@@ -1484,10 +1509,14 @@
       "download": "下载",
       "cancelDownload": "取消下载",
       "downloaded": "已下载",
-      "downloading": "下载中"
+      "downloading": "下载中",
+      "getArtist": "获取此艺人",
+      "want": "想要",
+      "wanted": "已想要"
     },
     "rows": {
-      "options": "{{title}}的选项"
+      "options": "{{title}}的选项",
+      "titleAndSubtitle": "{{title}}，{{subtitle}}"
     },
     "searchInput": "搜索",
     "queueBackToPlayer": "返回播放器",
@@ -1568,6 +1597,10 @@
     },
     "wants": {
       "remove": "从想要列表中移除“{{title}}”"
+    },
+    "rating": {
+      "label": "评分",
+      "star_other": "{{count}} 星"
     }
   },
   "tabs": {
@@ -1590,5 +1623,12 @@
   },
   "externalOptions": {
     "openInSource": "在 {{source}} 中打开"
+  },
+  "ratings": {
+    "offline": "服务器无法连接，暂时无法修改评分",
+    "failed": "评分未能保存",
+    "title": "评分",
+    "clear": "清除评分",
+    "notRated": "未评分"
   }
 }

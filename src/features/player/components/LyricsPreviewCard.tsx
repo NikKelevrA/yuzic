@@ -1,4 +1,4 @@
-import { motion, onDark, spacing, typography } from '@/constants/design';
+import { motion, onDark, onDarkAlpha, spacing, typography, veil } from '@/constants/design';
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import {
   View,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     paddingVertical: CARD_PADDING_V,
     paddingHorizontal: spacing.xl,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: veil.card,
     overflow: 'hidden',
   },
   scrollContent: {
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   inactiveLine: {
-    color: 'rgba(255,255,255,0.6)',
+    color: onDarkAlpha.body,
     fontWeight: '500',
   },
 });

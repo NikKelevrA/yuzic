@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Heart, CirclePlus, Disc, Radio, Mic2, ListEnd, ListStart, Sparkles, Moon,
+  Heart, CirclePlus, Disc, Radio, Mic2, ListEnd, ListStart, Sparkles, Moon, Star,
 } from 'lucide-react-native';
 import type { Song } from '@/domain/entities/Song';
 import { iconSize, statusColor, typography } from '@/constants/design';
@@ -8,6 +8,7 @@ import type { SleepTimer } from '@/features/player/sleepTimer';
 import SleepTimerRemaining from '@/features/player/components/SleepTimerRemaining';
 import type { ActionDef, BaseActionContext } from '../types';
 import { downloadRowIcon, downloadRowLabel } from '../shared/downloadActions';
+import RatingValue from '@/features/ratings/RatingValue';
 
 export interface SongLibraryActionContext extends BaseActionContext {
   kind: 'song';
@@ -16,6 +17,10 @@ export interface SongLibraryActionContext extends BaseActionContext {
   t: (key: string, opts?: Record<string, unknown>) => string;
   colors: { secondary: string; subtext: string };
   isStarred: boolean;
+  /** Whether this server keeps a rating at all — presence, never a provider name. */
+  ratingsAvailable: boolean;
+  /** Out of five, or undefined where the server carries none for this track. */
+  rating: number | undefined;
   isDownloaded: boolean;
   isDownloading: boolean;
   isGeneratingPlaylist: boolean;
@@ -25,6 +30,7 @@ export interface SongLibraryActionContext extends BaseActionContext {
   sleepTimerAvailable: boolean;
   handlers: {
     toggleFavorite: () => void;
+    rating: () => void;
     addToQueue: () => void;
     addToEndQueue: () => void;
     addToPlaylist: () => void;
@@ -49,6 +55,20 @@ export const songLibraryActions: ActionDef<Ctx>[] = [
     }),
     visible: () => true,
     invoke: ctx => ctx.handlers.toggleFavorite(),
+  },
+  {
+    id: 'rating',
+    label: ctx => ctx.t('songOptions.actions.rating'),
+    icon: ctx => React.createElement(Star, { size: icon(), color: ctx.colors.secondary }),
+    // Absent where the server keeps no rating, like every other surface this
+    // feature has. `docs/integrations.md` says which servers those are.
+    visible: ctx => ctx.ratingsAvailable,
+    // The value, not a second control: the five stars that set it live in the
+    // sheet this row opens, because a row is one accessibility element and
+    // anything tappable inside it is unreachable.
+    trailing: ctx => React.createElement(RatingValue, { value: ctx.rating }),
+    testID: () => 'options-rating',
+    invoke: ctx => ctx.handlers.rating(),
   },
   {
     id: 'addToQueue',

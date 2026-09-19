@@ -12,7 +12,7 @@ import SongRow from '@/components/rows/SongRow';
 import LoadingSongRow from '@/components/rows/SongRow/Loading';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useTheme } from '@/features/theme/useTheme';
-import { iconSize, spacing } from '@/constants/design';
+import { contentWidth, iconSize, spacing } from '@/constants/design';
 import CollectionActions from '@/features/library/CollectionActions';
 import { useLocalMix } from './hooks/useLocalMix';
 
@@ -66,6 +66,11 @@ export default function LocalMixScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  list: { paddingBottom: spacing.xl },
+  list: {
+    paddingBottom: spacing.xl,
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
+  },
   actions: { paddingHorizontal: spacing.page, paddingTop: spacing.sm, paddingBottom: spacing.md },
 });

@@ -20,8 +20,8 @@ import SingleSelectBottomSheet, { type SingleSelectOption } from '@/components/S
 import { useSheetRef } from '@/components/useSheetRef';
 import LibraryItem from '@/features/library/components/Items/LibraryItem';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from '@/features/library/layout';
+import { useGridColumns } from '@/features/layout/useGridColumns';
 import {
-  selectGridColumns,
   selectLibraryViewMode,
   setLibraryViewMode,
 } from '@/features/settings/appearance/state';
@@ -76,11 +76,11 @@ export default function RadioScreen() {
   const [sort, setSort] = useState<StationSort>('serverOrder');
   const dispatch = useDispatch();
   const isGridView = useSelector(selectLibraryViewMode('radio'));
-  const gridColumns = useSelector(selectGridColumns);
+  const gridColumns = useGridColumns();
   const { width: screenWidth } = useWindowDimensions();
   const sortSheetRef = useSheetRef();
 
-  const gutter = libraryGutter(isGridView, GRID_SPACING);
+  const gutter = libraryGutter(isGridView, GRID_SPACING, screenWidth);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
 
   const stationsQuery = useQuery({

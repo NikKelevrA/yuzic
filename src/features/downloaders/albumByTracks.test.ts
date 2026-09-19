@@ -43,6 +43,27 @@ describe('downloadAlbumByTracks', () => {
       .resolves.toEqual({ success: false, code: 'INVALID_KEY', message: 'bad key' });
   });
 
+  it('counts every track it has attempted, so a caller can say how far along it is', async () => {
+    const downloadTrack = jest.fn().mockResolvedValue({ success: true });
+    const onProgress = jest.fn();
+
+    await downloadAlbumByTracks(downloadTrack, 'cfg', tracks, onProgress);
+
+    expect(onProgress.mock.calls).toEqual(tracks.map((_, i) => [i + 1, tracks.length]));
+  });
+
+  it('counts a track that failed too — it is one the user no longer waits on', async () => {
+    const downloadTrack = jest.fn()
+      .mockResolvedValueOnce({ success: false, code: 'nope', message: 'no' })
+      .mockResolvedValue({ success: true });
+    const onProgress = jest.fn();
+
+    await downloadAlbumByTracks(downloadTrack, 'cfg', tracks, onProgress);
+
+    expect(onProgress).toHaveBeenCalledTimes(tracks.length);
+    expect(onProgress).toHaveBeenNthCalledWith(1, 1, tracks.length);
+  });
+
   it('has nothing to request for an album without tracks', async () => {
     const downloadTrack = jest.fn();
 

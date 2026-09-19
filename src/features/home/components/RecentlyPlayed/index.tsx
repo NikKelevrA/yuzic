@@ -7,7 +7,7 @@ import { useAlbums } from '@/features/album/useAlbums';
 import { usePlaylists } from '@/features/playlist/usePlaylists';
 import MediaTile from '../MediaTile';
 import SectionShelfHeader from '../SectionShelfHeader';
-import { SECTION_H_PADDING } from '../sectionStyles';
+import { SHELF_INSET, shelfItemWidth } from '@/features/layout/shelf';
 import { useTranslation } from 'react-i18next';
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers';
 import type { Album } from '@/domain/entities/Album';
@@ -21,16 +21,24 @@ import { useStableList } from '@/features/home/hooks/useStableList';
 
 // The shelf's own inset has to be the shared one: its heading comes from
 // SectionShelfHeader, which is inset with every other shelf on the screen.
-const H_PADDING = SECTION_H_PADDING;
-const GAP = 10;
+const H_PADDING = SHELF_INSET;
+/** Tighter than the other shelves on purpose — this one draws three across. */
+const GAP = spacing.controlGap;
 const VISIBLE_ITEMS = 3.2;
 const MAX_ITEMS = 12;
 const MIN_ITEMS = 1;
 
-const getItemWidth = (width: number) => {
-  const availableWidth = width - H_PADDING * 2;
-  return (availableWidth - GAP * (VISIBLE_ITEMS - 1)) / VISIBLE_ITEMS;
-};
+/**
+ * Its own density, the shared rule.
+ *
+ * Three and a bit tiles rather than two and a half, which is what makes this
+ * shelf read as "what you were just listening to" rather than as another row
+ * of covers — but the arithmetic over that number is the same arithmetic
+ * every other shelf uses, and this one used to carry a fourth copy of it with
+ * a gap count that was one out.
+ */
+const getItemWidth = (width: number) =>
+  shelfItemWidth(width, { visible: VISIBLE_ITEMS, gap: GAP });
 
 type RecentItem =
   | { kind: 'album'; data: Album; ts: number }

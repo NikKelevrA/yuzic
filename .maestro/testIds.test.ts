@@ -40,7 +40,7 @@ function sourceText(): string {
   // keeps gitignored build output out.
   return execFileSync(
     'git',
-    ['grep', '-h', '--untracked', '--exclude-standard', '-E', '[Tt]estID=', '--', 'src'],
+    ['grep', '-h', '--untracked', '--exclude-standard', '-E', '[Tt]estID[[:space:]]*[=:]', '--', 'src'],
     { cwd: ROOT, encoding: 'utf8' }
   );
 }
@@ -57,18 +57,33 @@ function sourceText(): string {
  * ids it produces are just as real as the ones on a bare `testID`. Matching
  * only `testID=` made those invisible here, so a flow that used one failed
  * this check even though the id existed.
+ *
+ * `testID:` — the property form — counts for the same reason, and has to
+ * be let through the grep above as well as matched here. A sheet row does
+ * not write JSX at all: it is an entry in the entity-action registry,
+ * where the id is `testID: () => 'options-rating'`. Every row of every
+ * options sheet names itself that way, so without this a flow that taps
+ * one is a flow this check calls a typo.
  */
 function testIdExpressions(source: string): string[] {
   const expressions: string[] = [];
 
-  for (const marker of source.matchAll(/\b[A-Za-z]*[Tt]estID=/g)) {
+  for (const marker of source.matchAll(/\b[A-Za-z]*[Tt]estID\s*[=:]\s*/g)) {
     const start = (marker.index ?? 0) + marker[0].length;
-    if (source[start] === '"') {
-      const end = source.indexOf('"', start + 1);
+    if (source[start] === '"' || source[start] === "'") {
+      const quote = source[start];
+      const end = source.indexOf(quote, start + 1);
       if (end !== -1) expressions.push(source.slice(start, end + 1));
       continue;
     }
-    if (source[start] !== '{') continue;
+    // The property form has no braces to walk: its value is an expression,
+    // usually an arrow returning the id. Take the rest of the line and let
+    // the literal and prefix readers below pick it apart.
+    if (source[start] !== '{') {
+      const lineEnd = source.indexOf("\n", start);
+      expressions.push(source.slice(start, lineEnd === -1 ? source.length : lineEnd));
+      continue;
+    }
 
     let depth = 0;
     for (let j = start; j < source.length; j++) {

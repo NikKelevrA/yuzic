@@ -15,8 +15,8 @@ import { selectSourceUse } from '@/features/settings/sources/state';
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
-  SECTION_VISIBLE_ITEMS,
 } from '@/features/home/constants';
+import { getSectionItemWidth } from './sectionStyles';
 import OptionsTile from './OptionsTile';
 import SkeletonTiles from '@/components/SkeletonTiles';
 import { useSourceSectionPresence } from './SourceGroup';
@@ -86,7 +86,7 @@ export default function LBSimilarForYouSection({ sectionKey, artistNames, refres
   });
 
   const gridItemWidth = useMemo(
-    () => (screenWidth - H_PADDING * 2 - SECTION_GRID_GAP * 2) / SECTION_VISIBLE_ITEMS,
+    () => getSectionItemWidth(screenWidth),
     [screenWidth]
   );
 

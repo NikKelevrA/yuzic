@@ -1,27 +1,19 @@
 import { StyleSheet } from 'react-native'
 import { spacing, typography } from '@/constants/design'
-import { SECTION_H_PADDING } from '@/features/home/constants'
+import { SHELF_GAP, SHELF_INSET, shelfItemWidth } from '@/features/layout/shelf'
+
+const SECTION_GAP = SHELF_GAP
+const SECTION_H_PADDING = SHELF_INSET
 
 /**
- * Home's shelves sit on the same page inset as every other screen.
+ * How wide one tile on a Home shelf is drawn.
  *
- * They were on 12 while the rest of the app was on 16, which survived the move
- * to the spacing scale by hiding behind a constant — the lint rule sees a
- * literal, not an identifier. Home is the first screen anyone opens, so it was
- * the worst place to be the odd one out.
- *
- * Re-exported rather than redeclared: half the shelves import it from here and
- * half from `features/home/constants`, and for a while those were two separate
- * numbers that only happened to agree.
+ * The rule itself lives in `features/layout/shelf`, because the album
+ * screen's shelves are the same shelf and used to carry their own copy of it.
+ * Kept as a name here so the shelves that call it do not all have to learn a
+ * new import path to get the same number.
  */
-export { SECTION_H_PADDING }
-const SECTION_GAP = spacing.md
-const SECTION_VISIBLE_ITEMS = 2.5
-
-export function getSectionItemWidth(screenWidth: number): number {
-  const available = screenWidth - SECTION_H_PADDING * 2
-  return (available - SECTION_GAP * (SECTION_VISIBLE_ITEMS - 1)) / SECTION_VISIBLE_ITEMS
-}
+export const getSectionItemWidth = shelfItemWidth
 
 export const sectionStyles = StyleSheet.create({
   container: {

@@ -74,7 +74,7 @@ module.exports = defineConfig([
     files: SCALED_FILES,
     // The scale file is where the numbers live, and its test has to write a
     // fixture scale to check the scaling with.
-    ignores: ["src/constants/design.ts", "src/constants/typography.ts", "src/constants/design.test.ts", "**/*.test.ts", "**/*.test.tsx"],
+    ignores: ["src/constants/design.ts", "src/constants/colors.ts", "src/constants/typography.ts", "src/constants/design.test.ts", "src/features/theme/useTheme.ts", "src/features/theme/coverAccent.ts", "**/*.test.ts", "**/*.test.tsx"],
     plugins: { yuzic },
     rules: {
       "no-restricted-syntax": [
@@ -91,6 +91,25 @@ module.exports = defineConfig([
         { selector: "Property[key.name='shadowOpacity'][value.type='Literal'][value.value!=0]", message: "Use a shadow/stateLayer token from @/constants/design instead of a literal shadowOpacity." },
         { selector: "Property[key.name='elevation'][value.type='Literal'][value.value!=0]", message: "Use a shadow token from @/constants/design instead of a literal elevation." },
         { selector: "Property[key.name=/^(color|backgroundColor|borderColor|shadowColor|tintColor|placeholderTextColor)$/][value.type='Literal'][value.value=/^#/]", message: "Use a semantic color token from @/constants/design or useTheme instead of a raw hex color." },
+        // A colour spelled out anywhere, not only as a style property. The rule
+        // above it could only ever see `{ color: '#fff' }`: an `rgba(...)` was
+        // invisible because it tests for a leading `#`, and a colour handed
+        // straight to a JSX prop or sitting in a gradient's array is invisible
+        // because it is not a Property at all. Forty-seven had collected in
+        // twelve files, four of them the same faint white card.
+        {
+          selector: "Literal[value=/^(#[0-9a-fA-F]{3,8}|rgba?[(])/]",
+          message:
+            "Use a colour token from @/constants/design (onDark, veil, shade, onDarkAlpha, coverFade) or useTheme instead of spelling a colour out.",
+        },
+        // `colors.themeColor + '26'` is a hex alpha appended to a string, which
+        // is neither a literal colour nor a token and so was caught by nothing.
+        // Three sites, two alphas, one idea.
+        {
+          selector: "BinaryExpression[operator='+'] > Literal[value=/^[0-9a-fA-F]{2}$/][raw=/^['\"]/]",
+          message:
+            "Use tinted(color, strength) from @/constants/design instead of appending a hex alpha to a colour.",
+        },
         // The glyph scale, which lives on a JSX attribute rather than a style
         // property — so none of the selectors above could ever have seen it,
         // and it drifted to 20 distinct values across 294 icons.

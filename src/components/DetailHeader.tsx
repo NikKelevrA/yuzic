@@ -10,11 +10,13 @@ import { MediaImage } from '@/components/MediaImage';
 import { useCoverAccent } from '@/features/theme/useCoverAccent';
 import { ACCENT_WASH_LOCATIONS, accentWashColors } from '@/features/theme/coverAccent';
 import { useTheme } from '@/features/theme/useTheme';
-import { controlSize, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
+import { controlSize, hitSlopFor, iconSize, shade, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import type { CoverSource } from '@/domain/entities/Cover';
 import Touchable from '@/components/Touchable';
 import { DETAIL_BAR_HEIGHT, useDetailScroll } from '@/components/detail/DetailScreen';
+import { useWindowLayout } from '@/features/layout/useWindowLayout';
+import { squareArtSize } from '@/features/layout/windowClass';
 
 // A detail screen is assembled from three modules; screens import all of it
 // from here.
@@ -39,6 +41,25 @@ const WASH_REACH = 420;
 
 /** Long enough to read as the colour arriving rather than the screen changing. */
 const WASH_FADE_MS = 450;
+
+/**
+ * The hero square on an album, artist or playlist.
+ *
+ * Fixed rather than a share of the width, and deliberately: this is a header
+ * the list scrolls away under, not the content, so it is the same size on
+ * every phone and does not grow into half an iPad.
+ */
+const DETAIL_COVER_SIZE = 280;
+
+/**
+ * How much of a short window the hero may take.
+ *
+ * 280 plus its margins and a two-line title is 400pt, which is the whole of a
+ * phone turned on its side — the screen opened on a full page of chrome with
+ * the first track below the fold. Only landscape asks this; in portrait the
+ * fixed size always wins, so no phone and no tablet held upright moves.
+ */
+const DETAIL_COVER_HEIGHT_SHARE = 0.45;
 
 type DetailHeaderProps = {
   title: string;
@@ -115,6 +136,10 @@ export function DetailHeader({
   const insets = useSafeAreaInsets();
   const accent = useCoverAccent(cover);
   const floating = useDetailScroll();
+  const { height, landscape } = useWindowLayout();
+  const coverSize = landscape
+    ? squareArtSize(DETAIL_COVER_SIZE, height * DETAIL_COVER_HEIGHT_SHARE)
+    : DETAIL_COVER_SIZE;
 
   // The hero starts at the very top of the scroll view so the wash can too;
   // the room the bar and the status bar need is padding here instead.
@@ -146,7 +171,7 @@ export function DetailHeader({
 
       {showNavigation && <DetailHeaderBar title={title} rightAction={rightAction} />}
 
-      <View style={[styles.coverWrapper, { borderRadius: rad.lg }]}>
+      <View style={[styles.coverWrapper, { width: coverSize, height: coverSize, borderRadius: rad.lg }]}>
         <MediaImage cover={cover} size="detail" style={[styles.coverImage, { borderRadius: rad.lg }]} />
       </View>
 
@@ -172,8 +197,8 @@ export function DetailHeader({
  * the opposite side of the theme from the icon settles it once, for every
  * cover, without the icon having to change colour halfway through a scroll.
  */
-const SCRIM_DARK = 'rgba(0, 0, 0, 0.35)';
-const SCRIM_LIGHT = 'rgba(255, 255, 255, 0.6)';
+const SCRIM_DARK = shade.scrim;
+const SCRIM_LIGHT = shade.scrimLight;
 
 type BarButtonProps = {
   children: React.ReactNode;
@@ -268,8 +293,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   coverWrapper: {
-    width: 280,
-    height: 280,
     marginTop: spacing.xxl,
     marginBottom: spacing.xl,
     overflow: 'hidden',

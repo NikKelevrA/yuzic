@@ -4,6 +4,7 @@ import {
   ArtistsApi,
   GenresApi,
   PlaylistsApi,
+  RatingsApi,
   StarredApi,
   SimilarApi,
   SongsApi,
@@ -40,6 +41,7 @@ import { movePlaylistEntry, removePlaylistEntry } from "./playlists/updatePlayli
 import { getStarredItems } from "./starred/getStarredItems";
 import { star } from "./starred/star";
 import { unstar } from "./starred/unstar";
+import { setRating } from "./ratings/setRating";
 
 import { getGenres } from "./genres/getGenres";
 
@@ -264,6 +266,10 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
     remove: async (id, type) => { await unstar(client, id, type); },
   };
 
+  const ratings: RatingsApi = {
+    set: async (id, rating) => setRating(client, id, rating),
+  };
+
   const songs: SongsApi = {
     get: async (id: string) => getSong(client, id, provenance),
     scrobble: async (songId, timestamp) => scrobble(client, songId, timestamp),
@@ -369,6 +375,7 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
     genres,
     playlists,
     starred,
+    ratings,
     songs,
     tracks,
     similar,

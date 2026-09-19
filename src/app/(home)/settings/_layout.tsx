@@ -9,6 +9,11 @@ export { default as ErrorBoundary } from '@/components/RouteErrorBoundary';
 export const unstable_settings = { anchor: 'index' };
 
 /**
+ * Every screen here draws its own header, so none of them carries a `title`:
+ * eighteen hardcoded English ones sat in this file doing nothing, which is
+ * eighteen strings that would have reached a French user the first time
+ * anyone turned a header on.
+ *
  * Settings lives on the root stack as a modal, not in the
  * `(home,search,library)` shared group — see `(home)/_layout.tsx`. That makes
  * it one instance for the whole app instead of one per tab.
@@ -16,24 +21,24 @@ export const unstable_settings = { anchor: 'index' };
 export default function SettingsLayout() {
     return (
         <Stack>
-            <Stack.Screen name='index' options={{ headerShown: false, title: "Settings" }} />
-            <Stack.Screen name='appearanceView' options={{ headerShown: false, title: "Appearances" }} />
-            <Stack.Screen name='libraryView' options={{ headerShown: false, title: "Library" }} />
-            <Stack.Screen name='homeView' options={{ headerShown: false, title: "Home" }} />
-            <Stack.Screen name='playerView' options={{ headerShown: false, title: "Playback" }} />
-            <Stack.Screen name='equalizerView' options={{ headerShown: false, title: "Equalizer" }} />
-            <Stack.Screen name='serverView' options={{ headerShown: false, title: "Server" }} />
-            <Stack.Screen name='connectionsView' options={{ headerShown: false, title: "Connections" }} />
-            <Stack.Screen name='lidarrView' options={{ headerShown: false, title: "Lidarr" }} />
-            <Stack.Screen name='slskdView' options={{ headerShown: false, title: "slskd" }} />
-            <Stack.Screen name='soulsyncView' options={{ headerShown: false, title: "SoulSync" }} />
-            <Stack.Screen name='listenbrainzView' options={{ headerShown: false, title: "ListenBrainz" }} />
-            <Stack.Screen name='scrobblingView' options={{ headerShown: false, title: "Scrobbling" }} />
-            <Stack.Screen name='listeningView' options={{ headerShown: false, title: "Listening" }} />
-            <Stack.Screen name='pagesView' options={{ headerShown: false, title: "Pages" }} />
-            <Stack.Screen name='searchView' options={{ headerShown: false, title: "Search" }} />
-            <Stack.Screen name='audiomuseView' options={{ headerShown: false, title: "AudioMuse-AI" }} />
-            <Stack.Screen name='metadataView' options={{ headerShown: false, title: "Metadata" }} />
+            <Stack.Screen name='index' options={{ headerShown: false }} />
+            <Stack.Screen name='appearanceView' options={{ headerShown: false }} />
+            <Stack.Screen name='libraryView' options={{ headerShown: false }} />
+            <Stack.Screen name='homeView' options={{ headerShown: false }} />
+            <Stack.Screen name='playerView' options={{ headerShown: false }} />
+            <Stack.Screen name='equalizerView' options={{ headerShown: false }} />
+            <Stack.Screen name='serverView' options={{ headerShown: false }} />
+            <Stack.Screen name='connectionsView' options={{ headerShown: false }} />
+            <Stack.Screen name='lidarrView' options={{ headerShown: false }} />
+            <Stack.Screen name='slskdView' options={{ headerShown: false }} />
+            <Stack.Screen name='soulsyncView' options={{ headerShown: false }} />
+            <Stack.Screen name='listenbrainzView' options={{ headerShown: false }} />
+            <Stack.Screen name='scrobblingView' options={{ headerShown: false }} />
+            <Stack.Screen name='listeningView' options={{ headerShown: false }} />
+            <Stack.Screen name='pagesView' options={{ headerShown: false }} />
+            <Stack.Screen name='searchView' options={{ headerShown: false }} />
+            <Stack.Screen name='audiomuseView' options={{ headerShown: false }} />
+            <Stack.Screen name='metadataView' options={{ headerShown: false }} />
         </Stack>
     );
 }

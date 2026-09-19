@@ -18,7 +18,7 @@ import { ShareLinkOptions } from '@/components/options/ShareLinkOptions';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useListDensity } from '@/features/theme/useListDensity';
-import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
+import { contentWidth, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
 import { shareItem } from '@/features/shares/share';
@@ -281,7 +281,16 @@ function EditShareSheet({ share, onClose }: { share: Share; onClose: () => void 
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { paddingVertical: spacing.md, paddingHorizontal: spacing.page, gap: spacing.sm },
+  listContent: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.page,
+    gap: spacing.sm,
+    // A column of rows, capped and centred like every other one. A
+    // `FlatList` takes a width here, unlike a `FlashList`.
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
+  },
   separator: { height: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   rowText: { flex: 1, minWidth: 0 },

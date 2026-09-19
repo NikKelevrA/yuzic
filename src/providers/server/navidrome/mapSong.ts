@@ -10,6 +10,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import { albumCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
+import { reportedRating } from '@/domain/entities/Rating';
 import { albumRef, artistRef } from './mapRefs';
 import type { SubsonicSong } from './types';
 
@@ -71,6 +72,7 @@ export function mapSong(dto: SubsonicSong, context: MapSongContext): Song {
     addedAt: dto.created ? Date.parse(dto.created) || undefined : undefined,
     serverPlayCount: dto.playCount,
     serverLastPlayedAt: dto.played ? Date.parse(dto.played) || undefined : undefined,
+    userRating: reportedRating(dto.userRating),
     audio: {
       bitrateKbps: dto.bitRate,
       sampleRateHz: dto.samplingRate,

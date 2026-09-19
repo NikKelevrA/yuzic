@@ -15,8 +15,8 @@ import { selectPersistedPlaybackBookmarks } from '@/state/redux/selectors/playba
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
-  SECTION_VISIBLE_ITEMS,
 } from '@/features/home/constants';
+import { getSectionItemWidth } from './sectionStyles';
 import OptionsTile from './OptionsTile';
 import { spacing, typography } from '@/constants/design';
 
@@ -44,7 +44,7 @@ export default function ContinuePlayingSection() {
   const bookmarks = useSelector(selectPersistedPlaybackBookmarks);
 
   const itemSize = useMemo(
-    () => (screenWidth - H_PADDING * 2 - SECTION_GRID_GAP * 2) / SECTION_VISIBLE_ITEMS,
+    () => getSectionItemWidth(screenWidth),
     [screenWidth]
   );
 

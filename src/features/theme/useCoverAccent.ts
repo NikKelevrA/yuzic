@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import ImageColors from 'react-native-image-colors'
 
+import { onDark } from '@/constants/design'
 import { buildCover } from '@/providers/registry/covers'
 import { selectCoverAccentEnabled } from '@/features/settings/appearance/state';
 import type { CoverSource } from '@/domain/entities/Cover';
@@ -45,9 +46,9 @@ export function useCoverAccent(cover: CoverSource | undefined): string | null {
     // pushed screens — and the late result must not paint over the new one.
     let current = true
     setAccent(null)
-    ImageColors.getColors(uri, { fallback: '#121212' })
+    ImageColors.getColors(uri, { fallback: onDark.wash })
       .then(result => {
-        const value = toWashAccent(pickAccent(result, '#121212'))
+        const value = toWashAccent(pickAccent(result, onDark.wash))
         accents.set(uri, value)
         if (current) setAccent(value)
       })

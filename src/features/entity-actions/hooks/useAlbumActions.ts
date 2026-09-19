@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@/features/theme/useTheme';
 import { useApi } from '@/providers/registry/useApi';
+import { useRating } from '@/features/ratings/useRatings';
+import { useRatingsAvailable } from '@/features/ratings/useRatingsAvailable';
 import { notify } from '@/components/toast';
 import { useSimilarityService } from '@/providers/registry/similarityService';
 import { useCanGeneratePlaylist, generateSimilarPlaylistForAlbum } from '@/features/playlist/generateSimilarPlaylist';
@@ -32,12 +34,15 @@ import { albumLibraryActions, type AlbumLibraryActionContext } from '../registry
 import { albumExternalActions, type AlbumExternalActionContext } from '../registry/albumExternalActions';
 
 export function useAlbumLibraryActions(
-  album: Album | null, opts: { hideGoToAlbum: boolean; isSheetOpen: boolean; close: () => void }
+  album: Album | null,
+  opts: { hideGoToAlbum: boolean; isSheetOpen: boolean; onRating: () => void; close: () => void }
 ) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const router = useRouter();
   const api = useApi();
+  const ratingsAvailable = useRatingsAvailable();
+  const rating = useRating(album);
   const enabledSources = useEnabledExternalSources();
   const playing = usePlaying();
   const { downloadAlbumById, removeDownloadByCollectionId, getCollectionDownloadState } = useDownload();
@@ -74,7 +79,8 @@ export function useAlbumLibraryActions(
 
   const ctx: AlbumLibraryActionContext = {
     kind: 'album', origin: 'library', album, t, colors, close: opts.close,
-    isStarred, playbackDisabled, songsLoading, isDownloaded, isDownloading, isSharing, canShare,
+    isStarred, ratingsAvailable, rating,
+    playbackDisabled, songsLoading, isDownloaded, isDownloading, isSharing, canShare,
     isGeneratingPlaylist, canGeneratePlaylist, hasExternalSources: enabledSources.length > 0, hideGoToAlbum: opts.hideGoToAlbum,
     handlers: {
       toggleFavorite: () => void toggleFavorite({
@@ -82,6 +88,7 @@ export function useAlbumLibraryActions(
         t, title: album.title, addedKey: 'albumOptions.toasts.addedToFavorites', removedKey: 'albumOptions.toasts.removedFromFavorites',
         failedKey: 'albumOptions.toasts.updateFavoritesFailed', close: opts.close,
       }),
+      rating: () => { opts.close(); requestAnimationFrame(opts.onRating); },
       play: () => playback.play(albumWithSongs, songs, false, opts.close),
       shuffle: () => playback.play(albumWithSongs, songs, true, opts.close),
       addToNext: () => playback.addToNext(

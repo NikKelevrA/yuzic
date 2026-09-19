@@ -30,8 +30,14 @@ npm run test:e2e
 ```
 
 Individual suites: `test:e2e:flows` (common user flows), `test:e2e:details`
-(detail screens, options sheet, player), `test:e2e:onboarding` (first-run
-onboarding).
+(detail screens, options sheet, player), `test:e2e:ratings` (the five-star
+rating row and its sheet), `test:e2e:onboarding` (first-run onboarding).
+
+`ratings.yaml` is the one flow that **writes to the server**: it rates a track
+one star and then clears it, so the track ends as it started. It is also the
+only one whose subject may legitimately not be there — ratings are a Subsonic
+capability, so on a Jellyfin, Emby or Plex server the row is deliberately
+absent and the flow skips its body rather than failing.
 
 ## Getting an authenticated app state
 

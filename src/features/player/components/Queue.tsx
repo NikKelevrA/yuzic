@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlbumsById } from '@/features/album/useAlbumsById';
 import type { Song } from '@/domain/entities/Song';
 import Touchable from '@/components/Touchable';
-import { iconSize, onDark, spacing, typography } from '@/constants/design';
+import { iconSize, onDark, spacing, typography, veil } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 
 type QueueItemProps = {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   controlButton: {
     padding: spacing.tight,
     marginLeft: spacing.tight,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: veil.rowSelected,
   },
 
   headerImage: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
 
   activeQueueItem: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: veil.row,
   },
 
   artwork: {

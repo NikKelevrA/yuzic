@@ -17,6 +17,21 @@ interface PlaybackSettingsState {
   showJumpButtons: boolean;
   showPlaybackSpeed: boolean;
   /**
+   * Five stars under the title on the player.
+   *
+   * The one member of this family that defaults *on*, and the reason is that
+   * the others duplicate something already reachable: the volume slider has
+   * the hardware keys, the speed dial and the jump buttons have their own
+   * cards and gestures. A rating has nowhere else to be on the player, and
+   * rating the track that is playing without opening anything is the thing
+   * people ask for when they ask for ratings at all.
+   *
+   * It costs nothing on a server without them: the row reads the adapter's
+   * `ratings` surface as well as this switch, so it never appears on
+   * Jellyfin, Emby, Plex or local files whatever this says.
+   */
+  showRating: boolean;
+  /**
    * Remembered playback rate per kind of listening — see
    * `utils/playback/speedProfile`. Two entries rather than one because a
    * listener wants one speed for talking and another for music; a single
@@ -49,6 +64,7 @@ const initialState: PlaybackSettingsState = {
   showVolumeSlider: false,
   showJumpButtons: false,
   showPlaybackSpeed: false,
+  showRating: true,
   playbackSpeeds: {},
   crossfadeSeconds: 0,
   crossfadeAlways: false,
@@ -89,6 +105,9 @@ const playbackSlice = createSlice({
     setShowPlaybackSpeed(state, action: PayloadAction<boolean>) {
       state.showPlaybackSpeed = action.payload;
     },
+    setShowRating(state, action: PayloadAction<boolean>) {
+      state.showRating = action.payload;
+    },
     /** Remember a rate for one kind of listening. Clamped here so a bad value
      *  cannot reach the engine even if something writes one. */
     setPlaybackSpeedForProfile(
@@ -121,6 +140,7 @@ export const {
   setShowVolumeSlider,
   setShowJumpButtons,
   setShowPlaybackSpeed,
+  setShowRating,
   setPlaybackSpeedForProfile,
   setCrossfadeSeconds,
   setCrossfadeAlways,
@@ -162,6 +182,13 @@ export const selectShowJumpButtons = (state: PlaybackRootState): boolean =>
 
 export const selectShowPlaybackSpeed = (state: PlaybackRootState): boolean =>
   state.settingsPlayback.showPlaybackSpeed;
+
+// Defaulted in the selector rather than read straight off the persisted blob:
+// an install that predates the key has no value for it, and an undefined
+// reaching a conditional render is the switch silently reading as off for
+// every existing user. Same rule as the appearance scales.
+export const selectShowRating = (state: PlaybackRootState): boolean =>
+  state.settingsPlayback.showRating ?? true;
 
 /**
  * Remembered rates per kind of listening. Read through `speedFor`, never

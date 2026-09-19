@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
+import { View } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { useNavigation } from '@react-navigation/native'
 
@@ -7,6 +8,7 @@ import { useTheme } from '@/features/theme/useTheme'
 import AlbumRow, { isExternalAlbum } from '@/components/rows/AlbumRow'
 import GenreHeader, { GenreHeaderBar } from '../Header'
 import { DetailScreen } from '@/components/DetailHeader'
+import { useContentInset } from '@/features/layout/useContentInset'
 import { spacing } from '@/constants/design'
 
 type Props = {
@@ -17,6 +19,7 @@ type Props = {
 export default function GenreContent({ genre, albums }: Props) {
   const navigation = useNavigation<any>()
   const { colors } = useTheme()
+  const { listInset, fullBleed } = useContentInset()
 
   const header = useMemo(
     () => <GenreHeader genre={genre} albums={albums} showNavigation={false} />,
@@ -46,12 +49,13 @@ export default function GenreContent({ genre, albums }: Props) {
       <FlashList
         data={albums}
         keyExtractor={(item) => item.localId}
-        ListHeaderComponent={header}
+        ListHeaderComponent={<View style={fullBleed}>{header}</View>}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: spacing.scrollClearance,
           backgroundColor: colors.background,
+          ...listInset,
         }}
         {...scroll}
       />

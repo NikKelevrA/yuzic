@@ -17,10 +17,10 @@ import { useGenres } from '@/features/genre/useGenres'
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
-  SECTION_VISIBLE_ITEMS,
   STALE_DEEZER_DISCOVERY,
   HOME_SEED_ARTISTS,
 } from '@/features/home/constants'
+import { getSectionItemWidth } from './sectionStyles'
 import { CATALOGUE_HOME_USE, fetchAlbumsForGenre } from '@/providers/registry/homeDiscovery'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
@@ -69,7 +69,7 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
   const [selectedGenre, setSelectedGenre] = React.useState<string>(genre)
 
   const gridItemWidth = useMemo(
-    () => (screenWidth - H_PADDING * 2 - SECTION_GRID_GAP * 2) / SECTION_VISIBLE_ITEMS,
+    () => getSectionItemWidth(screenWidth),
     [screenWidth]
   )
 

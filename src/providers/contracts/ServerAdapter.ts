@@ -91,6 +91,8 @@ export interface ApiAdapter {
   radio?: RadioApi;
   /** Public shareable URLs for albums/playlists/tracks (Subsonic shares). */
   shares?: SharesApi;
+  /** Five-star ratings, where the server keeps them natively. */
+  ratings?: RatingsApi;
   /** Per-track resume positions — audiobooks, podcasts, long mixes. */
   bookmarks?: BookmarksApi;
   /** Server-persisted play queue for cross-device continuity. */
@@ -357,6 +359,11 @@ export interface StarredApi {
   }>;
   add(id: string, type?: StarredItemType): Promise<void>;
   remove(id: string, type?: StarredItemType): Promise<void>;
+}
+
+/** Five stars written back to the server; zero clears. See docs/integrations.md. */
+export interface RatingsApi {
+  set(id: string, rating: number): Promise<void>;
 }
 
 export interface LyricsApi {

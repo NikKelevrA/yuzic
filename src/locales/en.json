@@ -344,7 +344,9 @@
         "onSubtext": "Fade between tracks over {{seconds}}s. Skips cut straight.",
         "seguesLabel": "Fade through segues",
         "seguesSubtext": "Gapless album joins stay hard-cut. On fades those too."
-      }
+      },
+      "showRating": "Show rating",
+      "showRatingSubtext": "Five stars under the title on the player"
     },
     "listenBrainz": {
       "title": "ListenBrainz",
@@ -530,7 +532,8 @@
       "off": "Off",
       "promptTitle": "Turn on {{use}} from {{name}}?",
       "turnOn": "Turn on",
-      "notNow": "Not now"
+      "notNow": "Not now",
+      "alwaysFirst": "First"
     },
     "sourceUses": {
       "lastfm": {
@@ -859,7 +862,8 @@
       "mostRecent": "Most Recent",
       "mostPlayed": "Most Played",
       "releaseYear": "Release Year",
-      "recentlyAdded": "Recently added"
+      "recentlyAdded": "Recently added",
+      "rating": "Rating"
     },
     "sortSheet": {
       "title": "Sort by"
@@ -982,7 +986,8 @@
     },
     "sources": {
       "server": "On your server"
-    }
+    },
+    "offlineBanner": "Offline — discovery is paused, and your library is here"
   },
   "playing": {
     "volume": "Volume",
@@ -1094,7 +1099,8 @@
       "downloading": "Downloading…",
       "downloaded": "Downloaded",
       "generatePlaylist": "Make a playlist from this",
-      "sleepTimer": "Sleep timer"
+      "sleepTimer": "Sleep timer",
+      "rating": "Rating"
     },
     "sections": {
       "media": "Media",
@@ -1216,7 +1222,9 @@
       "soulsyncDesc": "Search Soulseek through SoulSync",
       "addedToSoulsync": "Requested from SoulSync.",
       "addedTrackToSoulsync": "Requested from SoulSync.",
-      "monitoringOnLidarr": "Lidarr is following {{artist}}."
+      "monitoringOnLidarr": "Lidarr is following {{artist}}.",
+      "sending": "Sending {{title}} to {{downloader}}…",
+      "progress": "Requested {{done}} of {{total}} songs…"
     },
     "header": {
       "songs": "{{count}} song",
@@ -1259,6 +1267,22 @@
     },
     "filters": {
       "title": "Filter"
+    },
+    "getSheet": {
+      "monitor": "Albums to watch",
+      "policy": {
+        "future": "Future albums",
+        "all": "All albums",
+        "missing": "Missing albums",
+        "existing": "Existing albums",
+        "first": "First album",
+        "latest": "Latest album",
+        "none": "None"
+      },
+      "searchNow": "Search now",
+      "searchNowHint": "Start looking as soon as this is set up",
+      "nothingToSearch": "Nothing to search yet — this watches for future releases only.",
+      "confirm": "Follow artist"
     }
   },
   "albumOptions": {
@@ -1276,7 +1300,8 @@
       "unfavorite": "Unfavorite",
       "viewExternal": "View External",
       "share": "Share",
-      "generatePlaylist": "Make a playlist from this"
+      "generatePlaylist": "Make a playlist from this",
+      "rating": "Rating"
     },
     "toasts": {
       "addedNext": "Playing {{title}} next",
@@ -1479,10 +1504,14 @@
       "download": "Download",
       "cancelDownload": "Cancel download",
       "downloaded": "Downloaded",
-      "downloading": "Downloading"
+      "downloading": "Downloading",
+      "getArtist": "Get this artist",
+      "want": "Want",
+      "wanted": "Wanted"
     },
     "rows": {
-      "options": "Options for {{title}}"
+      "options": "Options for {{title}}",
+      "titleAndSubtitle": "{{title}}, {{subtitle}}"
     },
     "searchInput": "Search",
     "queueBackToPlayer": "Back to the player",
@@ -1563,6 +1592,11 @@
     },
     "wants": {
       "remove": "Remove {{title}} from Wants"
+    },
+    "rating": {
+      "label": "Rating",
+      "star_one": "{{count}} star",
+      "star_other": "{{count}} stars"
     }
   },
   "tabs": {
@@ -1595,5 +1629,12 @@
   },
   "externalOptions": {
     "openInSource": "Open in {{source}}"
+  },
+  "ratings": {
+    "offline": "Can't change a rating while the server is out of reach",
+    "failed": "That rating didn't save",
+    "title": "Rating",
+    "clear": "Clear rating",
+    "notRated": "Not rated"
   }
 }

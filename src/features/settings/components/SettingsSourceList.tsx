@@ -1,4 +1,4 @@
-import { iconSize, onDark, spacing, typography } from '@/constants/design';
+import { iconSize, onDark, spacing, tinted, typography } from '@/constants/design';
 import React, { useMemo } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { NestableDraggableFlatList, NestableScrollContainer, type RenderItemParams } from 'react-native-draggable-flatlist';
@@ -76,6 +76,7 @@ const SettingsSourceList: React.FC<Props> = ({
             </Touchable>
           )}
           <Switch
+            accessibilityLabel={item.label}
             value={item.enabled}
             onValueChange={item.onEnabledChange}
             trackColor={{ true: colors.themeColor }}
@@ -94,9 +95,11 @@ const SettingsSourceList: React.FC<Props> = ({
             <Text style={[styles.sourceLabel, { color: colors.secondary }]}>{pinnedSource.label}</Text>
             <Text style={[styles.sourceSubtext, { color: colors.subtext }]}>{pinnedSource.subtext}</Text>
           </View>
-          <View style={[styles.alwaysFirst, { backgroundColor: colors.themeColor + '18', borderRadius: rad.pill }]}>
+          <View style={[styles.alwaysFirst, { backgroundColor: tinted(colors.themeColor, 'surface'), borderRadius: rad.pill }]}>
             <Check size={iconSize.badge} color={colors.themeColor} />
-            <Text style={[styles.alwaysFirstText, { color: colors.themeColor }]}>First</Text>
+            <Text style={[styles.alwaysFirstText, { color: colors.themeColor }]}>
+              {t('settings.sources.alwaysFirst')}
+            </Text>
           </View>
         </View>
       )}

@@ -18,6 +18,13 @@ const SettingsToggleGroup: React.FC<Props> = ({ items }) => {
 
   return (
     <View style={styles.container}>
+      {/* The labels sit in their own column so the switches line up down the
+          right edge, which means a screen reader reads every label first and
+          every switch afterwards, with position the only thing tying one list
+          to the other. Each switch therefore carries its own label and hint.
+          Hiding this column instead would put the association beyond doubt,
+          but it also takes the text out of the tree, so exploring the screen
+          by touch finds nothing where the label is plainly drawn. */}
       <View style={styles.labels}>
         {items.map((item, i) => (
           <View key={i} style={styles.item}>
@@ -30,6 +37,8 @@ const SettingsToggleGroup: React.FC<Props> = ({ items }) => {
         {items.map((item, i) => (
           <View key={i} style={styles.item}>
             <Switch
+              accessibilityLabel={item.label}
+              accessibilityHint={item.subtext}
               value={item.value}
               onValueChange={item.onValueChange}
               trackColor={{ true: colors.themeColor }}

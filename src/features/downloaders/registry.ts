@@ -6,6 +6,7 @@ import * as slskd from '@/providers/integration/slskd'
 import * as soulsync from '@/providers/integration/soulsync'
 import type { SlskdSearchPreferences } from '@/providers/integration/slskd'
 import type { DownloaderId } from '@/state/redux/slices/downloadersSlice'
+import type { ArtistMonitorRequest } from './artistMonitor'
 import type { LidarrConfig } from '@/providers/integration/lidarr/config'
 import type { Album } from '@/domain/entities/Album'
 import { selectDownloadersForActiveServer, downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors'
@@ -58,8 +59,6 @@ type TrackDownloadRequest = { title: string; artist: string }
  * actually identifies them where the catalogue supplied one; the name is the
  * fallback and the thing a lookup is spelled with.
  */
-type ArtistMonitorRequest = { name: string; mbid?: string }
-
 /**
  * What a downloader is and what it can do — the one place either is declared.
  *
@@ -395,3 +394,6 @@ export function useDownloadersForUnit(unit: 'album' | 'track' | 'artist'): Downl
     return !!(d.def.downloadAlbum || d.def.downloadTrack)
   }), [states, unit])
 }
+
+/** Re-exported so a caller keeps one import for the whole downloader contract. */
+export type { ArtistMonitorPolicy } from './artistMonitor'

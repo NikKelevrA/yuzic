@@ -1,4 +1,4 @@
-import { controlSize, iconSize, onDark, spacing, typography } from '@/constants/design';
+import { controlSize, coverFade, iconSize, onDark, shade, spacing, typography, veil } from '@/constants/design';
 import React, { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -156,12 +156,8 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
         <LinearGradient
           colors={
             isDarkMode
-              ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,1)']
-              : [
-                  'rgba(255,255,255,0)',
-                  'rgba(255,255,255,0.7)',
-                  'rgba(255,255,255,1)',
-                ]
+              ? coverFade.onDark
+              : coverFade.onLight
           }
           style={StyleSheet.absoluteFill}
         />
@@ -295,7 +291,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: spacing.tight,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: shade.scrim,
   },
   content: {
     alignItems: 'center',
@@ -315,9 +311,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   secondaryButton: {
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: shade.tint,
   },
   secondaryButtonDark: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: veil.tint,
   },
 })

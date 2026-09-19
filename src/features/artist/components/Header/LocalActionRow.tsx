@@ -10,7 +10,7 @@ import DownloadStateIcon from '@/components/DownloadStateIcon';
 import { fetchAlbumSongsSettled } from '@/components/options/useLazyCollectionDetails';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { notify } from '@/components/toast';
-import { iconSize, spacing } from '@/constants/design';
+import { iconSize, shade, spacing, veil } from '@/constants/design';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
@@ -161,9 +161,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   secondaryButton: {
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: shade.tint,
   },
   secondaryButtonDark: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: veil.tint,
   },
 });

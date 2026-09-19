@@ -344,7 +344,9 @@
         "onSubtext": "Fondu entre titres sur {{seconds}} s. Les sauts coupent net.",
         "seguesLabel": "Fondre aussi les enchaînements",
         "seguesSubtext": "Les enchaînements d'album restent nets. Activé, ils sont fondus."
-      }
+      },
+      "showRating": "Afficher la note",
+      "showRatingSubtext": "Cinq étoiles sous le titre dans le lecteur"
     },
     "listenBrainz": {
       "title": "ListenBrainz",
@@ -530,7 +532,8 @@
       "off": "Désactivé",
       "promptTitle": "Activer {{use}} de {{name}} ?",
       "turnOn": "Activer",
-      "notNow": "Pas maintenant"
+      "notNow": "Pas maintenant",
+      "alwaysFirst": "Premier"
     },
     "sourceUses": {
       "lastfm": {
@@ -859,7 +862,8 @@
       "mostRecent": "Plus récents",
       "mostPlayed": "Plus écoutés",
       "releaseYear": "Année de sortie",
-      "recentlyAdded": "Récemment ajouté"
+      "recentlyAdded": "Récemment ajouté",
+      "rating": "Note"
     },
     "sortSheet": {
       "title": "Trier par"
@@ -980,7 +984,8 @@
     },
     "sources": {
       "server": "Sur votre serveur"
-    }
+    },
+    "offlineBanner": "Hors ligne — les découvertes sont en pause, votre bibliothèque reste accessible"
   },
   "playing": {
     "volume": "Volume",
@@ -1092,7 +1097,8 @@
       "downloaded": "Téléchargé",
       "goToArtist": "Voir l'artiste",
       "generatePlaylist": "Créer une playlist à partir de ce titre",
-      "sleepTimer": "Minuteur de veille"
+      "sleepTimer": "Minuteur de veille",
+      "rating": "Note"
     },
     "sections": {
       "media": "Média",
@@ -1214,7 +1220,9 @@
       "soulsyncDesc": "Chercher sur Soulseek via SoulSync",
       "addedToSoulsync": "Demandé à SoulSync.",
       "addedTrackToSoulsync": "Demandé à SoulSync.",
-      "monitoringOnLidarr": "Lidarr suit désormais {{artist}}."
+      "monitoringOnLidarr": "Lidarr suit désormais {{artist}}.",
+      "sending": "Envoi de {{title}} vers {{downloader}}…",
+      "progress": "{{done}} morceaux sur {{total}} demandés…"
     },
     "header": {
       "songs": "{{count}} morceau",
@@ -1247,6 +1255,22 @@
     },
     "filters": {
       "title": "Filtrer"
+    },
+    "getSheet": {
+      "monitor": "Albums à surveiller",
+      "policy": {
+        "future": "Albums à venir",
+        "all": "Tous les albums",
+        "missing": "Albums manquants",
+        "existing": "Albums existants",
+        "first": "Premier album",
+        "latest": "Dernier album",
+        "none": "Aucun"
+      },
+      "searchNow": "Chercher maintenant",
+      "searchNowHint": "Lancer la recherche dès la configuration terminée",
+      "nothingToSearch": "Rien à chercher pour l’instant — seules les sorties à venir sont surveillées.",
+      "confirm": "Suivre l’artiste"
     }
   },
   "manualAddWant": {
@@ -1274,7 +1298,8 @@
       "favorite": "Ajouter aux favoris",
       "unfavorite": "Retirer des favoris",
       "share": "Partager",
-      "generatePlaylist": "Créer une liste de lecture à partir de ceci"
+      "generatePlaylist": "Créer une liste de lecture à partir de ceci",
+      "rating": "Note"
     },
     "toasts": {
       "addedNext": "Lecture de {{title}} ensuite",
@@ -1489,10 +1514,14 @@
       "download": "Télécharger",
       "cancelDownload": "Annuler le téléchargement",
       "downloaded": "Téléchargé",
-      "downloading": "Téléchargement en cours"
+      "downloading": "Téléchargement en cours",
+      "getArtist": "Obtenir cet artiste",
+      "want": "Souhaiter",
+      "wanted": "Souhaité"
     },
     "rows": {
-      "options": "Options pour {{title}}"
+      "options": "Options pour {{title}}",
+      "titleAndSubtitle": "{{title}}, {{subtitle}}"
     },
     "searchInput": "Rechercher",
     "queueBackToPlayer": "Retour au lecteur",
@@ -1573,6 +1602,11 @@
     },
     "wants": {
       "remove": "Retirer {{title}} des souhaits"
+    },
+    "rating": {
+      "label": "Note",
+      "star_one": "{{count}} étoile",
+      "star_other": "{{count}} étoiles"
     }
   },
   "tabs": {
@@ -1595,5 +1629,12 @@
   },
   "externalOptions": {
     "openInSource": "Ouvrir dans {{source}}"
+  },
+  "ratings": {
+    "offline": "Impossible de modifier une note tant que le serveur est injoignable",
+    "failed": "Cette note n'a pas été enregistrée",
+    "title": "Note",
+    "clear": "Effacer la note",
+    "notRated": "Sans note"
   }
 }

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DEFAULT_LANGUAGE } from '@/features/settings/appearance/languages';
+import { themeColorPreset } from '@/constants/design';
 import type { ListDensity, RadiusPreset } from '@/constants/design';
 
 /**
@@ -94,8 +95,10 @@ interface AppearanceSettingsState {
   respectReducedMotion: boolean;
 }
 
-/** The accent a fresh install starts with, and the first of the presets offered. */
-export const THEME_DEFAULT_COLOR = '#ff7f7f';
+/** The accent a fresh install starts with — the first of the presets offered,
+ *  so the swatch row and this default cannot disagree. No longer exported: the
+ *  swatch row reads the list itself now. */
+const THEME_DEFAULT_COLOR: string = themeColorPreset[0];
 
 const initialState: AppearanceSettingsState = {
   themeMode: 'system',

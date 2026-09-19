@@ -58,6 +58,23 @@ describe('adapter capability declarations', () => {
     expect(adapters.local().songs.reportNowPlaying).toBeUndefined();
   });
 
+  it('offers five-star ratings only where the server keeps them apart from favourites', () => {
+    // Subsonic's setRating is a field of its own, beside the starred flag.
+    expect(adapters.navidrome().ratings).toBeDefined();
+
+    // MediaBrowser's per-user data has Likes and no star count to write, so
+    // there is nothing here to implement without inventing it.
+    expect(adapters.jellyfin().ratings).toBeUndefined();
+    expect(adapters.emby().ratings).toBeUndefined();
+
+    // Plex has exactly one number, and the app already spends it: a favourite
+    // on Plex *is* userRating 10, and unfavouriting writes 0. A ratings
+    // surface here would mean three stars silently unfavourites a track.
+    expect(adapters.plex().ratings).toBeUndefined();
+
+    expect(adapters.local().ratings).toBeUndefined();
+  });
+
   it('offers queue sync and the now-playing shelf only where the server backs them', () => {
     // Both switches live on the Server screen behind these two surfaces.
     expect(adapters.navidrome().queue).toBeDefined();
