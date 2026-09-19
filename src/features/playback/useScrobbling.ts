@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { Song } from '@/domain/entities/Song';
 import { recordListen } from '@/state/redux/slices/listeningSlice';
 import { endingFrom } from '@/features/listening/listeningEvent';
+import { relatedKey, songKey } from '@/features/listening/listenerKey';
 import {
   buildScrobbleMutation,
   type ScrobbleDestination,
@@ -128,10 +129,10 @@ export function useScrobbling() {
       const duration = song.durationSeconds || 0;
       dispatch(recordListen({
         at: opts.startTime,
-        track: `${activeServer.id}:${song.nativeId}`,
-        album: song.album.nativeId ? `${activeServer.id}:${song.album.nativeId}` : undefined,
-        artist: song.artist.nativeId ? `${activeServer.id}:${song.artist.nativeId}` : undefined,
-        playlist: opts.playlistId ? `${activeServer.id}:${opts.playlistId}` : undefined,
+        track: songKey(song),
+        album: relatedKey(song, song.album.nativeId),
+        artist: relatedKey(song, song.artist.nativeId),
+        playlist: relatedKey(song, opts.playlistId),
         seconds: opts.listenedSeconds,
         duration,
         ending: endingFrom(opts.listenedSeconds, duration),

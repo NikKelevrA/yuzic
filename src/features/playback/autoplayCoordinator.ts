@@ -3,8 +3,9 @@ import type { MediaItem } from '@/features/player/mediaItem';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import type { Song } from '@/domain/entities/Song';
 import type { LocalId } from '@/domain/identity/LocalId';
+import type { ListenerModel } from '@/features/listening/listenerModel';
+import { songKey } from '@/features/listening/listenerKey';
 import { playableOnly } from '@/features/playback/playableResource';
-import shuffleArray from '@/features/playback/shuffleArray';
 import { buildFillRequest } from './autoplayFill';
 import { tagSegment, type QueueSegment } from './playingQueue';
 import { resolveQueueFillProvider, type QueueFillProvider } from './queueProviders';
@@ -48,10 +49,17 @@ export interface AutoplayDeps {
    * Reordering only. A batch comes back the same length it went in, so a thin
    * history can never empty a queue.
    */
-  rankForListener: (
-    candidates: PlayableResource[],
-    after: PlayableResource | null,
-  ) => PlayableResource[];
+  /**
+   * What is known about this listener.
+   *
+   * One dependency rather than a ranker and a shuffler, because both ask the
+   * same question — *what order suits this person* — for different purposes,
+   * and keeping them apart is how two features end up with two opinions about
+   * what a skip is worth. A function rather than a value: the model is rebuilt
+   * whenever the log grows and this coordinator outlives that. Injected, so
+   * this file stays free of the store. See `features/listening/listenerModel`.
+   */
+  listener: () => ListenerModel;
   toMediaItems: (resources: PlayableResource[]) => MediaItem[];
   bumpQueue: () => void;
   /** Hand a whole queue to the player. Smart Shuffle replaces rather than appends. */
@@ -130,7 +138,19 @@ export function createAutoplayCoordinator(deps: AutoplayDeps): AutoplayCoordinat
     );
   };
 
-  /** The tracks both features start from, or an empty list if there is nothing to add. */
+  /**
+ * How a queue entry is named to the listener model.
+ *
+ * Through `songKey`, which is the same function the log is written with. This
+ * was briefly `localId` — which also carries provenance and reads tidier — and
+ * that was a silent bug: the log is keyed `serverId:nativeId`, so every lookup
+ * missed, the model reported knowing nothing about everything, and each of
+ * these orderings quietly became the identity. Nothing threw and every gate
+ * passed.
+ */
+const keyOfResource = (resource: PlayableResource): string => songKey(resource.song);
+
+/** The tracks both features start from, or an empty list if there is nothing to add. */
   const nextTracks = async (): Promise<PlayableResource[]> => {
     const provider = resolveQueueFillProvider(deps.providers());
     if (!provider) return [];
@@ -144,7 +164,9 @@ export function createAutoplayCoordinator(deps: AutoplayDeps): AutoplayCoordinat
     // The track the queue is continuing from, which is what a habit is
     // measured against — "you play B after A" needs to know what A was.
     const after = deps.queue()[deps.currentIndex()] ?? null;
-    return deps.rankForListener(fetched, after);
+    return deps.listener().order(fetched, keyOfResource, 'continue', {
+      after: after ? keyOfResource(after) : null,
+    });
   };
 
   return {
@@ -195,7 +217,12 @@ export function createAutoplayCoordinator(deps: AutoplayDeps): AutoplayCoordinat
         // reshuffling it would replay tracks the listener has just finished.
         const played = deps.queue().slice(0, deps.currentIndex() + 1);
         const remaining = deps.queue().slice(deps.currentIndex() + 1);
-        const full = [...played, ...shuffleArray([...remaining, ...playable])];
+        const shuffled = deps.listener().order(
+          [...remaining, ...playable],
+          keyOfResource,
+          'shuffle',
+        );
+        const full = [...played, ...shuffled];
 
         deps.setQueue(full);
         // One segment over the whole thing. After a smart shuffle there is no

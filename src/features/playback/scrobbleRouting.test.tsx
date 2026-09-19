@@ -253,7 +253,9 @@ describe('listening history', () => {
     const state = store.getState().listening
     expect(state.events).toHaveLength(1)
     expect(state.events[0]).toMatchObject({ ending: 'skipped', seconds: 20 })
-    expect(state.totals[`navidrome-1:${song.nativeId}`]).toMatchObject({
+    // Keyed by the song's own provenance, not the active server — see
+    // `relatedKey` for why those are allowed to differ.
+    expect(state.totals[`srv-1:${song.nativeId}`]).toMatchObject({
       starts: 1, plays: 0, rejections: 1,
     })
     // And nothing was reported outward, which is the existing behaviour.

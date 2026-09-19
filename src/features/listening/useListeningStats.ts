@@ -2,15 +2,9 @@ import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import type { RootState } from '@/state/redux/store';
-import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 import { type ListenEnding } from './listeningEvent';
-import {
-  affinity,
-  dormancy,
-  dormancyReason,
-  rankBy,
-  type DormancyReason,
-} from './listeningAffinity';
+import type { DormancyReason } from './listeningAffinity';
+import { useListenerModel } from './useListenerModel';
 import {
   averageCompletion,
   firstHeardIn,
@@ -66,24 +60,17 @@ export interface ListeningStats {
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const SHELF = 10;
 
-/**
- * Enough listening to be worth drawing.
- *
- * Below this the screen says so instead of showing a clock face with two
- * marks on it and a "top artist" with one play. A statistic drawn from
- * almost nothing is not a small statistic, it is a misleading one, and this
- * audience will check.
- */
-const ENOUGH_EVENTS = 20;
 
 export function useListeningStats(now: number = Date.now()): ListeningStats {
   const events = useSelector((state: RootState) => state.listening.events);
   const totals = useSelector((state: RootState) => state.listening.totals);
+  // The same model autoplay and Smart Shuffle ask. A screen that ranked by its
+  // own formula would be a second opinion about this listener, visible right
+  // next to the first.
+  const listener = useListenerModel();
 
   return useMemo(() => {
-    const entries: (EntityTotals & { key: string })[] = Object.entries(totals).map(
-      ([key, entry]) => ({ key, ...entry }),
-    );
+    const keys = Object.keys(totals);
 
     const endings: Record<ListenEnding, number> = {
       finished: 0,
@@ -92,16 +79,14 @@ export function useListeningStats(now: number = Date.now()): ListeningStats {
     };
     for (const event of events) endings[event.ending] += 1;
 
-    const favourites = rankBy(entries, entry => affinity(entry, now), SHELF).map(entry => ({
-      key: entry.key,
-      plays: entry.plays,
-      seconds: entry.seconds,
-    }));
+    const key = (k: string) => k;
+    const favourites = listener
+      .order(keys, key, 'favourite', { limit: SHELF })
+      .map(k => ({ key: k, plays: totals[k].plays, seconds: totals[k].seconds }));
 
-    const forgotten = rankBy(entries, entry => dormancy(entry, now), SHELF).map(entry => ({
-      key: entry.key,
-      reason: dormancyReason(entry, now),
-    }));
+    const forgotten = listener
+      .order(keys, key, 'rediscover', { limit: SHELF })
+      .map(k => ({ key: k, reason: listener.reasonFor(k) }));
 
     return {
       lifetime: lifetimeTotals(totals),
@@ -113,7 +98,7 @@ export function useListeningStats(now: number = Date.now()): ListeningStats {
       discovered: firstHeardIn(totals, now - MONTH_MS),
       favourites,
       forgotten,
-      hasHistory: events.length >= ENOUGH_EVENTS,
+      hasHistory: listener.informed,
     };
-  }, [events, totals, now]);
+  }, [events, totals, now, listener]);
 }

@@ -7,6 +7,8 @@ import type { QueueSegment } from './playingQueue';
 import { segmentAt } from './playingQueue';
 import type { QueueFillProvider } from './queueProviders';
 import { createAutoplayCoordinator, type AutoplayDeps } from './autoplayCoordinator';
+import { UNINFORMED_MODEL, type ListenerModel } from '@/features/listening/listenerModel';
+import { songKey } from '@/features/listening/listenerKey';
 
 jest.mock('@/features/playback/shuffleArray', () => ({
   // Identity, so the tests can assert on *which* tracks ended up where
@@ -64,7 +66,7 @@ function harness(over: Partial<{
   currentIndex: number;
   returns: Song[];
   noProvider: boolean;
-  rankForListener: AutoplayDeps['rankForListener'];
+  listener: AutoplayDeps['listener'];
   fails: boolean;
 }> = {}) {
   let queue = over.queue ?? [resource('1'), resource('2'), resource('3')];
@@ -118,7 +120,10 @@ function harness(over: Partial<{
     // Identity by default: these tests are about when autoplay fetches and
     // where it puts what it gets, not about the ranking policy, which has its
     // own suite. A test that cares passes its own.
-    rankForListener: over.rankForListener ?? (candidates => candidates),
+    // A model that changes nothing by default: these tests are about when
+    // autoplay fetches and where it puts what it gets, not about the ordering
+    // policy, which has its own suite. A test that cares passes its own.
+    listener: over.listener ?? (() => UNINFORMED_MODEL),
   };
 
   return {
@@ -338,16 +343,31 @@ describe('play similar', () => {
 /**
  * The seam between the provider and the listener.
  *
- * The coordinator must hand the fetched batch to the ranker and queue what
- * comes back — not the batch it fetched. Without this the whole listening
- * history is computed, passed in, and dropped on the floor, which is a fault
- * that looks exactly like working code.
+ * The coordinator must hand what it fetched to the model and use what comes
+ * back — not the batch it fetched. Without this the whole listening history is
+ * computed, passed in, and dropped on the floor, which is a fault that looks
+ * exactly like working code.
  */
-describe('ranking the fetched batch', () => {
-  it('queues the order the ranker returned, not the order the provider sent', async () => {
+function modelThat(
+  order: ListenerModel['order'],
+  purposes: string[] = [],
+): () => ListenerModel {
+  const model: ListenerModel = {
+    ...UNINFORMED_MODEL,
+    informed: true,
+    order: (items, keyOf, purpose, context) => {
+      purposes.push(purpose);
+      return order(items, keyOf, purpose, context);
+    },
+  };
+  return () => model;
+}
+
+describe('asking the listener model', () => {
+  it('queues the order the model returned, not the order the provider sent', async () => {
     const h = harness({
       returns: [song('x'), song('y'), song('z')],
-      rankForListener: candidates => [...candidates].reverse(),
+      listener: modelThat(items => [...items].reverse()),
     });
 
     await h.coordinator.fillQueueIfLow();
@@ -355,18 +375,38 @@ describe('ranking the fetched batch', () => {
     expect(ids(h.queue).slice(-3)).toEqual(['z', 'y', 'x']);
   });
 
-  it('tells the ranker which track the queue is continuing from', async () => {
-    let seenAfter: string | null = null;
+  it('asks to continue, and says which track it is continuing from', async () => {
+    const purposes: string[] = [];
+    let seenAfter: string | null | undefined;
     const h = harness({
       returns: [song('x')],
-      rankForListener: (candidates, after) => {
-        seenAfter = after?.song.nativeId ?? null;
-        return candidates;
-      },
+      listener: modelThat((items, _keyOf, _purpose, context) => {
+        seenAfter = context?.after;
+        return [...items];
+      }, purposes),
     });
 
     await h.coordinator.fillQueueIfLow();
 
-    expect(seenAfter).toBe(h.queue[0].song.nativeId);
+    expect(purposes).toContain('continue');
+    expect(seenAfter).toBe(songKey(h.queue[0].song));
+  });
+
+  /**
+   * Smart Shuffle used a uniform Fisher-Yates, so a track abandoned eleven
+   * times out of twelve was as likely to land first as one never skipped — in
+   * the feature with "smart" in its name.
+   */
+  it('asks to shuffle, rather than shuffling for itself', async () => {
+    const purposes: string[] = [];
+    const h = harness({
+      returns: [song('x')],
+      listener: modelThat(items => [...items], purposes),
+    });
+
+    await h.coordinator.injectSmartShuffleTracks(false, 0);
+
+    expect(purposes).toContain('shuffle');
+    expect(h.loaded).toHaveLength(1);
   });
 });
