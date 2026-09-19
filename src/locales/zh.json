@@ -981,7 +981,8 @@
     },
     "sources": {
       "server": "在你的服务器上"
-    }
+    },
+    "offlineBanner": "离线 — 发现已暂停，你的音乐库仍可使用"
   },
   "playing": {
     "volume": "音量",

@@ -984,7 +984,8 @@
     },
     "sources": {
       "server": "Sur votre serveur"
-    }
+    },
+    "offlineBanner": "Hors ligne — les découvertes sont en pause, votre bibliothèque reste accessible"
   },
   "playing": {
     "volume": "Volume",

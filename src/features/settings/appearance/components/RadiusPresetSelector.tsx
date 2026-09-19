@@ -5,21 +5,24 @@ import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react-native';
 
 import { useTheme } from '@/features/theme/useTheme';
-import { iconSize, spacing, type RadiusPreset, typography } from '@/constants/design';
+import { iconSize, radius, scaleRadius, spacing, type RadiusPreset, typography } from '@/constants/design';
 import { selectRadiusPreset, selectThemeColor, setRadiusPreset } from '@/features/settings/appearance/state';
 import Touchable from '@/components/Touchable';
 import SettingsCardHeader from '../../components/SettingsCardHeader';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsDivider from '../../components/SettingsDivider';
 
-// The preview swatches are 44×44 boxes with each preset's own corner radius so
-// the choice reads visually, not as text. These override radius.card at render
-// time (the exported `radius` reflects the CURRENT preset, not each option).
-const PREVIEW_RADIUS: Record<RadiusPreset, number> = {
-  sharp: 3,
-  default: 8,
-  rounded: 14,
-};
+// The preview swatches are 44×44 boxes wearing each preset's own corner radius,
+// so the choice reads visually rather than as three words. `scaleRadius` is
+// asked per option because the exported `radius` reflects the preset in force,
+// not the one being offered — a swatch row drawn from it would show the same
+// corner three times.
+//
+// The base is `radius.md` rather than the `radius.card` these presets mostly
+// govern: a card's 12 scales to 21 on a 44pt box, which reads as a pill and
+// oversells `rounded`. This was 3/8/14 written out, which is this expression
+// evaluated by hand and left to drift from the multipliers it came from.
+const previewRadius = (preset: RadiusPreset) => scaleRadius(radius.md, preset);
 
 export const RadiusPresetSelector: React.FC = () => {
   const { t } = useTranslation();
@@ -38,14 +41,14 @@ export const RadiusPresetSelector: React.FC = () => {
   return (
     <>
       <SettingsCardHeader subtle title={t('settings.appearance.radiusPreset.title')} />
-      <SettingsCard>
+      <SettingsCard accessibilityRole="radiogroup">
         {presets.map((preset, index) => {
           const isActive = selected === preset;
           return (
             <React.Fragment key={preset}>
               <Touchable
-                accessibilityRole="button"
-                accessibilityState={{ selected: isActive }}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isActive, checked: isActive }}
                 onPress={() => handleSelect(preset)}
                 style={styles.row}
               >
@@ -53,7 +56,7 @@ export const RadiusPresetSelector: React.FC = () => {
                   style={[
                     styles.swatch,
                     {
-                      borderRadius: PREVIEW_RADIUS[preset],
+                      borderRadius: previewRadius(preset),
                       backgroundColor: isActive ? themeColor : colors.muted,
                       borderColor: colors.border,
                     },

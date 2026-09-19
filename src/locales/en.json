@@ -986,7 +986,8 @@
     },
     "sources": {
       "server": "On your server"
-    }
+    },
+    "offlineBanner": "Offline — discovery is paused, and your library is here"
   },
   "playing": {
     "volume": "Volume",

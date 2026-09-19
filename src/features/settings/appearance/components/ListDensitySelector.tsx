@@ -43,14 +43,14 @@ export const ListDensitySelector: React.FC = () => {
   return (
     <>
       <SettingsCardHeader subtle title={t('settings.appearance.listDensity.title')} />
-      <SettingsCard>
+      <SettingsCard accessibilityRole="radiogroup">
         {DENSITIES.map((density, index) => {
           const isActive = selected === density;
           return (
             <React.Fragment key={density}>
               <Touchable
-                accessibilityRole="button"
-                accessibilityState={{ selected: isActive }}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isActive, checked: isActive }}
                 onPress={() => handleSelect(density)}
                 style={styles.row}
               >
