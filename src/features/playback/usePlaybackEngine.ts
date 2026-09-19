@@ -10,6 +10,7 @@ import { ownsPlayback } from '@/features/player/playbackSink';
 import { usePlayerActiveItem } from '@/features/player/usePlayerState';
 import { selectAutoplayEnabled, selectPlaybackSpeeds } from '@/features/settings/playback/state';
 import { createAutoplayCoordinator } from './autoplayCoordinator';
+import { useListenerModel } from '@/features/listening/useListenerModel';
 import { createPlaybackCoordinator } from './playbackCoordinator';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { captureOutgoingScrobble, deferOffTrackChange } from './outgoingScrobble';
@@ -49,7 +50,9 @@ export function usePlaybackEngine(
   const playbackSpeeds = useLatestRef(useSelector(selectPlaybackSpeeds));
   const activeMediaItem = usePlayerActiveItem();
   const { toMediaItems, resolve, queueFillProviders } = resources;
-  const { scrobble, nowPlaying, bookmarks, queueSync, persistence, resetLastScrobbled } = services;
+  const {
+    scrobble, nowPlaying, bookmarks, queueSync, persistence, resetLastScrobbled, markInterrupted,
+  } = services;
 
   /**
    * Records the listen that is ending, attributed to the collection it came
@@ -87,8 +90,22 @@ export function usePlaybackEngine(
   }, [resetLastScrobbled, session, sinkLoadQueue, sinkRef, toMediaItems]);
   const loadQueueRef = useLatestRef(loadQueue);
 
+  /*
+   Through a ref, like `loadQueue` above and for the same reason.
+
+   The ranking function's identity changes whenever the listening log does —
+   once per track — and the coordinator is memoised on a list that does not
+   include it. Passed directly it would be captured once and never replaced,
+   so autoplay would rank against whatever the graph held at mount: empty, on
+   every cold start. Adding it to the dependency list instead would rebuild
+   the coordinator every track and discard its in-flight `filling` guard with
+   it, which is the other way to get this wrong.
+  */
+  const listenerRef = useLatestRef(useListenerModel());
+
   /** Autoplay and Smart Shuffle: both extend the queue with tracks nobody chose. */
   const autoplay = useMemo(() => createAutoplayCoordinator({
+    listener: () => listenerRef.current,
     backend: getBackend,
     providers: () => queueFillProviders.current,
     queue: session.queue,
@@ -102,7 +119,7 @@ export function usePlaybackEngine(
     loadQueue: (queue, startIndex, play, seekToPosition) =>
       loadQueueRef.current(queue, startIndex, play, seekToPosition),
     logWarning: (message, error) => console.warn(message, error),
-  }), [loadQueueRef, queueFillProviders, resolve, session, toMediaItems]);
+  }), [loadQueueRef, listenerRef, queueFillProviders, resolve, session, toMediaItems]);
   const autoplayRef = useLatestRef(autoplay);
 
   const removeFailedCurrentTrack = useCallback(() => {
@@ -155,9 +172,16 @@ export function usePlaybackEngine(
 
   useEffect(() => getBackend().addListener(event => {
     switch (event.type) {
-      case 'error':
+      case 'error': {
+        // Said before the failure is handled, because handling it drops the
+        // track and that is what writes the listen down. Without it a lost
+        // stream is recorded as a skip, and the app concludes the listener
+        // dislikes whatever was playing when their connection went.
+        const failed = session.currentResource();
+        if (failed) markInterrupted(failed.song.nativeId);
         eventsRef.current.onError(event);
         return;
+      }
       case 'stateChange':
         session.setBuffering(event.buffering);
         return;

@@ -14,6 +14,7 @@ type SectionType =
   | 'becauseYouListened'
   | 'topArtists'
   | 'mostPlayed'
+  | 'setAside'
   | 'charts'
   | 'genre'
   | 'serverRandom'
@@ -87,6 +88,7 @@ export function buildLibrarySections(hasLibrary: boolean): SectionConfig[] {
   return [
     { key: 'recentlyAdded', type: 'recentlyAdded' },
     { key: 'mostPlayed', type: 'mostPlayed' },
+    { key: 'setAside', type: 'setAside' },
   ]
 }
 

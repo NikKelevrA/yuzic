@@ -74,6 +74,17 @@ jobs:
       - name: Run Fastlane iOS build
         env:
           VERSION_LABEL: ${{ steps.version.outputs.label }}
+          # Store screenshots follow a release, not every build. The upload
+          # does the screenshots and the binary together, screenshots first,
+          # so a refusal there loses the build after a full archive — which is
+          # how 2.2.0 died and how two dispatches died on 2026-09-19. A
+          # manually dispatched build has no reason to touch the public
+          # listing at all.
+          #
+          # `workflow_call` from release-on-version-bump reports the caller's
+          # event (`push`), so this is true for a release and false only for a
+          # hand-run build.
+          YUZIC_UPLOAD_SCREENSHOTS: ${{ github.event_name != 'workflow_dispatch' }}
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_API_KEY_BASE64: ${{ secrets.APPSTORE_API_KEY_BASE64 }}

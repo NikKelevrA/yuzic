@@ -593,6 +593,30 @@
         "serverDescription": "Use your server’s search instead"
       },
       "otherSources": "Other sources"
+    },
+    "listening": {
+      "title": "Listening",
+      "empty": "Not enough listening yet. Play a few things and this fills in.",
+      "allTime": "All time",
+      "thisMonth": "Last 30 days",
+      "plays": "Plays",
+      "hours": "Hours",
+      "tracks": "Tracks",
+      "artists": "Artists",
+      "newToYou": "New to you",
+      "streak": "Day streak",
+      "finished": "Heard through",
+      "whenYouListen": "When you listen",
+      "howItEnds": "How tracks end",
+      "playedThrough": "Played through",
+      "skipped": "Skipped",
+      "clear": "Delete listening history",
+      "privacy": "Counted on this device, from this device. Nothing here is sent anywhere.",
+      "worthRevisiting": "Worth revisiting",
+      "forgotten": "Set aside",
+      "longestGap": "Days untouched",
+      "topArtists": "Your artists",
+      "topTracks": "Your tracks"
     }
   },
   "common": {
@@ -950,7 +974,8 @@
         "weeklyJams": "Weekly Jams",
         "weeklyExploration": "Weekly Exploration"
       },
-      "continuePlaying": "Pick back up"
+      "continuePlaying": "Pick back up",
+      "setAside": "Set aside"
     },
     "empty": {
       "recentlyAdded": "No albums in your library yet"

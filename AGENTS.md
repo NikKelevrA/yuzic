@@ -141,6 +141,58 @@ which failed on *both* platforms without a byte reaching either store — after 
   newer; that release waits for the checksum/status and removes failed pending
   uploads before retrying (fastlane #30094/#30150).
 
+**Screenshots upload on a release, not on a hand-run build.** `ci_ios` reads
+`YUZIC_UPLOAD_SCREENSHOTS`, which `ios-build.yml` sets true for everything
+except `workflow_dispatch`. The reason is the one above restated: the upload
+carries the screenshots *and* the binary, screenshots first, so anything the
+store refuses there loses a fully archived build. On 2026-09-19 two dispatched
+builds off `dev` died fifteen minutes in with `Failed verification of all
+screenshots deleted... 10 screenshot(s) still exist`. A dev build has no reason
+to replace the public listing, so it no longer tries.
+
+**The binary and the listing are two uploads now, in that order.** They were
+one `upload_to_app_store` call doing both with the screenshots first, which is
+the mechanism behind every one of the failures above: the store objects to
+something about an image and a fully archived build is discarded. Each earlier
+fix addressed the particular objection — the oversized icon, the interactive
+prompt, the duplicate uploads — and the coupling survived every time and found
+a new way to spend a build.
+
+`upload_to_testflight` now ships the binary on its own, and the screenshot
+upload runs after it inside a `rescue`: it logs loudly and does not fail the
+lane. A listing one release out of date is a far smaller problem than a release
+that did not ship.
+
+**A submitted version's screenshots cannot be replaced, and `deliver` asks
+anyway.** This is what actually killed those two builds, and the message names
+it once you read past the summary line:
+
+```
+Failed to delete screenshot en-US APP_IPHONE_65
+The request cannot be fulfilled because of the state of another resource.
+  - Can't Delete Screenshot After Submit for review appScreenshots
+```
+
+`deliver` chooses its target with `get_edit_app_store_version`, and that
+filter counts `WAITING_FOR_REVIEW` as editable. Apple does not: once a version
+is submitted, its screenshots are frozen. Both builds carried version label
+2.6.3 while 2.6.3 sat in review, so `overwrite_screenshots` tried to delete the
+live set, got a `409` per set, and — because the delete happens *before* the
+upload — took the rest of the step with it. Deliver retries five times, which
+cannot help against a state lock; that is why all ten survived every attempt
+and why the failure reproduced exactly.
+
+`screenshots_replaceable?` in the `Fastfile` now asks for the version's state
+first and skips the listing unless it is one of `PREPARE_FOR_SUBMISSION`,
+`DEVELOPER_REJECTED`, `REJECTED`, `METADATA_REJECTED` or `INVALID_BINARY`. It
+is an allowlist so an unfamiliar state leaves the listing alone rather than
+gambling a release on it.
+
+The practical consequence for a release: **upload screenshots before submitting
+for review, not after.** If a listing change is needed for a version already
+submitted, it has to go through the next version — no re-run will place it on
+the current one.
+
 Run `python3 tools/store-screenshots/publish.py --check` before a release. It
 asserts the exact store sizes for the screenshots *and* for Play's icon and
 feature graphic, because every one of these rejections lands **after** the
