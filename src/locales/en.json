@@ -1267,6 +1267,22 @@
     },
     "filters": {
       "title": "Filter"
+    },
+    "getSheet": {
+      "monitor": "Albums to watch",
+      "policy": {
+        "future": "Future albums",
+        "all": "All albums",
+        "missing": "Missing albums",
+        "existing": "Existing albums",
+        "first": "First album",
+        "latest": "Latest album",
+        "none": "None"
+      },
+      "searchNow": "Search now",
+      "searchNowHint": "Start looking as soon as this is set up",
+      "nothingToSearch": "Nothing to search yet — this watches for future releases only.",
+      "confirm": "Follow artist"
     }
   },
   "albumOptions": {

@@ -23,6 +23,7 @@ import {
   downloadErrorKey,
   useAnyArtistDownloaderConnected,
   useDownloadersForUnit,
+  type ArtistMonitorPolicy,
 } from '@/features/downloaders/registry';
 import { promptConnectDownloader } from '@/features/downloaders/connectDownloaderPrompt';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
@@ -42,6 +43,10 @@ interface ArtistGetTarget {
   localId: LocalId;
   name: string;
   mbid?: string;
+  /** What the review sheet was told to watch, and whether to go looking now. */
+  monitor?: ArtistMonitorPolicy;
+  search?: boolean;
+  qualityProfileId?: number;
 }
 
 interface WantGet {
@@ -72,20 +77,31 @@ export function useWantGet(): WantGet {
       return;
     }
 
+    // One toast for the whole request, as an album Get reports: a repeat call
+    // on the same id rewrites it rather than stacking a second beside it.
+    const toastId = `get-artist:${target.localId}`;
+    notify.loading(t('externalAlbum.download.sending', {
+      title: target.name,
+      downloader: downloader.def.label,
+    }), { id: toastId });
+
     try {
       const result = await downloader.def.monitorArtist(downloader.config, {
         name: target.name,
         mbid: target.mbid,
+        monitor: target.monitor,
+        search: target.search,
+        qualityProfileId: target.qualityProfileId,
       });
       if (!result.success) {
         notify.error(t(downloadErrorKey(downloader.def.id, result.code), {
           defaultValue: t('externalAlbum.download.failed'),
-        }));
+        }), { id: toastId });
         return;
       }
       notify.success(t(downloader.def.artistMonitoredKey ?? 'externalAlbum.download.failed', {
         artist: target.name,
-      }));
+      }), { id: toastId });
       if (activeServerId) {
         dispatch(setWantJobRef({
           serverId: activeServerId,
@@ -94,7 +110,7 @@ export function useWantGet(): WantGet {
         }));
       }
     } catch {
-      notify.error(t('externalAlbum.download.startFailed'));
+      notify.error(t('externalAlbum.download.startFailed'), { id: toastId });
     }
   }, [artistDownloaders, activeServerId, dispatch, t]);
 

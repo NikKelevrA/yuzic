@@ -1255,6 +1255,22 @@
     },
     "filters": {
       "title": "Filtrer"
+    },
+    "getSheet": {
+      "monitor": "Albums à surveiller",
+      "policy": {
+        "future": "Albums à venir",
+        "all": "Tous les albums",
+        "missing": "Albums manquants",
+        "existing": "Albums existants",
+        "first": "Premier album",
+        "latest": "Dernier album",
+        "none": "Aucun"
+      },
+      "searchNow": "Chercher maintenant",
+      "searchNowHint": "Lancer la recherche dès la configuration terminée",
+      "nothingToSearch": "Rien à chercher pour l’instant — seules les sorties à venir sont surveillées.",
+      "confirm": "Suivre l’artiste"
     }
   },
   "manualAddWant": {

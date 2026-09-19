@@ -19,7 +19,7 @@ type LidarrArtist = LidarrArtistLookupResult & {
   id: number;
 };
 
-type LidarrMonitorPolicy =
+export type LidarrMonitorPolicy =
   | 'all'
   | 'future'
   | 'missing'
@@ -83,6 +83,22 @@ export async function ensureArtist(
     const found = existing.find(a => a.foreignArtistId === artist.foreignArtistId);
 
     if (found?.id) {
+      // An artist Lidarr already holds still has to be *told* to watch this
+      // one. This returned here without applying `monitored` at all, so a Get
+      // on an artist Lidarr knew but was not following reported success and
+      // changed nothing on the server — the one case where the request looks
+      // like it worked and provably did not.
+      //
+      // `addOptions.monitor` is an add-time policy and Lidarr does not
+      // re-apply it on update, so this only settles the artist's own flag.
+      // Which of their albums are watched stays as Lidarr already has it,
+      // which is also what its own UI does when you re-add someone.
+      if (opts.monitored !== undefined && found.monitored !== opts.monitored) {
+        await client.request(`/artist/${found.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ ...found, monitored: opts.monitored }),
+        });
+      }
       return { success: true, artistId: found.id, created: false };
     }
 
@@ -143,4 +159,54 @@ export async function ensureArtist(
     }
     return { success: false, message: e?.message ?? 'Failed to ensure artist' };
   }
+}
+
+type LidarrCommand = {
+  name?: string;
+  status?: string;
+  artistId?: number;
+  body?: {
+    artistId?: number;
+  };
+};
+
+function commandArtistId(command: LidarrCommand) {
+  return command.artistId ?? command.body?.artistId;
+}
+
+/**
+ * Whether Lidarr is already looking for this artist.
+ *
+ * The same guard the album path keeps, for the same reason: a second identical
+ * command does not make the first one faster, and a user who taps Get twice
+ * should not queue two sweeps of an artist's whole discography.
+ */
+async function hasActiveArtistSearch(client: LidarrClient, artistId: number) {
+  const commands = await client.request<LidarrCommand[]>('/command');
+  return commands.some(command => {
+    const status = command.status?.toLowerCase();
+    return (
+      command.name?.toLowerCase() === 'artistsearch' &&
+      (status === 'queued' || status === 'started') &&
+      commandArtistId(command) === artistId
+    );
+  });
+}
+
+/**
+ * Ask Lidarr to go looking for this artist's monitored albums.
+ *
+ * `ArtistSearch` searches what is *monitored and missing*, so what it finds is
+ * decided by the monitor policy the artist was added under — under `future`
+ * there is deliberately nothing yet, and the command is a no-op rather than an
+ * error. Answers false when a search for this artist is already running.
+ */
+export async function triggerArtistSearch(client: LidarrClient, artistId: number) {
+  if (await hasActiveArtistSearch(client, artistId)) return false;
+
+  await client.request('/command', {
+    method: 'POST',
+    body: JSON.stringify({ name: 'ArtistSearch', artistId }),
+  });
+  return true;
 }

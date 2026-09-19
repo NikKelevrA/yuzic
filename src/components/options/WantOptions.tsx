@@ -50,7 +50,7 @@ export function WantOptions({
   const { colors } = useTheme();
   const sheetRef = useSheetRef();
   const snapPoints = useMemo(() => ['45%'], []);
-  const { canGetArtist, getArtist } = useWantGet();
+  const { canGetArtist } = useWantGet();
   const canGetRelease = useAnyAlbumDownloaderConnected();
 
   useEffect(() => { sheetRef.current?.present(); }, [sheetRef]);
@@ -80,19 +80,11 @@ export function WantOptions({
       icon: status.kind === 'failed'
         ? <RotateCw size={sz} color={colors.secondary} />
         : <CloudDownload size={sz} color={colors.secondary} />,
-      onPress: run(() => {
-        if (isArtist) {
-          void getArtist({
-            localId: want.localId,
-            // `arrival` and `jobStatus` both read the artist off `want.artist`;
-            // a want saved before that carried only a title still resolves.
-            name: want.artist || want.title,
-            mbid: want.externalIds?.mbid,
-          });
-        } else {
-          onGet();
-        }
-      }),
+      // Every unit opens a review now — an album its own, an artist the one
+      // that asks what to watch. This branched straight into the request for an
+      // artist, which is why an artist Get was the only acquisition in the app
+      // that happened without being confirmed.
+      onPress: run(onGet),
       testID: 'want-option-get',
     });
   } else if (offerGet) {

@@ -1250,6 +1250,22 @@
     },
     "filters": {
       "title": "筛选"
+    },
+    "getSheet": {
+      "monitor": "要关注的专辑",
+      "policy": {
+        "future": "今后的专辑",
+        "all": "全部专辑",
+        "missing": "缺失的专辑",
+        "existing": "已有的专辑",
+        "first": "首张专辑",
+        "latest": "最新专辑",
+        "none": "不关注"
+      },
+      "searchNow": "立即搜索",
+      "searchNowHint": "设置完成后立即开始查找",
+      "nothingToSearch": "暂无可搜索的内容 — 仅关注今后的发行。",
+      "confirm": "关注此艺人"
     }
   },
   "manualAddWant": {

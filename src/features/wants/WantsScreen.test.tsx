@@ -81,6 +81,7 @@ jest.mock('./WantsFiltersSheet', () => {
 });
 
 const mockGetSheet = jest.fn();
+const mockArtistGetSheet = jest.fn();
 jest.mock('./WantGetSheet', () => {
   const { View } = require('react-native');
   return {
@@ -88,6 +89,19 @@ jest.mock('./WantGetSheet', () => {
     default: (props: { want: { localId: string } }) => {
       mockGetSheet(props.want);
       return <View testID="want-get-sheet" />;
+    },
+  };
+});
+
+// An artist want reviews through its own sheet now, for the same reason a
+// release does — it is not the subject of this suite either way.
+jest.mock('./WantArtistGetSheet', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: { want: { localId: string } }) => {
+      mockArtistGetSheet(props.want);
+      return <View testID="want-artist-get-sheet" />;
     },
   };
 });

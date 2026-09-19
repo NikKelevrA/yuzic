@@ -19,15 +19,33 @@ jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({ colors: { secondary: '#000' }, isDarkMode: false }),
 }));
 
+const mockPresent = jest.fn();
+jest.mock('@/components/useSheetRef', () => ({
+  useSheetRef: () => ({ current: { present: mockPresent, dismiss: jest.fn() } }),
+}));
+
+// Captured rather than rendered: the review is its own suite, and reaching it
+// pulls the bottom-sheet library in behind it.
+const mockSheetProps = jest.fn();
+jest.mock('@/features/wants/ArtistGetSheet', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: unknown) => {
+      mockSheetProps(props);
+      return <View testID="artist-get-sheet" />;
+    },
+  };
+});
+
 const mockPromptConnect = jest.fn();
 jest.mock('@/features/downloaders/connectDownloaderPrompt', () => ({
   promptConnectDownloader: (...args: unknown[]) => mockPromptConnect(...args),
 }));
 
-const mockGetArtist = jest.fn();
 let mockCanGetArtist = true;
 jest.mock('@/features/wants/useWantGet', () => ({
-  useWantGet: () => ({ canGetArtist: mockCanGetArtist, getArtist: mockGetArtist }),
+  useWantGet: () => ({ canGetArtist: mockCanGetArtist, getArtist: jest.fn() }),
 }));
 
 const mockToggle = jest.fn();
@@ -66,37 +84,57 @@ describe('an external artist screen', () => {
     expect(view.getByLabelText('a11y.detail.want')).toBeTruthy();
   });
 
-  it('follows the artist, and saves the want that gives the request somewhere to report', async () => {
+  it('reviews the Get rather than firing it', async () => {
     const view = await render(<ExternalActionRow artist={artist} />);
 
     await press(view, 'a11y.detail.getArtist');
 
+    expect(mockPresent).toHaveBeenCalledTimes(1);
+    // Nothing is wanted or asked for on the way to the review — confirming is.
+    expect(mockToggle).not.toHaveBeenCalled();
+  });
+
+  it('hands the review the artist, mbid included, so Lidarr can identify them', async () => {
+    await render(<ExternalActionRow artist={artist} />);
+
+    expect(mockSheetProps).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artist: expect.objectContaining({
+          localId: 'local:artist:ext:1',
+          name: 'New Order',
+          mbid: 'mb-1',
+        }),
+      })
+    );
+  });
+
+  it('saves the want on confirm, which is what gives the request somewhere to report', async () => {
+    await render(<ExternalActionRow artist={artist} />);
+
+    const { onConfirm } = mockSheetProps.mock.calls[0][0];
+    onConfirm();
+
     expect(mockToggle).toHaveBeenCalledTimes(1);
-    expect(mockGetArtist).toHaveBeenCalledWith({
-      localId: 'local:artist:ext:1',
-      name: 'New Order',
-      mbid: 'mb-1',
-    });
   });
 
   it('does not toggle a want that is already there — that would remove it', async () => {
     mockIsWanted = true;
-    const view = await render(<ExternalActionRow artist={artist} />);
+    await render(<ExternalActionRow artist={artist} />);
 
-    await press(view, 'a11y.detail.getArtist');
+    const { onConfirm } = mockSheetProps.mock.calls[0][0];
+    onConfirm();
 
     expect(mockToggle).not.toHaveBeenCalled();
-    expect(mockGetArtist).toHaveBeenCalledTimes(1);
   });
 
-  it('offers to connect a downloader instead of swallowing the tap', async () => {
+  it('offers to connect a downloader instead of opening a review with no service in it', async () => {
     mockCanGetArtist = false;
     const view = await render(<ExternalActionRow artist={artist} />);
 
     await press(view, 'a11y.detail.getArtist');
 
     expect(mockPromptConnect).toHaveBeenCalledWith('artist');
-    expect(mockGetArtist).not.toHaveBeenCalled();
+    expect(mockPresent).not.toHaveBeenCalled();
   });
 
   it('draws nothing for an artist the library already holds', async () => {

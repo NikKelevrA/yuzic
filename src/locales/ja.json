@@ -1250,6 +1250,22 @@
     },
     "filters": {
       "title": "絞り込み"
+    },
+    "getSheet": {
+      "monitor": "監視するアルバム",
+      "policy": {
+        "future": "今後のアルバム",
+        "all": "すべてのアルバム",
+        "missing": "不足しているアルバム",
+        "existing": "既存のアルバム",
+        "first": "最初のアルバム",
+        "latest": "最新のアルバム",
+        "none": "なし"
+      },
+      "searchNow": "今すぐ検索",
+      "searchNowHint": "設定が終わり次第検索を開始します",
+      "nothingToSearch": "まだ検索対象はありません — 今後のリリースのみを監視します。",
+      "confirm": "このアーティストをフォロー"
     }
   },
   "manualAddWant": {

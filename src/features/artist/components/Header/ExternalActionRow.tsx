@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { CloudDownload, Heart } from 'lucide-react-native';
 
 import { DetailActionRow, DetailCircleAction, DetailPlayAction } from '@/components/DetailHeader';
+import { useSheetRef } from '@/components/useSheetRef';
 import { iconSize, onDark, onDarkAlpha, statusColor } from '@/constants/design';
 import type { Artist } from '@/domain/entities/Artist';
 import { promptConnectDownloader } from '@/features/downloaders/connectDownloaderPrompt';
 import { useWantToggle } from '@/features/entity-actions/shared/wantActions';
 import { useLocalFirst } from '@/features/library/useLocalFirst';
 import { useTheme } from '@/features/theme/useTheme';
+import ArtistGetSheet from '@/features/wants/ArtistGetSheet';
 import { useWantGet } from '@/features/wants/useWantGet';
 
 /**
@@ -37,7 +39,8 @@ import { useWantGet } from '@/features/wants/useWantGet';
 export default function ExternalActionRow({ artist }: { artist: Artist }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { canGetArtist, getArtist } = useWantGet();
+  const { canGetArtist } = useWantGet();
+  const getSheetRef = useSheetRef();
   const { isWanted, toggle } = useWantToggle(artist.localId, 'artist', 'artist-page');
   const { localArtist } = useLocalFirst();
 
@@ -55,38 +58,47 @@ export default function ExternalActionRow({ artist }: { artist: Artist }) {
   };
 
   const handleGet = useCallback(() => {
+    // Nothing that follows artists is connected: say what a downloader is and
+    // offer the ones that could take this, rather than opening a review with
+    // no service in it.
     if (!canGetArtist) {
       promptConnectDownloader('artist');
       return;
     }
-    if (!artist.localId) return;
-    if (!isWanted) toggle(wantPayload);
-    void getArtist({
-      localId: artist.localId,
-      name: artist.name,
-      mbid: artist.externalIds?.mbid,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- wantPayload is rebuilt per render from the artist below
-  }, [canGetArtist, artist, isWanted, toggle, getArtist]);
+    getSheetRef.current?.present();
+  }, [canGetArtist, getSheetRef]);
 
   if (isInLibrary || !artist.localId) return null;
 
   return (
-    <DetailActionRow>
-      <DetailPlayAction onPress={handleGet} accessibilityLabel={t('a11y.detail.getArtist')}>
-        <CloudDownload size={iconSize.control} color={canGetArtist ? onDark.text : onDarkAlpha.disabled} />
-      </DetailPlayAction>
+    <>
+      <DetailActionRow>
+        <DetailPlayAction onPress={handleGet} accessibilityLabel={t('a11y.detail.getArtist')}>
+          <CloudDownload size={iconSize.control} color={canGetArtist ? onDark.text : onDarkAlpha.disabled} />
+        </DetailPlayAction>
 
-      <DetailCircleAction
-        onPress={() => toggle(wantPayload)}
-        accessibilityLabel={t(isWanted ? 'a11y.detail.wanted' : 'a11y.detail.want')}
-      >
-        <Heart
-          size={iconSize.row}
-          color={isWanted ? statusColor.success : colors.secondary}
-          fill={isWanted ? statusColor.success : 'none'}
-        />
-      </DetailCircleAction>
-    </DetailActionRow>
+        <DetailCircleAction
+          onPress={() => toggle(wantPayload)}
+          accessibilityLabel={t(isWanted ? 'a11y.detail.wanted' : 'a11y.detail.want')}
+        >
+          <Heart
+            size={iconSize.row}
+            color={isWanted ? statusColor.success : colors.secondary}
+            fill={isWanted ? statusColor.success : 'none'}
+          />
+        </DetailCircleAction>
+      </DetailActionRow>
+
+      <ArtistGetSheet
+        artist={{
+          localId: artist.localId,
+          name: artist.name,
+          mbid: artist.externalIds?.mbid,
+          cover: artist.cover,
+        }}
+        sheetRef={getSheetRef}
+        onConfirm={() => { if (!isWanted) toggle(wantPayload); }}
+      />
+    </>
   );
 }

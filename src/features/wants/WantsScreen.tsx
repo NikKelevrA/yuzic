@@ -27,6 +27,7 @@ import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { removeWant, type Want, type WantUnit } from '@/state/redux/slices/wantsSlice';
 import WantRow from './WantRow';
 import WantGetSheet from './WantGetSheet';
+import WantArtistGetSheet from './WantArtistGetSheet';
 import { useWantRowStatus } from './useWantRowStatus';
 import { wantAlbum, wantArtist } from './wantEntity';
 
@@ -269,11 +270,17 @@ const WantsScreen: React.FC = () => {
         />
       )}
 
-      {/* Album and track Gets go through the app's normal review sheet; an
-          artist Get is dispatched from the options sheet itself, since there
-          is no release to review. */}
+      {/* Every unit is reviewed before it is asked for. A release goes through
+          the app's normal Get sheet; an artist has no release to review and its
+          own sheet instead, which asks what to watch and whether to go looking.
+          An artist used to be dispatched straight from the options sheet — the
+          one acquisition in the app that happened without a confirm step. */}
       {getFor && getFor.unit !== 'artist' && (
         <WantGetSheet want={getFor} onClose={() => setGetFor(null)} />
+      )}
+
+      {getFor && getFor.unit === 'artist' && (
+        <WantArtistGetSheet want={getFor} onClose={() => setGetFor(null)} />
       )}
     </SafeAreaView>
   );
