@@ -15,7 +15,7 @@ import Touchable from '@/components/Touchable';
 import { setToastClearance } from '@/components/toast/clearance';
 import { useTheme } from '@/features/theme/useTheme';
 import { selectThemeColor, selectTranslucentDock } from '@/features/settings/appearance/state';
-import { iconSize, spacing } from '@/constants/design';
+import { contentWidth, iconSize, spacing } from '@/constants/design';
 
 /**
  * The tab bar is a real react-navigation bottom tab bar now: the tab-tracking
@@ -141,7 +141,11 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
   };
 
   const rows = (
-    <>
+    // The surface below stays edge to edge; this is the column of controls on
+    // it. Three tabs at `flex: 1` across a 1366pt iPad are three icons 455pt
+    // apart, and the playing bar is a row like any other row — so both are
+    // capped and centred together, as the two rows of one dock they are.
+    <View style={styles.dockContent}>
       <PlayingBar />
       <View style={styles.tabRow}>
         <TabButton
@@ -181,7 +185,7 @@ function TabBar({ state, navigation }: BottomTabBarProps) {
           )}
         </TabButton>
       </View>
-    </>
+    </View>
   );
 
   const padding = { paddingBottom: Math.max(insets.bottom, 8) };
@@ -248,6 +252,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  dockContent: {
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
   },
   tabRow: {
     flexDirection: 'row',

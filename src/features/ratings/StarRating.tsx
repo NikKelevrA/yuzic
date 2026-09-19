@@ -19,6 +19,18 @@ type Props = {
   emptyColor?: string;
   size?: number;
   disabled?: boolean;
+  /**
+   * Names each star for E2E, given its number.
+   *
+   * The caller builds the id rather than this component fixing one, because
+   * the player's stars and the sheet's can both be mounted at once — the
+   * sheet opens over the player — and two elements answering to one id is a
+   * flow that taps whichever Maestro finds first. Only the sheet passes it.
+   *
+   * Named to *end* in `testID`, which is the shape `.maestro/testIds.test.ts`
+   * looks for when it checks that every id a flow reaches for exists.
+   */
+  starTestID?: (star: number) => string;
 };
 
 const STARS = Array.from({ length: RATING_MAX }, (_, index) => index + 1);
@@ -49,6 +61,7 @@ const StarRating: React.FC<Props> = ({
   emptyColor,
   size = iconSize.control,
   disabled = false,
+  starTestID,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -66,6 +79,7 @@ const StarRating: React.FC<Props> = ({
       {STARS.map(star => (
         <Touchable
           key={star}
+          testID={starTestID?.(star)}
           feedback="control"
           disabled={disabled}
           accessibilityRole="radio"

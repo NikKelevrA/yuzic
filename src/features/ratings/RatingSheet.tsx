@@ -71,7 +71,12 @@ const RatingSheet = forwardRef<BottomSheetModal, { entity: Rateable | null | und
           <OptionSheetDivider />
 
           <View style={styles.stars}>
-            <StarRating value={rating} onChange={choose} size={iconSize.transport} />
+            <StarRating
+              value={rating}
+              onChange={choose}
+              size={iconSize.transport}
+              starTestID={star => `rating-star-${star}`}
+            />
           </View>
 
           {(rating ?? 0) > 0 && (
