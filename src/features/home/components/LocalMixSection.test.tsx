@@ -173,14 +173,22 @@ function renderWithStore(
   mockSongsById = new Map(tracks.map(song => [song.nativeId, song]));
   mockUseQuery.mockReturnValue(similarQueryResult);
 
+  // The local half of a play count comes from the listening log now, not from
+  // a counter in `stats` — so a seed the shelf needs has to be a rollup here.
+  const totals = Object.fromEntries(
+    Object.entries(songPlays).map(([key, plays]) => [
+      key,
+      { plays, starts: plays, rejections: 0, seconds: plays * 200, firstAt: 1, lastAt: 1 },
+    ]),
+  );
+
   const store = configureStore({
     reducer: {
       stats: (state = {
-        songPlays,
         serverSongPlays: {},
-        songLastPlayedAt: {},
         serverSongLastPlayedAt: {},
       }) => state,
+      listening: (state = { events: [], totals, albums: {}, artists: {}, playlists: {} }) => state,
       servers: (state = { activeServerId: 's1' }) => state,
     },
   });

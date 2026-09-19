@@ -43,7 +43,7 @@ export const MAX_EVENTS = 4000;
  * the honest representation: *unknown* and *zero* are different facts, and
  * "never played" is exactly the set the rediscovery surfaces want.
  */
-export interface TrackTotals {
+export interface EntityTotals {
   /** Listens that passed the play threshold — the number a user is shown. */
   plays: number;
   /** Every time the track started, threshold or not. */
@@ -56,19 +56,51 @@ export interface TrackTotals {
   lastAt: number;
 }
 
+/**
+ * Rolled up per entity, not only per track.
+ *
+ * A listen is evidence about four things at once — the track, its album, its
+ * artist, and the playlist it was reached through — and every one of those has
+ * a surface that ranks by it. Keeping only track rollups would mean album and
+ * artist ranking had to walk the event ring, which is bounded, so an artist
+ * played hundreds of times last year would silently rank below one played
+ * twice last week purely because the older events had been evicted.
+ *
+ * The four maps are the same shape and updated in one pass, which is also what
+ * lets `incrementPlay` go: it maintained a parallel, skip-blind copy of
+ * exactly this, written from the same call site a moment later.
+ */
 interface ListeningState {
   /** Oldest first. Append at the end, evict from the front. */
   events: ListenEvent[];
-  totals: Record<string, TrackTotals>;
+  totals: Record<string, EntityTotals>;
+  albums: Record<string, EntityTotals>;
+  artists: Record<string, EntityTotals>;
+  playlists: Record<string, EntityTotals>;
+  /** Whether the counters this replaced have already been carried across. */
+  legacySeeded: boolean;
 }
 
-const initialState: ListeningState = { events: [], totals: {} };
+const initialState: ListeningState = {
+  events: [],
+  totals: {},
+  albums: {},
+  artists: {},
+  playlists: {},
+  legacySeeded: false,
+};
 
 /** Everything about a listen except which sitting it belongs to, which is the
  *  reducer's to decide — it is the only place that can see the one before. */
 export type RecordedListen = Omit<ListenEvent, 'session'>;
 
-const emptyTotals = (at: number): TrackTotals => ({
+/** One of the four maps `incrementPlay` used to keep. */
+export interface LegacyCounts {
+  plays: Record<string, number>;
+  lastPlayedAt: Record<string, number>;
+}
+
+const emptyTotals = (at: number): EntityTotals => ({
   plays: 0,
   starts: 0,
   rejections: 0,
@@ -108,48 +140,79 @@ const listeningSlice = createSlice({
         state.events.splice(0, state.events.length - MAX_EVENTS);
       }
 
-      const totals = state.totals[event.track] ?? emptyTotals(event.at);
-      totals.starts += 1;
-      totals.seconds += event.seconds;
-      if (countsAsPlay(event)) totals.plays += 1;
-      if (isRejection(event)) totals.rejections += 1;
-      totals.firstAt = Math.min(totals.firstAt, event.at);
-      totals.lastAt = Math.max(totals.lastAt, event.at);
-      state.totals[event.track] = totals;
+      const played = countsAsPlay(event);
+      const rejected = isRejection(event);
+
+      const roll = (into: Record<string, EntityTotals>, key: string | undefined) => {
+        if (!key) return;
+        const totals = into[key] ?? emptyTotals(event.at);
+        totals.starts += 1;
+        totals.seconds += event.seconds;
+        if (played) totals.plays += 1;
+        if (rejected) totals.rejections += 1;
+        totals.firstAt = Math.min(totals.firstAt, event.at);
+        totals.lastAt = Math.max(totals.lastAt, event.at);
+        into[key] = totals;
+      };
+
+      roll(state.totals, event.track);
+      roll(state.albums, event.album);
+      roll(state.artists, event.artist);
+      roll(state.playlists, event.playlist);
     },
 
     /**
-     * Seed totals from the counters this replaced, once.
+     * Carry the counters this replaced across, once.
      *
-     * Without it, everyone's play counts reset to zero on the update that
-     * shipped this — the app would have thrown away the only record it had of
-     * years of listening, in the change whose entire purpose is to take that
-     * record seriously.
+     * Without it the update that shipped the log resets everybody's play
+     * counts, in the change whose whole purpose is to take that record
+     * seriously. Songs and albums would recover on the next sync because the
+     * server has its own numbers — **artists and playlists would not.** No
+     * Subsonic or Jellyfin server reports either, so those counters were the
+     * only copy in existence, and losing them empties the ranking behind
+     * Home's shelves and the figures on an artist's options sheet until the
+     * listener rebuilds a history from nothing.
      *
-     * Seeded rows carry `starts` equal to `plays` and no rejections, because
-     * that is all the old data says. They are deliberately *not* marked as
-     * estimates: every derivation here treats a missing signal as absent
-     * rather than as zero, so a seeded row simply contributes nothing to skip
-     * rate until it is played again, at which point real events take over.
+     * Seeded rows carry `starts` equal to `plays` and no rejections, which is
+     * all the old data says. Nothing here treats that as a clean record: every
+     * derivation reads a missing signal as absent rather than as zero, so a
+     * seeded row contributes nothing to skip rate until real events arrive.
+     *
+     * `legacySeeded` makes it once and for all. Running it twice would not
+     * double anything — an existing row is left alone — but the flag is what
+     * lets the caller stop reading a payload that will never change again.
      */
     seedFromLegacyCounts(
       state,
-      action: PayloadAction<{ plays: Record<string, number>; lastPlayedAt: Record<string, number> }>,
+      action: PayloadAction<{
+        tracks?: LegacyCounts;
+        albums?: LegacyCounts;
+        artists?: LegacyCounts;
+        playlists?: LegacyCounts;
+      }>,
     ) {
-      const { plays, lastPlayedAt } = action.payload;
-      for (const [track, count] of Object.entries(plays)) {
-        if (count <= 0) continue;
-        if (state.totals[track]) continue; // real events already know better
-        const at = lastPlayedAt[track] ?? 0;
-        state.totals[track] = {
-          plays: count,
-          starts: count,
-          rejections: 0,
-          seconds: 0,
-          firstAt: at,
-          lastAt: at,
-        };
-      }
+      const seed = (into: Record<string, EntityTotals>, counts: LegacyCounts | undefined) => {
+        if (!counts) return;
+        for (const [key, count] of Object.entries(counts.plays)) {
+          if (count <= 0) continue;
+          if (into[key]) continue; // real events already know better
+          const at = counts.lastPlayedAt[key] ?? 0;
+          into[key] = {
+            plays: count,
+            starts: count,
+            rejections: 0,
+            seconds: 0,
+            firstAt: at,
+            lastAt: at,
+          };
+        }
+      };
+
+      seed(state.totals, action.payload.tracks);
+      seed(state.albums, action.payload.albums);
+      seed(state.artists, action.payload.artists);
+      seed(state.playlists, action.payload.playlists);
+      state.legacySeeded = true;
     },
 
     /**
@@ -163,6 +226,12 @@ const listeningSlice = createSlice({
     clearListeningHistory(state) {
       state.events = [];
       state.totals = {};
+      state.albums = {};
+      state.artists = {};
+      state.playlists = {};
+      // The flag stays: the legacy counters are already gone from storage by
+      // the time anyone can press this, and re-seeding them would restore
+      // history the listener just asked to delete.
     },
   },
 });

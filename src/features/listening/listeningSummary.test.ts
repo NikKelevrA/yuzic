@@ -1,5 +1,5 @@
 import type { ListenEvent } from './listeningEvent';
-import type { TrackTotals } from '@/state/redux/slices/listeningSlice';
+import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 import {
   averageCompletion,
   firstHeardIn,
@@ -89,7 +89,7 @@ describe('lifetimeTotals', () => {
    * events, so a play count cannot fall as the ring wraps.
    */
   it('adds up the rollups and finds the earliest listen', () => {
-    const totals: Record<string, TrackTotals> = {
+    const totals: Record<string, EntityTotals> = {
       a: { plays: 5, starts: 6, rejections: 1, seconds: 1000, firstAt: 500, lastAt: 900 },
       b: { plays: 2, starts: 2, rejections: 0, seconds: 400, firstAt: 100, lastAt: 800 },
     };
@@ -133,7 +133,7 @@ describe('listeningStreak', () => {
 
 describe('firstHeardIn', () => {
   it('lists what was first heard inside the window, oldest first', () => {
-    const totals: Record<string, TrackTotals> = {
+    const totals: Record<string, EntityTotals> = {
       old: { plays: 1, starts: 1, rejections: 0, seconds: 1, firstAt: BASE - 90 * DAY, lastAt: BASE },
       newer: { plays: 1, starts: 1, rejections: 0, seconds: 1, firstAt: BASE - 2 * DAY, lastAt: BASE },
       newest: { plays: 1, starts: 1, rejections: 0, seconds: 1, firstAt: BASE - DAY, lastAt: BASE },

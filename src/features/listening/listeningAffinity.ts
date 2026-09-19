@@ -1,4 +1,4 @@
-import type { TrackTotals } from '@/state/redux/slices/listeningSlice';
+import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 
 /**
  * How much somebody likes a track, and whether they still do.
@@ -48,7 +48,7 @@ export function recencyWeight(lastAt: number, now: number): number {
  * would flatter it. It contributes nothing either way until real events
  * arrive, which is the honest reading of data that predates the measurement.
  */
-export function rejectionRate(totals: TrackTotals): number {
+export function rejectionRate(totals: EntityTotals): number {
   if (totals.starts <= 0) return 0;
   return Math.min(1, totals.rejections / totals.starts);
 }
@@ -62,7 +62,7 @@ export function rejectionRate(totals: TrackTotals): number {
  * to ask whether they still want it. The floor keeps it ranked last rather
  * than ranked away.
  */
-export function listenQuality(totals: TrackTotals): number {
+export function listenQuality(totals: EntityTotals): number {
   return Math.max(0.2, 1 - rejectionRate(totals));
 }
 
@@ -73,7 +73,7 @@ export function listenQuality(totals: TrackTotals): number {
  * "more of this". Plays rather than starts, so a skipped track does not climb
  * by being skipped often.
  */
-export function affinity(totals: TrackTotals, now: number): number {
+export function affinity(totals: EntityTotals, now: number): number {
   return totals.plays * listenQuality(totals) * recencyWeight(totals.lastAt, now);
 }
 
@@ -90,7 +90,7 @@ export function affinity(totals: TrackTotals, now: number): number {
  * behind it (`neverPlayed`), because "you loved this and stopped" and "you
  * have never opened this" want different words on screen.
  */
-export function dormancy(totals: TrackTotals, now: number): number {
+export function dormancy(totals: EntityTotals, now: number): number {
   const forgotten = 1 - recencyWeight(totals.lastAt, now);
   return totals.plays * listenQuality(totals) * forgotten;
 }
@@ -118,7 +118,7 @@ export interface DormancyReason {
   lastPlayedAt: number;
 }
 
-export function dormancyReason(totals: TrackTotals, now: number): DormancyReason {
+export function dormancyReason(totals: EntityTotals, now: number): DormancyReason {
   return {
     plays: totals.plays,
     daysSinceLastPlay: daysSince(totals.lastAt, now),

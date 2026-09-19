@@ -1,4 +1,4 @@
-import type { TrackTotals } from '@/state/redux/slices/listeningSlice';
+import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 import type { ListenEvent } from './listeningEvent';
 import { buildSequenceGraph } from './listeningSequence';
 import { rankForListener, type RankingContext } from './listeningRanking';
@@ -12,7 +12,7 @@ const play = (track: string, session: number): ListenEvent => {
   return { at: clock, track, seconds: 200, duration: 240, ending: 'finished', session };
 };
 
-const totals = (over: Partial<TrackTotals> = {}): TrackTotals => ({
+const totals = (over: Partial<EntityTotals> = {}): EntityTotals => ({
   plays: 0, starts: 0, rejections: 0, seconds: 0, firstAt: 0, lastAt: 0, ...over,
 });
 

@@ -90,23 +90,31 @@ describe('recordListen', () => {
 
 describe('seedFromLegacyCounts', () => {
   /**
-   * Without this, the update that shipped the log resets everyone's play
-   * counts to zero — throwing away the only record the app had of years of
-   * listening, in the change meant to take that record seriously.
+   * Without this the update that shipped the log resets everybody's play
+   * counts. Songs and albums recover on the next sync because the server has
+   * its own numbers; artists and playlists never would, because no Subsonic or
+   * Jellyfin server reports either.
    */
   it('carries the old counters across', () => {
     const state = reducer(empty(), seedFromLegacyCounts({
-      plays: { 's1:t1': 47 },
-      lastPlayedAt: { 's1:t1': BASE },
+      tracks: { plays: { 's1:t1': 47 }, lastPlayedAt: { 's1:t1': BASE } },
     }));
     expect(state.totals['s1:t1']).toMatchObject({ plays: 47, starts: 47, lastAt: BASE });
+  });
+
+  it('carries the counters no server can replace', () => {
+    const state = reducer(empty(), seedFromLegacyCounts({
+      artists: { plays: { 's1:ar1': 30 }, lastPlayedAt: { 's1:ar1': BASE } },
+      playlists: { plays: { 's1:pl1': 8 }, lastPlayedAt: {} },
+    }));
+    expect(state.artists['s1:ar1'].plays).toBe(30);
+    expect(state.playlists['s1:pl1'].plays).toBe(8);
   });
 
   it('does not overwrite a track the log already knows about', () => {
     let state = reducer(empty(), recordListen(listen()));
     state = reducer(state, seedFromLegacyCounts({
-      plays: { 's1:t1': 999 },
-      lastPlayedAt: { 's1:t1': BASE },
+      tracks: { plays: { 's1:t1': 999 }, lastPlayedAt: { 's1:t1': BASE } },
     }));
     expect(state.totals['s1:t1'].plays).toBe(1);
   });
@@ -115,10 +123,14 @@ describe('seedFromLegacyCounts', () => {
     // Jellyfin reports PlayCount: 0 for everything; seeding those would
     // recreate the fifty-thousand-zeros problem this design avoids.
     const state = reducer(empty(), seedFromLegacyCounts({
-      plays: { 's1:t1': 0 },
-      lastPlayedAt: {},
+      tracks: { plays: { 's1:t1': 0 }, lastPlayedAt: {} },
     }));
     expect(state.totals).toEqual({});
+  });
+
+  it('records that it has run, so the caller can stop looking', () => {
+    expect(empty().legacySeeded).toBe(false);
+    expect(reducer(empty(), seedFromLegacyCounts({})).legacySeeded).toBe(true);
   });
 });
 
@@ -132,5 +144,18 @@ describe('clearListeningHistory', () => {
     state = reducer(state, clearListeningHistory());
     expect(state.events).toEqual([]);
     expect(state.totals).toEqual({});
+    expect(state.artists).toEqual({});
+  });
+
+  /**
+   * The legacy counters are gone from storage by the time anyone can press
+   * this, so re-seeding would restore history the listener just deleted.
+   */
+  it('stays seeded, so nothing is restored behind the listener', () => {
+    let state = reducer(empty(), seedFromLegacyCounts({
+      artists: { plays: { 's1:ar1': 30 }, lastPlayedAt: {} },
+    }));
+    state = reducer(state, clearListeningHistory());
+    expect(state.legacySeeded).toBe(true);
   });
 });

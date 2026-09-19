@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { Song } from '@/domain/entities/Song';
-import { incrementPlay } from '@/state/redux/slices/statsSlice';
 import { recordListen } from '@/state/redux/slices/listeningSlice';
 import { endingFrom } from '@/features/listening/listeningEvent';
 import {
@@ -143,16 +142,6 @@ export function useScrobbling() {
     const songDuration = song.durationSeconds || 0;
     if (!passesScrobbleThreshold(opts.listenedSeconds, songDuration)) return;
     lastScrobbledIdRef.current = song.nativeId;
-
-    if (activeServer?.id) {
-      dispatch(incrementPlay({
-        serverId: activeServer.id,
-        songId: song.nativeId,
-        albumId: song.album.nativeId,
-        artistId: song.artist.nativeId,
-        playlistId: opts.playlistId,
-      }));
-    }
 
     if (plan.server) {
       try {

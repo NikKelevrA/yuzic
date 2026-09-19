@@ -6,7 +6,7 @@ import {
   weekdayOf,
   type ListenEvent,
 } from './listeningEvent';
-import type { TrackTotals } from '@/state/redux/slices/listeningSlice';
+import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 
 /**
  * The figures a listener is shown about their own listening.
@@ -164,7 +164,7 @@ export function summarise(
  * they only ever grow — unlike anything derived from the ring, which loses its
  * tail as it wraps.
  */
-export function lifetimeTotals(totals: Record<string, TrackTotals>): {
+export function lifetimeTotals(totals: Record<string, EntityTotals>): {
   plays: number;
   starts: number;
   seconds: number;
@@ -232,7 +232,7 @@ function localDayKey(at: number): string {
  * make every other figure here untrustworthy by association.
  */
 export function firstHeardIn(
-  totals: Record<string, TrackTotals>,
+  totals: Record<string, EntityTotals>,
   since: number,
   until: number = Number.MAX_SAFE_INTEGER,
 ): string[] {

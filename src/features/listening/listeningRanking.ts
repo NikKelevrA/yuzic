@@ -1,4 +1,4 @@
-import type { TrackTotals } from '@/state/redux/slices/listeningSlice';
+import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 import { listenQuality } from './listeningAffinity';
 import { sequenceWeight, type SequenceGraph } from './listeningSequence';
 
@@ -30,7 +30,7 @@ export interface RankingContext {
   /** The track the queue is continuing from, as a `serverId:trackId` key. */
   after: string | null;
   graph: SequenceGraph;
-  totals: Record<string, TrackTotals>;
+  totals: Record<string, EntityTotals>;
   now: number;
 }
 

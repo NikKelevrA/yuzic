@@ -1,4 +1,4 @@
-import type { TrackTotals } from '@/state/redux/slices/listeningSlice';
+import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 import {
   AFFINITY_HALF_LIFE_DAYS,
   affinity,
@@ -13,7 +13,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const NOW = 1_700_000_000_000;
 const daysAgo = (days: number) => NOW - days * DAY;
 
-const totals = (over: Partial<TrackTotals> = {}): TrackTotals => ({
+const totals = (over: Partial<EntityTotals> = {}): EntityTotals => ({
   plays: 10,
   starts: 10,
   rejections: 0,

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import type { RootState } from '@/state/redux/store';
-import type { TrackTotals } from '@/state/redux/slices/listeningSlice';
+import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 import { type ListenEnding } from './listeningEvent';
 import {
   affinity,
@@ -81,7 +81,7 @@ export function useListeningStats(now: number = Date.now()): ListeningStats {
   const totals = useSelector((state: RootState) => state.listening.totals);
 
   return useMemo(() => {
-    const entries: (TrackTotals & { key: string })[] = Object.entries(totals).map(
+    const entries: (EntityTotals & { key: string })[] = Object.entries(totals).map(
       ([key, entry]) => ({ key, ...entry }),
     );
 
