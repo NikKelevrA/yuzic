@@ -30,6 +30,8 @@ export interface SubsonicSong {
   bpm?: number;
   genre?: string;
   genres?: (SubsonicGenreRef | string)[];
+  /** 1-5 where the user has rated it, absent or 0 where they have not. */
+  userRating?: number;
   /** OpenSubsonic extensions; used for matching, absent on older servers. */
   musicBrainzId?: string;
   isrc?: string[];
@@ -45,6 +47,8 @@ export interface SubsonicAlbum {
   genre?: string;
   created?: string;
   song?: SubsonicSong[];
+  /** 1-5 where the user has rated it, absent or 0 where they have not. */
+  userRating?: number;
   /** OpenSubsonic extension; a release-group id where the server reports one. */
   musicBrainzId?: string;
 }
@@ -62,6 +66,7 @@ export interface SubsonicAlbumListEntry {
   songCount?: number;
   playCount?: number;
   played?: string;
+  userRating?: number;
 }
 
 /** Shape returned by search3's ID3-based `album` entries (uses "name", not "title"). */

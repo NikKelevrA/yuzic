@@ -22,7 +22,9 @@ jest.mock('@/components/haptics', () => ({
 jest.mock('@/components/toast', () => ({
   notify: Object.assign(jest.fn(), { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() }),
 }));
-jest.mock('react-redux', () => ({ useSelector: (selector: any) => selector({}), useDispatch: () => jest.fn() }));
+// The sheets' rating strip reads the real `selectRatingOverrides`, so the
+// fake state has to carry the slice, empty.
+jest.mock('react-redux', () => ({ useSelector: (selector: any) => selector({ ratings: { byServer: {} } }), useDispatch: () => jest.fn() }));
 jest.mock('@/state/redux/selectors/statsSelectors', () => ({ selectSongPlayCount: () => () => 0, selectAlbumPlayCount: () => () => 0 }));
 jest.mock('@/state/redux/selectors/serversSelectors', () => ({ selectActiveServerId: () => 'server-1' }));
 jest.mock('@/state/redux/selectors/wantsSelectors', () => ({ selectIsWanted: () => () => false }));

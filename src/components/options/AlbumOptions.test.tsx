@@ -45,10 +45,19 @@ jest.mock('@/features/sources/useMatchedNavigation', () => ({
   useMatchedNavigation: () => ({ navigateToAlbum: jest.fn(), navigateToArtist: mockNavigateToArtist }),
 }));
 
+// The rating strip refuses a write it cannot land, so it asks whether the
+// server is reachable — which reaches NetInfo, which has no native side here.
+jest.mock('@/features/connectivity/useServerReachable', () => ({
+  useServerReachable: () => true,
+}));
+
 const mockDispatch = jest.fn();
 
 jest.mock('react-redux', () => ({
-  useSelector: (selector: any) => selector({}),
+  // The sheet's rating strip reads the real `selectRatingOverrides`, which
+  // is the one selector here that is not mocked away — so the fake state has
+  // to carry the slice, empty.
+  useSelector: (selector: any) => selector({ ratings: { byServer: {} } }),
   useDispatch: () => mockDispatch,
 }));
 

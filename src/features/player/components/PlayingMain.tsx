@@ -17,6 +17,7 @@ import {
 } from '@/features/playback/PlayingContext';
 import { coverNeighbours } from '../coverNeighbours';
 import PlayingProgressSection from './PlayingProgress';
+import PlayingRating from './PlayingRating';
 import type { CoverStrip } from '@/features/player/PlayerExpansion';
 import { useSelector } from 'react-redux';
 import { selectShowQualityBadge } from '@/features/settings/appearance/state';
@@ -287,6 +288,8 @@ const PlayingMain: React.FC<PlayingMainProps> = ({
         </Touchable>
         </View>
       </View>
+
+      <PlayingRating song={currentSong} />
 
       {showQualityBadge && qualityLabel && (
         <Text style={styles.qualityBadge} numberOfLines={1}>

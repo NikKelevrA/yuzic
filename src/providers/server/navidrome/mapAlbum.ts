@@ -12,6 +12,7 @@ import type { LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import { albumCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
+import { reportedRating } from '@/domain/entities/Rating';
 import { artistRef } from './mapRefs';
 import type { SubsonicAlbum, SubsonicAlbumListEntry } from './types';
 
@@ -83,6 +84,7 @@ export function mapAlbum(dto: AnyAlbumDto, context: MapAlbumContext): Album {
     serverLastPlayedAt: 'played' in dto && dto.played
       ? Date.parse(dto.played) || undefined
       : undefined,
+    userRating: reportedRating(dto.userRating),
     songIds: context.songIds ?? [],
   };
 }

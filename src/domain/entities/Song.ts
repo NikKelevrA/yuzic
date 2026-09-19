@@ -77,5 +77,16 @@ export interface Song extends EntityCore {
   serverPlayCount?: number;
   /** When the origin last recorded a play, unix ms. Same caveat as above. */
   serverLastPlayedAt?: number;
+  /**
+   * What the signed-in user rated this, out of five, where the origin holds
+   * a rating and reports one.
+   *
+   * Absent is "the origin did not say" and zero is "not rated" — two states
+   * a single number cannot carry, which is why this is optional rather than
+   * defaulted. A server without ratings must not be read as one where the
+   * user has rated nothing, or every list sorted by rating on it would be
+   * a list of ties.
+   */
+  userRating?: number;
   audio?: AudioProperties;
 }

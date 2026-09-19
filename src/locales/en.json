@@ -344,7 +344,9 @@
         "onSubtext": "Fade between tracks over {{seconds}}s. Skips cut straight.",
         "seguesLabel": "Fade through segues",
         "seguesSubtext": "Gapless album joins stay hard-cut. On fades those too."
-      }
+      },
+      "showRating": "Show rating",
+      "showRatingSubtext": "Five stars under the title on the player"
     },
     "listenBrainz": {
       "title": "ListenBrainz",
@@ -859,7 +861,8 @@
       "mostRecent": "Most Recent",
       "mostPlayed": "Most Played",
       "releaseYear": "Release Year",
-      "recentlyAdded": "Recently added"
+      "recentlyAdded": "Recently added",
+      "rating": "Rating"
     },
     "sortSheet": {
       "title": "Sort by"
@@ -1563,6 +1566,11 @@
     },
     "wants": {
       "remove": "Remove {{title}} from Wants"
+    },
+    "rating": {
+      "label": "Rating",
+      "star_one": "{{count}} star",
+      "star_other": "{{count}} stars"
     }
   },
   "tabs": {
@@ -1595,5 +1603,10 @@
   },
   "externalOptions": {
     "openInSource": "Open in {{source}}"
+  },
+  "ratings": {
+    "label": "Rating",
+    "offline": "Can't change a rating while the server is out of reach",
+    "failed": "That rating didn't save"
   }
 }

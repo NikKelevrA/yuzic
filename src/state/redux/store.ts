@@ -22,6 +22,7 @@ import listeningReducer from './slices/listeningSlice';
 import offlineMutationsReducer from './slices/offlineMutationsSlice';
 import searchHistoryReducer, { normalizeSearchHistoryEntries } from './slices/searchHistorySlice';
 import wantsReducer from './slices/wantsSlice';
+import ratingsReducer from './slices/ratingsSlice';
 
 // Returns undefined (→ initialState) only on version bump; otherwise passes state through.
 const resetMigrate = (state: any, currentVersion: number): Promise<any> => {
@@ -113,6 +114,12 @@ const searchHistoryPersistConfig = {
 // Save-only intent store; a saved want is cheap and rare (user taps) so no
 // throttle is needed — matches downloaders/servers, which also write as-is.
 const wantsPersistConfig = { key: 'wants', storage };
+// Ratings the user gave since the last sync. Persisted for the same reason it
+// exists at all: the catalog on disk still holds the pre-rating value, so an
+// overlay that died with the process would show the rating vanishing on the
+// next launch. Written on a tap and cleared by the next sync, so it stays
+// small and needs no throttle.
+const ratingsPersistConfig = { key: 'ratings', storage };
 
 // Persist throttling. redux-persist writes on every dispatched action that
 // mutates the slice; for slices that carry thousands of entries (library) or
@@ -163,6 +170,7 @@ export const rootReducer = combineReducers({
     offlineMutations: offlineMutationsReducer,
     searchHistory: searchHistoryReducer,
     wants: wantsReducer,
+    ratings: ratingsReducer,
 });
 
 const persistedReducer = combineReducers({
@@ -185,6 +193,7 @@ const persistedReducer = combineReducers({
     offlineMutations: persistReducer(offlineMutationsPersistConfig, offlineMutationsReducer),
     searchHistory: persistReducer(searchHistoryPersistConfig, searchHistoryReducer),
     wants: persistReducer(wantsPersistConfig, wantsReducer),
+    ratings: persistReducer(ratingsPersistConfig, ratingsReducer),
 });
 
 const store = configureStore({

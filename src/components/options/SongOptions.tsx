@@ -13,6 +13,7 @@ import {
   OptionSheetSectionLabel,
 } from './OptionSheetPrimitives';
 import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet';
+import RatingStrip from '@/features/ratings/RatingStrip';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import {
   useSongLibraryActions,
@@ -116,6 +117,7 @@ const LibrarySongOptionsSheet = forwardRef<BottomSheetModal, LibrarySongOptionsP
           subtitle: selectedSong.artist.name || t('songOptions.unknownArtist'),
         }}
         actions={actions}
+        aboveActions={<RatingStrip entity={selectedSong} />}
         infoSection={
           <>
             <OptionSheetDivider />

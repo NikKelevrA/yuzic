@@ -16,10 +16,14 @@ import {
   selectPlaylistLastPlayedAt,
   selectPlaylistPlayCounts,
 } from '@/state/redux/selectors/statsSelectors'
+import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors'
+import { selectRatingOverrides } from '@/state/redux/slices/ratingsSlice'
 import {
+  EMPTY_RATINGS,
   EMPTY_SORT_STATS,
   sortItems,
   usesPlayStats,
+  usesRatings,
   type LibraryCollectionType,
   type LibraryItem,
   type SortOrder,
@@ -73,6 +77,12 @@ export function useLibraryItems(
   // doesn't recompute every time a song is played.
   const statsForSort = usesPlayStats(sortOrder) ? stats : EMPTY_SORT_STATS
 
+  // Same trick for the ratings the user has written since the last sync: only
+  // the one order that reads them pays for re-sorting when one changes.
+  const serverId = useSelector(selectActiveServerId)
+  const ratingOverrides = useSelector(selectRatingOverrides(serverId ?? undefined))
+  const ratingsForSort = usesRatings(sortOrder) ? ratingOverrides : EMPTY_RATINGS
+
   // Tracks saved on their own rather than as part of a saved album or
   // playlist. Without these the Downloaded collection hid every single song
   // downloaded from a track's own options.
@@ -107,13 +117,13 @@ export function useLibraryItems(
   const items = useMemo(() => {
     switch (type) {
       case 'playlists':
-        return sortItems(playlists.map(p => ({ kind: 'playlist' as const, data: p })), sortOrder, statsForSort)
+        return sortItems(playlists.map(p => ({ kind: 'playlist' as const, data: p })), sortOrder, statsForSort, ratingsForSort)
       case 'albums':
-        return sortItems(albums.map(a => ({ kind: 'album' as const, data: a })), sortOrder, statsForSort)
+        return sortItems(albums.map(a => ({ kind: 'album' as const, data: a })), sortOrder, statsForSort, ratingsForSort)
       case 'artists':
-        return sortItems(artists.map(a => ({ kind: 'artist' as const, data: a })), sortOrder, statsForSort)
+        return sortItems(artists.map(a => ({ kind: 'artist' as const, data: a })), sortOrder, statsForSort, ratingsForSort)
       case 'tracks':
-        return sortItems(tracks.map(tr => ({ kind: 'track' as const, data: tr })), sortOrder, statsForSort)
+        return sortItems(tracks.map(tr => ({ kind: 'track' as const, data: tr })), sortOrder, statsForSort, ratingsForSort)
       case 'downloaded':
         // `getAllDownloadedCollections()[].id` is the id `downloadAlbumById`/
         // `downloadPlaylistById` were called with, which they hand straight
@@ -122,15 +132,15 @@ export function useLibraryItems(
           ...albums.filter(a => downloadedCollectionIds.has(a.nativeId)).map(a => ({ kind: 'album' as const, data: a })),
           ...playlists.filter(p => downloadedCollectionIds.has(p.nativeId)).map(p => ({ kind: 'playlist' as const, data: p })),
           ...tracks.filter(tr => looseDownloadedTrackIds.has(tr.localId)).map(tr => ({ kind: 'track' as const, data: tr })),
-        ], sortOrder, statsForSort)
+        ], sortOrder, statsForSort, ratingsForSort)
       default:
         return sortItems([
           ...playlists.map(p => ({ kind: 'playlist' as const, data: p })),
           ...albums.map(a => ({ kind: 'album' as const, data: a })),
           ...artists.map(a => ({ kind: 'artist' as const, data: a })),
-        ], sortOrder, statsForSort)
+        ], sortOrder, statsForSort, ratingsForSort)
     }
-  }, [type, sortOrder, statsForSort, albums, artists, playlists, tracks, downloadedCollectionIds, looseDownloadedTrackIds])
+  }, [type, sortOrder, statsForSort, ratingsForSort, albums, artists, playlists, tracks, downloadedCollectionIds, looseDownloadedTrackIds])
 
   return { items, isLoading }
 }

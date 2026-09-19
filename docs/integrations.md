@@ -98,6 +98,7 @@ UI shows them only when the active server's adapter provides them:
 | Random songs + who else is listening | `discovery` | ✅ | ✅ (`SortBy=Random`; listeners from `/Sessions`) | — | — |
 | Podcasts | `podcasts` | ✅ | — | — | — |
 | Account avatar | `user` | ✅ (`getAvatar`) | ✅ (`/Users/{id}/Images/Primary`) | — | — |
+| Five-star ratings | `ratings` | ✅ (`setRating.view`) | — | — | — |
 
 A Jellyfin user never sees a Radio row rather than seeing one that goes
 nowhere — the Library index builds its rows from what the adapter offers
@@ -113,6 +114,31 @@ the next save wrote that emptiness to the server. The mapper accepts either;
 the update always sends the parameter, empty string included, because the
 server replaces the whole record and an omitted parameter is indistinguishable
 from a cleared one.
+
+**Ratings are Subsonic's alone, and the reason is different for each of the
+other three.** `setRating.view` takes an id and a number 0–5, stores it beside
+the starred flag rather than in it, and reports it back on every song and album
+as `userRating` — which is the whole shape the app needs, so Navidrome and any
+Subsonic-compatible server get it.
+
+- **Jellyfin and Emby** carry `Likes` in their per-user data and nothing that
+  writes a star count. `Likes` is the favourite the app already has, on
+  `FavoriteItems`. The only way to offer stars here would be to keep them on
+  the device, and a rating that never reaches the server the user chose to
+  self-host is a rating they lose on the next install — worse than not being
+  offered one.
+- **Plex** has exactly one number, `userRating`, written through `/:/rate`, and
+  **the app already spends it**: a Plex favourite *is* `userRating = 10`, and
+  unfavouriting writes 0 (`src/providers/server/plex/index.ts`). Adding a
+  ratings surface over the same field would mean three stars silently
+  unfavourites a track and favouriting it overwrites the rating. Two features
+  over one field is not two features.
+- **Local files** have no per-user anything.
+
+The app never invents the missing half. Where the adapter has no `ratings`, the
+strip in the options sheet, the stars on the player, the switch on Appearance
+and the "Rating" sort order are all simply absent
+(`src/features/ratings/useRatingsAvailable.ts`).
 
 **Artist info and pictures come from the server first.** Servers already fetch
 a lot of this themselves, so the app reads it before any Metadata backup:
@@ -537,6 +563,8 @@ it.
 | ListenBrainz | `GET /cf/recommendation/user/{user}/recording` and `GET /user/{user}/playlists/recommendations` | Raw collaborative-filtering output. The made-for-you mixes (`playlists/createdfor`) are the finished form of it — ListenBrainz built the mix, the app renders it — so the raw endpoints are not built. |
 | Deezer | Album previews by album id | `getAlbumEmbeddedPreviews` was the same story and went the same way. `searchAlbumPreviews` is the path samples actually take. |
 | MusicBrainz | Submitting anything (tags, ratings, edits) | The app is a read-only consumer of MusicBrainz. |
+| Jellyfin / Emby | A five-star rating | There is no endpoint for one. `Likes` is a boolean and is already the favourite. See **What each server can back**. |
+| Plex | `/:/rate` as a rating | It is already the favourite — a Plex favourite is `userRating = 10`. Rating over the top of it would silently unfavourite. |
 | Lidarr | Everything outside the add-artist → monitor-album → search flow: quality profiles, indexers, history, calendar, import lists | The app is a request button, not a Lidarr client. Configure Lidarr in Lidarr. |
 | slskd | User browsing, chat, rooms, shares, uploads | Same reason. The app searches, enqueues, watches, and cancels. |
 

@@ -26,6 +26,11 @@ jest.mock('reanimated-color-picker', () => {
 // The playing-bar actions pull in the player; the selector's list is not what
 // this screen's test is about.
 jest.mock('@/features/player/playingBar/actions/Actions', () => ({ PLAYING_BAR_ACTIONS: [] }));
+// Whether the rating switch is offered depends on the connected server, which
+// means `useApi`, which means every adapter and the native modules under them.
+// The switch's own behaviour is the appearance screen's business; which
+// servers have ratings is pinned in `adapterCapabilities.test.ts`.
+jest.mock('@/features/ratings/useRatingsAvailable', () => ({ useRatingsAvailable: () => true }));
 
 function makeStore() {
   return configureStore({
@@ -52,6 +57,9 @@ const SWITCH_ORDER = [
   'settings.player.showPlaybackSpeed',
   'settings.player.showJumpButtons',
   'settings.player.showVolumeSlider',
+  // Last in the player group, and only present because the mocked adapter
+  // above says this server has ratings.
+  'settings.player.showRating',
   'settings.appearance.showSourceHeaders',
   'settings.appearance.coverAccent',
   'settings.appearance.translucentDock',

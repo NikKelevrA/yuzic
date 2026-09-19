@@ -1,4 +1,5 @@
 import { setServerAlbumStats, setServerSongStats } from '@/state/redux/slices/statsSlice';
+import { clearServerRatings } from '@/state/redux/slices/ratingsSlice';
 import { setLastSyncedAt } from '@/features/settings/sync/state';
 import type { CatalogSyncResult } from './catalogSync';
 
@@ -42,6 +43,13 @@ export async function commitSyncResult({
     dispatch(setServerSongStats({ serverId, stats: result.songStats }));
   }
   if (!result.hasData) return null;
+
+  // The catalog just came back carrying the server's own ratings, so the
+  // overlay of the ones this device wrote has nothing left to add — see
+  // `ratingsSlice`. Only on a run that actually returned data: a sync that
+  // found nothing has not replaced anything, and dropping the overlay after
+  // one would show the user's own ratings disappearing.
+  dispatch(clearServerRatings(serverId));
 
   await flush();
   const syncedAt = now();

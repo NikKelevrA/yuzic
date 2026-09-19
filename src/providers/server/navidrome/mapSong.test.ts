@@ -129,4 +129,13 @@ describe('mapSong', () => {
   it('carries no stream URL, only the identity a stream can be built from', () => {
     expect(mapSong(fullDto, { provenance })).not.toHaveProperty('streamUrl');
   });
+
+  it('carries the rating the user gave it, and tells a missing one from none', () => {
+    expect(mapSong({ ...fullDto, userRating: 4 }, { provenance }).userRating).toBe(4);
+    // Subsonic omits the field entirely for a track nobody has rated, and
+    // sends 0 on some servers. Both are real and they are not the same fact
+    // as "this server has no ratings at all", which is what `undefined` says.
+    expect(mapSong({ ...fullDto, userRating: 0 }, { provenance }).userRating).toBe(0);
+    expect(mapSong(fullDto, { provenance }).userRating).toBeUndefined();
+  });
 });

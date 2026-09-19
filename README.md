@@ -18,7 +18,7 @@
 - **Your music, your way** — connect Navidrome, Jellyfin, Emby, Plex, another Subsonic-compatible server, or import files privately from this device.
 - **Native playback** — streaming up to lossless quality, crossfade, replay gain, a ten-band equalizer, sleep timer, playback speed, and autoplay.
 - **Works offline** — download songs, albums, and playlists; changes made offline sync when you reconnect.
-- **A complete library** — browse artists, albums, tracks, playlists, and genres; search on-device or through your server.
+- **A complete library** — browse artists, albums, tracks, playlists, and genres; search on-device or through your server, and rate what you play where your server keeps ratings.
 - **Play it elsewhere** — use AirPlay on iOS, DLNA/UPnP on your network, or your server's jukebox where available.
 - **Private by default** — optional integrations stay off until you enable them.
 

@@ -353,6 +353,16 @@ because both halves of each pair look reasonable in isolation.
   Anything drawn above the items — a header, the sort row — cancels that
   padding with a negative margin and keeps `spacing.page`, so all of it lines
   up on one edge.
+- **A sheet's rating strip is not an action**: `EntityOptionsSheet` has an
+  `aboveActions` slot, between the header and the first row, and the five-star
+  strip is what it is for. An action row does something when pressed; a row
+  whose only live parts are five small targets on its right does nothing when
+  a finger lands anywhere else on it. The actions stay a list of things that
+  happen. Everything about ratings is presence-gated on the adapter's
+  `ratings` surface rather than on a provider name — strip, player stars,
+  Appearance switch and the "Rating" sort order all disappear together on a
+  server without them; `docs/integrations.md` says which servers those are and
+  why Plex is one of them.
 - **Options live behind a `⋯`**: every detail-style screen — album, artist
   (browsed as well as owned), playlist, genre, radio, podcasts, shares, wants —
   puts its actions in an options sheet opened from a `⋯` on the right of

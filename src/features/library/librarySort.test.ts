@@ -60,3 +60,67 @@ describe('sorting playlists by play history', () => {
     expect(ids(sorted)).toEqual(['a', 'b'])
   })
 })
+
+const track = (nativeId: string, userRating?: number): LibraryItem => ({
+  kind: 'track',
+  data: {
+    localId: makeLocalId('song', provenance, nativeId),
+    nativeId,
+    provenance,
+    externalIds: {},
+    libraryState: 'in-library',
+    title: nativeId,
+    artist: { name: '' },
+    album: { title: '', cover: { kind: 'none' } },
+    cover: { kind: 'none' },
+    durationSeconds: 0,
+    contentKind: 'song',
+    genres: [],
+    userRating,
+  } as unknown as LibraryItem['data'],
+}) as LibraryItem
+
+const trackIds = (items: LibraryItem[]) =>
+  items.map(item => (item.kind === 'track' ? item.data.nativeId : ''))
+
+describe('sorting by rating', () => {
+  it('puts the best first and the unrated last', () => {
+    const sorted = sortItems(
+      [track('unrated'), track('two', 2), track('five', 5)],
+      'rating',
+      EMPTY_SORT_STATS,
+    )
+    expect(trackIds(sorted)).toEqual(['five', 'two', 'unrated'])
+  })
+
+  it('prefers what this device just wrote over what the catalog still says', () => {
+    const sorted = sortItems(
+      [track('demoted', 5), track('promoted', 1)],
+      'rating',
+      EMPTY_SORT_STATS,
+      { demoted: 1, promoted: 5 },
+    )
+    expect(trackIds(sorted)).toEqual(['promoted', 'demoted'])
+  })
+
+  it('sorts a cleared rating down, rather than back to what the catalog said', () => {
+    const sorted = sortItems([track('cleared', 5), track('kept', 3)], 'rating', EMPTY_SORT_STATS, {
+      cleared: 0,
+    })
+    expect(trackIds(sorted)).toEqual(['kept', 'cleared'])
+  })
+
+  it('breaks the ties by name, because at five values the ties are the list', () => {
+    const sorted = sortItems(
+      [track('c', 4), track('a', 4), track('b', 4)],
+      'rating',
+      EMPTY_SORT_STATS,
+    )
+    expect(trackIds(sorted)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('leaves a kind that cannot be rated where a stable order puts it', () => {
+    const sorted = sortItems([playlist('zz'), track('rated', 3), playlist('aa')], 'rating', EMPTY_SORT_STATS)
+    expect(sorted[0].kind).toBe('track')
+  })
+})

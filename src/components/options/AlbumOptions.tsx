@@ -18,6 +18,7 @@ import {
   useOptionSheetContentStyle,
 } from './OptionSheetPrimitives';
 import { EntityOptionsSheet } from '@/features/entity-actions/EntityOptionsSheet';
+import RatingStrip from '@/features/ratings/RatingStrip';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import { useAlbumLibraryActions, useAlbumExternalActions } from '@/features/entity-actions/hooks/useAlbumActions';
 
@@ -80,6 +81,7 @@ const LibraryAlbumOptionsSheet = forwardRef<BottomSheetModal, LibraryAlbumOption
         onChange={index => setIsSheetOpen(index >= 0)}
         header={album ? { cover: album.cover, title: album.title, subtitle: album.artist?.name ?? '', titleLines: 2 } : null}
         actions={actions}
+        aboveActions={<RatingStrip entity={album} />}
         infoSection={album && (
           <>
             <OptionSheetDivider />

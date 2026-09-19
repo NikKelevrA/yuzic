@@ -343,7 +343,9 @@
         "onSubtext": "曲目间淡入淡出 {{seconds}} 秒，切歌直接切换。",
         "seguesLabel": "连贯曲目也淡入淡出",
         "seguesSubtext": "专辑无缝衔接仍直切；开启则一并淡化。"
-      }
+      },
+      "showRating": "显示评分",
+      "showRatingSubtext": "在播放器标题下方显示五星评分"
     },
     "listenBrainz": {
       "title": "ListenBrainz",
@@ -858,7 +860,8 @@
       "mostRecent": "最新添加",
       "mostPlayed": "播放最多",
       "releaseYear": "发行年份",
-      "recentlyAdded": "最近添加"
+      "recentlyAdded": "最近添加",
+      "rating": "评分"
     },
     "sortSheet": {
       "title": "排序方式"
@@ -1568,6 +1571,10 @@
     },
     "wants": {
       "remove": "从想要列表中移除“{{title}}”"
+    },
+    "rating": {
+      "label": "评分",
+      "star_other": "{{count}} 星"
     }
   },
   "tabs": {
@@ -1590,5 +1597,10 @@
   },
   "externalOptions": {
     "openInSource": "在 {{source}} 中打开"
+  },
+  "ratings": {
+    "label": "评分",
+    "offline": "服务器无法连接，暂时无法修改评分",
+    "failed": "评分未能保存"
   }
 }

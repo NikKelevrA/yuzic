@@ -344,7 +344,9 @@
         "onSubtext": "Fondu entre titres sur {{seconds}} s. Les sauts coupent net.",
         "seguesLabel": "Fondre aussi les enchaînements",
         "seguesSubtext": "Les enchaînements d'album restent nets. Activé, ils sont fondus."
-      }
+      },
+      "showRating": "Afficher la note",
+      "showRatingSubtext": "Cinq étoiles sous le titre dans le lecteur"
     },
     "listenBrainz": {
       "title": "ListenBrainz",
@@ -859,7 +861,8 @@
       "mostRecent": "Plus récents",
       "mostPlayed": "Plus écoutés",
       "releaseYear": "Année de sortie",
-      "recentlyAdded": "Récemment ajouté"
+      "recentlyAdded": "Récemment ajouté",
+      "rating": "Note"
     },
     "sortSheet": {
       "title": "Trier par"
@@ -1573,6 +1576,11 @@
     },
     "wants": {
       "remove": "Retirer {{title}} des souhaits"
+    },
+    "rating": {
+      "label": "Note",
+      "star_one": "{{count}} étoile",
+      "star_other": "{{count}} étoiles"
     }
   },
   "tabs": {
@@ -1595,5 +1603,10 @@
   },
   "externalOptions": {
     "openInSource": "Ouvrir dans {{source}}"
+  },
+  "ratings": {
+    "label": "Note",
+    "offline": "Impossible de modifier une note tant que le serveur est injoignable",
+    "failed": "Cette note n'a pas été enregistrée"
   }
 }

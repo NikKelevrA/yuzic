@@ -12,7 +12,8 @@ import { GridColumns } from './components/GridColumns';
 import { RadiusPresetSelector } from './components/RadiusPresetSelector';
 import { ListDensitySelector } from './components/ListDensitySelector';
 import { selectShowQualityBadge, selectShowSourceHeaders, selectHapticsEnabled, selectTranslucentDock, selectRespectReducedMotion, selectCoverAccentEnabled, setShowQualityBadge, setShowSourceHeaders, setHapticsEnabled, setTranslucentDock, setRespectReducedMotion, setCoverAccentEnabled } from '@/features/settings/appearance/state';
-import { selectShowPlaybackSpeed, selectShowJumpButtons, selectShowVolumeSlider, setShowPlaybackSpeed, setShowJumpButtons, setShowVolumeSlider } from '@/features/settings/playback/state';
+import { selectShowPlaybackSpeed, selectShowJumpButtons, selectShowVolumeSlider, selectShowRating, setShowPlaybackSpeed, setShowJumpButtons, setShowVolumeSlider, setShowRating } from '@/features/settings/playback/state';
+import { useRatingsAvailable } from '@/features/ratings/useRatingsAvailable';
 
 const AppearanceSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -26,6 +27,8 @@ const AppearanceSettings: React.FC = () => {
   const showPlaybackSpeed = useSelector(selectShowPlaybackSpeed);
   const showJumpButtons = useSelector(selectShowJumpButtons);
   const showVolumeSlider = useSelector(selectShowVolumeSlider);
+  const showRating = useSelector(selectShowRating);
+  const ratingsAvailable = useRatingsAvailable();
 
   const toggleQualityBadge = useCallback((v: boolean) => { dispatch(setShowQualityBadge(v)); }, [dispatch]);
   const toggleSourceHeaders = useCallback((v: boolean) => { dispatch(setShowSourceHeaders(v)); }, [dispatch]);
@@ -37,6 +40,7 @@ const AppearanceSettings: React.FC = () => {
   const togglePlaybackSpeed = useCallback((v: boolean) => { dispatch(setShowPlaybackSpeed(v)); }, [dispatch]);
   const toggleJumpButtons = useCallback((v: boolean) => { dispatch(setShowJumpButtons(v)); }, [dispatch]);
   const toggleVolumeSlider = useCallback((v: boolean) => { dispatch(setShowVolumeSlider(v)); }, [dispatch]);
+  const toggleRating = useCallback((v: boolean) => { dispatch(setShowRating(v)); }, [dispatch]);
 
   // Which controls the player screen draws. The strings still live under
   // `settings.player.*` because that is where they were written and a key is
@@ -60,9 +64,17 @@ const AppearanceSettings: React.FC = () => {
       value: showVolumeSlider,
       onValueChange: toggleVolumeSlider,
     },
+    // Absent rather than disabled where the server has no ratings: a switch
+    // that cannot change anything is a question the screen should not ask.
+    ...(ratingsAvailable ? [{
+      label: t('settings.player.showRating'),
+      subtext: t('settings.player.showRatingSubtext'),
+      value: showRating,
+      onValueChange: toggleRating,
+    }] : []),
   ], [
-    t, showPlaybackSpeed, showJumpButtons, showVolumeSlider,
-    togglePlaybackSpeed, toggleJumpButtons, toggleVolumeSlider,
+    t, showPlaybackSpeed, showJumpButtons, showVolumeSlider, showRating, ratingsAvailable,
+    togglePlaybackSpeed, toggleJumpButtons, toggleVolumeSlider, toggleRating,
   ]);
 
   const feelItems = useMemo(() => [
