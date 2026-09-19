@@ -46,10 +46,17 @@ describe('buildResumeSections', () => {
 describe('buildLibrarySections', () => {
   it('carries only what changes on its own', () => {
     // Static, exhaustive views of the collection are the Library tab's job;
-    // this tier is for the two slices that move without being asked.
+    // this tier is for the slices that move without being asked.
+    //
+    // `setAside` earns its place on the same rule rather than by being new:
+    // it is the collection seen through the listener's own history, and it
+    // moves as that history ages whether or not anybody opens the app. It is
+    // also the one shelf here with no equivalent sort order in the Library
+    // tab, so there is nowhere else it could live.
     expect(buildLibrarySections(true).map(s => s.type)).toEqual([
       'recentlyAdded',
       'mostPlayed',
+      'setAside',
     ])
   })
 

@@ -592,6 +592,30 @@
         "serverDescription": "サーバーの検索を使用する"
       },
       "otherSources": "その他のソース"
+    },
+    "listening": {
+      "title": "再生履歴",
+      "empty": "まだデータが足りません。何曲か再生すると表示されます。",
+      "allTime": "全期間",
+      "thisMonth": "過去30日間",
+      "plays": "再生回数",
+      "hours": "時間",
+      "tracks": "曲数",
+      "artists": "アーティスト数",
+      "newToYou": "初めて聴いた曲",
+      "streak": "連続日数",
+      "finished": "最後まで再生",
+      "whenYouListen": "聴いている時間帯",
+      "howItEnds": "曲の終わり方",
+      "playedThrough": "最後まで再生",
+      "skipped": "スキップ",
+      "clear": "再生履歴を削除",
+      "privacy": "この端末で、この端末のデータから集計しています。どこにも送信されません。",
+      "worthRevisiting": "また聴きたい",
+      "forgotten": "しばらく未再生",
+      "longestGap": "未再生の日数",
+      "topArtists": "よく聴くアーティスト",
+      "topTracks": "よく聴く曲"
     }
   },
   "common": {
@@ -945,7 +969,8 @@
         "weeklyJams": "ウィークリージャム",
         "weeklyExploration": "ウィークリーエクスプロレーション"
       },
-      "continuePlaying": "続きから"
+      "continuePlaying": "続きから",
+      "setAside": "しばらく聴いていない"
     },
     "empty": {
       "recentlyAdded": "ライブラリにアルバムがありません"

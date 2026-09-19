@@ -11,6 +11,7 @@ import settingsScrobblingReducer, { setScrobbleRoute } from '@/features/settings
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice'
 import listenbrainzReducer, { setUsername } from '@/state/redux/slices/listenbrainzSlice'
 import statsReducer from '@/state/redux/slices/statsSlice'
+import listeningReducer from '@/state/redux/slices/listeningSlice'
 import offlineMutationsReducer from '@/state/redux/slices/offlineMutationsSlice'
 import * as listenbrainz from '@/providers/integration/listenbrainz'
 import { listenBrainzCredentialScope } from '@/state/redux/selectors/listenbrainzSelectors'
@@ -62,6 +63,7 @@ function makeStore(server: Server) {
       servers: serversReducer,
       listenbrainz: listenbrainzReducer,
       stats: statsReducer,
+      listening: listeningReducer,
       offlineMutations: offlineMutationsReducer,
     }),
     middleware: (getDefault) => getDefault({ serializableCheck: false }),
@@ -228,5 +230,134 @@ describe('scrobble route dispatch', () => {
 
     expect(listenbrainz.submitScrobble).toHaveBeenCalled()
     expect(mockSongsApi.scrobble).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * The history is not the scrobble, and the difference is the skips.
+ *
+ * Scrobbling reports outward under thresholds set by Last.fm and by servers.
+ * The listening log records what happened, locally, under none — so the
+ * listens scrobbling declines to report are exactly the ones it must keep.
+ */
+describe('listening history', () => {
+
+  it('records a skip that is far too short to scrobble', async () => {
+    const store = makeStore(serverOf('navidrome'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 20, startTime: 1_700_000_000 })
+    })
+
+    const state = store.getState().listening
+    expect(state.events).toHaveLength(1)
+    expect(state.events[0]).toMatchObject({ ending: 'skipped', seconds: 20 })
+    // Keyed by the song's own provenance, not the active server — see
+    // `relatedKey` for why those are allowed to differ.
+    expect(state.totals[`srv-1:${song.nativeId}`]).toMatchObject({
+      starts: 1, plays: 0, rejections: 1,
+    })
+    // And nothing was reported outward, which is the existing behaviour.
+    expect(mockSongsApi.scrobble).not.toHaveBeenCalled()
+  })
+
+  it('records a full listen as finished, alongside the scrobble', async () => {
+    const store = makeStore(serverOf('navidrome'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 240, startTime: 1_700_000_000 })
+    })
+
+    expect(store.getState().listening.events[0]).toMatchObject({ ending: 'finished' })
+    expect(mockSongsApi.scrobble).toHaveBeenCalled()
+  })
+
+  /**
+   * The outgoing-departure report can arrive twice for one listen, and the
+   * scrobble guard beside this one does not cover it — that ref is only set
+   * once a listen passes the threshold, so it never guards a skip at all.
+   * Two events for one departure is a doubled play count.
+   */
+  it('writes one event when the same departure is reported twice', async () => {
+    const store = makeStore(serverOf('navidrome'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_000 })
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_000 })
+    })
+
+    expect(store.getState().listening.events).toHaveLength(1)
+  })
+
+  /**
+   * The distinction the whole `ListenEnding` type exists for, and it was
+   * declared for a while with nothing able to produce it.
+   *
+   * A lost stream looks exactly like somebody pressing next — same position,
+   * same departure — so only the error path can tell them apart. Without it,
+   * every dropped connection is filed as a skip, and a skip past eight seconds
+   * is a rejection: the app concludes the listener dislikes whatever was
+   * playing when their network went, and mislearns hardest about the people
+   * with the worst connections.
+   */
+  it('records a failed track as interrupted, not as a skip', async () => {
+    const store = makeStore(serverOf('navidrome'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      result.current.markInterrupted(song.nativeId)
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_000 })
+    })
+
+    const state = store.getState().listening
+    expect(state.events[0].ending).toBe('interrupted')
+    // And so it is not held against the track.
+    expect(state.totals[`srv-1:${song.nativeId}`].rejections).toBe(0)
+  })
+
+  it('only excuses the track that actually failed', async () => {
+    const store = makeStore(serverOf('navidrome'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      result.current.markInterrupted('some-other-track')
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_000 })
+    })
+
+    expect(store.getState().listening.events[0].ending).toBe('skipped')
+  })
+
+  /**
+   * One failure excuses one listen. Left set, it would quietly forgive every
+   * skip after a single network blip, which is the same fault in the other
+   * direction — the app would stop learning anything from skips at all.
+   */
+  it('does not excuse the next track as well', async () => {
+    const store = makeStore(serverOf('navidrome'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      result.current.markInterrupted(song.nativeId)
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_000 })
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_900 })
+    })
+
+    const endings = store.getState().listening.events.map(e => e.ending)
+    expect(endings).toEqual(['interrupted', 'skipped'])
+  })
+
+  it('treats the same song started again as a second listen', async () => {
+    const store = makeStore(serverOf('navidrome'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_000 })
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 30, startTime: 1_700_000_900 })
+    })
+
+    expect(store.getState().listening.events).toHaveLength(2)
   })
 })

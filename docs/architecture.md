@@ -639,6 +639,95 @@ defaults.
   gets sent), guarded by `onboardingDiscoveryPrompted` so it shows once and only
   inside the onboarding flow — existing users never see it.
 
+## 11. Listening — one record, one model, one question
+
+Playback used to write a counter: `songPlays[key] += 1`, once a listen passed
+the scrobble threshold. Everything else about the listen was discarded at the
+moment it was known, and the worst of it was structural — a track abandoned at
+twenty seconds never reached the threshold, so **the strongest negative signal
+the app receives left no trace at all**.
+
+There is a log now, in `state/redux/slices/listeningSlice`, written *before*
+any threshold from the same departure that triggers a scrobble. It is not
+scrobbling and must not be confused with it: scrobbling reports a listen
+outward under somebody else's rules, this records what happened locally under
+none. They share a trigger and nothing else.
+
+**Shape.** A ring of the last `MAX_EVENTS` events, plus per-entity rollups for
+tracks, albums, artists and playlists that are *never* evicted — so a lifetime
+play count cannot fall as the ring wraps, and album ranking does not depend on
+how recently the events happened to be written.
+
+**One model in front of it.** `features/listening/listenerModel` is the single
+surface every feature asks. The policies underneath stay pure and separately
+tested; the model composes them. Callers state a **purpose** rather than
+choosing a formula:
+
+| purpose | used by | policy |
+| --- | --- | --- |
+| `continue` | autoplay fill | habits forward, skips back, volume ignored |
+| `shuffle` | Smart Shuffle | every track kept, odds tilted from what is abandoned |
+| `favourite` | ranked shelves | recency-weighted affection |
+| `rediscover` | `SetAsideAlbums` | its inverse — loved and dropped |
+
+Adding a shelf means adding a purpose, not inventing a ranking, and the fact
+that `continue` avoids what `favourite` seeks is legible in one file.
+
+**Three rules that are not obvious.**
+
+- **Volume is never a reason to play something again.** Neither `continue` nor
+  `shuffle` has a familiarity term. Ranking by what is already played most is
+  the narrowing that turns a large library into a small one — Spotify's own
+  research has organic listening more diverse than programmed listening — and
+  an app whose entire corpus is the user's own collection has no business
+  importing it. A *habit* ("you play B after A") is a fact about sequence and
+  is used; volume is a fact about totals and is not.
+- **Influence ramps.** Below `ENOUGH_TO_KNOW` events the model says nothing;
+  from there to `CONFIDENT_AT` its effect scales. A threshold alone is a cliff
+  — nineteen events and nothing is personalised, twenty and every queue
+  reorders at once.
+- **An interruption is not a rejection.** A lost stream and a deliberate skip
+  look identical from a playhead position, so the error path says which it was.
+  Without that, every dropped connection reads as dislike, and the app
+  mislearns hardest about the listeners with the worst connections.
+
+**Keys.** `serverId:nativeId`, built only through `listenerKey`'s `entityKey` /
+`relatedKey`. A mismatch between the code that writes the log and the code that
+reads it is completely silent — the model looks up keys that are not there,
+finds nothing about anybody, and leaves every list in the order it arrived.
+That has already happened once, and lint, typecheck, the architecture gates and
+the whole suite passed while it was true. Never hand-build one of these keys.
+
+**Reconciling with the server.** `statsSelectors` merges the log with what the
+server reports, by `Math.max` rather than by addition. The counter this
+replaced was an optimistic overlay that was *deleted* once the server's own
+count arrived including it; a log is the listener's history and is never
+deleted, so summing would double-count every listen both sides know about,
+permanently. Artists and playlists have no server half at all — no Subsonic or
+Jellyfin server reports one — so for them the log is simply the truth, which is
+why `useLegacyStatsMigration` exists and is not optional.
+
+### The numbers in here are reasoned, not measured
+
+Every constant below was argued for and none has been checked against real
+listening. They are collected here so that stays visible:
+
+| constant | value | what it decides |
+| --- | --- | --- |
+| `isRejection` floor | 8s | how much scrubbing is not a dislike |
+| `isRejection` share | 50% | how early a skip has to be to count |
+| `AFFINITY_HALF_LIFE_DAYS` | 180 | how fast affection decays |
+| `MAX_EVENTS` | 4000 | how far back sequence questions can see |
+| `ENOUGH_TO_KNOW` / `CONFIDENT_AT` | 20 / 200 | when the model starts and fully applies |
+| `MAX_SEQUENCE_BOOST` | 3 | how far a habit may lift a candidate |
+| `MAX_REJECTION_PENALTY` | 4 | how far a skipped track may fall |
+| `SESSION_GAP_MS` | 30min | where one sitting ends and the next begins |
+
+The app now measures all of this — **Settings → Listening** shows skip rate,
+average completion and the hour histogram. Tune these *against a week of real
+data*, not against argument. The ordering matters: a constant defended before
+it is measured is one that gets defended afterwards because it already shipped.
+
 ## Where things live
 
 ```

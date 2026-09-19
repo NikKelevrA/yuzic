@@ -30,6 +30,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PlayerExpansionProvider } from '@/features/player/PlayerExpansion';
 import PlayerHost from '@/features/player/PlayerHost';
 import { useTheme } from '@/features/theme/useTheme';
+import { useLegacyStatsMigration } from '@/features/listening/useLegacyStatsMigration';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { selectLanguage } from '@/features/settings/appearance/state';
 import i18n from '@/i18n';
@@ -190,6 +191,9 @@ function AppShell() {
   const { resolved, isDarkMode } = useTheme();
   const language = useSelector(selectLanguage);
   useImageMemoryCleanup();
+  // One-shot: carries the play counters that predate the listening log into
+  // it. See the hook for why artists and playlists cannot survive without it.
+  useLegacyStatsMigration();
   // Mounted here, not on the settings screen that owns the import UI: the
   // certificate has to be applied at startup and re-applied on every change of
   // active server, both of which happen with Settings closed. Mounted only
