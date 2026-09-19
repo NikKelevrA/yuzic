@@ -1498,7 +1498,10 @@
       "download": "Télécharger",
       "cancelDownload": "Annuler le téléchargement",
       "downloaded": "Téléchargé",
-      "downloading": "Téléchargement en cours"
+      "downloading": "Téléchargement en cours",
+      "getArtist": "Obtenir cet artiste",
+      "want": "Souhaiter",
+      "wanted": "Souhaité"
     },
     "rows": {
       "options": "Options pour {{title}}",

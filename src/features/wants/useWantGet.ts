@@ -26,17 +26,33 @@ import {
 } from '@/features/downloaders/registry';
 import { promptConnectDownloader } from '@/features/downloaders/connectDownloaderPrompt';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
-import { setWantJobRef, type Want } from '@/state/redux/slices/wantsSlice';
+import { setWantJobRef } from '@/state/redux/slices/wantsSlice';
+import type { LocalId } from '@/domain/identity/LocalId';
+
+/**
+ * Who to follow.
+ *
+ * Named rather than taking a whole `Want`, because the artist screen can ask
+ * for this too and has no want to hand — and the two callers would otherwise
+ * differ only in which fields of a want they happened to read. `localId` is
+ * the same id a want for this artist carries, so recording the job finds it
+ * where there is one and quietly does nothing where there is not.
+ */
+interface ArtistGetTarget {
+  localId: LocalId;
+  name: string;
+  mbid?: string;
+}
 
 interface WantGet {
   /** Whether anything connected can follow an artist. */
   canGetArtist: boolean;
   /**
-   * Sends an artist want to the downloader that can follow artists, and
-   * records which one was asked so the row can read its state back. Opens the
+   * Sends an artist to the downloader that can follow artists, and records
+   * which one was asked so a want's row can read its state back. Opens the
    * connect prompt instead when nothing can take it.
    */
-  getArtist: (want: Want) => Promise<void>;
+  getArtist: (target: ArtistGetTarget) => Promise<void>;
 }
 
 export function useWantGet(): WantGet {
@@ -46,35 +62,35 @@ export function useWantGet(): WantGet {
   const canGetArtist = useAnyArtistDownloaderConnected();
   const artistDownloaders = useDownloadersForUnit('artist');
 
-  const getArtist = useCallback(async (want: Want) => {
-    const target = artistDownloaders[0];
+  const getArtist = useCallback(async (target: ArtistGetTarget) => {
+    const downloader = artistDownloaders[0];
     // Nothing that follows artists is connected. The prompt says what a
     // downloader is and offers the ones that could take this, rather than a
     // row that swallows the tap.
-    if (!target?.def.monitorArtist) {
+    if (!downloader?.def.monitorArtist) {
       promptConnectDownloader('artist');
       return;
     }
 
     try {
-      const result = await target.def.monitorArtist(target.config, {
-        name: want.artist || want.title,
-        mbid: want.externalIds?.mbid,
+      const result = await downloader.def.monitorArtist(downloader.config, {
+        name: target.name,
+        mbid: target.mbid,
       });
       if (!result.success) {
-        notify.error(t(downloadErrorKey(target.def.id, result.code), {
+        notify.error(t(downloadErrorKey(downloader.def.id, result.code), {
           defaultValue: t('externalAlbum.download.failed'),
         }));
         return;
       }
-      notify.success(t(target.def.artistMonitoredKey ?? 'externalAlbum.download.failed', {
-        artist: want.artist || want.title,
+      notify.success(t(downloader.def.artistMonitoredKey ?? 'externalAlbum.download.failed', {
+        artist: target.name,
       }));
       if (activeServerId) {
         dispatch(setWantJobRef({
           serverId: activeServerId,
-          localId: want.localId,
-          jobRef: { downloader: target.def.id, requestedAt: Date.now() },
+          localId: target.localId,
+          jobRef: { downloader: downloader.def.id, requestedAt: Date.now() },
         }));
       }
     } catch {

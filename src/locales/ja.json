@@ -1493,7 +1493,10 @@
       "download": "ダウンロード",
       "cancelDownload": "ダウンロードをキャンセル",
       "downloaded": "ダウンロード済み",
-      "downloading": "ダウンロード中"
+      "downloading": "ダウンロード中",
+      "getArtist": "このアーティストを取得",
+      "want": "ウォント",
+      "wanted": "ウォント済み"
     },
     "rows": {
       "options": "{{title}}のオプション",

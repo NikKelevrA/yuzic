@@ -1,19 +1,16 @@
-import { iconSize, onDark, onDarkAlpha, spacing, statusColor } from '@/constants/design';
+import { iconSize, spacing, statusColor } from '@/constants/design';
 import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
 } from 'react-native';
-import { Ellipsis, Shuffle, Play, CloudDownload, Link } from 'lucide-react-native';
+import { Ellipsis, Link, Play, Shuffle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
-import type { Playlist } from '@/domain/entities/Playlist';
 import type { CoverSource } from '@/domain/entities/Cover';
-import { makeLocalId } from '@/domain/identity/LocalId';
 import AlbumOptions from '@/components/options/AlbumOptions';
-import GetReviewSheet from '@/components/options/GetReviewSheet';
 import StatusBanner from '@/components/StatusBanner';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import DownloadStateIcon from '@/components/DownloadStateIcon';
@@ -23,11 +20,9 @@ import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useDownload } from '@/features/offline/DownloadContext';
 import { useTheme } from '@/features/theme/useTheme';
 import { useSheetRef } from '@/components/useSheetRef';
+import ExternalActionRow from './ExternalActionRow';
 import { formatDuration } from '@/components/formatDuration';
-import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry';
-import { promptConnectDownloader } from '@/features/downloaders/connectDownloaderPrompt';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
-import { playableSongs } from '@/features/album/trackPlayability';
 import type { AlbumScreenModel } from '@/features/album/useAlbumScreenModel';
 import {
   DetailActionRow,
@@ -299,82 +294,6 @@ function LocalActionRow({ model }: { model: AlbumScreenModel }) {
   );
 }
 
-function ExternalActionRow({ model }: { model: AlbumScreenModel }) {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
-  const canDownload = useAnyAlbumDownloaderConnected();
-  const { playSongInCollection } = usePlayingActions();
-  const { album, songs, playability, externalStatus: albumStatus } = model;
-  const downloadSheetRef = useSheetRef();
-
-  const previewSongs = useMemo(() => playableSongs(songs, playability), [songs, playability]);
-
-  // There is no real playlist behind "play the previews we could resolve" —
-  // it's a transient queue seed, not a server object — so this builds a
-  // minimal-but-valid domain `Playlist` wrapper, namespaced under the
-  // external album's own provenance since that's the only origin these
-  // preview tracks have. Mirrors the equivalent build in
-  // `components/options/ArtistOptions`.
-  const previewCollection = useMemo<{ playlist: Playlist; songs: Song[] } | null>(() => {
-    if (!album) return null;
-    const provenance = album.provenance;
-    const playlist: Playlist = {
-      localId: makeLocalId('playlist', provenance, `preview-${album.nativeId}`),
-      nativeId: album.nativeId,
-      provenance,
-      externalIds: {},
-      libraryState: 'external',
-      title: album.title,
-      cover: album.cover,
-      isOwned: false,
-      songIds: previewSongs.map(s => s.localId),
-    };
-    return { playlist, songs: previewSongs };
-  }, [album, previewSongs]);
-
-  const handlePlay = useCallback(() => {
-    if (!previewSongs.length || !previewCollection) return;
-    playSongInCollection(previewSongs[0], previewCollection);
-  }, [previewSongs, previewCollection, playSongInCollection]);
-
-  const handleDownload = useCallback(() => {
-    if (albumStatus.kind !== 'none') return;
-    // Nothing connected to send it to: say so and offer to connect one, rather
-    // than a greyed-out button that swallows the tap.
-    if (!canDownload) {
-      promptConnectDownloader('album');
-      return;
-    }
-    downloadSheetRef.current?.present();
-  }, [canDownload, albumStatus.kind, downloadSheetRef]);
-
-  if (!album) return null;
-
-  return (
-    <>
-      <DetailActionRow>
-        <DetailPlayAction
-          onPress={handleDownload}
-          disabled={albumStatus.kind !== 'none'}
-          accessibilityLabel={t('a11y.detail.downloadToServer')}
-        >
-          <CloudDownload
-            size={iconSize.control}
-            color={!canDownload || albumStatus.kind !== 'none' ? onDarkAlpha.disabled : onDark.text}
-          />
-        </DetailPlayAction>
-
-        {previewSongs.length > 0 && (
-          <DetailCircleAction onPress={handlePlay} accessibilityLabel={t('a11y.detail.playPreview')}>
-            <Play size={iconSize.row} color={colors.secondary} fill={colors.secondary} />
-          </DetailCircleAction>
-        )}
-      </DetailActionRow>
-
-      <GetReviewSheet album={album} sheetRef={downloadSheetRef} />
-    </>
-  );
-}
 
 export default AlbumHeader;
 

@@ -80,7 +80,19 @@ export function WantOptions({
       icon: status.kind === 'failed'
         ? <RotateCw size={sz} color={colors.secondary} />
         : <CloudDownload size={sz} color={colors.secondary} />,
-      onPress: run(() => { if (isArtist) void getArtist(want); else onGet(); }),
+      onPress: run(() => {
+        if (isArtist) {
+          void getArtist({
+            localId: want.localId,
+            // `arrival` and `jobStatus` both read the artist off `want.artist`;
+            // a want saved before that carried only a title still resolves.
+            name: want.artist || want.title,
+            mbid: want.externalIds?.mbid,
+          });
+        } else {
+          onGet();
+        }
+      }),
       testID: 'want-option-get',
     });
   } else if (offerGet) {

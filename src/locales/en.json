@@ -1488,7 +1488,10 @@
       "download": "Download",
       "cancelDownload": "Cancel download",
       "downloaded": "Downloaded",
-      "downloading": "Downloading"
+      "downloading": "Downloading",
+      "getArtist": "Get this artist",
+      "want": "Want",
+      "wanted": "Wanted"
     },
     "rows": {
       "options": "Options for {{title}}",

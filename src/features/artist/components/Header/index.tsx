@@ -26,6 +26,7 @@ import type { CoverSource } from '@/domain/entities/Cover';
 import { useResolvedCover } from '@/features/artwork/useResolvedCover';
 import { SOURCES } from '@/providers/registry/sources';
 import ArtistMetaRow from './ArtistMetaRow';
+import ExternalActionRow from './ExternalActionRow';
 import LocalActionRow from './LocalActionRow';
 import ArtistOptionsButton from './ArtistOptionsButton';
 
@@ -134,7 +135,11 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
         </View>
       </View>
 
-      {isLocal && artist ? <LocalActionRow artist={artist} /> : null}
+      {artist
+        ? isLocal
+          ? <LocalActionRow artist={artist} />
+          : <ExternalActionRow artist={artist} />
+        : null}
     </>
   );
 };
