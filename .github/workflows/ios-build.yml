@@ -1,7 +1,10 @@
 name: iOS Build
 
+# Called by release-on-version-bump and nothing else. There is deliberately
+# no `workflow_dispatch`: a build that ships to TestFlight without a version
+# behind it is a build nobody can point at afterwards, and the hand-run path
+# existed mainly to test off `dev` — which is what the store kept refusing.
 on:
-  workflow_dispatch:
   workflow_call:
 
 concurrency: ios-build
@@ -77,14 +80,14 @@ jobs:
           # Store screenshots follow a release, not every build. The upload
           # does the screenshots and the binary together, screenshots first,
           # so a refusal there loses the build after a full archive — which is
-          # how 2.2.0 died and how two dispatches died on 2026-09-19. A
-          # manually dispatched build has no reason to touch the public
-          # listing at all.
+          # how 2.2.0 died and how two dispatches died on 2026-09-19.
           #
-          # `workflow_call` from release-on-version-bump reports the caller's
-          # event (`push`), so this is true for a release and false only for a
-          # hand-run build.
-          YUZIC_UPLOAD_SCREENSHOTS: ${{ github.event_name != 'workflow_dispatch' }}
+          # Every run of this workflow is now a release, so this is a constant.
+          # It stays stated rather than deleted because the Fastfile tests the
+          # string exactly: unset reads as false and silently skips the upload.
+          # The guard still earns its keep for a `fastlane ci_ios` run from a
+          # laptop, which has no business touching the public listing.
+          YUZIC_UPLOAD_SCREENSHOTS: 'true'
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_API_KEY_BASE64: ${{ secrets.APPSTORE_API_KEY_BASE64 }}

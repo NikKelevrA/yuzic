@@ -1,7 +1,9 @@
 name: Android Build
 
+# Called by release-on-version-bump and nothing else — see the note in
+# `ios-build.yml`. Both lost their `workflow_dispatch` together, so the two
+# platforms cannot drift into shipping by different routes.
 on:
-  workflow_dispatch:
   workflow_call:
 
 concurrency: android-build
