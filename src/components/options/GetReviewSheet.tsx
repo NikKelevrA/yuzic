@@ -5,7 +5,6 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import { notify } from '@/components/toast';
 import { useSelector, useDispatch } from 'react-redux';
 
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
@@ -14,14 +13,13 @@ import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
 import { useTranslation } from 'react-i18next';
 import {
-  downloadErrorKey,
   useDownloaderStates,
   type DownloaderId,
   type DownloaderState,
   type QualityProfile,
 } from '@/features/downloaders/registry';
-import { downloadAlbumByTracks } from '@/features/downloaders/albumByTracks';
 import { useAlbumTrackLoader } from '@/features/downloaders/albumTracks';
+import { runGet } from '@/features/downloaders/runGet';
 import { setDefaultProvider, setDefaultQualityProfileId } from '@/state/redux/slices/downloadersSlice';
 import {
   selectDefaultProviderForActiveServer,
@@ -109,7 +107,6 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
   }
 
   const [saveAsDefault, setSaveAsDefault] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const sheetBg = useOptionSheetBackground();
   const sheetContent = useOptionSheetContentStyle();
@@ -150,59 +147,43 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
     };
   }, [showQualityProfile, selected, savedDefaultQualityProfileId]);
 
-  const handleGet = async ({ def, config }: DownloaderState) => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      const result = track
-        ? await def.downloadTrack!(config, { title: track.title, artist: track.artist })
-        : def.downloadAlbum
-          ? await def.downloadAlbum(
-              config,
-              album,
-              showQualityProfile ? { qualityProfileId: selectedQualityProfileId } : undefined
-            )
-          : await downloadAlbumByTracks(def.downloadTrack!, config, await loadAlbumTracks(album));
-      const successKey = track ? def.trackAddedKey! : def.albumAddedKey;
-      const fallback = t('externalAlbum.download.failed');
-      notify[result.success ? 'success' : 'error'](
-        result.success
-          ? t(successKey)
-          : t(downloadErrorKey(def.id, result.code), { defaultValue: fallback })
-      );
-      if (result.success) {
-        // Persist the chosen provider as the unit default only when the user
-        // explicitly asked for that — a request-only override never writes here.
-        if (saveAsDefault) {
-          dispatch(setDefaultProvider({ serverId: activeServerId ?? '', unit, provider: def.id }));
-          // The quality profile follows the same explicit toggle — a
-          // bumped-for-this-Get profile only becomes the new default when the
-          // user asked to keep it, same as the provider itself.
-          if (showQualityProfile && activeServerId) {
-            dispatch(
-              setDefaultQualityProfileId({
-                serverId: activeServerId,
-                qualityProfileId: selectedQualityProfileId,
-              })
-            );
-          }
-        }
-        // Wire the started job back to the want, if this entity is wanted —
-        // Get never requires a Want, so this is a no-op otherwise.
-        if (localId && isWanted && activeServerId) {
-          dispatch(setWantJobRef({
-            serverId: activeServerId,
-            localId,
-            jobRef: { downloader: def.id, requestedAt: Date.now() },
-          }));
-        }
-        sheetRef.current?.dismiss();
+  const handleGet = (downloader: DownloaderState) => {
+    // The review is over the moment it is confirmed. Everything after this
+    // point reports through the toasts, so the sheet has no reason to stay on
+    // screen for it — and every reason not to, since a track-only downloader
+    // sends an album one track at a time.
+    sheetRef.current?.dismiss();
+
+    // Persist the chosen provider as the unit default only when the user
+    // explicitly asked for that — a request-only override never writes here.
+    if (saveAsDefault) {
+      dispatch(setDefaultProvider({ serverId: activeServerId ?? '', unit, provider: downloader.def.id }));
+      // The quality profile follows the same explicit toggle — a
+      // bumped-for-this-Get profile only becomes the new default when the
+      // user asked to keep it, same as the provider itself.
+      if (showQualityProfile && activeServerId) {
+        dispatch(setDefaultQualityProfileId({ serverId: activeServerId, qualityProfileId: selectedQualityProfileId }));
       }
-    } catch {
-      notify.error(t('externalAlbum.download.startFailed'));
-    } finally {
-      setLoading(false);
     }
+
+    void runGet({
+      downloader,
+      album,
+      track,
+      qualityProfileId: showQualityProfile ? selectedQualityProfileId : undefined,
+      loadTracks: loadAlbumTracks,
+      t,
+    }).then(started => {
+      // Wire the started job back to the want, if this entity is wanted — Get
+      // never requires a Want, so this is a no-op otherwise.
+      if (started && localId && isWanted && activeServerId) {
+        dispatch(setWantJobRef({
+          serverId: activeServerId,
+          localId,
+          jobRef: { downloader: downloader.def.id, requestedAt: Date.now() },
+        }));
+      }
+    });
   };
 
   const headerTitle = track ? track.title : album.title;
@@ -215,7 +196,6 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
     <BottomSheetModal
       ref={sheetRef}
       enableDynamicSizing
-      enablePanDownToClose={!loading}
       backdropComponent={renderBackdrop}
       stackBehavior="push"
       handleIndicatorStyle={{ backgroundColor: colors.border }}
@@ -244,8 +224,6 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
               label={downloader.def.label}
               description={t(downloader.def.descriptionKey)}
               onPress={() => setSelectedId(downloader.def.id)}
-              disabled={loading}
-              dimRow={loading}
               labelColor={isSelected ? colors.secondary : undefined}
               trailing={<RadioMark selected={isSelected} />}
             />
@@ -272,8 +250,6 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
                     key={profile.id}
                     label={profile.name}
                     onPress={() => setSelectedQualityProfileId(profile.id)}
-                    disabled={loading}
-                    dimRow={loading}
                     labelColor={isProfileSelected ? colors.secondary : undefined}
                     trailing={<RadioMark selected={isProfileSelected} />}
                   />
@@ -298,7 +274,6 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
           <Touchable
             style={styles.saveDefaultRow}
             onPress={() => setSaveAsDefault((v) => !v)}
-            disabled={loading}
           >
             <View
               style={[
@@ -319,18 +294,14 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
           style={[
             styles.getButton,
             { backgroundColor: colors.secondary, borderRadius: rad.card },
-            (!selected || loading) && styles.getButtonDisabled,
+            !selected && styles.getButtonDisabled,
           ]}
           onPress={() => selected && handleGet(selected)}
-          disabled={!selected || loading}
+          disabled={!selected}
         >
-          {loading ? (
-            <SpinningLoaderCircle size={iconSize.row} color={colors.background} />
-          ) : (
-            <Text style={[styles.getButtonLabel, { color: colors.background }]}>
-              {t('externalAlbum.review.confirmGet')}
-            </Text>
-          )}
+          <Text style={[styles.getButtonLabel, { color: colors.background }]}>
+            {t('externalAlbum.review.confirmGet')}
+          </Text>
         </Touchable>
       </BottomSheetScrollView>
     </BottomSheetModal>

@@ -21,18 +21,30 @@ type Result =
 export async function downloadAlbumByTracks<Config>(
   downloadTrack: (config: Config, req: TrackRequest) => Promise<Result>,
   config: Config,
-  tracks: TrackRequest[]
+  tracks: TrackRequest[],
+  /**
+   * Told after each track, so a caller can say how far along it is.
+   *
+   * Worth having because this loop is the slow one in the app: every track is
+   * a round trip and they are deliberately not sent at once, so an album is as
+   * many waits as it has songs. Without this the only honest thing to show was
+   * a spinner, which is what kept the sheet on screen for the whole run.
+   */
+  onProgress?: (done: number, total: number) => void
 ): Promise<Result> {
   if (tracks.length === 0) {
     return { success: false, code: 'no_tracks', message: 'No tracks to request for this album' };
   }
 
   const failures: Result[] = [];
-  for (const track of tracks) {
-    const result = await downloadTrack(config, track).catch(
+  for (let i = 0; i < tracks.length; i++) {
+    const result = await downloadTrack(config, tracks[i]).catch(
       (error: unknown): Result => ({ success: false, message: (error as Error)?.message ?? 'Track request failed' })
     );
     if (!result.success) failures.push(result);
+    // Attempted, not succeeded: the count is how far through the album we are,
+    // and a track that failed is still one the user no longer waits on.
+    onProgress?.(i + 1, tracks.length);
   }
 
   if (failures.length === 0) return { success: true };

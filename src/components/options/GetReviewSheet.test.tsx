@@ -25,9 +25,20 @@ jest.mock('@/components/BottomSheetBackdrop', () => ({
   renderBackdrop: () => null,
 }));
 
-jest.mock('@/components/toast', () => ({
-  notify: Object.assign(jest.fn(), { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() }),
+// Two paths to one store. The sheet reaches the toasts through the barrel;
+// `runGet` imports `notify.ts` directly, because it is framework-free and the
+// barrel would drag ToastHost's component tree in behind it. Mocking only one
+// of them leaves the other running the real store, and an assertion on a mock
+// nothing called reads as "the code never notified".
+jest.mock('@/components/toast/notify', () => ({
+  notify: Object.assign(jest.fn(), {
+    info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn(),
+  }),
 }));
+// The barrel hands back the same mock rather than a second one: a factory body
+// runs lazily, so requiring the already-mocked store here is safe where a
+// shared outer `const` would still be in its temporal dead zone.
+jest.mock('@/components/toast', () => ({ notify: require('@/components/toast/notify').notify }));
 
 jest.mock('@/components/SpinningLoaderCircle', () => 'SpinningLoaderCircle');
 
@@ -214,7 +225,7 @@ describe('GetReviewSheet', () => {
     expect(slskdDownloadAlbum).not.toHaveBeenCalled();
   });
 
-  it('tapping Get calls the selected provider and dismisses on success', async () => {
+  it('tapping Get calls the selected provider and closes the review', async () => {
     // `ref={sheetRef}` on a class-component BottomSheetModal makes React
     // overwrite `sheetRef.current` with the real instance on mount, so the
     // dismiss spy has to be attached to that instance after render rather
@@ -394,7 +405,33 @@ describe('GetReviewSheet with a downloader that takes only tracks', () => {
       { title: 'First', artist: 'External Artist' },
       { title: 'Second', artist: 'External Artist' },
     ]);
-    expect(notify.success).toHaveBeenCalledWith('externalAlbum.download.addedToSoulsync');
+    expect(notify.success).toHaveBeenCalledWith(
+      'externalAlbum.download.addedToSoulsync',
+      { id: expect.any(String) }
+    );
+  });
+
+  it('closes on the confirm tap, not when the request comes back', async () => {
+    // The point of the change: a track-only downloader sends an album one
+    // track at a time, so waiting for the result meant sitting in a sheet that
+    // could not be swiped away for as many round trips as the album has songs.
+    let resolveFirst: (value: { success: true }) => void = () => {};
+    soulsyncDownloadTrack.mockImplementationOnce(
+      () => new Promise<{ success: true }>(resolve => { resolveFirst = resolve; })
+    );
+    // Spied after render, for the reason the Lidarr case above records: the
+    // mock sheet is a class component, so React replaces `current` on mount.
+    const sheetRef = { current: null } as any;
+    const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={sheetRef} />);
+    const dismiss = jest.spyOn(sheetRef.current, 'dismiss');
+
+    await fireEvent.press(view.getByTestId('row-SoulSync'));
+    await fireEvent.press(view.getByText('externalAlbum.review.confirmGet'));
+
+    expect(dismiss).toHaveBeenCalledTimes(1);
+
+    resolveFirst({ success: true });
+    await flush();
   });
 
   it("says so when the album's tracks can't be listed", async () => {
@@ -407,7 +444,10 @@ describe('GetReviewSheet with a downloader that takes only tracks', () => {
     await flush();
 
     expect(soulsyncDownloadTrack).not.toHaveBeenCalled();
-    expect(notify.error).toHaveBeenCalledWith('externalAlbum.download.errors.soulsync.no_tracks');
+    expect(notify.error).toHaveBeenCalledWith(
+      'externalAlbum.download.errors.soulsync.no_tracks',
+      { id: expect.any(String) }
+    );
   });
 });
 

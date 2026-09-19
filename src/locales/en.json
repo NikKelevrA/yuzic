@@ -1222,7 +1222,9 @@
       "soulsyncDesc": "Search Soulseek through SoulSync",
       "addedToSoulsync": "Requested from SoulSync.",
       "addedTrackToSoulsync": "Requested from SoulSync.",
-      "monitoringOnLidarr": "Lidarr is following {{artist}}."
+      "monitoringOnLidarr": "Lidarr is following {{artist}}.",
+      "sending": "Sending {{title}} to {{downloader}}…",
+      "progress": "Requested {{done}} of {{total}} songs…"
     },
     "header": {
       "songs": "{{count}} song",

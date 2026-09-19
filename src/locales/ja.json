@@ -1215,7 +1215,9 @@
       "soulsyncDesc": "SoulSync 経由で Soulseek を検索",
       "addedToSoulsync": "SoulSync にリクエストしました。",
       "addedTrackToSoulsync": "SoulSync にリクエストしました。",
-      "monitoringOnLidarr": "Lidarr が {{artist}} を追跡しています。"
+      "monitoringOnLidarr": "Lidarr が {{artist}} を追跡しています。",
+      "sending": "{{title}} を {{downloader}} に送信しています…",
+      "progress": "{{total}} 曲中 {{done}} 曲をリクエストしました…"
     },
     "header": {
       "songs": "{{count}} 曲",
