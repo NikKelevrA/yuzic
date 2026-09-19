@@ -10,7 +10,7 @@ import { MediaImage } from '@/components/MediaImage';
 import { useCoverAccent } from '@/features/theme/useCoverAccent';
 import { ACCENT_WASH_LOCATIONS, accentWashColors } from '@/features/theme/coverAccent';
 import { useTheme } from '@/features/theme/useTheme';
-import { controlSize, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
+import { controlSize, hitSlopFor, iconSize, shade, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import type { CoverSource } from '@/domain/entities/Cover';
 import Touchable from '@/components/Touchable';
@@ -197,8 +197,8 @@ export function DetailHeader({
  * the opposite side of the theme from the icon settles it once, for every
  * cover, without the icon having to change colour halfway through a scroll.
  */
-const SCRIM_DARK = 'rgba(0, 0, 0, 0.35)';
-const SCRIM_LIGHT = 'rgba(255, 255, 255, 0.6)';
+const SCRIM_DARK = shade.scrim;
+const SCRIM_LIGHT = shade.scrimLight;
 
 type BarButtonProps = {
   children: React.ReactNode;

@@ -37,7 +37,7 @@ const gradientCache = createAccentCache<[string, string]>(ACCENT_CACHE_MAX);
 
 /** What the player fades to with no accent to show — extraction failed, or the
  *  user turned cover tinting off. */
-const NEUTRAL_GRADIENT: [string, string] = ['#121212', onDark.background];
+const NEUTRAL_GRADIENT: [string, string] = [onDark.wash, onDark.background];
 
 /**
  * The full-screen player, and the cover art that travels between it and the
@@ -114,8 +114,8 @@ export default function PlayerHost() {
       return;
     }
     try {
-      const result = await ImageColors.getColors(uri, { fallback: '#121212' });
-      const gradient: [string, string] = [toWashAccent(pickAccent(result, '#121212')), onDark.background];
+      const result = await ImageColors.getColors(uri, { fallback: onDark.wash });
+      const gradient: [string, string] = [toWashAccent(pickAccent(result, onDark.wash)), onDark.background];
       gradientCache.set(uri, gradient);
       setNextGradient(gradient);
     } catch {

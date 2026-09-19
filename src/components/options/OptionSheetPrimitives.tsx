@@ -1,4 +1,4 @@
-import { iconSize, onDark, radius, spacing, stateLayer, typography } from '@/constants/design';
+import { iconSize, onDark, radius, shade, spacing, stateLayer, typography, veil } from '@/constants/design';
 import React from 'react';
 import { useRadius } from '@/features/theme/useRadius';
 import {
@@ -206,7 +206,7 @@ type ChipsRowProps = {
 export function OptionSheetChipsRow({ label, values }: ChipsRowProps) {
   const { isDarkMode, colors } = useTheme();
   const rad = useRadius();
-  const chipBg = isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const chipBg = isDarkMode ? veil.border : shade.chip;
 
   return (
     <View style={styles.chipsRow}>

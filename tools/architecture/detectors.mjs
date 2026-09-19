@@ -113,7 +113,7 @@ const PROVIDER_HOMES = [
   // settings guidelines call these entity screens: every setting on them
   // belongs to that one thing, so naming it is the point, not a leak.
   'src/providers/contracts/',            // the contract lists the server types it covers
-  'src/constants/design.ts',             // each brand's own colour
+  'src/constants/colors.ts',             // each brand's own colour
   'src/constants/keys.ts',               // bundled public API keys
   'src/features/settings/downloaders/',  // one settings screen per downloader
   'src/features/settings/integrations/', // one settings screen per account integration

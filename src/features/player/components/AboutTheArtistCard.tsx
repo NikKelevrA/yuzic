@@ -11,7 +11,7 @@ import { buildCover } from '@/providers/registry/covers';
 import { CoverSource } from '@/domain/entities/Cover';
 import { useResolvedCover } from '@/features/artwork/useResolvedCover';
 import Touchable from '@/components/Touchable';
-import { onDark, spacing, typography } from '@/constants/design';
+import { coverFade, onDark, onDarkAlpha, spacing, typography, veil } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 /** The card is a fixed height; the name and text below the image keep at least this much of it. */
 const CARD_HEIGHT = 280;
@@ -53,7 +53,7 @@ export default function AboutTheArtistCard({
           contentPosition="top center"
         />
         <LinearGradient
-          colors={['rgba(0,0,0,0.45)', 'rgba(0,0,0,0.6)']}
+          colors={coverFade.photoScrim}
           style={StyleSheet.absoluteFill}
         />
         <Text
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: veil.card,
     overflow: 'hidden',
   },
   header: {
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   subtext: {
     ...typography.rowSubtitle,
-    color: 'rgba(255,255,255,0.75)',
+    color: onDarkAlpha.prominent,
     marginTop: spacing.xxs,
   },
 });

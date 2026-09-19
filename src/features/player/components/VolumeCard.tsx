@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { selectThemeColor } from '@/features/settings/appearance/state';
 import { usePlayingActions, usePlayingState } from '@/features/playback/PlayingContext';
 import { usePlaybackSink } from '@/features/player/PlaybackSinkContext';
-import { iconSize, onDark, spacing, typography } from '@/constants/design';
+import { iconSize, onDark, onDarkAlpha, spacing, typography, veil } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { selection } from '@/components/haptics';
 
@@ -59,7 +59,7 @@ export default function VolumeCard({ contentWidth }: Props) {
       ]}
     >
       <View style={styles.headerRow}>
-        <Icon size={iconSize.inline} color={isMuted ? themeColor : 'rgba(255,255,255,0.5)'} />
+        <Icon size={iconSize.inline} color={isMuted ? themeColor : onDarkAlpha.quiet} />
         <Text style={[styles.label, isMuted && { color: themeColor }]}>
           {t(onServer ? 'playing.volumeOnServer' : 'playing.volume')}
         </Text>
@@ -76,7 +76,7 @@ export default function VolumeCard({ contentWidth }: Props) {
         onValueChange={handleChange}
         onSlidingComplete={handleSlidingComplete}
         minimumTrackTintColor={themeColor}
-        maximumTrackTintColor="rgba(255,255,255,0.15)"
+        maximumTrackTintColor={veil.track}
         thumbTintColor={themeColor}
         accessibilityLabel={t(onServer ? 'playing.volumeOnServer' : 'playing.volume')}
       />
@@ -87,7 +87,7 @@ export default function VolumeCard({ contentWidth }: Props) {
 const styles = StyleSheet.create({
   card: {
     marginTop: spacing.lg,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: veil.card,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.roomy,
     paddingBottom: spacing.md,
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   label: {
     ...typography.caption,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    color: onDarkAlpha.quiet,
   },
   spacer: { flex: 1 },
   percent: {

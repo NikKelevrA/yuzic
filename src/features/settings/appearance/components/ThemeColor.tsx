@@ -1,25 +1,20 @@
-import { iconSize, radius, shadow, spacing, typography } from '@/constants/design';
+import { iconSize, radius, shadow, spacing, themeColorPreset, typography } from '@/constants/design';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import ColorPicker, { Panel1, HueSlider } from 'reanimated-color-picker';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectThemeColor, setThemeColor, THEME_DEFAULT_COLOR } from '@/features/settings/appearance/state';
+import { selectThemeColor, setThemeColor } from '@/features/settings/appearance/state';
 import { useTheme } from '@/features/theme/useTheme';
 import SettingsCardHeader from '../../components/SettingsCardHeader';
 import SettingsCard from '../../components/SettingsCard';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 
-const THEME_PRESET_COLORS = [
-  THEME_DEFAULT_COLOR,
-  '#ff9f43',
-  '#ffd32a',
-  '#0be881',
-  '#54a0ff',
-  '#5f27cd',
-] as const;
+// The first preset is the default a fresh install starts on, so the list is
+// the one place both are stated.
+const THEME_PRESET_COLORS = themeColorPreset;
 
 export const ThemeColor: React.FC = () => {
   const { t } = useTranslation();

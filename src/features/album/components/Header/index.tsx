@@ -1,4 +1,4 @@
-import { iconSize, onDark, spacing, statusColor } from '@/constants/design';
+import { iconSize, onDark, onDarkAlpha, spacing, statusColor } from '@/constants/design';
 import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
@@ -360,7 +360,7 @@ function ExternalActionRow({ model }: { model: AlbumScreenModel }) {
         >
           <CloudDownload
             size={iconSize.control}
-            color={!canDownload || albumStatus.kind !== 'none' ? 'rgba(255,255,255,0.4)' : onDark.text}
+            color={!canDownload || albumStatus.kind !== 'none' ? onDarkAlpha.disabled : onDark.text}
           />
         </DetailPlayAction>
 

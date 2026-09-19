@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react-native';
 
 import Touchable from '@/components/Touchable';
 import { SETTINGS_STATUS_COLORS } from '@/features/settings/constants';
-import { iconSize, spacing, typography } from '@/constants/design';
+import { iconSize, spacing, tinted, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { useTheme } from '@/features/theme/useTheme';
 
@@ -37,7 +37,7 @@ const SettingsConnectionRow: React.FC<Props> = ({
     <Touchable testID={testID} style={styles.row} onPress={onPress}>
       <View style={styles.leading}>
         {icon && (
-          <View style={[styles.icon, { backgroundColor: colors.themeColor + '18', borderRadius: rad.pill }]}>
+          <View style={[styles.icon, { backgroundColor: tinted(colors.themeColor, 'surface'), borderRadius: rad.pill }]}>
             {icon}
           </View>
         )}

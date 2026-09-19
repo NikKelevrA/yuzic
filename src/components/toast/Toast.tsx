@@ -1,4 +1,4 @@
-import { iconSize, shadow, spacing, typography } from '@/constants/design';
+import { iconSize, shadow, spacing, tinted, typography } from '@/constants/design';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -119,7 +119,7 @@ const Toast: React.FC<Props> = ({ toast, onDismiss }) => {
           { backgroundColor: colors.toastSurface, borderRadius: rad.card, borderColor: colors.border },
         ]}
       >
-        <View style={[styles.iconWrap, { backgroundColor: accent + '1A', borderRadius: rad.pill }]}>
+        <View style={[styles.iconWrap, { backgroundColor: tinted(accent, 'toastIcon'), borderRadius: rad.pill }]}>
           <VariantIcon variant={toast.variant} color={accent} />
         </View>
         <Text style={[styles.message, { color: colors.secondary }]} numberOfLines={2}>

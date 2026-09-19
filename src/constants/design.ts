@@ -58,66 +58,21 @@ export const shadow = {
   none: { shadowOpacity: 0, elevation: 0 },
 } as const;
 
-export const statusColor = {
-  favorite: '#ff3b30',
-  destructive: '#ff3b30',
-  success: '#34C759',
-  warning: '#FF9500',
-  /** Softer amber for inline warning text (e.g. onboarding hints, form warnings)
-   *  that would look shouty in the pure iOS orange. */
-  warningText: '#f59e0b',
-  downloading: '#007AFF',
-  errorText: '#e57373',
-} as const;
-
-export const fixedColor = {
-  onboardingBlue: '#1f6feb',
-  onboardingWarningSurface: '#1c1400',
-  onboardingWarningBorder: '#78450a',
-} as const;
-
-/**
- * External service brand colours. One source of truth so a badge on Home,
- * a chip on the artist page, and the source-registry entry all read the
- * same purple/red — instead of drifting to `#A238CA` in six files and
- * `#a238ca` in a seventh.
- */
-export const sourceColor = {
-  deezer: '#A238CA',
-  lastfm: '#D51007',
-  listenbrainz: '#EB743B',
-  musicbrainz: '#BA478F',
-  audiomuse: '#7C3AED',
-} as const;
-
-/**
- * Colours for surfaces that are always dark regardless of the app's theme —
- * the full-screen player, the playing bar, the onboarding flow. They can't
- * read from `useTheme()` because they need to look right for a light-theme
- * user too. Pre-radius/typography rules apply: pick by role, not by hex.
- *
- * Every value here was drift before — `#111` vs `#1a1a1a` vs `#121212` for
- * "one shade above black", `#888` vs `#aaa` for "subtext on dark". Twelve
- * distinct greys folded onto seven roles.
- */
-export const onDark = {
-  /** Base page background — the darkest surface. */
-  background: '#000',
-  /** Card / raised surface a step above the background. */
-  surface: '#111',
-  /** A slightly-lighter card, mostly used for player inner cards. */
-  surfaceElevated: '#1a1a1a',
-  /** A step further — chips, badges, muted rows on dark. */
-  muted: '#222',
-  /** Divider / soft border. */
-  border: '#333',
-  /** Primary foreground text. */
-  text: '#fff',
-  /** Secondary foreground (subtitle, timestamps, meta). */
-  subtext: '#aaa',
-  /** Tertiary foreground (very faded meta, disabled). */
-  mutedText: '#888',
-} as const;
+/** The colours the app states outright — opaque roles, translucent veils and
+ *  the cover fade — live in their own module; re-exported here so every style
+ *  keeps one import. */
+export {
+  coverFade,
+  fixedColor,
+  onDark,
+  onDarkAlpha,
+  shade,
+  sourceColor,
+  statusColor,
+  themeColorPreset,
+  tinted,
+  veil,
+} from './colors';
 
 /**
  * Pressed-state overlay opacity.

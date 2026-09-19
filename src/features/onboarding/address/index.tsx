@@ -18,7 +18,7 @@ import { useSheetRef } from '@/components/useSheetRef';
 import Touchable from '@/components/Touchable';
 import SpinningLoaderCircle from '@/components/SpinningLoaderCircle';
 import { getServerProvider } from '@/providers/registry/serverConnections';
-import { iconSize, onDark, spacing, statusColor, typography } from '@/constants/design';
+import { iconSize, onDark, spacing, statusColor, typography, veil } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 
 type Scheme = 'https' | 'http';
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
     },
     schemeOptionSelected: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: veil.field,
     },
     schemeOptionLeft: {
         flexDirection: 'row',
