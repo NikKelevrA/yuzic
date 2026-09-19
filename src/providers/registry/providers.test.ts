@@ -25,6 +25,14 @@ jest.mock('@/providers/integration/musicbrainz', () => ({
   searchReleaseGroupByTitle: jest.fn(),
   getReleaseGroup: jest.fn(),
   getTracksForReleaseGroup: jest.fn(),
+  createMusicbrainzClient: jest.fn(),
+}));
+// The provider reads the address the user has set for a MusicBrainz server of
+// their own from the store at the moment of each call.
+let mockServerUrls: Record<string, string> = {};
+jest.mock('@/state/redux/store', () => ({
+  __esModule: true,
+  default: { getState: () => ({ settingsSources: { uses: {}, serverUrls: mockServerUrls } }) },
 }));
 jest.mock('@/providers/integration/musicbrainz/mapAlbum', () => ({ mapAlbum: jest.fn() }));
 jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({ mapSong: jest.fn() }));
@@ -148,6 +156,40 @@ describe('musicbrainz provider', () => {
     await musicbrainzProvider.capabilities['catalogue.album']?.('mb-rg');
     expect(mbApi.getReleaseGroup).toHaveBeenCalledWith('mb-rg');
     expect(mbApi.getTracksForReleaseGroup).toHaveBeenCalledWith('mb-rg');
+    expect(mbApi.createMusicbrainzClient).not.toHaveBeenCalled();
+  });
+
+  describe('with a server address set', () => {
+    afterEach(() => {
+      mockServerUrls = {};
+    });
+
+    it('asks the server of your own, and not the public one', async () => {
+      mockServerUrls = { musicbrainz: 'http://nas:5000' };
+      const own = {
+        searchArtist: jest.fn().mockResolvedValue([]),
+        searchReleaseGroupByTitle: jest.fn().mockResolvedValue([]),
+      };
+      (mbApi.createMusicbrainzClient as jest.Mock).mockReturnValue(own);
+
+      await musicbrainzProvider.capabilities['catalogue.search']?.('query', { artists: true, albums: true });
+
+      expect(mbApi.createMusicbrainzClient).toHaveBeenCalledWith({ serverUrl: 'http://nas:5000' });
+      expect(own.searchArtist).toHaveBeenCalledWith('query', 4);
+      expect(own.searchReleaseGroupByTitle).toHaveBeenCalledWith('query', 6);
+      expect(mbApi.searchArtist).not.toHaveBeenCalled();
+      expect(mbApi.searchReleaseGroupByTitle).not.toHaveBeenCalled();
+    });
+
+    it('treats a blank address as none', async () => {
+      mockServerUrls = { musicbrainz: '   ' };
+      (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
+
+      await musicbrainzProvider.capabilities['catalogue.search']?.('query', { artists: true, albums: false });
+
+      expect(mbApi.createMusicbrainzClient).not.toHaveBeenCalled();
+      expect(mbApi.searchArtist).toHaveBeenCalledWith('query', 4);
+    });
   });
 });
 

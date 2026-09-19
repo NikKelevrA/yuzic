@@ -533,7 +533,14 @@
       "promptTitle": "Turn on {{use}} from {{name}}?",
       "turnOn": "Turn on",
       "notNow": "Not now",
-      "alwaysFirst": "First"
+      "alwaysFirst": "First",
+      "serverAddress": {
+        "label": "Server address",
+        "publicServer": "Public server",
+        "title": "Server address",
+        "description": "Use a server of your own instead of the public one. Enter its address, for example http://192.168.1.10:5000. Leave it empty to use the public server.",
+        "placeholder": "http://192.168.1.10:5000"
+      }
     },
     "sourceUses": {
       "lastfm": {

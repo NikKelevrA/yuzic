@@ -532,7 +532,14 @@
       "promptTitle": "{{name}}の{{use}}をオンにしますか？",
       "turnOn": "オンにする",
       "notNow": "今はしない",
-      "alwaysFirst": "最初"
+      "alwaysFirst": "最初",
+      "serverAddress": {
+        "label": "サーバーアドレス",
+        "publicServer": "公開サーバー",
+        "title": "サーバーアドレス",
+        "description": "公開サーバーの代わりに、ご自身のサーバーを使用します。アドレスを入力してください（例: http://192.168.1.10:5000）。空欄にすると公開サーバーを使用します。",
+        "placeholder": "http://192.168.1.10:5000"
+      }
     },
     "sourceUses": {
       "lastfm": {

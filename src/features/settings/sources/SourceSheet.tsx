@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +16,9 @@ import {
 } from '@/components/options/OptionSheetPrimitives';
 import { spacing, statusColor, typography } from '@/constants/design';
 import { useTheme } from '@/features/theme/useTheme';
-import { SOURCES, usesOf, type SourceId } from '@/providers/registry/sources';
-import { selectSourceUses, setSourceUse, stopUsingSource } from './state';
+import { SOURCES, isSelfHostable, usesOf, type SourceId } from '@/providers/registry/sources';
+import ServerAddressSheet from './ServerAddressSheet';
+import { selectSourceServerUrls, selectSourceUses, setSourceUse, stopUsingSource } from './state';
 
 type Props = {
   source: SourceId | null;
@@ -36,12 +37,15 @@ const SourceSheet = forwardRef<BottomSheetModal, Props>(({ source, onDone }, ref
   const sheetBg = useOptionSheetBackground();
   const sheetContent = useOptionSheetContentStyle();
   const uses = useSelector(selectSourceUses);
+  const serverUrls = useSelector(selectSourceServerUrls);
+  const [editingAddress, setEditingAddress] = useState(false);
 
   const declaration = source ? SOURCES[source] : undefined;
   const name = declaration ? t(declaration.nameKey) : '';
   const inUse = source ? usesOf(source).some(entry => uses[entry.id]) : false;
 
   return (
+    <>
     <BottomSheetModal
       ref={ref}
       enableDynamicSizing
@@ -69,6 +73,17 @@ const SourceSheet = forwardRef<BottomSheetModal, Props>(({ source, onDone }, ref
                 onValueChange={enabled => { dispatch(setSourceUse({ use: entry.id, enabled })); }}
               />
             ))}
+            {isSelfHostable(source) && (
+              <>
+                <OptionSheetDivider />
+                <OptionSheetRow
+                  testID="source-sheet-server-address"
+                  label={t('settings.sources.serverAddress.label')}
+                  description={serverUrls[source] || t('settings.sources.serverAddress.publicServer')}
+                  onPress={() => setEditingAddress(true)}
+                />
+              </>
+            )}
             {inUse && (
               <>
                 <OptionSheetDivider />
@@ -87,6 +102,10 @@ const SourceSheet = forwardRef<BottomSheetModal, Props>(({ source, onDone }, ref
         )}
       </BottomSheetScrollView>
     </BottomSheetModal>
+    {editingAddress && source && (
+      <ServerAddressSheet source={source} onClose={() => setEditingAddress(false)} />
+    )}
+    </>
   );
 });
 

@@ -29,6 +29,18 @@ export type SourcePurpose =
 
 export type SourceUseId = `${SourceId}.${SourcePurpose}`;
 
+/** Server addresses the user has set for sources they run themselves, by source. */
+export type SourceServerUrls = Partial<Record<SourceId, string>>;
+
+/**
+ * Sources that can be pointed at a server of your own instead of the public
+ * one. The address is asked for on the source's own sheet, so the screen only
+ * needs to know that a source can take one, not which source it is.
+ */
+const SELF_HOSTABLE: readonly SourceId[] = ['musicbrainz'];
+
+export const isSelfHostable = (source: SourceId): boolean => SELF_HOSTABLE.includes(source);
+
 type SourceDeclaration = {
   id: SourceId;
   nameKey: string;
