@@ -21,6 +21,8 @@ const SettingsToggleRow: React.FC<Props> = ({ label, subtext, value, onValueChan
         )}
       </View>
       <Switch
+        accessibilityLabel={label}
+        accessibilityHint={subtext}
         value={value}
         onValueChange={onValueChange}
         trackColor={{ true: colors.themeColor }}

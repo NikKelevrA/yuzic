@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
   Text,
@@ -54,10 +55,25 @@ export default function MediaListRow({
   style,
   testID,
 }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const rad = useRadius();
   const density = useListDensity();
   const isCompact = variant === 'compact';
+
+  /**
+   * What the row announces.
+   *
+   * An explicit label replaces everything the row draws rather than adding to
+   * it, so naming the row after its title alone dropped the artist from every
+   * track and every search result. The separator is a translated string: a
+   * comma is not the list separator in all four locales the app ships.
+   */
+  const accessibleName = !onPress
+    ? undefined
+    : subtitle
+      ? t('a11y.rows.titleAndSubtitle', { title, subtitle })
+      : title;
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -73,7 +89,7 @@ export default function MediaListRow({
         <Touchable
           testID={testID}
           accessibilityRole={onPress ? 'button' : undefined}
-          accessibilityLabel={onPress ? title : undefined}
+          accessibilityLabel={accessibleName}
           accessibilityState={{ disabled: disabled || !onPress }}
           style={styles.content}
           onPress={onPress}

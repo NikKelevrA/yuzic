@@ -76,6 +76,7 @@ const SettingsSourceList: React.FC<Props> = ({
             </Touchable>
           )}
           <Switch
+            accessibilityLabel={item.label}
             value={item.enabled}
             onValueChange={item.onEnabledChange}
             trackColor={{ true: colors.themeColor }}
@@ -96,7 +97,9 @@ const SettingsSourceList: React.FC<Props> = ({
           </View>
           <View style={[styles.alwaysFirst, { backgroundColor: colors.themeColor + '18', borderRadius: rad.pill }]}>
             <Check size={iconSize.badge} color={colors.themeColor} />
-            <Text style={[styles.alwaysFirstText, { color: colors.themeColor }]}>First</Text>
+            <Text style={[styles.alwaysFirstText, { color: colors.themeColor }]}>
+              {t('settings.sources.alwaysFirst')}
+            </Text>
           </View>
         </View>
       )}

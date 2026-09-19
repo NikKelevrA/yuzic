@@ -531,7 +531,8 @@
       "off": "オフ",
       "promptTitle": "{{name}}の{{use}}をオンにしますか？",
       "turnOn": "オンにする",
-      "notNow": "今はしない"
+      "notNow": "今はしない",
+      "alwaysFirst": "最初"
     },
     "sourceUses": {
       "lastfm": {
@@ -1492,7 +1493,8 @@
       "downloading": "ダウンロード中"
     },
     "rows": {
-      "options": "{{title}}のオプション"
+      "options": "{{title}}のオプション",
+      "titleAndSubtitle": "{{title}}、{{subtitle}}"
     },
     "searchInput": "検索",
     "queueBackToPlayer": "プレーヤーに戻る",

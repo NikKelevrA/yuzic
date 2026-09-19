@@ -531,7 +531,8 @@
       "off": "关闭",
       "promptTitle": "开启来自 {{name}} 的{{use}}？",
       "turnOn": "开启",
-      "notNow": "暂不"
+      "notNow": "暂不",
+      "alwaysFirst": "第一"
     },
     "sourceUses": {
       "lastfm": {
@@ -1492,7 +1493,8 @@
       "downloading": "下载中"
     },
     "rows": {
-      "options": "{{title}}的选项"
+      "options": "{{title}}的选项",
+      "titleAndSubtitle": "{{title}}，{{subtitle}}"
     },
     "searchInput": "搜索",
     "queueBackToPlayer": "返回播放器",

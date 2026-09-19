@@ -42,7 +42,7 @@ describe('SettingsSourceList', () => {
     );
 
     expect(view.getByText('Your server')).toBeTruthy();
-    expect(view.getByText('First')).toBeTruthy();
+    expect(view.getByText('settings.sources.alwaysFirst')).toBeTruthy();
     fireEvent(view.getByTestId('complete-source-reorder'), 'touchEnd');
     expect(onOrderChange).toHaveBeenCalledWith(['coverartarchive', 'deezer']);
   });

@@ -1,6 +1,6 @@
-import { hitSlopFor, iconSize, radius, spacing, stateLayer, typography } from '@/constants/design';
+import { hitSlopFor, iconSize, radius, spacing, typography } from '@/constants/design';
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ellipsis } from 'lucide-react-native';
 import { MediaImage } from '@/components/MediaImage';
@@ -57,21 +57,21 @@ const LibraryItem: React.FC<Props> = ({
   const rad = useRadius();
   const density = useListDensity();
 
-  const listRadius = circularImage ? 26 : rad.md;
-  const gridRadius = circularImage ? gridWidth / 2 : rad.card;
+  const listRadius = circularImage ? radius.pill : rad.md;
+  const gridRadius = circularImage ? radius.pill : rad.card;
 
   return (
-    <Pressable
+    <Touchable
       testID={testID}
+      accessibilityRole="button"
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={300}
-      style={({ pressed }) => [
+      style={
         isGridView
           ? [styles.gridContainer, { width: gridWidth, marginHorizontal: gridSpacing, marginVertical: gridSpacing, borderRadius: rad.md }]
-          : [styles.listContainer, { paddingVertical: density.libraryRowPadding }],
-        pressed && styles.pressed,
-      ]}
+          : [styles.listContainer, { paddingVertical: density.libraryRowPadding }]
+      }
     >
       <MediaImage
         cover={cover}
@@ -105,7 +105,7 @@ const LibraryItem: React.FC<Props> = ({
           <Ellipsis size={iconSize.row} color={colors.subtext} />
         </Touchable>
       )}
-    </Pressable>
+    </Touchable>
   );
 };
 
@@ -136,8 +136,5 @@ const styles = StyleSheet.create({
     // and its neighbour's is not used to put the two titles on different
     // baselines, which reads as a layout bug rather than as missing data.
     minHeight: typography.caption.lineHeight,
-  },
-  pressed: {
-    opacity: stateLayer.selectedOpacity,
   },
 });

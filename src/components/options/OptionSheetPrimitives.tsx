@@ -1,8 +1,9 @@
-import { iconSize, radius, spacing, stateLayer, typography } from '@/constants/design';
+import { iconSize, onDark, radius, spacing, stateLayer, typography } from '@/constants/design';
 import React from 'react';
 import { useRadius } from '@/features/theme/useRadius';
 import {
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -97,6 +98,61 @@ export function OptionSheetRow({
         )}
       </View>
       {trailing}
+    </Touchable>
+  );
+}
+
+type SwitchRowProps = {
+  label: string;
+  /** Optional second line under the label */
+  description?: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  testID?: string;
+};
+
+/**
+ * A sheet row whose whole width toggles a switch.
+ *
+ * A `Switch` handed to {@link OptionSheetRow}'s `trailing` slot is drawn inside
+ * that row's single `Touchable`, and a row is one accessibility element — so
+ * the switch becomes a control a screen reader can see and never reach. That is
+ * the shape the rating stars had before they moved out of a row and into their
+ * own sheet; a switch is small enough to stay, so here the row itself is the
+ * control and carries the checked state, and the switch is drawn rather than
+ * operated. Presses land on the row either way, so the finger sees no change.
+ */
+export function OptionSheetSwitchRow({
+  label,
+  description,
+  value,
+  onValueChange,
+  testID,
+}: SwitchRowProps) {
+  const { colors } = useTheme();
+
+  return (
+    <Touchable
+      testID={testID}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityHint={description}
+      style={styles.option}
+      onPress={() => { onValueChange(!value); }}
+    >
+      <View style={[styles.optionBody, styles.optionBodyNoIcon]}>
+        <Text style={[styles.optionText, { color: colors.secondary }]}>{label}</Text>
+        {description !== undefined && (
+          <Text style={[styles.optionDescription, { color: colors.subtext }]}>{description}</Text>
+        )}
+      </View>
+      <View pointerEvents="none">
+        <Switch
+          value={value}
+          trackColor={{ true: colors.themeColor }}
+          thumbColor={onDark.text}
+        />
+      </View>
     </Touchable>
   );
 }

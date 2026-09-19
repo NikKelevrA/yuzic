@@ -532,7 +532,8 @@
       "off": "Off",
       "promptTitle": "Turn on {{use}} from {{name}}?",
       "turnOn": "Turn on",
-      "notNow": "Not now"
+      "notNow": "Not now",
+      "alwaysFirst": "First"
     },
     "sourceUses": {
       "lastfm": {
@@ -1487,7 +1488,8 @@
       "downloading": "Downloading"
     },
     "rows": {
-      "options": "Options for {{title}}"
+      "options": "Options for {{title}}",
+      "titleAndSubtitle": "{{title}}, {{subtitle}}"
     },
     "searchInput": "Search",
     "queueBackToPlayer": "Back to the player",
