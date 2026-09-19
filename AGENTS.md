@@ -151,10 +151,25 @@ screenshots deleted... 10 screenshot(s) still exist` — App Store Connect would
 not confirm the deletion it had been asked for. A dev build has no reason to
 replace the public listing, so it no longer tries.
 
-**This does not fix the refusal, and a release will still meet it.** If a
-version bump fails that way, the listing state on App Store Connect is what
-needs attention — not the build. Re-running will not help; it failed twice in
-a row from a clean archive.
+**The binary and the listing are two uploads now, in that order.** They were
+one `upload_to_app_store` call doing both with the screenshots first, which is
+the mechanism behind every one of the failures above: the store objects to
+something about an image and a fully archived build is discarded. Each earlier
+fix addressed the particular objection — the oversized icon, the interactive
+prompt, the duplicate uploads — and the coupling survived every time and found
+a new way to spend a build.
+
+`upload_to_testflight` now ships the binary on its own, and the screenshot
+upload runs after it inside a `rescue`: it logs loudly and does not fail the
+lane. A listing one release out of date is a far smaller problem than a release
+that did not ship.
+
+**None of that fixes the refusal itself, and a release will still meet it.** If
+the screenshot step logs an error, the listing state on App Store Connect is
+what needs attention — not the build. A version that is no longer editable will
+not let its screenshots be replaced, and re-running cannot help: it failed
+twice in a row from a clean archive, with *zero* of the ten deleted, which is
+a refusal rather than the eventual consistency it resembles.
 
 Run `python3 tools/store-screenshots/publish.py --check` before a release. It
 asserts the exact store sizes for the screenshots *and* for Play's icon and

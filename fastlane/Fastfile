@@ -240,44 +240,74 @@ platform :ios do
       include_bitcode: false
     )
 
-    upload_to_app_store(
+    # The binary first, and on its own.
+    #
+    # These used to be one `upload_to_app_store` call doing both, screenshots
+    # first — so anything the store disliked about an image discarded a fully
+    # archived build. That is how 2.2.0 died on both platforms after a
+    # 24-minute Gradle build and a successful Xcode archive, and how two
+    # dispatched builds died on 2026-09-19 when App Store Connect would not
+    # confirm a screenshot deletion it had been asked for.
+    #
+    # Every fix before this one addressed the *particular* thing the store
+    # objected to: the oversized icon, the interactive prompt, the duplicate
+    # uploads. The coupling survived each time and found a new way to spend a
+    # build. So the binary now goes first and by itself, and nothing about the
+    # listing can cost it.
+    upload_to_testflight(
       api_key: api_key,
-      skip_metadata: true,
-      # Screenshots come from tools/store-screenshots (capture.sh, then
-      # publish.py) and land in fastlane/screenshots/en-US. deliver picks the
-      # device from the filename prefix, so those names are load-bearing.
-      #
-      # App Store Connect accepts only exact sizes and rejects the upload
-      # otherwise — after the whole build has run. compose.py exports at the
-      # store size for that reason (the iPad artboard is 2064x2752 while the
-      # store wants 2048x2732), and publish.py asserts it before copying.
-      # Only on the release path. `upload_to_app_store` does the screenshots
-      # *and* the binary, and the screenshots go first — so anything wrong with
-      # them loses the build too, after a full archive. That is how 2.2.0 died
-      # on both platforms, and on 2026-09-19 it happened again from the other
-      # direction: App Store Connect would not confirm the existing images had
-      # been deleted ("10 screenshot(s) still exist"), twice in a row, fifteen
-      # minutes of compile discarded each time.
-      #
-      # A manually dispatched build has no business replacing the public
-      # listing anyway. The listing should follow a *release*, which is what
-      # the version-bump path is, and a dev build off `dev` gains nothing from
-      # touching it while carrying the whole risk. So the dispatch path skips
-      # them and the release path is unchanged.
-      #
-      # Note this does not fix the underlying refusal — a release will still
-      # meet it. It stops that being every build's problem.
-      skip_screenshots: ENV["YUZIC_UPLOAD_SCREENSHOTS"] != "true",
-      overwrite_screenshots: true,
-      # deliver renders a Preview.html and asks "Does the Preview ... look okay
-      # for you?" whenever it uploads screenshots. On a runner nobody can
-      # answer and it does NOT fall back to a default — it raises
-      # FastlaneCrash ("Could not retrieve response as fastlane runs in
-      # non-interactive mode") BEFORE uploading the binary, so enabling
-      # screenshots without this loses the build as well as the screenshots.
-      force: true,
-      submit_for_review: false,
-      run_precheck_before_submit: false
+      ipa: "build/ios/Yuzic.ipa",
+      # The build is uploaded; what Apple then does with it takes minutes and
+      # nothing here waits on the answer. `false` here is what made the old
+      # call sit through processing before it would move on.
+      skip_waiting_for_build_processing: true,
+      skip_submission: true
     )
+
+    # Then the listing, which may fail without taking the build with it.
+    #
+    # `skip_binary_upload` is the load-bearing part: this call must not be a
+    # second route to uploading the app. Only the release path runs it at all
+    # — see `YUZIC_UPLOAD_SCREENSHOTS`.
+    unless ENV["YUZIC_UPLOAD_SCREENSHOTS"] == "true"
+      UI.important("Skipping store screenshots: not a release build.")
+      next
+    end
+
+    begin
+      upload_to_app_store(
+        api_key: api_key,
+        skip_binary_upload: true,
+        skip_metadata: true,
+        # Screenshots come from tools/store-screenshots (capture.sh, then
+        # publish.py) and land in fastlane/screenshots/en-US. deliver picks the
+        # device from the filename prefix, so those names are load-bearing.
+        #
+        # App Store Connect accepts only exact sizes and rejects the upload
+        # otherwise. compose.py exports at the store size for that reason (the
+        # iPad artboard is 2064x2752 while the store wants 2048x2732), and
+        # publish.py asserts it before copying.
+        skip_screenshots: false,
+        overwrite_screenshots: true,
+        # deliver renders a Preview.html and asks "Does the Preview ... look
+        # okay for you?" whenever it uploads screenshots. On a runner nobody
+        # can answer and it does NOT fall back to a default — it raises
+        # FastlaneCrash before returning, so this is what makes screenshot
+        # upload survivable at all.
+        force: true,
+        submit_for_review: false,
+        run_precheck_before_submit: false
+      )
+    rescue => error
+      # Loud, and not fatal. The build is already on TestFlight by here, and a
+      # listing that is one release out of date is a smaller problem than a
+      # release that did not ship.
+      #
+      # If this fires, the thing to look at is the version's state on App Store
+      # Connect rather than the build: a version that is no longer editable
+      # will not let its screenshots be replaced, and re-running cannot help.
+      UI.error("Store screenshots were not updated: #{error.message}")
+      UI.error("The build shipped. Check the version's state on App Store Connect.")
+    end
   end
 end
