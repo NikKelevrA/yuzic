@@ -129,6 +129,89 @@ def resolved_ios_profile_name
   raw.nil? || raw.empty? ? "carplay" : raw
 end
 
+# The states in which App Store Connect will let a version's screenshots be
+# replaced. Everything else — submitted, in review, accepted, awaiting release,
+# live — refuses the delete.
+#
+# An allowlist rather than a denylist on purpose: a state nobody here has seen
+# yet should leave the listing alone, not gamble a release on it.
+SCREENSHOT_EDITABLE_STATES = [
+  "PREPARE_FOR_SUBMISSION",
+  "DEVELOPER_REJECTED",
+  "REJECTED",
+  "METADATA_REJECTED",
+  "INVALID_BINARY"
+].freeze
+
+def screenshots_replaceable?(api_key)
+  # Apple will not let a submitted version's screenshots be replaced, and
+  # `deliver` asks anyway.
+  #
+  # It picks its target with `get_edit_app_store_version`, whose filter counts
+  # WAITING_FOR_REVIEW as editable. Apple disagrees. Deleting a screenshot on a
+  # submitted version returns:
+  #
+  #   The request cannot be fulfilled because of the state of another resource.
+  #   - Can't Delete Screenshot After Submit for review appScreenshots
+  #
+  # and because `overwrite_screenshots` deletes before it uploads, the upload
+  # dies right there. It is a state lock, not a transient, so deliver's five
+  # retries only repeat the same rejection — which is the whole content of
+  # "Failed verification of all screenshots deleted... 10 screenshot(s) still
+  # exist", the message that killed two builds on 2026-09-19. Both were dev
+  # builds carrying version label 2.6.3 while 2.6.3 sat in review.
+  #
+  # So the question is asked once, up front, and the answer is a property of
+  # the version rather than of the attempt.
+  require 'spaceship'
+
+  token = Spaceship::ConnectAPI::Token.from(hash: api_key)
+  if token.nil?
+    UI.important("No App Store Connect token — leaving the listing alone.")
+    return false
+  end
+  Spaceship::ConnectAPI.token = token
+
+  app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+  if app.nil?
+    UI.important("No app on App Store Connect for #{APP_IDENTIFIER} — leaving the listing alone.")
+    return false
+  end
+
+  version = app.get_edit_app_store_version(platform: Spaceship::ConnectAPI::Platform::IOS)
+  if version.nil?
+    UI.important("No editable App Store version — leaving the listing alone.")
+    return false
+  end
+
+  # Order matters, and not arbitrarily: `app_store_state` is marked deprecated
+  # in App Store Connect API specification 3.3, so it is the one liable to come
+  # back nil against a current API version. `app_version_state` is the current
+  # field and has to be read first. Do not flip this.
+  #
+  # The five states above happen to be spelled identically in both enums, so
+  # the check is safe whichever field answers. That is luck rather than design
+  # — the vocabularies diverge elsewhere (AppStoreState has READY_FOR_SALE,
+  # AppVersionState has READY_FOR_DISTRIBUTION instead), so anything added to
+  # the list has to be checked against both.
+  state = version.app_version_state || version.app_store_state
+  unless SCREENSHOT_EDITABLE_STATES.include?(state)
+    UI.important(
+      "Version #{version.version_string} is #{state}. App Store Connect will " \
+      "not replace the screenshots of a version in that state, so they are " \
+      "being left alone. This is not a build failure."
+    )
+    return false
+  end
+
+  UI.important("Version #{version.version_string} is #{state}; screenshots can be replaced.")
+  true
+rescue => error
+  # Asking must never be more dangerous than not asking.
+  UI.important("Could not read the App Store version state (#{error.message}) — leaving the listing alone.")
+  false
+end
+
 def prepare_build_dirs
   sh "mkdir -p build/android"
   sh "mkdir -p build/ios"
@@ -274,6 +357,10 @@ platform :ios do
       next
     end
 
+    # And only when Apple will actually accept them. Checked before the upload
+    # rather than discovered during it.
+    next unless screenshots_replaceable?(api_key)
+
     begin
       upload_to_app_store(
         api_key: api_key,
@@ -303,9 +390,10 @@ platform :ios do
       # listing that is one release out of date is a smaller problem than a
       # release that did not ship.
       #
-      # If this fires, the thing to look at is the version's state on App Store
-      # Connect rather than the build: a version that is no longer editable
-      # will not let its screenshots be replaced, and re-running cannot help.
+      # `screenshots_replaceable?` already turns away the known cause — a
+      # version that has been submitted — so reaching here means something
+      # else. The version's state on App Store Connect is still the first
+      # thing to read; re-running is still not a fix.
       UI.error("Store screenshots were not updated: #{error.message}")
       UI.error("The build shipped. Check the version's state on App Store Connect.")
     end
