@@ -18,6 +18,7 @@ import settingsOnboardingReducer from '@/features/settings/onboarding/state';
 import listenbrainzReducer from './slices/listenbrainzSlice';
 import playbackReducer from './slices/playbackSlice';
 import statsReducer from './slices/statsSlice';
+import listeningReducer from './slices/listeningSlice';
 import offlineMutationsReducer from './slices/offlineMutationsSlice';
 import searchHistoryReducer, { normalizeSearchHistoryEntries } from './slices/searchHistorySlice';
 import wantsReducer from './slices/wantsSlice';
@@ -130,6 +131,14 @@ const statsPersistConfig = {
   migrate: resetMigrate,
   throttle: 1000,
 };
+// listening: 1s, for the same reason as stats — one `recordListen` per track
+// change. Deliberately *not* on `resetMigrate` like its neighbour: a wipe on
+// version bump is fine for counters the server can re-supply, and this is the
+// one slice nothing else can rebuild. Losing it is losing the user's own
+// listening history, so a future shape change has to be migrated rather than
+// reset. The event array is bounded by `MAX_EVENTS` precisely so this write
+// stays small enough to belong on the same throttle.
+const listeningPersistConfig = { key: 'listening', storage, throttle: 1000 };
 // Genres used to live in a `library` slice; they are now a catalog
 // query like the rest (`useGenres`), so the slice and its persist key are gone.
 // The old on-disk payload is simply never read again.
@@ -150,6 +159,7 @@ export const rootReducer = combineReducers({
     listenbrainz: listenbrainzReducer,
     playback: playbackReducer,
     stats: statsReducer,
+    listening: listeningReducer,
     offlineMutations: offlineMutationsReducer,
     searchHistory: searchHistoryReducer,
     wants: wantsReducer,
@@ -171,6 +181,7 @@ const persistedReducer = combineReducers({
     listenbrainz: persistReducer(listenbrainzPersistConfig, listenbrainzReducer),
     playback: persistReducer(playbackPersistConfig, playbackReducer),
     stats: persistReducer(statsPersistConfig, statsReducer),
+    listening: persistReducer(listeningPersistConfig, listeningReducer),
     offlineMutations: persistReducer(offlineMutationsPersistConfig, offlineMutationsReducer),
     searchHistory: persistReducer(searchHistoryPersistConfig, searchHistoryReducer),
     wants: persistReducer(wantsPersistConfig, wantsReducer),

@@ -2,6 +2,8 @@ import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { Song } from '@/domain/entities/Song';
 import { incrementPlay } from '@/state/redux/slices/statsSlice';
+import { recordListen } from '@/state/redux/slices/listeningSlice';
+import { endingFrom } from '@/features/listening/listeningEvent';
 import {
   buildScrobbleMutation,
   type ScrobbleDestination,
@@ -41,9 +43,23 @@ export function useScrobbling() {
   const plan = useScrobbleDestinationPlan();
 
   const lastScrobbledIdRef = useRef<string | null>(null);
+  /*
+   The last listen written to the history, as `track@startedAt`.
+
+   `lastScrobbledIdRef` below cannot stand in for this. It is only *set* once
+   a listen passes the scrobble threshold, so it does not guard a skip at all
+   — and skips are precisely what the history records and scrobbling does not.
+   A departure reported twice would otherwise be two events, which is a
+   doubled play count and a halved completion rate for that track.
+
+   Keyed by start time as well as track, so the same song played twice in one
+   sitting is two listens, which it is.
+  */
+  const lastRecordedRef = useRef<string | null>(null);
 
   const resetLastScrobbled = useCallback(() => {
     lastScrobbledIdRef.current = null;
+    lastRecordedRef.current = null;
   }, []);
 
   /**
@@ -93,6 +109,36 @@ export function useScrobbling() {
     // episodes still scrobble; a finished episode is a listen the same way a
     // finished track is.
     if (!isScrobbleable(song.contentKind)) return;
+
+    /*
+     Written down *before* any threshold, and this ordering is the whole point.
+     Everything below returns early — the already-scrobbled guard, then the
+     half-a-track rule — and those early returns are exactly the listens worth
+     knowing about: a track abandoned at twenty seconds is the strongest
+     negative signal this app ever receives, and under the old counter it left
+     no trace at all, because the only thing that wrote anything was the
+     scrobble that a skip by definition never earns.
+
+     Scrobbling reports a listen outward under somebody else's rules.
+     `recordListen` writes down what happened, locally, under none. They share
+     this trigger and nothing else.
+    */
+    const recordKey = `${song.nativeId}@${opts.startTime}`;
+    if (activeServer?.id && lastRecordedRef.current !== recordKey) {
+      lastRecordedRef.current = recordKey;
+      const duration = song.durationSeconds || 0;
+      dispatch(recordListen({
+        at: opts.startTime,
+        track: `${activeServer.id}:${song.nativeId}`,
+        album: song.album.nativeId ? `${activeServer.id}:${song.album.nativeId}` : undefined,
+        artist: song.artist.nativeId ? `${activeServer.id}:${song.artist.nativeId}` : undefined,
+        playlist: opts.playlistId ? `${activeServer.id}:${opts.playlistId}` : undefined,
+        seconds: opts.listenedSeconds,
+        duration,
+        ending: endingFrom(opts.listenedSeconds, duration),
+      }));
+    }
+
     if (lastScrobbledIdRef.current === song.nativeId) return;
     const songDuration = song.durationSeconds || 0;
     if (!passesScrobbleThreshold(opts.listenedSeconds, songDuration)) return;

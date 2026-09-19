@@ -9,7 +9,7 @@ import {
     Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Server, Library, Volume2, Palette, Puzzle, Github, Newspaper, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search } from 'lucide-react-native';
+import { Server, Library, Volume2, Palette, Puzzle, Github, Newspaper, FileText, ShieldCheck, ScrollText, House as HomeIcon, Tags, Disc3, Search, ChartColumn } from 'lucide-react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useSelector } from 'react-redux';
@@ -170,6 +170,12 @@ export default function Settings() {
                         rightText={searchSummary}
                         leftIcon={<Search size={iconSize.secondary} color={colors.secondary} />}
                         onPress={() => router.push('/settings/searchView')}
+                    />
+                    <SettingsDivider />
+                    <SettingsRow
+                        label={t('settings.listening.title')}
+                        leftIcon={<ChartColumn size={iconSize.secondary} color={colors.secondary} />}
+                        onPress={() => router.push('/settings/listeningView')}
                     />
                     <SettingsDivider />
                     <SettingsRow

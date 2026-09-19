@@ -593,6 +593,30 @@
         "serverDescription": "Utiliser la recherche du serveur à la place"
       },
       "otherSources": "Autres sources"
+    },
+    "listening": {
+      "title": "Écoutes",
+      "empty": "Pas encore assez d'écoutes. Lancez quelques morceaux et tout se remplira.",
+      "allTime": "Depuis toujours",
+      "thisMonth": "30 derniers jours",
+      "plays": "Lectures",
+      "hours": "Heures",
+      "tracks": "Titres",
+      "artists": "Artistes",
+      "newToYou": "Nouveautés",
+      "streak": "Jours d'affilée",
+      "finished": "Écoutés en entier",
+      "whenYouListen": "Quand vous écoutez",
+      "howItEnds": "Fin des titres",
+      "playedThrough": "Écoutés jusqu'au bout",
+      "skipped": "Passés",
+      "clear": "Supprimer l'historique d'écoute",
+      "privacy": "Comptabilisé sur cet appareil, à partir de cet appareil. Rien n'est envoyé ailleurs.",
+      "worthRevisiting": "À redécouvrir",
+      "forgotten": "Mis de côté",
+      "longestGap": "Jours sans écoute",
+      "topArtists": "Vos artistes",
+      "topTracks": "Vos titres"
     }
   },
   "common": {

@@ -33,6 +33,15 @@ export const spacing = {
   generous: 48,
   /** The two detail-header skeletons, clearing a nav bar that overlays them. */
   headerOffset: 60,
+  /**
+   * The listening clock's plot area — twenty-four hour bars.
+   *
+   * Its own role rather than a reuse of `headerOffset`, which is the same
+   * number today and means something unrelated: one is breathing room under a
+   * nav bar, the other is how tall a chart reads. Tying them together would
+   * make a nav-bar tweak silently resize a graph.
+   */
+  chartHeight: 60,
 } as const;
 
 export const motion = {
