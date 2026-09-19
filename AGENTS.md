@@ -141,6 +141,21 @@ which failed on *both* platforms without a byte reaching either store — after 
   newer; that release waits for the checksum/status and removes failed pending
   uploads before retrying (fastlane #30094/#30150).
 
+**Screenshots upload on a release, not on a hand-run build.** `ci_ios` reads
+`YUZIC_UPLOAD_SCREENSHOTS`, which `ios-build.yml` sets true for everything
+except `workflow_dispatch`. The reason is the one above restated: the upload
+carries the screenshots *and* the binary, screenshots first, so anything the
+store refuses there loses a fully archived build. On 2026-09-19 two dispatched
+builds off `dev` died fifteen minutes in with `Failed verification of all
+screenshots deleted... 10 screenshot(s) still exist` — App Store Connect would
+not confirm the deletion it had been asked for. A dev build has no reason to
+replace the public listing, so it no longer tries.
+
+**This does not fix the refusal, and a release will still meet it.** If a
+version bump fails that way, the listing state on App Store Connect is what
+needs attention — not the build. Re-running will not help; it failed twice in
+a row from a clean archive.
+
 Run `python3 tools/store-screenshots/publish.py --check` before a release. It
 asserts the exact store sizes for the screenshots *and* for Play's icon and
 feature graphic, because every one of these rejections lands **after** the

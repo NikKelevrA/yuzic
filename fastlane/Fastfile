@@ -251,7 +251,23 @@ platform :ios do
       # otherwise — after the whole build has run. compose.py exports at the
       # store size for that reason (the iPad artboard is 2064x2752 while the
       # store wants 2048x2732), and publish.py asserts it before copying.
-      skip_screenshots: false,
+      # Only on the release path. `upload_to_app_store` does the screenshots
+      # *and* the binary, and the screenshots go first — so anything wrong with
+      # them loses the build too, after a full archive. That is how 2.2.0 died
+      # on both platforms, and on 2026-09-19 it happened again from the other
+      # direction: App Store Connect would not confirm the existing images had
+      # been deleted ("10 screenshot(s) still exist"), twice in a row, fifteen
+      # minutes of compile discarded each time.
+      #
+      # A manually dispatched build has no business replacing the public
+      # listing anyway. The listing should follow a *release*, which is what
+      # the version-bump path is, and a dev build off `dev` gains nothing from
+      # touching it while carrying the whole risk. So the dispatch path skips
+      # them and the release path is unchanged.
+      #
+      # Note this does not fix the underlying refusal — a release will still
+      # meet it. It stops that being every build's problem.
+      skip_screenshots: ENV["YUZIC_UPLOAD_SCREENSHOTS"] != "true",
       overwrite_screenshots: true,
       # deliver renders a Preview.html and asks "Does the Preview ... look okay
       # for you?" whenever it uploads screenshots. On a runner nobody can
