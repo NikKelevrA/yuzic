@@ -1,4 +1,4 @@
-import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
+import { contentWidth, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import React, { useRef } from 'react';
 import { View, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { CloudOff, SlidersHorizontal, Search as SearchIcon, X } from 'lucide-react-native';
@@ -171,5 +171,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: spacing.sm,
     paddingBottom: 0,
+    // Results are rows; rows are capped and centred like every other column
+    // of them. The field above stays the width of the window.
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
   },
 });

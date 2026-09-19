@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { View } from 'react-native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +17,7 @@ import PlaylistEditList from '../EditList';
 import PlaylistOptions from '@/components/options/PlaylistOptions';
 import { DetailScreen } from '@/components/DetailHeader';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
+import { useContentInset } from '@/features/layout/useContentInset';
 
 type Props = {
   playlist: Playlist;
@@ -29,6 +31,7 @@ type ListItem = SongItem | SkeletonItem;
 
 const PlaylistContent: React.FC<Props> = ({ playlist, songs, songsLoading }) => {
   const scrollClearance = useScrollClearance();
+  const { listInset, fullBleed } = useContentInset();
   const { t } = useTranslation();
   const { songs: starredSongs } = useStarredSongs();
   const optionsRef = useRef<BottomSheetModal>(null);
@@ -76,10 +79,18 @@ const PlaylistContent: React.FC<Props> = ({ playlist, songs, songsLoading }) => 
         data={items}
         keyExtractor={(item, index) => item.type === 'song' ? `${item.song.localId}:${index}` : item.id}
         renderItem={renderItem}
-        ListHeaderComponent={<Header playlist={playlist} songs={songs} showNavigation={false} onOptions={() => optionsRef.current?.present()} />}
-        ListFooterComponent={<RecommendedSection playlist={playlist} songs={songs} />}
+        ListHeaderComponent={
+          <View style={fullBleed}>
+            <Header playlist={playlist} songs={songs} showNavigation={false} onOptions={() => optionsRef.current?.present()} />
+          </View>
+        }
+        ListFooterComponent={
+          <View style={fullBleed}>
+            <RecommendedSection playlist={playlist} songs={songs} />
+          </View>
+        }
         ListEmptyComponent={songsLoading ? null : <SectionEmptyState message={t('playlist.empty')} />}
-        contentContainerStyle={{ paddingBottom: scrollClearance }}
+        contentContainerStyle={{ paddingBottom: scrollClearance, ...listInset }}
         showsVerticalScrollIndicator={false}
         {...scroll}
       />

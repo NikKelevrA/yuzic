@@ -14,9 +14,9 @@ import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import {
   SECTION_H_PADDING as H_PADDING,
   SECTION_GRID_GAP,
-  SECTION_VISIBLE_ITEMS,
   STALE_DEEZER_CHARTS,
 } from '@/features/home/constants'
+import { getSectionItemWidth } from './sectionStyles'
 import OptionsTile from './OptionsTile'
 import SkeletonTiles from '@/components/SkeletonTiles'
 import type { Artist } from '@/domain/entities/Artist'
@@ -33,7 +33,7 @@ export default function TopArtistsSection({ refreshKey = 0 }: Props) {
   const { navigateToArtist } = useMatchedNavigation()
 
   const gridItemWidth = useMemo(
-    () => (screenWidth - H_PADDING * 2 - SECTION_GRID_GAP * 2) / SECTION_VISIBLE_ITEMS,
+    () => getSectionItemWidth(screenWidth),
     [screenWidth]
   )
 

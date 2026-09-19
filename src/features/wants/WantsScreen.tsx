@@ -13,12 +13,12 @@ import WantsPickSheet, { type WantsPickHandle, type WantsPickOption } from './Wa
 import { WantOptions } from '@/components/options/WantOptions';
 import LibraryItem from '@/features/library/components/Items/LibraryItem';
 import { gridItemWidth, libraryGutter, GRID_SPACING } from '@/features/library/layout';
+import { useGridColumns } from '@/features/layout/useGridColumns';
 import { useTheme } from '@/features/theme/useTheme';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { iconSize } from '@/constants/design';
 import {
-  selectGridColumns,
   selectLibraryViewMode,
   setLibraryViewMode,
 } from '@/features/settings/appearance/state';
@@ -68,7 +68,7 @@ const WantsScreen: React.FC = () => {
   const wants = useSelector(selectWantsForActiveServer);
   const activeServerId = useSelector(selectActiveServerId);
   const isGridView = useSelector(selectLibraryViewMode('wants'));
-  const gridColumns = useSelector(selectGridColumns);
+  const gridColumns = useGridColumns();
   const { width: screenWidth } = useWindowDimensions();
   const statusOf = useWantRowStatus();
   const { navigateToAlbum, navigateToArtist } = useMatchedNavigation();

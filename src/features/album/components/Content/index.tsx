@@ -31,6 +31,7 @@ import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { DetailScreen } from '@/components/DetailHeader';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
+import { useContentInset } from '@/features/layout/useContentInset';
 
 type Props = {
   model: AlbumScreenModel;
@@ -54,6 +55,7 @@ type ListItem = DiscHeader | SongItem | SkeletonItem;
  */
 const AlbumContent: React.FC<Props> = ({ model }) => {
   const scrollClearance = useScrollClearance();
+  const { listInset, fullBleed } = useContentInset();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const rad = useRadius();
@@ -231,9 +233,13 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
           (layout as { size?: number }).size =
             item.type === 'disc-header' ? ALBUM_DISC_HEADER_HEIGHT : ALBUM_ESTIMATED_ROW_HEIGHT;
         }}
-        ListHeaderComponent={<AlbumHeader model={model} showNavigation={false} />}
-        ListFooterComponent={footer}
-        contentContainerStyle={{ paddingBottom: scrollClearance }}
+        ListHeaderComponent={
+          <View style={fullBleed}>
+            <AlbumHeader model={model} showNavigation={false} />
+          </View>
+        }
+        ListFooterComponent={<View style={fullBleed}>{footer}</View>}
+        contentContainerStyle={{ paddingBottom: scrollClearance, ...listInset }}
         showsVerticalScrollIndicator={false}
         {...scroll}
       />

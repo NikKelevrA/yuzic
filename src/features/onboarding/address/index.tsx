@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TextInput,
+  ScrollView,
   StyleSheet,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -68,7 +69,15 @@ export default function Address() {
     return (
         <>
             <SafeAreaView style={styles.container}>
-                <View style={{ flex: 1 }}>
+                {/* The column still fills the screen when it fits, so nothing
+                    moves; it scrolls only once it cannot. A phone on its side is
+                    390pt tall and the keyboard takes half of that, which used to
+                    leave the button that moves the flow on below both. */}
+                <ScrollView
+                  contentContainerStyle={styles.form}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
                     <View style={styles.mainContent}>
                         <Text style={styles.title}>{t('onboarding.address.title')}</Text>
                         <Text style={styles.subtitle}>{t('onboarding.address.subtitle')}</Text>
@@ -132,7 +141,7 @@ export default function Address() {
                             <Text style={styles.backButtonText}>{t('common.back')}</Text>
                         </Touchable>
                     </View>
-                </View>
+                </ScrollView>
             </SafeAreaView>
 
             <BottomSheetModal
@@ -189,6 +198,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: onDark.background,
+    },
+    /** What the `flex: 1` column was, as a scroll view's content. */
+    form: {
+        flexGrow: 1,
     },
     mainContent: {
         flexGrow: 1,

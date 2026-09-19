@@ -12,7 +12,7 @@ import { useDownloaderStates } from '@/features/downloaders/registry';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useTheme } from '@/features/theme/useTheme';
-import { iconSize } from '@/constants/design';
+import { contentWidth, iconSize } from '@/constants/design';
 import DownloaderQueueSection from './DownloaderQueueSection';
 
 /**
@@ -74,7 +74,7 @@ const DownloadsScreen: React.FC = () => {
           action={{ label: t('downloads.setUpDownloader'), onPress: () => router.push('/settings/connectionsView') }}
         />
       ) : (
-        <ScrollView contentContainerStyle={{ paddingBottom: scrollClearance }}>
+        <ScrollView contentContainerStyle={[styles.queues, { paddingBottom: scrollClearance }]}>
           {connected.map(state => {
             const snapshot = queues.find(queue => queue.id === state.def.id);
             return (
@@ -112,4 +112,11 @@ export default DownloadsScreen;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  // A downloader's queue is a column of rows, capped and centred like the
+  // rest of them rather than stretched across a tablet.
+  queues: {
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
+  },
 });

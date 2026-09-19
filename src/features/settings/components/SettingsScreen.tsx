@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Platform, ViewStyle, type ScrollViewProps } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/features/theme/useTheme';
 import Header from './Header';
-import { spacing } from '@/constants/design';
+import { contentWidth, spacing } from '@/constants/design';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 
 type Props = {
@@ -77,5 +77,13 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: {
     padding: spacing.lg,
+    // Every settings screen is a single column of cards, and a card 1300pt
+    // wide with a switch at one end and its label at the other is unreadable
+    // in the specific way that says "phone app on a tablet". Capped and
+    // centred; on a phone the window is always the smaller of the two and
+    // nothing moves.
+    width: '100%',
+    maxWidth: contentWidth.readable,
+    alignSelf: 'center',
   },
 });

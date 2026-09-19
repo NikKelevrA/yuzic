@@ -11,7 +11,6 @@ import { spacing } from '@/constants/design'
  */
 export const SECTION_H_PADDING = spacing.page
 export const SECTION_GRID_GAP = spacing.md
-export const SECTION_VISIBLE_ITEMS = 2.5
 
 /**
  * Shared stale-time values for Deezer explore section queries.
