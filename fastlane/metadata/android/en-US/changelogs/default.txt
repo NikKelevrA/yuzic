@@ -1,6 +1,6 @@
-Rate your music, and turn your phone on its side.
+Rate your music, turn your phone on its side, and get what you're missing.
 
-- Five stars on the player, in song and album options, and as a library sort order — kept on your server, wherever your server keeps ratings
-- The app lays itself out for the window it is in. Landscape, iPad Split View and foldables get their own layout instead of a stretched portrait one, and the player has a second shape on its side
-- A wider window shows more artwork, not bigger
-- Screen readers name controls they used to skip
+- Five stars on the player, in song and album options, and as a library sort order, kept on your server
+- Landscape, iPad Split View and foldables get a layout of their own, and the player a second shape
+- Get and Want now sit on the artist or album screen itself, not behind a menu
+- Sending an album to a downloader no longer traps you in a sheet: it closes, and reports as it goes
