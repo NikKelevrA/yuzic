@@ -64,6 +64,7 @@ function harness(over: Partial<{
   currentIndex: number;
   returns: Song[];
   noProvider: boolean;
+  rankForListener: AutoplayDeps['rankForListener'];
   fails: boolean;
 }> = {}) {
   let queue = over.queue ?? [resource('1'), resource('2'), resource('3')];
@@ -114,6 +115,10 @@ function harness(over: Partial<{
       });
     },
     logWarning: message => { warnings.push(message); },
+    // Identity by default: these tests are about when autoplay fetches and
+    // where it puts what it gets, not about the ranking policy, which has its
+    // own suite. A test that cares passes its own.
+    rankForListener: over.rankForListener ?? (candidates => candidates),
   };
 
   return {
@@ -327,5 +332,41 @@ describe('play similar', () => {
     const h = harness({ returns: [] });
 
     await expect(h.coordinator.relatedTo(song('7'), 20)).resolves.toEqual([]);
+  });
+});
+
+/**
+ * The seam between the provider and the listener.
+ *
+ * The coordinator must hand the fetched batch to the ranker and queue what
+ * comes back — not the batch it fetched. Without this the whole listening
+ * history is computed, passed in, and dropped on the floor, which is a fault
+ * that looks exactly like working code.
+ */
+describe('ranking the fetched batch', () => {
+  it('queues the order the ranker returned, not the order the provider sent', async () => {
+    const h = harness({
+      returns: [song('x'), song('y'), song('z')],
+      rankForListener: candidates => [...candidates].reverse(),
+    });
+
+    await h.coordinator.fillQueueIfLow();
+
+    expect(ids(h.queue).slice(-3)).toEqual(['z', 'y', 'x']);
+  });
+
+  it('tells the ranker which track the queue is continuing from', async () => {
+    let seenAfter: string | null = null;
+    const h = harness({
+      returns: [song('x')],
+      rankForListener: (candidates, after) => {
+        seenAfter = after?.song.nativeId ?? null;
+        return candidates;
+      },
+    });
+
+    await h.coordinator.fillQueueIfLow();
+
+    expect(seenAfter).toBe(h.queue[0].song.nativeId);
   });
 });

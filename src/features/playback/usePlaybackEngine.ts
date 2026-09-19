@@ -10,6 +10,7 @@ import { ownsPlayback } from '@/features/player/playbackSink';
 import { usePlayerActiveItem } from '@/features/player/usePlayerState';
 import { selectAutoplayEnabled, selectPlaybackSpeeds } from '@/features/settings/playback/state';
 import { createAutoplayCoordinator } from './autoplayCoordinator';
+import { useListenerRanking } from '@/features/listening/useListenerRanking';
 import { createPlaybackCoordinator } from './playbackCoordinator';
 import { createPlaybackEventHandlers } from './playbackEvents';
 import { captureOutgoingScrobble, deferOffTrackChange } from './outgoingScrobble';
@@ -87,8 +88,22 @@ export function usePlaybackEngine(
   }, [resetLastScrobbled, session, sinkLoadQueue, sinkRef, toMediaItems]);
   const loadQueueRef = useLatestRef(loadQueue);
 
+  /*
+   Through a ref, like `loadQueue` above and for the same reason.
+
+   The ranking function's identity changes whenever the listening log does —
+   once per track — and the coordinator is memoised on a list that does not
+   include it. Passed directly it would be captured once and never replaced,
+   so autoplay would rank against whatever the graph held at mount: empty, on
+   every cold start. Adding it to the dependency list instead would rebuild
+   the coordinator every track and discard its in-flight `filling` guard with
+   it, which is the other way to get this wrong.
+  */
+  const rankForListenerRef = useLatestRef(useListenerRanking());
+
   /** Autoplay and Smart Shuffle: both extend the queue with tracks nobody chose. */
   const autoplay = useMemo(() => createAutoplayCoordinator({
+    rankForListener: (candidates, after) => rankForListenerRef.current(candidates, after),
     backend: getBackend,
     providers: () => queueFillProviders.current,
     queue: session.queue,
@@ -102,7 +117,7 @@ export function usePlaybackEngine(
     loadQueue: (queue, startIndex, play, seekToPosition) =>
       loadQueueRef.current(queue, startIndex, play, seekToPosition),
     logWarning: (message, error) => console.warn(message, error),
-  }), [loadQueueRef, queueFillProviders, resolve, session, toMediaItems]);
+  }), [loadQueueRef, rankForListenerRef, queueFillProviders, resolve, session, toMediaItems]);
   const autoplayRef = useLatestRef(autoplay);
 
   const removeFailedCurrentTrack = useCallback(() => {
