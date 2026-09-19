@@ -974,7 +974,8 @@
         "weeklyJams": "Weekly Jams",
         "weeklyExploration": "Weekly Exploration"
       },
-      "continuePlaying": "Pick back up"
+      "continuePlaying": "Pick back up",
+      "setAside": "Set aside"
     },
     "empty": {
       "recentlyAdded": "No albums in your library yet"

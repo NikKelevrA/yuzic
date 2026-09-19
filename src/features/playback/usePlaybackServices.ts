@@ -15,12 +15,27 @@ export type PlaybackServices = ReturnType<typeof usePlaybackServices>;
  * one of these hooks returns a new object.
  */
 export function usePlaybackServices() {
-  const { scrobbleIfNeeded, submitNowPlaying, reportPlaybackProgress, resetLastScrobbled } = useScrobbling();
+  const {
+    scrobbleIfNeeded,
+    submitNowPlaying,
+    reportPlaybackProgress,
+    resetLastScrobbled,
+    markInterrupted,
+  } = useScrobbling();
   const scrobble = useLatestRef(scrobbleIfNeeded);
   const nowPlaying = useLatestRef(submitNowPlaying);
   const bookmarks = useLatestRef(useBookmarkManager());
   const queueSync = useLatestRef(useQueueSync());
   const persistence = useLatestRef(usePlaybackPersistence());
 
-  return { scrobble, nowPlaying, bookmarks, queueSync, persistence, reportPlaybackProgress, resetLastScrobbled };
+  return {
+    scrobble,
+    nowPlaying,
+    bookmarks,
+    queueSync,
+    persistence,
+    reportPlaybackProgress,
+    resetLastScrobbled,
+    markInterrupted,
+  };
 }

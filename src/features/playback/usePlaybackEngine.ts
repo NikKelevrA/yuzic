@@ -50,7 +50,9 @@ export function usePlaybackEngine(
   const playbackSpeeds = useLatestRef(useSelector(selectPlaybackSpeeds));
   const activeMediaItem = usePlayerActiveItem();
   const { toMediaItems, resolve, queueFillProviders } = resources;
-  const { scrobble, nowPlaying, bookmarks, queueSync, persistence, resetLastScrobbled } = services;
+  const {
+    scrobble, nowPlaying, bookmarks, queueSync, persistence, resetLastScrobbled, markInterrupted,
+  } = services;
 
   /**
    * Records the listen that is ending, attributed to the collection it came
@@ -170,9 +172,16 @@ export function usePlaybackEngine(
 
   useEffect(() => getBackend().addListener(event => {
     switch (event.type) {
-      case 'error':
+      case 'error': {
+        // Said before the failure is handled, because handling it drops the
+        // track and that is what writes the listen down. Without it a lost
+        // stream is recorded as a skip, and the app concludes the listener
+        // dislikes whatever was playing when their connection went.
+        const failed = session.currentResource();
+        if (failed) markInterrupted(failed.song.nativeId);
         eventsRef.current.onError(event);
         return;
+      }
       case 'stateChange':
         session.setBuffering(event.buffering);
         return;

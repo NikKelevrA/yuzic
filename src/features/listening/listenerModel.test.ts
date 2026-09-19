@@ -1,6 +1,13 @@
 import type { EntityTotals } from '@/state/redux/slices/listeningSlice';
 import type { ListenEvent } from './listeningEvent';
-import { ENOUGH_TO_KNOW, UNINFORMED_MODEL, buildListenerModel } from './listenerModel';
+import {
+  CONFIDENT_AT,
+  ENOUGH_TO_KNOW,
+  MINIMUM_INFLUENCE,
+  UNINFORMED_MODEL,
+  buildListenerModel,
+  confidenceFrom,
+} from './listenerModel';
 
 const NOW = 1_700_000_000_000;
 const DAY = 24 * 60 * 60 * 1000;
@@ -11,8 +18,8 @@ const totals = (over: Partial<EntityTotals> = {}): EntityTotals => ({
   ...over,
 });
 
-/** Enough events that the model considers itself informed. */
-function filler(count = ENOUGH_TO_KNOW): ListenEvent[] {
+/** By default enough events that the model is at full confidence. */
+function filler(count = CONFIDENT_AT): ListenEvent[] {
   return Array.from({ length: count }, (_, i) => ({
     at: NOW - (count - i) * 60_000,
     track: `s1:filler${i}`,
@@ -26,7 +33,7 @@ function filler(count = ENOUGH_TO_KNOW): ListenEvent[] {
 const model = (over: { events?: ListenEvent[]; totals?: Record<string, EntityTotals> } = {}) =>
   buildListenerModel({
     events: over.events ?? filler(),
-    totals: over.totals ?? {},
+    rollups: { track: over.totals ?? {}, album: {}, artist: {}, playlist: {} },
     now: NOW,
   });
 
@@ -48,6 +55,56 @@ describe('buildListenerModel', () => {
   it('reports whether it knows enough to be worth asking', () => {
     expect(model({ events: filler(ENOUGH_TO_KNOW - 1) }).informed).toBe(false);
     expect(model({ events: filler(ENOUGH_TO_KNOW) }).informed).toBe(true);
+  });
+});
+
+/**
+ * A threshold alone is a cliff: at nineteen events nothing is personalised and
+ * at twenty every queue reorders at once, which is a visible jump with no
+ * reason behind it except where the constant landed.
+ */
+describe('confidenceFrom', () => {
+  it('says nothing below the threshold', () => {
+    expect(confidenceFrom(0)).toBe(0);
+    expect(confidenceFrom(ENOUGH_TO_KNOW - 1)).toBe(0);
+  });
+
+  /**
+   * Without a floor, a linear ramp from zero would make the threshold
+   * meaningless — the first event past it would still change nothing.
+   */
+  it('starts small rather than at nothing', () => {
+    expect(confidenceFrom(ENOUGH_TO_KNOW)).toBe(MINIMUM_INFLUENCE);
+  });
+
+  it('rises with the history and stops at full', () => {
+    const early = confidenceFrom(ENOUGH_TO_KNOW + 40);
+    const later = confidenceFrom(ENOUGH_TO_KNOW + 120);
+    expect(later).toBeGreaterThan(early);
+    expect(confidenceFrom(CONFIDENT_AT)).toBe(1);
+    expect(confidenceFrom(CONFIDENT_AT * 10)).toBe(1);
+  });
+});
+
+describe('the ramp in practice', () => {
+  const skipped = totals({ plays: 1, starts: 20, rejections: 18, lastAt: daysAgo(2) });
+
+  it('barely moves anything on a young history', () => {
+    const m = buildListenerModel({
+      events: filler(ENOUGH_TO_KNOW),
+      rollups: { track: { skipped }, album: {}, artist: {}, playlist: {} },
+      now: NOW,
+    });
+    expect(m.order(['skipped', 'other'], k => k, 'continue')).toEqual(['skipped', 'other']);
+  });
+
+  it('moves it once there is enough history to mean it', () => {
+    const m = buildListenerModel({
+      events: filler(CONFIDENT_AT),
+      rollups: { track: { skipped }, album: {}, artist: {}, playlist: {} },
+      now: NOW,
+    });
+    expect(m.order(['skipped', 'other'], k => k, 'continue')).toEqual(['other', 'skipped']);
   });
 });
 
@@ -112,6 +169,48 @@ describe('order', () => {
       Array.from({ length: 12 }, () => m.order(items, keyOf, 'shuffle').join()),
     );
     expect(orders.size).toBeGreaterThan(1);
+  });
+});
+
+describe('scopes', () => {
+  /**
+   * A key carries no kind, so a caller ordering albums has to say so. Getting
+   * it wrong is silent — the model reports knowing nothing and leaves the list
+   * alone, which looks exactly like working code.
+   */
+  it('reads the rollup the caller named', () => {
+    const m = buildListenerModel({
+      events: filler(),
+      rollups: {
+        track: {},
+        album: { 'srv:al1': totals({ plays: 40, lastAt: daysAgo(1) }) },
+        artist: {},
+        playlist: {},
+      },
+      now: NOW,
+    });
+    expect(m.affinityOf('srv:al1', 'album')).toBeGreaterThan(0);
+    // The same key against the default scope finds nothing, rather than
+    // borrowing the album's numbers.
+    expect(m.affinityOf('srv:al1')).toBe(0);
+  });
+
+  it('ranks albums by their own history', () => {
+    const m = buildListenerModel({
+      events: filler(),
+      rollups: {
+        track: {},
+        album: {
+          cold: totals({ plays: 1, lastAt: daysAgo(400) }),
+          warm: totals({ plays: 40, lastAt: daysAgo(1) }),
+        },
+        artist: {},
+        playlist: {},
+      },
+      now: NOW,
+    });
+    expect(m.order(['cold', 'warm'], keyOf, 'favourite', { scope: 'album' }))
+      .toEqual(['warm', 'cold']);
   });
 });
 

@@ -4,7 +4,7 @@ import type { PlayableResource } from '@/features/playback/playableResource';
 import type { Song } from '@/domain/entities/Song';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { ListenerModel } from '@/features/listening/listenerModel';
-import { songKey } from '@/features/listening/listenerKey';
+import { entityKey } from '@/features/listening/listenerKey';
 import { playableOnly } from '@/features/playback/playableResource';
 import { buildFillRequest } from './autoplayFill';
 import { tagSegment, type QueueSegment } from './playingQueue';
@@ -141,14 +141,14 @@ export function createAutoplayCoordinator(deps: AutoplayDeps): AutoplayCoordinat
   /**
  * How a queue entry is named to the listener model.
  *
- * Through `songKey`, which is the same function the log is written with. This
+ * Through `entityKey`, which is the same function the log is written with. This
  * was briefly `localId` — which also carries provenance and reads tidier — and
  * that was a silent bug: the log is keyed `serverId:nativeId`, so every lookup
  * missed, the model reported knowing nothing about everything, and each of
  * these orderings quietly became the identity. Nothing threw and every gate
  * passed.
  */
-const keyOfResource = (resource: PlayableResource): string => songKey(resource.song);
+const keyOfResource = (resource: PlayableResource): string => entityKey(resource.song);
 
 /** The tracks both features start from, or an empty list if there is nothing to add. */
   const nextTracks = async (): Promise<PlayableResource[]> => {

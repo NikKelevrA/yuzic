@@ -969,7 +969,8 @@
         "weeklyJams": "ウィークリージャム",
         "weeklyExploration": "ウィークリーエクスプロレーション"
       },
-      "continuePlaying": "続きから"
+      "continuePlaying": "続きから",
+      "setAside": "しばらく聴いていない"
     },
     "empty": {
       "recentlyAdded": "ライブラリにアルバムがありません"

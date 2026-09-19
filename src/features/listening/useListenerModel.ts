@@ -24,11 +24,18 @@ import {
  */
 export function useListenerModel(): ListenerModel {
   const events = useSelector((state: RootState) => state.listening.events);
-  const totals = useSelector((state: RootState) => state.listening.totals);
+  const track = useSelector((state: RootState) => state.listening.totals);
+  const album = useSelector((state: RootState) => state.listening.albums);
+  const artist = useSelector((state: RootState) => state.listening.artists);
+  const playlist = useSelector((state: RootState) => state.listening.playlists);
   const activeServer = useSelector(selectActiveServer);
 
   return useMemo(() => {
     if (!activeServer?.id) return UNINFORMED_MODEL;
-    return buildListenerModel({ events, totals, now: Date.now() });
-  }, [events, totals, activeServer?.id]);
+    return buildListenerModel({
+      events,
+      rollups: { track, album, artist, playlist },
+      now: Date.now(),
+    });
+  }, [events, track, album, artist, playlist, activeServer?.id]);
 }

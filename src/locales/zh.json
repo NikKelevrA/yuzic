@@ -969,7 +969,8 @@
         "weeklyJams": "每周金曲",
         "weeklyExploration": "每周探索"
       },
-      "continuePlaying": "继续播放"
+      "continuePlaying": "继续播放",
+      "setAside": "许久未听"
     },
     "empty": {
       "recentlyAdded": "媒体库中暂无专辑"

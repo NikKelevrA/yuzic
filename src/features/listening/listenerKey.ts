@@ -1,5 +1,11 @@
-import type { Song } from '@/domain/entities/Song';
+import type { Provenance } from '@/domain/identity/Provenance';
 import { provenanceScope } from '@/domain/identity/Provenance';
+
+/** Anything the log can be keyed by: it needs an id and where it came from. */
+interface Identified {
+  nativeId: string;
+  provenance: Provenance;
+}
 
 /**
  * The one name a thing goes by in the listening log.
@@ -25,9 +31,9 @@ function listenerKey(serverId: string, nativeId: string): string {
   return `${serverId}:${nativeId}`;
 }
 
-/** The key for a song, from the provenance it already carries. */
-export function songKey(song: Pick<Song, 'nativeId' | 'provenance'>): string {
-  return listenerKey(provenanceScope(song.provenance), song.nativeId);
+/** The key for a song, album or artist, from the provenance it carries. */
+export function entityKey(entity: Identified): string {
+  return listenerKey(provenanceScope(entity.provenance), entity.nativeId);
 }
 
 /**
@@ -41,7 +47,7 @@ export function songKey(song: Pick<Song, 'nativeId' | 'provenance'>): string {
  * in half at the moment somebody most wants it whole.
  */
 export function relatedKey(
-  song: Pick<Song, 'provenance'>,
+  song: Pick<Identified, 'provenance'>,
   nativeId: string | undefined,
 ): string | undefined {
   return nativeId ? listenerKey(provenanceScope(song.provenance), nativeId) : undefined;

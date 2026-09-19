@@ -32,6 +32,14 @@ export interface RankingContext {
   graph: SequenceGraph;
   totals: Record<string, EntityTotals>;
   now: number;
+  /**
+   * How much the history is worth listening to, 0..1 — see
+   * `listenerModel.confidenceFrom`.
+   *
+   * Scales every adjustment, so influence arrives gradually rather than
+   * switching on. Defaults to full for callers that have already decided.
+   */
+  confidence?: number;
 }
 
 /**
@@ -65,13 +73,13 @@ const MAX_REJECTION_PENALTY = 4;
  * comes out exactly as the provider sent it.
  */
 function positionDelta(key: string, context: RankingContext): number {
-  const { after, graph, totals } = context;
+  const { after, graph, totals, confidence = 1 } = context;
 
   const habit = after ? sequenceWeight(graph, after, key) : 0;
   const boost = habit > 0 ? -Math.min(MAX_SEQUENCE_BOOST, habit) : 0;
 
   const entry = totals[key];
-  if (!entry) return boost;
+  if (!entry) return boost * confidence;
 
   // `listenQuality` is 1 for a track never abandoned and 0.2 for one always
   // abandoned, so this is 0 and 4 at the ends.
@@ -93,7 +101,7 @@ function positionDelta(key: string, context: RankingContext): number {
    A habit is not familiarity: "you play B after A" is a fact about sequence,
    not about volume, and it is the one this file is for.
   */
-  return boost + penalty;
+  return (boost + penalty) * confidence;
 }
 
 /**

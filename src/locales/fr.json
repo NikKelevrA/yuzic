@@ -972,7 +972,8 @@
         "weeklyJams": "Jams hebdomadaires",
         "weeklyExploration": "Exploration hebdomadaire"
       },
-      "continuePlaying": "Reprendre"
+      "continuePlaying": "Reprendre",
+      "setAside": "Mis de côté"
     },
     "empty": {
       "recentlyAdded": "Aucun album dans votre bibliothèque pour le moment"

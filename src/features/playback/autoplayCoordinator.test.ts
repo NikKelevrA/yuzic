@@ -8,7 +8,7 @@ import { segmentAt } from './playingQueue';
 import type { QueueFillProvider } from './queueProviders';
 import { createAutoplayCoordinator, type AutoplayDeps } from './autoplayCoordinator';
 import { UNINFORMED_MODEL, type ListenerModel } from '@/features/listening/listenerModel';
-import { songKey } from '@/features/listening/listenerKey';
+import { entityKey } from '@/features/listening/listenerKey';
 
 jest.mock('@/features/playback/shuffleArray', () => ({
   // Identity, so the tests can assert on *which* tracks ended up where
@@ -389,7 +389,7 @@ describe('asking the listener model', () => {
     await h.coordinator.fillQueueIfLow();
 
     expect(purposes).toContain('continue');
-    expect(seenAfter).toBe(songKey(h.queue[0].song));
+    expect(seenAfter).toBe(entityKey(h.queue[0].song));
   });
 
   /**

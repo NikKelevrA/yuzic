@@ -18,6 +18,7 @@ import QuickPicksSection from './components/QuickPicksSection'
 import RecentlyPlayed from './components/RecentlyPlayed'
 import RecentlyAdded from './components/RecentlyAdded'
 import MostPlayedAlbums from './components/MostPlayedAlbums'
+import SetAsideAlbums from './components/SetAsideAlbums'
 import BecauseYouListenedSection from './components/BecauseYouListenedSection'
 import TopArtistsSection from './components/TopArtistsSection'
 import ChartsSection from './components/ChartsSection'
@@ -49,6 +50,8 @@ function renderSection(config: SectionConfig, refreshKey: number) {
       return <RecentlyAdded key={config.key} />
     case 'mostPlayed':
       return <MostPlayedAlbums key={config.key} />
+    case 'setAside':
+      return <SetAsideAlbums key={config.key} />
     case 'charts':
       return <ChartsSection key={config.key} refreshKey={refreshKey} />
     case 'topArtists':

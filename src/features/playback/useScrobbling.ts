@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { Song } from '@/domain/entities/Song';
 import { recordListen } from '@/state/redux/slices/listeningSlice';
 import { endingFrom } from '@/features/listening/listeningEvent';
-import { relatedKey, songKey } from '@/features/listening/listenerKey';
+import { relatedKey, entityKey } from '@/features/listening/listenerKey';
 import {
   buildScrobbleMutation,
   type ScrobbleDestination,
@@ -56,10 +56,31 @@ export function useScrobbling() {
    sitting is two listens, which it is.
   */
   const lastRecordedRef = useRef<string | null>(null);
+  /*
+   The track the player last failed on, if it has not been written down yet.
+
+   `endingFrom` can only tell `finished` from `skipped`, because a position is
+   all it has and a lost stream looks exactly like somebody pressing next. Only
+   the error path knows the difference, so it says so here and the recording
+   reads it.
+
+   It matters more than it sounds. Without this every dropped stream is filed
+   as a skip, and a skip past eight seconds is a *rejection* — so the listener
+   whose connection drops has the app conclude they dislike whatever was
+   playing when it did. That is precisely backwards, and it mislearns hardest
+   about the people with the worst connections.
+  */
+  const interruptedIdRef = useRef<string | null>(null);
 
   const resetLastScrobbled = useCallback(() => {
     lastScrobbledIdRef.current = null;
     lastRecordedRef.current = null;
+    interruptedIdRef.current = null;
+  }, []);
+
+  /** Told by the error path that this track did not end by choice. */
+  const markInterrupted = useCallback((nativeId: string) => {
+    interruptedIdRef.current = nativeId;
   }, []);
 
   /**
@@ -127,15 +148,17 @@ export function useScrobbling() {
     if (activeServer?.id && lastRecordedRef.current !== recordKey) {
       lastRecordedRef.current = recordKey;
       const duration = song.durationSeconds || 0;
+      const interrupted = interruptedIdRef.current === song.nativeId;
+      interruptedIdRef.current = null;
       dispatch(recordListen({
         at: opts.startTime,
-        track: songKey(song),
+        track: entityKey(song),
         album: relatedKey(song, song.album.nativeId),
         artist: relatedKey(song, song.artist.nativeId),
         playlist: relatedKey(song, opts.playlistId),
         seconds: opts.listenedSeconds,
         duration,
-        ending: endingFrom(opts.listenedSeconds, duration),
+        ending: interrupted ? 'interrupted' : endingFrom(opts.listenedSeconds, duration),
       }));
     }
 
@@ -208,5 +231,11 @@ export function useScrobbling() {
     api.songs.reportPlaybackProgress?.(song.nativeId, positionMs, isPaused).catch(() => {});
   }, [plan, api]);
 
-  return { scrobbleIfNeeded, submitNowPlaying, reportPlaybackProgress, resetLastScrobbled };
+  return {
+    scrobbleIfNeeded,
+    submitNowPlaying,
+    reportPlaybackProgress,
+    resetLastScrobbled,
+    markInterrupted,
+  };
 }
