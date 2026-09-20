@@ -1,5 +1,6 @@
 import type { Album } from "@/domain/entities/Album";
 import type { Song } from "@/domain/entities/Song";
+import type { Provenance } from "@/domain/identity/Provenance";
 import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapSong } from "../mapSong";
 import { normalizeAlbum } from "../albums/getAlbums";
@@ -11,7 +12,7 @@ interface GetStarredItemsResult {
   albums: Album[];
 }
 
-async function fetchGetStarredSongs(client: MediaBrowserClient) {
+const fetchStarredSongs = (client: MediaBrowserClient, provenance: Provenance) => {
   const path =
     `/Users/${client.userId}/Items` +
     `?Recursive=true` +
@@ -20,36 +21,32 @@ async function fetchGetStarredSongs(client: MediaBrowserClient) {
     `&Fields=Id,Name,Artists,AlbumId,RunTimeTicks,ImageTags,MediaSources,Genres,PremiereDate,DateCreated`;
   // Paged for the same reason the catalog is: favourites have no ceiling
   // either, and this is one of the six resources a sync fetches.
-  return { Items: await fetchAllItems<MediaBrowserItem>(client, path) };
-}
+  return fetchAllItems<MediaBrowserItem, Song>(client, path, (s) =>
+    mapSong(s, { provenance, brand: client.brand })
+  );
+};
 
-async function fetchGetStarredAlbums(client: MediaBrowserClient) {
+const fetchStarredAlbums = (client: MediaBrowserClient) => {
   const path =
     `/Users/${client.userId}/Items` +
     `?Recursive=true` +
     `&Filters=IsFavorite` +
     `&IncludeItemTypes=MusicAlbum` +
     `&Fields=PrimaryImageTag,Genres,AlbumArtist,ArtistItems,Artists,DateCreated,ProviderIds,UserData`;
-  return { Items: await fetchAllItems<MediaBrowserItem>(client, path) };
-}
+  return fetchAllItems<MediaBrowserItem, Album>(client, path, (a) => normalizeAlbum(a, client));
+};
 
 export async function getStarredItems(
   client: MediaBrowserClient
 ): Promise<GetStarredItemsResult> {
   try {
-    const [songsRaw, albumsRaw] = await Promise.all([
-      fetchGetStarredSongs(client),
-      fetchGetStarredAlbums(client),
+    const provenance = requireProvenance(client);
+    const [songs, albums] = await Promise.all([
+      fetchStarredSongs(client, provenance),
+      fetchStarredAlbums(client),
     ]);
 
-    const provenance = requireProvenance(client);
-    const songItems = songsRaw?.Items ?? [];
-    const albumItems = albumsRaw?.Items ?? [];
-
-    return {
-      songs: songItems.map((s) => mapSong(s, { provenance, brand: client.brand })),
-      albums: albumItems.map((a) => normalizeAlbum(a, client)).filter((a): a is Album => a !== null),
-    };
+    return { songs, albums };
   } catch (error) {
     console.error(`Failed to fetch ${client.brand.label} starred items:`, error);
     return { songs: [], albums: [] };

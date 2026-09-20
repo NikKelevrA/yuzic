@@ -36,12 +36,24 @@ const MAX_PAGES = 2000;
  * the only signal every Jellyfin and Emby build gives reliably.
  * `TotalRecordCount` is used when present, as a second way to stop early, but
  * never as the only one: it is absent from some responses and wrong on others.
+ *
+ * **`map` runs per page, and that is the point.** It used to return the raw
+ * DTOs for the caller to map afterwards, so for a moment every DTO and every
+ * entity was alive at once — and a Jellyfin track DTO, with its
+ * `MediaSources`, `UserData` and `ArtistItems`, is the larger of the two.
+ * Mapping here lets each page's DTOs be collected as soon as the next request
+ * goes out, and the peak becomes one page plus the result. A caller that
+ * genuinely wants the DTOs passes `item => item` and says so.
+ *
+ * A `map` returning `null` drops the item, which is how the callers skip a row
+ * the server sent without an `Id`.
  */
-export async function fetchAllItems<T>(
+export async function fetchAllItems<T, R>(
   client: Pick<MediaBrowserClient, 'request'>,
-  path: string
-): Promise<T[]> {
-  const all: T[] = [];
+  path: string,
+  map: (item: T) => R | null
+): Promise<R[]> {
+  const all: R[] = [];
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const startIndex = page * PAGE_SIZE;
@@ -53,15 +65,22 @@ export async function fetchAllItems<T>(
     // Appended one at a time rather than spread: a server that ignores `Limit`
     // hands back the whole library at once, and `push(...items)` with a
     // hundred thousand arguments overflows the call stack.
-    for (const item of items) all.push(item);
+    for (const item of items) {
+      const mapped = map(item);
+      if (mapped !== null) all.push(mapped);
+    }
+
+    // Counted from the page, not from `all`: a `map` that drops rows would
+    // otherwise make a full page look short and end the walk early.
+    const received = items.length;
 
     // A server that ignored `Limit` has already given us everything there is,
     // so asking again would return the same rows forever.
-    if (items.length >= PAGE_SIZE + 1) return all;
-    if (items.length < PAGE_SIZE) return all;
+    if (received >= PAGE_SIZE + 1) return all;
+    if (received < PAGE_SIZE) return all;
 
     const total = raw?.TotalRecordCount;
-    if (typeof total === 'number' && all.length >= total) return all;
+    if (typeof total === 'number' && startIndex + received >= total) return all;
   }
 
   return all;
