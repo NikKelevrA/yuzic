@@ -136,6 +136,37 @@ describe('runCatalogSync', () => {
     expect(result.albumStats).toEqual([{ id: 'al1', playCount: 7, lastPlayedAt: 1_000 }]);
   });
 
+  it('fetches one resource at a time, with tracks last', async () => {
+    // The shape of the memory problem, as a test. All six used to be in flight
+    // together, so every response, every DTO and every mapped entity was alive
+    // until the slowest finished — which at 90,000 tracks is the crash. One at
+    // a time, largest last, is what keeps the peak to a single resource.
+    const order: string[] = [];
+    const record = <T>(name: string, value: T) => async () => {
+      order.push(`${name}:start`);
+      await Promise.resolve();
+      order.push(`${name}:end`);
+      return value;
+    };
+    const api = makeApi({
+      albums: { list: record('albums', [album('al1')]) },
+      artists: { list: record('artists', []) },
+      playlists: { list: record('playlists', []) },
+      tracks: { list: record('tracks', [] as Song[]) },
+      starred: { list: record('starred', { songs: [], albums: [] }) },
+      genres: { list: record('genres', ['Rock']) },
+    });
+
+    await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
+
+    // Never two starts in a row: each one finished before the next began.
+    const overlapping = order.filter(
+      (entry, index) => index > 0 && entry.endsWith(':start') && order[index - 1].endsWith(':start')
+    );
+    expect(overlapping).toEqual([]);
+    expect(order[order.length - 1]).toBe('tracks:end');
+  });
+
   it('reports hasData false when the server has nothing at all', async () => {
     const api = makeApi({
       albums: { list: jest.fn(async () => []) },

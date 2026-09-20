@@ -53,6 +53,20 @@ const statsFrom = (entities: readonly (Album | Song)[] | undefined): ServerStat[
       lastPlayedAt: entity.serverLastPlayedAt ?? 0,
     }));
 
+/**
+ * Smallest first, tracks last.
+ *
+ * `CATALOG_RESOURCES` is ordered for reading as a table; this is ordered for
+ * the one property that matters while a sync is running, which is how much of
+ * the library is in memory at once. Tracks is far the largest, so it goes when
+ * nothing else is in flight — and the four small resources land, and paint,
+ * before the whale starts. Same reasoning as `useCatalogHydration`, for the
+ * same resource, in the other direction.
+ */
+const SYNC_ORDER = [...CATALOG_RESOURCES].sort(
+  (left, right) => Number(left.name === 'tracks') - Number(right.name === 'tracks')
+);
+
 export async function runCatalogSync({
   queryClient,
   api,
@@ -62,9 +76,26 @@ export async function runCatalogSync({
   api: ApiAdapter;
   serverId: string;
 }): Promise<CatalogSyncResult> {
-  const settled = await Promise.allSettled(
-    CATALOG_RESOURCES.map(resource =>
-      queryClient.fetchQuery({
+  const fetched = new Map<string, unknown>();
+
+  // One at a time, each stored as it lands.
+  //
+  // This was `Promise.allSettled` over all six, which meant every resource's
+  // response, every raw DTO and every mapped entity was alive together until
+  // the slowest finished, and only then was any of it written or released. At
+  // 45,000 tracks that peak is most of the heap and at 90,000 it is the crash:
+  // Hermes aborts inside its own allocator, so nothing reaches the console.
+  // Sequential costs the sum of the fetches rather than the longest, but four
+  // of the six are small enough not to notice and the fifth is the one that
+  // was killing the app.
+  //
+  // Only what actually arrived is stored. A rejected fetch has nothing to
+  // write, and writing anyway — an empty list, or whatever the cache still
+  // held — is how one flaky endpoint would empty a user's offline library. The
+  // stored copy simply stays as it was until a run succeeds.
+  for (const resource of SYNC_ORDER) {
+    try {
+      const value = await queryClient.fetchQuery({
         queryKey: resource.queryKey(serverId),
         queryFn: () => resource.fetch(api),
         // A sync always asks the server. `fetchQuery` resolves straight from
@@ -80,37 +111,23 @@ export async function runCatalogSync({
         // Rate limiting belongs to the caller, not here: `useSync` throttles
         // at 30 minutes and drops a run while another is in flight.
         staleTime: 0,
-      })
-    )
-  );
-
-  // Store what came back, resource by resource.
-  //
-  // Only the fulfilled ones. A rejected fetch has nothing to write, and
-  // writing anyway — an empty list, or whatever the cache still held — is how
-  // one flaky endpoint would empty a user's offline library. The stored copy
-  // simply stays as it was until a run succeeds.
-  //
-  // This is the whole write side of the catalog's persistence: six writes per
-  // sync, each only as big as its own resource. See `catalogPersistence`.
-  CATALOG_RESOURCES.forEach((resource, index) => {
-    const outcome = settled[index];
-    if (outcome.status !== 'fulfilled') return;
-    writeCatalogResource(serverId, resource.name, outcome.value);
-  });
+      });
+      fetched.set(resource.name, value);
+      writeCatalogResource(serverId, resource.name, value);
+    } catch {
+      // Recorded by its absence from `fetched`; one endpoint being down is not
+      // the whole sync failing.
+    }
+  }
 
   // A resource that failed may still have a usable cached copy from an
   // earlier run; read through to it rather than treating the whole sync as
   // lost because one endpoint was down.
-  const read = <T>(index: number): T | undefined => {
-    const outcome = settled[index];
-    return outcome.status === 'fulfilled'
-      ? (outcome.value as T)
-      : queryClient.getQueryData<T>(CATALOG_RESOURCES[index].queryKey(serverId));
+  const byName = <T>(name: (typeof CATALOG_RESOURCES)[number]['name']): T | undefined => {
+    if (fetched.has(name)) return fetched.get(name) as T;
+    const resource = CATALOG_RESOURCES.find(entry => entry.name === name);
+    return resource ? queryClient.getQueryData<T>(resource.queryKey(serverId)) : undefined;
   };
-
-  const byName = <T>(name: (typeof CATALOG_RESOURCES)[number]['name']): T | undefined =>
-    read<T>(CATALOG_RESOURCES.findIndex(resource => resource.name === name));
 
   const albums = byName<Album[]>('albums');
   const artists = byName<unknown[]>('artists');
@@ -120,8 +137,9 @@ export async function runCatalogSync({
   const genres = byName<string[]>('genres');
 
   return {
+    // Reported in table order, not the order they were fetched in.
     failed: CATALOG_RESOURCES
-      .filter((_, index) => settled[index].status === 'rejected')
+      .filter(resource => !fetched.has(resource.name))
       .map(resource => resource.name),
     hasData: Boolean(
       albums?.length ||
