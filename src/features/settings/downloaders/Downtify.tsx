@@ -14,6 +14,7 @@ const DowntifyView: React.FC = () => {
     <DownloaderSettingsScreen
       id="downtify"
       keyless
+      helperKey="settings.downloaders.downtify.credentialsHelper"
       testConnection={downtify.testConnection}
     />
   );

@@ -32,6 +32,7 @@ export default function SettingsLayout() {
             <Stack.Screen name='lidarrView' options={{ headerShown: false }} />
             <Stack.Screen name='slskdView' options={{ headerShown: false }} />
             <Stack.Screen name='soulsyncView' options={{ headerShown: false }} />
+            <Stack.Screen name='downtifyView' options={{ headerShown: false }} />
             <Stack.Screen name='listenbrainzView' options={{ headerShown: false }} />
             <Stack.Screen name='scrobblingView' options={{ headerShown: false }} />
             <Stack.Screen name='listeningView' options={{ headerShown: false }} />
