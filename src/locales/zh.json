@@ -710,6 +710,10 @@
       "subtitle": "输入你的服务器地址。",
       "enterUrl": "请输入服务器地址。",
       "hint": "如需指定端口，请在地址后添加，例如：your-server.com:4533",
+      "hintPlex": "Plex 通常使用端口 32400，例如 your-server.com:32400",
+      "hintNavidrome": "Navidrome 通常使用端口 4533，例如 your-server.com:4533",
+      "hintJellyfin": "Jellyfin 通常使用端口 8096，例如 your-server.com:8096",
+      "hintEmby": "Emby 通常使用端口 8096，例如 your-server.com:8096",
       "schemeTitle": "协议",
       "httpsDesc": "加密（推荐）",
       "httpDesc": "未加密",
@@ -737,6 +741,7 @@
         "waiting": "正在等待授权…",
         "expired": "此代码已过期。请重新开始以获取新代码。",
         "unavailable": "当前无法使用验证码登录。",
+        "serverRefused": "登录已获批准，但此服务器未接受该账户。请检查服务器地址后重试。",
         "usePassword": "使用用户名和密码",
         "jellyfin": {
           "instruction": "在 Jellyfin 中打开 Quick Connect 并输入此代码。",

@@ -100,7 +100,12 @@ export default function Credentials() {
             notify.error(
                 phase.reason === 'expired'
                     ? t('onboarding.credentials.codeAuth.expired')
-                    : phase.message || t('onboarding.credentials.codeAuth.unavailable')
+                    // Approved, then refused by the server. Saying the code
+                    // expired would send the user back to re-approve a code
+                    // that worked; the address is what needs changing.
+                    : phase.reason === 'server'
+                        ? t('onboarding.credentials.codeAuth.serverRefused')
+                        : phase.message || t('onboarding.credentials.codeAuth.unavailable')
             );
             cancelCodeAuth();
         }

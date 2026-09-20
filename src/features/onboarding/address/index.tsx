@@ -110,7 +110,7 @@ export default function Address() {
                             />
                         </View>
 
-                        <Text style={styles.hint}>{t('onboarding.address.hint')}</Text>
+                        <Text style={styles.hint}>{t(provider?.addressHintKey ?? 'onboarding.address.hint')}</Text>
 
                         {problem && (
                             <View testID="address-problem" style={styles.problem}>

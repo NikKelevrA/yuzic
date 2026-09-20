@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CodeAuthApi } from '@/providers/registry/serverProviderTypes';
 import type { BasicAuth, ProviderAuth } from '@/providers/contracts/Server';
+import { isCodeAuthServerError } from '@/providers/registry/codeAuthServerError';
 
 type CodeAuthPhase =
   /** Not started — the password form is showing. */
@@ -12,8 +13,13 @@ type CodeAuthPhase =
   | { status: 'waiting'; code: string }
   /** The user approved; these are the credentials to save. */
   | { status: 'approved'; auth: ProviderAuth; username: string }
-  /** Gave up. `reason` distinguishes a stale code from a real failure. */
-  | { status: 'failed'; reason: 'expired' | 'error'; message?: string };
+  /**
+   * Gave up. `reason` separates the three ways this ends: the code went stale
+   * unused, the flow never got started, or — `server` — the user approved and
+   * the server then refused the account. The last one is not a code problem
+   * and must not be described as one.
+   */
+  | { status: 'failed'; reason: 'expired' | 'error' | 'server'; message?: string };
 
 type Options = {
   codeAuth: CodeAuthApi | undefined;
@@ -97,7 +103,15 @@ export function useCodeAuth({ codeAuth, serverUrl, basicAuth }: Options) {
           handle,
           basicAuth: basicAuthRef.current,
         });
-      } catch {
+      } catch (err) {
+        // Approval already happened and the server is what said no, so waiting
+        // cannot help: every retry re-fails, and the timeout would end this by
+        // blaming a code the user has already used successfully.
+        if (isCodeAuthServerError(err)) {
+          stopPolling();
+          setPhase({ status: 'failed', reason: 'server', message: err.message });
+          return;
+        }
         // Transient — the code is still good, so keep waiting for the timeout
         // to be the thing that ends this rather than one unlucky request.
         return;

@@ -12,6 +12,7 @@ jest.mock('../client', () => ({
 
 import { createPlexClient } from '../client';
 import { beginPlexPin, pollPlexPin } from './pin';
+import { isCodeAuthServerError } from '@/providers/registry/codeAuthServerError';
 
 describe('pollPlexPin', () => {
   beforeEach(() => {
@@ -35,6 +36,27 @@ describe('pollPlexPin', () => {
       basicAuth: { username: 'proxy-user', password: 'proxy-password' },
     });
     expect(mockServerRequest).toHaveBeenCalledWith('/library/sections');
+  });
+
+  // The user has approved by the time the server is asked anything, so a
+  // refusal here is the server's answer. Unmarked, the caller treats it as a
+  // blip, retries until the timeout, and reports an expired code -- for a code
+  // that was accepted.
+  it('marks a post-approval server refusal so the flow stops instead of retrying', async () => {
+    mockAccountFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ authToken: 'account-token' }) });
+    mockServerRequest.mockRejectedValueOnce(new Error('Plex request failed (401)'));
+
+    const err = await pollPlexPin('pin-id', 'https://plex.example').catch(e => e);
+
+    expect(isCodeAuthServerError(err)).toBe(true);
+    expect(err.message).toContain('401');
+  });
+
+  it('does not mark a poll that has not reached approval yet', async () => {
+    mockAccountFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ authToken: null }) });
+
+    await expect(pollPlexPin('pin-id', 'https://plex.example')).resolves.toBeNull();
+    expect(mockServerRequest).not.toHaveBeenCalled();
   });
 });
 

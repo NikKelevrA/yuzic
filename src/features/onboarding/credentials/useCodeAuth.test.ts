@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useCodeAuth } from './useCodeAuth';
 import type { CodeAuthApi } from '@/providers/registry/serverProviderTypes';
 import type { BasicAuth } from '@/providers/contracts/Server';
+import { codeAuthServerError } from '@/providers/registry/codeAuthServerError';
 
 /**
  * Code sign-in — Jellyfin's Quick Connect, Plex's PIN — is a state machine
@@ -188,5 +189,45 @@ describe('useCodeAuth', () => {
     await act(async () => { await result.current.start(); });
 
     expect(result.current.phase).toEqual({ status: 'idle' });
+  });
+
+  // A poll that throws is normally retried, because the plex.tv/Jellyfin call
+  // is allowed to blink. A refusal that arrives *after* approval is different:
+  // it repeats forever and then surfaces as "that code expired", about a code
+  // the user already approved. This is the line between those two.
+  it('stops on a post-approval server refusal instead of polling to the timeout', async () => {
+    const codeAuth = makeCodeAuth({
+      poll: jest.fn(async () => { throw codeAuthServerError(new Error('request failed (401)')); }),
+    });
+    const { result } = await renderWithFakeTimers(() => useCodeAuth({ codeAuth, serverUrl }));
+
+    await act(async () => { await result.current.start(); });
+    await act(async () => { jest.advanceTimersByTime(1000); });
+
+    await waitFor(() => {
+      expect(result.current.phase).toEqual({
+        status: 'failed',
+        reason: 'server',
+        message: 'request failed (401)',
+      });
+    });
+
+    // Stopped, not merely reported: another interval would re-fail the same way.
+    const callsAfterFailure = (codeAuth.poll as jest.Mock).mock.calls.length;
+    await act(async () => { jest.advanceTimersByTime(5000); });
+    expect((codeAuth.poll as jest.Mock).mock.calls.length).toBe(callsAfterFailure);
+  });
+
+  it('still retries an unmarked poll failure', async () => {
+    const poll = jest.fn(async () => { throw new Error('network blip'); });
+    const codeAuth = makeCodeAuth({ poll });
+    const { result } = await renderWithFakeTimers(() => useCodeAuth({ codeAuth, serverUrl }));
+
+    await act(async () => { await result.current.start(); });
+    await act(async () => { jest.advanceTimersByTime(1000); });
+    await act(async () => { jest.advanceTimersByTime(1000); });
+
+    expect(poll.mock.calls.length).toBeGreaterThan(1);
+    expect(result.current.phase).toEqual({ status: 'waiting', code: 'ABC123' });
   });
 });

@@ -13,6 +13,7 @@ import { connect as connectMediaBrowser } from '@/providers/server/media-browser
 import { JELLYFIN_BRAND } from '@/providers/server/media-browser/brand';
 import { probeAddress as probeMediaBrowserAddress } from '@/providers/server/media-browser/auth/probeAddress';
 import type { ServerProviderConfig } from '@/providers/registry/serverProviderTypes';
+import { codeAuthServerError } from '@/providers/registry/codeAuthServerError';
 import i18n from '@/i18n';
 
 export const jellyfinProvider: ServerProviderConfig = {
@@ -25,6 +26,7 @@ export const jellyfinProvider: ServerProviderConfig = {
   },
   libraryScope: { key: 'parentIds', legacyKey: 'parentId' },
   listLibraries: (server) => getMusicLibraries(server),
+  addressHintKey: 'onboarding.address.hintJellyfin',
   probeAddress: (url) => probeMediaBrowserAddress(JELLYFIN_BRAND, url),
   ping: async (url, username, auth, basicAuth) => {
     const token = auth.token as string;
@@ -61,12 +63,20 @@ export const jellyfinProvider: ServerProviderConfig = {
       const authenticated = await pollQuickConnect(serverUrl, secret, basicAuth);
       if (!authenticated) return null;
 
-      const { token, userId, username } = await authenticateWithQuickConnect(
-        serverUrl,
-        secret,
-        basicAuth
-      );
-      return { auth: { token, userId }, username };
+      // Quick Connect has been approved by this point, so a failure exchanging
+      // the secret for a token is the server's answer and not a blip worth
+      // retrying. Marked so the flow stops here instead of polling on until it
+      // times out and tells the user their code expired.
+      try {
+        const { token, userId, username } = await authenticateWithQuickConnect(
+          serverUrl,
+          secret,
+          basicAuth
+        );
+        return { auth: { token, userId }, username };
+      } catch (err) {
+        throw codeAuthServerError(err);
+      }
     },
     pollIntervalMs: 3000,
     timeoutMs: 10 * 60 * 1000,
