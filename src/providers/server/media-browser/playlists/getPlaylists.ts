@@ -1,7 +1,8 @@
 import type { Playlist } from "@/domain/entities/Playlist";
 import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapPlaylist } from "../mapPlaylist";
-import { MediaBrowserItemsResponse } from "../types";
+import type { MediaBrowserItem } from "../types";
+import { fetchAllItems } from "../pagedItems";
 
 type GetPlaylistsResult = Playlist[];
 
@@ -11,7 +12,7 @@ async function fetchGetPlaylists(client: MediaBrowserClient) {
     `?IncludeItemTypes=Playlist` +
     `&Recursive=true` +
     `&Fields=Id,Name,PrimaryImageTag,DateCreated,DateLastMediaAdded,ChildCount`;
-  return client.request<MediaBrowserItemsResponse>(path);
+  return { Items: await fetchAllItems<MediaBrowserItem>(client, path) };
 }
 
 export async function getPlaylists(client: MediaBrowserClient): Promise<GetPlaylistsResult> {

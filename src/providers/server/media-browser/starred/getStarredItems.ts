@@ -3,7 +3,8 @@ import type { Song } from "@/domain/entities/Song";
 import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapSong } from "../mapSong";
 import { normalizeAlbum } from "../albums/getAlbums";
-import { MediaBrowserItemsResponse } from "../types";
+import type { MediaBrowserItem } from "../types";
+import { fetchAllItems } from "../pagedItems";
 
 interface GetStarredItemsResult {
   songs: Song[];
@@ -17,7 +18,9 @@ async function fetchGetStarredSongs(client: MediaBrowserClient) {
     `&Filters=IsFavorite` +
     `&IncludeItemTypes=Audio` +
     `&Fields=Id,Name,Artists,AlbumId,RunTimeTicks,ImageTags,MediaSources,Genres,PremiereDate,DateCreated`;
-  return client.request<MediaBrowserItemsResponse>(path);
+  // Paged for the same reason the catalog is: favourites have no ceiling
+  // either, and this is one of the six resources a sync fetches.
+  return { Items: await fetchAllItems<MediaBrowserItem>(client, path) };
 }
 
 async function fetchGetStarredAlbums(client: MediaBrowserClient) {
@@ -27,7 +30,7 @@ async function fetchGetStarredAlbums(client: MediaBrowserClient) {
     `&Filters=IsFavorite` +
     `&IncludeItemTypes=MusicAlbum` +
     `&Fields=PrimaryImageTag,Genres,AlbumArtist,ArtistItems,Artists,DateCreated,ProviderIds,UserData`;
-  return client.request<MediaBrowserItemsResponse>(path);
+  return { Items: await fetchAllItems<MediaBrowserItem>(client, path) };
 }
 
 export async function getStarredItems(

@@ -1,7 +1,8 @@
 import type { Album } from "@/domain/entities/Album";
 import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapAlbum } from "../mapAlbum";
-import type { MediaBrowserItem, MediaBrowserItemsResponse } from "../types";
+import type { MediaBrowserItem } from "../types";
+import { fetchAllItems } from "../pagedItems";
 
 type GetAlbumsResult = Album[];
 
@@ -35,8 +36,7 @@ export async function getAlbums(
     (artistId ? `&AlbumArtistIds=${encodeURIComponent(artistId)}` : "") +
     (client.parentId ? `&ParentId=${encodeURIComponent(client.parentId)}` : "");
 
-  const raw = await client.request<MediaBrowserItemsResponse>(path);
-  const items = raw?.Items ?? [];
+  const items = await fetchAllItems<MediaBrowserItem>(client, path);
 
   return items.map((a) => normalizeAlbum(a, client)).filter((a): a is Album => a !== null);
 }

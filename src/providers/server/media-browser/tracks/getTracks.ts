@@ -1,7 +1,8 @@
 import type { Song } from "@/domain/entities/Song";
 import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapSong } from "../mapSong";
-import { MediaBrowserItemsResponse } from "../types";
+import type { MediaBrowserItem } from "../types";
+import { fetchAllItems } from "../pagedItems";
 
 export async function getTracks(client: MediaBrowserClient): Promise<Song[]> {
   const path =
@@ -12,8 +13,9 @@ export async function getTracks(client: MediaBrowserClient): Promise<Song[]> {
     `&Fields=RunTimeTicks,ArtistItems,AlbumId,ProductionYear,DateCreated,UserData,IndexNumber,ParentIndexNumber,MediaSources,Genres` +
     (client.parentId ? `&ParentId=${encodeURIComponent(client.parentId)}` : "");
 
-  const raw = await client.request<MediaBrowserItemsResponse>(path);
-  const items = raw?.Items ?? [];
+  // Paged. This was one unbounded request, which for a large library is a
+  // single response big enough to kill the app before any of this runs (#266).
+  const items = await fetchAllItems<MediaBrowserItem>(client, path);
   const provenance = requireProvenance(client);
 
   return items

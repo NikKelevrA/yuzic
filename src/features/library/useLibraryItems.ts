@@ -114,33 +114,49 @@ export function useLibraryItems(
     }
   })()
 
-  const items = useMemo(() => {
+  /**
+   * The entities wrapped as `LibraryItem`s, memoised apart from the sort.
+   *
+   * These two used to be one memo, so changing the sort order rebuilt every
+   * wrapper: on a 90,000 track library that is 90,000 throwaway objects for a
+   * tap that only reorders the ones already there. The wrappers depend on the
+   * catalog, the order does not change the catalog, so they are kept apart.
+   *
+   * `sortItems` copies before sorting, so the array handed over is never
+   * mutated and can safely be reused across sorts.
+   */
+  const wrapped = useMemo<LibraryItem[]>(() => {
     switch (type) {
       case 'playlists':
-        return sortItems(playlists.map(p => ({ kind: 'playlist' as const, data: p })), sortOrder, statsForSort, ratingsForSort)
+        return playlists.map(p => ({ kind: 'playlist' as const, data: p }))
       case 'albums':
-        return sortItems(albums.map(a => ({ kind: 'album' as const, data: a })), sortOrder, statsForSort, ratingsForSort)
+        return albums.map(a => ({ kind: 'album' as const, data: a }))
       case 'artists':
-        return sortItems(artists.map(a => ({ kind: 'artist' as const, data: a })), sortOrder, statsForSort, ratingsForSort)
+        return artists.map(a => ({ kind: 'artist' as const, data: a }))
       case 'tracks':
-        return sortItems(tracks.map(tr => ({ kind: 'track' as const, data: tr })), sortOrder, statsForSort, ratingsForSort)
+        return tracks.map(tr => ({ kind: 'track' as const, data: tr }))
       case 'downloaded':
         // `getAllDownloadedCollections()[].id` is the id `downloadAlbumById`/
         // `downloadPlaylistById` were called with, which they hand straight
         // to `api.albums.get`/`api.playlists.get` — i.e. `nativeId`.
-        return sortItems([
+        return [
           ...albums.filter(a => downloadedCollectionIds.has(a.nativeId)).map(a => ({ kind: 'album' as const, data: a })),
           ...playlists.filter(p => downloadedCollectionIds.has(p.nativeId)).map(p => ({ kind: 'playlist' as const, data: p })),
           ...tracks.filter(tr => looseDownloadedTrackIds.has(tr.localId)).map(tr => ({ kind: 'track' as const, data: tr })),
-        ], sortOrder, statsForSort, ratingsForSort)
+        ]
       default:
-        return sortItems([
+        return [
           ...playlists.map(p => ({ kind: 'playlist' as const, data: p })),
           ...albums.map(a => ({ kind: 'album' as const, data: a })),
           ...artists.map(a => ({ kind: 'artist' as const, data: a })),
-        ], sortOrder, statsForSort, ratingsForSort)
+        ]
     }
-  }, [type, sortOrder, statsForSort, ratingsForSort, albums, artists, playlists, tracks, downloadedCollectionIds, looseDownloadedTrackIds])
+  }, [type, albums, artists, playlists, tracks, downloadedCollectionIds, looseDownloadedTrackIds])
+
+  const items = useMemo(
+    () => sortItems(wrapped, sortOrder, statsForSort, ratingsForSort),
+    [wrapped, sortOrder, statsForSort, ratingsForSort]
+  )
 
   return { items, isLoading }
 }
