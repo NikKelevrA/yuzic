@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { removeServer } from '@/state/redux/slices/serversSlice';
 import {
   enqueueOfflineMutation,
   OfflineMutation,
@@ -51,6 +52,21 @@ const offlineMutationsSlice = createSlice({
     clearOfflineMutationsForServer(state, action: PayloadAction<string>) {
       state.queue = state.queue.filter(item => item.serverId !== action.payload);
     },
+  },
+  /**
+   * Forget a server the listener removed.
+   *
+   * Wired to the action rather than dispatched beside it, because the one
+   * caller that removes a server should not have to remember every slice that
+   * kept something for it — and the next caller would not.
+   */
+  extraReducers: builder => {
+    builder.addCase(removeServer, (state, action) => {
+      // Flat queue rather than a map: a mutation names the server it is bound
+      // for, and one bound for a server that no longer exists can never be
+      // replayed.
+      state.queue = state.queue.filter(item => item.serverId !== action.payload);
+    });
   },
 });
 

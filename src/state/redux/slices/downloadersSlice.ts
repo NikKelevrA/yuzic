@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { removeServer } from '@/state/redux/slices/serversSlice';
 import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/providers/integration/slskd';
 
 export type DownloaderId = 'lidarr' | 'slskd' | 'soulsync';
@@ -144,6 +145,18 @@ const downloadersSlice = createSlice({
         lidarrDefaultQualityProfileId: qualityProfileId,
       };
     },
+  },
+  /**
+   * Forget a server the listener removed.
+   *
+   * Wired to the action rather than dispatched beside it, because the one
+   * caller that removes a server should not have to remember every slice that
+   * kept something for it — and the next caller would not.
+   */
+  extraReducers: builder => {
+    builder.addCase(removeServer, (state, action) => {
+      delete state.byServer[action.payload];
+    });
   },
 });
 

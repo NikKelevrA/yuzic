@@ -21,6 +21,8 @@ export function usePlaybackServices() {
     reportPlaybackProgress,
     resetLastScrobbled,
     markInterrupted,
+    hasOpenServerSession,
+    adoptOpenServerSession,
   } = useScrobbling();
   const scrobble = useLatestRef(scrobbleIfNeeded);
   const nowPlaying = useLatestRef(submitNowPlaying);
@@ -37,5 +39,7 @@ export function usePlaybackServices() {
     reportPlaybackProgress,
     resetLastScrobbled,
     markInterrupted,
+    hasOpenServerSession,
+    adoptOpenServerSession,
   };
 }

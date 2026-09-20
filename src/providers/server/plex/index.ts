@@ -26,6 +26,8 @@ import { mapSong } from './mapSong';
 import { mapAlbum } from './mapAlbum';
 import { mapArtist } from './mapArtist';
 import { mapPlaylist } from './mapPlaylist';
+import { createPlexPlaybackReporter } from './playbackReporting';
+import { ratePath } from './urlCommands';
 import { entryIndex, movedOrder } from '@/providers/server/playlistEntries';
 import { parseLrc } from '@/providers/integration/lrclib/parseLrc';
 import { PlexRequestError } from './requestError';
@@ -206,6 +208,11 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     },
   };
 
+  // A Plex song id is its rating key, which is what both playback endpoints
+  // address the track by. What each of them needs beyond that, and why they
+  // need it, lives in `playbackReporting`.
+  const playback = createPlexPlaybackReporter(client);
+
   const songs: SongsApi = {
     get: tracks.get,
     buildStreamUrl: (partKey) => client.buildStreamUrl(partKey),
@@ -213,10 +220,10 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     // MediaBrowser "mark played" endpoint.
     scrobbleKind: 'scrobble',
     streamableCodecs: [],
-    scrobble: async (songId) => { await client.request(`/:/scrobble?key=${encodeURIComponent(`/library/metadata/${songId}`)}`); },
-    reportNowPlaying: async (songId) => { await client.request(`/:/timeline?ratingKey=${encodeURIComponent(songId)}&state=playing&time=0`); },
-    reportPlaybackProgress: async (songId, positionMs, paused) => { await client.request(`/:/timeline?ratingKey=${encodeURIComponent(songId)}&state=${paused ? 'paused' : 'playing'}&time=${Math.max(0, Math.floor(positionMs))}`); },
-    reportPlaybackStop: async (songId, positionMs) => { await client.request(`/:/timeline?ratingKey=${encodeURIComponent(songId)}&state=stopped&time=${Math.max(0, Math.floor(positionMs))}`); },
+    scrobble: (songId) => playback.scrobble(songId),
+    reportNowPlaying: (songId) => playback.nowPlaying(songId),
+    reportPlaybackProgress: (songId, positionMs, paused) => playback.progress(songId, positionMs, paused),
+    reportPlaybackStop: (songId, positionMs) => playback.stop(songId, positionMs),
   };
 
   const starred: StarredApi = {
@@ -226,8 +233,8 @@ export function createPlexAdapter(server: Server): ApiAdapter {
       const albums = (await libraryItems(9, `&userRating=${FAVORITE_RATING}`)).map(dto => mapAlbum(dto, { provenance }));
       return { songs, albums };
     },
-    add: async (id) => { await client.request(`/:/rate?key=${encodeURIComponent(`/library/metadata/${id}`)}&rating=${FAVORITE_RATING}`, { method: 'PUT' }); },
-    remove: async (id) => { await client.request(`/:/rate?key=${encodeURIComponent(`/library/metadata/${id}`)}&rating=0`, { method: 'PUT' }); },
+    add: async (id) => { await client.request(ratePath(id, FAVORITE_RATING), { method: 'PUT' }); },
+    remove: async (id) => { await client.request(ratePath(id, 0), { method: 'PUT' }); },
   };
 
   const playlists: PlaylistsApi = {

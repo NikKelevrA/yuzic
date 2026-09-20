@@ -11,7 +11,6 @@ export type Library = {
   name: string;
 };
 
-
 export interface SongsApi {
   get(id: string): Promise<Song | null>;
   scrobble(songId: string, timestamp: number): Promise<void>;
@@ -42,10 +41,11 @@ export interface SongsApi {
    */
   reportNowPlaying?(songId: string): Promise<void>;
   /**
-   * Session playback reporting for servers that scrobble on the strength of it
-   * (Jellyfin / Emby's Last.fm plugin reads these events, not scrobble.view or
-   * PlayedItems). Optional — Navidrome's Subsonic path already forwards to
-   * Last.fm through scrobble() and doesn't need session pings.
+   * Session reporting. Optional — Navidrome forwards through scrobble() and
+   * needs no pings. On Jellyfin/Emby these events *are* the scrobble (the
+   * plugins fire on Stopped), so Stop is sent on every departure from a track
+   * the adapter was told started, not only the ones that earned a scrobble;
+   * `positionMs` is the playhead, not listened time; `isPaused` is live.
    */
   reportPlaybackProgress?(songId: string, positionMs: number, isPaused: boolean): Promise<void>;
   reportPlaybackStop?(songId: string, positionMs: number): Promise<void>;

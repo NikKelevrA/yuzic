@@ -350,8 +350,13 @@ platform :ios do
     # Then the listing, which may fail without taking the build with it.
     #
     # `skip_binary_upload` is the load-bearing part: this call must not be a
-    # second route to uploading the app. Only the release path runs it at all
-    # — see `YUZIC_UPLOAD_SCREENSHOTS`.
+    # second route to uploading the app.
+    #
+    # CI always sets `YUZIC_UPLOAD_SCREENSHOTS`, since a release is the only
+    # thing that runs this lane there now. What the guard still catches is a
+    # `fastlane ci_ios` from a laptop, where an unset variable reads as false
+    # and the public listing is left alone — which is the right default for a
+    # run nobody can trace back to a version.
     unless ENV["YUZIC_UPLOAD_SCREENSHOTS"] == "true"
       UI.important("Skipping store screenshots: not a release build.")
       next

@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { removeServer } from '@/state/redux/slices/serversSlice';
 
 import { clampRating } from '@/domain/entities/Rating';
 
@@ -76,6 +77,18 @@ const ratingsSlice = createSlice({
     clearServerRatings(state, action: PayloadAction<string>) {
       delete state.byServer[action.payload];
     },
+  },
+  /**
+   * Forget a server the listener removed.
+   *
+   * Wired to the action rather than dispatched beside it, because the one
+   * caller that removes a server should not have to remember every slice that
+   * kept something for it — and the next caller would not.
+   */
+  extraReducers: builder => {
+    builder.addCase(removeServer, (state, action) => {
+      delete state.byServer[action.payload];
+    });
   },
 });
 

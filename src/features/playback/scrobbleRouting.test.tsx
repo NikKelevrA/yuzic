@@ -38,12 +38,16 @@ jest.mock('@/providers/integration/listenbrainz', () => ({
 }))
 
 import { useScrobbling } from './useScrobbling'
+import { finishListen, observePosition, observeSeek, resetListen } from './listenMeter'
 
 // The ListenBrainz token now lives in credentialCache, not Redux — a
 // module-level singleton that would otherwise leak a token set by one test
 // (the 'direct' route case below) into every other test reusing the same
 // server id ('navidrome-1', etc).
 afterEach(() => { clearCredentialCache() })
+// The meter is a module singleton, like the player it measures. Left dirty it
+// would carry one test's heard seconds into the next.
+beforeEach(() => { resetListen() })
 
 function serverOf(type: Server['type']): Server {
   return {
@@ -359,5 +363,271 @@ describe('listening history', () => {
     })
 
     expect(store.getState().listening.events).toHaveLength(2)
+  })
+})
+
+/**
+ * The incident.
+ *
+ * `Stopped` was sent from inside the scrobble's success branch, after
+ * `markPlayed`, so it inherited every reason that branch had not to run: a
+ * skip below the threshold sent none, a track whose route had been switched
+ * off mid-play sent none, and a departure that failed to scrobble sent none.
+ * What that left behind is not cosmetic. The server kept showing a
+ * `NowPlayingItem` for a track nobody was playing, its position frozen at the
+ * last tick it heard — and, because Jellyfin's and Emby's Last.fm and
+ * ListenBrainz plugins scrobble on `PlaybackStopped` and on nothing else, the
+ * one event that *is* the scrobble on those servers was the event being
+ * withheld.
+ *
+ * The rule these pin is symmetry, not a second condition: whatever opened a
+ * session closes it, and nothing else ever sends a stop.
+ */
+describe('server session reporting', () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  async function playing(store: ReturnType<typeof makeStore>) {
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+    await act(async () => { result.current.submitNowPlaying(song) })
+    return result
+  }
+
+  it('sends Stopped on a skip far below the scrobble threshold', async () => {
+    const result = await playing(makeStore(serverOf('jellyfin')))
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 20, startTime: 1_700_000_000 })
+    })
+
+    // Twenty seconds of a two hundred second track earns no scrobble, and
+    // that was never a reason to leave the session open.
+    expect(mockSongsApi.scrobble).not.toHaveBeenCalled()
+    expect(mockSongsApi.reportPlaybackStop).toHaveBeenCalledWith('s1', 20_000)
+  })
+
+  it('sends Stopped for a session whose route was switched off mid-track', async () => {
+    const server = serverOf('jellyfin')
+    const store = makeStore(server)
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+    await act(async () => { result.current.submitNowPlaying(song) })
+
+    // The listener opens Settings mid-song and turns scrobbling off. The
+    // session they already have on the server is still theirs to close.
+    await act(async () => {
+      store.dispatch(setScrobbleRoute({ serverId: server.id, destination: 'lastfm', route: 'disabled' }))
+      store.dispatch(setScrobbleRoute({ serverId: server.id, destination: 'listenbrainz', route: 'disabled' }))
+    })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 180, startTime: 1_700_000_000 })
+    })
+
+    expect(mockSongsApi.scrobble).not.toHaveBeenCalled()
+    expect(mockSongsApi.reportPlaybackStop).toHaveBeenCalledWith('s1', 180_000)
+  })
+
+  it('never opens or closes a session when nothing is routed through the server', async () => {
+    const server = serverOf('jellyfin')
+    const store = makeStore(server)
+    store.dispatch(setScrobbleRoute({ serverId: server.id, destination: 'lastfm', route: 'disabled' }))
+    store.dispatch(setScrobbleRoute({ serverId: server.id, destination: 'listenbrainz', route: 'disabled' }))
+
+    const result = await playing(store)
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 180, startTime: 1_700_000_000 })
+    })
+
+    // The session events *are* the scrobble on these servers — the plugins
+    // fire on Stopped. Sending one "because it isn't scrobbling" would
+    // scrobble to Last.fm for somebody who switched scrobbling off, and
+    // announcing now-playing would name their track to the server's admin.
+    // Nothing was opened, so there is nothing to close.
+    expect(mockSongsApi.reportNowPlaying).not.toHaveBeenCalled()
+    expect(mockSongsApi.reportPlaybackStop).not.toHaveBeenCalled()
+  })
+
+  it('sends one Stopped when the same departure is reported twice', async () => {
+    const result = await playing(makeStore(serverOf('jellyfin')))
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 20, startTime: 1_700_000_000 })
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 20, startTime: 1_700_000_000 })
+    })
+
+    expect(mockSongsApi.reportPlaybackStop).toHaveBeenCalledTimes(1)
+  })
+
+  /**
+   * `markPlayed` resets the server's stored position. Run after the stop, it
+   * would wipe the position the stop just reported, so the order is not a
+   * matter of taste. It is also the one call that must not happen twice: it
+   * is what the Settings row promises when it says "mark as played".
+   */
+  it('marks played once, and before the stop that carries the position', async () => {
+    const result = await playing(makeStore(serverOf('jellyfin')))
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 180, startTime: 1_700_000_000 })
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 180, startTime: 1_700_000_000 })
+    })
+
+    expect(mockSongsApi.scrobble).toHaveBeenCalledTimes(1)
+    expect(mockSongsApi.reportPlaybackStop).toHaveBeenCalledTimes(1)
+    expect(mockSongsApi.scrobble.mock.invocationCallOrder[0])
+      .toBeLessThan(mockSongsApi.reportPlaybackStop.mock.invocationCallOrder[0])
+  })
+
+  it('still closes the session when the scrobble itself fails', async () => {
+    mockSongsApi.scrobble.mockRejectedValueOnce(new Error('unreachable'))
+    const result = await playing(makeStore(serverOf('jellyfin')))
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 180, startTime: 1_700_000_000 })
+    })
+
+    expect(mockSongsApi.reportPlaybackStop).toHaveBeenCalledWith('s1', 180_000)
+  })
+})
+
+/**
+ * Two numbers were being carried under one name. The playhead answers "where
+ * were they" — the resume point, and whether the track ran out. Listened time
+ * answers "how much did they hear" — which is what every scrobble threshold in
+ * the world is written against. They diverge the moment anyone rewinds.
+ */
+describe('which quantity goes where', () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  /** Heard `listened` seconds of the track, and left the playhead at `leftAt`. */
+  function heard(songId: string, listened: number, leftAt: number) {
+    observePosition(0)
+    for (let credited = 0; credited < listened; credited += 10) {
+      // Ten seconds of play, then a rewind to where it started. The rewind
+      // itself credits nothing, so heard time climbs while the playhead does
+      // not run away.
+      observePosition(10)
+      observeSeek(10, 0)
+    }
+    // Park the playhead where they left it, without crediting the move.
+    observeSeek(0, leftAt)
+    finishListen(songId, leftAt)
+  }
+
+  it('scrobbles on time heard, not on where the playhead stopped', async () => {
+    const store = makeStore(serverOf('jellyfin'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+    await act(async () => { result.current.submitNowPlaying(song) })
+
+    // Three minutes of a two hundred second track, all of it in the first ten
+    // seconds, left at 0:10. The threshold is 100s: on listened time this is a
+    // scrobble, on the playhead it is not — and it was not, before this.
+    heard(song.nativeId, 180, 10)
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 10, startTime: 1_700_000_000 })
+    })
+
+    expect(mockSongsApi.scrobble).toHaveBeenCalledWith('s1', 1_700_000_000)
+    // ...and the position on the wire is still the playhead, because that is
+    // what the field means on the server: it sets the resume point and, past
+    // ninety percent, the played flag.
+    expect(mockSongsApi.reportPlaybackStop).toHaveBeenCalledWith('s1', 10_000)
+  })
+
+  it('records the heard time in the history and judges the ending by the playhead', async () => {
+    const store = makeStore(serverOf('jellyfin'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    heard(song.nativeId, 180, 10)
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 10, startTime: 1_700_000_000 })
+    })
+
+    const event = store.getState().listening.events[0]
+    expect(event.seconds).toBe(180)
+    // Heard nearly the whole track and still walked out at 0:10. That is a
+    // skip; reading the ending off heard time would have called it finished.
+    expect(event.ending).toBe('skipped')
+  })
+
+  it('falls back to the playhead for a departure the meter never saw', async () => {
+    const store = makeStore(serverOf('jellyfin'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(song, { listenedSeconds: 150, startTime: 1_700_000_000 })
+    })
+
+    // A path that does not feed the meter behaves exactly as it did before the
+    // meter existed, rather than reporting that nothing was heard.
+    expect(store.getState().listening.events[0].seconds).toBe(150)
+    expect(mockSongsApi.scrobble).toHaveBeenCalled()
+  })
+})
+
+/**
+ * Last.fm and ListenBrainz both refuse a track shorter than thirty seconds.
+ * Without a floor, the threshold does something quietly absurd: a ten-second
+ * interlude needs five seconds to "pass", so every album's spoken intro
+ * scrobbled itself on the way past and every one of those submissions was
+ * discarded at the far end. The app said it had reported a play; the service
+ * had recorded nothing.
+ */
+describe('minimum track length', () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  const interlude: Song = { ...song, nativeId: 's-short', durationSeconds: 10 }
+
+  it('never scrobbles a track under thirty seconds, however much of it was heard', async () => {
+    const store = makeStore(serverOf('jellyfin'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+    await act(async () => { result.current.submitNowPlaying(interlude) })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(interlude, { listenedSeconds: 10, startTime: 1_700_000_000 })
+    })
+
+    expect(mockSongsApi.scrobble).not.toHaveBeenCalled()
+    expect(listenbrainz.submitScrobble).not.toHaveBeenCalled()
+  })
+
+  it('still records it in the history, and still closes the session', async () => {
+    const store = makeStore(serverOf('jellyfin'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+    await act(async () => { result.current.submitNowPlaying(interlude) })
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(interlude, { listenedSeconds: 10, startTime: 1_700_000_000 })
+    })
+
+    // Somebody else's submission rule is no reason for the app to forget what
+    // happened, or to leave a session hanging.
+    expect(store.getState().listening.events[0]).toMatchObject({ seconds: 10, ending: 'finished' })
+    expect(mockSongsApi.reportPlaybackStop).toHaveBeenCalledWith('s-short', 10_000)
+  })
+
+  it('still scrobbles a track of exactly thirty seconds', async () => {
+    const store = makeStore(serverOf('jellyfin'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+    const short: Song = { ...song, nativeId: 's-30', durationSeconds: 30 }
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(short, { listenedSeconds: 20, startTime: 1_700_000_000 })
+    })
+
+    expect(mockSongsApi.scrobble).toHaveBeenCalledWith('s-30', 1_700_000_000)
+  })
+
+  it('treats an unknown duration as unknown rather than as too short', async () => {
+    const store = makeStore(serverOf('jellyfin'))
+    const { result } = await renderHook(() => useScrobbling(), { wrapper: wrapperFor(store) })
+    const unknown: Song = { ...song, nativeId: 's-unknown', durationSeconds: 0 }
+
+    await act(async () => {
+      await result.current.scrobbleIfNeeded(unknown, { listenedSeconds: 300, startTime: 1_700_000_000 })
+    })
+
+    // Four minutes is the arm of the threshold that handles a length the
+    // server never told us.
+    expect(mockSongsApi.scrobble).toHaveBeenCalledWith('s-unknown', 1_700_000_000)
   })
 })

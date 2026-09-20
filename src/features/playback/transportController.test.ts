@@ -4,6 +4,7 @@ import type { RepeatModeState } from '@/domain/playback/PlaybackModes';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { createTransportController, type TransportDeps } from './transportController';
+import { listenedSoFar, observePosition, resetListen, takeFinishedListen } from './listenMeter';
 
 const provenance = serverProvenance('srv-1');
 
@@ -280,5 +281,61 @@ describe('skipping to a chosen track', () => {
     expect(h.scrobbled).toEqual([]);
     expect(h.newListens).toBe(0);
     expect(h.active).toEqual([{ index: 1, id: '2' }]);
+  });
+});
+
+/**
+ * The controller is where a seek and a departure are both *known*, and it was
+ * telling nothing about either beyond a playhead. How much of a track was
+ * heard is a different number the moment somebody rewinds, and it is not
+ * recoverable a second later — the outgoing report is deferred, and the
+ * session has started the next listen's clock by the time it runs.
+ */
+describe('what the listen meter is told', () => {
+  beforeEach(() => { resetListen(); });
+
+  it('closes the meter on the track being left, not on the one arriving', async () => {
+    const h = harness({ currentIndex: 0, localPosition: 20 });
+    observePosition(0);
+    observePosition(10);
+
+    await h.controller.skipToNext();
+
+    // Latched against the song that was playing, so the deferred report finds
+    // it under the right name. Twenty, not ten: the departure closes the gap
+    // since the last heartbeat, which is real play nobody else would credit.
+    expect(takeFinishedListen('1')).toBe(20);
+  });
+
+  it('credits the play before a seek instead of losing it to the next heartbeat', () => {
+    const h = harness({ localPosition: 10 });
+    observePosition(0);
+
+    h.controller.seek(0);
+    // Ten seconds heard, then a rewind to the start. Left to the heartbeat to
+    // notice, the jump would read as a seek and those ten seconds would go.
+    observePosition(5);
+
+    expect(listenedSoFar(5)).toBe(15);
+  });
+
+  it('credits the play before a relative jump too', () => {
+    const h = harness({ localPosition: 10 });
+    observePosition(0);
+
+    h.controller.jumpBy(-10);
+    observePosition(5);
+
+    expect(listenedSoFar(5)).toBe(15);
+  });
+
+  it('never credits the jump itself', () => {
+    const h = harness({ localPosition: 10 });
+    observePosition(0);
+
+    // Scrubbing to the end is not listening to the middle.
+    h.controller.seek(190);
+
+    expect(listenedSoFar(190)).toBe(10);
   });
 });

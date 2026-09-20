@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { removeServer } from "@/state/redux/slices/serversSlice";
+import { dropServerNamespace } from "@/state/redux/serverScopedState";
 
 type PlayMap = Record<string, number>;
 type LastPlayedMap = Record<string, number>; // "serverId:entityId" -> timestamp (ms)
@@ -14,10 +16,7 @@ const key = (serverId: string, id: string) => `${serverId}:${id}`;
  * for good, and the map grew without bound across library churn.
  */
 function replaceNamespace(map: Record<string, number>, serverId: string): void {
-  const prefix = `${serverId}:`;
-  for (const k of Object.keys(map)) {
-    if (k.startsWith(prefix)) delete map[k];
-  }
+  dropServerNamespace(map, serverId);
 }
 
 type ServerAlbumStat = {
@@ -122,6 +121,26 @@ const statsSlice = createSlice({
         }
       }
     },
+  },
+  /**
+   * Forget a server the listener removed.
+   *
+   * Wired to the action rather than dispatched beside it, because the one
+   * caller that removes a server should not have to remember nine slices —
+   * and the next caller would not.
+   */
+  extraReducers: builder => {
+    builder.addCase(removeServer, (state, action) => {
+      const serverId = action.payload;
+      for (const map of [
+        state.serverAlbumPlays,
+        state.serverAlbumLastPlayedAt,
+        state.serverSongPlays,
+        state.serverSongLastPlayedAt,
+      ]) {
+        replaceNamespace(map, serverId);
+      }
+    });
   },
 });
 

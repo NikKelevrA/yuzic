@@ -1,6 +1,7 @@
 import type { PlayerBackend } from '@/features/player/backend';
 import type { PlayableResource } from '@/features/playback/playableResource';
 import type { RepeatModeState } from '@/domain/playback/PlaybackModes';
+import { finishListen, observeSeek } from './listenMeter';
 import { seekTarget } from './playingPolicies';
 
 /**
@@ -89,7 +90,22 @@ export function createTransportController(deps: TransportDeps): TransportControl
       ? deps.jukeboxPosition()
       : deps.backend().getProgress().position;
 
-  const reportOutgoing = () => deps.scrobbleOutgoing(Math.floor(position()));
+  /**
+   * Hand the departing listen to the reporter, and close the meter on it
+   * first.
+   *
+   * The two numbers are different and both are needed. `scrobbleOutgoing`
+   * takes the playhead, which is what says whether the track ran out and where
+   * to resume; the meter is closed here, before anything resets the listen,
+   * because how much was *heard* is what any scrobble threshold is actually
+   * about, and it is not recoverable a second later.
+   */
+  const reportOutgoing = () => {
+    const leftAt = Math.floor(position());
+    const leaving = deps.currentResource();
+    if (leaving) finishListen(leaving.song.nativeId, leftAt);
+    return deps.scrobbleOutgoing(leftAt);
+  };
 
   /** Resume only what was already playing: a skip made while paused stays paused. */
   const startIfItWasPlaying = () => {
@@ -155,6 +171,11 @@ export function createTransportController(deps: TransportDeps): TransportControl
     },
 
     seek(positionSeconds: number) {
+      // Told to the meter before the playhead moves, so the stretch that was
+      // playing is credited and the new one starts at the destination. Left to
+      // the heartbeat to notice, a seek costs up to ten seconds of heard time
+      // — every one of them real listening.
+      observeSeek(position(), positionSeconds);
       if (!deps.remoteOwnsPlayback()) deps.backend().seekTo(positionSeconds);
       void deps.sink.seek(positionSeconds);
     },
@@ -168,6 +189,7 @@ export function createTransportController(deps: TransportDeps): TransportControl
         ? deps.currentResource()?.song.durationSeconds ?? 0
         : deps.backend().getProgress().duration;
       const target = seekTarget(position(), deltaSeconds, duration);
+      observeSeek(position(), target);
       if (!deps.remoteOwnsPlayback()) deps.backend().seekTo(target);
       void deps.sink.seek(target);
     },

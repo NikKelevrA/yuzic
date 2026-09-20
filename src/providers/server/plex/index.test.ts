@@ -74,6 +74,31 @@ describe('Plex adapter', () => {
   });
 
 
+  it("reports playback the way Plex needs to hear it, with the track's length on every event", async () => {
+    // The parameters themselves are `playbackReporting`'s to get right; what
+    // is proven here is that the adapter's three report calls and its scrobble
+    // all go through it, rather than hand-rolling a URL again.
+    mockRequest.mockImplementation(async (path: string) =>
+      path.startsWith("/library/metadata/")
+        ? { MediaContainer: { Metadata: [{ type: "track", ratingKey: "7", duration: 210000 }] } }
+        : {}
+    );
+    const adapter = createPlexAdapter(server);
+
+    await adapter.songs.scrobble("7", 1760000000000);
+    await adapter.songs.reportNowPlaying!("7");
+    await adapter.songs.reportPlaybackProgress!("7", 30000, true);
+    await adapter.songs.reportPlaybackStop!("7", 60000);
+
+    const timeline = "/:/timeline?ratingKey=7&key=%2Flibrary%2Fmetadata%2F7&identifier=com.plexapp.plugins.library";
+    expect(mockRequest.mock.calls.map(([path]) => path).filter((path: string) => path.startsWith("/:/"))).toEqual([
+      "/:/scrobble?key=7&identifier=com.plexapp.plugins.library",
+      `${timeline}&state=playing&time=0&duration=210000`,
+      `${timeline}&state=paused&time=30000&duration=210000`,
+      `${timeline}&state=stopped&time=60000&duration=210000`,
+    ]);
+  });
+
   describe("lyrics", () => {
     const trackWith = (streams: object[]) => ({
       MediaContainer: { Metadata: [{ type: "track", ratingKey: "7", Media: [{ Part: [{ key: "/library/parts/7", Stream: streams }] }] }] },
