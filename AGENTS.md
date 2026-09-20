@@ -314,8 +314,22 @@ because both halves of each pair look reasonable in isolation.
   style as a broken layout rather than as a default. Under the `default` option
   each hook returns exactly the number the app used before the setting existed,
   so adding one moves nothing until the user asks it to.
-- **The window, not the device**: the app rotates, and every size that used
-  to come from `useWindowDimensions` now comes from `features/layout` —
+- **Landscape is a tablet shape, not a phone one.** A phone is portrait-locked:
+  `app.json`'s `orientation` is `portrait`, which governs the iPhone array in
+  `Info.plist`, while `supportsTablet` writes all four into
+  `UISupportedInterfaceOrientations~ipad` whatever it says — so the two halves
+  differ by design rather than by oversight. On Android the manifest says
+  `screenOrientation="portrait"` and **Android 16 ignores that above 600dp**,
+  which is not a bug working against us here: it is what leaves tablets and
+  unfolded foldables free to rotate while phones stay put. Both native files are
+  checked in and nothing runs `expo prebuild` in CI, so `app.json` alone changes
+  nothing — edit all three or the change is cosmetic.
+
+  None of this retires the layout work below. Split View, a half-open foldable
+  and an Android window over 600dp are all still windows the app does not
+  choose, and a phone still has a keyboard that takes half the screen.
+- **The window, not the device**: every size that used to come from
+  `useWindowDimensions` now comes from `features/layout` —
   `useWindowLayout` for the window itself, `useGridColumns` for a grid,
   `shelfItemWidth` for a horizontal shelf of covers (Home's and the album
   screen's alike; `getSectionItemWidth` is the same function under the name

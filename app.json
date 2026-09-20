@@ -2,7 +2,7 @@
   "expo": {
     "name": "Yuzic",
     "slug": "yuzic",
-    "orientation": "default",
+    "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "yuzic",
     "userInterfaceStyle": "automatic",
