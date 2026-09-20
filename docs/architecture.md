@@ -413,11 +413,63 @@ refetches all six resources. `syncPlaylists()` refreshes only the playlist list
 somewhere — album ids, playlist ids, stats. A server switch clears the slices
 so ids from server A don't confuse a query against server B.
 
+### Where the catalog is stored
+
+At runtime the catalog is one array per resource in the query cache, read
+through the keys in `CATALOG_RESOURCES`. That has not changed. What changed is
+its shape **on disk**.
+
+The catalog used to ride in the query persister's single blob, which is what
+`createAsyncStoragePersister` does by default: the whole cache,
+`JSON.stringify`'d to one key, rewritten on a one-second throttle whenever
+anything in the cache changes, and parsed whole before first paint. The cost of
+that is the size of the *library*, paid for *any* change — measured against the
+real entity shapes, 98 MB and 0.7 s to parse at 80,000 tracks, 367 MB and 3.3 s
+at 300,000, on desktop V8 before Hermes and a phone's heap are accounted for.
+Users reported 10 s cold starts and a UI that stopped taking taps.
+
+So the catalog has its own MMKV namespace and its own two halves:
+
+- **`catalogPersistence.ts`** — one record per resource per server.
+  `runCatalogSync` writes each resource it successfully fetched, and only
+  those: a rejected fetch leaves the stored copy alone, because one flaky
+  endpoint must not empty someone's offline library.
+- **`useCatalogHydration.ts`** — reads them back at start, once the thread is
+  idle, one resource at a time, **tracks last**. A sync that already filled a
+  key wins; hydration never overwrites.
+
+`app/_layout.tsx`'s `dehydrateOptions` is what keeps the two apart — it is the
+one place that decides the catalog is not the persister's business, via
+`isCatalogQuery`. Everything else still rides the blob, which is now small.
+
+Two consequences worth knowing:
+
+- **`queryClient.clear()` no longer clears the catalog.** Sign-out calls
+  `clearCatalog()` alongside it (`AccountBottomSheet`). Anywhere else that
+  means to forget a library has to do the same.
+- **A resource that has not hydrated yet reads as `undefined`**, exactly as it
+  does before a first sync, which every catalog hook already renders as
+  loading. `undefined` means "ask the server" and an empty array means "the
+  server has none" — under `staleTime: Infinity` the difference is whether the
+  list is ever fetched again.
+
+This deliberately does not change how much of the library is in memory. A
+library too large to hold at all needs paged reads out of a real database,
+which is a much larger change; this one makes the common case fast without
+touching a call site.
+
 ### Adding a new library-shaped resource
 
 Add it to `CATALOG_RESOURCES` in `catalogQueries.ts` — a cache key and a fetch,
 nothing else — and read the result out of `runCatalogSync` by name. If it's
 per-server, key by `activeServerId`.
+
+That table is also what persistence is derived from, so a resource added to it
+is stored, hydrated and kept out of the persister's blob without anything else
+being written. A resource that skips the table and fetches into a catalog-shaped
+key of its own gets none of that, and lands back in the blob — which for a
+library-sized list is the 98 MB problem above, reintroduced one resource at a
+time.
 
 **Do not give it a `staleTime`.** The sync fetches with `staleTime: 0`
 deliberately, and the temptation to reuse the screens' value is the bug this

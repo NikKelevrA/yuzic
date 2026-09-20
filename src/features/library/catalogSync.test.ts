@@ -6,6 +6,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { runCatalogSync } from './catalogSync';
+import { clearCatalog, readCatalogResource, writeCatalogResource } from './catalogPersistence';
 
 const SERVER = 'srv-1';
 const provenance = serverProvenance(SERVER);
@@ -144,5 +145,51 @@ describe('runCatalogSync', () => {
     const result = await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
 
     expect(result.hasData).toBe(false);
+  });
+});
+
+describe('runCatalogSync and the catalog store', () => {
+  beforeEach(() => {
+    clearCatalog();
+  });
+
+  it('stores each resource it fetched, so a cold start has a library to read', async () => {
+    await runCatalogSync({ queryClient: client(), api: makeApi(), serverId: SERVER });
+
+    expect(readCatalogResource(SERVER, 'albums')).toEqual([album('al1')]);
+    expect(readCatalogResource(SERVER, 'genres')).toEqual(['Rock']);
+  });
+
+  it('leaves a failed resource stored as it was, rather than emptying it', async () => {
+    // One flaky endpoint must not cost the user their offline library. The
+    // previous run's copy is better than nothing, and nothing is what writing
+    // the rejection through would leave.
+    writeCatalogResource(SERVER, 'tracks', [{ nativeId: 'tr-from-a-good-run' }]);
+    const api = makeApi({
+      tracks: { list: jest.fn(async () => { throw new Error('502'); }) },
+    });
+
+    const result = await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
+
+    expect(result.failed).toContain('tracks');
+    expect(readCatalogResource(SERVER, 'tracks')).toEqual([{ nativeId: 'tr-from-a-good-run' }]);
+  });
+
+  it('stores the resources that succeeded even when another failed', async () => {
+    const api = makeApi({
+      tracks: { list: jest.fn(async () => { throw new Error('502'); }) },
+    });
+
+    await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
+
+    expect(readCatalogResource(SERVER, 'albums')).toEqual([album('al1')]);
+  });
+
+  it('stores an empty list a server really returned, which is not the same as a failure', async () => {
+    const api = makeApi({ albums: { list: jest.fn(async () => []) } });
+
+    await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
+
+    expect(readCatalogResource(SERVER, 'albums')).toEqual([]);
   });
 });

@@ -23,6 +23,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { controlSize, iconSize, radius, spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
+import { clearCatalog } from '@/features/library/catalogPersistence';
 
 type Props = {
   onDismiss?: () => void;
@@ -72,6 +73,10 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
       dispatch(disconnect());
       await queryClient.cancelQueries();
       queryClient.clear();
+      // The catalog is no longer inside the query cache's persisted blob, so
+      // clearing the cache no longer reaches it. Without this the next account
+      // would hydrate the previous one's library.
+      clearCatalog();
       router.replace('/(onboarding)');
     } catch {
       notify.error(t('home.account.signOutFailed'));

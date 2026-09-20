@@ -2,7 +2,7 @@ import { motion } from '@/constants/design';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 
-import { QueryClient, QueryCache, onlineManager } from '@tanstack/react-query';
+import { QueryClient, QueryCache, defaultShouldDehydrateQuery, onlineManager } from '@tanstack/react-query';
 import { ToastHost, notify } from '@/components/toast';
 import SourceUsePromptHost from '@/features/settings/sources/SourceUsePromptHost';
 import CoverResolutionHost from '@/features/artwork/CoverResolutionHost';
@@ -44,6 +44,8 @@ import { QueryKeys } from '@/state/query/queryKeys';
 import { clearImageMemoryCache, runImageCacheMigration } from '@/features/artwork/imageCache';
 import { useClientCertificate } from '@/features/mtls/useClientCertificate';
 import { CredentialsGate } from '@/features/servers/CredentialsGate';
+import { isCatalogQuery } from '@/features/library/catalogPersistence';
+import { useCatalogHydration } from '@/features/library/useCatalogHydration';
 
 
 const LIBRARY_LOAD_FAILED_TOAST_ID = 'library-load-failed';
@@ -166,6 +168,26 @@ const queryPersister = createAsyncStoragePersister({
   storage: queryCacheStorage,
 })
 
+/**
+ * What the persister's blob is allowed to hold.
+ *
+ * This persister writes the *whole* dehydrated cache to one key every time
+ * anything in that cache changes, and reads it back whole before first paint.
+ * That is fine for the screens' queries and ruinous for the catalog, which is
+ * the library itself: at 80,000 tracks the blob measured ~98 MB, so playing a
+ * song re-serialised a hundred megabytes and launching the app parsed them.
+ *
+ * So the catalog is excluded here and persisted per resource instead — see
+ * `features/library/catalogPersistence` for the numbers and the shape, and
+ * `useCatalogHydration` for the read side. `defaultShouldDehydrateQuery` is
+ * kept as the first test rather than replaced, so a query that TanStack would
+ * not have persisted anyway (a failed one, chiefly) still isn't.
+ */
+const dehydrateOptions = {
+  shouldDehydrateQuery: (query: Parameters<typeof defaultShouldDehydrateQuery>[0]) =>
+    defaultShouldDehydrateQuery(query) && !isCatalogQuery(query.queryKey),
+};
+
 const OFFLINE_TOAST_ID = 'offline-banner';
 
 function useImageMemoryCleanup() {
@@ -191,6 +213,10 @@ function AppShell() {
   const { resolved, isDarkMode } = useTheme();
   const language = useSelector(selectLanguage);
   useImageMemoryCleanup();
+  // Reads the stored catalog back into the query cache, after first paint and
+  // one resource at a time. The persister used to do this as part of restoring
+  // its blob, before the catalog was taken out of it — see `dehydrateOptions`.
+  useCatalogHydration();
   // One-shot: carries the play counters that predate the listening log into
   // it. See the hook for why artists and playlists cannot survive without it.
   useLegacyStatsMigration();
@@ -300,6 +326,7 @@ export default function RootLayout() {
       persistOptions={{
         persister: queryPersister,
         maxAge: QUERY_CACHE_MAX_AGE,
+        dehydrateOptions,
       }}
     >
       <Provider store={store}>

@@ -17,6 +17,7 @@ import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { CATALOG_RESOURCES } from './catalogQueries';
+import { writeCatalogResource } from './catalogPersistence';
 
 interface ServerStat {
   id: string;
@@ -82,6 +83,21 @@ export async function runCatalogSync({
       })
     )
   );
+
+  // Store what came back, resource by resource.
+  //
+  // Only the fulfilled ones. A rejected fetch has nothing to write, and
+  // writing anyway — an empty list, or whatever the cache still held — is how
+  // one flaky endpoint would empty a user's offline library. The stored copy
+  // simply stays as it was until a run succeeds.
+  //
+  // This is the whole write side of the catalog's persistence: six writes per
+  // sync, each only as big as its own resource. See `catalogPersistence`.
+  CATALOG_RESOURCES.forEach((resource, index) => {
+    const outcome = settled[index];
+    if (outcome.status !== 'fulfilled') return;
+    writeCatalogResource(serverId, resource.name, outcome.value);
+  });
 
   // A resource that failed may still have a usable cached copy from an
   // earlier run; read through to it rather than treating the whole sync as
