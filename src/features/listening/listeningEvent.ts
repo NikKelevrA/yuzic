@@ -56,7 +56,24 @@ export interface ListenEvent {
   artist?: string;
   /** The collection the queue position came from, when it was a playlist. */
   playlist?: string;
-  /** Seconds actually listened. Not the position — a seek backwards adds. */
+  /**
+   * Seconds actually listened. Not the position — a seek backwards adds.
+   *
+   * This said exactly that from the day it was written, and for a long time no
+   * producer delivered it: `transportController` passed its `position()`,
+   * `playbackCoordinator` passed the outgoing track's playhead, the heartbeat
+   * passed its last tick. One field, one name, two quantities, and four
+   * readers below written against whichever of the two their author had in
+   * mind.
+   *
+   * It is the listened time now, measured by `listenMeter` and resolved in
+   * `useScrobbling`, and the readers that need a *position* — `endingFrom` is
+   * the only one — take it as an argument instead of reading it from here.
+   * The distinction is not pedantry: they are the same number until somebody
+   * rewinds, and then everything downstream of the difference is wrong at
+   * once. See `listenMeter` for why the meter is a refinement rather than a
+   * dependency, and what a departure it never saw falls back to.
+   */
   seconds: number;
   /** The track's full length in seconds, or 0 when unknown (live radio). */
   duration: number;
@@ -87,6 +104,11 @@ export const SESSION_GAP_MS = 30 * 60 * 1000;
  * through. Clamped above because a seek backwards can accumulate more
  * listened seconds than the track is long, and a completion of 1.4 would
  * quietly poison every average it entered.
+ *
+ * That clamp is load-bearing now and was not before. While `seconds` was
+ * really a playhead it could not exceed the duration, so the guard had never
+ * fired and nothing would have noticed if it were wrong; a listener who plays
+ * a three-minute track twice through without leaving it reaches 1.9 here.
  */
 export function completionOf(event: Pick<ListenEvent, 'seconds' | 'duration'>): number {
   if (event.duration <= 0) return 0;
@@ -118,6 +140,13 @@ export function isRejection(event: ListenEvent): boolean {
  * for the same listen agree. They would otherwise differ by exactly the
  * listens this log records and scrobbling declines to, which is a support
  * question nobody should have to answer.
+ *
+ * One case is allowed to diverge, deliberately. Scrobbling refuses a track
+ * shorter than thirty seconds outright, because Last.fm and ListenBrainz do
+ * and a submission they will discard is worse than none. This count has no
+ * such reason: a twenty-second interlude the listener heard all of is a play
+ * of it, and saying otherwise inside the app to match a rule that belongs to
+ * somebody else's service would be the tail wagging the dog.
  */
 export function countsAsPlay(event: ListenEvent): boolean {
   const threshold = event.duration > 0

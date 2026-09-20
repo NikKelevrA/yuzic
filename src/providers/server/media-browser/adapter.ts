@@ -225,6 +225,30 @@ export const createMediaBrowserAdapter = (
 
   const songs: SongsApi = {
     get: async (id: string) => getSong(client, id),
+    /*
+     `PlayedItems` and the Stopped event do *different* things, and the app's
+     suspicion that they double-count was checked against the server rather
+     than reasoned about. They do not, on jellyfin 10.8.13 / 10.9.11 / 10.10.0:
+
+      - `POST /Users/{id}/PlayedItems/{item}` runs `BaseItem.MarkPlayed`, which
+        increments `PlayCount` only when a `datePlayed` is supplied. This call
+        supplies none, so it clamps the count to at least one, sets `Played`,
+        stamps `LastPlayedDate`, and stops.
+      - The Stopped event never touches `PlayCount` at all; it runs
+        `UpdatePlayState`, which decides the played flag and the resume point
+        from the position.
+      - The count itself is incremented by `/Sessions/Playing` — at position
+        zero, when the track *starts*. That is where a Jellyfin play count
+        comes from, for every client, and it is why a session of skipping
+        raises play counts for tracks nobody listened to. It is the server's
+        model, not something this adapter can fix by sending less.
+
+     They also reach the scrobbler plugins by different routes, which is the
+     part that matters most: `PlayedItems` raises `UserDataSaved` with reason
+     `TogglePlayed`, and both the Last.fm and ListenBrainz plugins ignore that
+     reason. Only the Stopped event scrobbles. So this call is what the
+     Settings row promises — "mark as played on the server" — and nothing more.
+    */
     scrobble: async (songId) => markPlayed(client, songId),
     reportNowPlaying: async (songId) => reportPlaybackStart(client, songId, 0),
     buildStreamUrl: (songId, quality, codec) => client.buildStreamUrl(songId, quality, codec),
@@ -260,6 +284,23 @@ export const createMediaBrowserAdapter = (
   // fire from the player. The create() and remove() paths here fire an
   // idempotent Stopped so the local action goes cross-device without
   // waiting for the next real progress tick.
+  //
+  // Two things about this are worth someone's attention and are deliberately
+  // NOT changed here, because both are older than the reporting fix this file
+  // was last touched for and each needs its own verification:
+  //
+  //  1. A Stopped is not free. The scrobbler plugins fire on it (see
+  //     `reportPlaybackStop`), so a bookmark written on departure from a long
+  //     track lands *alongside* the player's own Stopped for the same
+  //     departure — two events, and potentially two scrobbles, for one listen.
+  //     Bookmarks only apply to podcast episodes and tracks past twenty
+  //     minutes, so this is narrow, but it is real.
+  //  2. Jellyfin's `UpdatePlayState` forces the stored position to zero for
+  //     any item that does not support position resume, and plain `Audio`
+  //     inherits `false` for that — only `Video` overrides it. If that holds
+  //     for `AudioBook` too, the server side of this mirror never stores
+  //     anything for music and the local bookmark is doing all the work.
+  //     Worth confirming against a real server before relying on it.
   const bookmarks = {
     list: async () => getBookmarksFromUserData(client),
     create: async (input: { songId: string; positionMs: number }) =>

@@ -5,6 +5,7 @@ import type { Song } from '@/domain/entities/Song';
 import { sameQueue } from '@/features/playback/playableResource';
 import { isAutoplaySeed } from '@/domain/playback/ContentKind';
 import { shouldFillQueue } from './autoplayFill';
+import { finishListen } from './listenMeter';
 import { resourceFromMediaItem, resourcesFromPlayerQueue } from './playingQueue';
 import { knownResource } from './knownResources';
 
@@ -124,6 +125,13 @@ export function createPlaybackCoordinator(
       const previous = deps.currentResource();
       if (previous && previous.song.localId !== mediaId) {
         const leftAt = Math.floor(deps.backend().getOutgoingProgress().position);
+        // The playhead is what goes on from here — it is what decides whether
+        // the track ran out, and it is the resume point. How much was heard is
+        // a different number the moment anyone seeks backwards, so the meter
+        // is closed on the outgoing track now, while the listen it measured
+        // still exists: `markNewListen` below starts the next one, and the
+        // outgoing report is not sent for another second.
+        finishListen(previous.song.nativeId, leftAt);
         deps.scrobbleOutgoing(previous.song, leftAt);
         deps.saveBookmark(previous.song, leftAt);
         deps.markNewListen();

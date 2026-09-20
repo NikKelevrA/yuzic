@@ -3,6 +3,7 @@ import { qualityToStreamParams } from '@/providers/server/streamQuality';
 import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
 import { serverProvenance, type Provenance } from '@/domain/identity/Provenance';
 import { MediaBrowserBrand } from './brand';
+import { playMethodForStreamFormat, type PlayMethod } from './playback/playMethod';
 import { mediaBrowserAuthHeaders } from './clientHeader';
 import { serverFetch } from '@/features/mtls/serverFetch';
 import { MediaBrowserRequestError } from './requestError';
@@ -121,18 +122,54 @@ export function createMediaBrowserClient(config: MediaBrowserClientConfig, brand
     });
   }
 
+  /**
+   * What was last asked of the server for each item, so the session reports
+   * can say so honestly.
+   *
+   * Recorded where the decision is actually made. Nothing else knows it: the
+   * report calls are handed an item id and a position, and the quality setting
+   * that decides between the original bytes and a re-encode is read on the
+   * other side of the app, in a hook, at the moment a queue is built.
+   *
+   * Bounded because a long session builds a URL for every track it queues, and
+   * a map that only grows is a leak however small each entry is. Oldest out
+   * first; an item that falls off reports the conservative default rather than
+   * a stale answer.
+   */
+  const playMethods = new Map<string, PlayMethod>();
+  const PLAY_METHOD_MEMORY = 200;
+
   function buildStreamUrl(songId: string, quality: AudioQuality = 'high', codec: 'mp3' | 'opus' = 'mp3'): string {
     // Streams pick up whichever URL failover has most recently confirmed alive:
     // a metadata request that just fell over to the fallback also moves the
     // stream URL onto that same address for the next `getPlayableUrl` call.
     const streamBaseUrl = failoverHint ? orderedUrls(failoverHint)[0] ?? baseUrl : baseUrl;
     const { format, maxBitRate } = qualityToStreamParams(quality);
+    playMethods.delete(songId);
+    playMethods.set(songId, playMethodForStreamFormat(format));
+    while (playMethods.size > PLAY_METHOD_MEMORY) {
+      const oldest = playMethods.keys().next();
+      if (oldest.done) break;
+      playMethods.delete(oldest.value);
+    }
     if (format === 'raw') {
       return `${streamBaseUrl}/Audio/${songId}/stream?Static=true&${brand.streamTokenParam}=${token}`;
     }
     const bitrate = (maxBitRate ?? 320) * 1000;
     const ext = codec === 'opus' ? 'opus' : 'mp3';
     return `${streamBaseUrl}/Audio/${songId}/stream.${ext}?AudioCodec=${codec}&MaxStreamingBitrate=${bitrate}&${brand.streamTokenParam}=${token}`;
+  }
+
+  /**
+   * How this item is being delivered, for a session report.
+   *
+   * `DirectPlay` when nothing was ever asked of this server for the item —
+   * a track playing from a downloaded copy, or a queue recovered into a fresh
+   * JavaScript context that has lost what it built. Both are cases where the
+   * server is doing no work, which is exactly what `DirectPlay` claims.
+   */
+  function playMethodFor(songId: string): PlayMethod {
+    return playMethods.get(songId) ?? 'DirectPlay';
   }
 
   function buildAvatarUrl(): string {
@@ -155,6 +192,7 @@ export function createMediaBrowserClient(config: MediaBrowserClientConfig, brand
     userId,
     parentId,
     buildStreamUrl,
+    playMethodFor,
     buildAvatarUrl,
     brand,
   };
