@@ -13,6 +13,7 @@ import { albumCoverSubject, missingCover, type CoverSource } from '@/domain/enti
 import { reportedRating } from '@/domain/entities/Rating';
 import { albumRef, artistRef } from './mapRefs';
 import type { SubsonicSong } from './types';
+import { internCover } from '@/domain/entities/internRef';
 
 /** Subsonic reports genres two ways, and older servers only the singular one. */
 function genresOf(dto: SubsonicSong): string[] {
@@ -46,9 +47,9 @@ interface MapSongContext {
 export function mapSong(dto: SubsonicSong, context: MapSongContext): Song {
   const { provenance } = context;
   const nativeId = dto.id ?? '';
-  const cover: CoverSource = dto.coverArt
+  const cover: CoverSource = internCover(dto.coverArt
     ? { kind: 'navidrome', coverArtId: dto.coverArt }
-    : context.cover ?? missingCover(albumCoverSubject(dto.album ?? context.albumTitle, dto.artist));
+    : context.cover ?? missingCover(albumCoverSubject(dto.album ?? context.albumTitle, dto.artist)));
 
   return {
     localId: makeLocalId('song', provenance, nativeId),

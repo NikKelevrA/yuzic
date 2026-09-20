@@ -24,6 +24,7 @@ import { controlSize, iconSize, radius, spacing, typography } from '@/constants/
 import { useRadius } from '@/features/theme/useRadius';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import { clearCatalog } from '@/features/library/catalogPersistence';
+import { clearInternedRefs } from '@/domain/entities/internRef';
 
 type Props = {
   onDismiss?: () => void;
@@ -77,6 +78,10 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
       // clearing the cache no longer reaches it. Without this the next account
       // would hydrate the previous one's library.
       clearCatalog();
+      // The shared artist/album references outlive the entities that named
+      // them, so they are dropped with the catalog rather than left holding
+      // the previous account's names.
+      clearInternedRefs();
       router.replace('/(onboarding)');
     } catch {
       notify.error(t('home.account.signOutFailed'));

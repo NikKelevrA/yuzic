@@ -13,6 +13,7 @@ import type { Provenance } from '@/domain/identity/Provenance';
 import { albumCoverSubject, artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import { imageCover } from './imageCover';
 import type { DeezerAlbum, DeezerArtist } from './types';
+import { internAlbumRef, internArtistRef } from '@/domain/entities/internRef';
 
 /** Deezer's largest-first artist picture, or a gap naming the artist. */
 function artistCover(artist: DeezerArtist): CoverSource {
@@ -29,22 +30,22 @@ export function albumCover(album: DeezerAlbum): CoverSource {
 
 export function artistRef(provenance: Provenance, artist: DeezerArtist | undefined): ArtistRef {
   const nativeId = artist?.id != null ? String(artist.id) : '';
-  return {
+  return internArtistRef({
     localId: makeLocalId('artist', provenance, nativeId),
     nativeId,
     externalIds: nativeId ? { deezerId: nativeId } : {},
     name: artist?.name ?? 'Unknown Artist',
     cover: artist ? artistCover(artist) : missingCover(undefined),
-  };
+  });
 }
 
 export function albumRef(provenance: Provenance, album: DeezerAlbum | undefined): AlbumRef {
   const nativeId = album?.id != null ? String(album.id) : '';
-  return {
+  return internAlbumRef({
     localId: makeLocalId('album', provenance, nativeId),
     nativeId,
     externalIds: nativeId ? { deezerId: nativeId } : {},
     title: album?.title ?? 'Unknown Album',
     cover: album ? albumCover(album) : missingCover(undefined),
-  };
+  });
 }
