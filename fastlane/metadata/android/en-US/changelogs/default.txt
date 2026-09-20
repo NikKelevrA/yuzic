@@ -1,7 +1,4 @@
-Faster on a big library. The whole catalog was being rewritten to disk every time anything changed, which is what made a large library slow to open and sluggish to scroll.
+Fixes a crash when Yuzic scanned a large Jellyfin library.
 
-- Android can reach a server behind a certificate authority of your own
-- Downtify joins Lidarr, slskd and SoulSync as a downloader
-- MusicBrainz can point at your own mirror
-- A fallback URL is tried when the first address stops answering
-- Tracks in Your Mix play when you tap them
+- The library is fetched a page at a time now. It used to be asked for in one request, and on a big library that single response was large enough to run the app out of memory before it could draw anything
+- Sorting a large library no longer rebuilds the whole list first
