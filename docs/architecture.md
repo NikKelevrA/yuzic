@@ -188,8 +188,12 @@ and the code is still good a moment later. The exception is the step *after*
 approval, where the app checks the account against the chosen server: once a
 token exists the approval is settled, so a failure there is the server, not the
 code. A provider marks that with `codeAuthServerError`, and `useCodeAuth` ends
-the flow with `reason: 'server'`. Without the mark it retried until the timeout
-and told the user their code had expired, about a code they had just approved.
+the flow with `reason: 'serverRefused'` or `'serverUnreachable'`. Without the
+mark it retried until the timeout and told the user their code had expired,
+about a code they had just approved. The two outcomes are kept apart because
+they need opposite advice: a 401/403 means the address was right and the
+*account* was not authorised, so pointing at the address is the same mistake in
+a new place.
 
 `ServerProviderConfig.addressHintKey` is the address screen's per-provider
 hint. It exists because one shared example names one port, and the port is the

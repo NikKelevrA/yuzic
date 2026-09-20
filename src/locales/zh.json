@@ -741,7 +741,8 @@
         "waiting": "正在等待授权…",
         "expired": "此代码已过期。请重新开始以获取新代码。",
         "unavailable": "当前无法使用验证码登录。",
-        "serverRefused": "登录已获批准，但此服务器未接受该账户。请检查服务器地址后重试。",
+        "serverRefused": "登录已获批准，但此服务器未授权您的账户。请确认该账户拥有此服务器，或已与其共享。",
+        "serverUnreachable": "登录已获批准，但应用无法连接到该服务器。请检查服务器地址后重试。",
         "usePassword": "使用用户名和密码",
         "jellyfin": {
           "instruction": "在 Jellyfin 中打开 Quick Connect 并输入此代码。",

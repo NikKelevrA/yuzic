@@ -12,7 +12,7 @@ jest.mock('../client', () => ({
 
 import { createPlexClient } from '../client';
 import { beginPlexPin, pollPlexPin } from './pin';
-import { isCodeAuthServerError } from '@/providers/registry/codeAuthServerError';
+import { codeAuthServerFailure } from '@/providers/registry/codeAuthServerError';
 
 describe('pollPlexPin', () => {
   beforeEach(() => {
@@ -42,14 +42,26 @@ describe('pollPlexPin', () => {
   // refusal here is the server's answer. Unmarked, the caller treats it as a
   // blip, retries until the timeout, and reports an expired code -- for a code
   // that was accepted.
-  it('marks a post-approval server refusal so the flow stops instead of retrying', async () => {
+  it('marks a post-approval refusal as the server saying no, not a bad address', async () => {
     mockAccountFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ authToken: 'account-token' }) });
     mockServerRequest.mockRejectedValueOnce(new Error('Plex request failed (401)'));
 
     const err = await pollPlexPin('pin-id', 'https://plex.example').catch(e => e);
 
-    expect(isCodeAuthServerError(err)).toBe(true);
+    expect(codeAuthServerFailure(err)).toBe('refused');
     expect(err.message).toContain('401');
+  });
+
+  // An unclaimed or unshared server answers 401 with a perfectly good address,
+  // so the two cannot share a message: one is about the account, the other is
+  // about where the app looked.
+  it('marks an unreachable server separately from a refusal', async () => {
+    mockAccountFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ authToken: 'account-token' }) });
+    mockServerRequest.mockRejectedValueOnce(new Error('Network request failed'));
+
+    const err = await pollPlexPin('pin-id', 'https://plex.example').catch(e => e);
+
+    expect(codeAuthServerFailure(err)).toBe('unreachable');
   });
 
   it('does not mark a poll that has not reached approval yet', async () => {

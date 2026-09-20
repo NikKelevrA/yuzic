@@ -742,7 +742,8 @@
         "waiting": "Waiting for approval…",
         "expired": "That code expired. Start again to get a new one.",
         "unavailable": "Code sign-in is unavailable right now.",
-        "serverRefused": "You approved the sign-in, but this server did not accept the account. Check the server address, then try again.",
+        "serverRefused": "You approved the sign-in, but this server did not authorize your account. Make sure the server is claimed by that account, or shared with it.",
+        "serverUnreachable": "You approved the sign-in, but the app could not reach that server. Check the server address, then try again.",
         "usePassword": "Use username and password",
         "jellyfin": {
           "instruction": "Open Quick Connect in Jellyfin and enter this code.",

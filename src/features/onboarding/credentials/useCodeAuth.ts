@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CodeAuthApi } from '@/providers/registry/serverProviderTypes';
 import type { BasicAuth, ProviderAuth } from '@/providers/contracts/Server';
-import { isCodeAuthServerError } from '@/providers/registry/codeAuthServerError';
+import { codeAuthServerFailure } from '@/providers/registry/codeAuthServerError';
 
 type CodeAuthPhase =
   /** Not started — the password form is showing. */
@@ -14,12 +14,17 @@ type CodeAuthPhase =
   /** The user approved; these are the credentials to save. */
   | { status: 'approved'; auth: ProviderAuth; username: string }
   /**
-   * Gave up. `reason` separates the three ways this ends: the code went stale
-   * unused, the flow never got started, or — `server` — the user approved and
-   * the server then refused the account. The last one is not a code problem
-   * and must not be described as one.
+   * Gave up. `reason` separates the ways this ends: the code went stale unused,
+   * the flow never started, or the user approved and the server then either
+   * refused the account (`serverRefused`) or could not be reached
+   * (`serverUnreachable`). The last two are not code problems and must not be
+   * described as one — and they need opposite advice from each other.
    */
-  | { status: 'failed'; reason: 'expired' | 'error' | 'server'; message?: string };
+  | {
+      status: 'failed';
+      reason: 'expired' | 'error' | 'serverRefused' | 'serverUnreachable';
+      message?: string;
+    };
 
 type Options = {
   codeAuth: CodeAuthApi | undefined;
@@ -107,9 +112,14 @@ export function useCodeAuth({ codeAuth, serverUrl, basicAuth }: Options) {
         // Approval already happened and the server is what said no, so waiting
         // cannot help: every retry re-fails, and the timeout would end this by
         // blaming a code the user has already used successfully.
-        if (isCodeAuthServerError(err)) {
+        const serverFailure = codeAuthServerFailure(err);
+        if (serverFailure) {
           stopPolling();
-          setPhase({ status: 'failed', reason: 'server', message: err.message });
+          setPhase({
+            status: 'failed',
+            reason: serverFailure === 'refused' ? 'serverRefused' : 'serverUnreachable',
+            message: err instanceof Error ? err.message : undefined,
+          });
           return;
         }
         // Transient — the code is still good, so keep waiting for the timeout

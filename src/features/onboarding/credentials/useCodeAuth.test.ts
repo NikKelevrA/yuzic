@@ -207,7 +207,7 @@ describe('useCodeAuth', () => {
     await waitFor(() => {
       expect(result.current.phase).toEqual({
         status: 'failed',
-        reason: 'server',
+        reason: 'serverRefused',
         message: 'request failed (401)',
       });
     });
@@ -216,6 +216,20 @@ describe('useCodeAuth', () => {
     const callsAfterFailure = (codeAuth.poll as jest.Mock).mock.calls.length;
     await act(async () => { jest.advanceTimersByTime(5000); });
     expect((codeAuth.poll as jest.Mock).mock.calls.length).toBe(callsAfterFailure);
+  });
+
+  it('separates a server that could not be reached from one that said no', async () => {
+    const codeAuth = makeCodeAuth({
+      poll: jest.fn(async () => { throw codeAuthServerError(new Error('Network request failed')); }),
+    });
+    const { result } = await renderWithFakeTimers(() => useCodeAuth({ codeAuth, serverUrl }));
+
+    await act(async () => { await result.current.start(); });
+    await act(async () => { jest.advanceTimersByTime(1000); });
+
+    await waitFor(() => {
+      expect(result.current.phase).toMatchObject({ status: 'failed', reason: 'serverUnreachable' });
+    });
   });
 
   it('still retries an unmarked poll failure', async () => {
