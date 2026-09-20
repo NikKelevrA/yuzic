@@ -253,8 +253,12 @@ const downtifyDownloader: DownloaderDefinition = {
   fetchQueue: async (config) => (await downtify.fetchQueue(downtifyConfigOf(config))).map(record => ({
     id: record.id,
     percentComplete: record.progress,
-    title: record.title,
+    // The album where Downtify reported one, for the same reason SoulSync
+    // does it: this is matched against an album the listener is looking at,
+    // and a single track's name would never match one.
+    title: record.album || record.title,
     artistName: record.artist,
+    albumTitle: record.album || undefined,
     transferIds: [record.id],
     // `done` is finished-but-still-listed; the row leaving the queue is what
     // says the file has landed. `error` is not active either — it will never

@@ -52,22 +52,5 @@ export function createDowntifyClient(config: DowntifyConfig) {
     return JSON.parse(body) as T;
   }
 
-  /**
-   * The body as text.
-   *
-   * `/api/version` answers with a bare version string rather than JSON, which
-   * `request` cannot return without casting a string to its caller's type.
-   * A second method is the honest way to say "this one is not JSON".
-   */
-  async function requestText(path: string): Promise<string> {
-    const res = await fetchWithTimeout(`${baseUrl}${path}`, {
-      headers: { Accept: 'text/plain, application/json' },
-    });
-    if (!res.ok) {
-      throw new DowntifyError(`Downtify API error (${res.status})`, res.status);
-    }
-    return res.text();
-  }
-
-  return { request, requestText, baseUrl };
+  return { request, baseUrl };
 }

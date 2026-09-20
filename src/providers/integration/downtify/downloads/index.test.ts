@@ -18,13 +18,24 @@ const answer = (body: unknown, ok = true, status = 200) => ({
 const fetchMock = jest.fn();
 global.fetch = fetchMock as unknown as typeof fetch;
 
-/** A search result, with a field this app has never heard of. */
+/**
+ * A search result exactly as Downtify 3.0.0 returns one, plus a field this
+ * app has never heard of — the schema is not published, so a future version
+ * adding one has to survive the round trip.
+ */
 const searchHit = {
-  id: 'song-1',
-  title: 'Roygbiv',
-  artist: 'Boards of Canada',
-  source: 'youtube-music',
-  youtube_id: 'yt-1',
+  song_id: 'SM4tQcUt_mQ',
+  name: 'Roygbiv',
+  artists: ['Boards of Canada'],
+  album_name: 'Music Has The Right To Children',
+  cover_url: 'https://yt3.googleusercontent.com/example=w600-h600-l90-rj',
+  duration: 150,
+  url: 'https://music.youtube.com/watch?v=SM4tQcUt_mQ',
+  explicit: false,
+  year: '',
+  release_date: '',
+  source: 'youtube',
+  spotify_url: 'https://open.spotify.com/search/Boards%20of%20Canada%20Roygbiv',
   some_field_downtify_added_later: 'keep me',
 };
 
@@ -43,7 +54,8 @@ describe('testConnection', () => {
   beforeEach(() => { fetchMock.mockReset(); });
 
   it('asks for the version, with no credential of any kind', async () => {
-    fetchMock.mockResolvedValue(answer('1.14.0'));
+    // JSON on the wire: the body is `"3.0.0"`, quotes included.
+    fetchMock.mockResolvedValue(answer('"3.0.0"'));
 
     await expect(testConnection(config)).resolves.toBe(true);
 
@@ -56,6 +68,12 @@ describe('testConnection', () => {
   it('says no when something else answers at the address', async () => {
     // A reverse proxy or the wrong service replies with a page, not a version.
     fetchMock.mockResolvedValue(answer(''));
+
+    await expect(testConnection(config)).resolves.toBe(false);
+  });
+
+  it('says no when the answer is JSON but not a version string', async () => {
+    fetchMock.mockResolvedValue(answer({ some: 'object' }));
 
     await expect(testConnection(config)).resolves.toBe(false);
   });
@@ -75,8 +93,8 @@ describe('downloadTrack', () => {
 
   it('searches, then queues the top result through the batch endpoint', async () => {
     fetchMock
-      .mockResolvedValueOnce(answer([searchHit, { id: 'song-2', title: 'Other' }]))
-      .mockResolvedValueOnce(answer({ job_ids: ['song-1'], count: 1 }));
+      .mockResolvedValueOnce(answer([searchHit, { song_id: 'other', name: 'Other' }]))
+      .mockResolvedValueOnce(answer({ job_ids: ['SM4tQcUt_mQ'], count: 1 }));
 
     const result = await downloadTrack(config, { title: 'Roygbiv', artist: 'Boards of Canada' });
 
@@ -86,7 +104,8 @@ describe('downloadTrack', () => {
     // Not `/api/download/url`: that one blocks until the file has landed.
     expect(downloadUrl).toBe('https://downtify.example/api/download/batch');
     expect(init.method).toBe('POST');
-    expect(result.jobIds).toEqual(['song-1']);
+    // `job_ids` carries the song's own `song_id`.
+    expect(result.jobIds).toEqual(['SM4tQcUt_mQ']);
   });
 
   it('hands the search result back untouched, unknown fields and all', async () => {
@@ -95,7 +114,7 @@ describe('downloadTrack', () => {
     // whatever we did not know to copy.
     fetchMock
       .mockResolvedValueOnce(answer([searchHit]))
-      .mockResolvedValueOnce(answer({ job_ids: ['song-1'] }));
+      .mockResolvedValueOnce(answer({ job_ids: ['SM4tQcUt_mQ'] }));
 
     await downloadTrack(config, { title: 'Roygbiv', artist: 'Boards of Canada' });
 
@@ -106,7 +125,7 @@ describe('downloadTrack', () => {
   it('does not ask for an M3U, which would leave a playlist per track', async () => {
     fetchMock
       .mockResolvedValueOnce(answer([searchHit]))
-      .mockResolvedValueOnce(answer({ job_ids: ['song-1'] }));
+      .mockResolvedValueOnce(answer({ job_ids: ['SM4tQcUt_mQ'] }));
 
     await downloadTrack(config, { title: 'Roygbiv', artist: 'Boards of Canada' });
 
@@ -141,10 +160,11 @@ describe('fetchQueue', () => {
 
     await expect(fetchQueue(config)).resolves.toEqual([
       {
-        id: 'song-1',
+        id: 'SM4tQcUt_mQ',
         status: 'downloading',
         title: 'Roygbiv',
         artist: 'Boards of Canada',
+        album: 'Music Has The Right To Children',
         progress: 42,
         provider: 'youtube-music',
         message: 'fetching',
@@ -152,18 +172,29 @@ describe('fetchQueue', () => {
     ]);
   });
 
-  it('addresses a job by youtube_id when it carries no id', async () => {
+  it('joins a collaboration rather than showing only the first name', async () => {
     fetchMock.mockResolvedValue(answer([
-      { song: { title: 'T', artist: 'A', youtube_id: 'yt-9' }, status: 'queued', progress: 0 },
+      { song: { song_id: 's', name: 'T', artists: ['A', 'B'] }, status: 'queued', progress: 0 },
     ]));
 
     const [record] = await fetchQueue(config);
-    expect(record.id).toBe('yt-9');
+    expect(record.artist).toBe('A, B');
+  });
+
+  it('reports an empty provider while nothing has served it yet', async () => {
+    // What a freshly queued job really looks like: no provider, no filename.
+    fetchMock.mockResolvedValue(answer([
+      { song: { song_id: 's', name: 'T', artists: ['A'] }, status: 'downloading', progress: 0, message: '', provider: '', filename: null },
+    ]));
+
+    const [record] = await fetchQueue(config);
+    expect(record.provider).toBe('');
+    expect(record.status).toBe('downloading');
   });
 
   it('drops a job it could not address, rather than showing an uncancellable row', async () => {
     fetchMock.mockResolvedValue(answer([
-      { song: { title: 'T', artist: 'A' }, status: 'queued', progress: 0 },
+      { song: { name: 'T', artists: ['A'] }, status: 'queued', progress: 0 },
     ]));
 
     await expect(fetchQueue(config)).resolves.toEqual([]);
@@ -185,6 +216,7 @@ describe('cancelDownload', () => {
     await cancelDownload(config, { id: 'song 1' });
 
     const [url, init] = fetchMock.mock.calls[0];
+    // Answers `{"removed":true}` against a live server.
     expect(url).toBe('https://downtify.example/api/queue/item?song_id=song%201');
     expect(init.method).toBe('DELETE');
   });

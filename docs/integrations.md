@@ -649,12 +649,24 @@ Downtify's design, not something the app can tighten.
 | `DELETE /api/queue/item?song_id=` | Cancelling |
 
 A search result is handed back to `/api/download/batch` **exactly as it
-arrived**. Downtify documents `source`, `artist`, `title` and the optional
-`track_number`, `album_track_total`, `youtube_id` and `downtify_playlist_url`,
-and says those fields have to survive the round trip, but it does not publish
-the full schema — so the object is carried through opaquely and only the
-documented fields are ever read. Rebuilding it from the fields we know would
-silently drop the ones we don't.
+arrived**, and the field names were read off a live Downtify 3.0.0 rather than
+its reference, which does not carry the schema. They are not what the prose
+implies: a result is
+
+```json
+{ "song_id": "SM4tQcUt_mQ", "name": "Roygbiv", "artists": ["Boards of Canada"],
+  "album_name": "Music Has The Right To Children", "duration": 150,
+  "url": "https://music.youtube.com/watch?v=...", "source": "youtube", … }
+```
+
+`song_id` / `name` / `artists` (an array), **not** `id` / `title` / `artist` —
+which is what the first cut of this client assumed, and it was wrong on all
+three until a real instance said otherwise. `job_ids` from `batch` carries that
+same `song_id`, and it is what `DELETE /api/queue/item?song_id=` takes.
+
+The object is still passed back whole rather than rebuilt, because the endpoint
+takes all of it and a version that adds a field would lose it the moment this
+side started copying fields across by name.
 
 `generate_m3u` and `playlist_url` are deliberately not sent: they belong to a
 playlist download, and one track from a Get is not one.

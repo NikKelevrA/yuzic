@@ -6,20 +6,24 @@ type TrackRequest = { title: string; artist: string };
  * One of Downtify's search results, and the thing its batch endpoint takes
  * back.
  *
- * Deliberately opaque past the two fields below. Downtify's documented schema
- * names `source`, `artist`, `title` and the optional `track_number`,
- * `album_track_total`, `youtube_id` and `downtify_playlist_url`, and says
- * these "survive the re-fetch by URL" — but it does not publish a complete
- * field list. So a result is carried back to `/api/download/batch` exactly as
- * it arrived, and only what is documented is ever read. Rebuilding the object
- * from fields we think we know would drop whatever we do not.
+ * Read off a live Downtify 3.0.0, because its published reference does not
+ * carry the schema and the field names are not the ones the prose implies:
+ * a result is `song_id` / `name` / `artists` (an array), not `id` / `title` /
+ * `artist`. The rest — `album_name`, `cover_url`, `duration`, `url`,
+ * `source`, `spotify_url`, `explicit`, `year`, `release_date` — is carried
+ * but unread.
+ *
+ * Still indexed, and still passed back to `/api/download/batch` exactly as it
+ * arrived rather than rebuilt: the endpoint takes the whole object, and a
+ * version that adds a field would lose it the moment this side started
+ * copying fields across by name.
  */
 type DowntifySong = {
-  title?: string;
-  artist?: string;
-  /** Not documented, but what a job is addressed by — see `queueItemId`. */
-  id?: string;
-  youtube_id?: string;
+  /** What a job is addressed by: `job_ids` and `song_id` are the same value. */
+  song_id?: string;
+  name?: string;
+  artists?: string[];
+  album_name?: string;
   [field: string]: unknown;
 };
 
@@ -39,8 +43,10 @@ type DowntifyQueueRecord = {
   status: string;
   title: string;
   artist: string;
+  album: string;
   /** 0–100. */
   progress: number;
+  /** Which source served it, once one has: `youtube-music`, `youtube`, `slskd`. */
   provider: string;
   message: string;
 };
@@ -48,23 +54,24 @@ type DowntifyQueueRecord = {
 /**
  * How a queue row is addressed for cancellation.
  *
- * `DELETE /api/queue/item` takes a `song_id`, and `POST /api/download/batch`
- * answers with `job_ids`, so the two are the same identifier — but Downtify's
- * reference does not say which field of a song carries it. `id` is the
- * reading that matches those two names; `youtube_id` is the documented field
- * most likely to stand in where `id` is absent. A row with neither is dropped
- * rather than shown as something that cannot be cancelled.
+ * `DELETE /api/queue/item` takes a `song_id` and `POST /api/download/batch`
+ * answers with `job_ids`; against a live server those are the same value, and
+ * it is the song's `song_id`. A row without one is dropped rather than shown
+ * as something that cannot be cancelled.
  */
 function queueItemId(song: DowntifySong | undefined): string {
-  return String(song?.id ?? song?.youtube_id ?? '');
+  return String(song?.song_id ?? '');
 }
 
 function toRecord(job: DowntifyJob): DowntifyQueueRecord {
   return {
     id: queueItemId(job.song),
     status: String(job.status ?? 'unknown'),
-    title: job.song?.title ?? '',
-    artist: job.song?.artist ?? '',
+    title: job.song?.name ?? '',
+    // An array, and Downtify fills it with one name for a YouTube Music
+    // match. Joined rather than indexed so a collaboration reads as one.
+    artist: (job.song?.artists ?? []).join(', '),
+    album: job.song?.album_name ?? '',
     progress: Number(job.progress) || 0,
     provider: String(job.provider ?? ''),
     message: String(job.message ?? ''),
@@ -81,9 +88,9 @@ export function buildQuery(req: TrackRequest): string {
 /** Cheap unauthenticated read, used to check the address points at a Downtify. */
 export async function testConnection(config: DowntifyConfig): Promise<boolean> {
   const client = createDowntifyClient(config);
-  const version = await client.requestText('/api/version');
-  // A bare version string is what Downtify answers with. Anything else — a
-  // reverse proxy's HTML, a different service — is not one.
+  const version = await client.request<string>('/api/version');
+  // A JSON string — `"3.0.0"` on the wire — is what Downtify answers with.
+  // Anything else (a reverse proxy's HTML, a different service) is not one.
   return typeof version === 'string' && version.trim().length > 0;
 }
 
