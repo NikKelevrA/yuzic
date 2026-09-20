@@ -743,7 +743,7 @@
           "action": "Quick Connect でサインイン"
         },
         "plex": {
-          "instruction": "ブラウザまたは Plex アプリで Plex を開き、このコードを入力してください。",
+          "instruction": "ブラウザで plex.tv/link を開き、このコードを入力してください。",
           "action": "Plex でサインイン",
           "useCode": "代わりに Plex サインインを使用してください"
         }

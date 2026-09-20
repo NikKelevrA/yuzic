@@ -20,9 +20,17 @@ async function accountRequest<T>(path: string, init: RequestInit = {}): Promise<
  * Plex PIN sign-in. The server URL is intentionally not sent to plex.tv: PIN
  * approval grants an account token, then the normal provider ping verifies
  * that token against the server the user selected.
+ *
+ * The PIN is deliberately **not** a strong one. Plex issues two kinds, and
+ * `?strong=true` returns a 25-character opaque code meant to be carried inside
+ * an `app.plex.tv/auth#?code=...` URL that the user never reads. The default
+ * returns the four-character code that plex.tv/link accepts by hand. This flow
+ * prints the code and asks the user to type it, so asking for the strong one
+ * handed them something plex.tv/link has no field for — Plex sign-in could not
+ * be completed at all, by anyone.
  */
 export async function beginPlexPin(_serverUrl: string, _basicAuth?: BasicAuth) {
-  const pin = await accountRequest<PlexPinResponse>('/api/v2/pins?strong=true', { method: 'POST' });
+  const pin = await accountRequest<PlexPinResponse>('/api/v2/pins', { method: 'POST' });
   if (!pin.id || !pin.code) throw new Error('Plex did not return a sign-in code.');
   return { code: pin.code, handle: String(pin.id) };
 }

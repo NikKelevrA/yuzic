@@ -743,7 +743,7 @@
           "action": "使用 Quick Connect 登录"
         },
         "plex": {
-          "instruction": "在浏览器或 Plex 应用中打开 Plex，然后输入此代码。",
+          "instruction": "在浏览器中打开 plex.tv/link，然后输入此代码。",
           "action": "使用 Plex 登录",
           "useCode": "请改用 Plex 登录"
         }

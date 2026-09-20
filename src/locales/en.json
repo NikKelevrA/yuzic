@@ -744,7 +744,7 @@
           "action": "Sign in with Quick Connect"
         },
         "plex": {
-          "instruction": "Open Plex in a browser or the Plex app and enter this code.",
+          "instruction": "Go to plex.tv/link in a browser and enter this code.",
           "action": "Sign in with Plex",
           "useCode": "Use Plex sign-in instead"
         }

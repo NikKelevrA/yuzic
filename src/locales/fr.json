@@ -744,7 +744,7 @@
           "action": "Se connecter avec Quick Connect"
         },
         "plex": {
-          "instruction": "Ouvrez Plex dans un navigateur ou l’app Plex et saisissez ce code.",
+          "instruction": "Ouvrez plex.tv/link dans un navigateur et saisissez ce code.",
           "action": "Se connecter avec Plex",
           "useCode": "Utilisez plutôt la connexion Plex"
         }
