@@ -28,6 +28,7 @@ import type { Artist } from '@/domain/entities/Artist';
 import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId, type LocalId } from '@/domain/identity/LocalId';
+import { buildLibraryIndex, type LibraryIndex } from './localFirst';
 import type { Provenance } from '@/domain/identity/Provenance';
 
 export interface Catalog {
@@ -62,6 +63,20 @@ export interface CatalogStore {
   readonly songIdsByAlbum: ReadonlyMap<LocalId, readonly LocalId[]>;
   readonly songIdsByArtist: ReadonlyMap<LocalId, readonly LocalId[]>;
   readonly albumIdsByGenre: ReadonlyMap<string, readonly LocalId[]>;
+
+  /**
+   * The identity index: "does the library already hold this record?"
+   *
+   * Built on first use rather than with the rest of the store. It costs about
+   * 311 ms at 90,000 tracks, and most screens never ask the question — it
+   * only matters where browsed records from an outside catalogue meet the
+   * library. Paying for it on every sync, for every user, to serve the
+   * screens that browse Deezer would be the wrong default.
+   *
+   * The rule itself stays in `localFirst`; what two records being the same
+   * means is not the store's business. The store only holds the answer.
+   */
+  readonly match: LibraryIndex;
 
   /**
    * The provenance every record in this catalog shares.
@@ -143,7 +158,14 @@ export function buildCatalogStore(catalog: Catalog): CatalogStore {
     catalog.playlists[0]?.provenance ??
     null;
 
+  // Built on demand; see `match` on the interface for why.
+  let match: LibraryIndex | null = null;
+
   return {
+    get match(): LibraryIndex {
+      match ??= buildLibraryIndex(catalog);
+      return match;
+    },
     songs,
     albums,
     artists,

@@ -40,6 +40,9 @@ jest.mock('@/components/useSheetRef', () => ({ useSheetRef: () => ({ current: nu
 jest.mock('@/features/album/useAlbums', () => ({ useAlbums: () => ({ albums: [] }) }));
 jest.mock('@/features/artist/useArtists', () => ({ useArtists: () => ({ artists: [] }) }));
 jest.mock('@/features/song/useTracks', () => ({ useTracks: () => ({ tracks: mockLibrary }) }));
+// The catalog store reads playlists too, and the real hook reaches i18n
+// through the provider registry. Mocked like its three siblings above.
+jest.mock('@/features/playlist/usePlaylists', () => ({ usePlaylists: () => ({ playlists: [] }) }));
 
 const artistRef = {
   localId: 'local:artist:srv:s1:a1' as Song['artist']['localId'],
