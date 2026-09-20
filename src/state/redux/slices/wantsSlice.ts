@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { removeServer } from '@/state/redux/slices/serversSlice';
 import type { LocalId } from '@/domain/identity/LocalId';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import type { CoverSource } from '@/domain/entities/Cover';
@@ -109,6 +110,18 @@ const wantsSlice = createSlice({
     clearWantsForServer(state, action: PayloadAction<ServerRef>) {
       state.byServer[action.payload.serverId] = [];
     },
+  },
+  /**
+   * Forget a server the listener removed.
+   *
+   * Wired to the action rather than dispatched beside it, because the one
+   * caller that removes a server should not have to remember every slice that
+   * kept something for it — and the next caller would not.
+   */
+  extraReducers: builder => {
+    builder.addCase(removeServer, (state, action) => {
+      delete state.byServer[action.payload];
+    });
   },
 });
 

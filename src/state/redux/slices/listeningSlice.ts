@@ -1,5 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { removeServer } from '@/state/redux/slices/serversSlice';
+import { forgetServerListening } from '@/features/listening/forgetServer';
+
 import {
   countsAsPlay,
   isRejection,
@@ -233,6 +236,11 @@ const listeningSlice = createSlice({
       // the time anyone can press this, and re-seeding them would restore
       // history the listener just asked to delete.
     },
+  },
+  extraReducers: builder => {
+    builder.addCase(removeServer, (state, action) => {
+      forgetServerListening(state, action.payload);
+    });
   },
 });
 
