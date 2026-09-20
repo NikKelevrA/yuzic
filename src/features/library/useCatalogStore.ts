@@ -21,33 +21,38 @@ import { useMemo } from 'react';
 import { useAlbums } from '@/features/album/useAlbums';
 import { useArtists } from '@/features/artist/useArtists';
 import { useTracks } from '@/features/song/useTracks';
+import { usePlaylists } from '@/features/playlist/usePlaylists';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Song } from '@/domain/entities/Song';
+import type { Playlist } from '@/domain/entities/Playlist';
 import { buildCatalogStore, type CatalogStore } from './catalogStore';
 
 let shared: {
   songs: readonly Song[];
   albums: readonly Album[];
   artists: readonly Artist[];
+  playlists: readonly Playlist[];
   store: CatalogStore;
 } | null = null;
 
 function sharedStore(
   songs: readonly Song[],
   albums: readonly Album[],
-  artists: readonly Artist[]
+  artists: readonly Artist[],
+  playlists: readonly Playlist[]
 ): CatalogStore {
   if (
     shared &&
     shared.songs === songs &&
     shared.albums === albums &&
-    shared.artists === artists
+    shared.artists === artists &&
+    shared.playlists === playlists
   ) {
     return shared.store;
   }
-  const store = buildCatalogStore({ songs, albums, artists });
-  shared = { songs, albums, artists, store };
+  const store = buildCatalogStore({ songs, albums, artists, playlists });
+  shared = { songs, albums, artists, playlists, store };
   return store;
 }
 
@@ -60,6 +65,10 @@ export function useCatalogStore(): CatalogStore {
   const { albums } = useAlbums();
   const { artists } = useArtists();
   const { tracks } = useTracks();
+  const { playlists } = usePlaylists();
 
-  return useMemo(() => sharedStore(tracks, albums, artists), [tracks, albums, artists]);
+  return useMemo(
+    () => sharedStore(tracks, albums, artists, playlists),
+    [tracks, albums, artists, playlists]
+  );
 }

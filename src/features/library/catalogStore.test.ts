@@ -11,6 +11,7 @@ import {
 } from './catalogStore';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
+import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
@@ -39,7 +40,14 @@ const song = (nativeId: string, albumNativeId: string, artistNativeId: string): 
   durationSeconds: 100, contentKind: 'song', genres: [],
 });
 
+const playlist = (nativeId: string): Playlist => ({
+  localId: makeLocalId('playlist', provenance, nativeId), nativeId, provenance,
+  externalIds: {}, libraryState: 'in-library', title: `Playlist ${nativeId}`,
+  cover: { kind: 'none' }, isOwned: true, songIds: [],
+});
+
 const catalog: Catalog = {
+  playlists: [playlist('p1')],
   artists: [artist('a1'), artist('a2')],
   albums: [album('al1', 'a1', ['Rock']), album('al2', 'a1', ['Rock', 'Indie']), album('al3', 'a2', ['Jazz'])],
   songs: [song('s1', 'al1', 'a1'), song('s2', 'al1', 'a1'), song('s3', 'al3', 'a2')],
@@ -53,6 +61,11 @@ describe('buildCatalogStore', () => {
     expect(store.albums.size).toBe(3);
     expect(store.songs.size).toBe(3);
     expect(store.albums.get(albumId('al2'))?.title).toBe('Album al2');
+  });
+
+  it('indexes playlists, which are a catalog resource like the rest', () => {
+    expect(store.playlists.size).toBe(1);
+    expect(store.playlistByNativeId.get('p1')?.title).toBe('Playlist p1');
   });
 
   it('indexes by native id too, which is what half the callers hold', () => {
@@ -143,14 +156,14 @@ describe('lookups by native id', () => {
 
   it('returns nothing rather than guessing when the catalog is empty', () => {
     // No entities means no provenance to derive an id from.
-    const empty = buildCatalogStore({ songs: [], albums: [], artists: [] });
+    const empty = buildCatalogStore({ songs: [], albums: [], artists: [], playlists: [] });
 
     expect(empty.provenance).toBeNull();
     expect(albumsByArtistNativeId(empty, 'a1')).toEqual([]);
   });
 
   it('takes the provenance from whichever kind the catalog has', () => {
-    const artistsOnly = buildCatalogStore({ songs: [], albums: [], artists: catalog.artists });
+    const artistsOnly = buildCatalogStore({ songs: [], albums: [], artists: catalog.artists, playlists: [] });
 
     expect(artistsOnly.provenance).toEqual(provenance);
   });

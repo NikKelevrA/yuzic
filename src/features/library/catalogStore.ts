@@ -25,6 +25,7 @@
  */
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
+import type { Playlist } from '@/domain/entities/Playlist';
 import type { Song } from '@/domain/entities/Song';
 import { makeLocalId, type LocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
@@ -33,6 +34,7 @@ export interface Catalog {
   readonly songs: readonly Song[];
   readonly albums: readonly Album[];
   readonly artists: readonly Artist[];
+  readonly playlists: readonly Playlist[];
 }
 
 export interface CatalogStore {
@@ -40,6 +42,7 @@ export interface CatalogStore {
   readonly songs: ReadonlyMap<LocalId, Song>;
   readonly albums: ReadonlyMap<LocalId, Album>;
   readonly artists: ReadonlyMap<LocalId, Artist>;
+  readonly playlists: ReadonlyMap<LocalId, Playlist>;
 
   /**
    * The same entities by the id their server gave them.
@@ -52,6 +55,7 @@ export interface CatalogStore {
   readonly songByNativeId: ReadonlyMap<string, Song>;
   readonly albumByNativeId: ReadonlyMap<string, Album>;
   readonly artistByNativeId: ReadonlyMap<string, Artist>;
+  readonly playlistByNativeId: ReadonlyMap<string, Playlist>;
 
   /** Relationships, resolved once rather than scanned per call. */
   readonly albumIdsByArtist: ReadonlyMap<LocalId, readonly LocalId[]>;
@@ -96,6 +100,8 @@ export function buildCatalogStore(catalog: Catalog): CatalogStore {
   const songByNativeId = new Map<string, Song>();
   const albumByNativeId = new Map<string, Album>();
   const artistByNativeId = new Map<string, Artist>();
+  const playlists = new Map<LocalId, Playlist>();
+  const playlistByNativeId = new Map<string, Playlist>();
   const albumIdsByArtist = new Map<LocalId, LocalId[]>();
   const songIdsByAlbum = new Map<LocalId, LocalId[]>();
   const songIdsByArtist = new Map<LocalId, LocalId[]>();
@@ -107,6 +113,13 @@ export function buildCatalogStore(catalog: Catalog): CatalogStore {
     // that somehow holds the same native id twice keeps the earlier record
     // rather than flipping between them.
     if (!artistByNativeId.has(artist.nativeId)) artistByNativeId.set(artist.nativeId, artist);
+  }
+
+  for (const playlist of catalog.playlists) {
+    playlists.set(playlist.localId, playlist);
+    if (!playlistByNativeId.has(playlist.nativeId)) {
+      playlistByNativeId.set(playlist.nativeId, playlist);
+    }
   }
 
   for (const album of catalog.albums) {
@@ -127,15 +140,18 @@ export function buildCatalogStore(catalog: Catalog): CatalogStore {
     catalog.songs[0]?.provenance ??
     catalog.albums[0]?.provenance ??
     catalog.artists[0]?.provenance ??
+    catalog.playlists[0]?.provenance ??
     null;
 
   return {
     songs,
     albums,
     artists,
+    playlists,
     songByNativeId,
     albumByNativeId,
     artistByNativeId,
+    playlistByNativeId,
     albumIdsByArtist,
     songIdsByAlbum,
     songIdsByArtist,

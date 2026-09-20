@@ -12,10 +12,12 @@ import { Text } from 'react-native';
 let mockAlbums: unknown[] = [];
 const mockEmptyArtists: unknown[] = [];
 const mockEmptyTracks: unknown[] = [];
+const mockEmptyPlaylists: unknown[] = [];
 
 jest.mock('@/features/album/useAlbums', () => ({ useAlbums: () => ({ albums: mockAlbums }) }));
 jest.mock('@/features/artist/useArtists', () => ({ useArtists: () => ({ artists: mockEmptyArtists }) }));
 jest.mock('@/features/song/useTracks', () => ({ useTracks: () => ({ tracks: mockEmptyTracks }) }));
+jest.mock('@/features/playlist/usePlaylists', () => ({ usePlaylists: () => ({ playlists: mockEmptyPlaylists }) }));
 
 const mockBuildSpy = jest.fn();
 jest.mock('./catalogStore', () => {

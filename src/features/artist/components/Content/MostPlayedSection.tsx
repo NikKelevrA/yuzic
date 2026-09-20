@@ -8,6 +8,7 @@ import { selectSongPlayCounts } from '@/state/redux/selectors/statsSelectors'
 import { useTracks } from '@/features/song/useTracks';
 import { usePlayingActions } from '@/features/playback/PlayingContext'
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
+import { useCatalogStore } from '@/features/library/useCatalogStore'
 import TopTrackRow from '@/components/rows/TopTrackRow'
 import { rankMostPlayedTracks } from './mostPlayed'
 import type { Artist } from '@/domain/entities/Artist'
@@ -24,6 +25,7 @@ export default function MostPlayedSection({ artist }: Props) {
   const { colors } = useTheme()
   const { t } = useTranslation()
   const { tracks } = useTracks()
+  const store = useCatalogStore()
   const playCounts = useSelector(selectSongPlayCounts)
   const { playSong } = usePlayingActions()
   const { resolvePlayableSong } = usePlayableSongResolver()
@@ -35,7 +37,10 @@ export default function MostPlayedSection({ artist }: Props) {
   const ranked = rankMostPlayedTracks(playCountTracks, playCounts, artist.nativeId)
   if (ranked.length === 0) return null
 
-  const tracksByNativeId = new Map(tracks.map(t => [t.nativeId, t]))
+  // The store's index rather than one built here: this used to index every
+  // track in the library on every render of every artist screen, to read back
+  // the handful of rows `ranked` names. It is indexed once for the app now.
+  const tracksByNativeId = store.songByNativeId
 
   const handlePress = async (nativeId: string) => {
     try {
