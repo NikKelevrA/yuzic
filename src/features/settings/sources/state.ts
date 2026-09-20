@@ -5,6 +5,7 @@ import {
   usesOf,
   type SourceId,
   type SourcePurpose,
+  type SourceServerUrls,
   type SourceUseId,
 } from '@/providers/registry/sources';
 
@@ -19,10 +20,18 @@ interface SourcesSettingsState {
    * was off, which is a permission that grants nothing.
    */
   uses: Partial<Record<SourceUseId, boolean>>;
+  /**
+   * The address of a server of your own, for a source that can use one. Absent
+   * means the public server. Kept apart from `uses` because it says where to
+   * ask, not whether to: a source with an address and every use off sends
+   * nothing anywhere.
+   */
+  serverUrls: SourceServerUrls;
 }
 
 const initialState: SourcesSettingsState = {
   uses: {},
+  serverUrls: {},
 };
 
 const sourcesSlice = createSlice({
@@ -36,6 +45,16 @@ const sourcesSlice = createSlice({
     setSourceUses(state, action: PayloadAction<{ uses: readonly SourceUseId[]; enabled: boolean }>) {
       for (const use of action.payload.uses) state.uses[use] = action.payload.enabled;
     },
+    /** Sets the address of a server of your own; an empty one goes back to the public server. */
+    setSourceServerUrl(state, action: PayloadAction<{ source: SourceId; url: string }>) {
+      const { source } = action.payload;
+      const url = action.payload.url.trim();
+      // State persisted before addresses existed has no `serverUrls` at all.
+      const next = { ...state.serverUrls };
+      if (url) next[source] = url;
+      else delete next[source];
+      state.serverUrls = next;
+    },
     /** Stops using a source everywhere. */
     stopUsingSource(state, action: PayloadAction<SourceId>) {
       for (const use of usesOf(action.payload)) delete state.uses[use.id];
@@ -43,7 +62,7 @@ const sourcesSlice = createSlice({
   },
 });
 
-export const { setSourceUse, setSourceUses, stopUsingSource } = sourcesSlice.actions;
+export const { setSourceUse, setSourceUses, setSourceServerUrl, stopUsingSource } = sourcesSlice.actions;
 
 export default sourcesSlice.reducer;
 
@@ -56,6 +75,12 @@ export const selectSourceUses = (state: SourcesRootState): SourcesSettingsState[
 
 export const selectSourceUse = (use: SourceUseId) =>
   (state: SourcesRootState): boolean => state.settingsSources.uses[use] ?? false;
+
+const NO_SERVER_URLS: SourceServerUrls = {};
+
+/** The addresses set for sources you run yourself. Stable while unchanged, so it is safe to subscribe to. */
+export const selectSourceServerUrls = (state: SourcesRootState): SourceServerUrls =>
+  state.settingsSources?.serverUrls ?? NO_SERVER_URLS;
 
 /** Whether any use of a source is on — whether Yuzic already talks to it. */
 export const selectSourceInUse = (source: SourceId) =>

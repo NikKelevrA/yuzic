@@ -87,6 +87,9 @@ export function albumWebLink(album: Album): WebLink | null {
   });
 }
 
+// The musicbrainz.org links here are pages for the user to open in a browser,
+// not requests the app makes, so they stay on the public site even when a server
+// of the user's own is set for MusicBrainz lookups. Leave them be.
 export function artistWebLink(artist: Artist): WebLink | null {
   return resolve(artist.provenance, artist.externalIds, (source, ids) => {
     if (source === 'deezer') {

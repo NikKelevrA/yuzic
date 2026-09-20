@@ -541,7 +541,16 @@
       "promptTitle": "Activer {{use}} de {{name}} ?",
       "turnOn": "Activer",
       "notNow": "Pas maintenant",
-      "alwaysFirst": "Premier"
+      "alwaysFirst": "Premier",
+      "serverAddress": {
+        "label": "Adresse du serveur",
+        "publicServer": "Serveur public",
+        "title": "Adresse du serveur",
+        "description": "Utilisez votre propre serveur au lieu du serveur public. Saisissez son adresse, par exemple http://192.168.1.10:5000. Laissez vide pour utiliser le serveur public.",
+        "placeholder": "http://192.168.1.10:5000",
+        "invalid": "Ce n'est pas une adresse web valide. Utilisez par exemple http://192.168.1.10:5000.",
+        "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil."
+      }
     },
     "sourceUses": {
       "lastfm": {

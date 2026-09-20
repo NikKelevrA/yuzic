@@ -26,6 +26,13 @@ jest.mock('@/features/connectivity/useIsOffline', () => ({
   useIsOffline: () => mockIsOffline,
 }));
 
+// MusicBrainz's provider reads the user's server address from the store, and the
+// real store can't be built here (react-redux and redux-persist are mocked below).
+jest.mock('@/state/redux/store', () => ({
+  __esModule: true,
+  default: { getState: () => ({ settingsSources: { uses: {}, serverUrls: {} } }) },
+}));
+
 let mockServerUnreachable = false;
 jest.mock('@/features/connectivity/serverReachability', () => ({
   useServerUnreachable: () => mockServerUnreachable,

@@ -8,14 +8,47 @@
  * `musicbrainzSource` already made for the same job.
  */
 import * as mb from '@/providers/integration/musicbrainz';
+import type { MusicbrainzClient } from '@/providers/integration/musicbrainz';
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
 import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist';
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
 import { sourceColor } from '@/constants/design';
 import { integrationProvenance } from '@/domain/identity/Provenance';
+import { selectSourceServerUrls } from '@/features/settings/sources/state';
+import store from '@/state/redux/store';
 import type { IntegrationProvider } from '../contracts/Provider';
 
 const MB_PROVENANCE = integrationProvenance('musicbrainz');
+
+/**
+ * The client for the server the user has chosen: their own when they have set
+ * an address for it, the shared public one otherwise.
+ *
+ * Read at the moment of the call, so a change in Settings applies to the next
+ * request without anything being rebuilt. The address is handed to the client
+ * as its config; the integration itself never sees the store. A client for a
+ * server of your own holds no state (it has no limiter to share), so making
+ * one per call costs nothing, while the public one stays the single shared
+ * client whose limiter every call must queue behind.
+ */
+export function currentMusicbrainzClient(): MusicbrainzClient {
+  const serverUrl = selectSourceServerUrls(store.getState()).musicbrainz;
+  return serverUrl?.trim() ? mb.createMusicbrainzClient({ serverUrl }) : mb;
+}
+
+/**
+ * Whether a server answers like a MusicBrainz one, asked with the same client
+ * the app will use for it — so an address that passes here is one the search
+ * will actually work against, `/ws/2` handling and all.
+ */
+export async function musicbrainzServerAnswers(serverUrl: string): Promise<boolean> {
+  try {
+    await mb.createMusicbrainzClient({ serverUrl }).searchArtist('a', 1);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export const musicbrainzProvider: IntegrationProvider = {
   kind: 'integration',
@@ -28,8 +61,8 @@ export const musicbrainzProvider: IntegrationProvider = {
   capabilities: {
     'catalogue.search': async (query, kinds) => {
       const [artists, releaseGroups] = await Promise.all([
-        kinds.artists ? mb.searchArtist(query, 4) : Promise.resolve([]),
-        kinds.albums ? mb.searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
+        kinds.artists ? currentMusicbrainzClient().searchArtist(query, 4) : Promise.resolve([]),
+        kinds.albums ? currentMusicbrainzClient().searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
       ]);
       return {
         // MusicBrainz names no second line for an artist; for a release group
@@ -43,8 +76,9 @@ export const musicbrainzProvider: IntegrationProvider = {
       };
     },
     'catalogue.album': async nativeId => {
-      const rg = await mb.getReleaseGroup(nativeId);
-      const tracks = await mb.getTracksForReleaseGroup(nativeId);
+      const client = currentMusicbrainzClient();
+      const rg = await client.getReleaseGroup(nativeId);
+      const tracks = await client.getTracksForReleaseGroup(nativeId);
       const songs = tracks.map(track => mapMbSong(track, { provenance: MB_PROVENANCE, releaseGroup: rg }));
       const album = mapMbAlbum(rg, { provenance: MB_PROVENANCE, songIds: songs.map(s => s.localId) });
       return { album, songs };

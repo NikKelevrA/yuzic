@@ -540,7 +540,16 @@
       "promptTitle": "开启来自 {{name}} 的{{use}}？",
       "turnOn": "开启",
       "notNow": "暂不",
-      "alwaysFirst": "第一"
+      "alwaysFirst": "第一",
+      "serverAddress": {
+        "label": "服务器地址",
+        "publicServer": "公共服务器",
+        "title": "服务器地址",
+        "description": "使用您自己的服务器，而不是公共服务器。请输入其地址，例如 http://192.168.1.10:5000。留空则使用公共服务器。",
+        "placeholder": "http://192.168.1.10:5000",
+        "invalid": "这不是有效的网址。请使用类似 http://192.168.1.10:5000 的格式。",
+        "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。"
+      }
     },
     "sourceUses": {
       "lastfm": {
