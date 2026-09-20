@@ -719,7 +719,8 @@
       "httpDesc": "非暗号化",
       "unreachable": "このアドレスのサーバーに接続できませんでした。アドレスとポートを確認してください。",
       "notThisServer": "このアドレスは応答しましたが、{{server}} ではありません。",
-      "continueAnyway": "このまま続ける"
+      "continueAnyway": "このまま続ける",
+      "untrustedCertificate": "このサーバーの証明書はデバイスに信頼されていません。自分で発行した場合は、その認証局の証明書をこのデバイスにインストールしてからもう一度お試しください。"
     },
     "credentials": {
       "title": "認証情報を入力",

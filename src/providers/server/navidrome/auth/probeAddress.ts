@@ -1,6 +1,5 @@
 import { serverFetch } from '@/features/mtls/serverFetch';
-
-type Probe = { kind: 'ok' | 'unreachable' | 'notThisServer' };
+import { probeFailure, type AddressProbe } from '@/providers/server/addressProbe';
 
 /**
  * Whether a Subsonic server answers at `url`, before anyone has signed in.
@@ -10,12 +9,12 @@ type Probe = { kind: 'ok' | 'unreachable' | 'notThisServer' };
  * check this replaces fetched the bare address, which any web server answers,
  * and nothing asked it anyway.
  */
-export async function probeAddress(url: string): Promise<Probe> {
+export async function probeAddress(url: string): Promise<AddressProbe> {
   let res: Response;
   try {
     res = await serverFetch(`${url.replace(/\/+$/, '')}/rest/ping.view?f=json&v=1.16.0&c=Yuzic`);
-  } catch {
-    return { kind: 'unreachable' };
+  } catch (error) {
+    return probeFailure(error);
   }
   // A proxy in front asking for its own sign-in: reachable, and the
   // credentials step asks for it.

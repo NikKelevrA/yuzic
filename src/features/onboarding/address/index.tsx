@@ -32,7 +32,7 @@ export default function Address() {
     const [scheme, setScheme] = useState<Scheme>('https');
     const [host, setHost] = useState('');
     const [checking, setChecking] = useState(false);
-    const [problem, setProblem] = useState<'unreachable' | 'notThisServer' | null>(null);
+    const [problem, setProblem] = useState<'unreachable' | 'notThisServer' | 'untrustedCertificate' | null>(null);
     const provider = type ? getServerProvider(type) : undefined;
 
     const schemeSheetRef = useSheetRef();

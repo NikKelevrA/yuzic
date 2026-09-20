@@ -719,7 +719,8 @@
       "httpDesc": "未加密",
       "unreachable": "无法连接到此地址的服务器。请检查地址以及是否需要端口。",
       "notThisServer": "此地址有响应，但不是 {{server}}。",
-      "continueAnyway": "仍然继续"
+      "continueAnyway": "仍然继续",
+      "untrustedCertificate": "此服务器的证书未被你的设备信任。如果是你自行签发的，请在此设备上安装该证书颁发机构的证书后重试。"
     },
     "credentials": {
       "title": "输入你的凭证",

@@ -228,6 +228,29 @@ every file it will now send — not only the ones being added.
 - `src/features/playback/PlayingContext.tsx` is the central playback state/controls context — most player-related work touches this file.
 - The engine lives in its own repo (github.com/yuzicapp/yuzic-engine) and is consumed as a pinned git dependency. **The pin drifts.** Bumping it once and then making further engine commits leaves the app building an engine older than the one you are reading, and it has caused two wrong conclusions already. Check `package.json` against the engine's HEAD before trusting that a fix is in the build.
 
+## Native config that `app.json` cannot express
+
+`expo-build-properties` covers most of it, but not everything, and the pieces
+it does not cover live in `plugins/` as local config plugins registered in
+`app.json`'s `plugins` array. There is one so far:
+
+- **`withUserCaTrust.js`** writes `res/xml/network_security_config.xml` and
+  points the manifest at it, so Android trusts the user's own CAs. Without it
+  the platform ignores a user-installed root from API 24 up, and a server
+  behind a private CA — Caddy's `tls internal`, typically — is unreachable on
+  Android while iOS and every browser accept it.
+
+Two traps here, both of which cost a real build if missed:
+
+- **A network security config replaces `usesCleartextTraffic`, it does not add
+  to it.** Omitting `cleartextTrafficPermitted` from the config turns `http://`
+  servers off on API 28+, which is most of a LAN install.
+- **The generated file is checked in, because nothing runs `expo prebuild` in
+  CI.** The checked-in copy under `android/` is what ships; the plugin is what
+  makes a prebuild reproduce it instead of dropping it. Change the plugin and
+  regenerate, never the checked-in file alone — the same double-entry rule the
+  orientation note under UI conventions describes.
+
 ## UI conventions
 
 These were made consistent across the app in one pass; they drift back easily

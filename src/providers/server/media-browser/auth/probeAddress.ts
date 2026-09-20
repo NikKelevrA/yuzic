@@ -1,7 +1,6 @@
 import type { MediaBrowserBrand } from '../brand';
 import { serverFetch } from '@/features/mtls/serverFetch';
-
-type Probe = { kind: 'ok' | 'unreachable' | 'notThisServer' };
+import { probeFailure, type AddressProbe } from '@/providers/server/addressProbe';
 
 /**
  * Whether a Jellyfin or Emby server of `brand` answers at `url`, before
@@ -11,12 +10,12 @@ type Probe = { kind: 'ok' | 'unreachable' | 'notThisServer' };
  * Server", "Emby Server" — so a Jellyfin address typed under Emby is caught
  * here, where it used to fail at sign-in looking like a wrong password.
  */
-export async function probeAddress(brand: MediaBrowserBrand, url: string): Promise<Probe> {
+export async function probeAddress(brand: MediaBrowserBrand, url: string): Promise<AddressProbe> {
   let res: Response;
   try {
     res = await serverFetch(`${url.replace(/\/+$/, '')}/System/Info/Public`);
-  } catch {
-    return { kind: 'unreachable' };
+  } catch (error) {
+    return probeFailure(error);
   }
   if (res.status === 401 || res.status === 403) return { kind: 'ok' };
   try {

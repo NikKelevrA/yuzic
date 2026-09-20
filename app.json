@@ -64,6 +64,7 @@
         }
       ],
       "yuzic-engine",
+      "./plugins/withUserCaTrust",
       "expo-secure-store"
     ],
     "experiments": {

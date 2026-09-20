@@ -720,7 +720,8 @@
       "httpDesc": "Unencrypted",
       "unreachable": "Couldn't reach a server at this address. Check it, and whether it needs a port.",
       "notThisServer": "Something answered at this address, but it isn't {{server}}.",
-      "continueAnyway": "Continue anyway"
+      "continueAnyway": "Continue anyway",
+      "untrustedCertificate": "This server's certificate isn't trusted by your device. If you issued it yourself, install that authority's certificate on this device and try again."
     },
     "credentials": {
       "title": "Enter Your Credentials",

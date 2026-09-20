@@ -720,7 +720,8 @@
       "httpDesc": "Non chiffré",
       "unreachable": "Impossible de joindre un serveur à cette adresse. Vérifiez-la, ainsi que le port éventuel.",
       "notThisServer": "Quelque chose répond à cette adresse, mais ce n’est pas {{server}}.",
-      "continueAnyway": "Continuer quand même"
+      "continueAnyway": "Continuer quand même",
+      "untrustedCertificate": "Le certificat de ce serveur n'est pas approuvé par votre appareil. Si vous l'avez émis vous-même, installez le certificat de cette autorité sur cet appareil, puis réessayez."
     },
     "credentials": {
       "title": "Saisissez vos identifiants",
