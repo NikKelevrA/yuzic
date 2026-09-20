@@ -287,6 +287,15 @@ Read-only, no account. Fills in artist and album pages with canonical metadata
 when the entity isn't in your library, and supplies MBIDs that the downloaders
 use to resolve a release precisely instead of by fuzzy name match.
 
+If you run a MusicBrainz server of your own (for example
+[musicbrainz-docker](https://github.com/metabrainz/musicbrainz-docker)), set its
+root address — `http://host:5000` — under **Settings › Sources › MusicBrainz ›
+Server address**. Requests then go there instead of `musicbrainz.org`, with no
+one-request-a-second spacing, since there is no public limit to respect. The
+address is the server's root; `/ws/2` is added by the app. Cover Art Archive is a
+separate source and is unaffected, and the links that open `musicbrainz.org` in
+a browser keep pointing at the public site.
+
 ### Last.fm
 
 `src/providers/integration/lastfm/` · **Metadata › Artist info**, **Pages**
@@ -497,6 +506,9 @@ No auth. `src/providers/integration/deezer/`.
 ### MusicBrainz — `https://musicbrainz.org/ws/2`
 
 No auth, `User-Agent` identifies the app. `src/providers/integration/musicbrainz/index.ts`.
+Calls are spaced 1.1 s apart on the public server. With a server address set
+under Sources, the same endpoints are called at `{address}/ws/2` instead, unspaced,
+with the same `User-Agent`.
 
 | Endpoint | Used for |
 | --- | --- |

@@ -13,7 +13,7 @@ import {
   searchDeezerAlbums,
 } from '@/providers/integration/deezer'
 import { selectEnabledSourcesFor } from '@/features/settings/sources/state';
-import * as mb from '@/providers/integration/musicbrainz'
+import { currentMusicbrainzClient } from '@/providers/registry/musicbrainz'
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum'
 import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong'
@@ -264,7 +264,7 @@ const musicbrainzSource: SourceDefinition = {
   // artist screens and search results. It has no Home shelf.
 
   async resolveArtist(name) {
-    const results = await mb.searchArtist(name, 5)
+    const results = await currentMusicbrainzClient().searchArtist(name, 5)
     const best = results[0]
     if (!best) return null
     const artist = mapMbArtist(best, MB_PROVENANCE)
@@ -272,7 +272,7 @@ const musicbrainzSource: SourceDefinition = {
   },
 
   async resolveAlbum(artist, title) {
-    const results = await mb.searchReleaseGroup(artist, title, 5)
+    const results = await currentMusicbrainzClient().searchReleaseGroup(artist, title, 5)
     const best = results[0]
     if (!best) return null
     const album = mapMbAlbum(best, { provenance: MB_PROVENANCE })
@@ -287,8 +287,8 @@ const musicbrainzSource: SourceDefinition = {
 
   async fetchAlbum(id) {
     const [rg, tracks] = await Promise.all([
-      mb.getReleaseGroup(id),
-      mb.getTracksForReleaseGroup(id),
+      currentMusicbrainzClient().getReleaseGroup(id),
+      currentMusicbrainzClient().getTracksForReleaseGroup(id),
     ])
     const songs = tracks.map(track => mapMbSong(track, { provenance: MB_PROVENANCE, releaseGroup: rg }))
     const album = mapMbAlbum(rg, { provenance: MB_PROVENANCE, songIds: songs.map(s => s.localId) })
@@ -296,13 +296,13 @@ const musicbrainzSource: SourceDefinition = {
   },
 
   async fetchArtistAlbums(artistId, limit) {
-    const artist = await mb.getArtistWithReleases(artistId)
+    const artist = await currentMusicbrainzClient().getArtistWithReleases(artistId)
     const rgs = artist['release-groups'] ?? []
     return rgs.slice(0, limit).map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
   },
 
   async fetchArtist(id) {
-    const dto = await mb.getArtistWithReleases(id)
+    const dto = await currentMusicbrainzClient().getArtistWithReleases(id)
     const rgs = dto['release-groups'] ?? []
     const albums = rgs
       .filter(rg => !rg['primary-type'] || rg['primary-type'] === 'Album')
@@ -321,8 +321,8 @@ const musicbrainzSource: SourceDefinition = {
 
   async search(query, wants) {
     const [artists, releaseGroups] = await Promise.all([
-      wants.artists ? mb.searchArtist(query, 4) : Promise.resolve([]),
-      wants.albums ? mb.searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
+      wants.artists ? currentMusicbrainzClient().searchArtist(query, 4) : Promise.resolve([]),
+      wants.albums ? currentMusicbrainzClient().searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
     ])
     return {
       artists: artists.map(artist => ({
