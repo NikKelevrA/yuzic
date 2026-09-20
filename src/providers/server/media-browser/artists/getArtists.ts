@@ -1,7 +1,8 @@
 import type { Artist } from "@/domain/entities/Artist";
 import { requireProvenance, type MediaBrowserClient } from "../client";
 import { mapArtist } from "../mapArtist";
-import { MediaBrowserItemsResponse } from "../types";
+import type { MediaBrowserItem } from "../types";
+import { fetchAllItems } from "../pagedItems";
 
 type GetArtistsResult = Artist[];
 
@@ -19,8 +20,7 @@ export async function getArtists(client: MediaBrowserClient): Promise<GetArtists
     `&Fields=PrimaryImageTag,Overview,Genres,DateCreated,ProviderIds` +
     (client.parentId ? `&ParentId=${encodeURIComponent(client.parentId)}` : "");
 
-  const raw = await client.request<MediaBrowserItemsResponse>(path);
-  const items = raw?.Items ?? [];
+  const items = await fetchAllItems<MediaBrowserItem>(client, path);
   const provenance = requireProvenance(client);
 
   return items.map((a) => mapArtist(a, { provenance, brand: client.brand }));

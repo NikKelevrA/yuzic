@@ -83,4 +83,7 @@ export interface MediaBrowserItem {
 
 export interface MediaBrowserItemsResponse<T = MediaBrowserItem> {
   Items?: T[];
+  /** How many items match in total, for paging. Absent on some responses and
+   *  unreliable on others, so it is a hint rather than the stop condition. */
+  TotalRecordCount?: number;
 }
