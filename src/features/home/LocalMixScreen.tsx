@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { notify } from '@/components/toast';
 import { ListMusic } from 'lucide-react-native';
 
@@ -21,6 +22,12 @@ export default function LocalMixScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { playSongs } = usePlayingActions();
+  // The list ended in a flat `spacing.xl`, which is a guess at the room the
+  // playing bar needs and not one this screen can make: the bar's height moves
+  // with the safe-area inset and with whether anything is playing, and under
+  // the translucent dock the tabs take no layout space at all. The last track
+  // sat behind both. This reads the real heights, as every other list does.
+  const scrollClearance = useScrollClearance();
   const { refreshKey: rawRefreshKey } = useLocalSearchParams<{ refreshKey?: string }>();
   const refreshKey = Number.parseInt(rawRefreshKey ?? '0', 10) || 0;
   const { songs, isLoading } = useLocalMix(refreshKey);
@@ -29,6 +36,16 @@ export default function LocalMixScreen() {
     if (!songs.length) return;
     try {
       await playSongs(songs, { shuffle, contextId: 'local-mix' });
+    } catch {
+      notify.error(t('library.collection.playFailed'));
+    }
+  }, [playSongs, songs, t]);
+
+  /** A tapped row plays the whole mix from there, not that song alone. */
+  const playFrom = useCallback(async (startIndex: number) => {
+    if (!songs.length) return;
+    try {
+      await playSongs(songs, { startIndex, contextId: 'local-mix' });
     } catch {
       notify.error(t('library.collection.playFailed'));
     }
@@ -45,14 +62,26 @@ export default function LocalMixScreen() {
           {Array.from({ length: 6 }).map((_, index) => <LoadingSongRow key={index} />)}
         </View>
       ) : songs.length ? (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView contentContainerStyle={[styles.list, { paddingBottom: scrollClearance }]}>
           <View style={styles.actions}>
             <CollectionActions
               onPlay={() => { void play(false); }}
               onShuffle={() => { void play(true); }}
             />
           </View>
-          {songs.map(song => <SongRow key={song.localId} song={song} />)}
+          {/* `onPress` is what makes a row playable at all: `SongRow`
+              disables itself when given neither a press handler nor a
+              collection, so these were inert and only the shuffle button
+              above worked (#264). The mix is neither an album nor a
+              playlist, so it plays through `playSongs` — the same call the
+              button makes, from the tapped song. */}
+          {songs.map((song, index) => (
+            <SongRow
+              key={song.localId}
+              song={song}
+              onPress={() => { void playFrom(index); }}
+            />
+          ))}
         </ScrollView>
       ) : (
         <EmptyState
@@ -67,7 +96,6 @@ export default function LocalMixScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: {
-    paddingBottom: spacing.xl,
     width: '100%',
     maxWidth: contentWidth.readable,
     alignSelf: 'center',
