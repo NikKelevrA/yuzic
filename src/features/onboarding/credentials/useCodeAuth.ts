@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CodeAuthApi } from '@/providers/registry/serverProviderTypes';
 import type { BasicAuth, ProviderAuth } from '@/providers/contracts/Server';
+import { codeAuthServerFailure } from '@/providers/registry/codeAuthServerError';
 
 type CodeAuthPhase =
   /** Not started — the password form is showing. */
@@ -12,8 +13,18 @@ type CodeAuthPhase =
   | { status: 'waiting'; code: string }
   /** The user approved; these are the credentials to save. */
   | { status: 'approved'; auth: ProviderAuth; username: string }
-  /** Gave up. `reason` distinguishes a stale code from a real failure. */
-  | { status: 'failed'; reason: 'expired' | 'error'; message?: string };
+  /**
+   * Gave up. `reason` separates the ways this ends: the code went stale unused,
+   * the flow never started, or the user approved and the server then either
+   * refused the account (`serverRefused`) or could not be reached
+   * (`serverUnreachable`). The last two are not code problems and must not be
+   * described as one — and they need opposite advice from each other.
+   */
+  | {
+      status: 'failed';
+      reason: 'expired' | 'error' | 'serverRefused' | 'serverUnreachable';
+      message?: string;
+    };
 
 type Options = {
   codeAuth: CodeAuthApi | undefined;
@@ -97,7 +108,20 @@ export function useCodeAuth({ codeAuth, serverUrl, basicAuth }: Options) {
           handle,
           basicAuth: basicAuthRef.current,
         });
-      } catch {
+      } catch (err) {
+        // Approval already happened and the server is what said no, so waiting
+        // cannot help: every retry re-fails, and the timeout would end this by
+        // blaming a code the user has already used successfully.
+        const serverFailure = codeAuthServerFailure(err);
+        if (serverFailure) {
+          stopPolling();
+          setPhase({
+            status: 'failed',
+            reason: serverFailure === 'refused' ? 'serverRefused' : 'serverUnreachable',
+            message: err instanceof Error ? err.message : undefined,
+          });
+          return;
+        }
         // Transient — the code is still good, so keep waiting for the timeout
         // to be the thing that ends this rather than one unlucky request.
         return;

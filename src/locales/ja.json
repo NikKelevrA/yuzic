@@ -710,6 +710,10 @@
       "subtitle": "サーバーのアドレスを入力してください。",
       "enterUrl": "サーバーアドレスを入力してください。",
       "hint": "必要に応じてポートを含めてください（例：your-server.com:4533）",
+      "hintPlex": "Plex は通常ポート 32400 を使用します（例: your-server.com:32400）",
+      "hintNavidrome": "Navidrome は通常ポート 4533 を使用します（例: your-server.com:4533）",
+      "hintJellyfin": "Jellyfin は通常ポート 8096 を使用します（例: your-server.com:8096）",
+      "hintEmby": "Emby は通常ポート 8096 を使用します（例: your-server.com:8096）",
       "schemeTitle": "プロトコル",
       "httpsDesc": "暗号化（推奨）",
       "httpDesc": "非暗号化",
@@ -737,13 +741,15 @@
         "waiting": "承認を待っています…",
         "expired": "コードの有効期限が切れました。もう一度開始して新しいコードを取得してください。",
         "unavailable": "現在、コードによるサインインは利用できません。",
+        "serverRefused": "サインインは承認されましたが、このサーバーはアカウントを認可しませんでした。そのアカウントがサーバーを所有しているか、共有されているか確認してください。",
+        "serverUnreachable": "サインインは承認されましたが、サーバーに接続できませんでした。サーバーアドレスを確認してからもう一度お試しください。",
         "usePassword": "ユーザー名とパスワードを使用",
         "jellyfin": {
           "instruction": "Jellyfin で Quick Connect を開き、このコードを入力してください。",
           "action": "Quick Connect でサインイン"
         },
         "plex": {
-          "instruction": "ブラウザまたは Plex アプリで Plex を開き、このコードを入力してください。",
+          "instruction": "ブラウザで plex.tv/link を開き、このコードを入力してください。",
           "action": "Plex でサインイン",
           "useCode": "代わりに Plex サインインを使用してください"
         }

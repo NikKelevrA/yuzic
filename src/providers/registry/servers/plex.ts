@@ -28,6 +28,7 @@ export const plexProvider: ServerProviderConfig = {
       .filter((section: any) => section.type === 'artist')
       .map((section: any) => ({ id: String(section.key), name: section.title ?? 'Music' }));
   },
+  addressHintKey: 'onboarding.address.hintPlex',
   probeAddress: (url) => probePlexAddress(url),
   ping: async (url, _username, auth, basicAuth) => {
     const token = auth.token as string | undefined;

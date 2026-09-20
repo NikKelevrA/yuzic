@@ -394,13 +394,14 @@ Plex is connected with a browser-approved PIN rather than its server's
 username/password form. Yuzic sends its persistent per-install
 `X-Plex-Client-Identifier` with every Plex request, asks `plex.tv` for a PIN,
 polls it until Plex returns the account token, then verifies that token against
-the selected server. Tokens are stored in the server credential record; they
-are never put in URLs except where Plex requires the token on a direct media or
-artwork URL.
+the selected server. The user is shown that PIN and enters it at
+`plex.tv/link`, so the short code is the one to ask for. Tokens are stored in
+the server credential record; they are never put in URLs except where Plex
+requires the token on a direct media or artwork URL.
 
 | Endpoint | Used for |
 | --- | --- |
-| `POST https://plex.tv/api/v2/pins?strong=true` | Starting browser PIN sign-in |
+| `POST https://plex.tv/api/v2/pins` | Starting PIN sign-in. Deliberately not `?strong=true`: that returns a 25-character code for an `app.plex.tv/auth` URL, while the default returns the four-character code the user types at plex.tv/link |
 | `GET https://plex.tv/api/v2/pins/{id}` | Polling PIN approval |
 | `GET https://plex.tv/api/v2/user` | Account display name after approval |
 | `GET /identity` | Server reachability/token check; its `machineIdentifier` roots the item URIs playlist writes send |

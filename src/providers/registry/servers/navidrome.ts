@@ -31,6 +31,7 @@ export const navidromeProvider: ServerProviderConfig = {
   },
   libraryScope: { key: 'musicFolderIds', legacyKey: 'musicFolderId' },
   listLibraries: (server) => getMusicFolders(server),
+  addressHintKey: 'onboarding.address.hintNavidrome',
   probeAddress: (url) => probeSubsonicAddress(url),
   ping: async (url, username, auth, basicAuth) => {
     const password = auth.password as string;

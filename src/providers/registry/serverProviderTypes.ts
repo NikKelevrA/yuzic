@@ -152,6 +152,14 @@ export type ServerProviderConfig = {
    * and token servers need nothing added.
    */
   mediaAuthHeaders?: (server: Server) => Record<string, string> | null;
+  /**
+   * Address-screen hint naming this provider's usual port. Optional: without
+   * one the screen shows the generic hint. It exists because a single shared
+   * example is wrong for every provider but the one it was written for — it
+   * named Navidrome's 4533 on the Plex screen, where the answer is 32400, so
+   * a user following the app's own example could not reach their server.
+   */
+  addressHintKey?: string;
   /** Sign in by code instead of password, where the provider offers it. */
   codeAuth?: CodeAuthApi;
   demo?: () => Promise<DemoResult>;

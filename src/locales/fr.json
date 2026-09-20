@@ -711,6 +711,10 @@
       "subtitle": "Saisissez l'adresse de votre serveur.",
       "enterUrl": "Veuillez saisir une adresse de serveur.",
       "hint": "Ajoutez un port si nécessaire, ex. : votre-serveur.com:4533",
+      "hintPlex": "Plex utilise généralement le port 32400, par ex. votre-serveur.com:32400",
+      "hintNavidrome": "Navidrome utilise généralement le port 4533, par ex. votre-serveur.com:4533",
+      "hintJellyfin": "Jellyfin utilise généralement le port 8096, par ex. votre-serveur.com:8096",
+      "hintEmby": "Emby utilise généralement le port 8096, par ex. votre-serveur.com:8096",
       "schemeTitle": "Protocole",
       "httpsDesc": "Chiffré (recommandé)",
       "httpDesc": "Non chiffré",
@@ -738,13 +742,15 @@
         "waiting": "En attente de validation…",
         "expired": "Ce code a expiré. Recommencez pour en obtenir un nouveau.",
         "unavailable": "La connexion par code est indisponible pour le moment.",
+        "serverRefused": "Vous avez approuvé la connexion, mais ce serveur n’a pas autorisé votre compte. Vérifiez que le serveur appartient à ce compte ou qu’il est partagé avec lui.",
+        "serverUnreachable": "Vous avez approuvé la connexion, mais l’app n’a pas pu joindre ce serveur. Vérifiez l’adresse du serveur, puis réessayez.",
         "usePassword": "Utiliser un nom d’utilisateur et un mot de passe",
         "jellyfin": {
           "instruction": "Ouvrez Quick Connect dans Jellyfin et saisissez ce code.",
           "action": "Se connecter avec Quick Connect"
         },
         "plex": {
-          "instruction": "Ouvrez Plex dans un navigateur ou l’app Plex et saisissez ce code.",
+          "instruction": "Ouvrez plex.tv/link dans un navigateur et saisissez ce code.",
           "action": "Se connecter avec Plex",
           "useCode": "Utilisez plutôt la connexion Plex"
         }

@@ -711,6 +711,10 @@
       "subtitle": "Enter the address of your server.",
       "enterUrl": "Please enter a server address.",
       "hint": "Include a port if needed, e.g. your-server.com:4533",
+      "hintPlex": "Plex usually runs on port 32400, e.g. your-server.com:32400",
+      "hintNavidrome": "Navidrome usually runs on port 4533, e.g. your-server.com:4533",
+      "hintJellyfin": "Jellyfin usually runs on port 8096, e.g. your-server.com:8096",
+      "hintEmby": "Emby usually runs on port 8096, e.g. your-server.com:8096",
       "schemeTitle": "Protocol",
       "httpsDesc": "Encrypted (recommended)",
       "httpDesc": "Unencrypted",
@@ -738,13 +742,15 @@
         "waiting": "Waiting for approval…",
         "expired": "That code expired. Start again to get a new one.",
         "unavailable": "Code sign-in is unavailable right now.",
+        "serverRefused": "You approved the sign-in, but this server did not authorize your account. Make sure the server is claimed by that account, or shared with it.",
+        "serverUnreachable": "You approved the sign-in, but the app could not reach that server. Check the server address, then try again.",
         "usePassword": "Use username and password",
         "jellyfin": {
           "instruction": "Open Quick Connect in Jellyfin and enter this code.",
           "action": "Sign in with Quick Connect"
         },
         "plex": {
-          "instruction": "Open Plex in a browser or the Plex app and enter this code.",
+          "instruction": "Go to plex.tv/link in a browser and enter this code.",
           "action": "Sign in with Plex",
           "useCode": "Use Plex sign-in instead"
         }

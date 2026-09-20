@@ -20,6 +20,7 @@ export const embyProvider: ServerProviderConfig = {
   },
   libraryScope: { key: 'parentIds', legacyKey: 'parentId' },
   listLibraries: (server) => getMusicLibraries(server),
+  addressHintKey: 'onboarding.address.hintEmby',
   probeAddress: (url) => probeMediaBrowserAddress(EMBY_BRAND, url),
   ping: async (url, username, auth, basicAuth) => {
     const token = auth.token as string;

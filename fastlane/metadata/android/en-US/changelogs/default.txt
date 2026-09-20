@@ -1,7 +1,6 @@
-Music that plays to the end, and servers that hear about it.
+Plex sign-in works. It could not be completed at all before.
 
-- Tracks no longer stop part-way through and skip to the next song
-- Seeking near the end of a track no longer ends it early
-- Plex records what you play, and starring a track works — neither did before
-- Jellyfin is told when you pause and when you stop, so it stops showing you as playing
-- Landscape is now for tablets; phones stay upright
+- The Plex code is now the four characters plex.tv/link actually accepts, instead of a 25-character one with nowhere to enter it
+- The screen now names plex.tv/link, rather than leaving you to find it
+- Each server type shows its own port in the address hint; Plex's said Navidrome's
+- Approving a code and then being told it expired is fixed, and the app now says whether the server refused the account or could not be reached
