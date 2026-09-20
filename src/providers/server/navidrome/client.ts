@@ -1,12 +1,15 @@
 import type { AudioQuality } from '@/domain/playback/AudioFormat';
 import { qualityToStreamParams } from '@/providers/server/streamQuality';
-import { tryWithFailover, orderedUrls } from '@/providers/http/urlFailover';
+import { tryWithFailover, orderedUrls, UrlTimeoutError, isAbortError } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
 import { ServerFeatureUnavailableError } from '@/providers/contracts/ServerAdapter';
 
 // md5 does not ship TypeScript declarations in this project.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const md5 = require("md5") as (s: string) => string;
+
+/** How long one URL gets to answer before failover moves on to the next. */
+const REQUEST_TIMEOUT_MS = 30_000;
 
 interface NavidromeClientConfig {
   /** Primary server URL. Used verbatim when no serverId/fallbackUrls given. */
@@ -108,7 +111,16 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
     const asForm = options.method === "POST" && (await openSubsonicExtensions()).has("formPost");
     const attempt = async (url: string): Promise<T> => {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 30_000);
+      // Whether *we* aborted. A bare AbortError cannot be told apart from a
+      // cancellation, and failover has to know: a timed-out URL is one to give
+      // up on and move past, a cancelled request is not. Reported as a
+      // `UrlTimeoutError` so `isNetworkError` can say so without having to
+      // treat every abort as a dead URL — see #263.
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, REQUEST_TIMEOUT_MS);
       try {
         const res = await serverFetch(asForm ? `${url}/rest/${endpoint}` : `${url}/rest/${endpoint}?${params}`, {
           method: options.method ?? "GET",
@@ -134,6 +146,13 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
           throw new SubsonicRequestError(envelope.error?.code, envelope.error?.message);
         }
         return body as T;
+      } catch (error) {
+        // Both halves matter. `timedOut` alone would relabel a real Subsonic
+        // refusal that happened to be thrown while parsing a body the timer
+        // then fired under; the abort alone cannot say the deadline caused it.
+        throw timedOut && isAbortError(error)
+          ? new UrlTimeoutError(url, REQUEST_TIMEOUT_MS)
+          : error;
       } finally {
         clearTimeout(timer);
       }

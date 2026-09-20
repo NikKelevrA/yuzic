@@ -5,6 +5,8 @@ import {
   forgetReachable,
   tryWithFailover,
   isNetworkError,
+  isAbortError,
+  UrlTimeoutError,
   _resetCache,
 } from './urlFailover';
 
@@ -150,5 +152,68 @@ describe('isNetworkError', () => {
   it('is false for null / undefined', () => {
     expect(isNetworkError(null)).toBe(false);
     expect(isNetworkError(undefined)).toBe(false);
+  });
+});
+
+describe('a URL that ran out of time (#263)', () => {
+  const abortError = (message = 'Aborted') =>
+    Object.assign(new Error(message), { name: 'AbortError' });
+
+  it('counts as a network error, so failover moves on to the next URL', () => {
+    expect(isNetworkError(new UrlTimeoutError('https://home.lan', 30_000))).toBe(true);
+  });
+
+  it('is still told apart from a bare abort, which is how a cancellation arrives', () => {
+    // Treating every abort as a dead URL would make a cancelled request retry
+    // itself against every fallback. The client flags its own timeout instead.
+    expect(isNetworkError(abortError())).toBe(false);
+  });
+
+  it('lets the Tailscale fallback answer when the LAN address never does', async () => {
+    // The reported shape of #263: off the home network, the LAN URL sits
+    // there until the deadline. Before the timeout was reported as a network
+    // error, that re-threw and no fallback was ever tried.
+    const attempt = jest.fn(async (url: string) => {
+      if (url === 'https://home.lan') throw new UrlTimeoutError(url, 30_000);
+      return `answered by ${url}`;
+    });
+
+    await expect(tryWithFailover(server, attempt)).resolves.toBe('answered by https://ts.example');
+    expect(attempt).toHaveBeenCalledTimes(2);
+  });
+
+  it('remembers the URL that answered, so the next request starts there', async () => {
+    const attempt = jest.fn(async (url: string) => {
+      if (url === 'https://home.lan') throw new UrlTimeoutError(url, 30_000);
+      return url;
+    });
+    await tryWithFailover(server, attempt);
+
+    expect(orderedUrls(server)[0]).toBe('https://ts.example');
+  });
+
+  it('still gives up when every URL times out, carrying the last failure', async () => {
+    const attempt = jest.fn(async (url: string) => {
+      throw new UrlTimeoutError(url, 30_000);
+    });
+
+    await expect(tryWithFailover(server, attempt)).rejects.toBeInstanceOf(UrlTimeoutError);
+    expect(attempt).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('isAbortError', () => {
+  it('knows an abort by name', () => {
+    expect(isAbortError(Object.assign(new Error('Aborted'), { name: 'AbortError' }))).toBe(true);
+  });
+
+  it.each([
+    ['an ordinary network failure', new TypeError('Network request failed')],
+    ['null', null],
+    ['undefined', undefined],
+    ['a thrown string', 'nope'],
+    ['an object with no name', {}],
+  ])('says no to %s', (_label, value) => {
+    expect(isAbortError(value)).toBe(false);
   });
 });
