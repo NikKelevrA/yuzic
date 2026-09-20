@@ -75,6 +75,12 @@ type MbRelease = {
 export function createMusicbrainzClient(config: MusicbrainzConfig = {}) {
   const custom = config.serverUrl?.trim();
   const base = custom ? baseOf(custom) : PUBLIC_BASE;
+  // Each client without an address builds its own limiter, so reach the public
+  // server through `publicClient` below and never by calling this with no
+  // config: MusicBrainz's limit is per client application, and two of them
+  // spacing separately would together send twice the allowed rate.
+  // `currentMusicbrainzClient` only calls this when an address is set, which
+  // is what keeps there being exactly one.
   const spaced: <T>(run: () => Promise<T>) => Promise<T> = custom
     ? run => run()
     : createRateLimiter(MUSICBRAINZ_MIN_INTERVAL_MS);

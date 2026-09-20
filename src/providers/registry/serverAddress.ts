@@ -2,7 +2,9 @@ import type { SourceId } from './sources';
 import { parseServerAddress } from './sources';
 import { musicbrainzServerAnswers } from './musicbrainz';
 
-export type ServerAddressCheck =
+/** Not exported: callers read the result of `checkServerAddress`, and an
+ *  export nothing imports is one the architecture gate rightly refuses. */
+type ServerAddressCheck =
   | { ok: true; address: string }
   | { ok: false; reason: 'invalid' | 'unreachable' };
 
