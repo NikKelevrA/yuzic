@@ -396,7 +396,8 @@
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
         "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008"
+        "soulsync": "http://soulsync:8008",
+        "downtify": "http://downtify:8000"
       },
       "lidarr": {
         "title": "Lidarr",
@@ -430,6 +431,13 @@
         "credentialsHelper": "SoulSyncのURLとAPIキー（Settings → API Keys）。",
         "connectionFailed": "SoulSync への接続に失敗しました",
         "disconnected": "SoulSync から切断しました。"
+      },
+      "downtify": {
+        "title": "Downtify",
+        "credentialsTitle": "接続",
+        "credentialsHelper": "Downtify の URL。Downtify には API キーがないため、到達できる人は誰でもダウンロードを追加できます。",
+        "connectionFailed": "Downtify への接続に失敗しました",
+        "disconnected": "Downtify から切断しました。"
       }
     },
     "audiomuse": {
@@ -1224,7 +1232,10 @@
       "addedTrackToSoulsync": "SoulSync にリクエストしました。",
       "monitoringOnLidarr": "Lidarr が {{artist}} を追跡しています。",
       "sending": "{{title}} を {{downloader}} に送信しています…",
-      "progress": "{{total}} 曲中 {{done}} 曲をリクエストしました…"
+      "progress": "{{total}} 曲中 {{done}} 曲をリクエストしました…",
+      "downtifyDesc": "Downtify 経由で YouTube Music を検索",
+      "addedToDowntify": "Downtify にリクエストしました。",
+      "addedTrackToDowntify": "Downtify にリクエストしました。"
     },
     "header": {
       "songs": "{{count}} 曲",

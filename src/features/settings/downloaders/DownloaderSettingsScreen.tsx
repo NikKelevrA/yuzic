@@ -24,6 +24,12 @@ type Props = {
   extraCards?: React.ReactNode;
   /** Called on disconnect so a screen can drop any extra local state. */
   onDisconnected?: () => void;
+  /**
+   * For a downloader with no credential — Downtify's API has none at all. The
+   * key field is left out rather than shown empty and ignored, and the
+   * connection is judged on the address alone.
+   */
+  keyless?: boolean;
 };
 
 /**
@@ -36,6 +42,7 @@ function DownloaderSettingsScreen({
   testConnection,
   extraCards,
   onDisconnected,
+  keyless = false,
 }: Props) {
   const { t } = useTranslation();
 
@@ -49,7 +56,7 @@ function DownloaderSettingsScreen({
     isLoading,
     ping,
     disconnect,
-  } = useDownloaderConnection(id, testConnection);
+  } = useDownloaderConnection(id, testConnection, { keyless });
 
   const handleDisconnect = () => {
     disconnect();
@@ -68,13 +75,13 @@ function DownloaderSettingsScreen({
             onChangeText: setServerUrl,
             placeholder: t(`settings.downloaders.serverUrlPlaceholder.${id}`),
           },
-          {
+          ...(keyless ? [] : [{
             label: t('settings.downloaders.apiKey'),
             value: apiKey,
             onChangeText: setApiKey,
             placeholder: t('settings.downloaders.apiKeyPlaceholder'),
             secureTextEntry: true,
-          },
+          }]),
         ]}
         isAuthenticated={isAuthenticated}
         isLoading={isLoading}

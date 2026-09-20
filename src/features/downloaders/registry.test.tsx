@@ -112,11 +112,37 @@ describe('downloaders as providers', () => {
     jest.clearAllMocks();
   });
 
-  it('declares apiKey auth for every downloader', () => {
+  it('declares an auth tier for every downloader, and names the keys when there are any', () => {
+    // This used to assert `apiKey` for all of them, which stopped being true
+    // with Downtify: its API has no authentication of any kind, so there is no
+    // credential for `configKeys` to name. What holds for all of them is that
+    // the tier is declared, and that a downloader claiming a key says which.
     for (const def of ALL_DOWNLOADERS) {
-      expect(def.auth.tier).toBe('apiKey');
-      expect(def.auth.configKeys).toEqual(expect.arrayContaining(['serverUrl', 'apiKey']));
+      expect(def.auth.tier).toBeDefined();
+      if (def.auth.tier === 'apiKey') {
+        expect(def.auth.configKeys).toEqual(expect.arrayContaining(['serverUrl', 'apiKey']));
+      }
     }
+  });
+
+  it('leaves Downtify with no credential to name', () => {
+    const downtify = by('downtify');
+
+    expect(downtify.auth.tier).toBe('none');
+    // Not an empty array: there is nothing to configure, which is different
+    // from configuring nothing.
+    expect(downtify.auth.configKeys).toBeUndefined();
+  });
+
+  it('offers Downtify as a track downloader and not an album one', () => {
+    // Downtify's album endpoint takes a YouTube Music album URL, which nothing
+    // here has. An album Get reaches it through `albumByTracks` instead, the
+    // same way it reaches SoulSync.
+    const downtify = by('downtify');
+
+    expect(downtify.downloadTrack).toBeDefined();
+    expect(downtify.downloadAlbum).toBeUndefined();
+    expect(downtify.cancelQueueItem).toBeDefined();
   });
 
   const config = { serverUrl: 'http://example.test', apiKey: 'key' };

@@ -397,7 +397,8 @@
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
         "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008"
+        "soulsync": "http://soulsync:8008",
+        "downtify": "http://downtify:8000"
       },
       "lidarr": {
         "title": "Lidarr",
@@ -431,6 +432,13 @@
         "credentialsHelper": "URL et clé API SoulSync (Settings → API Keys).",
         "connectionFailed": "Échec de la connexion à SoulSync",
         "disconnected": "Déconnecté de SoulSync."
+      },
+      "downtify": {
+        "title": "Downtify",
+        "credentialsTitle": "Connexion",
+        "credentialsHelper": "Adresse de Downtify. Downtify n'a pas de clé d'API : toute personne pouvant l'atteindre peut y lancer des téléchargements.",
+        "connectionFailed": "Échec de la connexion à Downtify",
+        "disconnected": "Déconnecté de Downtify."
       }
     },
     "audiomuse": {
@@ -1229,7 +1237,10 @@
       "addedTrackToSoulsync": "Demandé à SoulSync.",
       "monitoringOnLidarr": "Lidarr suit désormais {{artist}}.",
       "sending": "Envoi de {{title}} vers {{downloader}}…",
-      "progress": "{{done}} morceaux sur {{total}} demandés…"
+      "progress": "{{done}} morceaux sur {{total}} demandés…",
+      "downtifyDesc": "Rechercher sur YouTube Music via Downtify",
+      "addedToDowntify": "Demandé à Downtify.",
+      "addedTrackToDowntify": "Demandé à Downtify."
     },
     "header": {
       "songs": "{{count}} morceau",

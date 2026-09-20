@@ -19,6 +19,7 @@ const defaultEntry: PerServerDownloadersState = {
   lidarr: emptyConnection,
   slskd: emptyConnection,
   soulsync: emptyConnection,
+  downtify: emptyConnection,
 };
 
 export const selectDownloadersForActiveServer = createSelector(

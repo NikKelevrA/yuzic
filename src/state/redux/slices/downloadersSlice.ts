@@ -2,9 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { removeServer } from '@/state/redux/slices/serversSlice';
 import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/providers/integration/slskd';
 
-export type DownloaderId = 'lidarr' | 'slskd' | 'soulsync';
+export type DownloaderId = 'lidarr' | 'slskd' | 'soulsync' | 'downtify';
 
-export const DOWNLOADER_IDS: DownloaderId[] = ['lidarr', 'slskd', 'soulsync'];
+export const DOWNLOADER_IDS: DownloaderId[] = ['lidarr', 'slskd', 'soulsync', 'downtify'];
 
 /**
  * `apiKey` is NOT here — it goes to the keystore via `setCredential` (scope
@@ -60,6 +60,9 @@ const defaultPerServer: PerServerDownloadersState = {
   lidarr: emptyConnection,
   slskd: emptyConnection,
   soulsync: emptyConnection,
+  // Downtify holds no credential at all, so its `isAuthenticated` means
+  // "answered when we asked" rather than "the key was accepted".
+  downtify: emptyConnection,
 };
 
 const initialState: DownloadersState = {
