@@ -219,6 +219,44 @@ Scrobbling**: off, through the server (Navidrome forwards scrobbles to Last.fm
 or ListenBrainz itself), or direct from Yuzic (ListenBrainz only). One route per
 destination, so a listen is never sent twice.
 
+**What each server is told while a track plays**, and when:
+
+| | Start | While playing | Departure |
+| --- | --- | --- | --- |
+| Subsonic/Navidrome | `scrobble.view?submission=false` | — | `scrobble.view?submission=true&time=` |
+| Jellyfin/Emby | `POST /Sessions/Playing` | `POST /Sessions/Playing/Progress` every 10s, `IsPaused` live | `POST /Users/{id}/PlayedItems/{item}` past the threshold, then `POST /Sessions/Playing/Stopped` |
+| Plex | `/:/timeline?state=playing` | `/:/timeline` every 10s | `/:/scrobble` past the threshold, then `/:/timeline?state=stopped` |
+
+Three things about that table are decisions rather than detail.
+
+**The departure report is unconditional.** `Stopped` used to be sent only when
+the scrobble succeeded, so a skip below the threshold left the session open —
+`NowPlayingItem` still set, position frozen at the last tick. It is now tied to
+the start instead: whatever opened a session closes it.
+
+**On Jellyfin the session events *are* the scrobble.** Its Last.fm and
+ListenBrainz plugins submit from `PlaybackStopped`, so session reporting is
+behind the scrobbling route and stays there. Sending presence "because it is
+not scrobbling" would scrobble for someone who turned scrobbling off, and there
+is no way to send half of it. Resume position is unaffected: it goes through
+`api.bookmarks` under **Resume long tracks**.
+
+**Subsonic's `time` is omitted when unknown**, not sent as `0`. It is optional,
+and Navidrome stamps its own clock in its absence — the same clock the play
+count already agrees with. A `0` was a listen dated 1970: stored as given, and
+refused by Last.fm, whose window is a fortnight. A lost listen that looked
+delivered.
+
+A listen is only submitted past **50% of the track or four minutes**, whichever
+comes first, and never for a track under 30 seconds — Last.fm and ListenBrainz
+both refuse those. The listening history records it regardless: someone else's
+submission rule is no reason for the app to forget what happened.
+
+Jellyfin counts a play when `/Sessions/Playing` lands, at position zero, so a
+skip-heavy queue raises play counts there for tracks nobody heard. That is the
+server's model and it is the same for every client; Yuzic's own history is what
+knows the difference.
+
 ### Deezer
 
 `src/providers/integration/deezer/` · **Metadata**, **Pages**, **Search**, **Home**
@@ -374,9 +412,34 @@ artwork URL.
 | `PUT /playlists/{id}/items?uri=…/library/metadata/{ratingKey}` | Adding a track |
 | `DELETE /playlists/{id}/items/{playlistItemID}` | Removing one entry |
 | `PUT /playlists/{id}/items/{playlistItemID}/move?after={playlistItemID}` | Moving an entry (no `after` moves it first) |
-| `PUT /:/rate`, `GET /:/scrobble`, `GET /:/timeline` | Favourites and playback events |
+| `PUT /:/rate?key={ratingKey}&identifier=com.plexapp.plugins.library&rating=` | Favourites. `userRating = 10` is starred, `0` is not |
+| `GET /:/scrobble?key={ratingKey}&identifier=com.plexapp.plugins.library` | Marking a track played |
+| `GET /:/timeline?ratingKey=&key=/library/metadata/{ratingKey}&identifier=…&state=&time=&duration=` | Now-playing, progress every 10s, and stop |
+| `GET /library/metadata/{id}` | A track's duration for the timeline, fetched once per track and reused |
 | `GET /library/streams/{id}` | A track's lyrics: the media part's stream with `streamType` 4, read as LRC when timed and plain lines otherwise |
 | `GET /library/metadata/{id}/nearest?limit=&maxDistance=` | Sonically similar tracks; a 404 (library without sonic analysis) is no similar tracks, not a failure |
+
+**The `/:/` parameters above are load-bearing, and Plex will not tell you when
+they are wrong.** These are not resources that take what they are given: a
+`/:/` call is an instruction handed to the plugin that owns the item, named in
+`identifier`, and without it the server has nothing to hand the key to. It
+answers `200` with an empty body either way — which the client reads as
+success, so a discarded write and a completed one are indistinguishable from
+here. All three calls once went out with no `identifier` at all, and addressed
+the track by its metadata path where two of them want the bare rating key; the
+timeline was also missing `duration`, without which Plex cannot place an event,
+since progress is `time` read against `duration`. On the documented behaviour
+of those endpoints that means no listen was recorded and no favourite set,
+while the app showed both as having worked — read from Plex's own clients and
+its API documentation rather than confirmed against a live server, which is the
+same caveat the rest of this section carries.
+
+The two `key` spellings are not a mistake to tidy: `/:/scrobble` and `/:/rate`
+take the bare rating key, `/:/timeline` takes the metadata path, and Plex asks
+the timeline for both under different names.
+
+`duration` is omitted when a track's length is not known rather than sent as
+`0`, which would file every listen as a complete play.
 
 Plex answers writes with an empty body, which the client reads as success
 rather than failing to parse. Neither lyrics streams nor `nearest` have been
