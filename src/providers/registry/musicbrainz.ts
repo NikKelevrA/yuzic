@@ -36,6 +36,20 @@ export function currentMusicbrainzClient(): MusicbrainzClient {
   return serverUrl?.trim() ? mb.createMusicbrainzClient({ serverUrl }) : mb;
 }
 
+/**
+ * Whether a server answers like a MusicBrainz one, asked with the same client
+ * the app will use for it — so an address that passes here is one the search
+ * will actually work against, `/ws/2` handling and all.
+ */
+export async function musicbrainzServerAnswers(serverUrl: string): Promise<boolean> {
+  try {
+    await mb.createMusicbrainzClient({ serverUrl }).searchArtist('a', 1);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const musicbrainzProvider: IntegrationProvider = {
   kind: 'integration',
   id: 'musicbrainz',

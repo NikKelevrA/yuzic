@@ -43,7 +43,7 @@ jest.mock('@/providers/integration/lastfm', () => ({ getLastFmArtistInfo: jest.f
 jest.mock('@/constants/keys', () => ({ LASTFM_API_KEY: 'test-lastfm-key' }));
 
 import { deezerProvider } from './deezer';
-import { musicbrainzProvider } from './musicbrainz';
+import { musicbrainzProvider, musicbrainzServerAnswers } from './musicbrainz';
 import { lastfmProvider } from './lastfm';
 import { KEYLESS_INTEGRATIONS } from './keyless';
 import * as deezerApi from '@/providers/integration/deezer';
@@ -189,6 +189,23 @@ describe('musicbrainz provider', () => {
 
       expect(mbApi.createMusicbrainzClient).not.toHaveBeenCalled();
       expect(mbApi.searchArtist).toHaveBeenCalledWith('query', 4);
+    });
+  });
+
+  describe('checking a server address', () => {
+    it('is satisfied when a client for that address can search', async () => {
+      const own = { searchArtist: jest.fn().mockResolvedValue([]) };
+      (mbApi.createMusicbrainzClient as jest.Mock).mockReturnValue(own);
+
+      await expect(musicbrainzServerAnswers('http://nas:5000')).resolves.toBe(true);
+      expect(mbApi.createMusicbrainzClient).toHaveBeenCalledWith({ serverUrl: 'http://nas:5000' });
+    });
+
+    it('is not when the search fails', async () => {
+      const own = { searchArtist: jest.fn().mockRejectedValue(new Error('MusicBrainz 503')) };
+      (mbApi.createMusicbrainzClient as jest.Mock).mockReturnValue(own);
+
+      await expect(musicbrainzServerAnswers('http://nas:5000')).resolves.toBe(false);
     });
   });
 });
