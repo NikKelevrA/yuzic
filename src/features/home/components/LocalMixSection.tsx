@@ -8,6 +8,8 @@ import SongRow from '@/components/rows/SongRow';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { useSourceSectionPresence } from './SourceGroup';
 import { useLocalMix } from '../hooks/useLocalMix';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
+import { notify } from '@/components/toast';
 import { spacing } from '@/constants/design';
 import { SECTION_H_PADDING as H_PADDING } from '@/features/home/constants';
 import type { Song } from '@/domain/entities/Song';
@@ -25,13 +27,38 @@ const PREVIEW_TRACKS = 3;
 export default function LocalMixSection({ sectionKey, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
   const router = useRouter();
+  const { playSongs } = usePlayingActions();
   const { songs, isLoading, hasContent } = useLocalMix(refreshKey);
 
   useSourceSectionPresence(sectionKey, hasContent);
 
-  const renderSong = useCallback((song: Song) => (
-    <SongRow key={song.localId} song={song} />
-  ), []);
+  const playFrom = useCallback(async (startIndex: number) => {
+    if (!songs.length) return;
+    try {
+      await playSongs(songs, { startIndex, contextId: 'local-mix' });
+    } catch {
+      notify.error(t('library.collection.playFailed'));
+    }
+  }, [playSongs, songs, t]);
+
+  /**
+   * The shelf shows three, but a tap plays the mix — from the tapped song,
+   * through the whole thing, exactly as the full screen does. Taking only the
+   * previewed three would make the shelf a different mix from the one its
+   * heading opens.
+   *
+   * `onPress` is also what makes the row playable at all: `SongRow` disables
+   * itself when given neither a handler nor a collection, which is why these
+   * were inert (#264). A mix is neither an album nor a playlist, so there is
+   * no collection to give it.
+   */
+  const renderSong = useCallback((song: Song, index: number) => (
+    <SongRow
+      key={song.localId}
+      song={song}
+      onPress={() => { void playFrom(index); }}
+    />
+  ), [playFrom]);
 
   if (!hasContent) return null;
 

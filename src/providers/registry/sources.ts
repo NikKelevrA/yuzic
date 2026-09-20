@@ -29,6 +29,31 @@ export type SourcePurpose =
 
 export type SourceUseId = `${SourceId}.${SourcePurpose}`;
 
+/** Server addresses the user has set for sources they run themselves, by source. */
+export type SourceServerUrls = Partial<Record<SourceId, string>>;
+
+/**
+ * Sources that can be pointed at a server of your own instead of the public
+ * one. The address is asked for on the source's own sheet, so the screen only
+ * needs to know that a source can take one, not which source it is.
+ */
+const SELF_HOSTABLE: readonly SourceId[] = ['musicbrainz'];
+
+export const isSelfHostable = (source: SourceId): boolean => SELF_HOSTABLE.includes(source);
+
+/**
+ * The address a person typed for a server of their own, tidied, or null when
+ * it is not a web address at all.
+ *
+ * Only the shape is checked here: `http` or `https`, a host, an optional port
+ * and an optional path, no spaces. Whether anything answers there is asked
+ * separately, because that needs the network.
+ */
+export function parseServerAddress(input: string): string | null {
+  const address = input.trim().replace(/\/+$/, '');
+  return /^https?:\/\/[^\s/?#]+(\/[^\s?#]*)?$/i.test(address) ? address : null;
+}
+
 type SourceDeclaration = {
   id: SourceId;
   nameKey: string;

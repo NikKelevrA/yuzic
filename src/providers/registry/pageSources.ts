@@ -6,7 +6,7 @@
  */
 import * as deezer from '@/providers/integration/deezer';
 import { getLastFmSimilarArtists } from '@/providers/integration/lastfm/getSimilarArtists';
-import { searchArtist } from '@/providers/integration/musicbrainz';
+import { currentMusicbrainzClient } from './musicbrainz';
 import { LASTFM_API_KEY } from '@/constants/keys';
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
@@ -114,7 +114,7 @@ export async function fetchSimilarArtistsFromScrobbles(
 
 /** An artist's MusicBrainz id, looked up by name, or null when nothing matches. */
 export async function lookupArtistId(name: string): Promise<string | null> {
-  const [match] = await searchArtist(name, 1);
+  const [match] = await currentMusicbrainzClient().searchArtist(name, 1);
   return match?.id ?? null;
 }
 

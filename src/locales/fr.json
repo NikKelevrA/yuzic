@@ -397,7 +397,8 @@
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
         "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008"
+        "soulsync": "http://soulsync:8008",
+        "downtify": "http://downtify:8000"
       },
       "lidarr": {
         "title": "Lidarr",
@@ -431,6 +432,13 @@
         "credentialsHelper": "URL et clé API SoulSync (Settings → API Keys).",
         "connectionFailed": "Échec de la connexion à SoulSync",
         "disconnected": "Déconnecté de SoulSync."
+      },
+      "downtify": {
+        "title": "Downtify",
+        "credentialsTitle": "Connexion",
+        "credentialsHelper": "Adresse de Downtify. Downtify n'a pas de clé d'API : toute personne pouvant l'atteindre peut y lancer des téléchargements.",
+        "connectionFailed": "Échec de la connexion à Downtify",
+        "disconnected": "Déconnecté de Downtify."
       }
     },
     "audiomuse": {
@@ -533,7 +541,16 @@
       "promptTitle": "Activer {{use}} de {{name}} ?",
       "turnOn": "Activer",
       "notNow": "Pas maintenant",
-      "alwaysFirst": "Premier"
+      "alwaysFirst": "Premier",
+      "serverAddress": {
+        "label": "Adresse du serveur",
+        "publicServer": "Serveur public",
+        "title": "Adresse du serveur",
+        "description": "Utilisez votre propre serveur au lieu du serveur public. Saisissez son adresse, par exemple http://192.168.1.10:5000. Laissez vide pour utiliser le serveur public.",
+        "placeholder": "http://192.168.1.10:5000",
+        "invalid": "Ce n'est pas une adresse web valide. Utilisez par exemple http://192.168.1.10:5000.",
+        "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil."
+      }
     },
     "sourceUses": {
       "lastfm": {
@@ -720,7 +737,8 @@
       "httpDesc": "Non chiffré",
       "unreachable": "Impossible de joindre un serveur à cette adresse. Vérifiez-la, ainsi que le port éventuel.",
       "notThisServer": "Quelque chose répond à cette adresse, mais ce n’est pas {{server}}.",
-      "continueAnyway": "Continuer quand même"
+      "continueAnyway": "Continuer quand même",
+      "untrustedCertificate": "Le certificat de ce serveur n'est pas approuvé par votre appareil. Si vous l'avez émis vous-même, installez le certificat de cette autorité sur cet appareil, puis réessayez."
     },
     "credentials": {
       "title": "Saisissez vos identifiants",
@@ -1228,7 +1246,10 @@
       "addedTrackToSoulsync": "Demandé à SoulSync.",
       "monitoringOnLidarr": "Lidarr suit désormais {{artist}}.",
       "sending": "Envoi de {{title}} vers {{downloader}}…",
-      "progress": "{{done}} morceaux sur {{total}} demandés…"
+      "progress": "{{done}} morceaux sur {{total}} demandés…",
+      "downtifyDesc": "Rechercher sur YouTube Music via Downtify",
+      "addedToDowntify": "Demandé à Downtify.",
+      "addedTrackToDowntify": "Demandé à Downtify."
     },
     "header": {
       "songs": "{{count}} morceau",

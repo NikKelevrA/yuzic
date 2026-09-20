@@ -96,6 +96,42 @@ export async function tryWithFailover<T>(
 }
 
 /**
+ * A URL that took too long to answer.
+ *
+ * The clients give each attempt a deadline and abort it themselves, which
+ * produces a bare `AbortError` whose message says nothing about why — React
+ * Native words it "Aborted", and it looks exactly like a caller cancelling.
+ * `isNetworkError` could not call that a network error without also calling a
+ * real cancellation one, so a timed-out URL was re-thrown as a *non-network*
+ * failure and `tryWithFailover` stopped: every fallback URL went untried.
+ *
+ * That is issue #263 in full. A phone off the home network reaches the LAN
+ * address, waits for the deadline, and never tries the Tailscale URL sitting
+ * right behind it — the connection spinner turns for 30 seconds and then
+ * gives up on a server that was reachable the whole time.
+ *
+ * So a timeout says it is one. The client throwing this is the only thing
+ * that knows its own abort was the deadline rather than a cancellation.
+ */
+export class UrlTimeoutError extends Error {
+  constructor(url: string, ms: number) {
+    super(`No answer from ${url} within ${ms}ms`);
+    this.name = 'UrlTimeoutError';
+  }
+}
+
+/**
+ * Whether a thrown value is a fetch that was aborted.
+ *
+ * Paired with the client's own "did my timer fire" flag: the flag says the
+ * deadline passed, this says the failure was the abort rather than something
+ * the response turned out to contain. Neither is sufficient alone.
+ */
+export function isAbortError(error: unknown): boolean {
+  return (error as { name?: string } | null)?.name === 'AbortError';
+}
+
+/**
  * True for the class of errors that mean "the URL didn't answer" — DNS
  * failures, connect refused, timeouts, TLS handshake errors. We identify these
  * by name/message rather than instanceof because they arrive as generic
@@ -105,6 +141,7 @@ export async function tryWithFailover<T>(
  */
 export function isNetworkError(error: unknown): boolean {
   if (!error) return false;
+  if (error instanceof UrlTimeoutError) return true;
   const e = error as { name?: string; message?: string };
   const name = e.name?.toLowerCase() ?? '';
   const message = e.message?.toLowerCase() ?? '';

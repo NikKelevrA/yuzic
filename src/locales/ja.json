@@ -396,7 +396,8 @@
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
         "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008"
+        "soulsync": "http://soulsync:8008",
+        "downtify": "http://downtify:8000"
       },
       "lidarr": {
         "title": "Lidarr",
@@ -430,6 +431,13 @@
         "credentialsHelper": "SoulSyncのURLとAPIキー（Settings → API Keys）。",
         "connectionFailed": "SoulSync への接続に失敗しました",
         "disconnected": "SoulSync から切断しました。"
+      },
+      "downtify": {
+        "title": "Downtify",
+        "credentialsTitle": "接続",
+        "credentialsHelper": "Downtify の URL。Downtify には API キーがないため、到達できる人は誰でもダウンロードを追加できます。",
+        "connectionFailed": "Downtify への接続に失敗しました",
+        "disconnected": "Downtify から切断しました。"
       }
     },
     "audiomuse": {
@@ -532,7 +540,16 @@
       "promptTitle": "{{name}}の{{use}}をオンにしますか？",
       "turnOn": "オンにする",
       "notNow": "今はしない",
-      "alwaysFirst": "最初"
+      "alwaysFirst": "最初",
+      "serverAddress": {
+        "label": "サーバーアドレス",
+        "publicServer": "公開サーバー",
+        "title": "サーバーアドレス",
+        "description": "公開サーバーの代わりに、ご自身のサーバーを使用します。アドレスを入力してください（例: http://192.168.1.10:5000）。空欄にすると公開サーバーを使用します。",
+        "placeholder": "http://192.168.1.10:5000",
+        "invalid": "有効なWebアドレスではありません。http://192.168.1.10:5000 のように入力してください。",
+        "unreachable": "このアドレスから想定どおりの応答がありません。サーバーが起動していて、このデバイスから届くか確認してください。"
+      }
     },
     "sourceUses": {
       "lastfm": {
@@ -719,7 +736,8 @@
       "httpDesc": "非暗号化",
       "unreachable": "このアドレスのサーバーに接続できませんでした。アドレスとポートを確認してください。",
       "notThisServer": "このアドレスは応答しましたが、{{server}} ではありません。",
-      "continueAnyway": "このまま続ける"
+      "continueAnyway": "このまま続ける",
+      "untrustedCertificate": "このサーバーの証明書はデバイスに信頼されていません。自分で発行した場合は、その認証局の証明書をこのデバイスにインストールしてからもう一度お試しください。"
     },
     "credentials": {
       "title": "認証情報を入力",
@@ -1223,7 +1241,10 @@
       "addedTrackToSoulsync": "SoulSync にリクエストしました。",
       "monitoringOnLidarr": "Lidarr が {{artist}} を追跡しています。",
       "sending": "{{title}} を {{downloader}} に送信しています…",
-      "progress": "{{total}} 曲中 {{done}} 曲をリクエストしました…"
+      "progress": "{{total}} 曲中 {{done}} 曲をリクエストしました…",
+      "downtifyDesc": "Downtify 経由で YouTube Music を検索",
+      "addedToDowntify": "Downtify にリクエストしました。",
+      "addedTrackToDowntify": "Downtify にリクエストしました。"
     },
     "header": {
       "songs": "{{count}} 曲",

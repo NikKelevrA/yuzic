@@ -11,6 +11,8 @@ import SectionShelfHeader from './SectionShelfHeader';
 import SongRow from '@/components/rows/SongRow';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { useSourceSectionPresence } from './SourceGroup';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
+import { notify } from '@/components/toast';
 import { spacing } from '@/constants/design';
 import { SECTION_H_PADDING as H_PADDING } from '@/features/home/constants';
 import type { Song } from '@/domain/entities/Song';
@@ -48,6 +50,7 @@ const MAX_TRACKS = 10;
  */
 export default function LBCreatedForSection({ sectionKey, mixType, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
+  const { playSongs } = usePlayingActions();
   const discoveryEnabled = useSelector(selectSourceUse(LISTENERS_HOME_USE));
   const username = useSelector(selectListenersAccountName);
 
@@ -67,9 +70,25 @@ export default function LBCreatedForSection({ sectionKey, mixType, refreshKey = 
 
   useSourceSectionPresence(sectionKey, hasContent);
 
-  const renderSong = useCallback((song: Song) => (
-    <SongRow key={song.localId} song={song} />
-  ), []);
+  /** A tapped row plays this mix from there. Without `onPress` the row has
+   *  neither a handler nor a collection, which is what `SongRow` disables
+   *  itself on — the same defect as the local mix's (#264). */
+  const playFrom = useCallback(async (startIndex: number) => {
+    if (!data.length) return;
+    try {
+      await playSongs(data, { startIndex, contextId: `lb-created-for-${mixType}` });
+    } catch {
+      notify.error(t('library.collection.playFailed'));
+    }
+  }, [playSongs, data, mixType, t]);
+
+  const renderSong = useCallback((song: Song, index: number) => (
+    <SongRow
+      key={song.localId}
+      song={song}
+      onPress={() => { void playFrom(index); }}
+    />
+  ), [playFrom]);
 
   // A heading over an empty rail is worse than no shelf — and the source
   // header above it goes with it, told by the presence report.

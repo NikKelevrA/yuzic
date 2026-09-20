@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { Info } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { SOURCES, usesFor, type SourceId, type SourcePurpose } from '@/providers/registry/sources';
 import SettingsCard from '../components/SettingsCard';
 import SettingsDivider from '../components/SettingsDivider';
+import ServerAddressSheet from './ServerAddressSheet';
 import SourceSheet from './SourceSheet';
 import { selectSourceUses, setSourceUse } from './state';
 
@@ -37,6 +38,12 @@ export default function SourceUseList({ purpose, source }: Props) {
   const [detailsFor, setDetailsFor] = useState<SourceId | null>(null);
 
   const entries = usesFor(purpose).filter(entry => !source || entry.source === source);
+
+  // The address form is opened by the details sheet but belongs beside it, not
+  // inside it: it waits for that sheet to finish closing, so the two are never
+  // on screen together.
+  const [addressFor, setAddressFor] = useState<SourceId | null>(null);
+  const addressAfterClose = useRef<SourceId | null>(null);
 
   const openDetails = useCallback((next: SourceId) => {
     setDetailsFor(next);
@@ -81,11 +88,19 @@ export default function SourceUseList({ purpose, source }: Props) {
       <SourceSheet
         ref={sheetRef}
         source={detailsFor}
+        onEditAddress={next => {
+          addressAfterClose.current = next;
+          sheetRef.current?.dismiss();
+        }}
         onDone={() => {
           sheetRef.current?.dismiss();
           setDetailsFor(null);
+          const next = addressAfterClose.current;
+          addressAfterClose.current = null;
+          if (next) setAddressFor(next);
         }}
       />
+      {addressFor && <ServerAddressSheet source={addressFor} onClose={() => setAddressFor(null)} />}
     </>
   );
 }

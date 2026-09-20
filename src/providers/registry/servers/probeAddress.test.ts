@@ -77,3 +77,43 @@ describe('address probes', () => {
     });
   });
 });
+
+describe('a certificate the device refused', () => {
+  // Every probe used to report this as `unreachable`, which sends the user
+  // back to check an address that was right all along. On Android it is the
+  // common case for a private CA — see plugins/withUserCaTrust.js.
+  const refused = () =>
+    Promise.reject(
+      new Error('java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.')
+    );
+
+  it('is named by the Subsonic probe', async () => {
+    mockServerFetch.mockReturnValueOnce(refused());
+
+    await expect(probeSubsonic('https://music.lan')).resolves.toEqual({
+      kind: 'untrustedCertificate',
+    });
+  });
+
+  it('is named by the Jellyfin/Emby probe', async () => {
+    mockServerFetch.mockReturnValueOnce(refused());
+
+    await expect(probeMediaBrowser(JELLYFIN_BRAND, 'https://jf.lan')).resolves.toEqual({
+      kind: 'untrustedCertificate',
+    });
+  });
+
+  it('is named by the Plex probe', async () => {
+    mockServerFetch.mockReturnValueOnce(refused());
+
+    await expect(probePlex('https://plex.lan')).resolves.toEqual({
+      kind: 'untrustedCertificate',
+    });
+  });
+
+  it('leaves an ordinary connection failure reading as unreachable', async () => {
+    mockServerFetch.mockReturnValueOnce(Promise.reject(new TypeError('Network request failed')));
+
+    await expect(probeSubsonic('https://music.lan')).resolves.toEqual({ kind: 'unreachable' });
+  });
+});

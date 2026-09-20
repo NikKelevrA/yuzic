@@ -287,6 +287,15 @@ Read-only, no account. Fills in artist and album pages with canonical metadata
 when the entity isn't in your library, and supplies MBIDs that the downloaders
 use to resolve a release precisely instead of by fuzzy name match.
 
+If you run a MusicBrainz server of your own (for example
+[musicbrainz-docker](https://github.com/metabrainz/musicbrainz-docker)), set its
+root address — `http://host:5000` — under **Settings › Sources › MusicBrainz ›
+Server address**. Requests then go there instead of `musicbrainz.org`, with no
+one-request-a-second spacing, since there is no public limit to respect. The
+address is the server's root; `/ws/2` is added by the app. Cover Art Archive is a
+separate source and is unaffected, and the links that open `musicbrainz.org` in
+a browser keep pointing at the public site.
+
 ### Last.fm
 
 `src/providers/integration/lastfm/` · **Metadata › Artist info**, **Pages**
@@ -349,6 +358,7 @@ without a manual pull (`src/features/downloaders/DownloadersQueueContext.tsx`).
 | [Lidarr](https://lidarr.audio) | Lidarr | ✅ | — (Lidarr is album-oriented) | Server URL + API key (Lidarr → Settings → General) |
 | [slskd](https://github.com/slskd/slskd) (Soulseek) | Soulseek | ✅ | ✅ | Server URL + API key, plus its own search preferences |
 | [SoulSync](https://github.com/Nezreka/SoulSync) | SoulSync | ✅ as its tracks (no album endpoint) | ✅ | Server URL + API key |
+| [Downtify](https://github.com/henriquesebastiao/downtify) | Downtify | ✅ as its tracks (album endpoint needs a URL we don't have) | ✅ | Server URL only — Downtify has no API key |
 
 Registry and the shared `DownloaderDefinition` shape:
 `src/features/downloaders/registry.ts`. A downloader is offered on an external
@@ -497,6 +507,9 @@ No auth. `src/providers/integration/deezer/`.
 ### MusicBrainz — `https://musicbrainz.org/ws/2`
 
 No auth, `User-Agent` identifies the app. `src/providers/integration/musicbrainz/index.ts`.
+Calls are spaced 1.1 s apart on the public server. With a server address set
+under Sources, the same endpoints are called at `{address}/ws/2` instead, unspaced,
+with the same `User-Agent`.
 
 | Endpoint | Used for |
 | --- | --- |
@@ -617,6 +630,57 @@ the album's tracks, each its own `POST /request`, one after another
 (`features/downloaders/albumByTracks.ts`); the tracks come from the album's
 catalogue source or the server (`albumTracks.ts`), so any album sheet can offer
 it.
+
+### Downtify — your instance, `/api`
+
+No authentication. `src/providers/integration/downtify/`. This is the only
+downloader here that holds no credential: Downtify's API has no key, no token
+and no basic auth, so `AuthDescriptor` is `{ tier: 'none' }` and its settings
+screen asks for an address and nothing else. Anything that can reach the port
+can queue downloads on it, which the setup screen says in as many words — it is
+Downtify's design, not something the app can tighten.
+
+| Endpoint | Used for |
+| --- | --- |
+| `GET /api/version` | Connection test. Answers a bare version string, which is also how a reverse proxy or the wrong service is told apart from a real one |
+| `GET /api/songs/search?query=` | Resolving a track before it can be queued. Downtify's download endpoints take a URL or a song object, never a free-text query the way SoulSync's does |
+| `POST /api/download/batch` | Queueing. Used even for a single track, because `POST /api/download/url` **blocks until the download finishes** — minutes with nothing to show — while `batch` answers at once with `job_ids` |
+| `GET /api/queue` | The in-app transfer queue, and spotting finished items |
+| `DELETE /api/queue/item?song_id=` | Cancelling |
+
+A search result is handed back to `/api/download/batch` **exactly as it
+arrived**, and the field names were read off a live Downtify 3.0.0 rather than
+its reference, which does not carry the schema. They are not what the prose
+implies: a result is
+
+```json
+{ "song_id": "SM4tQcUt_mQ", "name": "Roygbiv", "artists": ["Boards of Canada"],
+  "album_name": "Music Has The Right To Children", "duration": 150,
+  "url": "https://music.youtube.com/watch?v=...", "source": "youtube", … }
+```
+
+`song_id` / `name` / `artists` (an array), **not** `id` / `title` / `artist` —
+which is what the first cut of this client assumed, and it was wrong on all
+three until a real instance said otherwise. `job_ids` from `batch` carries that
+same `song_id`, and it is what `DELETE /api/queue/item?song_id=` takes.
+
+The object is still passed back whole rather than rebuilt, because the endpoint
+takes all of it and a version that adds a field would lose it the moment this
+side started copying fields across by name.
+
+`generate_m3u` and `playlist_url` are deliberately not sent: they belong to a
+playlist download, and one track from a Get is not one.
+
+No album endpoint the app can reach: `POST /api/download/album` takes a
+*YouTube Music album URL*, and nothing on this side has one — a browsed album
+is a catalogue record, not a YouTube link. So `downloadAlbum` is absent for the
+same reason it is for SoulSync, and an album Get arrives as its tracks through
+`features/downloaders/albumByTracks.ts`.
+
+Downtify can use slskd as one of its own audio sources, and can push playlists
+to Navidrome. Neither is anything the app arranges or needs to know about; it is
+configured in Downtify and worth knowing only because the same slskd may already
+be connected here as a downloader in its own right.
 
 ## What we don't call
 

@@ -1,6 +1,7 @@
-Plex sign-in works. It could not be completed at all before.
+Faster on a big library. The whole catalog was being rewritten to disk every time anything changed, which is what made a large library slow to open and sluggish to scroll.
 
-- The Plex code is now the four characters plex.tv/link actually accepts, instead of a 25-character one with nowhere to enter it
-- The screen now names plex.tv/link, rather than leaving you to find it
-- Each server type shows its own port in the address hint; Plex's said Navidrome's
-- Approving a code and then being told it expired is fixed, and the app now says whether the server refused the account or could not be reached
+- Android can reach a server behind a certificate authority of your own
+- Downtify joins Lidarr, slskd and SoulSync as a downloader
+- MusicBrainz can point at your own mirror
+- A fallback URL is tried when the first address stops answering
+- Tracks in Your Mix play when you tap them

@@ -396,7 +396,8 @@
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
         "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008"
+        "soulsync": "http://soulsync:8008",
+        "downtify": "http://downtify:8000"
       },
       "lidarr": {
         "title": "Lidarr",
@@ -430,6 +431,13 @@
         "credentialsHelper": "SoulSync URL 和 API 密钥（Settings → API Keys）。",
         "connectionFailed": "SoulSync 连接失败",
         "disconnected": "已断开与 SoulSync 的连接。"
+      },
+      "downtify": {
+        "title": "Downtify",
+        "credentialsTitle": "连接",
+        "credentialsHelper": "Downtify 的地址。Downtify 没有 API 密钥，任何能访问它的人都可以在上面添加下载。",
+        "connectionFailed": "连接 Downtify 失败",
+        "disconnected": "已断开与 Downtify 的连接。"
       }
     },
     "audiomuse": {
@@ -532,7 +540,16 @@
       "promptTitle": "开启来自 {{name}} 的{{use}}？",
       "turnOn": "开启",
       "notNow": "暂不",
-      "alwaysFirst": "第一"
+      "alwaysFirst": "第一",
+      "serverAddress": {
+        "label": "服务器地址",
+        "publicServer": "公共服务器",
+        "title": "服务器地址",
+        "description": "使用您自己的服务器，而不是公共服务器。请输入其地址，例如 http://192.168.1.10:5000。留空则使用公共服务器。",
+        "placeholder": "http://192.168.1.10:5000",
+        "invalid": "这不是有效的网址。请使用类似 http://192.168.1.10:5000 的格式。",
+        "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。"
+      }
     },
     "sourceUses": {
       "lastfm": {
@@ -719,7 +736,8 @@
       "httpDesc": "未加密",
       "unreachable": "无法连接到此地址的服务器。请检查地址以及是否需要端口。",
       "notThisServer": "此地址有响应，但不是 {{server}}。",
-      "continueAnyway": "仍然继续"
+      "continueAnyway": "仍然继续",
+      "untrustedCertificate": "此服务器的证书未被你的设备信任。如果是你自行签发的，请在此设备上安装该证书颁发机构的证书后重试。"
     },
     "credentials": {
       "title": "输入你的凭证",
@@ -1223,7 +1241,10 @@
       "addedTrackToSoulsync": "已向 SoulSync 发起请求。",
       "monitoringOnLidarr": "Lidarr 正在关注 {{artist}}。",
       "sending": "正在将《{{title}}》发送至 {{downloader}}…",
-      "progress": "已请求 {{total}} 首中的 {{done}} 首…"
+      "progress": "已请求 {{total}} 首中的 {{done}} 首…",
+      "downtifyDesc": "通过 Downtify 搜索 YouTube Music",
+      "addedToDowntify": "已向 Downtify 发出请求。",
+      "addedTrackToDowntify": "已向 Downtify 发出请求。"
     },
     "header": {
       "songs": "{{count}} 首曲目",

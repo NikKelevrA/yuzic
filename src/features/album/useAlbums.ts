@@ -15,13 +15,21 @@ type UseAlbumsResult = {
 };
 
 /**
- * The persisted TanStack Query cache (`PersistQueryClientProvider` in
- * `_layout.tsx`) is the only place the catalog lives now — there is no
- * separate Redux/LibraryContext mirror. Offline, `enabled` below goes
- * false and no fetch happens, but `useQuery` still returns whatever this
+ * The TanStack Query cache is the only place the catalog lives at runtime —
+ * there is no separate Redux/LibraryContext mirror. Offline, `enabled` below
+ * goes false and no fetch happens, but `useQuery` still returns whatever this
  * exact key's cache entry was hydrated with on cold start (or last held from
  * a previous session), so `query.data` doubles as the offline fallback with
  * no extra plumbing.
+ *
+ * What fills that entry on a cold start is `features/library/
+ * useCatalogHydration`, not the query persister: the catalog is stored per
+ * resource in its own namespace rather than inside the persister's blob,
+ * because the blob is rewritten whenever anything in the cache changes and a
+ * large library made every one of those writes cost the whole library. See
+ * `catalogPersistence` for the numbers. Nothing about this hook changes for
+ * it, except that the entry may arrive a moment after first paint instead of
+ * before it.
  */
 export function useAlbums(): UseAlbumsResult {
   const api = useApi();

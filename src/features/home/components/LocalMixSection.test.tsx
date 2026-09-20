@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
@@ -40,8 +40,9 @@ jest.mock('@/features/theme/useRadius', () => ({
   useRadius: () => ({ thumb: 8, pill: 999, pillFor: () => 999, card: 8 }),
 }));
 
+const mockPlaySongs = jest.fn();
 jest.mock('@/features/playback/PlayingContext', () => ({
-  usePlayingActions: () => ({ playSongInCollection: jest.fn() }),
+  usePlayingActions: () => ({ playSongInCollection: jest.fn(), playSongs: mockPlaySongs }),
 }));
 
 jest.mock('@/features/entity-actions/SongActionSheetContext', () => ({
@@ -71,12 +72,15 @@ jest.mock('@/components/toast', () => ({
 }));
 
 jest.mock('@/components/MediaListRow', () => {
-  const { Text: RNText, View: RNView } = require('react-native');
-  return function MockMediaListRow({ title }: any) {
+  const { Text: RNText, Pressable: RNPressable } = require('react-native');
+  // Carries `onPress`/`disabled` through, which the shelf's whole bug was
+  // about: the real row disables itself when given neither a handler nor a
+  // collection, and a mock that drops both cannot see that.
+  return function MockMediaListRow({ title, onPress, disabled }: any) {
     return (
-      <RNView>
+      <RNPressable testID={`row-${title}`} onPress={onPress} disabled={disabled}>
         <RNText>{title}</RNText>
-      </RNView>
+      </RNPressable>
     );
   };
 });
@@ -199,6 +203,7 @@ function renderWithStore(
 describe('LocalMixSection', () => {
   beforeEach(() => {
     mockUseQuery.mockReset();
+    mockPlaySongs.mockReset();
     mockGetSimilarSongs.mockReset();
     (useApi as jest.Mock).mockReturnValue({
       similar: { getSimilarSongs: mockGetSimilarSongs },
@@ -268,5 +273,28 @@ describe('LocalMixSection', () => {
     const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
 
     expect(view.getByText('Similar Song')).toBeTruthy();
+  });
+
+  it('plays the mix from the tapped song, rather than sitting there inert (#264)', async () => {
+    // The shelf passed `SongRow` neither `onPress` nor `collection`, and the
+    // row disables itself on exactly that pair — so every track was
+    // untappable and only the shuffle button on the full screen worked.
+    similarQueryResult = { data: [sampleSimilarSong], isLoading: false };
+
+    const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
+    fireEvent.press(view.getByTestId('row-Similar Song'));
+
+    expect(mockPlaySongs).toHaveBeenCalledWith(
+      [expect.objectContaining({ title: 'Similar Song' })],
+      expect.objectContaining({ startIndex: 0, contextId: 'local-mix' }),
+    );
+  });
+
+  it('leaves its rows enabled', async () => {
+    similarQueryResult = { data: [sampleSimilarSong], isLoading: false };
+
+    const view = await renderWithStore(<LocalMixSection sectionKey="localMix" />);
+
+    expect(view.getByTestId('row-Similar Song').props.disabled).toBeFalsy();
   });
 });

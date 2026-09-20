@@ -37,10 +37,17 @@ export type DownloaderConfig = { serverUrl: string; apiKey: string };
  * Credential state and connection testing for one downloader. Lidarr and slskd
  * differ only in which `testConnection` they call, so the auth effect, the
  * manual ping and the disconnect all live here rather than once per screen.
+ *
+ * `keyless` is for a downloader with no credential to hold — Downtify's API
+ * has no authentication at all. Everything below used to gate on a URL *and* a
+ * key, which for such a downloader is a gate that can never open: it would sit
+ * on "not connected" forever with no field left to fill. So what is required
+ * is asked once, as `hasCredentials`, rather than spelled out at each gate.
  */
 export function useDownloaderConnection(
   id: DownloaderId,
-  testConnection: (config: DownloaderConfig) => Promise<unknown>
+  testConnection: (config: DownloaderConfig) => Promise<unknown>,
+  { keyless = false }: { keyless?: boolean } = {}
 ) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -57,6 +64,9 @@ export function useDownloaderConnection(
   useEffect(() => { setLocalApiKey(cachedApiKey); }, [cachedApiKey]);
   const isAuthenticated = useSelector(selectors.isAuthenticated);
   const config = useMemo<DownloaderConfig>(() => ({ serverUrl, apiKey }), [serverUrl, apiKey]);
+
+  /** Everything this downloader needs before it is worth asking the network. */
+  const hasCredentials = keyless ? Boolean(serverUrl) : Boolean(serverUrl && apiKey);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -91,7 +101,7 @@ export function useDownloaderConnection(
   );
 
   useEffect(() => {
-    if (!serverUrl || !apiKey) {
+    if (!hasCredentials) {
       dispatch(setDownloaderAuthenticated({ serverId, downloader: id, value: false }));
       return;
     }
@@ -101,7 +111,7 @@ export function useDownloaderConnection(
     const timeout = setTimeout(async () => {
       setIsLoading(true);
       try {
-        if (config.serverUrl && config.apiKey) {
+        if (hasCredentials) {
           await testConnection(config);
           if (!cancelled) dispatch(connectDownloader({ serverId, downloader: id }));
         }
@@ -119,10 +129,10 @@ export function useDownloaderConnection(
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [apiKey, config, dispatch, id, isAuthenticated, serverId, serverUrl, testConnection]);
+  }, [config, dispatch, hasCredentials, id, isAuthenticated, serverId, testConnection]);
 
   const ping = useCallback(async () => {
-    if (!config.serverUrl || !config.apiKey || isLoading) return;
+    if (!hasCredentials || isLoading) return;
     setIsLoading(true);
     try {
       await testConnection(config);
@@ -133,7 +143,7 @@ export function useDownloaderConnection(
     } finally {
       setIsLoading(false);
     }
-  }, [config, dispatch, id, isLoading, serverId, t, testConnection]);
+  }, [config, dispatch, hasCredentials, id, isLoading, serverId, t, testConnection]);
 
   const disconnect = useCallback(() => {
     dispatch(disconnectDownloader({ serverId, downloader: id }));

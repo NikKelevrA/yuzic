@@ -397,7 +397,8 @@
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
         "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008"
+        "soulsync": "http://soulsync:8008",
+        "downtify": "http://downtify:8000"
       },
       "queueTitle": "Download Queue",
       "lidarr": {
@@ -431,6 +432,13 @@
         "credentialsHelper": "SoulSync URL and API key (Settings → API Keys).",
         "connectionFailed": "SoulSync connection failed",
         "disconnected": "Disconnected from SoulSync."
+      },
+      "downtify": {
+        "title": "Downtify",
+        "credentialsTitle": "Connection",
+        "credentialsHelper": "Downtify URL. Downtify has no API key, so anyone who can reach it can queue downloads on it.",
+        "connectionFailed": "Downtify connection failed",
+        "disconnected": "Disconnected from Downtify."
       }
     },
     "audiomuse": {
@@ -533,7 +541,16 @@
       "promptTitle": "Turn on {{use}} from {{name}}?",
       "turnOn": "Turn on",
       "notNow": "Not now",
-      "alwaysFirst": "First"
+      "alwaysFirst": "First",
+      "serverAddress": {
+        "label": "Server address",
+        "publicServer": "Public server",
+        "title": "Server address",
+        "description": "Use a server of your own instead of the public one. Enter its address, for example http://192.168.1.10:5000. Leave it empty to use the public server.",
+        "placeholder": "http://192.168.1.10:5000",
+        "invalid": "That doesn't look like a web address. Use something like http://192.168.1.10:5000.",
+        "unreachable": "That address didn't answer as expected. Check the server is running and reachable from this device."
+      }
     },
     "sourceUses": {
       "lastfm": {
@@ -720,7 +737,8 @@
       "httpDesc": "Unencrypted",
       "unreachable": "Couldn't reach a server at this address. Check it, and whether it needs a port.",
       "notThisServer": "Something answered at this address, but it isn't {{server}}.",
-      "continueAnyway": "Continue anyway"
+      "continueAnyway": "Continue anyway",
+      "untrustedCertificate": "This server's certificate isn't trusted by your device. If you issued it yourself, install that authority's certificate on this device and try again."
     },
     "credentials": {
       "title": "Enter Your Credentials",
@@ -1230,7 +1248,10 @@
       "addedTrackToSoulsync": "Requested from SoulSync.",
       "monitoringOnLidarr": "Lidarr is following {{artist}}.",
       "sending": "Sending {{title}} to {{downloader}}…",
-      "progress": "Requested {{done}} of {{total}} songs…"
+      "progress": "Requested {{done}} of {{total}} songs…",
+      "downtifyDesc": "Search YouTube Music through Downtify",
+      "addedToDowntify": "Requested from Downtify.",
+      "addedTrackToDowntify": "Requested from Downtify."
     },
     "header": {
       "songs": "{{count}} song",

@@ -3,6 +3,7 @@ import type { ComponentType } from 'react';
 import type { CoverSource } from '@/domain/entities/Cover';
 import type { BasicAuth, ProviderAuth, Server, ServerType } from '@/providers/contracts/Server';
 import type { ApiAdapter, Library } from '@/providers/contracts/ServerAdapter';
+import type { AddressProbe } from '@/providers/server/addressProbe';
 
 /** What a music server type declares about itself: see `serverConnections.ts`. */
 
@@ -109,13 +110,9 @@ export type ServerProviderIcon =
   | { kind: 'image'; source: number }
   | { kind: 'glyph'; Glyph: ComponentType<{ size?: number; color?: string }> };
 
-/**
- * What an address answered before anyone signed in: a server of this type,
- * something that is not one (a web page, a different server), or nothing.
- * A proxy asking for its own sign-in counts as reachable — that is the
- * credentials step's to ask for.
- */
-type AddressProbe = { kind: 'ok' | 'unreachable' | 'notThisServer' };
+// `AddressProbe` — what an address answered before anyone signed in — is
+// defined next to the probes that produce it (`server/addressProbe`), since
+// telling those answers apart is their job.
 
 export type ServerProviderConfig = {
   type: ServerType;

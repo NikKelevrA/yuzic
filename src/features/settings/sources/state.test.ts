@@ -1,7 +1,9 @@
 import sourcesReducer, {
   selectEnabledSourcesFor,
   selectSourceInUse,
+  selectSourceServerUrls,
   selectSourceUse,
+  setSourceServerUrl,
   setSourceUse,
   setSourceUses,
   stopUsingSource,
@@ -47,5 +49,43 @@ describe('source uses', () => {
     );
     expect(selectSourceInUse('deezer')(state)).toBe(false);
     expect(selectSourceUse('lastfm.artistInfo')(state)).toBe(true);
+  });
+});
+
+describe('server addresses', () => {
+  it('starts with none, which means the public server', () => {
+    expect(selectSourceServerUrls(reduce())).toEqual({});
+  });
+
+  it('stores the address for one source, trimmed', () => {
+    const state = reduce(setSourceServerUrl({ source: 'musicbrainz', url: '  http://nas:5000  ' }));
+    expect(selectSourceServerUrls(state)).toEqual({ musicbrainz: 'http://nas:5000' });
+  });
+
+  it('goes back to the public server when the address is emptied', () => {
+    const state = reduce(
+      setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }),
+      setSourceServerUrl({ source: 'musicbrainz', url: '   ' }),
+    );
+    expect(selectSourceServerUrls(state)).toEqual({});
+  });
+
+  it('is kept when every use of the source is turned off', () => {
+    const state = reduce(
+      setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }),
+      setSourceUse({ use: 'musicbrainz.search', enabled: true }),
+      stopUsingSource('musicbrainz'),
+    );
+    expect(selectSourceServerUrls(state)).toEqual({ musicbrainz: 'http://nas:5000' });
+  });
+
+  it('reads settings saved before addresses existed as none', () => {
+    const saved = { settingsSources: { uses: {} } } as unknown as Parameters<typeof selectSourceServerUrls>[0];
+    expect(selectSourceServerUrls(saved)).toEqual({});
+  });
+
+  it('hands a subscriber the same object until an address changes', () => {
+    const state = reduce();
+    expect(selectSourceServerUrls(state)).toBe(selectSourceServerUrls(state));
   });
 });

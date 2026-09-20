@@ -2,24 +2,32 @@ import { createMMKV } from 'react-native-mmkv';
 import { Storage } from 'redux-persist';
 
 /**
- * Two stores, deliberately separate.
+ * Three stores, deliberately separate.
  *
  * Redux holds small durable client state — playback resume position, settings,
- * wants. TanStack Query holds the server catalog. They have different sizes,
- * different lifetimes and different reasons to be cleared: dropping a stale
- * catalog should never risk a user's settings, and one instance made that a
- * single blast radius.
+ * wants. TanStack Query holds the screens' own queries. The catalog — albums,
+ * artists, tracks — holds its own, one record per resource. They have
+ * different sizes, different lifetimes and different reasons to be cleared:
+ * dropping a stale catalog should never risk a user's settings, and one
+ * instance made that a single blast radius.
  *
- * Both live in a namespace of their own for this architecture. Nothing reads
- * the previous namespace: the rewrite changed what every persisted record
- * looks like, so a value carried over would be a value in a shape no reader
- * now understands. Users reconnect and re-sync once, and the old namespace is
- * left untouched so a rollback finds its state exactly as it was.
+ * The catalog is separate from the query cache for size rather than for
+ * lifetime. The persister rewrites its blob whenever anything in the cache
+ * changes, and a catalog inside it made every one of those writes cost the
+ * whole library — see `features/library/catalogPersistence`, which owns this
+ * store's records.
+ *
+ * All three live in a namespace of their own for this architecture. Nothing
+ * reads the previous namespace: the rewrite changed what every persisted
+ * record looks like, so a value carried over would be a value in a shape no
+ * reader now understands. Users reconnect and re-sync once, and the old
+ * namespace is left untouched so a rollback finds its state exactly as it was.
  */
 const NAMESPACE = 'yuzic-v2';
 
 const reduxMmkv = createMMKV({ id: `${NAMESPACE}-redux` });
 const queryMmkv = createMMKV({ id: `${NAMESPACE}-query` });
+const catalogMmkv = createMMKV({ id: `${NAMESPACE}-catalog` });
 
 /** Kept for the few modules that store their own small values directly. */
 export const mmkv = reduxMmkv;
@@ -48,3 +56,12 @@ export const reduxStorage: Storage = {
 
 /** The persister for the query cache. Named for what it is, not for AsyncStorage. */
 export const queryCacheStorage = storageFor(queryMmkv);
+
+/**
+ * The catalog store, handed out raw rather than behind `storageFor`.
+ *
+ * Its reader is not a persister — it addresses one resource at a time by key,
+ * and it needs `clearAll` for sign-out — so the promise-returning shape the
+ * other two wear for their libraries' sake would only be something to unwrap.
+ */
+export const catalogStorage = catalogMmkv;
