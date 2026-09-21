@@ -103,6 +103,34 @@ export function readCatalogResource<T>(
 }
 
 /**
+ * Compacts the store back down to what it actually holds.
+ *
+ * MMKV is append-only inside one mmap'd file: rewriting a key appends the new
+ * value and leaves the old one as dead space, and when the file runs out of
+ * room it doubles. The catalog's records are the largest values this app
+ * writes by a wide margin, so a handful of syncs is enough for the file to
+ * outgrow its contents several times over. Measured on a device at 89,878
+ * tracks: a 512 MB file, 273 MB of it resident, for records that serialise to
+ * roughly 130 MB. The resident part is the expensive half, because an mmap'd
+ * page that has been written to counts against the app the same as a
+ * malloc'd one.
+ *
+ * `trim()` rewrites the file at its used size and drops the memory cache. It
+ * is safe to call with the catalog live: the records the screens are reading
+ * already sit in the query cache, and a later read simply faults its pages
+ * back in.
+ */
+export function compactCatalog(): void {
+  try {
+    catalogStorage.trim();
+  } catch (error) {
+    // Compaction is an optimisation. A store that would not trim is still a
+    // store that reads, so this must never be what fails a sync.
+    console.warn('[catalog] could not compact', error);
+  }
+}
+
+/**
  * Drops every stored catalog.
  *
  * Signing out calls `queryClient.clear()`, which used to take the catalog

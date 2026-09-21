@@ -2,6 +2,7 @@ import { QueryKeys } from '@/state/query/queryKeys';
 import { catalogStorage } from '@/state/mmkvStorage';
 import {
   clearCatalog,
+  compactCatalog,
   isCatalogQuery,
   readCatalogResource,
   writeCatalogResource,
@@ -95,5 +96,38 @@ describe('clearCatalog', () => {
 
     expect(readCatalogResource(SERVER, 'albums')).toBeUndefined();
     expect(readCatalogResource('srv-2', 'tracks')).toBeUndefined();
+  });
+});
+
+describe('compactCatalog', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('trims the store, which is what reclaims the space', () => {
+    const trim = jest.spyOn(catalogStorage, 'trim');
+
+    compactCatalog();
+
+    expect(trim).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves every record readable, so compacting a live catalog is safe', () => {
+    writeCatalogResource(SERVER, 'albums', [{ nativeId: 'al1' }]);
+    writeCatalogResource(SERVER, 'tracks', [{ nativeId: 'tr1' }]);
+
+    compactCatalog();
+
+    expect(readCatalogResource(SERVER, 'albums')).toEqual([{ nativeId: 'al1' }]);
+    expect(readCatalogResource(SERVER, 'tracks')).toEqual([{ nativeId: 'tr1' }]);
+  });
+
+  it('survives a store that will not trim, because compaction is never worth a crash', () => {
+    jest.spyOn(catalogStorage, 'trim').mockImplementation(() => {
+      throw new Error('no space to rewrite into');
+    });
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    expect(() => compactCatalog()).not.toThrow();
   });
 });

@@ -17,7 +17,7 @@ import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { CATALOG_RESOURCES } from './catalogQueries';
-import { writeCatalogResource } from './catalogPersistence';
+import { compactCatalog, writeCatalogResource } from './catalogPersistence';
 
 interface ServerStat {
   id: string;
@@ -127,6 +127,13 @@ export async function runCatalogSync({
   for (const group of SYNC_GROUPS) {
     await Promise.all(group.map(fetchResource));
   }
+
+  // The store is at its most bloated right here, having just had every record
+  // it holds rewritten. Compacting now rather than on a timer means the cost
+  // lands inside an operation the user already knows is happening, and one
+  // that just spent far longer downloading the library than this takes to
+  // rewrite it.
+  compactCatalog();
 
   // A resource that failed may still have a usable cached copy from an
   // earlier run; read through to it rather than treating the whole sync as

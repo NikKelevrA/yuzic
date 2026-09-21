@@ -7,6 +7,7 @@ import { serverProvenance } from '@/domain/identity/Provenance';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { runCatalogSync } from './catalogSync';
 import { clearCatalog, readCatalogResource, writeCatalogResource } from './catalogPersistence';
+import { catalogStorage } from '@/state/mmkvStorage';
 
 const SERVER = 'srv-1';
 const provenance = serverProvenance(SERVER);
@@ -236,5 +237,29 @@ describe('runCatalogSync and the catalog store', () => {
     await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
 
     expect(readCatalogResource(SERVER, 'albums')).toEqual([]);
+  });
+});
+
+describe('compaction', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('compacts once the sync has written everything it fetched', async () => {
+    const trim = jest.spyOn(catalogStorage, 'trim');
+
+    await runCatalogSync({ queryClient: new QueryClient(), api: makeApi(), serverId: SERVER });
+
+    expect(trim).toHaveBeenCalledTimes(1);
+  });
+
+  it('compacts even when a resource failed, since the rest were still rewritten', async () => {
+    const trim = jest.spyOn(catalogStorage, 'trim');
+    const api = makeApi({ tracks: { list: jest.fn(async () => { throw new Error('down'); }), get: jest.fn() } });
+
+    const result = await runCatalogSync({ queryClient: new QueryClient(), api, serverId: SERVER });
+
+    expect(result.failed).toContain('tracks');
+    expect(trim).toHaveBeenCalledTimes(1);
   });
 });

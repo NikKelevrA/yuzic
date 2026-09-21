@@ -34,6 +34,11 @@ export function createMMKV({ id = 'default' } = {}) {
     clearAll() {
       store.clear();
     },
+    // The real one rewrites the mmap'd file at its used size and drops the
+    // memory cache. A Map has no dead space and no file, so there is nothing
+    // to reclaim here — but it has to exist, or a caller's `trim()` throws
+    // under test and passes for a no-op.
+    trim() {},
     getAllKeys() {
       return [...store.keys()];
     },
