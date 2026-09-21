@@ -6,6 +6,7 @@ import { useApi } from '@/providers/registry/useApi';
 import { staleTime } from '@/state/query/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasArrayData, useOfflineFirstQuery } from '@/state/query/useOfflineFirstQuery';
+import { useCatalogHydrated } from '@/features/library/useCatalogHydration';
 
 type UseStarredSongsResult = {
   songs: Song[];
@@ -27,11 +28,15 @@ const EMPTY: { songs: Song[]; albums: Album[] } = { songs: [], albums: [] };
 export function useStarredSongs(): UseStarredSongsResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
+  const hydrated = useCatalogHydrated(activeServer?.id);
 
   const query = useOfflineFirstQuery<{ songs: Song[]; albums: Album[] }>({
     queryKey: [QueryKeys.Starred, activeServer?.id],
     queryFn: api.starred.list,
-    enabled: !!activeServer?.id,
+    // Not until the stored catalog has had its chance. A cold start otherwise
+    // downloads the whole library again while hydration is reading it off
+    // disk, and holds both — see `useCatalogHydrated`.
+    enabled: !!activeServer?.id && hydrated,
     staleTime: staleTime.starred,
     emptyValue: EMPTY,
     hasData: value => hasArrayData(value.songs) || hasArrayData(value.albums),
