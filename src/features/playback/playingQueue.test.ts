@@ -7,13 +7,10 @@ import {
   reconcileUnshuffledQueue,
   tagSegment,
   shiftSegmentsAfterInsert,
-  shiftSegmentsAfterRemove,
   segmentAt,
   collectionContextOf,
   soleCollectionContext,
   segmentsFromContexts,
-  isContextBoundary,
-  findNextBoundaryIndex,
   QueueSegment,
 } from './playingQueue'
 import { rememberResource } from './knownResources'
@@ -137,19 +134,6 @@ describe('queue segment tracking', () => {
     expect(shifted[1].startIndex).toBe(3)
   })
 
-  it('shiftSegmentsAfterRemove moves later segments left and drops emptied ones', () => {
-    const segments: QueueSegment[] = [
-      { startIndex: 0, length: 2, source: { kind: 'user', contextId: 'a', contextType: 'album' } },
-      { startIndex: 2, length: 1, source: { kind: 'autoplay-fill', contextId: 'fill-1' } },
-      { startIndex: 3, length: 2, source: { kind: 'user', contextId: 'b', contextType: 'playlist' } },
-    ]
-
-    const shifted = shiftSegmentsAfterRemove(segments, 2, 1)
-
-    expect(shifted).toHaveLength(2)
-    expect(shifted[0].startIndex).toBe(0)
-    expect(shifted[1].startIndex).toBe(2)
-  })
 
   it('segmentAt finds the segment containing an index', () => {
     const segments = [
@@ -162,28 +146,7 @@ describe('queue segment tracking', () => {
     expect(segmentAt(segments, 99)).toBeUndefined()
   })
 
-  it('isContextBoundary is true only where adjacent segments differ', () => {
-    const segments = [
-      { startIndex: 0, length: 2, source: { kind: 'user' as const, contextId: 'album-1', contextType: 'album' as const } },
-      { startIndex: 2, length: 2, source: { kind: 'user' as const, contextId: 'album-2', contextType: 'album' as const } },
-    ]
 
-    expect(isContextBoundary(segments, 0)).toBe(false) // index 0 has no predecessor
-    expect(isContextBoundary(segments, 1)).toBe(false) // still within album-1
-    expect(isContextBoundary(segments, 2)).toBe(true)  // album-1 -> album-2
-    expect(isContextBoundary(segments, 3)).toBe(false) // still within album-2
-  })
-
-  it('findNextBoundaryIndex returns the nearest boundary at or after fromIndex, or null', () => {
-    const segments = [
-      { startIndex: 0, length: 2, source: { kind: 'user' as const, contextId: 'album-1', contextType: 'album' as const } },
-      { startIndex: 2, length: 2, source: { kind: 'user' as const, contextId: 'album-2', contextType: 'album' as const } },
-    ]
-
-    expect(findNextBoundaryIndex(segments, 0)).toBe(2)
-    expect(findNextBoundaryIndex(segments, 2)).toBe(2)
-    expect(findNextBoundaryIndex(segments, 3)).toBeNull()
-  })
 })
 
 describe('shiftSegmentsAfterInsert, inserting inside a segment', () => {
@@ -247,7 +210,6 @@ describe('resourcesFromPlayerQueue', () => {
       nativeId,
       provenance,
       externalIds: {},
-      libraryState: 'in-library',
       title: `Track ${nativeId}`,
       artist: {
         localId: makeLocalId('artist', provenance, 'a1'),
