@@ -64,6 +64,15 @@ export function ExternalResolutionProvider({ children }: { children: React.React
       return;
     }
 
+    // A record that came from an enabled catalogue is opened in that catalogue.
+    // Searching the other sources for it would only offer a picker of lookalikes
+    // by title, and when the artist name is missing or wrong (as it once was) of
+    // unrelated records; the one that was tapped is already the one wanted.
+    if (providerId && item.nativeId && enabledSources.some(s => s.id === providerId)) {
+      router.push({ pathname: '/albumView', params: { source: providerId, albumId: item.nativeId, artist: item.artist.name, title: item.title } });
+      return;
+    }
+
     // If only one source enabled and it matches the item's source, navigate directly
     if (enabledSources.length === 1 && (!providerId || enabledSources[0].id === providerId)) {
       router.push({ pathname: '/albumView', params: { source: providerId ?? enabledSources[0].id, albumId: item.nativeId, artist: item.artist.name, title: item.title } });
@@ -99,6 +108,12 @@ export function ExternalResolutionProvider({ children }: { children: React.React
 
     if (enabledSources.length === 0) {
       notify.error(NO_SOURCE_TOAST);
+      return;
+    }
+
+    const origin = providerId ? enabledSources.find(s => s.id === providerId) : undefined;
+    if (origin && (item.nativeId || item.externalIds.mbid)) {
+      router.push({ pathname: '/artistView', params: { source: origin.id, artistId: origin.artistIdOf(item.externalIds), mbid: item.externalIds.mbid ?? item.nativeId, name: item.name } });
       return;
     }
 

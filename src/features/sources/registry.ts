@@ -15,6 +15,8 @@ import {
 import { selectEnabledSourcesFor } from '@/features/settings/sources/state';
 import { currentMusicbrainzClient } from '@/providers/registry/musicbrainz'
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum'
+import { collapseEditions, isStudioAlbum } from '@/providers/integration/musicbrainz/discography'
+import type { MbReleaseGroup } from '@/providers/integration/musicbrainz'
 import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong'
 import type { Album } from '@/domain/entities/Album'
@@ -297,19 +299,27 @@ const musicbrainzSource: SourceDefinition = {
 
   async fetchArtistAlbums(artistId, limit) {
     const artist = await currentMusicbrainzClient().getArtistWithReleases(artistId)
-    const rgs = artist['release-groups'] ?? []
-    return rgs.slice(0, limit).map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
+    const fallbackArtist = { id: artist.id, name: artist.name }
+    return collapseEditions(artist['release-groups'] ?? [])
+      .slice(0, limit)
+      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE, fallbackArtist }))
   },
 
   async fetchArtist(id) {
     const dto = await currentMusicbrainzClient().getArtistWithReleases(id)
     const rgs = dto['release-groups'] ?? []
-    const albums = rgs
-      .filter(rg => !rg['primary-type'] || rg['primary-type'] === 'Album')
-      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
-    const singles = rgs
-      .filter(rg => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP')
-      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
+    const fallbackArtist = { id: dto.id, name: dto.name }
+    const asAlbum = (rg: MbReleaseGroup) => mapMbAlbum(rg, { provenance: MB_PROVENANCE, fallbackArtist })
+    // "Albums" counts records, not editions: studio albums only, one entry per
+    // record. Live albums, compilations, bootlegs and the like are not studio
+    // albums, so they ride with the singles and EPs rather than inflating it.
+    const albums = collapseEditions(rgs.filter(isStudioAlbum)).map(asAlbum)
+    const singles = [
+      ...collapseEditions(rgs.filter(rg => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP')),
+      ...collapseEditions(
+        rgs.filter(rg => !isStudioAlbum(rg) && rg['primary-type'] !== 'Single' && rg['primary-type'] !== 'EP')
+      ),
+    ].map(asAlbum)
     return {
       artist: mapMbArtist(dto, MB_PROVENANCE),
       topTracks: [],

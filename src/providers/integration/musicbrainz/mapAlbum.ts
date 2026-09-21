@@ -44,6 +44,12 @@ interface MapAlbumContext {
    * Deezer mappers — mapping an album never implies mapping its songs.
    */
   songIds?: LocalId[];
+  /**
+   * Who to credit when the release group names no artist of its own — which
+   * is the case for the ones an artist lookup embeds (`inc=release-groups`),
+   * where the artist is the page they were fetched for.
+   */
+  fallbackArtist?: { id: string; name: string };
 }
 
 export function mapAlbum(dto: MbReleaseGroup, context: MapAlbumContext): Album {
@@ -64,7 +70,13 @@ export function mapAlbum(dto: MbReleaseGroup, context: MapAlbumContext): Album {
     libraryState: 'external',
     title: dto.title ?? 'Unknown Album',
     cover,
-    artist: artistRef(provenance, dto['artist-credit']),
+    artist: artistRef(
+      provenance,
+      dto['artist-credit'] ??
+        (context.fallbackArtist
+          ? [{ name: context.fallbackArtist.name, artist: context.fallbackArtist }]
+          : undefined)
+    ),
     year: yearOf(firstReleaseDate),
     // Only carried when it is finer than the year already captured above —
     // a bare 'YYYY' first-release-date says nothing releaseDate wouldn't.

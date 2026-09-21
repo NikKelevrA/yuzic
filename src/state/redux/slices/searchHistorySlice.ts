@@ -30,6 +30,8 @@ export interface SearchEntityEntry {
   id: string;
   title: string;
   subtitle: string;
+  /** An album's artist by name when `subtitle` is decorated; see `SearchResult.artistName`. */
+  artistName?: string;
   cover: CoverSource;
   source: 'local' | 'external';
   /** Which integration supplied it. An opaque provider id, not a closed set:

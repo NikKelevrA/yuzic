@@ -15,6 +15,12 @@ export interface SearchResult {
   id: string;
   title: string;
   subtext: string;
+  /**
+   * An album's artist by name, when `subtext` is decorated (an external
+   * catalogue's "Artist · year") and so cannot stand in for it. Lookups read
+   * this in preference to `subtext`.
+   */
+  artistName?: string;
   cover: CoverSource;
   type: 'song' | 'album' | 'artist' | 'playlist';
   source: 'local' | 'external';

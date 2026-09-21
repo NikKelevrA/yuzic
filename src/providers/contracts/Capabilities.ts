@@ -46,6 +46,14 @@ interface CatalogueSearchKinds {
 interface CatalogueSearchMatch<T> {
   entity: T;
   subtitle: string;
+  /**
+   * The album's artist by name, when the provider's `subtitle` is not itself
+   * that name. `subtitle` is what a row shows; this is what a follow-up
+   * lookup (matching the library, searching another catalogue) must use, so
+   * it can never be a year or any other decoration. Omitted when `subtitle`
+   * already is the artist's name.
+   */
+  artistName?: string;
 }
 
 interface CatalogueSearchResults {
