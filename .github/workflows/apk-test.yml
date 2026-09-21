@@ -1,0 +1,52 @@
+# FORK-ONLY test build. Do NOT include this file in the pull request.
+# Builds a sideloadable Android APK that installs next to the real Yuzic
+# (different application id and app name) and is signed with the debug key.
+name: APK test build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [fork-apk-test-3, fork-apk-test-3-2]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties', 'android/**/*.gradle*') }}
+          restore-keys: gradle-
+
+      - name: Install Node dependencies
+        run: npm ci --omit=dev
+
+      - name: Give the test build its own identity
+        run: |
+          sed -i "s/applicationId 'com.arinora.rawarr'/applicationId 'com.arinora.rawarr.mbtest'/" android/app/build.gradle
+          sed -i 's#<string name="app_name">Yuzic</string>#<string name="app_name">Yuzic MB</string>#' android/app/src/main/res/values/strings.xml
+          grep -n "applicationId" android/app/build.gradle
+          grep -n "app_name" android/app/src/main/res/values/strings.xml
+
+      - name: Build release APK (arm64 only, debug-signed)
+        working-directory: android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yuzic-mb-test-apk
+          path: android/app/build/outputs/apk/release/*.apk

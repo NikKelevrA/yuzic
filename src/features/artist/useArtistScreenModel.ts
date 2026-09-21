@@ -107,12 +107,13 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
     // empty library sorts them the same way `classifyDiscography` sorts
     // everything else, without a second sort implementation.
     const ext = external.data;
-    const classified = classifyDiscography([], new Map(), { albums: ext?.albums ?? [], singles: ext?.singles ?? [] });
+    const classified = classifyDiscography([], new Map(), { albums: ext?.albums ?? [], singles: ext?.singles ?? [], others: ext?.others ?? [] });
     return {
       ownedAlbums: [],
       ownedSingles: [],
       unownedAlbums: classified.unownedAlbums,
       unownedSingles: classified.unownedSingles,
+      unownedOthers: classified.unownedOthers,
     };
   }, [isLocal, localAlbums, songCountByAlbumId, externalDiscography, external.data]);
 

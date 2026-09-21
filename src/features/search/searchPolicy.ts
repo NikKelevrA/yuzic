@@ -213,11 +213,12 @@ export async function searchExternalLeg(
         isDownloaded: false,
       });
     }
-    for (const { entity, subtitle } of found.albums) {
+    for (const { entity, subtitle, artistName } of found.albums) {
       results.push({
         id: entity.nativeId,
         title: entity.title,
         subtext: subtitle,
+        artistName,
         cover: entity.cover,
         type: 'album',
         source: 'external',

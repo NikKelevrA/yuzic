@@ -15,6 +15,12 @@ export interface SearchResult {
   id: string;
   title: string;
   subtext: string;
+  /**
+   * An album's artist by name, when `subtext` is decorated (an external
+   * catalogue's "Artist · year") and so cannot stand in for it. Lookups read
+   * this in preference to `subtext`.
+   */
+  artistName?: string;
   cover: CoverSource;
   type: 'song' | 'album' | 'artist' | 'playlist';
   source: 'local' | 'external';
@@ -85,6 +91,19 @@ export function compareResults(
   const bContains = bTitle.includes(lowerQuery);
   if (aContains !== bContains) return aContains ? -1 : 1;
 
+  // Two results from one outside catalogue stay in the order that catalogue
+  // gave them. It ranked them (by how well known they are, for MusicBrainz),
+  // and the type and alphabetical tie-breaks below would only undo that: a
+  // search for an artist whose name is also the title of dozens of albums
+  // would bury the artist under all of them.
+  if (
+    a.source === 'external' &&
+    b.source === 'external' &&
+    a.externalSource === b.externalSource
+  ) {
+    return 0;
+  }
+
   const typeDiff = typeRank(a.type) - typeRank(b.type);
   if (typeDiff !== 0) return typeDiff;
 
@@ -95,5 +114,10 @@ export function dedupeAndSort(
   results: SearchResult[],
   lowerQuery: string
 ): SearchResult[] {
-  return dedupeResults(results).sort((a, b) => compareResults(a, b, lowerQuery));
+  // Ties keep their arrival order explicitly, rather than trusting the
+  // engine's sort to be stable.
+  return dedupeResults(results)
+    .map((result, index) => ({ result, index }))
+    .sort((a, b) => compareResults(a.result, b.result, lowerQuery) || a.index - b.index)
+    .map(({ result }) => result);
 }

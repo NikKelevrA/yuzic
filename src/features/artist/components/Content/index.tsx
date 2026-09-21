@@ -35,8 +35,8 @@ type ArtistContentItem =
   | { kind: 'section'; id: string; title: string }
   | { kind: 'localAlbum'; id: string; album: Album }
   | { kind: 'externalAlbum'; id: string; album: Album }
-  | { kind: 'showMore'; id: string; target: 'albums' | 'singles'; remaining: number }
-  | { kind: 'showUnowned'; id: string; target: 'albums' | 'singles'; count: number }
+  | { kind: 'showMore'; id: string; target: 'albums' | 'singles' | 'others'; remaining: number }
+  | { kind: 'showUnowned'; id: string; target: 'albums' | 'singles' | 'others'; count: number }
   | { kind: 'similar'; id: string }
   | { kind: 'bio'; id: string }
 
@@ -64,9 +64,10 @@ export default function ArtistContent({ model }: Props) {
   const [visibleSinglesCount, setVisibleSinglesCount] = useState(INITIAL_RELEASE_ROWS)
   const [showUnownedAlbums, setShowUnownedAlbums] = useState(false)
   const [showUnownedSingles, setShowUnownedSingles] = useState(false)
+  const [showUnownedOthers, setShowUnownedOthers] = useState(false)
 
   const { artist, isLocal, discography } = model
-  const { ownedAlbums, ownedSingles, unownedAlbums, unownedSingles } = discography
+  const { ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, unownedOthers } = discography
 
   const items = useMemo<ArtistContentItem[]>(() => {
     const rows: ArtistContentItem[] = []
@@ -114,6 +115,15 @@ export default function ArtistContent({ model }: Props) {
         }
       }
 
+      if (unownedOthers.length > 0) {
+        rows.push({ kind: 'section', id: 'others-section', title: t('artist.sections.others') })
+        if (showUnownedOthers) {
+          rows.push(...unownedOthers.map(album => ({ kind: 'externalAlbum' as const, id: `other-ext-${album.localId}`, album })))
+        } else {
+          rows.push({ kind: 'showUnowned', id: 'show-unowned-others', target: 'others', count: unownedOthers.length })
+        }
+      }
+
       rows.push({ kind: 'similar', id: 'similar-artists' })
       rows.push({ kind: 'bio', id: 'bio' })
     } else {
@@ -137,6 +147,15 @@ export default function ArtistContent({ model }: Props) {
         }
       }
 
+      if (unownedOthers.length > 0) {
+        rows.push({ kind: 'section', id: 'others-section', title: t('artist.sections.others') })
+        if (showUnownedOthers) {
+          rows.push(...unownedOthers.map(album => ({ kind: 'externalAlbum' as const, id: `other-${album.localId}`, album })))
+        } else {
+          rows.push({ kind: 'showUnowned', id: 'show-unowned-others', target: 'others', count: unownedOthers.length })
+        }
+      }
+
       if (model.similarArtists.length > 0) {
         rows.push({ kind: 'similar', id: 'similar-artists' })
       }
@@ -144,7 +163,7 @@ export default function ArtistContent({ model }: Props) {
     }
 
     return rows
-  }, [artist, isLocal, ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, model.similarArtists, visibleAlbumsCount, visibleSinglesCount, showUnownedAlbums, showUnownedSingles, t])
+  }, [artist, isLocal, ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, unownedOthers, model.similarArtists, visibleAlbumsCount, visibleSinglesCount, showUnownedAlbums, showUnownedSingles, showUnownedOthers, t])
 
   const renderContent = useCallback((item: ArtistContentItem) => {
     if (item.kind === 'mostPlayed') {
@@ -193,6 +212,7 @@ export default function ArtistContent({ model }: Props) {
           onPress={() => {
             if (isUnowned) {
               if (item.target === 'albums') setShowUnownedAlbums(true)
+              else if (item.target === 'others') setShowUnownedOthers(true)
               else setShowUnownedSingles(true)
             } else if (item.target === 'albums') {
               setVisibleAlbumsCount(c => c + 5)
@@ -231,7 +251,7 @@ export default function ArtistContent({ model }: Props) {
         subtextOverride={releaseYearLabel(item.album) ?? undefined}
       />
     )
-  }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, setVisibleAlbumsCount, setVisibleSinglesCount, setShowUnownedAlbums, setShowUnownedSingles, t])
+  }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, setVisibleAlbumsCount, setVisibleSinglesCount, setShowUnownedAlbums, setShowUnownedSingles, setShowUnownedOthers, t])
 
   // The list is mostly a column of album rows, so it is capped and centred
   // like every other column of rows — but five of its item kinds are not

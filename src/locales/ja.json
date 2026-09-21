@@ -961,6 +961,7 @@
     "sections": {
       "albums": "アルバム",
       "singles": "シングル・EP",
+      "others": "その他のリリース",
       "mostPlayed": "よく聴いた曲",
       "popularOnDeezer": "Deezerで人気",
       "similarArtists": "似ているアーティスト",
@@ -1422,6 +1423,7 @@
   "album": {
     "disc": "ディスク {{number}}",
     "moreBy": "{{name}}のその他の作品",
+    "otherVersions": "その他のバージョン",
     "mightAlsoLike": "こちらもおすすめ",
     "duration": {
       "hrMin": "{{hrs}}時間{{mins}}分",

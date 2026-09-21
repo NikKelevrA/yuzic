@@ -964,6 +964,7 @@
     "sections": {
       "albums": "Albums",
       "singles": "Singles et EP",
+      "others": "Autres sorties",
       "mostPlayed": "Les plus écoutés",
       "popularOnDeezer": "Populaire sur Deezer",
       "similarArtists": "Artistes similaires",
@@ -1427,6 +1428,7 @@
   "album": {
     "disc": "Disque {{number}}",
     "moreBy": "Plus de {{name}}",
+    "otherVersions": "Autres versions",
     "mightAlsoLike": "Vous pourriez aussi aimer",
     "duration": {
       "hrMin": "{{hrs}} h {{mins}} min",

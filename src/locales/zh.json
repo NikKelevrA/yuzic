@@ -961,6 +961,7 @@
     "sections": {
       "albums": "专辑",
       "singles": "单曲和 EP",
+      "others": "其他发行",
       "mostPlayed": "常听曲目",
       "popularOnDeezer": "Deezer 热门",
       "similarArtists": "相似歌手",
@@ -1422,6 +1423,7 @@
   "album": {
     "disc": "碟片 {{number}}",
     "moreBy": "{{name}} 的更多作品",
+    "otherVersions": "其他版本",
     "mightAlsoLike": "猜你喜欢",
     "duration": {
       "hrMin": "{{hrs}} 小时 {{mins}} 分钟",

@@ -183,3 +183,21 @@ describe('dedupeAndSort', () => {
     expect(titlesOf(dedupeAndSort(results, ''))).toEqual(['A', 'B']);
   });
 });
+
+describe('results from one external catalogue', () => {
+  it('keep the order the catalogue gave them, whatever their type', () => {
+    const artist = result({ id: 'a', title: 'Muse', type: 'artist', source: 'external', externalSource: 'musicbrainz' });
+    const albumOne = result({ id: 'b', title: 'Muse', type: 'album', source: 'external', externalSource: 'musicbrainz' });
+    const albumTwo = result({ id: 'c', title: 'Muse', type: 'album', source: 'external', externalSource: 'musicbrainz' });
+
+    expect(dedupeAndSort([artist, albumOne, albumTwo], 'muse').map(r => r.id)).toEqual(['a', 'b', 'c']);
+    expect(dedupeAndSort([albumTwo, artist, albumOne], 'muse').map(r => r.id)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('still rank an exact title above one that only contains the query', () => {
+    const exact = result({ id: 'a', title: 'Muse', source: 'external', externalSource: 'musicbrainz' });
+    const loose = result({ id: 'b', title: 'Museum', source: 'external', externalSource: 'musicbrainz' });
+
+    expect(dedupeAndSort([loose, exact], 'muse').map(r => r.id)).toEqual(['a', 'b']);
+  });
+});

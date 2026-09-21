@@ -14,6 +14,7 @@ export enum QueryKeys {
 	RecentSongs = 'recent-songs',
 	Genres = 'genres',
 	ExternalAlbum = 'external-album',
+	ExternalAlbumVersions = 'external-album-versions',
 	ExternalArtist = 'external-artist-v2',
 	ExploreSimilarArtists = 'explore-similar-artists',
 	ExploreSimilarArtistAlbums = 'explore-similar-artist-albums',

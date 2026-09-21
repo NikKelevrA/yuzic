@@ -1,5 +1,5 @@
 import type { SearchResult } from '@/features/search/searchRanking';
-import { resultToAlbum, resultToArtist, isExternalArtist } from './searchResultAdapters';
+import { resultToAlbum, resultToArtist, isExternalArtist, entityToAlbum } from './searchResultAdapters';
 
 const baseResult: SearchResult = {
   id: 'x-1',
@@ -24,6 +24,42 @@ describe('resultToAlbum', () => {
     const album = resultToAlbum(external, 'srv-1');
     expect(album.provenance).toEqual({ origin: 'integration', providerId: 'deezer' });
     expect(album.libraryState).toBe('external');
+  });
+});
+
+describe('external album artist name', () => {
+  const decorated: SearchResult = {
+    ...baseResult,
+    source: 'external',
+    externalSource: 'musicbrainz',
+    id: 'rg-1',
+    title: 'In the End',
+    subtext: 'Linkin Park · 2001',
+    artistName: 'Linkin Park',
+  };
+
+  it('uses the artist name, never the decorated second line, as the album artist', () => {
+    expect(resultToAlbum(decorated, 'srv-1').artist.name).toBe('Linkin Park');
+  });
+
+  it('falls back to the subtext for a catalogue whose second line is the artist', () => {
+    const deezer: SearchResult = { ...decorated, artistName: undefined, subtext: 'Daft Punk' };
+    expect(resultToAlbum(deezer, 'srv-1').artist.name).toBe('Daft Punk');
+  });
+
+  it('keeps the artist name when reopened from search history', () => {
+    const album = entityToAlbum({
+      kind: 'entity',
+      type: 'album',
+      id: 'rg-1',
+      title: 'In the End',
+      subtitle: 'Linkin Park · 2001',
+      artistName: 'Linkin Park',
+      cover: { kind: 'none' },
+      source: 'external',
+      externalSource: 'musicbrainz',
+    });
+    expect(album.artist.name).toBe('Linkin Park');
   });
 });
 
