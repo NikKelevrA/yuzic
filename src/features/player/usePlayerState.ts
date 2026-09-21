@@ -39,22 +39,13 @@ export function usePlayerProgress(updateIntervalSeconds = 1) {
   return progress;
 }
 
-/**
- * Whether audio is actually coming out.
- *
- * Answered from the `playing` field on the state event. That field is optional
- * on `BackendEvent`, and the guard below is the reason: absent means "cannot
- * say", and coercing it to false would stop the button ever showing as
- * playing.
- */
+/** Whether audio is actually coming out, from the `playing` field on the state event. */
 export function usePlayerIsPlaying(): boolean {
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     return getBackend().addListener(event => {
-      if (event.type === 'stateChange' && typeof event.playing === 'boolean') {
-        setPlaying(event.playing);
-      }
+      if (event.type === 'stateChange') setPlaying(event.playing);
     });
   }, []);
 
