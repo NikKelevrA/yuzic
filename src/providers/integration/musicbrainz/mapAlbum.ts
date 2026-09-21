@@ -61,7 +61,6 @@ export function mapAlbum(dto: MbReleaseGroup, context: MapAlbumContext): Album {
     externalIds: nativeId ? { mbid: nativeId, mbidType: 'release-group' } : {},
     // Browsing MusicBrainz's catalogue is not owning it — see mapArtist's
     // comment on why this mapper never guesses further than 'external'.
-    libraryState: 'external',
     title: dto.title ?? 'Unknown Album',
     cover,
     artist: artistRef(provenance, dto['artist-credit']),

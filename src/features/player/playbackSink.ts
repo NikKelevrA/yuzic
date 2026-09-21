@@ -30,21 +30,3 @@ export const LOCAL_SINK: PlaybackSink = { kind: 'local' };
 export function ownsPlayback(sink: PlaybackSink): boolean {
   return sink.kind === 'jukebox';
 }
-
-/** True when the local player still runs (audibly or muted) alongside the sink. */
-export function playsLocally(sink: PlaybackSink): boolean {
-  return !ownsPlayback(sink);
-}
-
-/** Identity for render keys and "is this the selected row" checks. */
-export function sinkId(sink: PlaybackSink): string {
-  switch (sink.kind) {
-    case 'local': return 'local';
-    case 'dlna': return `dlna:${sink.id}`;
-    case 'jukebox': return 'jukebox';
-  }
-}
-
-export function isSameSink(a: PlaybackSink, b: PlaybackSink): boolean {
-  return sinkId(a) === sinkId(b);
-}

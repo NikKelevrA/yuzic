@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { useRoute } from '@react-navigation/native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next'
 
 import { useTheme } from '@/features/theme/useTheme'
 import { useAlbums } from '@/features/album/useAlbums';
+import { albumsByGenre } from '@/features/library/catalogStore'
+import { useCatalogStore } from '@/features/library/useCatalogStore'
 import NotFoundView from '@/components/NotFoundView'
 import StatusBanner from '@/components/StatusBanner'
 import GenreContent from './components/Content'
@@ -19,10 +21,15 @@ const GenreScreen: React.FC = () => {
   const { genre } = route.params
   const { t } = useTranslation()
   const { colors } = useTheme()
-  const { albums, isLoading, degraded } = useAlbums()
+  // Still the source of the load and reachability state; the list itself comes
+  // from the store below.
+  const { isLoading, degraded } = useAlbums()
+  const store = useCatalogStore()
   const insets = useSafeAreaInsets()
 
-  const genreAlbums = albums.filter((a) => a.genres.includes(genre))
+  // This used to scan every album in the library on every render. Genre is
+  // indexed once for the app now, so this is a lookup.
+  const genreAlbums = useMemo(() => albumsByGenre(store, genre), [store, genre])
 
   if (!genre) {
     return <NotFoundView message={t('media.genreNotFound')} />

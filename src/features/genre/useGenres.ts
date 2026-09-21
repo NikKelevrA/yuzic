@@ -7,6 +7,7 @@ import { QueryKeys } from '@/state/query/queryKeys';
 import { staleTime } from '@/state/query/staleTime';
 import { hasArrayData, useOfflineFirstQuery } from '@/state/query/useOfflineFirstQuery';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { useCatalogHydrated } from '@/features/library/useCatalogHydration';
 
 /**
  * The genres in the active server's library.
@@ -24,12 +25,16 @@ import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 export function useGenres(): { genres: string[]; isLoading: boolean } {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
+  const hydrated = useCatalogHydrated(activeServer?.id);
   const { albums } = useAlbums();
 
   const query = useOfflineFirstQuery<string[]>({
     queryKey: [QueryKeys.Genres, activeServer?.id],
     queryFn: () => api.genres.list(),
-    enabled: !!activeServer?.id,
+    // Not until the stored catalog has had its chance. A cold start otherwise
+    // downloads the whole library again while hydration is reading it off
+    // disk, and holds both — see `useCatalogHydrated`.
+    enabled: !!activeServer?.id && hydrated,
     staleTime: staleTime.genres,
     emptyValue: [],
     hasData: hasArrayData,

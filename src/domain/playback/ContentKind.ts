@@ -94,8 +94,6 @@ const BEHAVIOUR: Record<ContentKind, ContentKindBehaviour> = {
   },
 };
 
-export const contentKindBehaviour = (kind: ContentKind): ContentKindBehaviour => BEHAVIOUR[kind];
-
 export const hasDuration = (kind: ContentKind): boolean => BEHAVIOUR[kind].hasDuration;
 export const isScrobbleable = (kind: ContentKind): boolean => BEHAVIOUR[kind].isScrobbleable;
 export const isSeekable = (kind: ContentKind): boolean => BEHAVIOUR[kind].isSeekable;

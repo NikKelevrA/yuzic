@@ -59,7 +59,7 @@ function startWatching() {
 }
 
 function onBackendEvent(event: BackendEvent) {
-  if (event.type === 'stateChange' && typeof event.playing === 'boolean') playing = event.playing;
+  if (event.type === 'stateChange') playing = event.playing;
   if (event.type === 'stateChange' || event.type === 'trackChange') update();
 }
 

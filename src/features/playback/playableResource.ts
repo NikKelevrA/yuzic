@@ -114,7 +114,6 @@ export function resourceFromPlayerItem(item: {
       externalIds: {},
       // The player is reporting something it is already holding, so the app
       // owns it in whatever sense it owned it when it was queued.
-      libraryState: 'in-library',
       title: item.title ?? '',
       artist: emptyRef('artist', item.artist ?? '') as Song['artist'],
       album: emptyRef('album', '') as Song['album'],

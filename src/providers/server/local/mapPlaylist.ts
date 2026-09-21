@@ -27,7 +27,6 @@ export function mapPlaylist(dto: LocalPlaylist, context: MapPlaylistContext): Pl
     provenance,
     externalIds: {},
     // A playlist the user created on-device is, by definition, in their library.
-    libraryState: 'in-library',
     title: dto.title,
     // Local playlists carry no artwork of their own.
     cover: { kind: 'none' },

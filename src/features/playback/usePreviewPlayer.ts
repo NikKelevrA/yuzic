@@ -68,7 +68,6 @@ export function usePreviewPlayer() {
         nativeId: albumId,
         provenance: collectionProvenance,
         externalIds: {},
-        libraryState: 'external',
         title: albumTitle,
         cover: albumPreviewSongs[0]?.cover ?? { kind: 'none' },
         isOwned: false,

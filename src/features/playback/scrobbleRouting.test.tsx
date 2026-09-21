@@ -15,7 +15,7 @@ import listeningReducer from '@/state/redux/slices/listeningSlice'
 import offlineMutationsReducer from '@/state/redux/slices/offlineMutationsSlice'
 import * as listenbrainz from '@/providers/integration/listenbrainz'
 import { listenBrainzCredentialScope } from '@/state/redux/selectors/listenbrainzSelectors'
-import { setCredential, clearCredentialCache } from '@/state/credentialCache'
+import { setCredential, _clearCredentialCache } from '@/state/credentialCache'
 
 const mockSongsApi = {
   get: jest.fn(),
@@ -44,7 +44,7 @@ import { finishListen, observePosition, observeSeek, resetListen } from './liste
 // module-level singleton that would otherwise leak a token set by one test
 // (the 'direct' route case below) into every other test reusing the same
 // server id ('navidrome-1', etc).
-afterEach(() => { clearCredentialCache() })
+afterEach(() => { _clearCredentialCache() })
 // The meter is a module singleton, like the player it measures. Left dirty it
 // would carry one test's heard seconds into the next.
 beforeEach(() => { resetListen() })
@@ -92,7 +92,6 @@ const song: Song = {
   nativeId: 's1',
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Roygbiv',
   artist: { localId: makeLocalId('artist', provenance, 'a1'), nativeId: 'a1', externalIds: {}, name: 'Boards of Canada', cover: { kind: 'none' } },
   album: { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1', externalIds: {}, title: 'Album', cover: { kind: 'none' } },

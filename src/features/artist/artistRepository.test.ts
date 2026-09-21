@@ -13,7 +13,6 @@ function makeArtist(overrides: Partial<Artist> = {}): Artist {
     nativeId,
     provenance: SERVER,
     externalIds: {},
-    libraryState: 'in-library',
     name: 'Radiohead',
     cover: { kind: 'none' },
     biography: undefined,

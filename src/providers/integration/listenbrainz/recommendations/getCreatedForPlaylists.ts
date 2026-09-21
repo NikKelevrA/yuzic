@@ -97,7 +97,6 @@ function mapTrack(track: JspfTrack): Song | null {
     nativeId,
     provenance: PROVENANCE,
     externalIds: mbid ? { mbid } : {},
-    libraryState: 'external',
     title: track.title,
     artist: {
       localId: makeLocalId('artist', PROVENANCE, track.creator),

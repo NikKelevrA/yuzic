@@ -26,6 +26,10 @@ jest.mock('@/providers/registry/useApi', () => {
     useApi: () => ({
       playlists: { list: offline() },
       artists: { list: offline(), get: offline() },
+      // The catalog store reads all four list queries, so every one has to
+      // exist even though none of them may run while offline.
+      albums: { list: offline() },
+      tracks: { list: offline() },
     }),
   };
 });
@@ -84,6 +88,10 @@ describe('useOfflineFirstQuery with nothing cached', () => {
     client.unmount();
   });
 
+  // The fallback is derived by the caller now, from the catalog store, rather
+  // than by this hook reaching into other cache entries. The guarantee is
+  // unchanged and still worth pinning: opening artist B after artist A, with
+  // the list unchanged between them, must show B.
   it('re-derives a fallback when the entity changes but its list does not', async () => {
     // `useArtist(id)` falls back to the artists *list*, whose key has no id in
     // it. A memo keyed only on the list's data would keep answering with the
@@ -94,7 +102,6 @@ describe('useOfflineFirstQuery with nothing cached', () => {
       nativeId,
       provenance,
       externalIds: {},
-      libraryState: 'in-library',
       name,
       cover: { kind: 'none' },
       tags: [],

@@ -17,7 +17,7 @@
  * field is added to any slice later without this file being touched.
  */
 import { configureStore } from '@reduxjs/toolkit';
-import { rootReducer } from './store';
+import { _rootReducer } from './store';
 import { addServer, setActiveServer } from './slices/serversSlice';
 import { setUsername } from './slices/listenbrainzSlice';
 import { setAudiomuseServerUrl, connectAudiomuse } from './slices/audiomuseSlice';
@@ -26,7 +26,7 @@ import { saveServerCredentials } from '@/providers/registry/serverCredentials';
 import { listenBrainzCredentialScope } from './selectors/listenbrainzSelectors';
 import { audiomuseCredentialScope } from './selectors/audiomuseSelectors';
 import { downloaderCredentialScope } from './selectors/downloadersSelectors';
-import { setCredential, clearCredentialCache } from '@/state/credentialCache';
+import { setCredential, _clearCredentialCache } from '@/state/credentialCache';
 
 const SENTINEL_PASSWORD = 'SENTINEL-PASSWORD-1';
 const SENTINEL_TOKEN = 'SENTINEL-TOKEN-1';
@@ -49,18 +49,18 @@ const ALL_SENTINELS = [
 const SERVER_ID = 'srv-sentinel-1';
 
 function makeStore() {
-  // `rootReducer` — not the persisted wrapper `store` exports as default —
+  // `_rootReducer` — not the persisted wrapper `store` exports as default —
   // so this asserts over exactly the fields each slice contributes, the same
   // shape `persistReducer` hands to MMKV underneath its own bookkeeping keys.
   return configureStore({
-    reducer: rootReducer,
+    reducer: _rootReducer,
     middleware: getDefault => getDefault({ serializableCheck: false }),
   });
 }
 
 describe('no secret reaches persisted Redux state', () => {
   afterEach(() => {
-    clearCredentialCache();
+    _clearCredentialCache();
   });
 
   it('keeps every sentinel secret out of the serialized store', async () => {

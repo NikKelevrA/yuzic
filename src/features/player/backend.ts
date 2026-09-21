@@ -112,18 +112,10 @@ export interface PlayerBackend {
 }
 
 /**
- * The events the app reacts to, which is fewer than either player emits.
+ * The events the app reacts to, which is fewer than the engine emits.
  *
- * `PlayingContext` subscribes to exactly three, and what it takes from each is
- * narrower still — the state event is read for one thing, whether the player
- * is buffering. So that is what this carries.
- *
- * **Not playing-ness.** rntp has no "playing" state at all: its `PlaybackState`
- * is idle / ready / buffering / ended / error, and whether audio is coming out
- * is a separate question answered by `useIsPlaying`. Putting a `playing` flag
- * here would mean inventing one on the rntp side and having the two backends
- * disagree about a field the app does not read. Playing-ness belongs to the
- * hooks, where both can answer it honestly.
+ * The state event carries two facts: whether the player is buffering, and
+ * whether audio is actually coming out.
  */
 export type BackendEvent =
   | { type: 'error'; code?: string; message: string }
@@ -131,12 +123,16 @@ export type BackendEvent =
       type: 'stateChange';
       buffering: boolean;
       /**
-       * Absent when the backend cannot say — which is rntp's honest answer,
-       * not an oversight. Consumers must not read absent as `false`; rntp's
-       * playing-ness comes from its `useIsPlaying` hook instead, and the
-       * player hooks pick whichever source the active backend actually has.
+       * The engine's `playing` state: the source opened and audio is going
+       * out, not merely that play was asked for. A stream that cannot open
+       * never produces it, which is why failure recovery takes it as proof a
+       * retry worked — see `onPlaying` in `playbackEvents`.
+       *
+       * It was optional while `@rntp/player` was a second backend, because
+       * rntp has no playing state to report. The engine is the only backend
+       * now, and it always says.
        */
-      playing?: boolean;
+      playing: boolean;
     }
   | { type: 'trackChange'; index: number }
   /**

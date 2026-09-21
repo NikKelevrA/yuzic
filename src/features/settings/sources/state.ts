@@ -82,10 +82,6 @@ const NO_SERVER_URLS: SourceServerUrls = {};
 export const selectSourceServerUrls = (state: SourcesRootState): SourceServerUrls =>
   state.settingsSources?.serverUrls ?? NO_SERVER_URLS;
 
-/** Whether any use of a source is on — whether Yuzic already talks to it. */
-export const selectSourceInUse = (source: SourceId) =>
-  (state: SourcesRootState): boolean => usesOf(source).some(use => state.settingsSources.uses[use.id]);
-
 const enabledSourcesSelectors = new Map<SourcePurpose, (state: SourcesRootState) => SourceId[]>();
 
 /**

@@ -65,7 +65,6 @@ const libraryAlbum: Album = {
   nativeId: 'a1',
   provenance: { origin: 'server', serverId: 'server1' },
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Local Album',
   cover: { kind: 'none' },
   artist: {
@@ -86,7 +85,6 @@ const externalAlbum: Album = {
   nativeId: 'ext1',
   provenance: { origin: 'integration', providerId: 'deezer' },
   externalIds: {},
-  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
   artist: {

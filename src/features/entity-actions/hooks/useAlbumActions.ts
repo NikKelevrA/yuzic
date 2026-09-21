@@ -161,7 +161,6 @@ export function useAlbumExternalActions(album: Album, opts: { close: () => void;
           nativeId: album.artist.nativeId,
           provenance: album.provenance,
           externalIds: album.artist.externalIds,
-          libraryState: 'external',
           name: album.artist.name,
           cover: album.artist.cover,
           tags: [],

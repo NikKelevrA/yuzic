@@ -137,7 +137,6 @@ function domainSong(nativeId: string, title: string, artistName: string): Song {
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title,
     artist: {
       localId: makeLocalId('artist', provenance, 'a1'),

@@ -13,10 +13,9 @@
  * string — so the rebuilt record points at the same catalogue entry the want
  * was made from, rather than at a guess made from its title.
  *
- * These are honest records, not stand-ins: `libraryState: 'external'` is
- * true of anything on this screen (something in the library is not a want any
- * more, and the arrival watcher removes it), and the cover is the one the
- * want saved, so the one picture rule resolves it identically here.
+ * These are honest records, not stand-ins: the provenance is the integration
+ * the want came from, and the cover is the one the want saved, so the one
+ * picture rule resolves it identically here.
  */
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
@@ -48,7 +47,6 @@ export function wantAlbum(want: Want): Album {
     nativeId,
     provenance,
     externalIds,
-    libraryState: 'external',
     title: want.title,
     cover: want.cover ?? { kind: 'none' },
     artist: {
@@ -73,7 +71,6 @@ export function wantArtist(want: Want): Artist {
     nativeId,
     provenance,
     externalIds: normalizeExternalIds(want.externalIds),
-    libraryState: 'external',
     name,
     cover: want.cover ?? missingCover(artistCoverSubject(name)),
     tags: [],

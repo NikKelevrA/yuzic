@@ -42,7 +42,6 @@ export function mapAlbum(group: LocalAlbumGroup, context: MapAlbumContext): Albu
     // Tag reading at import time does not surface a MusicBrainz release id.
     externalIds: {},
     // A file the user imported is, by definition, in their library.
-    libraryState: 'in-library',
     title: first?.albumTitle ?? 'Unknown Album',
     cover: coverOrMissing(first?.cover ?? { kind: 'none' }, albumCoverSubject(first?.albumTitle, first?.artist)),
     artist: artistRef(provenance, first?.artistId, first?.artist),

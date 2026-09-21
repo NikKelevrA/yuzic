@@ -25,7 +25,6 @@ export function mapArtist(dto: DeezerArtist, provenance: Provenance): Artist {
     // one they own. Whether it becomes wanted/acquirable is decided later by
     // a policy that knows the user's wants and connected downloaders — this
     // mapper has neither, and must not guess. See LibraryState.
-    libraryState: 'external',
     name: dto.name ?? 'Unknown Artist',
     cover: imageCover([dto.picture_xl, dto.picture_big, dto.picture_medium], artistCoverSubject(dto.name)),
     // Deezer's public artist object has no biography, and no tag/genre list.

@@ -38,7 +38,6 @@ export function mapArtist(group: LocalArtistGroup, provenance: Provenance): Arti
     // not surface a MusicBrainz id.
     externalIds: {},
     // A file the user imported is, by definition, in their library.
-    libraryState: 'in-library',
     name,
     // Imported files carry album art at most; the gap names the artist.
     cover: missingCover(artistCoverSubject(name)),

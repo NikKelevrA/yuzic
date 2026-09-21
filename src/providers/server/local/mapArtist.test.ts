@@ -26,7 +26,6 @@ describe('mapArtist', () => {
       localId: 'local:artist:srv:local:local:artist:radiohead',
       nativeId: 'local:artist:radiohead',
       provenance: { origin: 'server', serverId: 'local' },
-      libraryState: 'in-library',
       name: 'Radiohead',
       tags: [],
     });

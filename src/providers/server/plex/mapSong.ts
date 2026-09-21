@@ -13,6 +13,7 @@ import { albumCoverSubject, missingCover, type CoverSource } from '@/domain/enti
 import { albumRef, artistRef } from './mapRefs';
 import { mbidOf } from './externalIds';
 import type { PlexMetadata } from './types';
+import { internCover } from '@/domain/entities/internRef';
 
 const id = (value: string | number | undefined): string => (value == null ? '' : String(value));
 
@@ -34,11 +35,11 @@ interface MapSongContext {
 export function mapSong(dto: PlexMetadata, context: MapSongContext): Song {
   const { provenance } = context;
   const nativeId = id(dto.ratingKey);
-  const cover: CoverSource = dto.thumb
+  const cover: CoverSource = internCover(dto.thumb
     ? { kind: 'plex', path: dto.thumb }
     : dto.parentThumb
       ? { kind: 'plex', path: dto.parentThumb }
-      : context.cover ?? missingCover(albumCoverSubject(dto.parentTitle, dto.grandparentTitle));
+      : context.cover ?? missingCover(albumCoverSubject(dto.parentTitle, dto.grandparentTitle)));
 
   const media = dto.Media?.[0];
   const part = media?.Part?.[0];
@@ -52,7 +53,6 @@ export function mapSong(dto: PlexMetadata, context: MapSongContext): Song {
     nativeId,
     provenance,
     externalIds: externalIdsOf(dto),
-    libraryState: 'in-library',
     title: dto.title ?? 'Unknown',
     artist: artistRef(provenance, id(dto.grandparentRatingKey), dto.grandparentTitle),
     album: albumRef(provenance, id(dto.parentRatingKey), dto.parentTitle, cover),

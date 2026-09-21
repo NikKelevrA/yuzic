@@ -40,6 +40,9 @@ jest.mock('@/components/useSheetRef', () => ({ useSheetRef: () => ({ current: nu
 jest.mock('@/features/album/useAlbums', () => ({ useAlbums: () => ({ albums: [] }) }));
 jest.mock('@/features/artist/useArtists', () => ({ useArtists: () => ({ artists: [] }) }));
 jest.mock('@/features/song/useTracks', () => ({ useTracks: () => ({ tracks: mockLibrary }) }));
+// The catalog store reads playlists too, and the real hook reaches i18n
+// through the provider registry. Mocked like its three siblings above.
+jest.mock('@/features/playlist/usePlaylists', () => ({ usePlaylists: () => ({ playlists: [] }) }));
 
 const artistRef = {
   localId: 'local:artist:srv:s1:a1' as Song['artist']['localId'],
@@ -55,7 +58,6 @@ const librarySong: Song = {
   nativeId: 's1',
   provenance: { origin: 'server', serverId: 's1' },
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Roygbiv',
   artist: artistRef,
   album: albumRef,
@@ -70,7 +72,6 @@ const browsedSong: Song = {
   localId: 'local:song:int:deezer:x1' as Song['localId'],
   nativeId: 'x1',
   provenance: { origin: 'integration', providerId: 'deezer' },
-  libraryState: 'external',
   contentKind: 'preview',
   durationSeconds: 30,
   streamId: 'https://cdn.deezer.example/clip.mp3',

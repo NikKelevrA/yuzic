@@ -1,7 +1,7 @@
 import type { Album } from '@/domain/entities/Album';
 
 // Every `Album` carries both `year` and `releaseDate` as optional fields now
-// — whether it's local or external is `provenance`/`libraryState` data, not a
+// — whether it's local or external is `provenance` data, not a
 // different shape. A local record usually has only `year`; an external one
 // (Deezer, MusicBrainz) usually reports `releaseDate` and no bare year, so
 // this tries both rather than picking one per origin.

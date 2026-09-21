@@ -1,22 +1,27 @@
 /**
  * The local-first rule, for components.
  *
- * Reads the already-loaded catalog — the same persisted query cache every
- * library screen reads, so this starts no fetch of its own — and memoises the
- * index on it, so a shelf of ten rows costs one index build rather than ten
- * scans of the library. The rule itself is in `localFirst.ts`, which stays
- * pure; this is only the half that knows where the library lives.
+ * Reads the identity index off the catalog store, which builds it once for
+ * the whole app and only when something first asks — see `match` in
+ * `catalogStore`. The rule itself is in `localFirst.ts`, which stays pure;
+ * this is only the half that knows where the library lives.
+ *
+ * **This hook used to build the index itself**, in a `useMemo`. `useMemo` is
+ * per component *instance*, and `SongRow` calls this hook, so every row on
+ * screen built its own index of the entire library: fifteen rows meant
+ * fifteen builds and fifteen copies of two Maps over every song, album and
+ * artist. At 90,000 tracks one build is about 311 ms, so roughly five seconds
+ * of index building to fill a single screen. It was fixed here first with a
+ * cache of its own; the store subsumes that, and one shared thing is better
+ * than two.
  */
 import { useMemo } from 'react';
 
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
 import type { Song } from '@/domain/entities/Song';
-import { useAlbums } from '@/features/album/useAlbums';
-import { useArtists } from '@/features/artist/useArtists';
-import { useTracks } from '@/features/song/useTracks';
+import { useCatalogStore } from './useCatalogStore';
 import {
-  buildLibraryIndex,
   localAlbum,
   localArtist,
   localSong,
@@ -34,23 +39,19 @@ interface LocalFirst {
 }
 
 export function useLocalFirst(): LocalFirst {
-  const { albums } = useAlbums();
-  const { artists } = useArtists();
-  const { tracks } = useTracks();
+  const store = useCatalogStore();
 
-  const index = useMemo(
-    () => buildLibraryIndex({ songs: tracks, albums, artists }),
-    [tracks, albums, artists]
-  );
-
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    // Reading `store.match` here is what builds it, the first time any
+    // component asks. Inside the memo so a screen that never renders a row
+    // never pays for it.
+    const index = store.match;
+    return {
       index,
       localSong: (song: Song) => localSong(index, song),
       localAlbum: (album: Album) => localAlbum(index, album),
       localArtist: (artist: Artist) => localArtist(index, artist),
       preferLocalSong: (song: Song) => preferLocalSong(index, song),
-    }),
-    [index]
-  );
+    };
+  }, [store]);
 }

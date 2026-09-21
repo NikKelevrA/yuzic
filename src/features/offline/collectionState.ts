@@ -11,11 +11,6 @@ type AlbumTrackLike = {
   albumId?: string | null;
 };
 
-type PlaylistLike = {
-  id: string;
-  songs: TrackIdLike[];
-};
-
 export function buildDownloadedTrackIdSet(
   tracks: TrackIdLike[]
 ): Set<string> {
@@ -29,24 +24,6 @@ export function buildDownloadedTrackIdSet(
   return new Set(
     ids
   );
-}
-
-export function areTrackIdsFullyDownloaded(
-  trackIds: string[],
-  downloadedTrackIds: Set<string>
-): boolean {
-  if (!trackIds.length) return false;
-  return trackIds.every(id => downloadedTrackIds.has(id));
-}
-
-export function isPlaylistFullyDownloaded(
-  playlist: PlaylistLike,
-  downloadedTrackIds: Set<string>
-): boolean {
-  const trackIds = playlist.songs
-    .map(song => String(song.id))
-    .filter(Boolean);
-  return areTrackIdsFullyDownloaded(trackIds, downloadedTrackIds);
 }
 
 export function getFullyDownloadedAlbumIds(

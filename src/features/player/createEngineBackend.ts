@@ -236,8 +236,9 @@ export function createEngineBackend(): PlayerBackend {
           unsubscribeEngine = api.addListener((event: Parameters<typeof applyEvent>[1]) => {
             shadow = applyEvent(shadow, event);
             if (event.type === 'stateChange') {
-              // The engine *can* say whether it is playing, unlike rntp, so it
-              // does — see BackendEvent for why the field is optional.
+              // `playing` only from the engine's own playing state, never from
+              // a play request — failure recovery relies on that; see
+              // BackendEvent.
               emit({
                 type: 'stateChange',
                 buffering: event.state === 'buffering',

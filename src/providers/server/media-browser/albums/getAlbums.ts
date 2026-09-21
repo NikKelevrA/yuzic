@@ -36,7 +36,7 @@ export async function getAlbums(
     (artistId ? `&AlbumArtistIds=${encodeURIComponent(artistId)}` : "") +
     (client.parentId ? `&ParentId=${encodeURIComponent(client.parentId)}` : "");
 
-  const items = await fetchAllItems<MediaBrowserItem>(client, path);
-
-  return items.map((a) => normalizeAlbum(a, client)).filter((a): a is Album => a !== null);
+  // Normalized per page: see `fetchAllItems` for why the mapping happens
+  // inside the walk rather than over the finished array.
+  return fetchAllItems<MediaBrowserItem, Album>(client, path, (a) => normalizeAlbum(a, client));
 }

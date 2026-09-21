@@ -7,7 +7,6 @@ const local = (id: string, year: number): Album => ({
   nativeId: id,
   provenance: { origin: 'server', serverId: 'server1' },
   externalIds: {},
-  libraryState: 'in-library',
   title: `Album ${id}`,
   cover: { kind: 'none' },
   artist: {
@@ -28,7 +27,6 @@ const external = (id: string, overrides: Partial<Album> = {}): Album => ({
   nativeId: id,
   provenance: { origin: 'integration', providerId: 'deezer' },
   externalIds: {},
-  libraryState: 'external',
   title: `Album ${id}`,
   cover: { kind: 'none' },
   artist: {

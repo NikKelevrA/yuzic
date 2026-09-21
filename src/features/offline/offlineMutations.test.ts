@@ -24,7 +24,6 @@ function makeSong(nativeId: string): Song {
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: nativeId,
     artist: ref('artist', 'a1', 'Artist') as Song['artist'],
     album: ref('album', 'al1', 'Album') as Song['album'],

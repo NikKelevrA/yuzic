@@ -1,7 +1,6 @@
 import {
   EQ_FREQUENCIES,
   EQ_PRESETS,
-  FLAT_EQ,
   isFlat,
   matchPreset,
   presetToBands,
@@ -38,7 +37,7 @@ describe('matchPreset', () => {
   });
 
   it('reports flat as a preset, since it is one', () => {
-    expect(matchPreset(FLAT_EQ)).toBe('flat');
+    expect(matchPreset(presetToBands([]))).toBe('flat');
   });
 
   /**
@@ -55,7 +54,7 @@ describe('matchPreset', () => {
 
 describe('isFlat', () => {
   it('is true only when nothing is boosted or cut', () => {
-    expect(isFlat(FLAT_EQ)).toBe(true);
+    expect(isFlat(presetToBands([]))).toBe(true);
     expect(isFlat(presetToBands(EQ_PRESETS[1].gains))).toBe(false);
   });
 

@@ -135,7 +135,6 @@ const artist: Artist = {
   nativeId: 'ar1',
   provenance: { origin: 'server', serverId: 'server1' },
   externalIds: {},
-  libraryState: 'in-library',
   cover: { kind: 'none' },
   name: 'Some Artist',
   tags: [],
@@ -180,7 +179,6 @@ describe('ArtistOptions', () => {
       localId: 'local:artist:ext:deezer:9' as Artist['localId'],
       nativeId: '9',
       provenance: { origin: 'integration', providerId: 'deezer' },
-      libraryState: 'external',
       externalIds: { deezerId: '9' },
     };
 

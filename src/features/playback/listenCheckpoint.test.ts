@@ -15,7 +15,6 @@ const song: Song = {
   nativeId: 's1',
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Roygbiv',
   artist: { localId: makeLocalId('artist', provenance, 'a1'), nativeId: 'a1', externalIds: {}, name: 'Boards of Canada', cover: { kind: 'none' } },
   album: { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1', externalIds: {}, title: 'Album', cover: { kind: 'none' } },

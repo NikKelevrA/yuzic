@@ -56,7 +56,6 @@ export function mapAlbum(dto: DeezerAlbum, context: MapAlbumContext): Album {
     externalIds: externalIdsOf(dto),
     // Browsing Deezer's catalogue is not owning it — see LibraryState and
     // mapArtist's comment on why this mapper never guesses further than that.
-    libraryState: 'external',
     title: dto.title ?? 'Unknown Album',
     cover: imageCover(
       [dto.cover_xl, dto.cover_big, dto.cover_medium],

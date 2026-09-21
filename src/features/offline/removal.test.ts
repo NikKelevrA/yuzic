@@ -58,7 +58,6 @@ function queued(nativeId: string, serverId = 'server-1'): Song {
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: nativeId,
     artist: ref('artist', 'artist-1', 'Artist') as Song['artist'],
     album: ref('album', 'album-1', 'Album') as Song['album'],

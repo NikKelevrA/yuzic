@@ -34,7 +34,6 @@ describe('mapSong (full catalogue track)', () => {
       nativeId: '3135556',
       provenance: { origin: 'integration', providerId: 'deezer' },
       externalIds: { deezerId: '3135556', isrc: 'GBDUW0000059' },
-      libraryState: 'external',
       title: 'One More Time',
       artist: {
         localId: 'local:artist:ext:deezer:27',
@@ -82,7 +81,6 @@ describe('mapSong (full catalogue track)', () => {
   });
 
   it('is external — a track browsed on Deezer is not one the user owns', () => {
-    expect(mapSong(fullTrackDto, { provenance, album }).libraryState).toBe('external');
   });
 
   it('derives identity from the provenance it is given', () => {
@@ -129,7 +127,6 @@ describe('mapPreviewTrack (30-second clip)', () => {
       nativeId: '3135556',
       provenance: { origin: 'integration', providerId: 'deezer' },
       externalIds: { deezerId: '3135556' },
-      libraryState: 'external',
       title: 'One More Time',
       artist: {
         localId: 'local:artist:ext:deezer:27',

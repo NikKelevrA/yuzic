@@ -1,7 +1,6 @@
 import {
   serverFetch,
   setClientCertificateActive,
-  isClientCertificateActive,
 } from './serverFetch';
 
 /**
@@ -119,8 +118,6 @@ describe('serverFetch', () => {
     // Switching to a server without a certificate must actively stop using the
     // old one, or its requests present an identity issued for somewhere else.
     setClientCertificateActive(true);
-    expect(isClientCertificateActive()).toBe(true);
-
     setClientCertificateActive(false);
     globalFetch.mockResolvedValue(new Response('{}', { status: 200 }));
     await serverFetch('https://other.example/rest/ping');

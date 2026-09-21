@@ -668,6 +668,7 @@
     "oneSecond": "One moment.",
     "playingSimilar": "Playing similar music",
     "playbackError": "Unable to play track",
+    "playbackStopped": "Stopped: several tracks in a row wouldn't play",
     "songDetailsError": "Unable to load song details",
     "syncFailed": "Library sync failed. Check your connection.",
     "libraryLoadFailed": "Failed to load library data. Check your connection.",

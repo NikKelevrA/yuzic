@@ -27,7 +27,6 @@ describe('mapAlbum', () => {
       localId: 'local:album:srv:srv-1:300',
       nativeId: '300',
       provenance: { origin: 'server', serverId: 'srv-1' },
-      libraryState: 'in-library',
       title: 'Kid A',
       year: 2000,
       releaseType: 'album',

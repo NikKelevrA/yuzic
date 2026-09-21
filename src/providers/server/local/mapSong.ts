@@ -17,6 +17,7 @@ import type { Provenance } from '@/domain/identity/Provenance';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 import { albumRef, artistRef } from './mapRefs';
 import type { LocalTrack } from './store';
+import { internCover } from '@/domain/entities/internRef';
 
 function externalIdsOf(dto: LocalTrack): ExternalIds {
   const ids: ExternalIds = {};
@@ -33,7 +34,7 @@ export function mapSong(dto: LocalTrack, context: MapSongContext): Song {
   const { provenance } = context;
   const nativeId = dto.id;
   // A file with no embedded art names its album, for a backup to fill.
-  const cover = coverOrMissing(dto.cover, albumCoverSubject(dto.albumTitle, dto.artist));
+  const cover = internCover(coverOrMissing(dto.cover, albumCoverSubject(dto.albumTitle, dto.artist)));
 
   return {
     localId: makeLocalId('song', provenance, nativeId),
@@ -41,7 +42,6 @@ export function mapSong(dto: LocalTrack, context: MapSongContext): Song {
     provenance,
     externalIds: externalIdsOf(dto),
     // A file the user imported is, by definition, in their library.
-    libraryState: 'in-library',
     title: dto.title,
     artist: artistRef(provenance, dto.artistId, dto.artist),
     album: albumRef(provenance, dto.albumId, dto.albumTitle, cover),

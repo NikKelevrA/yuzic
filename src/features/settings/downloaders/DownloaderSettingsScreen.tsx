@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import SettingsScreen from '../components/SettingsScreen';
 import SettingsAuthCard from '../components/SettingsAuthCard';
+import SettingsCardHeader from '../components/SettingsCardHeader';
 import SettingsDisconnectButton from '../components/SettingsDisconnectButton';
 import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 import {
@@ -30,6 +31,13 @@ type Props = {
    * connection is judged on the address alone.
    */
   keyless?: boolean;
+  /**
+   * A line above the fields, where a downloader needs one. Most do not: a URL
+   * and an API key explain themselves. Downtify does, because it has no API
+   * key at all and that is worth saying out loud rather than leaving the user
+   * to notice the missing box.
+   */
+  helperKey?: string;
 };
 
 /**
@@ -43,6 +51,7 @@ function DownloaderSettingsScreen({
   extraCards,
   onDisconnected,
   keyless = false,
+  helperKey,
 }: Props) {
   const { t } = useTranslation();
 
@@ -67,6 +76,7 @@ function DownloaderSettingsScreen({
 
   return (
     <SettingsScreen title={t(`settings.downloaders.${id}.title`)}>
+      {helperKey ? <SettingsCardHeader subtle title={t(helperKey)} /> : null}
       <SettingsAuthCard
         fields={[
           {

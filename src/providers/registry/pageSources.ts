@@ -101,7 +101,6 @@ export async function fetchSimilarArtistsFromScrobbles(
         nativeId,
         provenance,
         externalIds: c.mbid ? { mbid: c.mbid } : {},
-        libraryState: 'external',
         name: c.name,
         // Scrobblers' similar artists carry no pictures of their own; the gap
         // names who each is, for cover resolution to fill.

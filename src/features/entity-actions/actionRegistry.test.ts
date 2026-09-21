@@ -1,6 +1,6 @@
 import { resolveActions } from './types';
 import {
-  actionRegistrySummary,
+  _actionRegistrySummary,
   songLibraryActions, type SongLibraryActionContext,
   songExternalActions, type SongExternalActionContext,
   albumLibraryActions, type AlbumLibraryActionContext,
@@ -19,33 +19,33 @@ const t = (key: string) => key;
  * old per-component conditionals proved, but against the one shared
  * resolver (`resolveActions`) instead of four separate `if` ladders.
  */
-describe('actionRegistrySummary', () => {
+describe('_actionRegistrySummary', () => {
   it('lists a stable id set per entity kind/origin', () => {
     // Rating sits beside Favourite on purpose: one says "keep this where I
     // can find it", the other says how much you like it, and next to each
     // other they read as two questions rather than two answers to one.
-    expect(actionRegistrySummary['song.library']).toEqual([
+    expect(_actionRegistrySummary['song.library']).toEqual([
       'favorite', 'rating', 'addToQueue', 'addToEnd', 'addToPlaylist', 'sleepTimer', 'download',
       'goToAlbum', 'goToArtist', 'instantMix', 'generatePlaylist',
     ]);
-    expect(actionRegistrySummary['song.external']).toEqual(['play', 'inLibrary', 'want', 'getSong', 'get']);
-    expect(actionRegistrySummary['album.library']).toEqual([
+    expect(_actionRegistrySummary['song.external']).toEqual(['play', 'inLibrary', 'want', 'getSong', 'get']);
+    expect(_actionRegistrySummary['album.library']).toEqual([
       'favorite', 'rating', 'play', 'shuffle', 'addToNext', 'addToEnd', 'shuffleToQueue',
       'generatePlaylist', 'goToAlbum', 'viewExternal', 'share', 'download',
     ]);
-    expect(actionRegistrySummary['album.external']).toEqual([
+    expect(_actionRegistrySummary['album.external']).toEqual([
       'inLibrary', 'downloading', 'want', 'get', 'noServiceConnected',
       'goToArtist', 'share', 'openInSource',
     ]);
-    expect(actionRegistrySummary.artist).toEqual([
+    expect(_actionRegistrySummary.artist).toEqual([
       'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'generatePlaylist', 'download', 'goToArtist', 'viewExternal',
     ]);
     // Want leads, and the ownership row that settles it comes first — the
     // same shape as `album.external` above.
-    expect(actionRegistrySummary['artist.external']).toEqual([
+    expect(_actionRegistrySummary['artist.external']).toEqual([
       'inLibrary', 'want', 'share', 'openInSource',
     ]);
-    expect(actionRegistrySummary.playlist).toEqual([
+    expect(_actionRegistrySummary.playlist).toEqual([
       'play', 'shuffle', 'addToQueue', 'shuffleToQueue', 'goToPlaylist', 'download', 'share', 'editSongs', 'rename', 'delete',
     ]);
   });

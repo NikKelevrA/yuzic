@@ -10,6 +10,7 @@ import type { AlbumRef, ArtistRef } from '@/domain/entities/EntityRef';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import { artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
+import { internAlbumRef, internArtistRef } from '@/domain/entities/internRef';
 
 export function artistRef(
   provenance: Provenance,
@@ -18,13 +19,13 @@ export function artistRef(
   cover: CoverSource = missingCover(artistCoverSubject(name))
 ): ArtistRef {
   const id = nativeId ?? '';
-  return {
+  return internArtistRef({
     localId: makeLocalId('artist', provenance, id),
     nativeId: id,
     externalIds: {},
     name: name ?? 'Unknown Artist',
     cover,
-  };
+  });
 }
 
 export function albumRef(
@@ -34,11 +35,11 @@ export function albumRef(
   cover: CoverSource = { kind: 'none' }
 ): AlbumRef {
   const id = nativeId ?? '';
-  return {
+  return internAlbumRef({
     localId: makeLocalId('album', provenance, id),
     nativeId: id,
     externalIds: {},
     title: title ?? 'Unknown Album',
     cover,
-  };
+  });
 }

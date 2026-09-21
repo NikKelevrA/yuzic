@@ -55,7 +55,7 @@ describe('getAlbum', () => {
     expect(result?.songs[0].title).toBe('Unknown');
   });
 
-  it('derives a stable localId and in-library libraryState from the given provenance', async () => {
+  it('derives a stable localId from the given provenance', async () => {
     const client = makeClient({
       'subsonic-response': {
         album: {
@@ -68,11 +68,9 @@ describe('getAlbum', () => {
     });
 
     const result = await getAlbum(client, 'album-1', provenance);
-    expect(result?.album.libraryState).toBe('in-library');
     expect(result?.album.localId).toBe('local:album:srv:server-1:album-1');
     expect(result?.album.artist.localId).toBe('local:artist:srv:server-1:artist-1');
     expect(result?.songs[0].localId).toBe('local:song:srv:server-1:song-1');
-    expect(result?.songs[0].libraryState).toBe('in-library');
 
     // Stable: fetching the same album twice from the same server produces the same localId.
     const again = await getAlbum(client, 'album-1', provenance);

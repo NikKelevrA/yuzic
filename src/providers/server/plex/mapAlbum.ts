@@ -46,7 +46,6 @@ export function mapAlbum(dto: PlexMetadata, context: MapAlbumContext): Album {
     nativeId,
     provenance,
     externalIds,
-    libraryState: 'in-library',
     title: dto.title ?? 'Unknown Album',
     cover,
     artist: artistRef(provenance, id(dto.parentRatingKey), dto.parentTitle, artistCover),

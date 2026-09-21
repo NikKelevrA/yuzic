@@ -16,7 +16,6 @@ function song(nativeId: string, contentKind: ContentKind = 'song'): Song {
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: `Track ${nativeId}`,
     artist: {
       localId: makeLocalId('artist', provenance, 'a1'),
@@ -96,7 +95,6 @@ function harness(over: Partial<{
     },
     bumpQueue: () => {},
 
-    onTrackStarted: () => { events.push('onTrackStarted'); },
     scrobbleOutgoing: (s, seconds) => { events.push(`scrobble:${s.nativeId}:${seconds}`); },
     markNewListen: () => { events.push('markNewListen'); },
     saveBookmark: (s, seconds) => { events.push(`bookmark:${s.nativeId}:${seconds}`); },
@@ -191,14 +189,6 @@ describe('leaving the previous track', () => {
     expect(h.events).not.toContain('markNewListen');
     expect(h.events.some(e => e.startsWith('scrobble:'))).toBe(false);
     expect(h.events.some(e => e.startsWith('bookmark:'))).toBe(false);
-  });
-
-  it('clears the retry state first, because the track is genuinely playing', () => {
-    const h = harness({ nativeIndex: 1 });
-
-    h.coordinator.onActiveTrackChanged(itemFor('2'));
-
-    expect(h.events[0]).toBe('onTrackStarted');
   });
 });
 

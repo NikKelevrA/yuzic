@@ -7,6 +7,7 @@ import { serverProvenance } from '@/domain/identity/Provenance';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { runCatalogSync } from './catalogSync';
 import { clearCatalog, readCatalogResource, writeCatalogResource } from './catalogPersistence';
+import { catalogStorage } from '@/state/mmkvStorage';
 
 const SERVER = 'srv-1';
 const provenance = serverProvenance(SERVER);
@@ -16,7 +17,6 @@ const album = (nativeId: string, playCount?: number): Album => ({
   nativeId,
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   title: nativeId,
   cover: { kind: 'none' },
   artist: {
@@ -136,6 +136,52 @@ describe('runCatalogSync', () => {
     expect(result.albumStats).toEqual([{ id: 'al1', playCount: 7, lastPlayedAt: 1_000 }]);
   });
 
+  it('never fetches tracks alongside anything else', async () => {
+    // The shape of the memory problem, as a test. All six used to be in flight
+    // together, so every response, every DTO and every mapped entity was alive
+    // until the slowest finished — which at 90,000 tracks is the crash. Tracks
+    // is the one that has to be alone; the rest together cost a few megabytes
+    // and save seconds.
+    const order: string[] = [];
+    const record = <T>(name: string, value: T) => async () => {
+      order.push(`${name}:start`);
+      await Promise.resolve();
+      order.push(`${name}:end`);
+      return value;
+    };
+    const api = makeApi({
+      albums: { list: record('albums', [album('al1')]) },
+      artists: { list: record('artists', []) },
+      playlists: { list: record('playlists', []) },
+      tracks: { list: record('tracks', [] as Song[]) },
+      starred: { list: record('starred', { songs: [], albums: [] }) },
+      genres: { list: record('genres', ['Rock']) },
+    });
+
+    await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
+
+    // Nothing else is open between tracks starting and tracks ending.
+    const inFlight = new Set<string>();
+    const sharedWithTracks: string[] = [];
+    for (const entry of order) {
+      const [name, edge] = entry.split(':');
+      if (edge === 'start') {
+        if (inFlight.has('tracks') || name === 'tracks') {
+          for (const open of inFlight) if (open !== 'tracks') sharedWithTracks.push(open);
+        }
+        inFlight.add(name);
+      } else {
+        inFlight.delete(name);
+      }
+    }
+
+    expect(sharedWithTracks).toEqual([]);
+    expect(order[order.length - 1]).toBe('tracks:end');
+    // And the rest really do overlap, rather than this passing by being serial.
+    expect(order.slice(0, 2)).toEqual(expect.arrayContaining([expect.stringContaining(':start')]));
+    expect(order[1].endsWith(':start')).toBe(true);
+  });
+
   it('reports hasData false when the server has nothing at all', async () => {
     const api = makeApi({
       albums: { list: jest.fn(async () => []) },
@@ -191,5 +237,45 @@ describe('runCatalogSync and the catalog store', () => {
     await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
 
     expect(readCatalogResource(SERVER, 'albums')).toEqual([]);
+  });
+});
+
+describe('what a sync puts in the cache', () => {
+  it('shares the parts fetched tracks repeat', async () => {
+    // Mappers build a fresh artist reference for every track they map.
+    const withArtist = (id: string) => ({ nativeId: id, artist: { localId: 'local:artist:a1', name: 'A' } });
+    const api = makeApi({
+      tracks: { list: jest.fn(async () => [withArtist('t1'), withArtist('t2')]), get: jest.fn() },
+    });
+    const queryClient = new QueryClient();
+
+    await runCatalogSync({ queryClient, api, serverId: SERVER });
+
+    const tracks = queryClient.getQueryData<{ artist: unknown }[]>([QueryKeys.Tracks, SERVER]);
+    expect(tracks![0].artist).toBe(tracks![1].artist);
+  });
+});
+
+describe('compaction', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('compacts once the sync has written everything it fetched', async () => {
+    const trim = jest.spyOn(catalogStorage, 'trim');
+
+    await runCatalogSync({ queryClient: new QueryClient(), api: makeApi(), serverId: SERVER });
+
+    expect(trim).toHaveBeenCalledTimes(1);
+  });
+
+  it('compacts even when a resource failed, since the rest were still rewritten', async () => {
+    const trim = jest.spyOn(catalogStorage, 'trim');
+    const api = makeApi({ tracks: { list: jest.fn(async () => { throw new Error('down'); }), get: jest.fn() } });
+
+    const result = await runCatalogSync({ queryClient: new QueryClient(), api, serverId: SERVER });
+
+    expect(result.failed).toContain('tracks');
+    expect(trim).toHaveBeenCalledTimes(1);
   });
 });

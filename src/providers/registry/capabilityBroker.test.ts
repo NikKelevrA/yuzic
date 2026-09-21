@@ -1,4 +1,4 @@
-import { firstOfferFor, hasCapability, offersFor, type BrokerInput } from './capabilityBroker';
+import { firstOfferFor, offersFor, type BrokerInput } from './capabilityBroker';
 import type { Provider } from '../contracts/Provider';
 
 const enrich = jest.fn(async () => null);
@@ -72,7 +72,6 @@ describe('offersFor', () => {
     // The point of the split: asking who *could* answer must not make everyone
     // answer. Eager fan-out on load is what made enrichment unpredictable.
     offersFor(input(), 'artist.enrich');
-    hasCapability(input(), 'artist.enrich');
     firstOfferFor(input(), 'artist.enrich');
 
     expect(enrich).not.toHaveBeenCalled();
@@ -89,7 +88,7 @@ describe('offersFor', () => {
 describe('firstOfferFor', () => {
   it('is null when nothing qualifies, rather than throwing', () => {
     expect(firstOfferFor(input({ isConnected: () => false }), 'artist.enrich')).toBeNull();
-    expect(hasCapability(input({ isConnected: () => false }), 'artist.enrich')).toBe(false);
+    expect(offersFor(input({ isConnected: () => false }), 'artist.enrich')).toEqual([]);
   });
 
   it('is null for a capability nothing declares', () => {

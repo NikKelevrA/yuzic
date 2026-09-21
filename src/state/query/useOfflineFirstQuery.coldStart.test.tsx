@@ -9,7 +9,7 @@ import { persistQueryClientRestore, persistQueryClientSave } from '@tanstack/rea
 
 import { useAlbums } from '@/features/album/useAlbums';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { rootReducer } from '@/state/redux/store';
+import { _rootReducer } from '@/state/redux/store';
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
@@ -55,7 +55,6 @@ function persistedAlbum(nativeId: string, title: string): Album {
     nativeId,
     provenance: PROVENANCE,
     externalIds: {},
-    libraryState: 'in-library',
     title,
     cover: { kind: 'none' },
     artist: {
@@ -110,10 +109,10 @@ describe('offline cold start reads the persisted query cache', () => {
   it('renders the synced catalog offline from a freshly-restored QueryClient, with no Redux catalog copy', async () => {
     // Nothing in the real app's store shape carries a catalog slice any
     // more — this is the assertion that stops a second store growing back.
-    // Checked against the actual `rootReducer` from `state/redux/store.ts`,
+    // Checked against the actual `_rootReducer` from `state/redux/store.ts`,
     // not a hand-rolled test store, so a reintroduced `libraryAlbums` (or
     // sibling) slice fails this test directly.
-    const realStoreShape = rootReducer(undefined, { type: '@@INIT' });
+    const realStoreShape = _rootReducer(undefined, { type: '@@INIT' });
     expect(Object.keys(realStoreShape)).not.toEqual(
       expect.arrayContaining([
         'libraryAlbums', 'libraryArtists', 'libraryPlaylists', 'libraryTracks', 'libraryStarred',

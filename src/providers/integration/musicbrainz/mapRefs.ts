@@ -13,6 +13,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import type { Provenance } from '@/domain/identity/Provenance';
 import { artistCoverSubject, missingCover, type CoverSource } from '@/domain/entities/Cover';
 import type { MbReleaseGroup } from './';
+import { internAlbumRef, internArtistRef } from '@/domain/entities/internRef';
 
 /** The `artist-credit` entry shape MusicBrainz embeds on releases and tracks. */
 type MbArtistCredit = { name?: string; artist: { id?: string; name: string } };
@@ -20,14 +21,14 @@ type MbArtistCredit = { name?: string; artist: { id?: string; name: string } };
 export function artistRef(provenance: Provenance, credits: MbArtistCredit[] | undefined): ArtistRef {
   const credit = credits?.[0];
   const nativeId = credit?.artist.id ?? '';
-  return {
+  return internArtistRef({
     localId: makeLocalId('artist', provenance, nativeId),
     nativeId,
     externalIds: nativeId ? { mbid: nativeId } : {},
     name: credit?.name ?? credit?.artist.name ?? 'Unknown Artist',
     // MusicBrainz's search/lookup responses used here carry no artist image.
     cover: missingCover(artistCoverSubject(credit?.name ?? credit?.artist.name, nativeId ? { mbid: nativeId } : {})),
-  };
+  });
 }
 
 export function albumRef(provenance: Provenance, releaseGroup: MbReleaseGroup): AlbumRef {
@@ -35,11 +36,11 @@ export function albumRef(provenance: Provenance, releaseGroup: MbReleaseGroup): 
   const cover: CoverSource = nativeId
     ? { kind: 'coverartarchive', mbid: nativeId, mbidType: 'release-group' }
     : { kind: 'none' };
-  return {
+  return internAlbumRef({
     localId: makeLocalId('album', provenance, nativeId),
     nativeId,
     externalIds: nativeId ? { mbid: nativeId, mbidType: 'release-group' } : {},
     title: releaseGroup.title ?? 'Unknown Album',
     cover,
-  };
+  });
 }

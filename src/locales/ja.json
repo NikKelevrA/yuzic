@@ -677,6 +677,7 @@
     "more": "もっと見る",
     "less": "閉じる",
     "playbackError": "曲を再生できません",
+    "playbackStopped": "再生できない曲が続いたため停止しました",
     "serverUnreachableBanner": "サーバーに接続できません — ローカルのデータを表示中",
     "searchPlaceholder": "検索…",
     "save": "保存",

@@ -1,7 +1,6 @@
 import { useSelector } from 'react-redux'
 import { useIsOffline } from '@/features/connectivity/useIsOffline'
-import { selectEnabledSourcesFor, selectSourceUse } from '@/features/settings/sources/state'
-import { searchUseOf } from '@/providers/registry/sources'
+import { selectEnabledSourcesFor } from '@/features/settings/sources/state'
 import { ALL_SOURCES, type SourceId } from '@/features/sources/registry'
 
 /**
@@ -18,10 +17,4 @@ export function useEnabledSearchSourceIds(): SourceId[] {
   const isOffline = useIsOffline()
   if (isOffline) return []
   return ALL_SOURCES.filter(source => enabled.includes(source.id)).map(source => source.id)
-}
-
-export function useSearchSourceEnabled(sourceId: SourceId): boolean {
-  const enabled = useSelector(selectSourceUse(searchUseOf(sourceId)))
-  const isOffline = useIsOffline()
-  return enabled && !isOffline
 }

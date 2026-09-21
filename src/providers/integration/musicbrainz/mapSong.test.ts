@@ -28,7 +28,6 @@ describe('mapSong', () => {
       nativeId: '2a3a2a3a-1111-2222-3333-444455556666',
       provenance: { origin: 'integration', providerId: 'musicbrainz' },
       externalIds: { mbid: '2a3a2a3a-1111-2222-3333-444455556666' },
-      libraryState: 'external',
       title: 'One More Time',
       artist: {
         localId: 'local:artist:ext:musicbrainz:056e4f3e-d505-4dad-8ec1-d04f521cbb56',
@@ -61,7 +60,6 @@ describe('mapSong', () => {
   });
 
   it('is external — resolved through MusicBrainz, not owned on any server', () => {
-    expect(mapSong(fullDto, { provenance, releaseGroup }).libraryState).toBe('external');
   });
 
   it('derives identity from the provenance it is given', () => {

@@ -27,7 +27,6 @@ export function mapArtist(dto: SubsonicArtist, provenance: Provenance): Artist {
     provenance,
     externalIds,
     // Anything the user's own server returned is, by definition, in their library.
-    libraryState: 'in-library',
     name: dto.name ?? 'Unknown Artist',
     cover,
     tags: [],

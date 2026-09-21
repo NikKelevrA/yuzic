@@ -37,7 +37,6 @@ describe('mapSong', () => {
       localId: 'local:song:srv:srv-1:tr-100',
       nativeId: 'tr-100',
       provenance: { origin: 'server', serverId: 'srv-1' },
-      libraryState: 'in-library',
       title: 'Everything In Its Right Place',
       durationSeconds: 251,
       contentKind: 'song',

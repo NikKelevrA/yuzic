@@ -8,6 +8,7 @@ import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices
 import type { Server } from '@/providers/contracts/Server';
 import { QueryKeys } from '@/state/query/queryKeys';
 import { clearCatalog, writeCatalogResource } from './catalogPersistence';
+import { catalogSyncKey } from './catalogQueries';
 import { useCatalogHydration } from './useCatalogHydration';
 
 const SERVER_ID = 'server-1';
@@ -51,6 +52,8 @@ afterEach(async () => {
   for (const view of mounted.splice(0)) await view.unmount();
   clients.splice(0).forEach(created => {
     created.clear();
+    // `clear` is queries only, and the sync cases below leave a mutation.
+    created.getMutationCache().clear();
     created.unmount();
   });
   clearCatalog();
@@ -79,6 +82,24 @@ describe('useCatalogHydration', () => {
       expect(queryClient.getQueryData([QueryKeys.Albums, SERVER_ID])).toEqual([
         { nativeId: 'al1' },
       ]);
+    });
+  });
+
+  it('shares the parts stored tracks repeat, rather than a parsed copy each', async () => {
+    const artist = { localId: 'local:artist:a1', nativeId: 'a1', externalIds: {}, name: 'A' };
+    writeCatalogResource(SERVER_ID, 'tracks', [
+      { nativeId: 'tr1', artist },
+      { nativeId: 'tr2', artist },
+    ]);
+    const queryClient = makeClient();
+
+    await render(makeStore(), queryClient);
+
+    await waitFor(() => {
+      const tracks = queryClient.getQueryData<{ artist: unknown }[]>([QueryKeys.Tracks, SERVER_ID]);
+      expect(tracks).toHaveLength(2);
+      // Stored as JSON, so without sharing these are two equal objects.
+      expect(tracks![0].artist).toBe(tracks![1].artist);
     });
   });
 
@@ -160,6 +181,93 @@ describe('useCatalogHydration', () => {
 
     await waitFor(() => {
       expect(queryClient.getQueryData([QueryKeys.Albums, SERVER_ID])).toBeUndefined();
+    });
+  });
+
+  describe('while a sync is running', () => {
+    /**
+     * A catalog sync in flight, under the key the app uses, and the handle
+     * that lets it finish. The hook watches the mutation cache, so a real
+     * mutation is what it has to see — not a flag.
+     */
+    function syncInFlight(queryClient: QueryClient) {
+      let finish: () => void = () => {};
+      const done = new Promise<void>(resolve => {
+        finish = resolve;
+      });
+      const running = queryClient
+        .getMutationCache()
+        .build(queryClient, {
+          mutationKey: catalogSyncKey(SERVER_ID),
+          mutationFn: () => done,
+          // A settled mutation otherwise keeps a garbage-collection timer,
+          // which is enough on its own to hold the jest worker open.
+          gcTime: 0,
+        })
+        .execute(undefined)
+        .catch(() => {});
+      return { finish, running };
+    }
+
+    it('holds the stored tracks back rather than sitting next to what replaces them', async () => {
+      // The whole point: a start that is going to sync ends up with the
+      // server's copy either way, and reading the stored one first means
+      // holding both while the fetch runs. At 90,000 tracks that is the crash.
+      writeCatalogResource(SERVER_ID, 'albums', [{ nativeId: 'al1' }]);
+      writeCatalogResource(SERVER_ID, 'tracks', [{ nativeId: 'stored' }]);
+      const queryClient = makeClient();
+      const sync = syncInFlight(queryClient);
+
+      await render(makeStore(), queryClient);
+
+      // Albums do not wait — they are what Home and Library paint with.
+      await waitFor(() => {
+        expect(queryClient.getQueryData([QueryKeys.Albums, SERVER_ID])).toBeDefined();
+      });
+      expect(queryClient.getQueryData([QueryKeys.Tracks, SERVER_ID])).toBeUndefined();
+
+      sync.finish();
+      await sync.running;
+    });
+
+    it('lets the sync own the tracks it fetched', async () => {
+      writeCatalogResource(SERVER_ID, 'tracks', [{ nativeId: 'stored' }]);
+      const queryClient = makeClient();
+      const sync = syncInFlight(queryClient);
+
+      await render(makeStore(), queryClient);
+
+      // What a sync does, while hydration is waiting on it.
+      queryClient.setQueryData([QueryKeys.Tracks, SERVER_ID], [{ nativeId: 'fresh' }]);
+      sync.finish();
+      await sync.running;
+
+      await waitFor(() => {
+        expect(queryClient.getQueryData([QueryKeys.Tracks, SERVER_ID])).toEqual([
+          { nativeId: 'fresh' },
+        ]);
+      });
+    });
+
+    it('still falls back to the stored tracks when the sync brings none', async () => {
+      // Waiting rather than skipping is what keeps the offline story: a sync
+      // that failed, or failed for tracks alone, leaves the cache empty and
+      // the stored copy goes in as it always did.
+      writeCatalogResource(SERVER_ID, 'tracks', [{ nativeId: 'stored' }]);
+      const queryClient = makeClient();
+      const sync = syncInFlight(queryClient);
+
+      await render(makeStore(), queryClient);
+      expect(queryClient.getQueryData([QueryKeys.Tracks, SERVER_ID])).toBeUndefined();
+
+      sync.finish();
+      await sync.running;
+
+      await waitFor(() => {
+        expect(queryClient.getQueryData([QueryKeys.Tracks, SERVER_ID])).toEqual([
+          { nativeId: 'stored' },
+        ]);
+      });
     });
   });
 });

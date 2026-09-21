@@ -11,7 +11,6 @@ describe('mapArtist', () => {
         nativeId: 'ar-7',
         provenance: { origin: 'server', serverId: 'srv-1' },
         externalIds: { mbid: 'ar-mbid' },
-        libraryState: 'in-library',
         name: 'Radiohead',
         cover: { kind: 'navidrome', coverArtId: 'ar-7' },
         tags: [],

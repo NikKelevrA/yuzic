@@ -13,7 +13,7 @@ import downloadersReducer, {
 } from '@/state/redux/slices/downloadersSlice';
 import settingsAppearanceReducer from '@/features/settings/appearance/state';
 import { downloaderCredentialScope } from '@/state/redux/selectors/downloadersSelectors';
-import { clearCredentialCache, getCredentials, setCredential } from '@/state/credentialCache';
+import { _clearCredentialCache, getCredentials, setCredential } from '@/state/credentialCache';
 import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 
 // Boundaries only: the downloaders' HTTP calls, the toast, and i18n. The
@@ -107,7 +107,7 @@ const entry = (store: Store, downloader: DownloaderId) =>
 describe('Downloader settings', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    clearCredentialCache();
+    _clearCredentialCache();
     mockSlskdTest.mockReset().mockResolvedValue({ success: true });
     mockLidarrTest.mockReset().mockResolvedValue({ success: true });
     mockSoulsyncTest.mockReset().mockResolvedValue({ success: true });

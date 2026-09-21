@@ -93,7 +93,6 @@ function artistNamed(name: string, cover: CoverSource = { kind: 'none', subject:
     nativeId: name,
     provenance: { origin: 'integration', providerId: 'listenbrainz' },
     externalIds: {},
-    libraryState: 'external',
     name,
     cover,
     tags: [],

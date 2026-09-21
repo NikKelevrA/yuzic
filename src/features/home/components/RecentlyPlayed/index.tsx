@@ -3,8 +3,7 @@ import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native'
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { selectAlbumLastPlayedAt, selectPlaylistLastPlayedAt } from '@/state/redux/selectors/statsSelectors';
-import { useAlbums } from '@/features/album/useAlbums';
-import { usePlaylists } from '@/features/playlist/usePlaylists';
+import { useCatalogStore } from '@/features/library/useCatalogStore';
 import MediaTile from '../MediaTile';
 import SectionShelfHeader from '../SectionShelfHeader';
 import { SHELF_INSET, shelfItemWidth } from '@/features/layout/shelf';
@@ -123,33 +122,32 @@ export default function RecentlyPlayed() {
 
   const albumLastPlayedAt = useSelector(selectAlbumLastPlayedAt);
   const playlistLastPlayedAt = useSelector(selectPlaylistLastPlayedAt);
-  const { albums } = useAlbums();
-  const { playlists } = usePlaylists();
+  const { albumByNativeId, playlistByNativeId } = useCatalogStore();
 
   // Stable while the same albums and playlists are listed in the same order;
   // see `useStableList`.
   const items = useStableList(useMemo<RecentItem[]>(() => {
     // `selectAlbumLastPlayedAt`/`selectPlaylistLastPlayedAt` key by the
     // origin's own id (see `useScrobbling`'s `incrementPlay` dispatch), so
-    // these maps look albums/playlists up by `nativeId`, not `localId`.
-    const albumMap = new Map(albums.map(a => [a.nativeId, a]));
-    const playlistMap = new Map(playlists.map(p => [p.nativeId, p]));
+    // these look albums/playlists up by `nativeId`, not `localId`. Both come
+    // from the store, which indexes the catalog once for the app rather than
+    // once per render of this shelf.
     const result: RecentItem[] = [];
 
     for (const [id, ts] of Object.entries(albumLastPlayedAt)) {
       if (ts <= 0) continue;
-      const album = albumMap.get(id);
+      const album = albumByNativeId.get(id);
       if (album) result.push({ kind: 'album', data: album, ts });
     }
 
     for (const [id, ts] of Object.entries(playlistLastPlayedAt)) {
       if (ts <= 0) continue;
-      const playlist = playlistMap.get(id);
+      const playlist = playlistByNativeId.get(id);
       if (playlist) result.push({ kind: 'playlist', data: playlist, ts });
     }
 
     return result.sort((a, b) => b.ts - a.ts).slice(0, MAX_ITEMS);
-  }, [albumLastPlayedAt, playlistLastPlayedAt, albums, playlists]), sameRecentItem);
+  }, [albumLastPlayedAt, playlistLastPlayedAt, albumByNativeId, playlistByNativeId]), sameRecentItem);
 
   const coversToPrefetch = useMemo(() => items.map(i => i.data.cover), [items]);
   usePrefetchCovers(coversToPrefetch, 'grid');

@@ -114,8 +114,8 @@ export const useToasts = (): Toast[] => {
   return [...list].sort((a, b) => a.seq - b.seq);
 };
 
-/** Plain snapshot getter (seq-sorted) for tests and non-React callers. */
-export const getToasts = (): Toast[] => [...toasts].sort((a, b) => a.seq - b.seq);
+/** Plain snapshot getter (seq-sorted). Tests only; the app reads `useToasts`. */
+export const __getToasts = (): Toast[] => [...toasts].sort((a, b) => a.seq - b.seq);
 
 /** Test-only reset. */
 export const __resetToasts = () => {

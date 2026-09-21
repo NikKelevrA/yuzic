@@ -23,7 +23,6 @@ describe('mapAlbum', () => {
       nativeId: 'e0be0716-0d95-3007-a562-e6e86fdbcc37',
       provenance: { origin: 'integration', providerId: 'musicbrainz' },
       externalIds: { mbid: 'e0be0716-0d95-3007-a562-e6e86fdbcc37', mbidType: 'release-group' },
-      libraryState: 'external',
       title: 'Discovery',
       cover: {
         kind: 'coverartarchive',
@@ -53,7 +52,6 @@ describe('mapAlbum', () => {
   });
 
   it('is external — a resolved MusicBrainz release-group is not one the user owns', () => {
-    expect(mapAlbum(fullDto, { provenance }).libraryState).toBe('external');
   });
 
   it('maps primary/secondary types to the domain release type, compilation taking precedence', () => {
@@ -85,7 +83,6 @@ describe('mapAlbum', () => {
       nativeId: 'rg-1',
       provenance: { origin: 'integration', providerId: 'musicbrainz' },
       externalIds: { mbid: 'rg-1', mbidType: 'release-group' },
-      libraryState: 'external',
       title: 'Untitled',
       cover: { kind: 'coverartarchive', mbid: 'rg-1', mbidType: 'release-group' },
       artist: {

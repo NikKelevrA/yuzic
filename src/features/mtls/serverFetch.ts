@@ -36,10 +36,6 @@ export function setClientCertificateActive(active: boolean): void {
   certificateActive = (Platform.OS === 'ios' || Platform.OS === 'android') && active;
 }
 
-export function isClientCertificateActive(): boolean {
-  return certificateActive;
-}
-
 /** The engine, required lazily for the same reason the rest of the app does:
  *  pulling the native module in at import time runs before it is registered. */
 function engine() {

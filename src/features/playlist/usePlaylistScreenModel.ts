@@ -21,6 +21,7 @@ import { staleTime } from '@/state/query/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasValue, useOfflineFirstQuery } from '@/state/query/useOfflineFirstQuery';
 import { usePlaylists } from '@/features/playlist/usePlaylists';
+import { useCatalogStore } from '@/features/library/useCatalogStore';
 import { getPlaylist } from './playlistRepository';
 import { resolvePlaylistOrigin, type PlaylistOrigin } from './playlistOrigin';
 
@@ -48,6 +49,11 @@ export function usePlaylistScreenModel(params: PlaylistRouteParams): PlaylistScr
   const activeServer = useSelector(selectActiveServer);
   const serverId = activeServer?.id;
   const { playlists: libraryPlaylists } = usePlaylists();
+  const store = useCatalogStore();
+  const fallbackPlaylist = useMemo(() => {
+    const playlist = store.playlistByNativeId.get(id);
+    return playlist ? { playlist, songs: [] } : undefined;
+  }, [store, id]);
 
   const query = useOfflineFirstQuery<PlaylistDetail | null>({
     queryKey: [QueryKeys.Playlist, serverId, id],
@@ -56,15 +62,10 @@ export function usePlaylistScreenModel(params: PlaylistRouteParams): PlaylistScr
     staleTime: staleTime.playlists,
     emptyValue: null,
     hasData: hasValue,
-    fallback: {
-      sources: [{ queryKey: [QueryKeys.Playlists, serverId], queryFn: api.playlists.list }],
-      select: ([cachedPlaylists]) => {
-        const playlists = Array.isArray(cachedPlaylists) ? (cachedPlaylists as Playlist[]) : [];
-        const playlist = playlists.find(p => p.nativeId === id);
-        if (!playlist) return undefined;
-        return { playlist, songs: [] };
-      },
-    },
+    // The playlist without its tracks, for a screen opened while the server
+    // cannot be asked. Its songs are not in the catalog's playlist record, so
+    // an offline open shows the playlist and an empty list, as before.
+    fallbackValue: fallbackPlaylist,
   });
 
   const playlist = query.data?.playlist ?? null;

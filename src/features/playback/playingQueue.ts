@@ -96,10 +96,6 @@ export type QueueSegment = {
   source: QueueSegmentSource
 }
 
-function contextIdOf(source: QueueSegmentSource): string {
-  return source.kind === 'transition-bridge' ? `${source.fromContextId}->${source.toContextId}` : source.contextId
-}
-
 export function tagSegment(
   segments: QueueSegment[],
   startIndex: number,
@@ -154,32 +150,6 @@ export function shiftSegmentsAfterInsert(
   })
 }
 
-// Segments entirely before the removed range are untouched, segments entirely
-// after shift left by `removedCount`, and segments overlapping the removed
-// range shrink by the overlap (dropped entirely if nothing survives).
-export function shiftSegmentsAfterRemove(
-  segments: QueueSegment[],
-  atIndex: number,
-  removedCount: number,
-): QueueSegment[] {
-  if (removedCount <= 0) return segments
-  const removedEnd = atIndex + removedCount
-  return segments
-    .map(seg => {
-      const segEnd = seg.startIndex + seg.length
-      if (segEnd <= atIndex) return seg
-      if (seg.startIndex >= removedEnd) return { ...seg, startIndex: seg.startIndex - removedCount }
-      const overlapStart = Math.max(seg.startIndex, atIndex)
-      const overlapEnd = Math.min(segEnd, removedEnd)
-      const overlap = overlapEnd - overlapStart
-      return {
-        ...seg,
-        startIndex: seg.startIndex < atIndex ? seg.startIndex : atIndex,
-        length: seg.length - overlap,
-      }
-    })
-    .filter(seg => seg.length > 0)
-}
 
 export function segmentAt(segments: QueueSegment[], index: number): QueueSegment | undefined {
   return segments.find(seg => index >= seg.startIndex && index < seg.startIndex + seg.length)
@@ -239,23 +209,6 @@ export function segmentsFromContexts(
   return segments
 }
 
-export function isContextBoundary(segments: QueueSegment[], index: number): boolean {
-  if (index <= 0) return false
-  const prev = segmentAt(segments, index - 1)
-  const curr = segmentAt(segments, index)
-  if (!prev || !curr) return false
-  return contextIdOf(prev.source) !== contextIdOf(curr.source)
-}
-
-// Returns the nearest index >= fromIndex where isContextBoundary is true, or
-// null if none exists in the remaining queue.
-export function findNextBoundaryIndex(segments: QueueSegment[], fromIndex: number): number | null {
-  const maxIndex = segments.reduce((max, seg) => Math.max(max, seg.startIndex + seg.length), 0)
-  for (let i = Math.max(fromIndex, 1); i < maxIndex; i++) {
-    if (isContextBoundary(segments, i)) return i
-  }
-  return null
-}
 
 /**
  * The player's queue, expressed as the app's own resources.

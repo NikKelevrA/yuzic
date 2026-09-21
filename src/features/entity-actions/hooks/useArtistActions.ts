@@ -50,8 +50,7 @@ export function useArtistOptionsActions(
     if (!artist) return null;
     const playlist: Playlist = {
       localId: makeLocalId('playlist', artist.provenance, `artist:${artist.nativeId}`),
-      nativeId: artist.nativeId, provenance: artist.provenance, externalIds: {}, libraryState: artist.libraryState,
-      title: artist.name, cover: artist.cover, isOwned: false, songIds: songs.map(song => song.localId),
+      nativeId: artist.nativeId, provenance: artist.provenance, externalIds: {}, title: artist.name, cover: artist.cover, isOwned: false, songIds: songs.map(song => song.localId),
     };
     return { playlist, songs };
   }, [artist]);

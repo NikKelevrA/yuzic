@@ -10,7 +10,7 @@ import { resourceFromBookmarkSnapshot } from '@/features/playback/bookmarkSnapsh
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
-import { useTracks } from '@/features/song/useTracks';
+import { useCatalogStore } from '@/features/library/useCatalogStore';
 import { selectPersistedPlaybackBookmarks } from '@/state/redux/selectors/playbackSelectors';
 import {
   SECTION_H_PADDING as H_PADDING,
@@ -40,7 +40,10 @@ export default function ContinuePlayingSection() {
   const rad = useRadius();
   const { width: screenWidth } = useWindowDimensions();
   const { playSong } = usePlayingActions();
-  const { tracks } = useTracks();
+  // Already keyed by `localId`, which is what the bookmark join below needs:
+  // the store builds that index once for the app rather than once per
+  // component.
+  const { songs } = useCatalogStore();
   const bookmarks = useSelector(selectPersistedPlaybackBookmarks);
 
   const itemSize = useMemo(
@@ -64,10 +67,9 @@ export default function ContinuePlayingSection() {
   // stream URL is irrelevant here since `playSong` resolves a fresh one
   // itself, so this passes an empty placeholder).
   const entries = useMemo<Entry[]>(() => {
-    const byId = new Map(tracks.map((track) => [track.localId, track]));
     return Object.entries(bookmarks)
       .map(([songId, entry]) => {
-        const song = byId.get(songId as LocalId);
+        const song = songs.get(songId as LocalId);
         if (song) return { song, positionMs: entry.positionMs, updatedAt: entry.updatedAt };
         if (!entry.snapshot) return null;
         const resource = resourceFromBookmarkSnapshot(songId as LocalId, entry.snapshot, '');
@@ -77,7 +79,7 @@ export default function ContinuePlayingSection() {
       .filter((e): e is Entry & { updatedAt: number } => e !== null)
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, MAX_ENTRIES);
-  }, [bookmarks, tracks]);
+  }, [bookmarks, songs]);
 
   const handlePress = useCallback((entry: Entry) => {
     // Player auto-resumes to the saved position when it loads (see

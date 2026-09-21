@@ -5,6 +5,7 @@ import { useApi } from '@/providers/registry/useApi';
 import { staleTime } from '@/state/query/staleTime';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { hasValue, useOfflineFirstQuery } from '@/state/query/useOfflineFirstQuery';
+import { useCatalogStore } from '@/features/library/useCatalogStore';
 
 type UseArtistResult = {
   artist: Artist | null;
@@ -16,15 +17,17 @@ type UseArtistResult = {
 
 /**
  * `ArtistsApi.get` returns the domain `Artist`. This artist may never have
- * been individually fetched, so the offline fallback reads the artists
- * *list*'s persisted cache entry directly (`[Artists, serverId]`) and looks
- * it up by `nativeId` — see `useAlbum` for why this is a direct cache read
- * rather than a second store.
+ * been individually fetched, so when the server cannot be asked the answer
+ * comes out of the catalog store, which already holds every artist indexed by
+ * `nativeId`. That used to be a scan of the artists list's cache entry,
+ * reached through this hook's own fallback mechanism — a second way into the
+ * catalog, which is the thing the store exists to remove.
  */
 export function useArtist(id: string): UseArtistResult {
   const api = useApi();
   const activeServer = useSelector(selectActiveServer);
   const serverId = activeServer?.id;
+  const store = useCatalogStore();
 
   const query = useOfflineFirstQuery<Artist | null>({
     queryKey: [QueryKeys.Artist, serverId, id],
@@ -33,13 +36,7 @@ export function useArtist(id: string): UseArtistResult {
     staleTime: staleTime.artists,
     emptyValue: null,
     hasData: hasValue,
-    fallback: {
-      sources: [{ queryKey: [QueryKeys.Artists, serverId], queryFn: api.artists.list }],
-      select: ([cachedArtists]) => {
-        const artists = Array.isArray(cachedArtists) ? (cachedArtists as Artist[]) : [];
-        return artists.find(a => a.nativeId === id);
-      },
-    },
+    fallbackValue: store.artistByNativeId.get(id),
   });
 
   return {

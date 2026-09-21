@@ -6,18 +6,15 @@ import { fetchAllItems } from "../pagedItems";
 
 type GetPlaylistsResult = Playlist[];
 
-async function fetchGetPlaylists(client: MediaBrowserClient) {
+export async function getPlaylists(client: MediaBrowserClient): Promise<GetPlaylistsResult> {
   const path =
     `/Users/${client.userId}/Items` +
     `?IncludeItemTypes=Playlist` +
     `&Recursive=true` +
     `&Fields=Id,Name,PrimaryImageTag,DateCreated,DateLastMediaAdded,ChildCount`;
-  return { Items: await fetchAllItems<MediaBrowserItem>(client, path) };
-}
-
-export async function getPlaylists(client: MediaBrowserClient): Promise<GetPlaylistsResult> {
-  const raw = await fetchGetPlaylists(client);
-  const items = raw?.Items ?? [];
   const provenance = requireProvenance(client);
-  return items.map((p) => mapPlaylist(p, { provenance, brand: client.brand }));
+
+  return fetchAllItems<MediaBrowserItem, Playlist>(client, path, (p) =>
+    mapPlaylist(p, { provenance, brand: client.brand })
+  );
 }

@@ -17,7 +17,8 @@ import { fetchAlbumSongsSettled } from './useLazyCollectionDetails';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { usePlaying } from '@/features/playback/PlayingContext';
 import { useDownload } from '@/features/offline/DownloadContext';
-import { useTracks } from '@/features/song/useTracks';
+import { songsByAlbum } from '@/features/library/catalogStore';
+import { useCatalogStore } from '@/features/library/useCatalogStore';
 import { useTheme } from '@/features/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import { renderBackdrop } from '@/components/BottomSheetBackdrop';
@@ -54,7 +55,7 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
   } = usePlaying();
 
   const { downloadAlbumById, getCollectionDownloadState } = useDownload();
-  const { tracks } = useTracks();
+  const catalog = useCatalogStore();
 
   const snapPoints = useMemo(() => ['40%', '70%'], []);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -65,10 +66,11 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
   const sheetBg = useOptionSheetBackground();
   const sheetContent = useOptionSheetContentStyle();
 
-  const albumIds = useMemo(() => new Set(albums.map(a => a.localId)), [albums]);
+  // Asked album by album rather than by scanning every track in the library
+  // for one whose album is in this genre — `songIdsByAlbum` already knows.
   const genreTrackIds = useMemo(
-    () => tracks.filter(track => albumIds.has(track.album.localId)).map(track => track.localId),
-    [albumIds, tracks]
+    () => albums.flatMap(album => songsByAlbum(catalog, album.localId).map(song => song.localId)),
+    [albums, catalog]
   );
   const { isDownloaded: isFullyDownloaded, isDownloading } = getCollectionDownloadState(genreTrackIds);
 
@@ -112,7 +114,6 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
       nativeId: genre,
       provenance,
       externalIds: {},
-      libraryState: 'in-library',
       title: genre,
       cover: albums[0]?.cover ?? { kind: 'none' },
       isOwned: false,

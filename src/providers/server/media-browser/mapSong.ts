@@ -14,6 +14,7 @@ import { buildSongCover, type MediaBrowserBrand } from './brand';
 import { normalizeGenres } from './utils/normalizeGenres';
 import { albumRef, artistRef } from './mapRefs';
 import type { MediaBrowserItem } from './types';
+import { internCover } from '@/domain/entities/internRef';
 
 /** MediaBrowser reports duration in 100ns ticks, not seconds. */
 const TICKS_PER_SECOND = 10_000_000;
@@ -56,7 +57,7 @@ export function mapSong(dto: MediaBrowserItem, context: MapSongContext): Song {
   const nativeId = dto.Id ?? '';
   const albumId = dto.AlbumId ?? context.albumId;
   const artistItem = dto.ArtistItems?.[0];
-  const cover = context.cover ?? songCover(dto, brand, albumId, artistItem?.Name ?? dto.AlbumArtist, context.albumTitle);
+  const cover = internCover(context.cover ?? songCover(dto, brand, albumId, artistItem?.Name ?? dto.AlbumArtist, context.albumTitle));
   const mediaSource = dto.MediaSources?.[0];
   const audioStream = mediaSource?.MediaStreams?.find(stream => stream.Type === 'Audio');
   const ticks = dto.RunTimeTicks ?? mediaSource?.RunTimeTicks ?? 0;
@@ -66,7 +67,6 @@ export function mapSong(dto: MediaBrowserItem, context: MapSongContext): Song {
     nativeId,
     provenance,
     externalIds: externalIdsOf(dto),
-    libraryState: 'in-library',
     title: dto.Name ?? 'Unknown',
     artist: artistRef(provenance, artistItem?.Id, artistItem?.Name ?? dto.AlbumArtist),
     album: albumRef(provenance, albumId, context.albumTitle, cover),

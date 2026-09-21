@@ -18,7 +18,6 @@ const song = (over: Partial<Song> = {}): Song => ({
   nativeId: 's1',
   provenance: LIBRARY,
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Roygbiv',
   artist: {
     localId: 'local:artist:srv:server-1:a1' as Song['artist']['localId'],
@@ -40,7 +39,6 @@ const externalSong = (over: Partial<Song> = {}): Song =>
     localId: 'local:song:int:deezer:x1' as Song['localId'],
     nativeId: 'x1',
     provenance: DEEZER,
-    libraryState: 'external',
     contentKind: 'preview',
     durationSeconds: 30,
     streamId: 'https://cdn.deezer.example/preview.mp3',
@@ -52,7 +50,6 @@ const album = (over: Partial<Album> = {}): Album => ({
   nativeId: 'al1',
   provenance: LIBRARY,
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Geogaddi',
   cover: { kind: 'none' },
   artist: {
@@ -70,7 +67,6 @@ const artist = (over: Partial<Artist> = {}): Artist => ({
   nativeId: 'a1',
   provenance: LIBRARY,
   externalIds: {},
-  libraryState: 'in-library',
   name: 'Boards of Canada',
   cover: { kind: 'none' },
   tags: [],
@@ -154,11 +150,11 @@ describe('localAlbum and localArtist', () => {
 
     const browsedAlbum = album({
       localId: 'local:album:int:deezer:1' as Album['localId'],
-      provenance: DEEZER, libraryState: 'external', externalIds: { deezerId: '1' },
+      provenance: DEEZER, externalIds: { deezerId: '1' },
     });
     const browsedArtist = artist({
       localId: 'local:artist:int:deezer:9' as Artist['localId'],
-      provenance: DEEZER, libraryState: 'external', externalIds: { deezerId: '9' },
+      provenance: DEEZER, externalIds: { deezerId: '9' },
     });
 
     expect(localAlbum(index, browsedAlbum)).toBe(myAlbum);
@@ -172,7 +168,6 @@ describe('localAlbum and localArtist', () => {
     const browsed = album({
       localId: 'local:album:int:musicbrainz:g' as Album['localId'],
       provenance: integrationProvenance('musicbrainz'),
-      libraryState: 'external',
       title: 'Something Else',
       externalIds: { mbid: 'shared', mbidType: 'release-group' },
     });

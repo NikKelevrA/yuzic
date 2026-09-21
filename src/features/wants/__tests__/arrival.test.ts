@@ -49,7 +49,6 @@ function libraryAlbum(overrides: Partial<Album> = {}): Album {
     nativeId: 'lib-album-1',
     provenance: PROVENANCE,
     externalIds: {},
-    libraryState: 'in-library',
     title: 'Some Album',
     cover: { kind: 'none' },
     artist: {
@@ -86,7 +85,6 @@ function libraryArtist(overrides: Partial<Artist> = {}): Artist {
     nativeId: 'lib-artist-1',
     provenance: PROVENANCE,
     externalIds: {},
-    libraryState: 'in-library',
     name: 'Some Artist',
     cover: { kind: 'none' },
     tags: [],
@@ -101,7 +99,6 @@ function libraryTrack(overrides: Partial<Song> = {}): Song {
     nativeId: 'lib-track-1',
     provenance: PROVENANCE,
     externalIds: {},
-    libraryState: 'in-library',
     title: 'Some Track',
     artist: {
       localId: makeLocalId('artist', PROVENANCE, 'artist-1'),

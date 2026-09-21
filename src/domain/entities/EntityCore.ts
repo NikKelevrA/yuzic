@@ -7,14 +7,13 @@
  * screen that can show either to carry both and pick between them, which is
  * where `localArtist ?? externalArtist` came from.
  *
- * All five fields are required. They were optional while the model was being
- * migrated, which meant every consumer had to decide what an absent
- * `libraryState` meant, and they did not all decide the same thing.
+ * All four fields are required. They were optional while the model was being
+ * migrated, which meant every consumer had to decide what an absent one
+ * meant, and they did not all decide the same thing.
  */
 import type { ExternalIds } from '../identity/ExternalIds';
 import type { LocalId } from '../identity/LocalId';
 import type { Provenance } from '../identity/Provenance';
-import type { LibraryState } from '../library/LibraryState';
 
 export interface EntityCore {
   /** Stable on-device identity, derived from `provenance` and `nativeId`. */
@@ -25,6 +24,4 @@ export interface EntityCore {
   provenance: Provenance;
   /** Identifiers this entity is known by elsewhere. Additive. */
   externalIds: ExternalIds;
-  /** How it stands relative to the user's library. Changes over time. */
-  libraryState: LibraryState;
 }

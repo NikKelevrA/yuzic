@@ -1,5 +1,4 @@
 import {
-  contentKindBehaviour,
   hasDuration,
   isAutoplaySeed,
   isContinuous,
@@ -11,32 +10,19 @@ import type { ContentKind } from './ContentKind';
 
 const ALL_KINDS: readonly ContentKind[] = ['song', 'liveStream', 'podcastEpisode', 'preview'];
 
-describe('contentKindBehaviour', () => {
-  it('has a total behaviour entry for every ContentKind', () => {
+describe('content kind behaviour', () => {
+  const ASPECTS = [hasDuration, isScrobbleable, isSeekable, isAutoplaySeed, hasReissuableUrl, isContinuous];
+
+  it('answers every aspect for every ContentKind', () => {
+    // Totality: no kind falls through to undefined, which would read as false
+    // at the call site and be wrong silently.
     for (const kind of ALL_KINDS) {
-      const behaviour = contentKindBehaviour(kind);
-      expect(behaviour).toEqual(
-        expect.objectContaining({
-          hasDuration: expect.any(Boolean),
-          isScrobbleable: expect.any(Boolean),
-          isSeekable: expect.any(Boolean),
-          isAutoplaySeed: expect.any(Boolean),
-          hasReissuableUrl: expect.any(Boolean),
-          isContinuous: expect.any(Boolean),
-        })
-      );
+      for (const aspect of ASPECTS) expect(typeof aspect(kind)).toBe('boolean');
     }
   });
 
   it('song is scrobbleable, seekable, an autoplay seed, stream-refreshable, and has duration', () => {
-    expect(contentKindBehaviour('song')).toEqual({
-      hasDuration: true,
-      isScrobbleable: true,
-      isSeekable: true,
-      isAutoplaySeed: true,
-      hasReissuableUrl: true,
-      isContinuous: false,
-    });
+    expect(ASPECTS.map(aspect => aspect('song'))).toEqual([true, true, true, true, true, false]);
   });
 
   it('only a live stream is continuous, which is what the engine reads it by', () => {

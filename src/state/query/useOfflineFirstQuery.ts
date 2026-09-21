@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useNetInfo } from '@react-native-community/netinfo';
-import { QueryKey, useQueries, useQuery } from '@tanstack/react-query';
+import { QueryKey, useQuery } from '@tanstack/react-query';
 import { useServerUnreachable } from '@/features/connectivity/serverReachability';
 
 export function hasArrayData<T>(value: T[] | null | undefined): value is T[] {
@@ -40,7 +40,7 @@ export function useOfflineFirstQuery<T>({
   staleTime,
   emptyValue,
   hasData,
-  fallback,
+  fallbackValue,
 }: {
   queryKey: QueryKey;
   queryFn: () => Promise<T>;
@@ -50,21 +50,17 @@ export function useOfflineFirstQuery<T>({
   emptyValue: T;
   hasData: (value: T) => boolean;
   /**
-   * Different, already-broader cache entries to derive this query's value
-   * from when its own entry has never been populated — e.g. a single
-   * album's detail query falling back to the albums *list* query (and the
-   * tracks list, to rebuild its song list), for an album that's never been
-   * opened online. Each source's `queryFn` is passed through for typing
-   * only: `enabled: false` below means these observers never fetch
-   * anything themselves, they only ever read what persistence hydrated or
-   * what another mounted hook (the list screen, a background sync) already
-   * put there. This read of the persisted query cache — not a second store
-   * — is the entire offline fallback story now.
+   * A value to show when this query's own entry has never been populated —
+   * an album the user opened for the first time while offline, say.
+   *
+   * The caller computes it, from the catalog store. This used to be a list of
+   * *other* cache entries plus a `select` to derive the value from them,
+   * which made this hook a second way to read the catalog: it reached into
+   * the albums, tracks, artists and playlists list queries behind the
+   * caller's back. Every one of the three callers was doing a catalog lookup,
+   * so the store does it now and hands the answer in.
    */
-  fallback?: {
-    sources: { queryKey: QueryKey; queryFn: () => Promise<unknown> }[];
-    select: (cached: (unknown | undefined)[]) => T | undefined;
-  };
+  fallbackValue?: T;
 }) {
   const netInfo = useNetInfo();
   const isOffline =
@@ -84,19 +80,6 @@ export function useOfflineFirstQuery<T>({
     networkMode: 'offlineFirst',
   });
 
-  const fallbackSources = fallback?.sources ?? [];
-  const fallbackQueries = useQueries({
-    queries: fallbackSources.map(source => ({
-      queryKey: source.queryKey,
-      queryFn: source.queryFn,
-      enabled: false,
-      staleTime: Infinity,
-    })),
-  });
-
-  // Both values below are handed to every memo and effect keyed on this hook's
-  // `data`, so each has to be the same object until its content changes.
-  //
   // `emptyValue` is almost always a literal (`[]`) written at the call site — a
   // new object every render. Returned as-is, "nothing cached" read as "the data
   // changed" on every render, and a consumer that copies derived state in an
@@ -105,32 +88,11 @@ export function useOfflineFirstQuery<T>({
   // screen got to render. The first one is kept.
   const emptyRef = useRef(emptyValue);
 
-  // `select` builds a new value each time it runs, so it runs again only when
-  // what it reads changes: a source's cached data, or which entity this hook is
-  // for. The second matters because the sources are usually lists whose keys
-  // carry no id — `useArtist(id)` falls back to the whole artists list — so a
-  // new id with the same list would otherwise keep the previous entity.
-  const fallbackDatas = fallbackQueries.map(q => q.data);
-  const queryIdentity = JSON.stringify(queryKey);
-  const fallbackMemo = useRef<{ identity: string; datas: unknown[]; value: T | undefined } | null>(null);
-  if (
-    !fallbackMemo.current ||
-    fallbackMemo.current.identity !== queryIdentity ||
-    fallbackMemo.current.datas.length !== fallbackDatas.length ||
-    fallbackMemo.current.datas.some((cached, i) => cached !== fallbackDatas[i])
-  ) {
-    fallbackMemo.current = {
-      identity: queryIdentity,
-      datas: fallbackDatas,
-      value: fallback ? fallback.select(fallbackDatas) : undefined,
-    };
-  }
-  const rawFallbackData = fallbackMemo.current.value;
-  const hasFallback = rawFallbackData !== undefined && hasData(rawFallbackData);
+  const hasFallback = fallbackValue !== undefined && hasData(fallbackValue);
 
   const data = selectOfflineFirstData({
     queryData: query.data,
-    fallbackData: hasFallback ? (rawFallbackData as T) : emptyRef.current,
+    fallbackData: hasFallback ? fallbackValue : emptyRef.current,
     hasFallbackData: hasData,
   });
 

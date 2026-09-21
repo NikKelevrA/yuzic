@@ -21,7 +21,6 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import type { PlexMetadata, PlexResponse } from './types';
 import { createPlexClient } from './client';
-import type { PlexClient } from './client';
 import { mapSong } from './mapSong';
 import { mapAlbum } from './mapAlbum';
 import { mapArtist } from './mapArtist';
@@ -31,9 +30,9 @@ import { ratePath } from './urlCommands';
 import { entryIndex, movedOrder } from '@/providers/server/playlistEntries';
 import { parseLrc } from '@/providers/integration/lrclib/parseLrc';
 import { PlexRequestError } from './requestError';
+import { metadata, pagedMetadata } from './pagedMetadata';
 
 const FAVORITE_RATING = 10;
-const PAGE_SIZE = 200;
 /** Plex's stream type for lyrics, beside 1 video, 2 audio and 3 subtitles. */
 const LYRICS_STREAM_TYPE = 4;
 const SIMILAR_LIMIT = 50;
@@ -46,37 +45,6 @@ function lyricsFromText(text: string): LyricsResult | null {
   if (synced.length > 0) return { synced: true, lines: synced };
   const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => ({ startMs: 0, text: line }));
   return lines.length > 0 ? { synced: false, lines } : null;
-}
-
-function metadata(response: PlexResponse): PlexMetadata[] {
-  return response.MediaContainer?.Metadata ?? [];
-}
-
-/**
- * Plex returns a page even when a catalog has thousands of entries; its API
- * requires X-Plex-Container headers rather than an implicit unlimited list.
- * Keep paging here so every catalog consumer cannot accidentally ship a
- * first-page-only view.
- */
-async function pagedMetadata(client: PlexClient, path: string): Promise<PlexMetadata[]> {
-  const result: PlexMetadata[] = [];
-  let start = 0;
-
-  while (true) {
-    const response = await client.request<PlexResponse>(path, {
-      headers: {
-        'X-Plex-Container-Start': String(start),
-        'X-Plex-Container-Size': String(PAGE_SIZE),
-      },
-    });
-    const page = metadata(response);
-    result.push(...page);
-
-    const total = Number(response.MediaContainer?.totalSize);
-    if (!page.length || !Number.isFinite(total) || result.length >= total) return result;
-
-    start += page.length;
-  }
 }
 
 function sectionIds(server: Server): string[] {
@@ -105,17 +73,45 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     return sections.length ? sections : (await client.request<PlexResponse>('/library/sections')).MediaContainer?.Directory?.map(s => String(s.key)).filter(Boolean) ?? [];
   }
 
-  async function libraryItems(type: number, extra = ''): Promise<PlexMetadata[]> {
+  /**
+   * Everything of one type across the library's sections, mapped as it
+   * arrives and deduped by the caller's key.
+   *
+   * A record can sit in two sections, so the same rating key can come back
+   * twice. The dedupe is on the mapped value rather than the DTO, which is
+   * what lets a page's DTOs go before the next request. Sections are still
+   * fetched together and kept in section order, so the list a caller sees is
+   * the one it saw before.
+   */
+  async function libraryItems<T>(
+    type: number,
+    map: (dto: PlexMetadata) => T | null,
+    keyOf: (value: T) => string,
+    extra = ''
+  ): Promise<T[]> {
     const ids = await sectionKeys();
-    const responses = await Promise.all(ids.map(section =>
-      pagedMetadata(client, `/library/sections/${encodeURIComponent(section)}/all?type=${type}${extra}`)
+    const sectionResults = await Promise.all(ids.map(section =>
+      pagedMetadata(client, `/library/sections/${encodeURIComponent(section)}/all?type=${type}${extra}`, map)
     ));
+
     const seen = new Set<string>();
-    return responses.flat().filter(item => {
-      const key = String(item.ratingKey ?? '');
-      return key && !seen.has(key) && (seen.add(key), true);
-    });
+    const all: T[] = [];
+    for (const results of sectionResults) {
+      for (const value of results) {
+        const key = keyOf(value);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        all.push(value);
+      }
+    }
+    return all;
   }
+
+  /** How the rows above are told apart, per shape. */
+  const ratingKeyOf = (dto: PlexMetadata): string => String(dto.ratingKey ?? '');
+  const byNativeId = (entity: { nativeId: string }): string => entity.nativeId;
+  const asTrack = (dto: PlexMetadata): Song | null =>
+    dto.type === 'track' ? mapSong(dto, { provenance }) : null;
 
   async function item(id: string): Promise<PlexMetadata | null> {
     const result = await client.request<PlexResponse>(`/library/metadata/${encodeURIComponent(id)}`);
@@ -123,7 +119,7 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   }
 
   async function itemTracks(id: string): Promise<PlexMetadata[]> {
-    return pagedMetadata(client, `/library/metadata/${encodeURIComponent(id)}/children`);
+    return pagedMetadata(client, `/library/metadata/${encodeURIComponent(id)}/children`, dto => dto);
   }
 
   let machineIdentifier: Promise<string> | null = null;
@@ -145,7 +141,7 @@ export function createPlexAdapter(server: Server): ApiAdapter {
 
   /** A playlist's track entries in order — the same ones `playlists.get` shows, so positions agree. */
   async function playlistEntries(playlistId: string): Promise<PlexMetadata[]> {
-    const entries = await pagedMetadata(client, `/playlists/${encodeURIComponent(playlistId)}/items`);
+    const entries = await pagedMetadata(client, `/playlists/${encodeURIComponent(playlistId)}/items`, dto => dto);
     return entries.filter(entry => entry.type === 'track');
   }
 
@@ -172,7 +168,7 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   };
 
   const albums: AlbumsApi = {
-    list: async () => (await libraryItems(9)).map(dto => mapAlbum(dto, { provenance })),
+    list: async () => libraryItems(9, dto => mapAlbum(dto, { provenance }), byNativeId),
     get: async (id) => {
       const [album, trackItems] = await Promise.all([item(id), itemTracks(id)]);
       if (!album) throw new Error('Album not found');
@@ -181,7 +177,7 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   };
 
   const artists: ArtistsApi = {
-    list: async () => (await libraryItems(8)).map(dto => mapArtist(dto, provenance)),
+    list: async () => libraryItems(8, dto => mapArtist(dto, provenance), byNativeId),
     get: async (id) => {
       const artist = await item(id);
       if (!artist) throw new Error('Artist not found');
@@ -197,11 +193,14 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     // Plex's collection-level genre endpoint varies by server/scanner. Album
     // Genre tags are present on the live server, so derive the stable union
     // from those rather than relying on an unverified endpoint.
-    list: async () => [...new Set((await libraryItems(9)).flatMap(album => album.Genre?.map(g => g.tag ?? '') ?? []).filter(Boolean))].sort(),
+    // Read off the DTO, not the mapped album: `mapAlbum` splits a `Rock;Jazz`
+    // tag into two genres, which is arguably right and is not this change's
+    // to make.
+    list: async () => [...new Set((await libraryItems(9, dto => dto, ratingKeyOf)).flatMap(album => album.Genre?.map(g => g.tag ?? '') ?? []).filter(Boolean))].sort(),
   };
 
   const tracks: TracksApi = {
-    list: async () => mapTracks(await libraryItems(10)),
+    list: async () => libraryItems(10, asTrack, byNativeId),
     get: async (id) => {
       const track = await item(id);
       return track?.type === 'track' ? mapSong(track, { provenance }) : null;
@@ -228,9 +227,10 @@ export function createPlexAdapter(server: Server): ApiAdapter {
 
   const starred: StarredApi = {
     list: async () => {
-      const items = await libraryItems(10, `&userRating=${FAVORITE_RATING}`);
-      const songs = mapTracks(items);
-      const albums = (await libraryItems(9, `&userRating=${FAVORITE_RATING}`)).map(dto => mapAlbum(dto, { provenance }));
+      const songs = await libraryItems(10, asTrack, byNativeId, `&userRating=${FAVORITE_RATING}`);
+      const albums = await libraryItems(
+        9, dto => mapAlbum(dto, { provenance }), byNativeId, `&userRating=${FAVORITE_RATING}`
+      );
       return { songs, albums };
     },
     add: async (id) => { await client.request(ratePath(id, FAVORITE_RATING), { method: 'PUT' }); },
@@ -238,11 +238,11 @@ export function createPlexAdapter(server: Server): ApiAdapter {
   };
 
   const playlists: PlaylistsApi = {
-    list: async () => (await pagedMetadata(client, '/playlists?playlistType=audio')).map(dto => mapPlaylist(dto, { provenance })),
+    list: async () => pagedMetadata(client, '/playlists?playlistType=audio', dto => mapPlaylist(dto, { provenance })),
     get: async (id): Promise<PlaylistDetail> => {
       const base = metadata(await client.request<PlexResponse>(`/playlists/${encodeURIComponent(id)}`))[0];
       if (!base) throw new Error('Playlist not found');
-      const entries = await pagedMetadata(client, `/playlists/${encodeURIComponent(id)}/items`);
+      const entries = await pagedMetadata(client, `/playlists/${encodeURIComponent(id)}/items`, dto => dto);
       const songs = mapTracks(entries);
       const playlist = mapPlaylist(base, { provenance, songIds: songs.map(song => song.localId) });
       return { playlist, songs };

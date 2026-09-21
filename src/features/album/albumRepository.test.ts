@@ -16,7 +16,6 @@ function makeAlbum(overrides: Partial<Album> = {}): Album {
     nativeId,
     provenance: SERVER,
     externalIds: {},
-    libraryState: 'in-library',
     title: 'OK Computer',
     cover: { kind: 'none' },
     artist: {

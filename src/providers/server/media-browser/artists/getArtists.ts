@@ -20,8 +20,9 @@ export async function getArtists(client: MediaBrowserClient): Promise<GetArtists
     `&Fields=PrimaryImageTag,Overview,Genres,DateCreated,ProviderIds` +
     (client.parentId ? `&ParentId=${encodeURIComponent(client.parentId)}` : "");
 
-  const items = await fetchAllItems<MediaBrowserItem>(client, path);
   const provenance = requireProvenance(client);
 
-  return items.map((a) => mapArtist(a, { provenance, brand: client.brand }));
+  return fetchAllItems<MediaBrowserItem, Artist>(client, path, (a) =>
+    mapArtist(a, { provenance, brand: client.brand })
+  );
 }

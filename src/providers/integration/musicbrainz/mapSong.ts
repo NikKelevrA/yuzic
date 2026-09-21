@@ -58,7 +58,6 @@ export function mapSong(dto: MbTrack, context: MapSongContext): Song {
     externalIds: externalIdsOf(dto),
     // Resolved through MusicBrainz, not owned on any server — see
     // mapArtist's comment on why this mapper never guesses further.
-    libraryState: 'external',
     title: dto.title ?? 'Unknown',
     artist: artistRef(provenance, dto['artist-credit']),
     album,

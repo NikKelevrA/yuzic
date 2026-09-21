@@ -1,16 +1,17 @@
-import { useMemo } from 'react';
 import type { Song } from '@/domain/entities/Song';
-import { useTracks } from './useTracks';
+import { useCatalogStore } from '@/features/library/useCatalogStore';
 
 /**
- * O(1) lookup map over the synced track catalog (now the persisted TanStack
- * Query cache via `useTracks`, not a Redux mirror — see `useAlbums` for why).
- * Keyed by `nativeId`: every caller looks a song up by the id it already has
- * from an origin-facing call (a queue entry, a download record, ...), and
- * the catalog is always scoped to one active server at a time, so a
- * `nativeId` collision across origins can't occur.
+ * O(1) lookup over the track catalog, keyed by `nativeId`: every caller looks
+ * a song up by the id it already has from an origin-facing call (a queue
+ * entry, a download record, ...), and the catalog is always scoped to one
+ * active server at a time, so a `nativeId` collision across origins cannot
+ * occur.
+ *
+ * This used to build its own `new Map(tracks.map(...))` — an index over every
+ * track in the library, rebuilt inside each component that wanted one. The
+ * store builds it once for the app.
  */
-export function useSongsById(): Map<string, Song> {
-  const { tracks } = useTracks();
-  return useMemo(() => new Map(tracks.map(song => [song.nativeId, song])), [tracks]);
+export function useSongsById(): ReadonlyMap<string, Song> {
+  return useCatalogStore().songByNativeId;
 }

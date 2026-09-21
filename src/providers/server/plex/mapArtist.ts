@@ -27,7 +27,6 @@ export function mapArtist(dto: PlexMetadata, provenance: Provenance): Artist {
     provenance,
     externalIds,
     // Anything the user's own server returned is, by definition, in their library.
-    libraryState: 'in-library',
     name: dto.title ?? 'Unknown Artist',
     cover,
     biography: dto.summary,

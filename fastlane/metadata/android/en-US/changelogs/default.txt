@@ -1,4 +1,8 @@
-Fixes a crash when Yuzic scanned a large Jellyfin library.
+Large libraries are faster and far lighter.
 
-- The library is fetched a page at a time now. It used to be asked for in one request, and on a big library that single response was large enough to run the app out of memory before it could draw anything
-- Sorting a large library no longer rebuilds the whole list first
+- No more crashes syncing or reopening a library of 90,000 songs
+- Opens from its saved copy instead of downloading your library again
+- Sorting a big library is about six times faster
+- Uses much less memory and storage
+- A song that won't play no longer retries forever. After three in a row, playback stops and keeps your queue
+- A song that failed behind hotel Wi-Fi or a broken proxy plays again once the connection is fixed

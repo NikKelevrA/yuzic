@@ -14,7 +14,6 @@ describe('mapPlaylist', () => {
       nativeId: 'pl-2',
       provenance: { origin: 'server', serverId: 'srv-1' },
       externalIds: {},
-      libraryState: 'in-library',
       title: 'Late night',
       cover: { kind: 'navidrome', coverArtId: 'pl-2' },
       isOwned: true,

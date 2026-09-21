@@ -46,7 +46,6 @@ const dzAlbum = {
   nativeId: 'dz-1',
   provenance: { origin: 'integration', providerId: 'deezer' },
   externalIds: { deezerId: 'dz-1' },
-  libraryState: 'external',
   title: 'Rumours',
   cover: { kind: 'none' },
   artist: {
