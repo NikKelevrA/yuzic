@@ -1,5 +1,5 @@
 import {
-  clearCredentialCache,
+  _clearCredentialCache,
   forgetCredentials,
   getCredentials,
   hydrateAll,
@@ -23,7 +23,7 @@ const integration: CredentialScope = { kind: 'integration', providerId: 'listenb
 
 beforeEach(() => {
   mockStore.clear();
-  clearCredentialCache();
+  _clearCredentialCache();
 });
 
 describe('getCredentials', () => {
@@ -32,7 +32,7 @@ describe('getCredentials', () => {
     // handle it: the adapter fails its ping, the app shows the disconnected
     // path, and re-renders once hydration lands.
     await setCredential(server, 'token', 'a-token');
-    clearCredentialCache();
+    _clearCredentialCache();
 
     expect(getCredentials(server)).toEqual({});
 
@@ -64,7 +64,7 @@ describe('setCredential', () => {
     expect(getCredentials(server).token).toBe('v2');
 
     // Proven against the store itself, not just the cache.
-    clearCredentialCache();
+    _clearCredentialCache();
     await hydrateCredentials(server);
     expect(getCredentials(server).token).toBe('v2');
   });
@@ -74,7 +74,7 @@ describe('setCredential', () => {
     await setCredential(server, 'token', '');
 
     expect('token' in getCredentials(server)).toBe(false);
-    clearCredentialCache();
+    _clearCredentialCache();
     await hydrateCredentials(server);
     expect('token' in getCredentials(server)).toBe(false);
   });
@@ -89,7 +89,7 @@ describe('forgetCredentials', () => {
 
     expect(getCredentials(server)).toEqual({});
     expect(getCredentials(other).token).toBe('kept');
-    clearCredentialCache();
+    _clearCredentialCache();
     await hydrateAll([server, other]);
     expect(getCredentials(server)).toEqual({});
     expect(getCredentials(other).token).toBe('kept');
@@ -100,7 +100,7 @@ describe('hydrateAll', () => {
   it('loads every scope it is given', async () => {
     await setCredential(server, 'password', 'p');
     await setCredential(integration, 'token', 't');
-    clearCredentialCache();
+    _clearCredentialCache();
 
     await hydrateAll([server, integration]);
 

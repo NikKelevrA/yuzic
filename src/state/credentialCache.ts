@@ -75,7 +75,7 @@ export async function forgetCredentials(scope: CredentialScope): Promise<void> {
   cache.delete(scopeKey(scope));
 }
 
-/** Drops the working copy without touching the keystore. For tests. */
-export function clearCredentialCache(): void {
+/** Drops the working copy without touching the keystore. Tests only. */
+export function _clearCredentialCache(): void {
   cache.clear();
 }

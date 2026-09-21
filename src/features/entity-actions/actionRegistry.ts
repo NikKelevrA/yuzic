@@ -32,8 +32,12 @@ export type { ArtistExternalActionContext } from './registry/artistExternalActio
 export { playlistActions } from './registry/playlistActions';
 export type { PlaylistActionContext } from './registry/playlistActions';
 
-/** `{kind}.{origin}` (or bare `{kind}` for the no-origin kinds) -> action ids, in declared order. */
-export const actionRegistrySummary = {
+/**
+ * `{kind}.{origin}` (or bare `{kind}` for the no-origin kinds) -> action ids,
+ * in declared order. Tests only: it is what lets one case assert the whole
+ * registry rather than one list at a time.
+ */
+export const _actionRegistrySummary = {
   'song.library': songLibraryActions.map(a => a.id),
   'song.external': songExternalActions.map(a => a.id),
   'album.library': albumLibraryActions.map(a => a.id),

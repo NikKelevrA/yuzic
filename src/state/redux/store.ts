@@ -150,7 +150,11 @@ const listeningPersistConfig = { key: 'listening', storage, throttle: 1000 };
 // query like the rest (`useGenres`), so the slice and its persist key are gone.
 // The old on-disk payload is simply never read again.
 
-export const rootReducer = combineReducers({
+/**
+ * The slice tree without redux-persist. Tests only — the app runs the
+ * persisted tree below. `store.test` holds the two to the same slice list.
+ */
+export const _rootReducer = combineReducers({
     servers: serversReducer,
     downloaders: downloadersReducer,
     audiomuse: audiomuseReducer,

@@ -11,7 +11,7 @@ import audiomuseReducer, {
 } from '@/state/redux/slices/audiomuseSlice';
 import settingsAppearanceReducer from '@/features/settings/appearance/state';
 import { audiomuseCredentialScope } from '@/state/redux/selectors/audiomuseSelectors';
-import { clearCredentialCache, getCredentials, setCredential } from '@/state/credentialCache';
+import { _clearCredentialCache, getCredentials, setCredential } from '@/state/credentialCache';
 
 // Boundaries only: AudioMuse-AI's HTTP call, the toast and i18n.
 jest.mock('expo-router', () => ({
@@ -71,7 +71,7 @@ const connection = (store: Store) => store.getState().audiomuse.byServer[SERVER_
 describe('AudiomuseView', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    clearCredentialCache();
+    _clearCredentialCache();
     mockTestConnection.mockReset().mockResolvedValue(undefined);
     (notify.error as jest.Mock).mockClear();
     (notify.info as jest.Mock).mockClear();
