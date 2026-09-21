@@ -165,6 +165,7 @@ export function usePlaybackEngine(
     setCurrentResource: session.setCurrentResource,
     removeFailedCurrentTrack,
     notifyError: () => notify.error(t('common.playbackError')),
+    notifyStopped: () => notify.error(t('common.playbackStopped')),
     logFailure: info => console.warn('Playback failed', info),
     now: Date.now,
   }), [removeFailedCurrentTrack, resolve, session, t, toMediaItems]);

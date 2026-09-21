@@ -9,6 +9,20 @@ import { resolvePlaybackErrorAction } from './playbackErrorRecovery';
 export const ERROR_TOAST_INTERVAL_MS = 1500;
 
 /**
+ * How many tracks may be given up on in a row, with nothing playing in
+ * between, before playback stops instead of moving on.
+ *
+ * One dead track is a bad file and two can be a coincidence, but a third with
+ * nothing heard in between says the problem is the server or the connection,
+ * not the tracks. Moving on past that point was not recovery: it dropped each
+ * track from the queue in turn, and Autoplay refilled it, so a server whose
+ * streams had broken ate the listener's queue about a track a second and never
+ * stopped. Measured on a device: 121 failures a minute at 134% CPU, a fresh
+ * mix fetched every ten seconds, indefinitely.
+ */
+export const MAX_DEAD_TRACKS_IN_A_ROW = 3;
+
+/**
  * What the app *does* about a playback failure.
  *
  * The decision is `playbackErrorRecovery`'s and it is pure: given how far the
@@ -44,6 +58,8 @@ export interface PlaybackEventDeps {
   setCurrentResource: (resource: PlayableResource | null) => void;
   /** Drop the track that cannot be played and move on. */
   removeFailedCurrentTrack: () => void;
+  /** Tell the listener playback stopped because nothing would play. */
+  notifyStopped: () => void;
   notifyError: () => void;
   logFailure: (info: Record<string, unknown>) => void;
   /** Injected so the toast throttle can be tested without waiting it out. */
@@ -82,10 +98,13 @@ export function createPlaybackEventHandlers(deps: PlaybackEventDeps): PlaybackEv
   let stallResumes: { songId: string | null; count: number } = { songId: null, count: 0 };
   /** When the last failure toast was shown, so a burst produces one. */
   let lastErrorToastAt = 0;
+  /** Tracks given up on since anything last played — see `MAX_DEAD_TRACKS_IN_A_ROW`. */
+  let deadTracksInARow = 0;
 
   return {
     onPlaying() {
       lastRecoveryAttemptedId = null;
+      deadTracksInARow = 0;
     },
 
     onError(event) {
@@ -140,6 +159,19 @@ export function createPlaybackEventHandlers(deps: PlaybackEventDeps): PlaybackEv
         deps.setCurrentResource(fresh[deps.currentIndex()] ?? resource ?? null);
         deps.backend().setMediaItems(deps.toMediaItems(fresh), deps.currentIndex());
         deps.backend().play();
+        return;
+      }
+
+      // Several in a row with nothing heard in between: stop, and keep the
+      // queue. The listener gets their queue back intact once the server is,
+      // and pressing play tries this track again with fresh URLs rather than
+      // resuming the walk. Counted until something actually plays, so a press
+      // that fails again stops again instead of dropping the next track.
+      deadTracksInARow += 1;
+      if (deadTracksInARow >= MAX_DEAD_TRACKS_IN_A_ROW) {
+        lastRecoveryAttemptedId = null;
+        deps.backend().pause();
+        deps.notifyStopped();
         return;
       }
 

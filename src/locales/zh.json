@@ -677,6 +677,7 @@
     "more": "更多",
     "less": "收起",
     "playbackError": "无法播放曲目",
+    "playbackStopped": "连续多首歌曲无法播放，已停止",
     "serverUnreachableBanner": "无法连接服务器 — 正在显示本地数据",
     "searchPlaceholder": "搜索…",
     "save": "保存",

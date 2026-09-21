@@ -678,6 +678,7 @@
     "more": "Plus",
     "less": "Moins",
     "playbackError": "Impossible de lire le morceau",
+    "playbackStopped": "Lecture arrêtée : plusieurs morceaux d'affilée n'ont pas pu être lus",
     "serverUnreachableBanner": "Serveur injoignable — affichage des données locales",
     "searchPlaceholder": "Rechercher…",
     "save": "Enregistrer",
