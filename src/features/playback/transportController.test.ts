@@ -15,7 +15,6 @@ function resource(nativeId: string, durationSeconds = 200): PlayableResource {
       nativeId,
       provenance,
       externalIds: {},
-      libraryState: 'in-library',
       title: `Track ${nativeId}`,
       artist: {
         localId: makeLocalId('artist', provenance, 'a1'),

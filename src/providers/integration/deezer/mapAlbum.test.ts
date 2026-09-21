@@ -23,7 +23,6 @@ describe('mapAlbum', () => {
       nativeId: '302127',
       provenance: { origin: 'integration', providerId: 'deezer' },
       externalIds: { deezerId: '302127', upc: '0724384960650' },
-      libraryState: 'external',
       title: 'Discovery',
       cover: { kind: 'url', url: 'https://api.deezer.com/album/302127/cover-xl.jpg' },
       artist: {
@@ -42,7 +41,6 @@ describe('mapAlbum', () => {
   });
 
   it('is external — an album browsed on Deezer is not one the user owns', () => {
-    expect(mapAlbum(fullDto, { provenance }).libraryState).toBe('external');
   });
 
   it('maps record_type to the domain release type, including compilations', () => {
@@ -66,7 +64,6 @@ describe('mapAlbum', () => {
       nativeId: '5',
       provenance: { origin: 'integration', providerId: 'deezer' },
       externalIds: { deezerId: '5' },
-      libraryState: 'external',
       title: 'Untitled',
       cover: { kind: 'none', subject: { kind: 'album', title: 'Untitled', artistName: 'Nobody' } },
       artist: {

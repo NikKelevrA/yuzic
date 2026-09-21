@@ -81,7 +81,6 @@ const ownedPlaylist: Playlist = {
   nativeId: 'p1',
   provenance: { origin: 'server', serverId: 'server1' },
   externalIds: {},
-  libraryState: 'in-library',
   title: 'My Mix',
   cover: { kind: 'none' },
   isOwned: true,

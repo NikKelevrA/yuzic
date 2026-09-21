@@ -42,7 +42,6 @@ export function mapSong(dto: LocalTrack, context: MapSongContext): Song {
     provenance,
     externalIds: externalIdsOf(dto),
     // A file the user imported is, by definition, in their library.
-    libraryState: 'in-library',
     title: dto.title,
     artist: artistRef(provenance, dto.artistId, dto.artist),
     album: albumRef(provenance, dto.albumId, dto.albumTitle, cover),

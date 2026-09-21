@@ -20,19 +20,19 @@ const albumId = (n: string) => makeLocalId('album', provenance, n);
 
 const artist = (nativeId: string, name = `Artist ${nativeId}`): Artist => ({
   localId: artistId(nativeId), nativeId, provenance, externalIds: {},
-  libraryState: 'in-library', name, cover: { kind: 'none' }, tags: [], albumIds: [],
+  name, cover: { kind: 'none' }, tags: [], albumIds: [],
 });
 
 const album = (nativeId: string, artistNativeId: string, genres: string[] = []): Album => ({
   localId: albumId(nativeId), nativeId, provenance, externalIds: {},
-  libraryState: 'in-library', title: `Album ${nativeId}`, cover: { kind: 'none' },
+  title: `Album ${nativeId}`, cover: { kind: 'none' },
   artist: { localId: artistId(artistNativeId), nativeId: artistNativeId, externalIds: {}, name: `Artist ${artistNativeId}`, cover: { kind: 'none' } },
   releaseType: 'album', genres, songIds: [],
 });
 
 const song = (nativeId: string, albumNativeId: string, artistNativeId: string): Song => ({
   localId: makeLocalId('song', provenance, nativeId), nativeId, provenance, externalIds: {},
-  libraryState: 'in-library', title: `Song ${nativeId}`, cover: { kind: 'none' },
+  title: `Song ${nativeId}`, cover: { kind: 'none' },
   artist: { localId: artistId(artistNativeId), nativeId: artistNativeId, externalIds: {}, name: `Artist ${artistNativeId}`, cover: { kind: 'none' } },
   album: { localId: albumId(albumNativeId), nativeId: albumNativeId, externalIds: {}, title: `Album ${albumNativeId}`, cover: { kind: 'none' } },
   durationSeconds: 100, contentKind: 'song', genres: [],
@@ -40,7 +40,7 @@ const song = (nativeId: string, albumNativeId: string, artistNativeId: string): 
 
 const playlist = (nativeId: string): Playlist => ({
   localId: makeLocalId('playlist', provenance, nativeId), nativeId, provenance,
-  externalIds: {}, libraryState: 'in-library', title: `Playlist ${nativeId}`,
+  externalIds: {}, title: `Playlist ${nativeId}`,
   cover: { kind: 'none' }, isOwned: true, songIds: [],
 });
 

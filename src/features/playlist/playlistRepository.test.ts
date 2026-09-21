@@ -14,7 +14,6 @@ function makePlaylist(overrides: Partial<Playlist> = {}): Playlist {
     nativeId,
     provenance: SERVER,
     externalIds: {},
-    libraryState: 'in-library',
     title: 'Road Trip',
     cover: { kind: 'none' },
     isOwned: true,

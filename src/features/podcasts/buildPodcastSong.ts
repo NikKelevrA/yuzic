@@ -37,7 +37,6 @@ export function podcastEpisodeToSong(
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: episode.title,
     // A podcast's "artist" and "album" are both its channel: that is what the
     // player's now-playing surfaces and the lock screen have to show.

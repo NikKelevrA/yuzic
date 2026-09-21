@@ -14,7 +14,6 @@ function song(nativeId: string): Song {
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: `Track ${nativeId}`,
     artist: { localId: makeLocalId('artist', provenance, 'a'), nativeId: 'a', externalIds: {}, name: 'Movements', cover: { kind: 'none' } },
     album: { localId: makeLocalId('album', provenance, 'al'), nativeId: 'al', externalIds: {}, title: 'Al', cover: { kind: 'none' } },

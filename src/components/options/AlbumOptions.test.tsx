@@ -172,7 +172,6 @@ const libraryAlbum: Album = {
   nativeId: 'a1',
   provenance: { origin: 'server', serverId: 'server1' },
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Local Album',
   cover: { kind: 'none' },
   artist: {
@@ -193,7 +192,6 @@ const externalAlbum: Album = {
   nativeId: 'ext1',
   provenance: { origin: 'integration', providerId: 'deezer' },
   externalIds: {},
-  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
   artist: {
@@ -239,7 +237,7 @@ describe('AlbumOptions', () => {
 
     view.getByText('externalAlbum.menu.goToArtist').props.onPress();
     expect(mockNavigateToArtist).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'External Artist', libraryState: 'external' })
+      expect.objectContaining({ name: 'External Artist' })
     );
 
     view.getByText('albumOptions.actions.share').props.onPress();

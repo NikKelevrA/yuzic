@@ -102,8 +102,7 @@ import type { Playlist } from '@/domain/entities/Playlist';
 
 const song: Song = {
   localId: 'local:song:srv:server1:s1' as Song['localId'], nativeId: 's1',
-  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, libraryState: 'in-library',
-  title: 'Local Song',
+  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, title: 'Local Song',
   artist: { localId: 'local:artist:srv:server1:ar1' as Song['artist']['localId'], nativeId: 'ar1', name: 'Some Artist', cover: { kind: 'none' }, externalIds: {} },
   album: { localId: 'local:album:srv:server1:al1' as Song['album']['localId'], nativeId: 'al1', title: 'Local Album', cover: { kind: 'none' }, externalIds: {} },
   cover: { kind: 'none' }, durationSeconds: 180, contentKind: 'song', genres: [],
@@ -111,32 +110,29 @@ const song: Song = {
 
 const externalSong: Song = {
   ...song, localId: 'local:song:ext:deezer:1' as Song['localId'], nativeId: 'ext-1',
-  provenance: { origin: 'integration', providerId: 'deezer' }, libraryState: 'external', contentKind: 'preview',
+  provenance: { origin: 'integration', providerId: 'deezer' }, contentKind: 'preview',
 };
 
 const album: Album = {
   localId: 'local:album:srv:server1:a1' as Album['localId'], nativeId: 'a1',
-  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, libraryState: 'in-library',
-  title: 'Local Album', cover: { kind: 'none' },
+  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, title: 'Local Album', cover: { kind: 'none' },
   artist: { localId: 'local:artist:srv:server1:ar1' as Album['artist']['localId'], nativeId: 'ar1', name: 'Some Artist', cover: { kind: 'none' }, externalIds: {} },
   year: 2020, releaseType: 'album', genres: [], songIds: [],
 };
 
 const externalAlbum: Album = {
   ...album, localId: 'local:album:ext:deezer:1' as Album['localId'], nativeId: 'ext-a1',
-  provenance: { origin: 'integration', providerId: 'deezer' }, libraryState: 'external',
+  provenance: { origin: 'integration', providerId: 'deezer' },
 };
 
 const artist: Artist = {
   localId: 'local:artist:srv:server1:ar1' as Artist['localId'], nativeId: 'ar1',
-  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, libraryState: 'in-library',
-  cover: { kind: 'none' }, name: 'Some Artist', tags: [], albumIds: [],
+  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, cover: { kind: 'none' }, name: 'Some Artist', tags: [], albumIds: [],
 };
 
 const playlist: Playlist = {
   localId: 'local:playlist:srv:server1:p1' as Playlist['localId'], nativeId: 'p1',
-  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, libraryState: 'in-library',
-  title: 'My Mix', cover: { kind: 'none' }, isOwned: true, songIds: [],
+  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, title: 'My Mix', cover: { kind: 'none' }, isOwned: true, songIds: [],
 };
 
 /**

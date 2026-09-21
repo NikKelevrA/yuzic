@@ -22,7 +22,6 @@ describe('mapPlaylist', () => {
       localId: 'local:playlist:srv:local:local:playlist:1',
       nativeId: 'local:playlist:1',
       provenance: { origin: 'server', serverId: 'local' },
-      libraryState: 'in-library',
       title: 'Road Trip',
       isOwned: true,
       createdAt: 1_700_000_000_000,

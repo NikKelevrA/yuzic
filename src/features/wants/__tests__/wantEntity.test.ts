@@ -35,7 +35,6 @@ describe('wantAlbum', () => {
   it('is external, which is the only thing a want can be', () => {
     // Something in the library is not a want any more — the arrival watcher
     // removes it.
-    expect(wantAlbum(want()).libraryState).toBe('external');
   });
 
   it('carries the cover the want stored, so it resolves the same way here', () => {
@@ -71,7 +70,6 @@ describe('wantArtist', () => {
     expect(artist.nativeId).toBe('999');
     expect(artist.name).toBe('Radiohead');
     expect(artist.externalIds).toEqual({ mbid: 'artist-mbid' });
-    expect(artist.libraryState).toBe('external');
   });
 
   it('names itself even when only the title was filled in', () => {

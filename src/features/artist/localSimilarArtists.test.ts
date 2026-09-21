@@ -17,7 +17,6 @@ const album = (id: string, artistId: string, artistName: string, genres: string[
   nativeId: id,
   provenance: { origin: 'server', serverId: 'server1' },
   externalIds: {},
-  libraryState: 'in-library',
   title: `Album ${id}`,
   cover: { kind: 'none' },
   artist: artistRef(artistId, artistName),

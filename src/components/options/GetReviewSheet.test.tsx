@@ -126,7 +126,6 @@ const externalAlbum: Album = {
   nativeId: 'ext1',
   provenance: { origin: 'integration', providerId: 'deezer' },
   externalIds: {},
-  libraryState: 'external',
   title: 'External Album',
   cover: { kind: 'none' },
   artist: {

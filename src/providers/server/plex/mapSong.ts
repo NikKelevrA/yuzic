@@ -53,7 +53,6 @@ export function mapSong(dto: PlexMetadata, context: MapSongContext): Song {
     nativeId,
     provenance,
     externalIds: externalIdsOf(dto),
-    libraryState: 'in-library',
     title: dto.title ?? 'Unknown',
     artist: artistRef(provenance, id(dto.grandparentRatingKey), dto.grandparentTitle),
     album: albumRef(provenance, id(dto.parentRatingKey), dto.parentTitle, cover),

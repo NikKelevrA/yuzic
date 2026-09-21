@@ -23,7 +23,6 @@ describe('mapArtist', () => {
       localId: 'local:artist:srv:srv-1:ar-7',
       nativeId: 'ar-7',
       provenance: { origin: 'server', serverId: 'srv-1' },
-      libraryState: 'in-library',
       name: 'Radiohead',
       biography: 'An English rock band.',
       tags: [],

@@ -171,7 +171,7 @@ export function useSongExternalActions(
 export function useExternalSongAlbumStub(song: Song, albumTitle: string): Album {
   return useMemo<Album>(() => ({
     localId: song.album.localId, nativeId: song.album.nativeId, provenance: song.provenance,
-    externalIds: song.album.externalIds, libraryState: 'external', title: albumTitle, cover: song.album.cover,
+    externalIds: song.album.externalIds, title: albumTitle, cover: song.album.cover,
     artist: song.artist, year: song.year, releaseDate: song.releaseDate, releaseType: 'album',
     genres: song.genres, songIds: [],
   }), [song, albumTitle]);

@@ -28,7 +28,6 @@ describe('mapAlbum', () => {
       localId: 'local:album:srv:local:local:album:in-rainbows',
       nativeId: 'local:album:in-rainbows',
       provenance: { origin: 'server', serverId: 'local' },
-      libraryState: 'in-library',
       title: 'In Rainbows',
       year: 2007,
       releaseType: 'album',

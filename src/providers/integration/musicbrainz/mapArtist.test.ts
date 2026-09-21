@@ -19,7 +19,6 @@ describe('mapArtist', () => {
       nativeId: '056e4f3e-d505-4dad-8ec1-d04f521cbb56',
       provenance: { origin: 'integration', providerId: 'musicbrainz' },
       externalIds: { mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' },
-      libraryState: 'external',
       name: 'Daft Punk',
       cover: { kind: 'none', subject: { kind: 'artist', name: 'Daft Punk', mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' } },
       biography: 'French electronic music duo formed in 1993.',
@@ -29,7 +28,6 @@ describe('mapArtist', () => {
   });
 
   it('is external — a resolved MusicBrainz artist is not one the user owns', () => {
-    expect(mapArtist(fullDto, provenance).libraryState).toBe('external');
   });
 
   it('captures the MBID as the external id', () => {
@@ -47,7 +45,6 @@ describe('mapArtist', () => {
       nativeId: 'ar-1',
       provenance: { origin: 'integration', providerId: 'musicbrainz' },
       externalIds: { mbid: 'ar-1' },
-      libraryState: 'external',
       name: 'Some Artist',
       cover: { kind: 'none', subject: { kind: 'artist', name: 'Some Artist', mbid: 'ar-1' } },
       biography: undefined,

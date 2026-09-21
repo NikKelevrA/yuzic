@@ -11,7 +11,6 @@ const album = (overrides: Partial<Album> = {}): Album => ({
   nativeId: 'local-album-1',
   provenance: PROVENANCE,
   externalIds: {},
-  libraryState: 'in-library',
   title: 'OK Computer',
   cover: { kind: 'none' },
   artist: {
@@ -32,7 +31,6 @@ const artist = (overrides: Partial<Artist> = {}): Artist => ({
   nativeId: 'local-artist-1',
   provenance: PROVENANCE,
   externalIds: {},
-  libraryState: 'in-library',
   name: 'Radiohead',
   cover: { kind: 'none' },
   tags: [],

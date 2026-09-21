@@ -65,11 +65,10 @@ describe('getAlbums', () => {
   });
 });
 
-describe('normalizeAlbum localId/libraryState', () => {
-  it('sets a stable localId and in-library libraryState when the client carries a serverId', () => {
+describe('normalizeAlbum identity', () => {
+  it('sets a stable localId when the client carries a serverId', () => {
     const client = makeClient({ serverId: 'server-1' });
     const album = normalizeAlbum(rawAlbum, client);
-    expect(album?.libraryState).toBe('in-library');
     expect(album?.localId).toBe('local:album:srv:server-1:album-1');
     expect(album?.artist.localId).toBe('local:artist:srv:server-1:artist-1');
 

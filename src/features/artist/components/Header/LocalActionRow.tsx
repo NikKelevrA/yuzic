@@ -79,7 +79,6 @@ export default function LocalActionRow({ artist }: { artist: Artist }) {
       nativeId: artist.nativeId,
       provenance: artist.provenance,
       externalIds: {},
-      libraryState: artist.libraryState,
       title: artist.name,
       cover: artist.cover,
       isOwned: false,

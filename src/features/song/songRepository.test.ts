@@ -13,7 +13,6 @@ function makeSong(overrides: Partial<Song> = {}): Song {
     nativeId,
     provenance: SERVER,
     externalIds: {},
-    libraryState: 'in-library',
     title: 'Paranoid Android',
     artist: { localId: makeLocalId('artist', SERVER, 'ar1'), nativeId: 'ar1', externalIds: {}, name: 'Radiohead', cover: { kind: 'none' } },
     album: { localId: makeLocalId('album', SERVER, 'al1'), nativeId: 'al1', externalIds: {}, title: 'OK Computer', cover: { kind: 'none' } },

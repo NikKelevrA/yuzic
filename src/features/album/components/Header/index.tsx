@@ -170,7 +170,7 @@ function ExternalMetaRow({ album, songs }: { album: Album | null; songs: Song[] 
 
   // The artist reference carried on the album is a thin `ArtistRef`, not a
   // full domain `Artist` — this builds a minimal-but-valid one to navigate
-  // with, taking provenance/libraryState from the album itself since the
+  // with, taking provenance from the album itself since the
   // referenced artist has no record of its own here.
   const handleNavigateToArtist = useCallback(() => {
     if (!album) return;
@@ -179,7 +179,6 @@ function ExternalMetaRow({ album, songs }: { album: Album | null; songs: Song[] 
       nativeId: album.artist.nativeId,
       provenance: album.provenance,
       externalIds: album.artist.externalIds,
-      libraryState: 'external',
       name: album.artist.name,
       cover: album.artist.cover,
       tags: [],

@@ -78,7 +78,6 @@ describe('albumRequestFromExternal', () => {
       localId: makeLocalId('album', provenance, '684058471'),
       nativeId: '684058471',
       provenance,
-      libraryState: 'external',
       title: 'IVE EMPATHY',
       cover: { kind: 'none' },
       artist: {

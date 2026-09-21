@@ -51,7 +51,6 @@ export function mapAlbum(dto: MediaBrowserItem, context: MapAlbumContext): Album
     nativeId,
     provenance,
     externalIds,
-    libraryState: 'in-library',
     title: dto.Name ?? 'Unknown Album',
     cover,
     // The embedded artist gets a cover derived from the album payload itself —

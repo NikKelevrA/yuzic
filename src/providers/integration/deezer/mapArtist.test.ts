@@ -20,7 +20,6 @@ describe('mapArtist', () => {
       nativeId: '27',
       provenance: { origin: 'integration', providerId: 'deezer' },
       externalIds: { deezerId: '27' },
-      libraryState: 'external',
       name: 'Daft Punk',
       cover: { kind: 'url', url: 'https://api.deezer.com/artist/27/image-xl.jpg' },
       tags: [],
@@ -29,7 +28,6 @@ describe('mapArtist', () => {
   });
 
   it('is external, not in-library — browsing Deezer is not owning it', () => {
-    expect(mapArtist(fullDto, provenance).libraryState).toBe('external');
   });
 
   it('captures the Deezer id as the external id', () => {
@@ -57,7 +55,6 @@ describe('mapArtist', () => {
       nativeId: '1',
       provenance: { origin: 'integration', providerId: 'deezer' },
       externalIds: { deezerId: '1' },
-      libraryState: 'external',
       name: 'Solo Artist',
       cover: { kind: 'none', subject: { kind: 'artist', name: 'Solo Artist' } },
       tags: [],

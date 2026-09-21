@@ -12,7 +12,6 @@ function song(id: string, overrides: Partial<Song> = {}): Song {
     nativeId: id,
     provenance: { origin: 'server', serverId: 's1' },
     externalIds: {},
-    libraryState: 'in-library',
     title: `Song ${id}`,
     artist: artistRef,
     album: albumRef,
@@ -29,7 +28,6 @@ function browsedSong(id: string, overrides: Partial<Song> = {}): Song {
   return song(id, {
     localId: `local:song:int:deezer:${id}` as LocalId,
     provenance: { origin: 'integration', providerId: 'deezer' },
-    libraryState: 'external',
     contentKind: 'preview',
     durationSeconds: 30,
     ...overrides,

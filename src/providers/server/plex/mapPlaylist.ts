@@ -30,7 +30,6 @@ export function mapPlaylist(dto: PlexMetadata, context: MapPlaylistContext): Pla
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: dto.title ?? 'Untitled playlist',
     cover,
     // Plex's `/playlists` listing does not distinguish owned from shared, and

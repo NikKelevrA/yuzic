@@ -22,7 +22,6 @@ export function mapArtist(dto: MbArtist, provenance: Provenance): Artist {
     // Known only through MusicBrainz means browsed, not owned — whether it
     // becomes wanted/acquirable is a later policy decision this mapper has no
     // visibility into. See LibraryState.
-    libraryState: 'external',
     name: dto.name ?? 'Unknown Artist',
     // MusicBrainz's artist lookup/search responses used by this adapter carry
     // no picture of their own; the gap names the artist for a backup.

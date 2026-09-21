@@ -97,8 +97,7 @@ import type { Album } from '@/domain/entities/Album';
 
 const librarySong: Song = {
   localId: 'local:song:srv:server1:s1' as Song['localId'], nativeId: 's1',
-  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, libraryState: 'in-library',
-  title: 'Local Song',
+  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, title: 'Local Song',
   artist: { localId: 'local:artist:srv:server1:ar1' as Song['artist']['localId'], nativeId: 'ar1', name: 'Some Artist', cover: { kind: 'none' }, externalIds: {} },
   album: { localId: 'local:album:srv:server1:al1' as Song['album']['localId'], nativeId: 'al1', title: 'Local Album', cover: { kind: 'none' }, externalIds: {} },
   cover: { kind: 'none' }, durationSeconds: 180, contentKind: 'song', genres: [],
@@ -106,8 +105,7 @@ const librarySong: Song = {
 
 const libraryAlbum: Album = {
   localId: 'local:album:srv:server1:a1' as Album['localId'], nativeId: 'a1',
-  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, libraryState: 'in-library',
-  title: 'Local Album', cover: { kind: 'none' },
+  provenance: { origin: 'server', serverId: 'server1' }, externalIds: {}, title: 'Local Album', cover: { kind: 'none' },
   artist: { localId: 'local:artist:srv:server1:ar1' as Album['artist']['localId'], nativeId: 'ar1', name: 'Some Artist', cover: { kind: 'none' }, externalIds: {} },
   year: 2020, releaseType: 'album', genres: [], songIds: [],
 };

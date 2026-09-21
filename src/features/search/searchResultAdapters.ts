@@ -43,7 +43,6 @@ function externalAlbum(input: {
     nativeId: input.id,
     provenance,
     externalIds: normalizeExternalIds(input.externalIds),
-    libraryState: 'external',
     title: input.title,
     cover: input.cover,
     artist: {
@@ -66,7 +65,6 @@ function localAlbum(result: SearchResult, activeServerId: string | undefined): A
     nativeId: result.id,
     provenance,
     externalIds: normalizeExternalIds(result.externalIds),
-    libraryState: 'in-library',
     title: result.title,
     cover: result.cover,
     artist: {
@@ -122,7 +120,6 @@ function externalArtist(input: {
     nativeId: input.id,
     provenance,
     externalIds: normalizeExternalIds(input.externalIds),
-    libraryState: 'external',
     name: input.name,
     cover: input.cover,
     tags: [],
@@ -140,9 +137,6 @@ export function resultToArtist(result: SearchResult, activeServerId: string | un
     nativeId: result.id,
     provenance,
     externalIds: normalizeExternalIds(result.externalIds),
-    libraryState: result.source === 'external'
-      ? (result.isDownloaded ? 'in-library' : 'external')
-      : 'in-library',
     name: result.title,
     cover: result.cover,
     tags: [],
@@ -172,7 +166,6 @@ export function resultToPlaylist(result: SearchResult, activeServerId: string | 
     nativeId: result.id,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: result.title,
     cover: result.cover,
     isOwned: true,

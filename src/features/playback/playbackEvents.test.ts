@@ -19,7 +19,6 @@ function resource(nativeId: string, contentKind: ContentKind = 'song'): Playable
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: `Track ${nativeId}`,
     artist: {
       localId: makeLocalId('artist', provenance, 'a1'),

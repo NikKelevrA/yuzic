@@ -16,7 +16,6 @@ const album = (nativeId: string, playCount?: number): Album => ({
   nativeId,
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   title: nativeId,
   cover: { kind: 'none' },
   artist: {

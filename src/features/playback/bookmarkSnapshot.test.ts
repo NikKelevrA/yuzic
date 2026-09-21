@@ -14,7 +14,6 @@ const librarySong: Song = {
   nativeId: 'track-1',
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   title: 'A Long Song',
   artist: { localId: makeLocalId('artist', provenance, 'artist-1'), nativeId: 'artist-1', externalIds: {}, name: 'An Artist', cover: { kind: 'none' } },
   album: { localId: makeLocalId('album', provenance, 'album-1'), nativeId: 'album-1', externalIds: {}, title: 'An Album', cover: { kind: 'none' } },

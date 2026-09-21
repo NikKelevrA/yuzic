@@ -14,7 +14,6 @@ function song(id: string, artistName: string, overrides: Partial<Song> = {}): So
     nativeId: id,
     provenance: { origin: 'server', serverId: 's1' },
     externalIds: {},
-    libraryState: 'in-library',
     title: `Song ${id}`,
     artist: artistRef(artistName),
     album: albumRef,

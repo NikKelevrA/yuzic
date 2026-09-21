@@ -49,7 +49,6 @@ export default function ExternalActionRow({ model }: { model: AlbumScreenModel }
       nativeId: album.nativeId,
       provenance,
       externalIds: {},
-      libraryState: 'external',
       title: album.title,
       cover: album.cover,
       isOwned: false,

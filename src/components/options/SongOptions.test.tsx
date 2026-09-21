@@ -161,7 +161,6 @@ const librarySong: Song = {
   nativeId: 's1',
   provenance: { origin: 'server', serverId: 'server1' },
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Local Song',
   artist: {
     localId: 'local:artist:srv:server1:ar1' as Song['artist']['localId'],
@@ -188,7 +187,6 @@ const externalSong: Song = {
   nativeId: 'ext-s1',
   provenance: { origin: 'integration', providerId: 'deezer' },
   externalIds: {},
-  libraryState: 'external',
   title: 'External Song',
   artist: {
     localId: 'local:artist:ext:deezer:extArtist1' as Song['artist']['localId'],

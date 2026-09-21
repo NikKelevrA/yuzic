@@ -69,7 +69,6 @@ export function mapAlbum(dto: AnyAlbumDto, context: MapAlbumContext): Album {
     nativeId,
     provenance,
     externalIds: externalIdsOf(dto),
-    libraryState: 'in-library',
     title: titleOf(dto),
     cover: albumCoverOf(dto),
     artist: artistRef(provenance, dto.artistId, dto.artist, context.artistCover),

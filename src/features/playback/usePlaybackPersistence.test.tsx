@@ -68,7 +68,6 @@ const resource = (id: string, contentKind: Song['contentKind'] = 'song'): Playab
     nativeId: id,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: id,
     artist: { localId: makeLocalId('artist', provenance, 'a1'), nativeId: 'a1', externalIds: {}, name: 'A', cover: { kind: 'none' } },
     album: { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1', externalIds: {}, title: 'Al', cover: { kind: 'none' } },

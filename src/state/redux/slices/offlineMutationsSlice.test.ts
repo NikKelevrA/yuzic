@@ -17,7 +17,6 @@ const song: Song = {
   nativeId: 'song-1',
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   title: 'Song',
   artist: {
     localId: makeLocalId('artist', provenance, 'artist-1'),

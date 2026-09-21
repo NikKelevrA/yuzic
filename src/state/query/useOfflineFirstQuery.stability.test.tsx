@@ -102,7 +102,6 @@ describe('useOfflineFirstQuery with nothing cached', () => {
       nativeId,
       provenance,
       externalIds: {},
-      libraryState: 'in-library',
       name,
       cover: { kind: 'none' },
       tags: [],

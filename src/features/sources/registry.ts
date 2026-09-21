@@ -159,7 +159,6 @@ function stubDeezerArtist(artistId: string, artistName: string): Artist {
     nativeId: artistId,
     provenance,
     externalIds: artistId ? { deezerId: artistId } : {},
-    libraryState: 'external',
     name: artistName,
     cover: missingCover(artistCoverSubject(artistName)),
     tags: [],

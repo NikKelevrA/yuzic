@@ -45,7 +45,6 @@ export function stationToSong(station: InternetRadioStation, serverId: string): 
     nativeId: `${LIVE_STREAM_ID_PREFIX}${station.id}`,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: station.name,
     artist: placeholderRef('artist', 'Live Radio') as Song['artist'],
     album: placeholderRef('album', '') as Song['album'],

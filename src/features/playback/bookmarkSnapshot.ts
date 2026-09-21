@@ -74,7 +74,6 @@ export function resourceFromBookmarkSnapshot(
       externalIds: {},
       // A bookmark only exists for something the user was playing, so it is
       // theirs in whatever sense it was when the position was stored.
-      libraryState: 'in-library',
       title: snapshot.title,
       artist: {
         localId: makeLocalId('artist', provenance, ''),

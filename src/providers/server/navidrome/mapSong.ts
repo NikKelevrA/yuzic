@@ -56,7 +56,6 @@ export function mapSong(dto: SubsonicSong, context: MapSongContext): Song {
     nativeId,
     provenance,
     externalIds: externalIdsOf(dto),
-    libraryState: 'in-library',
     title: dto.title ?? 'Unknown',
     artist: artistRef(provenance, dto.artistId, dto.artist),
     album: albumRef(provenance, dto.albumId ?? context.albumId, dto.album ?? context.albumTitle, cover),

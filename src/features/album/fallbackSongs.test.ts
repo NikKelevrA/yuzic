@@ -14,7 +14,6 @@ const track = (
   nativeId,
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   title: `Track ${nativeId}`,
   artist: {
     localId: makeLocalId('artist', provenance, 'artist-1'),

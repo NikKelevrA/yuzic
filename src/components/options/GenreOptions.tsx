@@ -112,7 +112,6 @@ const GenreOptions = forwardRef<BottomSheetModal, GenreOptionsProps>(({ genre, a
       nativeId: genre,
       provenance,
       externalIds: {},
-      libraryState: 'in-library',
       title: genre,
       cover: albums[0]?.cover ?? { kind: 'none' },
       isOwned: false,

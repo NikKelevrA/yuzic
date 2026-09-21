@@ -58,7 +58,6 @@ function libraryAlbum(): Album {
     nativeId: 'lib-album-1',
     provenance: PROVENANCE,
     externalIds: {},
-    libraryState: 'in-library',
     title: 'Some Album',
     cover: { kind: 'none' },
     artist: {
@@ -81,7 +80,6 @@ function libraryArtist(): Artist {
     nativeId: 'lib-artist-1',
     provenance: PROVENANCE,
     externalIds: {},
-    libraryState: 'in-library',
     name: 'Some Artist',
     cover: { kind: 'none' },
     tags: [],

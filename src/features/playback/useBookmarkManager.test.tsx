@@ -84,7 +84,6 @@ function song(id: string, durationSeconds: number): Song {
     nativeId: id,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: 'Track',
     artist: { localId: makeLocalId('artist', provenance, 'a1'), nativeId: 'a1', externalIds: {}, name: 'Author', cover: { kind: 'none' } },
     album: { localId: makeLocalId('album', provenance, 'al1'), nativeId: 'al1', externalIds: {}, title: 'Album', cover: { kind: 'none' } },

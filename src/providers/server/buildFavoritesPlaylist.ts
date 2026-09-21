@@ -25,7 +25,6 @@ export function buildFavoritesPlaylist(songs: Song[], provenance: Provenance): P
     nativeId: FAVORITES_ID,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: i18n.t('playlist.favoritesTitle'),
     cover: { kind: 'special', name: 'heart' },
     isOwned: true,

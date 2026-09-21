@@ -75,7 +75,6 @@ const outsideSong: Song = {
   nativeId: 'dz-1',
   provenance,
   externalIds: {},
-  libraryState: 'external',
   title: 'Blunts',
   artist: { localId: makeLocalId('artist', provenance, 'dz-ar'), nativeId: 'dz-ar', externalIds: {}, name: 'Artist', cover: { kind: 'none' } },
   album: { localId: makeLocalId('album', provenance, 'dz-al'), nativeId: 'dz-al', externalIds: {}, title: 'Album', cover: { kind: 'none' } },

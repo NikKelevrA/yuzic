@@ -29,7 +29,6 @@ export function mapPlaylist(dto: MediaBrowserItem, context: MapPlaylistContext):
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: dto.Name ?? 'Untitled playlist',
     cover,
     // The `/Items?IncludeItemTypes=Playlist` listing does not say who owns a

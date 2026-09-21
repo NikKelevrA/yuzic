@@ -67,7 +67,6 @@ export function mapSong(dto: MediaBrowserItem, context: MapSongContext): Song {
     nativeId,
     provenance,
     externalIds: externalIdsOf(dto),
-    libraryState: 'in-library',
     title: dto.Name ?? 'Unknown',
     artist: artistRef(provenance, artistItem?.Id, artistItem?.Name ?? dto.AlbumArtist),
     album: albumRef(provenance, albumId, context.albumTitle, cover),

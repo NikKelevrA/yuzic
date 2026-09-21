@@ -30,7 +30,6 @@ function song(nativeId: string, title: string): Song {
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title,
     artist: ref('artist', 'ar1', 'Some Artist') as Song['artist'],
     album: ref('album', 'al1', 'My Album') as Song['album'],
@@ -46,7 +45,6 @@ const artist: Artist = {
   nativeId: 'ar1',
   provenance,
   externalIds: {},
-  libraryState: 'in-library',
   name: 'Some Artist',
   cover: { kind: 'none' },
   tags: [],
@@ -100,7 +98,6 @@ describe('generateSimilarPlaylistForAlbum', () => {
       nativeId: 'al1',
       provenance,
       externalIds: {},
-      libraryState: 'in-library',
       title: 'My Album',
       cover: { kind: 'none' },
       artist: {

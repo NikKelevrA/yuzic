@@ -8,7 +8,6 @@ const album = (over: Partial<Album>): Album => ({
   nativeId: '1',
   provenance: integrationProvenance('deezer'),
   externalIds: {},
-  libraryState: 'external',
   title: 'Geogaddi',
   cover: { kind: 'none' },
   artist: {
@@ -29,7 +28,6 @@ const artist = (over: Partial<Artist>): Artist => ({
   nativeId: '9',
   provenance: integrationProvenance('deezer'),
   externalIds: {},
-  libraryState: 'external',
   name: 'Boards of Canada',
   cover: { kind: 'none' },
   tags: [],

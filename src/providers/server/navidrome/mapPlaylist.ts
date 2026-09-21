@@ -38,7 +38,6 @@ export function mapPlaylist(dto: SubsonicPlaylist, context: MapPlaylistContext):
     nativeId,
     provenance,
     externalIds: {},
-    libraryState: 'in-library',
     title: dto.name ?? 'Untitled playlist',
     cover,
     // Navidrome lists the caller's own playlists and other accounts' public

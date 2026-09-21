@@ -33,7 +33,6 @@ export function mapArtist(dto: MediaBrowserItem, context: MapArtistContext): Art
     provenance,
     externalIds,
     // Anything the user's own server returned is, by definition, in their library.
-    libraryState: 'in-library',
     name: dto.Name ?? 'Unknown Artist',
     cover,
     biography: dto.Overview,

@@ -228,7 +228,6 @@ export async function fetchSimilarArtistsFromListeners(
       nativeId: artist.artistMbid,
       provenance,
       externalIds: { mbid: artist.artistMbid },
-      libraryState: 'external',
       name: artist.name,
       // The graph names artists and has no pictures; the gap says who each is,
       // and cover resolution fills it the same way it fills any other.

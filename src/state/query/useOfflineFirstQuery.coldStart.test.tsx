@@ -55,7 +55,6 @@ function persistedAlbum(nativeId: string, title: string): Album {
     nativeId,
     provenance: PROVENANCE,
     externalIds: {},
-    libraryState: 'in-library',
     title,
     cover: { kind: 'none' },
     artist: {

@@ -119,7 +119,6 @@ const sampleTrack: Song = {
   nativeId: 't1',
   provenance: { origin: 'integration', providerId: 'listenbrainz' },
   externalIds: {},
-  libraryState: 'external',
   title: 'Song One',
   artist: {
     localId: 'local:artist:ext:listenbrainz:a1' as Song['artist']['localId'],
