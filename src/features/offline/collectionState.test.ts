@@ -1,8 +1,6 @@
 import {
-  areTrackIdsFullyDownloaded,
   buildDownloadedTrackIdSet,
   getFullyDownloadedAlbumIds,
-  isPlaylistFullyDownloaded,
 } from './collectionState';
 
 describe('download collection state', () => {
@@ -18,25 +16,6 @@ describe('download collection state', () => {
     expect([...ids]).toEqual(['track-a', '42', 'track-c']);
   });
 
-  it('requires every requested track to be downloaded', () => {
-    const downloaded = new Set(['a', 'b']);
-
-    expect(areTrackIdsFullyDownloaded(['a', 'b'], downloaded)).toBe(true);
-    expect(areTrackIdsFullyDownloaded(['a', 'c'], downloaded)).toBe(false);
-    expect(areTrackIdsFullyDownloaded([], downloaded)).toBe(false);
-  });
-
-  it('detects fully downloaded playlists', () => {
-    expect(isPlaylistFullyDownloaded(
-      { id: 'playlist-1', songs: [{ id: 'a' }, { id: 'b' }] },
-      new Set(['a', 'b', 'c'])
-    )).toBe(true);
-
-    expect(isPlaylistFullyDownloaded(
-      { id: 'playlist-1', songs: [{ id: 'a' }, { id: 'missing' }] },
-      new Set(['a'])
-    )).toBe(false);
-  });
 
   it('detects fully downloaded albums without counting partial albums', () => {
     const albumIds = getFullyDownloadedAlbumIds(

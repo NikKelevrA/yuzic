@@ -39,18 +39,3 @@ export function normalizeExternalIds(ids: unknown): ExternalIds {
   }
   return out as ExternalIds;
 }
-
-/**
- * Merges newly resolved ids over known ones.
- *
- * Existing values win: an id already recorded came from the entity's own
- * origin or from an earlier, higher-priority resolution, and a later provider
- * guessing differently must not silently overwrite it.
- */
-export function mergeExternalIds(known: ExternalIds, resolved: ExternalIds): ExternalIds {
-  const merged: ExternalIds = { ...resolved, ...known };
-  for (const key of Object.keys(merged) as (keyof ExternalIds)[]) {
-    if (merged[key] === undefined) delete merged[key];
-  }
-  return merged;
-}

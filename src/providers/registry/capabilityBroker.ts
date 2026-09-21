@@ -83,7 +83,3 @@ export function firstOfferFor<K extends CapabilityName>(
 ): CapabilityOffer<K> | null {
   return offersFor(input, capability)[0] ?? null;
 }
-
-/** Whether anything can serve this capability. Invokes nothing. */
-export const hasCapability = (input: BrokerInput, capability: CapabilityName): boolean =>
-  offersFor(input, capability).length > 0;

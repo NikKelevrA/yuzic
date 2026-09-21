@@ -5,8 +5,6 @@ import {
   buildCatalogStore,
   songsByAlbum,
   songsByAlbumNativeId,
-  songsByArtist,
-  songsByArtistNativeId,
   type Catalog,
 } from './catalogStore';
 import type { Album } from '@/domain/entities/Album';
@@ -97,10 +95,6 @@ describe('relationships', () => {
     expect(songsByAlbum(store, albumId('al1')).map(s => s.nativeId)).toEqual(['s1', 's2']);
   });
 
-  it('answers songs by artist across their albums', () => {
-    expect(songsByArtist(store, artistId('a1')).map(s => s.nativeId)).toEqual(['s1', 's2']);
-  });
-
   it('answers albums by genre, counting an album under each of its genres', () => {
     expect(albumsByGenre(store, 'Rock').map(a => a.nativeId)).toEqual(['al1', 'al2']);
     expect(albumsByGenre(store, 'Indie').map(a => a.nativeId)).toEqual(['al2']);
@@ -146,7 +140,6 @@ describe('lookups by native id', () => {
     // Routes carry native ids; relationships are keyed by LocalId. One is a
     // pure function of the other given the catalog's provenance.
     expect(albumsByArtistNativeId(store, 'a1')).toEqual(albumsByArtist(store, artistId('a1')));
-    expect(songsByArtistNativeId(store, 'a1')).toEqual(songsByArtist(store, artistId('a1')));
     expect(songsByAlbumNativeId(store, 'al1')).toEqual(songsByAlbum(store, albumId('al1')));
   });
 

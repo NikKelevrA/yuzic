@@ -23,18 +23,3 @@ export interface ResolvedField<T> {
 
 export const resolved = <T>(value: T, sourceId: ProviderId): ResolvedField<T> =>
   ({ value, sourceId });
-
-/**
- * The first field that has a value, in the order given.
- *
- * First-hit-wins is the default because enrichment sources are ranked by the
- * user, and blending two providers' answers to one question produces a record
- * that is true of neither. A feature that genuinely wants to combine sources
- * says so explicitly rather than getting it by accident here.
- */
-export function firstResolved<T>(
-  candidates: readonly (ResolvedField<T> | null | undefined)[]
-): ResolvedField<T> | null {
-  return candidates.find((candidate): candidate is ResolvedField<T> =>
-    candidate != null && candidate.value !== undefined && candidate.value !== null) ?? null;
-}

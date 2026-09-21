@@ -71,5 +71,3 @@ export function parseLocalId(
     nativeId,
   };
 }
-
-export const isLocalId = (id: string): id is LocalId => parseLocalId(id) !== null;

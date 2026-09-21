@@ -1,6 +1,5 @@
 import sourcesReducer, {
   selectEnabledSourcesFor,
-  selectSourceInUse,
   selectSourceServerUrls,
   selectSourceUse,
   setSourceServerUrl,
@@ -24,8 +23,6 @@ describe('source uses', () => {
     const state = reduce(setSourceUse({ use: 'deezer.artwork', enabled: true }));
     expect(selectSourceUse('deezer.artwork')(state)).toBe(true);
     expect(selectSourceUse('deezer.previews')(state)).toBe(false);
-    expect(selectSourceInUse('deezer')(state)).toBe(true);
-    expect(selectSourceInUse('lastfm')(state)).toBe(false);
   });
 
   it('lists the sources on for a purpose in the fixed order, not the order they were turned on', () => {
@@ -47,7 +44,7 @@ describe('source uses', () => {
       setSourceUse({ use: 'lastfm.artistInfo', enabled: true }),
       stopUsingSource('deezer'),
     );
-    expect(selectSourceInUse('deezer')(state)).toBe(false);
+    for (const use of usesOf('deezer')) expect(selectSourceUse(use.id)(state)).toBe(false);
     expect(selectSourceUse('lastfm.artistInfo')(state)).toBe(true);
   });
 });

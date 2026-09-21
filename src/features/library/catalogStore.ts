@@ -199,9 +199,6 @@ export const albumsByArtist = (store: CatalogStore, artistId: LocalId): Album[] 
 export const songsByAlbum = (store: CatalogStore, albumId: LocalId): Song[] =>
   resolve(store.songIdsByAlbum.get(albumId) ?? EMPTY, store.songs);
 
-export const songsByArtist = (store: CatalogStore, artistId: LocalId): Song[] =>
-  resolve(store.songIdsByArtist.get(artistId) ?? EMPTY, store.songs);
-
 export const albumsByGenre = (store: CatalogStore, genre: string): Album[] =>
   resolve(store.albumIdsByGenre.get(genre) ?? EMPTY, store.albums);
 
@@ -222,11 +219,6 @@ const localIdFor = (
 export function albumsByArtistNativeId(store: CatalogStore, nativeId: string): Album[] {
   const id = localIdFor(store, 'artist', nativeId);
   return id ? albumsByArtist(store, id) : [];
-}
-
-export function songsByArtistNativeId(store: CatalogStore, nativeId: string): Song[] {
-  const id = localIdFor(store, 'artist', nativeId);
-  return id ? songsByArtist(store, id) : [];
 }
 
 export function songsByAlbumNativeId(store: CatalogStore, nativeId: string): Song[] {

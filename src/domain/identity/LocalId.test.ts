@@ -1,4 +1,4 @@
-import { isLocalId, makeLocalId, parseLocalId } from './LocalId';
+import { makeLocalId, parseLocalId } from './LocalId';
 import type { Provenance } from './Provenance';
 
 const server1: Provenance = { origin: 'server', serverId: 'srv-1' };
@@ -72,24 +72,6 @@ describe('parseLocalId', () => {
   });
 });
 
-describe('isLocalId', () => {
-  it('agrees with parseLocalId for a value it produced', () => {
-    const id = makeLocalId('album', server1, 'abc');
-    expect(isLocalId(id)).toBe(parseLocalId(id) !== null);
-    expect(isLocalId(id)).toBe(true);
-  });
-
-  it('agrees with parseLocalId for a value that does not parse', () => {
-    const bogus = 'local:track:srv:srv-1:abc';
-    expect(isLocalId(bogus)).toBe(parseLocalId(bogus) !== null);
-    expect(isLocalId(bogus)).toBe(false);
-  });
-
-  it('agrees with parseLocalId for the empty string', () => {
-    expect(isLocalId('')).toBe(parseLocalId('') !== null);
-    expect(isLocalId('')).toBe(false);
-  });
-});
 
 describe('scope encoding', () => {
   it('round-trips a scope containing a colon without shifting the native id', () => {

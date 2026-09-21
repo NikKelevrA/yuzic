@@ -47,12 +47,6 @@ export const EQ_FREQUENCIES = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16
  */
 export const EQ_GAIN_LIMIT_DB = 12;
 
-/** Flat — the default, and what "reset" restores. */
-export const FLAT_EQ: EqualizerBand[] = EQ_FREQUENCIES.map(frequencyHz => ({
-  frequencyHz,
-  gainDb: 0,
-}));
-
 /**
  * Named curves, as offsets in dB per band.
  *

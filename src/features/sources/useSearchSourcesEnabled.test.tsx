@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
-import { useEnabledSearchSourceIds, useSearchSourceEnabled } from './useSearchSourcesEnabled';
+import { useEnabledSearchSourceIds } from './useSearchSourcesEnabled';
 import settingsSourcesReducer, { setSourceUse, setSourceUses } from '@/features/settings/sources/state';
 import { DISCOVERY_USES } from '@/providers/registry/sources';
 
@@ -52,18 +52,5 @@ describe('useEnabledSearchSourceIds', () => {
     mockIsOffline = true;
     const { result } = await renderHook(() => useEnabledSearchSourceIds(), { wrapper: wrapper(store) });
     expect(result.current).toEqual([]);
-  });
-});
-
-describe('useSearchSourceEnabled', () => {
-  beforeEach(() => {
-    mockIsOffline = false;
-  });
-
-  it('reads one source in isolation', async () => {
-    const store = makeStore();
-    store.dispatch(setSourceUse({ use: 'musicbrainz.search', enabled: true }));
-    const { result } = await renderHook(() => useSearchSourceEnabled('musicbrainz'), { wrapper: wrapper(store) });
-    expect(result.current).toBe(true);
   });
 });
