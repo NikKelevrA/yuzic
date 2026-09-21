@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, original, PayloadAction } from "@reduxjs/toolkit";
 import { removeServer } from "@/state/redux/slices/serversSlice";
-import { dropServerNamespace } from "@/state/redux/serverScopedState";
+import { withoutServerNamespace } from "@/state/redux/serverScopedState";
 
 type PlayMap = Record<string, number>;
 type LastPlayedMap = Record<string, number>; // "serverId:entityId" -> timestamp (ms)
@@ -8,16 +8,21 @@ type LastPlayedMap = Record<string, number>; // "serverId:entityId" -> timestamp
 const key = (serverId: string, id: string) => `${serverId}:${id}`;
 
 /**
- * Drops one server's entries from a map, in place, so the caller can write the
- * set the server just reported.
+ * One server's entries dropped, as a new map, so the caller can write the set
+ * the server just reported.
  *
  * Server stat maps used to only ever be merged into, so an album whose count
  * went back to zero — or that left the library entirely — kept its old number
  * for good, and the map grew without bound across library churn.
+ *
+ * Built fresh rather than edited in place: these maps have a row per track,
+ * and deleting ninety thousand properties one at a time is what aborted Hermes
+ * on the second sync of a large library. See `withoutServerNamespace`.
  */
-function replaceNamespace(map: Record<string, number>, serverId: string): void {
-  dropServerNamespace(map, serverId);
-}
+const replaceNamespace = (
+  map: Readonly<Record<string, number>>,
+  serverId: string
+): Record<string, number> => withoutServerNamespace(map, serverId);
 
 type ServerAlbumStat = {
   id: string;
@@ -97,13 +102,18 @@ const statsSlice = createSlice({
       action: PayloadAction<{ serverId: string; stats: ServerAlbumStat[] }>
     ) {
       const { serverId, stats } = action.payload;
-      replaceNamespace(state.serverAlbumPlays, serverId);
-      replaceNamespace(state.serverAlbumLastPlayedAt, serverId);
+      // Read through to the untouched state and build plain maps: every write
+      // below would otherwise go through a draft proxy, one per track.
+      const base = original(state) ?? state;
+      const plays = replaceNamespace(base.serverAlbumPlays, serverId);
+      const lastPlayed = replaceNamespace(base.serverAlbumLastPlayedAt, serverId);
       for (const { id, playCount, lastPlayedAt } of stats) {
         const k = key(serverId, id);
-        state.serverAlbumPlays[k] = playCount;
-        if (lastPlayedAt > 0) state.serverAlbumLastPlayedAt[k] = lastPlayedAt;
+        plays[k] = playCount;
+        if (lastPlayedAt > 0) lastPlayed[k] = lastPlayedAt;
       }
+      state.serverAlbumPlays = plays;
+      state.serverAlbumLastPlayedAt = lastPlayed;
     },
 
     setServerSongStats(
@@ -111,15 +121,18 @@ const statsSlice = createSlice({
       action: PayloadAction<{ serverId: string; stats: ServerSongStat[] }>
     ) {
       const { serverId, stats } = action.payload;
-      replaceNamespace(state.serverSongPlays, serverId);
-      replaceNamespace(state.serverSongLastPlayedAt, serverId);
+      const base = original(state) ?? state;
+      const plays = replaceNamespace(base.serverSongPlays, serverId);
+      const lastPlayed = replaceNamespace(base.serverSongLastPlayedAt, serverId);
       for (const { id, playCount, lastPlayedAt } of stats) {
         const k = key(serverId, id);
-        state.serverSongPlays[k] = playCount;
+        plays[k] = playCount;
         if (lastPlayedAt && lastPlayedAt > 0) {
-          state.serverSongLastPlayedAt[k] = lastPlayedAt;
+          lastPlayed[k] = lastPlayedAt;
         }
       }
+      state.serverSongPlays = plays;
+      state.serverSongLastPlayedAt = lastPlayed;
     },
   },
   /**

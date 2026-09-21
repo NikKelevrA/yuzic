@@ -91,4 +91,52 @@ describe('setServerAlbumStats', () => {
 
     expect(state.serverAlbumPlays['srv:a1']).toBeUndefined();
   });
+
+  /**
+   * A library's worth, twice, because the second time is the one that broke.
+   *
+   * Replacing a namespace drops the old entries before writing the new ones,
+   * and the first sync has nothing to drop — so the fault only ever appeared
+   * on a re-sync. On Hermes, deleting 89,878 properties one at a time took the
+   * JS heap from 220 MB to 2.4 GB and aborted the VM; on node the same code
+   * runs in under a second, which is why nothing here saw it.
+   *
+   * These cases check the answer rather than the cost: a timing assertion at
+   * this size would be flaky, and the engine that shows the difference is not
+   * the one running them. `withoutServerNamespace` carries the explanation.
+   */
+  describe('at library scale', () => {
+    const many = (count: number, from = 0) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `song-${from + i}`,
+        playCount: (from + i) % 37,
+        lastPlayedAt: 1_700_000_000_000 + from + i,
+      }));
+
+    it('replaces one server set without touching another', () => {
+      let state = reducer(empty(), setServerSongStats({ serverId: 'srv-a', stats: many(20_000) }));
+      state = reducer(state, setServerSongStats({ serverId: 'srv-b', stats: many(5_000, 900_000) }));
+
+      // The re-sync: same server, a library that has moved on.
+      state = reducer(state, setServerSongStats({ serverId: 'srv-a', stats: many(20_000, 10_000) }));
+
+      // Gone: in the first set for srv-a, not in the second.
+      expect(state.serverSongPlays['srv-a:song-0']).toBeUndefined();
+      // Kept: in the second set.
+      expect(state.serverSongPlays['srv-a:song-10000']).toBe(10_000 % 37);
+      expect(state.serverSongPlays['srv-a:song-29999']).toBe(29_999 % 37);
+      // Untouched: another server's namespace is none of this action's business.
+      expect(state.serverSongPlays['srv-b:song-900000']).toBe(900_000 % 37);
+      expect(Object.keys(state.serverSongPlays)).toHaveLength(25_000);
+    });
+
+    it('leaves the state it was given alone', () => {
+      const before = reducer(empty(), setServerSongStats({ serverId: 'srv', stats: many(20_000) }));
+      const plays = before.serverSongPlays;
+
+      reducer(before, setServerSongStats({ serverId: 'srv', stats: [] }));
+
+      expect(Object.keys(plays)).toHaveLength(20_000);
+    });
+  });
 });
