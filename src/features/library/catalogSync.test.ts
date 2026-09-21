@@ -240,6 +240,22 @@ describe('runCatalogSync and the catalog store', () => {
   });
 });
 
+describe('what a sync puts in the cache', () => {
+  it('shares the parts fetched tracks repeat', async () => {
+    // Mappers build a fresh artist reference for every track they map.
+    const withArtist = (id: string) => ({ nativeId: id, artist: { localId: 'local:artist:a1', name: 'A' } });
+    const api = makeApi({
+      tracks: { list: jest.fn(async () => [withArtist('t1'), withArtist('t2')]), get: jest.fn() },
+    });
+    const queryClient = new QueryClient();
+
+    await runCatalogSync({ queryClient, api, serverId: SERVER });
+
+    const tracks = queryClient.getQueryData<{ artist: unknown }[]>([QueryKeys.Tracks, SERVER]);
+    expect(tracks![0].artist).toBe(tracks![1].artist);
+  });
+});
+
 describe('compaction', () => {
   afterEach(() => {
     jest.restoreAllMocks();

@@ -6,6 +6,7 @@ import { staleTime } from "@/state/query/staleTime";
 import { selectActiveServer } from "@/state/redux/selectors/serversSelectors";
 import { hasArrayData, useOfflineFirstQuery } from "@/state/query/useOfflineFirstQuery";
 import { useCatalogHydrated } from "@/features/library/useCatalogHydration";
+import { fetchCatalogList } from "@/features/library/catalogQueries";
 
 type UseTracksResult = {
   tracks: Song[];
@@ -23,7 +24,7 @@ export function useTracks(): UseTracksResult {
 
   const query = useOfflineFirstQuery<Song[]>({
     queryKey: [QueryKeys.Tracks, activeServer?.id],
-    queryFn: api.tracks.list,
+    queryFn: () => fetchCatalogList.tracks(api),
     // Not until the stored catalog has had its chance. A cold start otherwise
     // downloads the whole library again while hydration is reading it off
     // disk, and holds both — see `useCatalogHydrated`.

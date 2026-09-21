@@ -85,6 +85,24 @@ describe('useCatalogHydration', () => {
     });
   });
 
+  it('shares the parts stored tracks repeat, rather than a parsed copy each', async () => {
+    const artist = { localId: 'local:artist:a1', nativeId: 'a1', externalIds: {}, name: 'A' };
+    writeCatalogResource(SERVER_ID, 'tracks', [
+      { nativeId: 'tr1', artist },
+      { nativeId: 'tr2', artist },
+    ]);
+    const queryClient = makeClient();
+
+    await render(makeStore(), queryClient);
+
+    await waitFor(() => {
+      const tracks = queryClient.getQueryData<{ artist: unknown }[]>([QueryKeys.Tracks, SERVER_ID]);
+      expect(tracks).toHaveLength(2);
+      // Stored as JSON, so without sharing these are two equal objects.
+      expect(tracks![0].artist).toBe(tracks![1].artist);
+    });
+  });
+
   it('hydrates every resource, not only the first', async () => {
     writeCatalogResource(SERVER_ID, 'albums', [{ nativeId: 'al1' }]);
     writeCatalogResource(SERVER_ID, 'tracks', [{ nativeId: 'tr1' }]);

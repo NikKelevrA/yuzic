@@ -37,6 +37,7 @@ import { useSelector } from 'react-redux';
 import { selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import { CATALOG_RESOURCES, catalogSyncKey } from './catalogQueries';
 import { readCatalogResource } from './catalogPersistence';
+import { shareIdenticalParts } from './shareIdenticalParts';
 
 /**
  * Cheapest first. `CATALOG_RESOURCES` is ordered for reading as a table; this
@@ -191,7 +192,9 @@ export function useCatalogHydration(): void {
         // A sync got there first — its copy is the fresh one.
         if (queryClient.getQueryData(queryKey) !== undefined) continue;
 
-        const stored = readCatalogResource(serverId, resource.name);
+        // Shared before it reaches the cache: parsed JSON has one copy of every
+        // repeated part per entity — see `shareIdenticalParts`.
+        const stored = shareIdenticalParts(readCatalogResource(serverId, resource.name));
         if (stored === undefined) continue;
 
         // Checked again: the read above is synchronous, but the yield at the

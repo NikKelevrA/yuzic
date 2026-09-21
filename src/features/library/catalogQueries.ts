@@ -15,6 +15,23 @@
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
 import { QueryKeys } from '@/state/query/queryKeys';
 import type { QueryKey } from '@tanstack/react-query';
+import { shareIdenticalParts } from './shareIdenticalParts';
+
+/**
+ * The three large lists, fetched the one way: through the adapter, with the
+ * parts every entity repeats shared rather than copied — see
+ * `shareIdenticalParts`.
+ *
+ * Both the sync (through `CATALOG_RESOURCES`) and the screens' own hooks fetch
+ * these, and they land under the same key. Defining the fetch once is what
+ * keeps a list the hooks fetched from costing twice what the same list costs
+ * when the sync fetched it.
+ */
+export const fetchCatalogList = {
+  albums: async (api: ApiAdapter) => shareIdenticalParts(await api.albums.list()),
+  artists: async (api: ApiAdapter) => shareIdenticalParts(await api.artists.list()),
+  tracks: async (api: ApiAdapter) => shareIdenticalParts(await api.tracks.list()),
+};
 
 interface CatalogResource {
   /** Stable name, used for reporting which part of a sync failed. */
@@ -27,12 +44,12 @@ export const CATALOG_RESOURCES: readonly CatalogResource[] = [
   {
     name: 'albums',
     queryKey: serverId => [QueryKeys.Albums, serverId],
-    fetch: api => api.albums.list(),
+    fetch: fetchCatalogList.albums,
   },
   {
     name: 'artists',
     queryKey: serverId => [QueryKeys.Artists, serverId],
-    fetch: api => api.artists.list(),
+    fetch: fetchCatalogList.artists,
   },
   {
     name: 'playlists',
@@ -42,7 +59,7 @@ export const CATALOG_RESOURCES: readonly CatalogResource[] = [
   {
     name: 'tracks',
     queryKey: serverId => [QueryKeys.Tracks, serverId],
-    fetch: api => api.tracks.list(),
+    fetch: fetchCatalogList.tracks,
   },
   {
     name: 'starred',
