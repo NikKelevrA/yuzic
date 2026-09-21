@@ -122,3 +122,62 @@ describe('sorting by rating', () => {
     expect(sorted[0].kind).toBe('track')
   })
 })
+
+/**
+ * The title order folds names instead of collating them.
+ *
+ * `Intl.Collator.compare` inside the comparator was 3.4 seconds of blocked JS
+ * thread to open a 89,878 track list on a device — about 1.5 million calls at
+ * roughly two microseconds each. Folding each name once and comparing the
+ * folded strings does the same list in 514 ms, and gives up ICU's
+ * locale-specific rules to do it.
+ *
+ * This is what says the trade was safe: the names below are picked to be the
+ * ones a fold gets wrong if it is naive — accents that decompose, letters that
+ * do not, punctuation, digits, mixed case, a leading article. Both orders are
+ * built here and compared, so a change to the fold that moves any of them
+ * fails rather than quietly reordering somebody's library.
+ */
+describe('sorting by title', () => {
+  const AWKWARD = [
+    'Abba', 'ábba', 'ÄBBA', 'Air', 'Ångström', 'Beatles', 'Björk', 'Blur',
+    'Café Tacvba', 'Cafe Tacvba', 'Daft Punk', 'Dvořák', 'Éliane Radigue',
+    'Elbow', 'Faust', 'Fauré', 'Grimes', 'Håkan', 'Haken', 'Iggy Pop',
+    'Jóhann Jóhannsson', 'Kraftwerk', 'Låpsley', 'Lapsley', 'Mø', 'Moby',
+    'Neu!', 'Nils Frahm', 'Ólafur Arnalds', 'Sigur Rós', 'Stereolab', 'Toto',
+    'Völur', 'Xiu Xiu', 'Zappa', 'The xx', '!!!', '2Pac', '10cc', 'Æther',
+    'Øresund', 'Straße',
+  ]
+
+  const named = (title: string): LibraryItem => ({
+    kind: 'playlist',
+    data: {
+      localId: makeLocalId('playlist', provenance, title),
+      nativeId: title,
+      provenance,
+      externalIds: {},
+      title,
+      cover: { kind: 'none' },
+      isOwned: true,
+      songIds: [],
+    } as Playlist,
+  })
+
+  it('orders the awkward names the way a base-sensitivity collator does', () => {
+    const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
+
+    const folded = sortItems(AWKWARD.map(named), 'title', EMPTY_SORT_STATS)
+      .map(item => (item.kind === 'playlist' ? item.data.title : ''))
+    const collated = [...AWKWARD].sort((a, b) => collator.compare(a, b))
+
+    expect(folded).toEqual(collated)
+  })
+
+  it('ties names that differ only by case or accent, and keeps catalog order for them', () => {
+    // What base sensitivity meant, and what the fold has to keep meaning.
+    const sorted = sortItems([named('ÄBBA'), named('abba'), named('Ábba')], 'title', EMPTY_SORT_STATS)
+
+    expect(sorted.map(item => (item.kind === 'playlist' ? item.data.title : '')))
+      .toEqual(['ÄBBA', 'abba', 'Ábba'])
+  })
+})
