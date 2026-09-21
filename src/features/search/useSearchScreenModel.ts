@@ -27,6 +27,7 @@ import { notify } from '@/components/toast';
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers';
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
+import { selectSourceServerUrls, selectSourceUse } from '@/features/settings/sources/state';
 import { selectActiveServer, selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import type { SearchEntityEntry } from '@/state/redux/slices/searchHistorySlice';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
@@ -46,6 +47,14 @@ export function useSearchScreenModel() {
   // enablement. Nothing here is ever implied by a Home toggle.
   const enabledSearchSourceIds = useEnabledSearchSourceIds();
   const showSourceHeaders = useSelector(selectShowSourceHeaders);
+  // A server of your own is deliberately pointed at — you typed its address —
+  // where the public one is what search does for everyone without asking. So
+  // only a server of your own is worth opening search on: it makes "Other
+  // sources" the reason MusicBrainz is configured at all, not an extra step
+  // after it.
+  const musicbrainzServerUrl = useSelector(selectSourceServerUrls).musicbrainz;
+  const musicbrainzSearchEnabled = useSelector(selectSourceUse('musicbrainz.search'));
+  const defaultToMusicbrainz = !!musicbrainzServerUrl?.trim() && musicbrainzSearchEnabled;
   const username = useSelector(selectActiveServer)?.username;
   const activeServerId = useSelector(selectActiveServerId);
 
@@ -55,8 +64,15 @@ export function useSearchScreenModel() {
   const [query, setQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   // 'library' is the default and the only scope that ever runs without an
-  // explicit switch — "Other sources" is the deliberate external action.
-  const [resultScope, setResultScope] = useState<SearchResultScope>('library');
+  // explicit switch — "Other sources" is the deliberate external action —
+  // except with a MusicBrainz server of your own switched on for search:
+  // there, opening Search and typing straight away is the point, so the
+  // screen opens on 'other' instead of asking for the same switch every
+  // time. `selectedSourceIds` below is `enabledSearchSourceIds`, so this
+  // never opens on a source you have not turned on for search.
+  const [resultScope, setResultScope] = useState<SearchResultScope>(
+    defaultToMusicbrainz ? 'other' : 'library'
+  );
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(enabledSearchSourceIds);
   const [selectedEntityTypes, setSelectedEntityTypes] = useState<SearchEntityType[]>(ALL_SEARCH_ENTITY_TYPES);
 
