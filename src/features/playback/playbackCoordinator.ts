@@ -41,8 +41,6 @@ export interface PlaybackCoordinatorDeps {
   setActive: (index: number, resource: PlayableResource) => void;
   bumpQueue: () => void;
 
-  /** Clear the "already retried once" state — this track is genuinely playing. */
-  onTrackStarted: () => void;
   scrobbleOutgoing: (song: Song, listenedSeconds: number) => void;
   /** Restart the listen clock for the track now playing. */
   markNewListen: () => void;
@@ -110,8 +108,6 @@ export function createPlaybackCoordinator(
     onActiveTrackChanged(item) {
       const mediaId = item?.mediaId;
       if (!item || !mediaId) return;
-
-      deps.onTrackStarted();
 
       // Read before anything moves the pointer: a moment later this position
       // belongs to the track now playing, and both the listen and the resume

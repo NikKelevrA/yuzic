@@ -170,6 +170,19 @@ describe('a failure before the track got going', () => {
     expect(names(h.engineCalls)).toEqual(['setMediaItems', 'play']);
   });
 
+  it('retries an unplayable track once, however many times it fails', () => {
+    // The loop this rules out: a retry rebuilds the queue, the engine
+    // announces the track again, and if that announcement cleared the retry
+    // memory every failure would be a first one. Nothing but `onPlaying`
+    // clears it, so a track that never plays is retried exactly once.
+    const h = harness({ position: 0 });
+
+    for (let attempt = 0; attempt < 10; attempt++) h.handlers.onError(fail);
+
+    expect(names(h.engineCalls).filter(n => n === 'setMediaItems')).toHaveLength(1);
+    expect(h.removed.length).toBeGreaterThan(0);
+  });
+
   it('drops the track when the refresh did not help', () => {
     const h = harness({ position: 0 });
 
@@ -180,13 +193,13 @@ describe('a failure before the track got going', () => {
     expect(h.toasts).toHaveLength(1);
   });
 
-  it('retries again once a track has actually started playing', () => {
-    // The player reports an item active only once it is really playing, so
-    // that is proof the last attempt worked. Without clearing, a track that
-    // recovered and later stalled would be dropped as a second failure.
+  it('retries again once a track has actually played', () => {
+    // Playing is the proof the last attempt worked. Without clearing, a track
+    // that recovered and later failed again would be dropped as a second
+    // failure of the same attempt.
     const h = harness({ position: 0 });
     h.handlers.onError(fail);
-    h.handlers.onTrackStarted();
+    h.handlers.onPlaying();
 
     h.handlers.onError(fail);
 

@@ -54,15 +54,25 @@ interface PlaybackEventHandlers {
   /** A failure arrived from the player. */
   onError: (event: { code?: string; message: string }) => void;
   /**
-   * A track actually started playing.
+   * The player is actually playing: it opened the source and has audio.
    *
-   * The player only reports an item active once it is really playing, so this
-   * is the proof that whatever was last attempted worked — which is what
+   * This is the proof that whatever was last attempted worked, and so what
    * clears the "already retried once" state. Without it a track that failed,
-   * was retried successfully, and later stalled would be treated as a second
-   * failure of the same attempt and dropped instead of resumed.
+   * was retried successfully, and later failed again would be treated as a
+   * second failure of the same attempt and dropped instead of retried.
+   *
+   * **Playing, not "became the active track".** It used to be the latter, on
+   * the understanding that the player only announces a track once it is
+   * really playing. The engine announces a queue's active track from
+   * `setQueue`, before it has made a sound — and the retry path below calls
+   * `setMediaItems`, which is `setQueue`. So every retry announced its own
+   * track, the announcement cleared the memory that it had been retried, and
+   * the next failure of the same track was a "first" one again. Measured on a
+   * device with a stream that would not open: one track failed 627 times in
+   * five minutes, at 120% CPU, rebuilding the whole queue each time, until the
+   * app was stopped.
    */
-  onTrackStarted: () => void;
+  onPlaying: () => void;
 }
 
 export function createPlaybackEventHandlers(deps: PlaybackEventDeps): PlaybackEventHandlers {
@@ -74,7 +84,7 @@ export function createPlaybackEventHandlers(deps: PlaybackEventDeps): PlaybackEv
   let lastErrorToastAt = 0;
 
   return {
-    onTrackStarted() {
+    onPlaying() {
       lastRecoveryAttemptedId = null;
     },
 

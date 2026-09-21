@@ -184,6 +184,9 @@ export function usePlaybackEngine(
       }
       case 'stateChange':
         session.setBuffering(event.buffering);
+        // The one signal that a track really opened — see `onPlaying` for why
+        // a track change is not it.
+        if (event.playing) eventsRef.current.onPlaying();
         return;
       case 'queueChange': {
         // The engine's queue moved, so take its answer. Edits made in the app
@@ -202,7 +205,7 @@ export function usePlaybackEngine(
   }), [eventsRef, session]);
 
   /**
-   * A track starting is eight separate things, and `playbackCoordinator` owns
+   * A track starting is several separate things, and `playbackCoordinator` owns
    * the order: the outgoing scrobble and bookmark are read before anything
    * moves the pointer, and autoplay is asked last.
    */
@@ -214,7 +217,6 @@ export function usePlaybackEngine(
     setActive: session.setActive,
     bumpQueue: session.bumpQueue,
 
-    onTrackStarted: () => eventsRef.current.onTrackStarted(),
     // Read now, sent once the change has been drawn — see `deferOffTrackChange`.
     scrobbleOutgoing: (song, listenedSeconds) => { deferOffTrackChange(captureScrobble(song, listenedSeconds)); },
     markNewListen: () => session.markNewListen(),
@@ -236,7 +238,7 @@ export function usePlaybackEngine(
     autoplayEnabled: () => autoplayEnabled.current,
     isFilling: () => autoplayRef.current.isFilling(),
     fillQueueIfLow: () => { void autoplayRef.current.fillQueueIfLow(); },
-  }), [autoplayEnabled, autoplayRef, bookmarks, eventsRef, nowPlaying, persistence, playbackSpeeds, queueSync, captureScrobble, session]);
+  }), [autoplayEnabled, autoplayRef, bookmarks, nowPlaying, persistence, playbackSpeeds, queueSync, captureScrobble, session]);
   const coordinatorRef = useLatestRef(coordinator);
 
   useEffect(() => {
