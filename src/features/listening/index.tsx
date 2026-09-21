@@ -10,8 +10,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
 import { spacing, typography } from '@/constants/design';
 import { clearListeningHistory } from '@/state/redux/slices/listeningSlice';
-import { useArtists } from '@/features/artist/useArtists';
-import { useTracks } from '@/features/song/useTracks';
+import { useCatalogStore } from '@/features/library/useCatalogStore';
 import type { Tally } from './listeningSummary';
 import {
   useListeningStats,
@@ -64,29 +63,25 @@ const ListeningStatsScreen: React.FC = () => {
   const rad = useRadius();
   const dispatch = useDispatch();
   const stats = useListeningStats();
-  const { artists } = useArtists();
-  const { tracks } = useTracks();
+  const catalog = useCatalogStore();
 
   // The log stores `serverId:entityId`; the catalog is the only thing that can
   // turn that into a name. A key with no match is dropped rather than shown as
   // a blank row — it means the track left the library, or came from a server
   // that is no longer the active one, and neither is worth a line on screen.
-  const artistNames = useMemo(
-    () => new Map(artists.map(artist => [artist.nativeId, artist.name])),
-    [artists],
-  );
-  const trackNames = useMemo(
-    () => new Map(tracks.map(track => [track.nativeId, track.title])),
-    [tracks],
-  );
-  const named = (entries: readonly Tally[], names: Map<string, string>) =>
+  //
+  // Asked of the store's own index rather than a `new Map(tracks.map(...))`
+  // built here. Ten names were costing a map over the whole library: at 89,878
+  // tracks that is 89,878 insertions to answer five lookups, rebuilt whenever
+  // a sync replaced the array.
+  const named = (entries: readonly Tally[], nameOf: (nativeId: string) => string | undefined) =>
     entries
-      .map(entry => ({ name: names.get(entry.key.split(':').slice(1).join(':')), plays: entry.plays }))
+      .map(entry => ({ name: nameOf(entry.key.split(':').slice(1).join(':')), plays: entry.plays }))
       .filter((entry): entry is { name: string; plays: number } => !!entry.name)
       .slice(0, 5);
 
-  const topArtists = named(stats.recent.topArtists, artistNames);
-  const topTracks = named(stats.favourites, trackNames);
+  const topArtists = named(stats.recent.topArtists, id => catalog.artistByNativeId.get(id)?.name);
+  const topTracks = named(stats.favourites, id => catalog.songByNativeId.get(id)?.title);
 
   return (
     <SettingsScreen title={t('settings.listening.title')}>

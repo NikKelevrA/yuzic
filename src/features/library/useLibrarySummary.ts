@@ -9,6 +9,8 @@ import { useDownload } from '@/features/offline/DownloadContext'
 import { useGenres } from '@/features/genre/useGenres'
 import { selectWantCountForActiveServer, selectWantsForActiveServer } from '@/state/redux/selectors/wantsSelectors'
 import { buildGenreRows } from '@/features/genre/genreList'
+import { albumsByGenre } from './catalogStore'
+import { useCatalogStore } from './useCatalogStore'
 import type { CoverSource } from '@/domain/entities/Cover'
 
 export type LibraryEntryKey =
@@ -71,6 +73,7 @@ export function useLibrarySummary(): Record<LibraryEntryKey, LibraryEntrySummary
   const { playlists } = usePlaylists()
   const { tracks } = useTracks()
   const { getAllDownloadedCollections } = useDownload()
+  const catalog = useCatalogStore()
   const { genres } = useGenres()
   const wantCount = useSelector(selectWantCountForActiveServer)
   const wants = useSelector(selectWantsForActiveServer)
@@ -82,9 +85,9 @@ export function useLibrarySummary(): Record<LibraryEntryKey, LibraryEntrySummary
     // row's art is the art of the screen it opens.
     const genreCovers: CoverSource[] = []
     for (const row of genreRows) {
-      const album = albums.find(
-        a => a.genres?.includes(row.genre) && hasArt(a.cover)
-      )
+      // The genre's own albums, from the index, rather than a pass over every
+      // album in the library for each of the genres on screen.
+      const album = albumsByGenre(catalog, row.genre).find(a => hasArt(a.cover))
       if (album) genreCovers.push(album.cover)
       if (genreCovers.length === MOSAIC_COVERS) break
     }
@@ -137,5 +140,5 @@ export function useLibrarySummary(): Record<LibraryEntryKey, LibraryEntrySummary
       podcasts: { count: undefined, covers: [] },
       shares: { count: undefined, covers: [] },
     }
-  }, [albums, artists, playlists, tracks, genres, getAllDownloadedCollections, wantCount, wants])
+  }, [albums, artists, playlists, tracks, genres, catalog, getAllDownloadedCollections, wantCount, wants])
 }
