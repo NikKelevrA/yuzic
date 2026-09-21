@@ -50,3 +50,6 @@ web-build/
 # Architecture measurement artifacts
 coverage/
 .hermes/.jest-result.json
+
+# Local mock server: failure injection, see tools/mock-jellyfin/server.js
+tools/mock-jellyfin/poison.txt
