@@ -136,11 +136,12 @@ describe('runCatalogSync', () => {
     expect(result.albumStats).toEqual([{ id: 'al1', playCount: 7, lastPlayedAt: 1_000 }]);
   });
 
-  it('fetches one resource at a time, with tracks last', async () => {
+  it('never fetches tracks alongside anything else', async () => {
     // The shape of the memory problem, as a test. All six used to be in flight
     // together, so every response, every DTO and every mapped entity was alive
-    // until the slowest finished — which at 90,000 tracks is the crash. One at
-    // a time, largest last, is what keeps the peak to a single resource.
+    // until the slowest finished — which at 90,000 tracks is the crash. Tracks
+    // is the one that has to be alone; the rest together cost a few megabytes
+    // and save seconds.
     const order: string[] = [];
     const record = <T>(name: string, value: T) => async () => {
       order.push(`${name}:start`);
@@ -159,12 +160,26 @@ describe('runCatalogSync', () => {
 
     await runCatalogSync({ queryClient: client(), api, serverId: SERVER });
 
-    // Never two starts in a row: each one finished before the next began.
-    const overlapping = order.filter(
-      (entry, index) => index > 0 && entry.endsWith(':start') && order[index - 1].endsWith(':start')
-    );
-    expect(overlapping).toEqual([]);
+    // Nothing else is open between tracks starting and tracks ending.
+    const inFlight = new Set<string>();
+    const sharedWithTracks: string[] = [];
+    for (const entry of order) {
+      const [name, edge] = entry.split(':');
+      if (edge === 'start') {
+        if (inFlight.has('tracks') || name === 'tracks') {
+          for (const open of inFlight) if (open !== 'tracks') sharedWithTracks.push(open);
+        }
+        inFlight.add(name);
+      } else {
+        inFlight.delete(name);
+      }
+    }
+
+    expect(sharedWithTracks).toEqual([]);
     expect(order[order.length - 1]).toBe('tracks:end');
+    // And the rest really do overlap, rather than this passing by being serial.
+    expect(order.slice(0, 2)).toEqual(expect.arrayContaining([expect.stringContaining(':start')]));
+    expect(order[1].endsWith(':start')).toBe(true);
   });
 
   it('reports hasData false when the server has nothing at all', async () => {

@@ -54,18 +54,24 @@ const statsFrom = (entities: readonly (Album | Song)[] | undefined): ServerStat[
     }));
 
 /**
- * Smallest first, tracks last.
+ * What is allowed to be in flight together.
  *
- * `CATALOG_RESOURCES` is ordered for reading as a table; this is ordered for
+ * `CATALOG_RESOURCES` is ordered for reading as a table; this is grouped for
  * the one property that matters while a sync is running, which is how much of
- * the library is in memory at once. Tracks is far the largest, so it goes when
- * nothing else is in flight — and the four small resources land, and paint,
- * before the whale starts. Same reasoning as `useCatalogHydration`, for the
- * same resource, in the other direction.
+ * the library is in memory at once.
+ *
+ * Tracks is the whale — at 90,000 of them it is an order of magnitude more
+ * than everything else put together — so it goes on its own, after the rest
+ * have landed and been stored. The others run together, because five
+ * thousand albums and a few thousand artists overlapping costs a few
+ * megabytes, and serialising them costs seconds on every sync for no benefit.
+ * Same reasoning as `useCatalogHydration`, for the same resource, in the other
+ * direction.
  */
-const SYNC_ORDER = [...CATALOG_RESOURCES].sort(
-  (left, right) => Number(left.name === 'tracks') - Number(right.name === 'tracks')
-);
+const SYNC_GROUPS: readonly (readonly (typeof CATALOG_RESOURCES)[number][])[] = [
+  CATALOG_RESOURCES.filter(resource => resource.name !== 'tracks'),
+  CATALOG_RESOURCES.filter(resource => resource.name === 'tracks'),
+];
 
 export async function runCatalogSync({
   queryClient,
@@ -78,22 +84,7 @@ export async function runCatalogSync({
 }): Promise<CatalogSyncResult> {
   const fetched = new Map<string, unknown>();
 
-  // One at a time, each stored as it lands.
-  //
-  // This was `Promise.allSettled` over all six, which meant every resource's
-  // response, every raw DTO and every mapped entity was alive together until
-  // the slowest finished, and only then was any of it written or released. At
-  // 45,000 tracks that peak is most of the heap and at 90,000 it is the crash:
-  // Hermes aborts inside its own allocator, so nothing reaches the console.
-  // Sequential costs the sum of the fetches rather than the longest, but four
-  // of the six are small enough not to notice and the fifth is the one that
-  // was killing the app.
-  //
-  // Only what actually arrived is stored. A rejected fetch has nothing to
-  // write, and writing anyway — an empty list, or whatever the cache still
-  // held — is how one flaky endpoint would empty a user's offline library. The
-  // stored copy simply stays as it was until a run succeeds.
-  for (const resource of SYNC_ORDER) {
+  const fetchResource = async (resource: (typeof CATALOG_RESOURCES)[number]) => {
     try {
       const value = await queryClient.fetchQuery({
         queryKey: resource.queryKey(serverId),
@@ -113,11 +104,28 @@ export async function runCatalogSync({
         staleTime: 0,
       });
       fetched.set(resource.name, value);
+      // Stored as it lands, not at the end, so its bytes stop being the
+      // sync's problem as early as they can be.
       writeCatalogResource(serverId, resource.name, value);
     } catch {
       // Recorded by its absence from `fetched`; one endpoint being down is not
-      // the whole sync failing.
+      // the whole sync failing. A rejected fetch has nothing to write, and
+      // writing anyway — an empty list, or whatever the cache still held — is
+      // how one flaky endpoint would empty a user's offline library. The
+      // stored copy simply stays as it was until a run succeeds.
     }
+  };
+
+  // Group by group, so tracks never shares the heap with anything else.
+  //
+  // This was `Promise.allSettled` over all six at once, which meant every
+  // resource's response, every raw DTO and every mapped entity was alive
+  // together until the slowest finished, and only then was any of it written
+  // or released. At 45,000 tracks that peak is most of the heap; at 90,000 it
+  // is the crash, and Hermes aborts inside its own allocator so nothing
+  // reaches the console.
+  for (const group of SYNC_GROUPS) {
+    await Promise.all(group.map(fetchResource));
   }
 
   // A resource that failed may still have a usable cached copy from an
