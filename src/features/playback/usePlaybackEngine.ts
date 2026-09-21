@@ -203,7 +203,7 @@ export function usePlaybackEngine(
         return;
       }
     }
-  }), [eventsRef, session]);
+  }), [eventsRef, markInterrupted, session]);
 
   /**
    * A track starting is several separate things, and `playbackCoordinator` owns
