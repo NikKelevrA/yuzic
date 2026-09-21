@@ -14,7 +14,7 @@ import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/ma
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
 import { sourceColor } from '@/constants/design';
 import { integrationProvenance } from '@/domain/identity/Provenance';
-import { selectSourceServerUrls } from '@/features/settings/sources/state';
+import { selectSourceFallbackUrls, selectSourceServerUrls } from '@/features/settings/sources/state';
 import store from '@/state/redux/store';
 import type { IntegrationProvider } from '../contracts/Provider';
 
@@ -32,8 +32,12 @@ const MB_PROVENANCE = integrationProvenance('musicbrainz');
  * client whose limiter every call must queue behind.
  */
 export function currentMusicbrainzClient(): MusicbrainzClient {
-  const serverUrl = selectSourceServerUrls(store.getState()).musicbrainz;
-  return serverUrl?.trim() ? mb.createMusicbrainzClient({ serverUrl }) : mb;
+  const state = store.getState();
+  const serverUrl = selectSourceServerUrls(state).musicbrainz;
+  const fallback = selectSourceFallbackUrls(state).musicbrainz?.trim();
+  return serverUrl?.trim()
+    ? mb.createMusicbrainzClient({ serverUrl, fallbackUrls: fallback ? [fallback] : undefined })
+    : mb;
 }
 
 /**
@@ -69,10 +73,20 @@ export const musicbrainzProvider: IntegrationProvider = {
         // it is the first release year, which is this catalogue's own idea of
         // what distinguishes two records with the same title.
         artists: artists.map(dto => ({ entity: mapMbArtist(dto, MB_PROVENANCE), subtitle: '' })),
-        albums: releaseGroups.map(dto => ({
-          entity: mapMbAlbum(dto, { provenance: MB_PROVENANCE }),
-          subtitle: dto['first-release-date']?.slice(0, 4) ?? '',
-        })),
+        albums: releaseGroups.map(dto => {
+          const year = dto['first-release-date']?.slice(0, 4) ?? '';
+          const artistName = dto['artist-credit']
+            ?.map(credit => credit.name ?? credit.artist.name)
+            .join(', ');
+          // The row names the artist as well as the year: two records with
+          // one title are told apart by who made them. The artist rides on
+          // separately so a lookup never mistakes "Artist · 2001" for a name.
+          return {
+            entity: mapMbAlbum(dto, { provenance: MB_PROVENANCE }),
+            subtitle: artistName ? (year ? `${artistName} · ${year}` : artistName) : year,
+            artistName: artistName || undefined,
+          };
+        }),
       };
     },
     'catalogue.album': async nativeId => {

@@ -86,7 +86,7 @@ export function resultToAlbum(result: SearchResult, activeServerId: string | und
     ? externalAlbum({
         id: result.id,
         title: result.title,
-        artistName: result.subtext,
+        artistName: result.artistName ?? result.subtext,
         cover: result.cover,
         externalSource: result.externalSource,
         externalIds: result.externalIds,
@@ -100,7 +100,7 @@ export function entityToAlbum(entity: SearchEntityEntry): Album {
   return externalAlbum({
     id: entity.id,
     title: entity.title,
-    artistName: entity.subtitle,
+    artistName: entity.artistName ?? entity.subtitle,
     cover: entity.cover,
     externalSource: entity.externalSource,
     externalIds: entity.externalIds,

@@ -549,7 +549,10 @@
         "description": "Use a server of your own instead of the public one. Enter its address, for example http://192.168.1.10:5000. Leave it empty to use the public server.",
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "That doesn't look like a web address. Use something like http://192.168.1.10:5000.",
-        "unreachable": "That address didn't answer as expected. Check the server is running and reachable from this device."
+        "unreachable": "That address didn't answer as expected. Check the server is running and reachable from this device.",
+        "fallbackLabel": "Fallback address (optional)",
+        "fallbackPlaceholder": "http://100.64.0.1:5000",
+        "fallbackInvalid": "That fallback address doesn't look like a web address. Use something like http://100.64.0.1:5000."
       }
     },
     "sourceUses": {
@@ -955,6 +958,7 @@
     "sections": {
       "albums": "Albums",
       "singles": "Singles & EPs",
+      "others": "Other releases",
       "mostPlayed": "Most Played",
       "popularOnDeezer": "Popular on Deezer",
       "similarArtists": "Similar artists",
@@ -969,6 +973,7 @@
   "album": {
     "disc": "Disc {{number}}",
     "moreBy": "More by {{name}}",
+    "otherVersions": "Other versions",
     "mightAlsoLike": "You Might Also Like",
     "duration": {
       "hrMin": "{{hrs}} hr {{mins}} min",

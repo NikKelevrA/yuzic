@@ -7,6 +7,7 @@
  * playback vs. preview-only — is now a typed per-track decision
  * (`trackPlayability.ts`), not two component types.
  */
+import { useAlbumVersions } from '@/features/album/useAlbumVersions';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Album } from '@/domain/entities/Album';
@@ -47,6 +48,8 @@ export type AlbumScreenModel = {
   moreAlbums: Album[];
   /** Get/Want status against the user's downloaders — external mode only. */
   externalStatus: ExternalAlbumStatus;
+  /** Other versions of this record (deluxe, live, acoustic) — MusicBrainz records only. */
+  versions: Album[];
 };
 
 /** Moved out of the deleted `useExternalAlbum` hook — same resolution order
@@ -138,6 +141,7 @@ export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel 
   );
 
   const externalStatus = useExternalAlbumStatus(isLocal ? null : album);
+  const versions = useAlbumVersions(isLocal ? null : album);
 
   const status: AlbumScreenModel['status'] = (() => {
     if (isLocal) {
@@ -161,5 +165,6 @@ export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel 
     playability,
     moreAlbums,
     externalStatus,
+    versions,
   };
 }

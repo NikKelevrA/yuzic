@@ -26,6 +26,11 @@ function releaseTypeOf(dto: MbReleaseGroup): ReleaseType {
   if (dto['secondary-types']?.includes('Compilation')) return 'compilation';
   if (dto['primary-type'] === 'Single') return 'single';
   if (dto['primary-type'] === 'EP') return 'ep';
+  // Live albums, remixes, demos, bootlegs and the rest carry a secondary type.
+  // They are not studio albums, and the domain has no word for "everything
+  // else" but this one, so they are filed with the compilations: the artist
+  // screen lists that group apart from the albums.
+  if (dto['secondary-types']?.length) return 'compilation';
   return 'album';
 }
 
@@ -44,6 +49,12 @@ interface MapAlbumContext {
    * Deezer mappers — mapping an album never implies mapping its songs.
    */
   songIds?: LocalId[];
+  /**
+   * Who to credit when the release group names no artist of its own — which
+   * is the case for the ones an artist lookup embeds (`inc=release-groups`),
+   * where the artist is the page they were fetched for.
+   */
+  fallbackArtist?: { id: string; name: string };
 }
 
 export function mapAlbum(dto: MbReleaseGroup, context: MapAlbumContext): Album {
@@ -63,7 +74,13 @@ export function mapAlbum(dto: MbReleaseGroup, context: MapAlbumContext): Album {
     // comment on why this mapper never guesses further than 'external'.
     title: dto.title ?? 'Unknown Album',
     cover,
-    artist: artistRef(provenance, dto['artist-credit']),
+    artist: artistRef(
+      provenance,
+      dto['artist-credit'] ??
+        (context.fallbackArtist
+          ? [{ name: context.fallbackArtist.name, artist: context.fallbackArtist }]
+          : undefined)
+    ),
     year: yearOf(firstReleaseDate),
     // Only carried when it is finer than the year already captured above —
     // a bare 'YYYY' first-release-date says nothing releaseDate wouldn't.

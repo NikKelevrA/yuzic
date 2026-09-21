@@ -15,6 +15,8 @@ import {
 import { selectEnabledSourcesFor } from '@/features/settings/sources/state';
 import { currentMusicbrainzClient } from '@/providers/registry/musicbrainz'
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum'
+import { collapseEditions, isArtistRelease, isStudioAlbum } from '@/providers/integration/musicbrainz/discography'
+import type { MbReleaseGroup } from '@/providers/integration/musicbrainz'
 import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong'
 import type { Album } from '@/domain/entities/Album'
@@ -94,6 +96,8 @@ type SourceArtistDetail = {
   topTracks: Song[]
   albums: Album[]
   singles: Album[]
+  /** Live albums, compilations and other releases that are not studio albums. */
+  others?: Album[]
   similarArtists: Artist[]
 }
 
@@ -296,24 +300,35 @@ const musicbrainzSource: SourceDefinition = {
 
   async fetchArtistAlbums(artistId, limit) {
     const artist = await currentMusicbrainzClient().getArtistWithReleases(artistId)
-    const rgs = artist['release-groups'] ?? []
-    return rgs.slice(0, limit).map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
+    const fallbackArtist = { id: artist.id, name: artist.name }
+    // The discography a library artist's page lists as "you don't own": one
+    // entry per record. Studio albums, singles and EPs come through as such;
+    // live albums, compilations and bootlegs come through typed as
+    // compilations, which the artist screen lists apart from the albums.
+    const records = (artist['release-groups'] ?? []).filter(isArtistRelease)
+    return collapseEditions(records)
+      .slice(0, limit)
+      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE, fallbackArtist }))
   },
 
   async fetchArtist(id) {
     const dto = await currentMusicbrainzClient().getArtistWithReleases(id)
     const rgs = dto['release-groups'] ?? []
-    const albums = rgs
-      .filter(rg => !rg['primary-type'] || rg['primary-type'] === 'Album')
-      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
-    const singles = rgs
-      .filter(rg => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP')
-      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
+    const fallbackArtist = { id: dto.id, name: dto.name }
+    const asAlbum = (rg: MbReleaseGroup) => mapMbAlbum(rg, { provenance: MB_PROVENANCE, fallbackArtist })
+    // "Albums" counts records, not editions: studio albums only, one entry per
+    // record. Live albums, compilations, bootlegs and the like are not studio
+    // albums; they are listed apart, as "other releases".
+    const isSingleOrEp = (rg: MbReleaseGroup) => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP'
+    const albums = collapseEditions(rgs.filter(isStudioAlbum)).map(asAlbum)
+    const singles = collapseEditions(rgs.filter(isSingleOrEp)).map(asAlbum)
+    const others = collapseEditions(rgs.filter(rg => !isStudioAlbum(rg) && !isSingleOrEp(rg))).map(asAlbum)
     return {
       artist: mapMbArtist(dto, MB_PROVENANCE),
       topTracks: [],
       albums,
       singles,
+      others,
       similarArtists: [],
     }
   },

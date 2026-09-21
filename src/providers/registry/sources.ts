@@ -32,6 +32,9 @@ export type SourceUseId = `${SourceId}.${SourcePurpose}`;
 /** Server addresses the user has set for sources they run themselves, by source. */
 export type SourceServerUrls = Partial<Record<SourceId, string>>;
 
+/** A second address for the same server, tried when the first does not answer — a Tailscale or domain address for one that is otherwise reached by its LAN address. */
+export type SourceFallbackUrls = Partial<Record<SourceId, string>>;
+
 /**
  * Sources that can be pointed at a server of your own instead of the public
  * one. The address is asked for on the source's own sheet, so the screen only

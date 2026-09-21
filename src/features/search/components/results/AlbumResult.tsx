@@ -25,6 +25,8 @@ export default function AlbumResult({ result, activeServerId, navigation, naviga
   return (
     <AlbumRow
       album={resultToAlbum(result, activeServerId)}
+      // A decorated line ("Artist · 2001") replaces the bare artist name.
+      subtextOverride={result.artistName ? result.subtext : undefined}
       onPress={album => {
         onSelect(result);
         prefetchCovers([album.cover], 'detail');

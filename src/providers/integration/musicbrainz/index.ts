@@ -1,5 +1,6 @@
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
 import { createRateLimiter } from '@/providers/http/rateLimit';
+import { orderedUrls, tryWithFailover, UrlTimeoutError } from '@/providers/http/urlFailover';
 
 const PUBLIC_BASE = 'https://musicbrainz.org/ws/2';
 const HEADERS = {
@@ -15,7 +16,22 @@ const HEADERS = {
 const MUSICBRAINZ_MIN_INTERVAL_MS = 1100;
 
 /** Where a MusicBrainz server of your own is, when you run one. */
-type MusicbrainzConfig = { serverUrl?: string };
+type MusicbrainzConfig = {
+  serverUrl?: string;
+  /** Other addresses of the same server, tried in order when the first does not answer. */
+  fallbackUrls?: string[];
+};
+
+/** The one server of your own there is, for remembering which of its addresses answered last. */
+const FAILOVER_ID = 'musicbrainz';
+
+/**
+ * How long an address gets to answer when another is waiting behind it. Long
+ * enough for a slow query on a busy server, short enough that a phone away
+ * from home is not stuck for the full request deadline on a LAN address that
+ * can never answer. The last address keeps the full deadline.
+ */
+const FAILOVER_ATTEMPT_TIMEOUT_MS = 8_000;
 
 /**
  * The web service under a server's root address, which is what the user
@@ -85,11 +101,38 @@ export function createMusicbrainzClient(config: MusicbrainzConfig = {}) {
     ? run => run()
     : createRateLimiter(MUSICBRAINZ_MIN_INTERVAL_MS);
 
+  const fallbacks = custom ? (config.fallbackUrls ?? []).map(url => url.trim()).filter(Boolean) : [];
+
+  async function get<T>(root: string, path: string, timeoutMs?: number): Promise<T> {
+    const init = timeoutMs ? { headers: HEADERS, timeoutMs } : { headers: HEADERS };
+    const res = await fetchWithTimeout(`${root}${path}`, init);
+    if (!res.ok) throw new Error(`MusicBrainz ${res.status}: ${path}`);
+    return res.json() as Promise<T>;
+  }
+
   async function mb<T>(path: string): Promise<T> {
     return spaced(async () => {
-      const res = await fetchWithTimeout(`${base}${path}`, { headers: HEADERS });
-      if (!res.ok) throw new Error(`MusicBrainz ${res.status}: ${path}`);
-      return res.json() as Promise<T>;
+      if (!custom || fallbacks.length === 0) return get<T>(base, path);
+
+      // More than one address: try them in order, the one that answered last
+      // first. Only a request that never reached a server moves on to the
+      // next address; an error status from a server that answered does not.
+      const server = { id: FAILOVER_ID, serverUrl: custom, fallbackUrls: fallbacks };
+      const order = orderedUrls(server);
+      const lastUrl = order[order.length - 1];
+      return tryWithFailover<T>(server, async url => {
+        const patient = url === lastUrl;
+        try {
+          return await get<T>(baseOf(url), path, patient ? undefined : FAILOVER_ATTEMPT_TIMEOUT_MS);
+        } catch (error) {
+          // The fetch wrapper's own deadline is not one the failover
+          // recognises as "this address did not answer".
+          if ((error as { name?: string } | null)?.name === 'RequestTimeoutError') {
+            throw new UrlTimeoutError(url, FAILOVER_ATTEMPT_TIMEOUT_MS);
+          }
+          throw error;
+        }
+      });
     });
   }
 

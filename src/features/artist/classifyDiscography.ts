@@ -18,11 +18,14 @@ export type ClassifiedDiscography = {
   ownedSingles: Album[];
   unownedAlbums: Album[];
   unownedSingles: Album[];
+  /** Live albums, compilations and other releases the library does not have. */
+  unownedOthers: Album[];
 };
 
 type ExternalDiscography = {
   albums: readonly Album[];
   singles: readonly Album[];
+  others?: readonly Album[];
 } | null | undefined;
 
 /**
@@ -57,11 +60,13 @@ export function classifyDiscography(
     );
   const unownedAlbums = (externalDiscography?.albums ?? []).filter(isMissing);
   const unownedSingles = (externalDiscography?.singles ?? []).filter(isMissing);
+  const unownedOthers = (externalDiscography?.others ?? []).filter(isMissing);
 
   return {
     ownedAlbums: [...ownedAlbums].sort(compareByReleaseYearDesc),
     ownedSingles: [...ownedSingles].sort(compareByReleaseYearDesc),
     unownedAlbums: [...unownedAlbums].sort(compareByReleaseYearDesc),
     unownedSingles: [...unownedSingles].sort(compareByReleaseYearDesc),
+    unownedOthers: [...unownedOthers].sort(compareByReleaseYearDesc),
   };
 }

@@ -1,6 +1,7 @@
 jest.mock('@/providers/http/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
 
 import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
+import { _resetCache } from '@/providers/http/urlFailover';
 import { createMusicbrainzClient } from './index';
 
 const fetchMock = fetchWithTimeout as jest.MockedFunction<typeof fetchWithTimeout>;
@@ -89,5 +90,66 @@ describe('MusicBrainz client spacing', () => {
     void client.searchArtist('c');
     await flush();
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('MusicBrainz client fallback address', () => {
+  const HOME = 'http://192.168.1.43:5001';
+  const AWAY = 'http://100.64.0.1:5001';
+  const client = () => createMusicbrainzClient({ serverUrl: HOME, fallbackUrls: [AWAY] });
+  const unreachable = () => new TypeError('Network request failed');
+
+  beforeEach(() => _resetCache());
+
+  it('asks the first address first', async () => {
+    await client().searchArtist('Muse');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(urlOfCall(0).startsWith(`${HOME}/ws/2/artist?query=`)).toBe(true);
+  });
+
+  it('moves on to the fallback when the first address does not answer', async () => {
+    fetchMock.mockRejectedValueOnce(unreachable());
+    await client().searchArtist('Muse');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(urlOfCall(1).startsWith(`${AWAY}/ws/2/artist?query=`)).toBe(true);
+  });
+
+  it('counts an address that timed out as one that did not answer', async () => {
+    fetchMock.mockRejectedValueOnce(Object.assign(new Error('Request timed out after 8000ms'), { name: 'RequestTimeoutError' }));
+    await client().searchArtist('Muse');
+    expect(urlOfCall(1).startsWith(`${AWAY}/ws/2/artist?query=`)).toBe(true);
+  });
+
+  it('goes straight to the address that answered last', async () => {
+    fetchMock.mockRejectedValueOnce(unreachable());
+    await client().searchArtist('Muse');
+    await client().searchArtist('Muse');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(urlOfCall(2).startsWith(`${AWAY}/ws/2/artist?query=`)).toBe(true);
+  });
+
+  it('does not move on when the first address answered with an error status', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({}) } as unknown as Response);
+    await expect(client().searchArtist('Muse')).rejects.toThrow('MusicBrainz 503');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives an address a shorter wait only while another is behind it', async () => {
+    await client().searchArtist('Muse');
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ timeoutMs: 8000 }));
+    fetchMock.mockRejectedValueOnce(unreachable());
+    _resetCache();
+    await client().searchArtist('Muse');
+    expect(fetchMock.mock.calls[2][1]).not.toHaveProperty('timeoutMs');
+  });
+
+  it('is unchanged when there is no fallback', async () => {
+    await createMusicbrainzClient({ serverUrl: HOME }).searchArtist('Muse');
+    expect(fetchMock.mock.calls[0][1]).not.toHaveProperty('timeoutMs');
+  });
+
+  it('ignores a fallback when there is no address of your own', async () => {
+    await createMusicbrainzClient({ fallbackUrls: [AWAY] }).searchArtist('Muse');
+    expect(urlOfCall(0).startsWith('https://musicbrainz.org/ws/2/artist?query=')).toBe(true);
   });
 });

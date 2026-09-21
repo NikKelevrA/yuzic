@@ -6,6 +6,8 @@ import type { Album } from '@/domain/entities/Album';
 type ArtistExternalDiscography = {
   albums: Album[];
   singles: Album[];
+  /** Live albums, compilations and other releases that are not studio albums. */
+  others: Album[];
 };
 
 const DISCOGRAPHY_LIMIT = 80;
@@ -36,8 +38,10 @@ export function useArtistExternalDiscography(
 
       const all = perSource.flat();
       return {
-        albums: all.filter(a => a.releaseType !== 'single'),
-        singles: all.filter(a => a.releaseType === 'single'),
+        // EPs sit with the singles, as the section they are shown in says.
+        albums: all.filter(a => a.releaseType === 'album'),
+        singles: all.filter(a => a.releaseType === 'single' || a.releaseType === 'ep'),
+        others: all.filter(a => a.releaseType === 'compilation'),
       };
     },
   });

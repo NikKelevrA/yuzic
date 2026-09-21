@@ -548,7 +548,10 @@
         "description": "公開サーバーの代わりに、ご自身のサーバーを使用します。アドレスを入力してください（例: http://192.168.1.10:5000）。空欄にすると公開サーバーを使用します。",
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "有効なWebアドレスではありません。http://192.168.1.10:5000 のように入力してください。",
-        "unreachable": "このアドレスから想定どおりの応答がありません。サーバーが起動していて、このデバイスから届くか確認してください。"
+        "unreachable": "このアドレスから想定どおりの応答がありません。サーバーが起動していて、このデバイスから届くか確認してください。",
+        "fallbackLabel": "予備のアドレス（任意）",
+        "fallbackPlaceholder": "http://100.64.0.1:5000",
+        "fallbackInvalid": "予備のアドレスがウェブアドレスの形式ではありません。例: http://100.64.0.1:5000"
       }
     },
     "sourceUses": {
@@ -962,6 +965,7 @@
     "sections": {
       "albums": "アルバム",
       "singles": "シングル・EP",
+      "others": "その他のリリース",
       "mostPlayed": "よく聴いた曲",
       "popularOnDeezer": "Deezerで人気",
       "similarArtists": "似ているアーティスト",
@@ -1423,6 +1427,7 @@
   "album": {
     "disc": "ディスク {{number}}",
     "moreBy": "{{name}}のその他の作品",
+    "otherVersions": "その他のバージョン",
     "mightAlsoLike": "こちらもおすすめ",
     "duration": {
       "hrMin": "{{hrs}}時間{{mins}}分",

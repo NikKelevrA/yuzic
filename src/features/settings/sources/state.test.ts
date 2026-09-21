@@ -1,7 +1,9 @@
 import sourcesReducer, {
   selectEnabledSourcesFor,
+  selectSourceFallbackUrls,
   selectSourceServerUrls,
   selectSourceUse,
+  setSourceFallbackUrl,
   setSourceServerUrl,
   setSourceUse,
   setSourceUses,
@@ -84,5 +86,35 @@ describe('server addresses', () => {
   it('hands a subscriber the same object until an address changes', () => {
     const state = reduce();
     expect(selectSourceServerUrls(state)).toBe(selectSourceServerUrls(state));
+  });
+});
+
+describe('fallback addresses', () => {
+  it('starts with none', () => {
+    expect(selectSourceFallbackUrls(reduce())).toEqual({});
+  });
+
+  it('stores the fallback for one source, trimmed, and removes it when emptied', () => {
+    const set = reduce(setSourceFallbackUrl({ source: 'musicbrainz', url: '  http://100.64.0.1:5000  ' }));
+    expect(selectSourceFallbackUrls(set)).toEqual({ musicbrainz: 'http://100.64.0.1:5000' });
+    const cleared = reduce(
+      setSourceFallbackUrl({ source: 'musicbrainz', url: 'http://100.64.0.1:5000' }),
+      setSourceFallbackUrl({ source: 'musicbrainz', url: '  ' }),
+    );
+    expect(selectSourceFallbackUrls(cleared)).toEqual({});
+  });
+
+  it('goes when the address it backs up is emptied', () => {
+    const state = reduce(
+      setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }),
+      setSourceFallbackUrl({ source: 'musicbrainz', url: 'http://100.64.0.1:5000' }),
+      setSourceServerUrl({ source: 'musicbrainz', url: '' }),
+    );
+    expect(selectSourceFallbackUrls(state)).toEqual({});
+  });
+
+  it('reads settings saved before fallbacks existed as none', () => {
+    const saved = { settingsSources: { uses: {}, serverUrls: {} } } as unknown as Parameters<typeof selectSourceFallbackUrls>[0];
+    expect(selectSourceFallbackUrls(saved)).toEqual({});
   });
 });
