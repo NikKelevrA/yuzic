@@ -667,4 +667,69 @@ describe('the browse tree the car is given', () => {
     expect(leaf.artworkUri).toBe('https://library.test/cover/1.jpg');
     expect(leaf.playable?.artworkUri).toBe('https://library.test/cover/1.jpg');
   });
+
+  it('gives the same song a different node id in each place it sits', async () => {
+    // The engine keeps the first of a repeated id, so a favourite song used to
+    // vanish from its album in the car. The track keeps its own id.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    const song = row({ mediaId: 'song-1', url: 'https://library.test/stream/1' });
+    backend.setBrowseTree([
+      { mediaId: 'favorites', title: 'Favorites', items: [song] },
+      { mediaId: 'albums', title: 'Albums', items: [row({ mediaId: 'album-1', children: [song] })] },
+    ]);
+    await flush();
+
+    const tree = treeSent();
+    const favourite = tree.children[0].children![0] as Node & { playable?: { id?: string } };
+    const inAlbum = tree.children[1].children![0].children![0] as Node & { playable?: { id?: string } };
+    expect(favourite.id).toBe('favorites/song-1');
+    expect(inAlbum.id).toBe('albums/album-1/song-1');
+    expect(favourite.playable?.id).toBe('song-1');
+    expect(inAlbum.playable?.id).toBe('song-1');
+  });
+
+  it("carries a tab's icon and layout, and a shuffle row's action", async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([{
+      mediaId: 'albums',
+      title: 'Albums',
+      icon: 'albums',
+      layout: 'grid',
+      items: [{ mediaId: 'shuffle', title: 'Shuffle', action: 'shuffle' }],
+    }]);
+    await flush();
+
+    const tab = treeSent().children[0] as Node & { icon?: string; layout?: string };
+    expect(tab).toMatchObject({ icon: 'albums', layout: 'grid' });
+    expect(tab.children![0]).toMatchObject({ id: 'albums/shuffle', action: 'shuffle' });
+    expect(tab.children![0].playable).toBeUndefined();
+  });
+
+  it('does not send the same tree twice, and sends again after a clear', async () => {
+    // Every send is the car redrawing under the driver, and on Android the
+    // whole tree encrypted and written to disk.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row()])]);
+    backend.setBrowseTree([category([row()])]);
+    await flush();
+    expect(named('setBrowseTree')).toHaveLength(1);
+
+    backend.setBrowseTree([category([row({ title: 'Renamed' })])]);
+    await flush();
+    expect(named('setBrowseTree')).toHaveLength(2);
+
+    backend.clearBrowseTree();
+    backend.setBrowseTree([category([row({ title: 'Renamed' })])]);
+    await flush();
+    expect(named('setBrowseTree')).toHaveLength(3);
+  });
 });

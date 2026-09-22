@@ -1,11 +1,15 @@
 public import Expo
 internal import React
 internal import ReactAppDependencyProvider
+import CarPlay
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+
+  /// The one React root for the process. See `reactRootViewController()`.
+  private var reactRoot: UIViewController?
 
   public override func application(
     _ application: UIApplication,
@@ -18,7 +22,46 @@ public class AppDelegate: ExpoAppDelegate {
     reactNativeDelegate = delegate
     reactNativeFactory = factory
 
+    // A car can launch the app into its CarPlay scene alone, with no phone
+    // window at all. React Native used to start only from the phone scene, so
+    // in that launch no JavaScript ran: the engine was never set up, no
+    // library was pushed, and the car showed an empty list that played
+    // nothing. Starting it here, for the car, fixes both.
+    NotificationCenter.default.addObserver(
+      forName: UIScene.willConnectNotification, object: nil, queue: .main
+    ) { [weak self] notification in
+      guard notification.object is CPTemplateApplicationScene else { return }
+      _ = self?.reactRootViewController()
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  /**
+   The React root, created the first time any scene asks for it.
+
+   One per process, whichever scene connects first. The CarPlay scene asks
+   so JavaScript runs with no phone window; the phone scene asks and puts it
+   in its window. Before this the phone scene started React Native itself on
+   every connect, so a phone scene discarded and reconnected while CarPlay
+   kept the process alive started a second React instance beside the first.
+
+   The same three steps `RCTReactNativeFactory.startReactNative` takes, minus
+   the window, which the caller supplies when it has one.
+   */
+  func reactRootViewController() -> UIViewController? {
+    if let reactRoot { return reactRoot }
+    guard let delegate = reactNativeDelegate, let factory = reactNativeFactory else { return nil }
+    let rootView = factory.rootViewFactory.view(
+      withModuleName: "main",
+      initialProperties: nil,
+      launchOptions: nil,
+      devMenuConfiguration: factory.devMenuConfiguration
+    )
+    let controller = delegate.createRootViewController()
+    delegate.setRootView(rootView, toRootViewController: controller)
+    reactRoot = controller
+    return controller
   }
 
   // Linking API

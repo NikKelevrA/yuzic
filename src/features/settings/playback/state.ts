@@ -3,7 +3,7 @@ import { clampSpeed, type SpeedProfile } from '@/features/playback/speedProfile'
 
 import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat';
 
-export type { AudioQuality, PreferredCodec };
+export type { AudioQuality };
 
 interface PlaybackSettingsState {
   wifiStreamQuality: AudioQuality;

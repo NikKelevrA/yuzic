@@ -1664,5 +1664,13 @@
     "title": "Rating",
     "clear": "Clear rating",
     "notRated": "Not rated"
+  },
+  "car": {
+    "recent": "Recent",
+    "favorites": "Favorites",
+    "playlists": "Playlists",
+    "albums": "Albums",
+    "downloads": "Downloads",
+    "shuffle": "Shuffle"
   }
 }

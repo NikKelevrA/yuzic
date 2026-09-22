@@ -65,8 +65,8 @@ export const PlayingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const isPlaying = usePlayerIsPlaying();
 
   usePlayerSetup();
-  useCarPlayBrowseTree();
   const resources = usePlaybackResources();
+  useCarPlayBrowseTree(resources.resolvePlayableSong);
   const services = usePlaybackServices();
   const engine = usePlaybackEngine(session, resources, services);
   useRestorePersistedQueue(session, resources.resolve, engine.loadQueueRef);

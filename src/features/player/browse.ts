@@ -30,23 +30,32 @@ export interface BrowseItem {
    * now-playing cover once the leaf plays. Set only when the active server
    * needs them.
    *
-   * The thumbnail used to be the exception: `BrowseNode` had no field for
-   * headers, so protected-server art rendered on the now-playing screen and
-   * not in the car's list. It carries them as of engine 1.0.7 — on iOS. On
-   * Android the row's cover goes through Media3, which takes a URI and
-   * fetches it itself with no hook for a header, so the gap survives there
-   * and is declared in the engine's `Tools/parity.py`.
+   * The row's thumbnail gets them too, on both platforms: Android serves
+   * browse covers through the engine's own content provider, which fetches
+   * with the headers, because a car fetching a URL itself cannot send them.
    */
   headers?: Record<string, string>;
   artworkHeaders?: Record<string, string>;
   /** Seconds. */
   duration?: number;
   children?: BrowseItem[];
+  /**
+   * A row that does something rather than playing one thing: `shuffle` plays
+   * the tracks beside it in random order. It has no `url` and no `children`.
+   */
+  action?: 'shuffle';
 }
 
-/** A top-level grouping — Favorites, Playlists, an album. */
+/** A top-level grouping — Favorites, Playlists, Albums. The car draws each as a tab. */
 export interface BrowseCategory {
   mediaId: string;
   title: string;
+  /** The tab's icon. */
+  icon?: 'recent' | 'favorites' | 'albums' | 'artists' | 'playlists' | 'downloads' | 'radio' | 'library';
+  /**
+   * How the tab draws its rows on Android Auto: `grid` for covers, `list` for
+   * tracks. Folders inside a grid tab draw their own tracks as a list.
+   */
+  layout?: 'list' | 'grid';
   items: BrowseItem[];
 }

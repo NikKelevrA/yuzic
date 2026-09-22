@@ -326,18 +326,44 @@ than this paragraph: the count here was wrong for months, claiming nine
 missing Android methods and a stubbed `setCrossfade` long after both had been
 implemented.
 
-Two differences are declared there today:
+One difference is declared there today: `configureCache` is absent on
+Android, deliberately absent rather than stubbed, so it rejects by name at the
+bridge. Media3 takes the cache limit as a constructor argument to its evictor,
+so changing it needs a second `SimpleCache` over one directory (documented as
+corrupting the index) or releasing the live one mid-track.
 
-- `configureCache` is absent on Android — deliberately absent rather than
-  stubbed, so it rejects by name at the bridge. Media3 takes the cache limit as
-  a constructor argument to its evictor, so changing it needs a second
-  `SimpleCache` over one directory (documented as corrupting the index) or
-  releasing the live one mid-track.
-- `BrowseNode.artworkHeaders` is carried on the bridge and unusable on Android:
-  a browse row's cover goes through Media3, which takes a URI on
-  `MediaMetadata` and fetches it itself with no hook for a request header. So
-  car thumbnails render for an ordinary server and not for a
-  header-authenticated one.
+**The car's library is built in two halves.** `useCarPlayBrowseTree` gathers
+it and turns each song into a row through the phone queue's own
+`resolvePlayableSong`, so a download plays from the device and the user's
+quality applies. `carBrowseTree` decides the shape, and is pure so it is
+tested: at most four tabs (Recent, Favorites, Playlists, Albums, with
+Downloads when there is room), Shuffle first in every folder, and offline only
+what is downloaded, with Downloads first. Two rules in the conversion
+(`toBrowseNode`, `createEngineBackend.setBrowseTree`) matter:
+
+- A node's id is its path (`albums/album-1/<song>`), never the song's id. The
+  engine keeps the first of a repeated id, and the same song sits under
+  Favorites and its album, so with bare ids it vanished from the album.
+- An unchanged tree is not sent again. Each send redraws the car and, on
+  Android, rewrites the encrypted copy on disk.
+
+**On iOS a car can start the app with no phone window.** `AppDelegate` starts
+the one React root when a CarPlay scene connects, and `PhoneSceneDelegate`
+puts that same root in its window. Before this, React Native only started
+from the phone scene, so a car launch ran no JavaScript and showed an empty
+library.
+
+Starting it was not enough on its own. expo-router's `SafeAreaProvider`
+renders nothing until native insets arrive, and a root view outside any
+window never gets them, so JavaScript ran and the app tree never mounted:
+no setup, no library. `patches/expo-router+55.0.13.patch` gives it the key
+window's metrics when there is one and zero when there is not. Re-check it
+whenever expo-router moves.
+
+This launch cannot be tested on a dev client build. expo-dev-launcher takes
+over the root and waits for a server to be picked on a phone screen that is
+not there. Test it on a Release build, in the Simulator's CarPlay window,
+with the app killed first.
 
 **A car can be playing before the app is.** On Android a car starts the
 engine's media service without the app's JavaScript, and the engine plays the
