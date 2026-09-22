@@ -1,3 +1,4 @@
+import type { BrowseNode } from 'yuzic-engine';
 import { isFlat } from './audioSettings';
 import type { MediaItem } from './mediaItem';
 import type { PlayerBackend, BackendEvent } from './backend';
@@ -37,6 +38,8 @@ function requireEngine() {
 export function createEngineBackend(): PlayerBackend {
   let shadow: Shadow = createShadow();
   let listeners: ((event: BackendEvent) => void)[] = [];
+  /** The last tree sent, serialized, so an unchanged one is not sent again. */
+  let lastBrowseTree: string | null = null;
   let unsubscribeEngine: (() => void) | null = null;
 
   // Untyped on purpose: this is the one place that reaches into the native
@@ -310,6 +313,15 @@ export function createEngineBackend(): PlayerBackend {
     clearCache() { fire('clearCache', async () => load().clearCache()); },
     evict(mediaId) { fire('evict', async () => load().evict(mediaId)); },
 
+    engineQueueKnown() {
+      return queueSync.engineQueueKnown();
+    },
+
+    clearBrowseTree() {
+      lastBrowseTree = null;
+      fire('clearBrowseTree', async () => load().clearBrowseTree());
+    },
+
     /**
      * Flat categories in, a tree out.
      *
@@ -321,27 +333,28 @@ export function createEngineBackend(): PlayerBackend {
      * folder — so the recursion sets it only where a `url` exists. The app
      * nests three deep in places (Albums → an album → its tracks), which is
      * why this recurses rather than mapping two fixed levels.
+     *
+     * A tree identical to the last one sent is not sent again. The hook
+     * rebuilds on every change to anything it reads, most of which leave the
+     * library as it was, and each send is a car redrawing under the driver
+     * and, on Android, the whole tree encrypted and written to disk.
      */
-    engineQueueKnown() {
-      return queueSync.engineQueueKnown();
-    },
-
-    clearBrowseTree() {
-      fire('clearBrowseTree', async () => load().clearBrowseTree());
-    },
-
     setBrowseTree(categories) {
-      fire('setBrowseTree', async () =>
-        load().setBrowseTree({
-          id: 'root',
-          title: 'yuzic',
-          children: categories.map(category => ({
-            id: category.mediaId,
-            title: category.title,
-            children: category.items.map(toBrowseNode),
-          })),
-        }),
-      );
+      const tree: BrowseNode = {
+        id: 'root',
+        title: 'yuzic',
+        children: categories.map(category => ({
+          id: category.mediaId,
+          title: category.title,
+          ...(category.icon ? { icon: category.icon } : {}),
+          ...(category.layout ? { layout: category.layout } : {}),
+          children: category.items.map(item => toBrowseNode(item, category.mediaId)),
+        })),
+      };
+      const serialized = JSON.stringify(tree);
+      if (serialized === lastBrowseTree) return;
+      lastBrowseTree = serialized;
+      fire('setBrowseTree', async () => load().setBrowseTree(tree));
     },
 
     addListener(listener) {

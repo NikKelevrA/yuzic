@@ -1658,5 +1658,13 @@
     "title": "評価",
     "clear": "評価を削除",
     "notRated": "未評価"
+  },
+  "car": {
+    "recent": "最近",
+    "favorites": "お気に入り",
+    "playlists": "プレイリスト",
+    "albums": "アルバム",
+    "downloads": "ダウンロード",
+    "shuffle": "シャッフル"
   }
 }

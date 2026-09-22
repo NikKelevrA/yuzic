@@ -1658,5 +1658,13 @@
     "title": "评分",
     "clear": "清除评分",
     "notRated": "未评分"
+  },
+  "car": {
+    "recent": "最近",
+    "favorites": "收藏",
+    "playlists": "播放列表",
+    "albums": "专辑",
+    "downloads": "下载",
+    "shuffle": "随机播放"
   }
 }
