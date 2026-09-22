@@ -65,7 +65,7 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
   const tileWidth = shelfItemWidth(screenWidth);
   const starredSongIds = useMemo(() => new Set(starredSongs.map(song => song.localId)), [starredSongs]);
 
-  const { album, songs, songsLoading, playability, isLocal, moreAlbums } = model;
+  const { album, songs, songsLoading, playability, isLocal, moreAlbums, versions } = model;
 
   const previewCollection = useMemo(() => playableSongs(songs, playability), [songs, playability]);
 
@@ -110,6 +110,42 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
   }, [songs, songsLoading, isLocal, albumPlayCount, colors, t]);
 
   const footer = useMemo(() => {
+    if (!isLocal && versions.length > 0) {
+      return (
+        <View>
+          {stats}
+          <View style={styles.moreSection}>
+            <Text style={[styles.moreSectionTitle, { color: colors.secondary }]}>
+              {t('album.otherVersions')}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.moreTileRow}
+            >
+              {versions.map(v => (
+                <MediaTile
+                  key={v.localId}
+                  cover={v.cover}
+                  title={v.title}
+                  subtitle={String(v.year ?? '')}
+                  size={tileWidth}
+                  radius={rad.card}
+                  onPress={() =>
+                    navigation.push('albumView', {
+                      source: 'musicbrainz',
+                      albumId: v.nativeId,
+                      artist: v.artist.name,
+                      title: v.title,
+                    })
+                  }
+                />
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      );
+    }
     if (!isLocal || !album) return stats;
     return (
       <View>
@@ -147,7 +183,7 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
         )}
       </View>
     );
-  }, [isLocal, album, colors, moreAlbums, stats, tileWidth, navigation, t, rad.card]);
+  }, [isLocal, album, colors, moreAlbums, versions, stats, tileWidth, navigation, t, rad.card]);
 
   const items = useMemo<ListItem[]>(() => {
     if (songsLoading) {

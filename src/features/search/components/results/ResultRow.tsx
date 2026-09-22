@@ -26,7 +26,15 @@ export default function ResultRow({
 }: Props) {
   switch (result.type) {
     case 'song':
-      return <SongResult result={result} onPress={onSongPress} onOptions={onSongOptions} />;
+      return (
+        <SongResult
+          result={result}
+          navigateToAlbum={navigateToAlbum}
+          onSelect={onSelect}
+          onPress={onSongPress}
+          onOptions={onSongOptions}
+        />
+      );
     case 'album':
       return (
         <AlbumResult

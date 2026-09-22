@@ -21,6 +21,7 @@
  */
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
+import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 
@@ -40,17 +41,34 @@ interface ArtistEnrichment {
 interface CatalogueSearchKinds {
   artists: boolean;
   albums: boolean;
+  /** A provider that has no song search of its own (Deezer today) simply
+   *  ignores this and returns none — the same way it already handles being
+   *  asked for nothing at all. Optional so call sites that predate song
+   *  search (and existing tests) don't all need updating just to add
+   *  `songs: false`. */
+  songs?: boolean;
 }
 
 /** One hit, with the second line the provider chose for it. */
 interface CatalogueSearchMatch<T> {
   entity: T;
   subtitle: string;
+  /**
+   * The album's artist by name, when the provider's `subtitle` is not itself
+   * that name. `subtitle` is what a row shows; this is what a follow-up
+   * lookup (matching the library, searching another catalogue) must use, so
+   * it can never be a year or any other decoration. Omitted when `subtitle`
+   * already is the artist's name.
+   */
+  artistName?: string;
 }
 
 interface CatalogueSearchResults {
   artists: CatalogueSearchMatch<Artist>[];
   albums: CatalogueSearchMatch<Album>[];
+  /** Absent from a provider that predates song search, or simply never
+   *  implements it (Deezer today) — callers read it as `found.songs ?? []`. */
+  songs?: CatalogueSearchMatch<Song>[];
 }
 
 /**

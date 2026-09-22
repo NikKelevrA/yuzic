@@ -23,6 +23,7 @@ jest.mock('@/providers/integration/deezer', () => ({
 jest.mock('@/providers/integration/musicbrainz', () => ({
   searchArtist: jest.fn(),
   searchReleaseGroupByTitle: jest.fn(),
+  searchRecording: jest.fn(),
   getReleaseGroup: jest.fn(),
   getTracksForReleaseGroup: jest.fn(),
   createMusicbrainzClient: jest.fn(),
@@ -35,7 +36,10 @@ jest.mock('@/state/redux/store', () => ({
   default: { getState: () => ({ settingsSources: { uses: {}, serverUrls: mockServerUrls } }) },
 }));
 jest.mock('@/providers/integration/musicbrainz/mapAlbum', () => ({ mapAlbum: jest.fn() }));
-jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({ mapSong: jest.fn() }));
+jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({
+  mapSong: jest.fn(),
+  mapRecordingSearchHit: jest.fn(),
+}));
 jest.mock('@/providers/integration/lastfm', () => ({ getLastFmArtistInfo: jest.fn() }));
 // Last.fm's api_key is a build-time env var, empty in the test environment —
 // fix it to a non-empty value so the provider's own "no key, no request"
@@ -49,7 +53,7 @@ import { KEYLESS_INTEGRATIONS } from './keyless';
 import * as deezerApi from '@/providers/integration/deezer';
 import * as mbApi from '@/providers/integration/musicbrainz';
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
-import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
+import { mapSong as mapMbSong, mapRecordingSearchHit as mapMbRecordingSearchHit } from '@/providers/integration/musicbrainz/mapSong';
 import * as lastfmApi from '@/providers/integration/lastfm';
 
 afterEach(() => {
@@ -154,6 +158,50 @@ describe('musicbrainz provider', () => {
     expect(mbApi.getReleaseGroup).toHaveBeenCalledWith('mb-rg');
     expect(mbApi.getTracksForReleaseGroup).toHaveBeenCalledWith('mb-rg');
     expect(mbApi.createMusicbrainzClient).not.toHaveBeenCalled();
+  });
+
+  it('searches recordings only when asked for songs, and maps hits through mapRecordingSearchHit', async () => {
+    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchRecording as jest.Mock).mockResolvedValue([{ id: 'rec-1', title: 'Test Song' }]);
+    (mapMbRecordingSearchHit as jest.Mock).mockReturnValue(makeSong());
+
+    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
+      'query',
+      { artists: false, albums: false, songs: true }
+    );
+
+    expect(mbApi.searchRecording).toHaveBeenCalledWith('query', 6);
+    expect(mapMbRecordingSearchHit).toHaveBeenCalledWith({ id: 'rec-1', title: 'Test Song' }, expect.anything());
+    expect(found?.songs).toHaveLength(1);
+    expect(found?.songs?.[0].entity).toEqual(makeSong());
+  });
+
+  it('does not search recordings when songs are not asked for', async () => {
+    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
+
+    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
+      'query',
+      { artists: true, albums: true }
+    );
+
+    expect(mbApi.searchRecording).not.toHaveBeenCalled();
+    expect(found?.songs).toEqual([]);
+  });
+
+  it('drops a recording hit that mapRecordingSearchHit cannot place on an album', async () => {
+    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchRecording as jest.Mock).mockResolvedValue([{ id: 'rec-orphan', title: 'No Album' }]);
+    (mapMbRecordingSearchHit as jest.Mock).mockReturnValue(null);
+
+    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
+      'query',
+      { artists: false, albums: false, songs: true }
+    );
+
+    expect(found?.songs).toEqual([]);
   });
 
   describe('with a server address set', () => {

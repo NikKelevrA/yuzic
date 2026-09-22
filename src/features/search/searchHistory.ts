@@ -46,6 +46,7 @@ export function useSearchHistory(activeServerId: string | undefined) {
       id: result.id,
       title: result.title,
       subtitle: result.subtext,
+      artistName: result.artistName,
       cover: result.cover,
       source: result.source,
       externalSource: result.externalSource,

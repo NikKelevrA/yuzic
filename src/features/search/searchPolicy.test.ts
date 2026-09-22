@@ -8,6 +8,20 @@ jest.mock('@/providers/registry/keyless', () => {
     artists: [],
     albums: [{ entity: { nativeId: `${id}-album`, title: `${id} album`, cover: { kind: 'none' }, externalIds: {} }, subtitle: 'Artist' }],
   });
+  const foundWithSong = (id: string) => ({
+    artists: [],
+    albums: [],
+    songs: [{
+      entity: {
+        nativeId: `${id}-song`,
+        title: `${id} song`,
+        cover: { kind: 'none' },
+        artist: { name: 'Song Artist' },
+        album: { nativeId: `${id}-song-album`, title: `${id} song album`, cover: { kind: 'none' } },
+      },
+      subtitle: 'Song Artist',
+    }],
+  });
   const provider = (id: string, search: () => Promise<unknown>) => ({
     kind: 'integration', id, presentation: { nameKey: id, icon: 0, color: '#000' }, auth: { tier: 'none' },
     capabilities: { 'catalogue.search': search },
@@ -17,6 +31,7 @@ jest.mock('@/providers/registry/keyless', () => {
     KEYLESS_INTEGRATIONS: [
       provider('healthy', async () => found('healthy')),
       provider('limited', async () => { throw new Error('MusicBrainz 503'); }),
+      provider('songful', async () => foundWithSong('songful')),
     ],
   };
 });
@@ -76,5 +91,28 @@ describe('searchExternalLeg', () => {
 
   it('still fails when no source answered at all', async () => {
     await expect(searchExternalLeg(['limited'], 'rumours', ['album', 'artist'])).rejects.toThrow('MusicBrainz 503');
+  });
+
+  it('maps a song hit to a "song" result carrying its own domain entity, not the row externalIds', async () => {
+    const results = await searchExternalLeg(['songful'], 'rumours', ['song']);
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        id: 'songful-song',
+        title: 'songful song',
+        subtext: 'Song Artist',
+        type: 'song',
+        source: 'external',
+        externalSource: 'songful',
+        isDownloaded: false,
+        song: expect.objectContaining({ nativeId: 'songful-song', title: 'songful song' }),
+      }),
+    ]);
+    expect(results[0]).not.toHaveProperty('externalIds');
+  });
+
+  it('does not crash a provider whose result has no songs key at all', async () => {
+    const results = await searchExternalLeg(['healthy'], 'rumours', ['album', 'artist', 'song']);
+    expect(results.map(r => r.id)).toEqual(['healthy-album']);
   });
 });

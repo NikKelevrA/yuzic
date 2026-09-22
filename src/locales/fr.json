@@ -549,7 +549,10 @@
         "description": "Utilisez votre propre serveur au lieu du serveur public. Saisissez son adresse, par exemple http://192.168.1.10:5000. Laissez vide pour utiliser le serveur public.",
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "Ce n'est pas une adresse web valide. Utilisez par exemple http://192.168.1.10:5000.",
-        "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil."
+        "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil.",
+        "fallbackLabel": "Adresse de secours (facultatif)",
+        "fallbackPlaceholder": "http://100.64.0.1:5000",
+        "fallbackInvalid": "Cette adresse de secours ne ressemble pas à une adresse web. Utilisez par exemple http://100.64.0.1:5000."
       }
     },
     "sourceUses": {
@@ -965,6 +968,7 @@
     "sections": {
       "albums": "Albums",
       "singles": "Singles et EP",
+      "others": "Autres sorties",
       "mostPlayed": "Les plus écoutés",
       "popularOnDeezer": "Populaire sur Deezer",
       "similarArtists": "Artistes similaires",
@@ -1428,6 +1432,7 @@
   "album": {
     "disc": "Disque {{number}}",
     "moreBy": "Plus de {{name}}",
+    "otherVersions": "Autres versions",
     "mightAlsoLike": "Vous pourriez aussi aimer",
     "duration": {
       "hrMin": "{{hrs}} h {{mins}} min",

@@ -36,6 +36,10 @@ export const deezerProvider: IntegrationProvider = {
         // album's is its artist. Both are this catalogue's own choice.
         artists: artists.map(entity => ({ entity, subtitle: '' })),
         albums: albums.map(entity => ({ entity, subtitle: entity.artist.name })),
+        // Deezer's own search API can do this; nothing here has asked for it
+        // yet, so it stays unimplemented rather than half-built. `kinds.songs`
+        // is safe to ignore — see `CatalogueSearchKinds`'s own note.
+        songs: [],
       };
     },
     'catalogue.album': async nativeId => getDeezerAlbum(nativeId),

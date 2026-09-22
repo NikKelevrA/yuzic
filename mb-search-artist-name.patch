@@ -1,0 +1,2368 @@
+diff --git a/src/features/album/components/Content/index.tsx b/src/features/album/components/Content/index.tsx
+index 2729df3d..ce07be3c 100644
+--- a/src/features/album/components/Content/index.tsx
++++ b/src/features/album/components/Content/index.tsx
+@@ -65,7 +65,7 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
+   const tileWidth = shelfItemWidth(screenWidth);
+   const starredSongIds = useMemo(() => new Set(starredSongs.map(song => song.localId)), [starredSongs]);
+ 
+-  const { album, songs, songsLoading, playability, isLocal, moreAlbums } = model;
++  const { album, songs, songsLoading, playability, isLocal, moreAlbums, versions } = model;
+ 
+   const previewCollection = useMemo(() => playableSongs(songs, playability), [songs, playability]);
+ 
+@@ -110,6 +110,42 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
+   }, [songs, songsLoading, isLocal, albumPlayCount, colors, t]);
+ 
+   const footer = useMemo(() => {
++    if (!isLocal && versions.length > 0) {
++      return (
++        <View>
++          {stats}
++          <View style={styles.moreSection}>
++            <Text style={[styles.moreSectionTitle, { color: colors.secondary }]}>
++              {t('album.otherVersions')}
++            </Text>
++            <ScrollView
++              horizontal
++              showsHorizontalScrollIndicator={false}
++              contentContainerStyle={styles.moreTileRow}
++            >
++              {versions.map(v => (
++                <MediaTile
++                  key={v.localId}
++                  cover={v.cover}
++                  title={v.title}
++                  subtitle={String(v.year ?? '')}
++                  size={tileWidth}
++                  radius={rad.card}
++                  onPress={() =>
++                    navigation.push('albumView', {
++                      source: 'musicbrainz',
++                      albumId: v.nativeId,
++                      artist: v.artist.name,
++                      title: v.title,
++                    })
++                  }
++                />
++              ))}
++            </ScrollView>
++          </View>
++        </View>
++      );
++    }
+     if (!isLocal || !album) return stats;
+     return (
+       <View>
+@@ -147,7 +183,7 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
+         )}
+       </View>
+     );
+-  }, [isLocal, album, colors, moreAlbums, stats, tileWidth, navigation, t, rad.card]);
++  }, [isLocal, album, colors, moreAlbums, versions, stats, tileWidth, navigation, t, rad.card]);
+ 
+   const items = useMemo<ListItem[]>(() => {
+     if (songsLoading) {
+diff --git a/src/features/album/useAlbumScreenModel.ts b/src/features/album/useAlbumScreenModel.ts
+index 5659d869..2fe6070e 100644
+--- a/src/features/album/useAlbumScreenModel.ts
++++ b/src/features/album/useAlbumScreenModel.ts
+@@ -7,6 +7,7 @@
+  * playback vs. preview-only — is now a typed per-track decision
+  * (`trackPlayability.ts`), not two component types.
+  */
++import { useAlbumVersions } from '@/features/album/useAlbumVersions';
+ import { useMemo } from 'react';
+ import { useQuery } from '@tanstack/react-query';
+ import type { Album } from '@/domain/entities/Album';
+@@ -47,6 +48,8 @@ export type AlbumScreenModel = {
+   moreAlbums: Album[];
+   /** Get/Want status against the user's downloaders — external mode only. */
+   externalStatus: ExternalAlbumStatus;
++  /** Other versions of this record (deluxe, live, acoustic) — MusicBrainz records only. */
++  versions: Album[];
+ };
+ 
+ /** Moved out of the deleted `useExternalAlbum` hook — same resolution order
+@@ -138,6 +141,7 @@ export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel
+   );
+ 
+   const externalStatus = useExternalAlbumStatus(isLocal ? null : album);
++  const versions = useAlbumVersions(isLocal ? null : album);
+ 
+   const status: AlbumScreenModel['status'] = (() => {
+     if (isLocal) {
+@@ -161,5 +165,6 @@ export function useAlbumScreenModel(params: AlbumRouteParams): AlbumScreenModel
+     playability,
+     moreAlbums,
+     externalStatus,
++    versions,
+   };
+ }
+diff --git a/src/features/album/useAlbumVersions.ts b/src/features/album/useAlbumVersions.ts
+new file mode 100644
+index 00000000..effb73ac
+--- /dev/null
++++ b/src/features/album/useAlbumVersions.ts
+@@ -0,0 +1,45 @@
++import { useMemo } from 'react';
++import { useQuery } from '@tanstack/react-query';
++
++import { QueryKeys } from '@/state/query/queryKeys';
++import { currentMusicbrainzClient } from '@/providers/registry/musicbrainz';
++import { integrationProvenance } from '@/domain/identity/Provenance';
++import { mapAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
++import { versionsOf } from '@/providers/integration/musicbrainz/discography';
++import type { Album } from '@/domain/entities/Album';
++
++const NO_VERSIONS: Album[] = [];
++const MB_PROVENANCE = integrationProvenance('musicbrainz');
++
++/**
++ * The other versions of a MusicBrainz record: its deluxe and anniversary
++ * editions, live and acoustic takes. They are hidden from the artist's list of
++ * albums so that list counts records, and this is where they stay reachable.
++ *
++ * It reads the artist's release groups, the same request the artist screen
++ * makes, so it is normally answered from cache. Nothing is asked for a record
++ * that did not come from MusicBrainz, or whose artist is unknown.
++ */
++export function useAlbumVersions(album: Album | null): Album[] {
++  const isMusicbrainz =
++    album?.provenance.origin === 'integration' && album.provenance.providerId === 'musicbrainz';
++  const artistId = album?.artist.nativeId ?? '';
++  const artistName = album?.artist.name ?? '';
++  const albumId = album?.nativeId ?? '';
++  const title = album?.title ?? '';
++
++  const { data } = useQuery<Album[]>({
++    queryKey: [QueryKeys.ExternalAlbumVersions, artistId, albumId],
++    enabled: isMusicbrainz && !!artistId && !!albumId,
++    staleTime: 1000 * 60 * 60 * 24,
++    queryFn: async () => {
++      const artist = await currentMusicbrainzClient().getArtistWithReleases(artistId);
++      const fallbackArtist = { id: artistId, name: artistName };
++      return versionsOf(artist['release-groups'] ?? [], { id: albumId, title }).map(rg =>
++        mapAlbum(rg, { provenance: MB_PROVENANCE, fallbackArtist })
++      );
++    },
++  });
++
++  return useMemo(() => data ?? NO_VERSIONS, [data]);
++}
+diff --git a/src/features/artist/classifyDiscography.ts b/src/features/artist/classifyDiscography.ts
+index 4f693b41..6c78dc8a 100644
+--- a/src/features/artist/classifyDiscography.ts
++++ b/src/features/artist/classifyDiscography.ts
+@@ -18,11 +18,14 @@ export type ClassifiedDiscography = {
+   ownedSingles: Album[];
+   unownedAlbums: Album[];
+   unownedSingles: Album[];
++  /** Live albums, compilations and other releases the library does not have. */
++  unownedOthers: Album[];
+ };
+ 
+ type ExternalDiscography = {
+   albums: readonly Album[];
+   singles: readonly Album[];
++  others?: readonly Album[];
+ } | null | undefined;
+ 
+ /**
+@@ -57,11 +60,13 @@ export function classifyDiscography(
+     );
+   const unownedAlbums = (externalDiscography?.albums ?? []).filter(isMissing);
+   const unownedSingles = (externalDiscography?.singles ?? []).filter(isMissing);
++  const unownedOthers = (externalDiscography?.others ?? []).filter(isMissing);
+ 
+   return {
+     ownedAlbums: [...ownedAlbums].sort(compareByReleaseYearDesc),
+     ownedSingles: [...ownedSingles].sort(compareByReleaseYearDesc),
+     unownedAlbums: [...unownedAlbums].sort(compareByReleaseYearDesc),
+     unownedSingles: [...unownedSingles].sort(compareByReleaseYearDesc),
++    unownedOthers: [...unownedOthers].sort(compareByReleaseYearDesc),
+   };
+ }
+diff --git a/src/features/artist/components/Content/index.tsx b/src/features/artist/components/Content/index.tsx
+index 12a0e27e..59a55d4a 100644
+--- a/src/features/artist/components/Content/index.tsx
++++ b/src/features/artist/components/Content/index.tsx
+@@ -35,8 +35,8 @@ type ArtistContentItem =
+   | { kind: 'section'; id: string; title: string }
+   | { kind: 'localAlbum'; id: string; album: Album }
+   | { kind: 'externalAlbum'; id: string; album: Album }
+-  | { kind: 'showMore'; id: string; target: 'albums' | 'singles'; remaining: number }
+-  | { kind: 'showUnowned'; id: string; target: 'albums' | 'singles'; count: number }
++  | { kind: 'showMore'; id: string; target: 'albums' | 'singles' | 'others'; remaining: number }
++  | { kind: 'showUnowned'; id: string; target: 'albums' | 'singles' | 'others'; count: number }
+   | { kind: 'similar'; id: string }
+   | { kind: 'bio'; id: string }
+ 
+@@ -64,9 +64,10 @@ export default function ArtistContent({ model }: Props) {
+   const [visibleSinglesCount, setVisibleSinglesCount] = useState(INITIAL_RELEASE_ROWS)
+   const [showUnownedAlbums, setShowUnownedAlbums] = useState(false)
+   const [showUnownedSingles, setShowUnownedSingles] = useState(false)
++  const [showUnownedOthers, setShowUnownedOthers] = useState(false)
+ 
+   const { artist, isLocal, discography } = model
+-  const { ownedAlbums, ownedSingles, unownedAlbums, unownedSingles } = discography
++  const { ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, unownedOthers } = discography
+ 
+   const items = useMemo<ArtistContentItem[]>(() => {
+     const rows: ArtistContentItem[] = []
+@@ -114,6 +115,15 @@ export default function ArtistContent({ model }: Props) {
+         }
+       }
+ 
++      if (unownedOthers.length > 0) {
++        rows.push({ kind: 'section', id: 'others-section', title: t('artist.sections.others') })
++        if (showUnownedOthers) {
++          rows.push(...unownedOthers.map(album => ({ kind: 'externalAlbum' as const, id: `other-ext-${album.localId}`, album })))
++        } else {
++          rows.push({ kind: 'showUnowned', id: 'show-unowned-others', target: 'others', count: unownedOthers.length })
++        }
++      }
++
+       rows.push({ kind: 'similar', id: 'similar-artists' })
+       rows.push({ kind: 'bio', id: 'bio' })
+     } else {
+@@ -137,6 +147,15 @@ export default function ArtistContent({ model }: Props) {
+         }
+       }
+ 
++      if (unownedOthers.length > 0) {
++        rows.push({ kind: 'section', id: 'others-section', title: t('artist.sections.others') })
++        if (showUnownedOthers) {
++          rows.push(...unownedOthers.map(album => ({ kind: 'externalAlbum' as const, id: `other-${album.localId}`, album })))
++        } else {
++          rows.push({ kind: 'showUnowned', id: 'show-unowned-others', target: 'others', count: unownedOthers.length })
++        }
++      }
++
+       if (model.similarArtists.length > 0) {
+         rows.push({ kind: 'similar', id: 'similar-artists' })
+       }
+@@ -144,7 +163,7 @@ export default function ArtistContent({ model }: Props) {
+     }
+ 
+     return rows
+-  }, [artist, isLocal, ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, model.similarArtists, visibleAlbumsCount, visibleSinglesCount, showUnownedAlbums, showUnownedSingles, t])
++  }, [artist, isLocal, ownedAlbums, ownedSingles, unownedAlbums, unownedSingles, unownedOthers, model.similarArtists, visibleAlbumsCount, visibleSinglesCount, showUnownedAlbums, showUnownedSingles, showUnownedOthers, t])
+ 
+   const renderContent = useCallback((item: ArtistContentItem) => {
+     if (item.kind === 'mostPlayed') {
+@@ -193,6 +212,7 @@ export default function ArtistContent({ model }: Props) {
+           onPress={() => {
+             if (isUnowned) {
+               if (item.target === 'albums') setShowUnownedAlbums(true)
++              else if (item.target === 'others') setShowUnownedOthers(true)
+               else setShowUnownedSingles(true)
+             } else if (item.target === 'albums') {
+               setVisibleAlbumsCount(c => c + 5)
+@@ -231,7 +251,7 @@ export default function ArtistContent({ model }: Props) {
+         subtextOverride={releaseYearLabel(item.album) ?? undefined}
+       />
+     )
+-  }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, setVisibleAlbumsCount, setVisibleSinglesCount, setShowUnownedAlbums, setShowUnownedSingles, t])
++  }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, setVisibleAlbumsCount, setVisibleSinglesCount, setShowUnownedAlbums, setShowUnownedSingles, setShowUnownedOthers, t])
+ 
+   // The list is mostly a column of album rows, so it is capped and centred
+   // like every other column of rows — but five of its item kinds are not
+diff --git a/src/features/artist/components/Header/index.artworkEnrichment.test.tsx b/src/features/artist/components/Header/index.artworkEnrichment.test.tsx
+index 53c58139..b32157eb 100644
+--- a/src/features/artist/components/Header/index.artworkEnrichment.test.tsx
++++ b/src/features/artist/components/Header/index.artworkEnrichment.test.tsx
+@@ -109,7 +109,7 @@ function modelFor(artist: Artist): ArtistScreenModel {
+     resolved: null,
+     topTracks: [],
+     similarArtists: [],
+-    discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [] },
++    discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [], unownedOthers: [] },
+     counts: { albums: 0, songs: 0 },
+   }
+ }
+diff --git a/src/features/artist/useArtistExternalDiscography.ts b/src/features/artist/useArtistExternalDiscography.ts
+index 8cd6dcf7..7a9c8a86 100644
+--- a/src/features/artist/useArtistExternalDiscography.ts
++++ b/src/features/artist/useArtistExternalDiscography.ts
+@@ -6,6 +6,8 @@ import type { Album } from '@/domain/entities/Album';
+ type ArtistExternalDiscography = {
+   albums: Album[];
+   singles: Album[];
++  /** Live albums, compilations and other releases that are not studio albums. */
++  others: Album[];
+ };
+ 
+ const DISCOGRAPHY_LIMIT = 80;
+@@ -36,8 +38,10 @@ export function useArtistExternalDiscography(
+ 
+       const all = perSource.flat();
+       return {
+-        albums: all.filter(a => a.releaseType !== 'single'),
+-        singles: all.filter(a => a.releaseType === 'single'),
++        // EPs sit with the singles, as the section they are shown in says.
++        albums: all.filter(a => a.releaseType === 'album'),
++        singles: all.filter(a => a.releaseType === 'single' || a.releaseType === 'ep'),
++        others: all.filter(a => a.releaseType === 'compilation'),
+       };
+     },
+   });
+diff --git a/src/features/artist/useArtistScreenModel.ts b/src/features/artist/useArtistScreenModel.ts
+index 73baeae1..8d557432 100644
+--- a/src/features/artist/useArtistScreenModel.ts
++++ b/src/features/artist/useArtistScreenModel.ts
+@@ -107,12 +107,13 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
+     // empty library sorts them the same way `classifyDiscography` sorts
+     // everything else, without a second sort implementation.
+     const ext = external.data;
+-    const classified = classifyDiscography([], new Map(), { albums: ext?.albums ?? [], singles: ext?.singles ?? [] });
++    const classified = classifyDiscography([], new Map(), { albums: ext?.albums ?? [], singles: ext?.singles ?? [], others: ext?.others ?? [] });
+     return {
+       ownedAlbums: [],
+       ownedSingles: [],
+       unownedAlbums: classified.unownedAlbums,
+       unownedSingles: classified.unownedSingles,
++      unownedOthers: classified.unownedOthers,
+     };
+   }, [isLocal, localAlbums, songCountByAlbumId, externalDiscography, external.data]);
+ 
+diff --git a/src/features/search/components/SearchFiltersSheet.tsx b/src/features/search/components/SearchFiltersSheet.tsx
+index 9417ecd3..bfab1cea 100644
+--- a/src/features/search/components/SearchFiltersSheet.tsx
++++ b/src/features/search/components/SearchFiltersSheet.tsx
+@@ -33,7 +33,7 @@ type Props = {
+ };
+ 
+ const SCOPE_ORDER: SearchResultScope[] = ['library', 'other'];
+-const ENTITY_TYPE_ORDER: SearchEntityType[] = ['album', 'artist'];
++const ENTITY_TYPE_ORDER: SearchEntityType[] = ['song', 'album', 'artist'];
+ 
+ /**
+  * The Search filter sheet. It owns the whole scope choice now — "Your Library"
+diff --git a/src/features/search/components/results/AlbumResult.tsx b/src/features/search/components/results/AlbumResult.tsx
+index 925a6bc8..9b4ce51c 100644
+--- a/src/features/search/components/results/AlbumResult.tsx
++++ b/src/features/search/components/results/AlbumResult.tsx
+@@ -25,6 +25,8 @@ export default function AlbumResult({ result, activeServerId, navigation, naviga
+   return (
+     <AlbumRow
+       album={resultToAlbum(result, activeServerId)}
++      // A decorated line ("Artist · 2001") replaces the bare artist name.
++      subtextOverride={result.artistName ? result.subtext : undefined}
+       onPress={album => {
+         onSelect(result);
+         prefetchCovers([album.cover], 'detail');
+diff --git a/src/features/search/components/results/ResultRow.tsx b/src/features/search/components/results/ResultRow.tsx
+index e7c15140..166c9a01 100644
+--- a/src/features/search/components/results/ResultRow.tsx
++++ b/src/features/search/components/results/ResultRow.tsx
+@@ -26,7 +26,15 @@ export default function ResultRow({
+ }: Props) {
+   switch (result.type) {
+     case 'song':
+-      return <SongResult result={result} onPress={onSongPress} onOptions={onSongOptions} />;
++      return (
++        <SongResult
++          result={result}
++          navigateToAlbum={navigateToAlbum}
++          onSelect={onSelect}
++          onPress={onSongPress}
++          onOptions={onSongOptions}
++        />
++      );
+     case 'album':
+       return (
+         <AlbumResult
+diff --git a/src/features/search/components/results/SongResult.tsx b/src/features/search/components/results/SongResult.tsx
+index 3c2615ad..9905caff 100644
+--- a/src/features/search/components/results/SongResult.tsx
++++ b/src/features/search/components/results/SongResult.tsx
+@@ -3,6 +3,8 @@ import { Ellipsis } from 'lucide-react-native';
+ import { useTranslation } from 'react-i18next';
+ 
+ import type { SearchResult } from '@/features/search/SearchContext';
++import type { Album } from '@/domain/entities/Album';
++import { songResultToAlbum } from '@/features/search/searchResultAdapters';
+ import MediaListRow from '@/components/MediaListRow';
+ import IconActionButton from '@/components/IconActionButton';
+ import { useTheme } from '@/features/theme/useTheme';
+@@ -10,15 +12,45 @@ import { iconSize } from '@/constants/design';
+ 
+ type Props = {
+   result: SearchResult;
++  navigateToAlbum: (album: Album) => void;
++  onSelect: (result: SearchResult) => void;
+   onPress: (result: SearchResult) => void;
+   onOptions: (result: SearchResult) => void;
+ };
+ 
+-/** A song result row — always local; there is no external song search
+- *  today (see `SearchEntityType`). */
+-export default function SongResult({ result, onPress, onOptions }: Props) {
++/**
++ * A song result row, branching on provenance the same way `AlbumResult` does
++ * (as an internal decision on the one component, not a second one `ResultRow`
++ * would have to pick between — see its own doc comment).
++ *
++ * A local match plays on tap, same as it always has. An external match —
++ * MusicBrainz today, through `searchRecording`/`mapRecordingSearchHit` —
++ * carries no stream (`mapSong`'s own note: MusicBrainz never had one to begin
++ * with), so tapping it opens the song's album instead, the same place
++ * tapping that album directly would reach. There is nothing an options sheet
++ * could offer a recording nobody owns — no queue, no playlist, nothing to
++ * download as this one track — so the row carries none for it.
++ */
++export default function SongResult({ result, navigateToAlbum, onSelect, onPress, onOptions }: Props) {
+   const { t } = useTranslation();
+   const { colors } = useTheme();
++
++  if (result.source === 'external') {
++    const album = songResultToAlbum(result);
++    return (
++      <MediaListRow
++        title={result.title}
++        testID="search-result-song"
++        subtitle={result.subtext}
++        cover={result.cover}
++        onPress={() => {
++          onSelect(result);
++          if (album) navigateToAlbum(album);
++        }}
++      />
++    );
++  }
++
+   return (
+     <MediaListRow
+       title={result.title}
+diff --git a/src/features/search/searchHistory.ts b/src/features/search/searchHistory.ts
+index 36dc9138..53576f0e 100644
+--- a/src/features/search/searchHistory.ts
++++ b/src/features/search/searchHistory.ts
+@@ -46,6 +46,7 @@ export function useSearchHistory(activeServerId: string | undefined) {
+       id: result.id,
+       title: result.title,
+       subtitle: result.subtext,
++      artistName: result.artistName,
+       cover: result.cover,
+       source: result.source,
+       externalSource: result.externalSource,
+diff --git a/src/features/search/searchPolicy.test.ts b/src/features/search/searchPolicy.test.ts
+index fcbf2c7c..af9910d7 100644
+--- a/src/features/search/searchPolicy.test.ts
++++ b/src/features/search/searchPolicy.test.ts
+@@ -8,6 +8,20 @@ jest.mock('@/providers/registry/keyless', () => {
+     artists: [],
+     albums: [{ entity: { nativeId: `${id}-album`, title: `${id} album`, cover: { kind: 'none' }, externalIds: {} }, subtitle: 'Artist' }],
+   });
++  const foundWithSong = (id: string) => ({
++    artists: [],
++    albums: [],
++    songs: [{
++      entity: {
++        nativeId: `${id}-song`,
++        title: `${id} song`,
++        cover: { kind: 'none' },
++        artist: { name: 'Song Artist' },
++        album: { nativeId: `${id}-song-album`, title: `${id} song album`, cover: { kind: 'none' } },
++      },
++      subtitle: 'Song Artist',
++    }],
++  });
+   const provider = (id: string, search: () => Promise<unknown>) => ({
+     kind: 'integration', id, presentation: { nameKey: id, icon: 0, color: '#000' }, auth: { tier: 'none' },
+     capabilities: { 'catalogue.search': search },
+@@ -17,6 +31,7 @@ jest.mock('@/providers/registry/keyless', () => {
+     KEYLESS_INTEGRATIONS: [
+       provider('healthy', async () => found('healthy')),
+       provider('limited', async () => { throw new Error('MusicBrainz 503'); }),
++      provider('songful', async () => foundWithSong('songful')),
+     ],
+   };
+ });
+@@ -77,4 +92,27 @@ describe('searchExternalLeg', () => {
+   it('still fails when no source answered at all', async () => {
+     await expect(searchExternalLeg(['limited'], 'rumours', ['album', 'artist'])).rejects.toThrow('MusicBrainz 503');
+   });
++
++  it('maps a song hit to a "song" result carrying its own domain entity, not the row externalIds', async () => {
++    const results = await searchExternalLeg(['songful'], 'rumours', ['song']);
++
++    expect(results).toEqual([
++      expect.objectContaining({
++        id: 'songful-song',
++        title: 'songful song',
++        subtext: 'Song Artist',
++        type: 'song',
++        source: 'external',
++        externalSource: 'songful',
++        isDownloaded: false,
++        song: expect.objectContaining({ nativeId: 'songful-song', title: 'songful song' }),
++      }),
++    ]);
++    expect(results[0]).not.toHaveProperty('externalIds');
++  });
++
++  it('does not crash a provider whose result has no songs key at all', async () => {
++    const results = await searchExternalLeg(['healthy'], 'rumours', ['album', 'artist', 'song']);
++    expect(results.map(r => r.id)).toEqual(['healthy-album']);
++  });
+ });
+diff --git a/src/features/search/searchPolicy.ts b/src/features/search/searchPolicy.ts
+index 468c99ff..8f1a1e91 100644
+--- a/src/features/search/searchPolicy.ts
++++ b/src/features/search/searchPolicy.ts
+@@ -23,13 +23,16 @@ import type { Song } from '@/domain/entities/Song';
+ import type { SearchResult } from '@/features/search/searchRanking';
+ 
+ /** Entity types an external source can be asked to return. Deliberately
+- *  narrower than the library's four kinds — 'song'/'playlist' have no
+- *  external equivalent through Deezer/MusicBrainz today, so filtering on
+- *  them would just always empty out; the Filters UI only offers what a
+- *  source actually supports. */
+-export type SearchEntityType = 'album' | 'artist';
++ *  narrower than the library's four kinds — 'playlist' has no external
++ *  equivalent through Deezer/MusicBrainz today, so filtering on it would just
++ *  always empty out; the Filters UI only offers what a source actually
++ *  supports. 'song' joined this list once MusicBrainz gained a real recording
++ *  search (`searchRecording`/`mapRecordingSearchHit`) — a provider with none
++ *  of its own, Deezer today, is simply asked for none and returns none, the
++ *  same way it already handles 'artists'/'albums' being turned off. */
++export type SearchEntityType = 'album' | 'artist' | 'song';
+ 
+-export const ALL_SEARCH_ENTITY_TYPES: SearchEntityType[] = ['album', 'artist'];
++export const ALL_SEARCH_ENTITY_TYPES: SearchEntityType[] = ['album', 'artist', 'song'];
+ 
+ // --- result mapping: library entity -> SearchResult -------------------------
+ 
+@@ -167,6 +170,7 @@ export async function searchExternalLeg(
+   const kinds = {
+     artists: entityTypes.includes('artist'),
+     albums: entityTypes.includes('album'),
++    songs: entityTypes.includes('song'),
+   };
+ 
+   // Asked of the broker, not of a list of sources: whoever can search a
+@@ -213,11 +217,12 @@ export async function searchExternalLeg(
+         isDownloaded: false,
+       });
+     }
+-    for (const { entity, subtitle } of found.albums) {
++    for (const { entity, subtitle, artistName } of found.albums) {
+       results.push({
+         id: entity.nativeId,
+         title: entity.title,
+         subtext: subtitle,
++        artistName,
+         cover: entity.cover,
+         type: 'album',
+         source: 'external',
+@@ -226,6 +231,26 @@ export async function searchExternalLeg(
+         isDownloaded: false,
+       });
+     }
++    // A song's own domain entity rides along on `song` — unlike a library
++    // match (see `songToResult`'s comment), there is a real one here, and it
++    // is what a song row needs to navigate to the album it's on, since it has
++    // nothing to play. `entity.externalIds` would be the recording's ids;
++    // `song` carries those instead of the row's own `externalIds`, since
++    // nothing here matches a song against the library the way an album/artist
++    // row's `externalIds` is used for.
++    for (const { entity, subtitle } of found.songs ?? []) {
++      results.push({
++        id: entity.nativeId,
++        title: entity.title,
++        subtext: subtitle,
++        cover: entity.cover,
++        type: 'song',
++        source: 'external',
++        externalSource: providerId,
++        isDownloaded: false,
++        song: entity,
++      });
++    }
+   }
+   return results;
+ }
+diff --git a/src/features/search/searchRanking.test.ts b/src/features/search/searchRanking.test.ts
+index 1d5ed618..f4482f6f 100644
+--- a/src/features/search/searchRanking.test.ts
++++ b/src/features/search/searchRanking.test.ts
+@@ -183,3 +183,21 @@ describe('dedupeAndSort', () => {
+     expect(titlesOf(dedupeAndSort(results, ''))).toEqual(['A', 'B']);
+   });
+ });
++
++describe('results from one external catalogue', () => {
++  it('keep the order the catalogue gave them, whatever their type', () => {
++    const artist = result({ id: 'a', title: 'Muse', type: 'artist', source: 'external', externalSource: 'musicbrainz' });
++    const albumOne = result({ id: 'b', title: 'Muse', type: 'album', source: 'external', externalSource: 'musicbrainz' });
++    const albumTwo = result({ id: 'c', title: 'Muse', type: 'album', source: 'external', externalSource: 'musicbrainz' });
++
++    expect(dedupeAndSort([artist, albumOne, albumTwo], 'muse').map(r => r.id)).toEqual(['a', 'b', 'c']);
++    expect(dedupeAndSort([albumTwo, artist, albumOne], 'muse').map(r => r.id)).toEqual(['c', 'a', 'b']);
++  });
++
++  it('keep the catalogue order even when a later result is an exact title match', () => {
++    const exact = result({ id: 'a', title: 'Muse', source: 'external', externalSource: 'musicbrainz' });
++    const loose = result({ id: 'b', title: 'Museum', source: 'external', externalSource: 'musicbrainz' });
++
++    expect(dedupeAndSort([loose, exact], 'muse').map(r => r.id)).toEqual(['b', 'a']);
++  });
++});
+diff --git a/src/features/search/searchRanking.ts b/src/features/search/searchRanking.ts
+index 1d713cc7..d6ca7231 100644
+--- a/src/features/search/searchRanking.ts
++++ b/src/features/search/searchRanking.ts
+@@ -15,6 +15,12 @@ export interface SearchResult {
+   id: string;
+   title: string;
+   subtext: string;
++  /**
++   * An album's artist by name, when `subtext` is decorated (an external
++   * catalogue's "Artist · year") and so cannot stand in for it. Lookups read
++   * this in preference to `subtext`.
++   */
++  artistName?: string;
+   cover: CoverSource;
+   type: 'song' | 'album' | 'artist' | 'playlist';
+   source: 'local' | 'external';
+@@ -74,6 +80,19 @@ export function compareResults(
+ 
+   if (a.isDownloaded !== b.isDownloaded) return a.isDownloaded ? -1 : 1;
+ 
++  // Two results from one outside catalogue stay in the order that catalogue
++  // gave them, before any title check. It ranked them (by how well known they
++  // are, for MusicBrainz), and re-sorting on the title would undo that: a
++  // search for an artist whose name is also the title of dozens of obscure
++  // albums would put those albums above the artist's own.
++  if (
++    a.source === 'external' &&
++    b.source === 'external' &&
++    a.externalSource === b.externalSource
++  ) {
++    return 0;
++  }
++
+   const aTitle = a.title.toLowerCase();
+   const bTitle = b.title.toLowerCase();
+ 
+@@ -95,5 +114,10 @@ export function dedupeAndSort(
+   results: SearchResult[],
+   lowerQuery: string
+ ): SearchResult[] {
+-  return dedupeResults(results).sort((a, b) => compareResults(a, b, lowerQuery));
++  // Ties keep their arrival order explicitly, rather than trusting the
++  // engine's sort to be stable.
++  return dedupeResults(results)
++    .map((result, index) => ({ result, index }))
++    .sort((a, b) => compareResults(a.result, b.result, lowerQuery) || a.index - b.index)
++    .map(({ result }) => result);
+ }
+diff --git a/src/features/search/searchResultAdapters.test.ts b/src/features/search/searchResultAdapters.test.ts
+index de230223..79bd84b9 100644
+--- a/src/features/search/searchResultAdapters.test.ts
++++ b/src/features/search/searchResultAdapters.test.ts
+@@ -1,5 +1,6 @@
+ import type { SearchResult } from '@/features/search/searchRanking';
+-import { resultToAlbum, resultToArtist, isExternalArtist } from './searchResultAdapters';
++import type { Song } from '@/domain/entities/Song';
++import { resultToAlbum, resultToArtist, isExternalArtist, entityToAlbum, songResultToAlbum } from './searchResultAdapters';
+ 
+ const baseResult: SearchResult = {
+   id: 'x-1',
+@@ -25,6 +26,92 @@ describe('resultToAlbum', () => {
+   });
+ });
+ 
++describe('external album artist name', () => {
++  const decorated: SearchResult = {
++    ...baseResult,
++    source: 'external',
++    externalSource: 'musicbrainz',
++    id: 'rg-1',
++    title: 'In the End',
++    subtext: 'Linkin Park · 2001',
++    artistName: 'Linkin Park',
++  };
++
++  it('uses the artist name, never the decorated second line, as the album artist', () => {
++    expect(resultToAlbum(decorated, 'srv-1').artist.name).toBe('Linkin Park');
++  });
++
++  it('falls back to the subtext for a catalogue whose second line is the artist', () => {
++    const deezer: SearchResult = { ...decorated, artistName: undefined, subtext: 'Daft Punk' };
++    expect(resultToAlbum(deezer, 'srv-1').artist.name).toBe('Daft Punk');
++  });
++
++  it('keeps the artist name when reopened from search history', () => {
++    const album = entityToAlbum({
++      kind: 'entity',
++      type: 'album',
++      id: 'rg-1',
++      title: 'In the End',
++      subtitle: 'Linkin Park · 2001',
++      artistName: 'Linkin Park',
++      cover: { kind: 'none' },
++      source: 'external',
++      externalSource: 'musicbrainz',
++    });
++    expect(album.artist.name).toBe('Linkin Park');
++  });
++});
++
++describe('songResultToAlbum', () => {
++  const songResult: SearchResult = {
++    ...baseResult,
++    type: 'song',
++    source: 'external',
++    externalSource: 'musicbrainz',
++    id: 'rec-1',
++    title: 'In the End',
++    subtext: 'Linkin Park',
++    song: {
++      localId: 'local:song:ext:musicbrainz:rec-1',
++      nativeId: 'rec-1',
++      provenance: { origin: 'integration', providerId: 'musicbrainz' },
++      externalIds: { mbid: 'rec-1' },
++      title: 'In the End',
++      artist: {
++        localId: 'local:artist:ext:musicbrainz:artist-1',
++        nativeId: 'artist-1',
++        externalIds: { mbid: 'artist-1' },
++        name: 'Linkin Park',
++        cover: { kind: 'none' },
++      },
++      album: {
++        localId: 'local:album:ext:musicbrainz:rg-1',
++        nativeId: 'rg-1',
++        externalIds: { mbid: 'rg-1' },
++        title: 'Hybrid Theory',
++        cover: { kind: 'none' },
++      },
++      cover: { kind: 'none' },
++      durationSeconds: 180,
++      contentKind: 'song',
++      genres: [],
++    } as Song,
++  };
++
++  it('returns null when the result carries no song entity, such as a local match', () => {
++    expect(songResultToAlbum(baseResult)).toBeNull();
++  });
++
++  it("builds the song's album from the song entity, not the row's own fields", () => {
++    const album = songResultToAlbum(songResult);
++    expect(album).not.toBeNull();
++    expect(album?.nativeId).toBe('rg-1');
++    expect(album?.title).toBe('Hybrid Theory');
++    expect(album?.artist.name).toBe('Linkin Park');
++    expect(album?.provenance).toEqual({ origin: 'integration', providerId: 'musicbrainz' });
++  });
++});
++
+ describe('resultToArtist', () => {
+   it('marks a local result in-library regardless of activeServerId presence', () => {
+     const artist = resultToArtist({ ...baseResult, type: 'artist' }, undefined);
+diff --git a/src/features/search/searchResultAdapters.ts b/src/features/search/searchResultAdapters.ts
+index 5a88c9cb..e42ea099 100644
+--- a/src/features/search/searchResultAdapters.ts
++++ b/src/features/search/searchResultAdapters.ts
+@@ -86,7 +86,7 @@ export function resultToAlbum(result: SearchResult, activeServerId: string | und
+     ? externalAlbum({
+         id: result.id,
+         title: result.title,
+-        artistName: result.subtext,
++        artistName: result.artistName ?? result.subtext,
+         cover: result.cover,
+         externalSource: result.externalSource,
+         externalIds: result.externalIds,
+@@ -94,13 +94,33 @@ export function resultToAlbum(result: SearchResult, activeServerId: string | und
+     : localAlbum(result, activeServerId);
+ }
+ 
++/**
++ * An external song result's album, for navigating from a song row straight to
++ * the record it's on. `result.song` is the domain `Song` an external source
++ * resolved (see `searchPolicy.ts#searchExternalLeg`) — never populated for a
++ * local match, so this is `null` there, same as for a result whose source
++ * mapped no song at all.
++ */
++export function songResultToAlbum(result: SearchResult): Album | null {
++  const song = result.song;
++  if (!song) return null;
++  return externalAlbum({
++    id: song.album.nativeId,
++    title: song.album.title,
++    artistName: song.artist.name,
++    cover: song.album.cover,
++    externalSource: result.externalSource,
++    externalIds: song.album.externalIds,
++  });
++}
++
+ /** A recent-history album entity's domain entity — always external; a local
+  *  album entry navigates by id directly and never reaches here. */
+ export function entityToAlbum(entity: SearchEntityEntry): Album {
+   return externalAlbum({
+     id: entity.id,
+     title: entity.title,
+-    artistName: entity.subtitle,
++    artistName: entity.artistName ?? entity.subtitle,
+     cover: entity.cover,
+     externalSource: entity.externalSource,
+     externalIds: entity.externalIds,
+diff --git a/src/features/search/useSearchScreenModel.ts b/src/features/search/useSearchScreenModel.ts
+index 586d7462..2c718f46 100644
+--- a/src/features/search/useSearchScreenModel.ts
++++ b/src/features/search/useSearchScreenModel.ts
+@@ -27,6 +27,7 @@ import { notify } from '@/components/toast';
+ import { usePrefetchCovers } from '@/features/library/usePrefetchCovers';
+ import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
+ import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
++import { selectSourceServerUrls, selectSourceUse } from '@/features/settings/sources/state';
+ import { selectActiveServer, selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
+ import type { SearchEntityEntry } from '@/state/redux/slices/searchHistorySlice';
+ import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
+@@ -46,6 +47,14 @@ export function useSearchScreenModel() {
+   // enablement. Nothing here is ever implied by a Home toggle.
+   const enabledSearchSourceIds = useEnabledSearchSourceIds();
+   const showSourceHeaders = useSelector(selectShowSourceHeaders);
++  // A server of your own is deliberately pointed at — you typed its address —
++  // where the public one is what search does for everyone without asking. So
++  // only a server of your own is worth opening search on: it makes "Other
++  // sources" the reason MusicBrainz is configured at all, not an extra step
++  // after it.
++  const musicbrainzServerUrl = useSelector(selectSourceServerUrls).musicbrainz;
++  const musicbrainzSearchEnabled = useSelector(selectSourceUse('musicbrainz.search'));
++  const defaultToMusicbrainz = !!musicbrainzServerUrl?.trim() && musicbrainzSearchEnabled;
+   const username = useSelector(selectActiveServer)?.username;
+   const activeServerId = useSelector(selectActiveServerId);
+ 
+@@ -55,8 +64,15 @@ export function useSearchScreenModel() {
+   const [query, setQuery] = useState('');
+   const [hasSearched, setHasSearched] = useState(false);
+   // 'library' is the default and the only scope that ever runs without an
+-  // explicit switch — "Other sources" is the deliberate external action.
+-  const [resultScope, setResultScope] = useState<SearchResultScope>('library');
++  // explicit switch — "Other sources" is the deliberate external action —
++  // except with a MusicBrainz server of your own switched on for search:
++  // there, opening Search and typing straight away is the point, so the
++  // screen opens on 'other' instead of asking for the same switch every
++  // time. `selectedSourceIds` below is `enabledSearchSourceIds`, so this
++  // never opens on a source you have not turned on for search.
++  const [resultScope, setResultScope] = useState<SearchResultScope>(
++    defaultToMusicbrainz ? 'other' : 'library'
++  );
+   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(enabledSearchSourceIds);
+   const [selectedEntityTypes, setSelectedEntityTypes] = useState<SearchEntityType[]>(ALL_SEARCH_ENTITY_TYPES);
+ 
+diff --git a/src/features/settings/sources/ServerAddressSheet.test.tsx b/src/features/settings/sources/ServerAddressSheet.test.tsx
+index 427979de..991a3e5e 100644
+--- a/src/features/settings/sources/ServerAddressSheet.test.tsx
++++ b/src/features/settings/sources/ServerAddressSheet.test.tsx
+@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
+ import { configureStore } from '@reduxjs/toolkit';
+ 
+ import ServerAddressSheet from './ServerAddressSheet';
+-import settingsSourcesReducer, { setSourceServerUrl } from './state';
++import settingsSourcesReducer, { setSourceFallbackUrl, setSourceServerUrl } from './state';
+ 
+ jest.mock('react-i18next', () => ({
+   initReactI18next: { type: '3rdParty', init: () => {} },
+@@ -33,8 +33,12 @@ jest.mock('@/components/FormSheet', () => {
+           ReactLib.createElement(Text, null, 'save')
+         )
+       ),
+-    FormSheetField: ({ value, onChangeText }: { value: string; onChangeText: (text: string) => void }) =>
+-      ReactLib.createElement(TextInput, { testID: 'field', value, onChangeText }),
++    FormSheetField: ({ label, value, onChangeText }: { label: string; value: string; onChangeText: (text: string) => void }) =>
++      ReactLib.createElement(TextInput, {
++        testID: label.includes('fallback') ? 'fallback-field' : 'field',
++        value,
++        onChangeText,
++      }),
+   };
+ });
+ 
+@@ -50,6 +54,7 @@ async function renderSheet(store: ReturnType<typeof makeStore>, onClose = jest.f
+ }
+ 
+ const saved = (store: ReturnType<typeof makeStore>) => store.getState().settingsSources.serverUrls;
++const savedFallback = (store: ReturnType<typeof makeStore>) => store.getState().settingsSources.fallbackUrls;
+ 
+ describe('ServerAddressSheet', () => {
+   beforeEach(() => mockCheck.mockReset());
+@@ -119,4 +124,76 @@ describe('ServerAddressSheet', () => {
+ 
+     expect(view.queryByTestId('server-address-problem')).toBeNull();
+   });
++
++  describe('fallback address', () => {
++    it('saves a fallback beside the address', async () => {
++      mockCheck.mockResolvedValue({ ok: true, address: 'http://192.168.1.43:5001' });
++      const store = makeStore();
++      const { view, onClose } = await renderSheet(store);
++
++      await fireEvent.changeText(view.getByTestId('field'), 'http://192.168.1.43:5001');
++      await fireEvent.changeText(view.getByTestId('fallback-field'), ' http://100.64.0.1:5001/ ');
++      await fireEvent.press(view.getByTestId('submit'));
++
++      await waitFor(() => expect(onClose).toHaveBeenCalled());
++      expect(saved(store)).toEqual({ musicbrainz: 'http://192.168.1.43:5001' });
++      expect(savedFallback(store)).toEqual({ musicbrainz: 'http://100.64.0.1:5001' });
++    });
++
++    it('says so, and saves nothing, when the fallback is not a web address', async () => {
++      mockCheck.mockResolvedValue({ ok: true, address: 'http://nas:5000' });
++      const store = makeStore();
++      const { view, onClose } = await renderSheet(store);
++
++      await fireEvent.changeText(view.getByTestId('field'), 'http://nas:5000');
++      await fireEvent.changeText(view.getByTestId('fallback-field'), 'tailscale');
++      await fireEvent.press(view.getByTestId('submit'));
++
++      await waitFor(() => expect(view.getByText('settings.sources.serverAddress.fallbackInvalid')).toBeTruthy());
++      expect(saved(store)).toEqual({});
++      expect(savedFallback(store)).toEqual({});
++      expect(onClose).not.toHaveBeenCalled();
++    });
++
++    it('does not ask the network about the fallback, nor about an address that did not change', async () => {
++      const store = makeStore();
++      store.dispatch(setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }));
++      const { view, onClose } = await renderSheet(store);
++
++      await fireEvent.changeText(view.getByTestId('fallback-field'), 'http://100.64.0.1:5000');
++      await fireEvent.press(view.getByTestId('submit'));
++
++      await waitFor(() => expect(onClose).toHaveBeenCalled());
++      expect(mockCheck).not.toHaveBeenCalled();
++      expect(savedFallback(store)).toEqual({ musicbrainz: 'http://100.64.0.1:5000' });
++    });
++
++    it('removes the fallback when it is emptied', async () => {
++      const store = makeStore();
++      store.dispatch(setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }));
++      store.dispatch(setSourceFallbackUrl({ source: 'musicbrainz', url: 'http://100.64.0.1:5000' }));
++      const { view, onClose } = await renderSheet(store);
++
++      await fireEvent.changeText(view.getByTestId('fallback-field'), '');
++      await fireEvent.press(view.getByTestId('submit'));
++
++      await waitFor(() => expect(onClose).toHaveBeenCalled());
++      expect(savedFallback(store)).toEqual({});
++      expect(saved(store)).toEqual({ musicbrainz: 'http://nas:5000' });
++    });
++
++    it('goes with the address when the address is cleared', async () => {
++      const store = makeStore();
++      store.dispatch(setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }));
++      store.dispatch(setSourceFallbackUrl({ source: 'musicbrainz', url: 'http://100.64.0.1:5000' }));
++      const { view, onClose } = await renderSheet(store);
++
++      await fireEvent.changeText(view.getByTestId('field'), '');
++      await fireEvent.press(view.getByTestId('submit'));
++
++      await waitFor(() => expect(onClose).toHaveBeenCalled());
++      expect(saved(store)).toEqual({});
++      expect(savedFallback(store)).toEqual({});
++    });
++  });
+ });
+diff --git a/src/features/settings/sources/ServerAddressSheet.tsx b/src/features/settings/sources/ServerAddressSheet.tsx
+index 40a6a607..49c5ec2f 100644
+--- a/src/features/settings/sources/ServerAddressSheet.tsx
++++ b/src/features/settings/sources/ServerAddressSheet.tsx
+@@ -5,9 +5,15 @@ import { useDispatch, useSelector } from 'react-redux';
+ 
+ import { FormSheet, FormSheetField } from '@/components/FormSheet';
+ import { spacing, statusColor, typography } from '@/constants/design';
++import { forgetReachable } from '@/providers/http/urlFailover';
+ import { checkServerAddress } from '@/providers/registry/serverAddress';
+-import type { SourceId } from '@/providers/registry/sources';
+-import { selectSourceServerUrls, setSourceServerUrl } from './state';
++import { parseServerAddress, type SourceId } from '@/providers/registry/sources';
++import {
++  selectSourceFallbackUrls,
++  selectSourceServerUrls,
++  setSourceFallbackUrl,
++  setSourceServerUrl,
++} from './state';
+ 
+ type Props = {
+   source: SourceId;
+@@ -24,33 +30,62 @@ type Props = {
+  * open with what was typed, saying which. Saving only stores it: nothing is
+  * sent to the address until a use of the source is on, and the source's own
+  * switches still say what is asked.
++ *
++ * A second, optional address can back it up — a Tailscale or domain address
++ * for a server that is reached by its LAN address at home. Only its shape is
++ * checked: away from home the first address cannot answer, and a fallback
++ * that is only reachable from outside cannot be checked from inside, so
++ * neither is a reason to refuse saving the other. The first address is only
++ * asked again when it was changed.
+  */
+ export default function ServerAddressSheet({ source, onClose }: Props) {
+   const { t } = useTranslation();
+   const dispatch = useDispatch();
+   const current = useSelector(selectSourceServerUrls)[source] ?? '';
++  const currentFallback = useSelector(selectSourceFallbackUrls)[source] ?? '';
+   const [draft, setDraft] = useState(current);
+-  const [problem, setProblem] = useState<'invalid' | 'unreachable' | null>(null);
++  const [draftFallback, setDraftFallback] = useState(currentFallback);
++  const [problem, setProblem] = useState<'invalid' | 'unreachable' | 'fallbackInvalid' | null>(null);
+ 
+   return (
+     <FormSheet
+       title={t('settings.sources.serverAddress.title')}
+       description={t('settings.sources.serverAddress.description')}
+       submitLabel={t('common.save')}
+-      canSubmit={draft.trim() !== current}
++      canSubmit={draft.trim() !== current || draftFallback.trim() !== currentFallback}
+       onSubmit={async () => {
+-        // Empty is "use the public server": nothing to check.
++        setProblem(null);
++        // Empty is "use the public server": nothing to check, and nothing for
++        // a fallback to back up.
+         if (!draft.trim()) {
+           dispatch(setSourceServerUrl({ source, url: '' }));
++          dispatch(setSourceFallbackUrl({ source, url: '' }));
++          forgetReachable(source);
+           return true;
+         }
+-        setProblem(null);
+-        const result = await checkServerAddress(source, draft);
+-        if (!result.ok) {
+-          setProblem(result.reason);
+-          return false;
++        let fallback = '';
++        if (draftFallback.trim()) {
++          const parsed = parseServerAddress(draftFallback);
++          if (!parsed) {
++            setProblem('fallbackInvalid');
++            return false;
++          }
++          fallback = parsed;
+         }
+-        dispatch(setSourceServerUrl({ source, url: result.address }));
++        let address = current;
++        if (draft.trim() !== current) {
++          const result = await checkServerAddress(source, draft);
++          if (!result.ok) {
++            setProblem(result.reason);
++            return false;
++          }
++          address = result.address;
++        }
++        dispatch(setSourceServerUrl({ source, url: address }));
++        dispatch(setSourceFallbackUrl({ source, url: fallback }));
++        // The address that answered last is remembered for the session; a
++        // changed list starts again from the first.
++        forgetReachable(source);
+         return true;
+       }}
+       onClose={onClose}
+@@ -65,6 +100,15 @@ export default function ServerAddressSheet({ source, onClose }: Props) {
+         keyboardType="url"
+         autoFocus
+       />
++      <FormSheetField
++        label={t('settings.sources.serverAddress.fallbackLabel')}
++        value={draftFallback}
++        onChangeText={text => { setDraftFallback(text); setProblem(null); }}
++        placeholder={t('settings.sources.serverAddress.fallbackPlaceholder')}
++        autoCapitalize="none"
++        autoCorrect={false}
++        keyboardType="url"
++      />
+       {problem && (
+         <Text testID="server-address-problem" style={styles.problem}>
+           {t(`settings.sources.serverAddress.${problem}`)}
+diff --git a/src/features/settings/sources/state.test.ts b/src/features/settings/sources/state.test.ts
+index 7862d7ef..446c835b 100644
+--- a/src/features/settings/sources/state.test.ts
++++ b/src/features/settings/sources/state.test.ts
+@@ -1,7 +1,9 @@
+ import sourcesReducer, {
+   selectEnabledSourcesFor,
++  selectSourceFallbackUrls,
+   selectSourceServerUrls,
+   selectSourceUse,
++  setSourceFallbackUrl,
+   setSourceServerUrl,
+   setSourceUse,
+   setSourceUses,
+@@ -86,3 +88,33 @@ describe('server addresses', () => {
+     expect(selectSourceServerUrls(state)).toBe(selectSourceServerUrls(state));
+   });
+ });
++
++describe('fallback addresses', () => {
++  it('starts with none', () => {
++    expect(selectSourceFallbackUrls(reduce())).toEqual({});
++  });
++
++  it('stores the fallback for one source, trimmed, and removes it when emptied', () => {
++    const set = reduce(setSourceFallbackUrl({ source: 'musicbrainz', url: '  http://100.64.0.1:5000  ' }));
++    expect(selectSourceFallbackUrls(set)).toEqual({ musicbrainz: 'http://100.64.0.1:5000' });
++    const cleared = reduce(
++      setSourceFallbackUrl({ source: 'musicbrainz', url: 'http://100.64.0.1:5000' }),
++      setSourceFallbackUrl({ source: 'musicbrainz', url: '  ' }),
++    );
++    expect(selectSourceFallbackUrls(cleared)).toEqual({});
++  });
++
++  it('goes when the address it backs up is emptied', () => {
++    const state = reduce(
++      setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }),
++      setSourceFallbackUrl({ source: 'musicbrainz', url: 'http://100.64.0.1:5000' }),
++      setSourceServerUrl({ source: 'musicbrainz', url: '' }),
++    );
++    expect(selectSourceFallbackUrls(state)).toEqual({});
++  });
++
++  it('reads settings saved before fallbacks existed as none', () => {
++    const saved = { settingsSources: { uses: {}, serverUrls: {} } } as unknown as Parameters<typeof selectSourceFallbackUrls>[0];
++    expect(selectSourceFallbackUrls(saved)).toEqual({});
++  });
++});
+diff --git a/src/features/settings/sources/state.ts b/src/features/settings/sources/state.ts
+index b6fc5636..b001ea9c 100644
+--- a/src/features/settings/sources/state.ts
++++ b/src/features/settings/sources/state.ts
+@@ -5,6 +5,7 @@ import {
+   usesOf,
+   type SourceId,
+   type SourcePurpose,
++  type SourceFallbackUrls,
+   type SourceServerUrls,
+   type SourceUseId,
+ } from '@/providers/registry/sources';
+@@ -27,11 +28,18 @@ interface SourcesSettingsState {
+    * nothing anywhere.
+    */
+   serverUrls: SourceServerUrls;
++  /**
++   * A second address for a server of your own, tried when the first does not
++   * answer: the LAN address at home, a Tailscale or domain address away from
++   * it. Only meaningful beside an address in `serverUrls`.
++   */
++  fallbackUrls: SourceFallbackUrls;
+ }
+ 
+ const initialState: SourcesSettingsState = {
+   uses: {},
+   serverUrls: {},
++  fallbackUrls: {},
+ };
+ 
+ const sourcesSlice = createSlice({
+@@ -54,6 +62,22 @@ const sourcesSlice = createSlice({
+       if (url) next[source] = url;
+       else delete next[source];
+       state.serverUrls = next;
++      // A fallback only makes sense beside the address it backs up.
++      if (!url) {
++        const fallbacks = { ...state.fallbackUrls };
++        delete fallbacks[source];
++        state.fallbackUrls = fallbacks;
++      }
++    },
++    /** Sets the fallback address of a server of your own; an empty one removes it. */
++    setSourceFallbackUrl(state, action: PayloadAction<{ source: SourceId; url: string }>) {
++      const { source } = action.payload;
++      const url = action.payload.url.trim();
++      // State persisted before fallback addresses existed has no `fallbackUrls`.
++      const next = { ...state.fallbackUrls };
++      if (url) next[source] = url;
++      else delete next[source];
++      state.fallbackUrls = next;
+     },
+     /** Stops using a source everywhere. */
+     stopUsingSource(state, action: PayloadAction<SourceId>) {
+@@ -62,7 +86,7 @@ const sourcesSlice = createSlice({
+   },
+ });
+ 
+-export const { setSourceUse, setSourceUses, setSourceServerUrl, stopUsingSource } = sourcesSlice.actions;
++export const { setSourceUse, setSourceUses, setSourceServerUrl, setSourceFallbackUrl, stopUsingSource } = sourcesSlice.actions;
+ 
+ export default sourcesSlice.reducer;
+ 
+@@ -82,6 +106,12 @@ const NO_SERVER_URLS: SourceServerUrls = {};
+ export const selectSourceServerUrls = (state: SourcesRootState): SourceServerUrls =>
+   state.settingsSources?.serverUrls ?? NO_SERVER_URLS;
+ 
++const NO_FALLBACK_URLS: SourceFallbackUrls = {};
++
++/** The fallback addresses set for sources you run yourself. Stable while unchanged. */
++export const selectSourceFallbackUrls = (state: SourcesRootState): SourceFallbackUrls =>
++  state.settingsSources?.fallbackUrls ?? NO_FALLBACK_URLS;
++
+ const enabledSourcesSelectors = new Map<SourcePurpose, (state: SourcesRootState) => SourceId[]>();
+ 
+ /**
+diff --git a/src/features/sources/ExternalResolutionProvider.tsx b/src/features/sources/ExternalResolutionProvider.tsx
+index ca5605e9..52fa0a2e 100644
+--- a/src/features/sources/ExternalResolutionProvider.tsx
++++ b/src/features/sources/ExternalResolutionProvider.tsx
+@@ -64,6 +64,15 @@ export function ExternalResolutionProvider({ children }: { children: React.React
+       return;
+     }
+ 
++    // A record that came from an enabled catalogue is opened in that catalogue.
++    // Searching the other sources for it would only offer a picker of lookalikes
++    // by title, and when the artist name is missing or wrong (as it once was) of
++    // unrelated records; the one that was tapped is already the one wanted.
++    if (providerId && item.nativeId && enabledSources.some(s => s.id === providerId)) {
++      router.push({ pathname: '/albumView', params: { source: providerId, albumId: item.nativeId, artist: item.artist.name, title: item.title } });
++      return;
++    }
++
+     // If only one source enabled and it matches the item's source, navigate directly
+     if (enabledSources.length === 1 && (!providerId || enabledSources[0].id === providerId)) {
+       router.push({ pathname: '/albumView', params: { source: providerId ?? enabledSources[0].id, albumId: item.nativeId, artist: item.artist.name, title: item.title } });
+@@ -102,6 +111,12 @@ export function ExternalResolutionProvider({ children }: { children: React.React
+       return;
+     }
+ 
++    const origin = providerId ? enabledSources.find(s => s.id === providerId) : undefined;
++    if (origin && (item.nativeId || item.externalIds.mbid)) {
++      router.push({ pathname: '/artistView', params: { source: origin.id, artistId: origin.artistIdOf(item.externalIds), mbid: item.externalIds.mbid ?? item.nativeId, name: item.name } });
++      return;
++    }
++
+     if (enabledSources.length === 1 && (!providerId || enabledSources[0].id === providerId)) {
+       router.push({ pathname: '/artistView', params: { source: providerId ?? enabledSources[0].id, artistId: enabledSources[0].artistIdOf(item.externalIds), mbid: item.externalIds.mbid ?? item.nativeId, name: item.name } });
+       return;
+diff --git a/src/features/sources/registry.ts b/src/features/sources/registry.ts
+index efa4ab04..f0afe090 100644
+--- a/src/features/sources/registry.ts
++++ b/src/features/sources/registry.ts
+@@ -15,6 +15,8 @@ import {
+ import { selectEnabledSourcesFor } from '@/features/settings/sources/state';
+ import { currentMusicbrainzClient } from '@/providers/registry/musicbrainz'
+ import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum'
++import { collapseEditions, isArtistRelease, isStudioAlbum } from '@/providers/integration/musicbrainz/discography'
++import type { MbReleaseGroup } from '@/providers/integration/musicbrainz'
+ import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist'
+ import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong'
+ import type { Album } from '@/domain/entities/Album'
+@@ -94,6 +96,8 @@ type SourceArtistDetail = {
+   topTracks: Song[]
+   albums: Album[]
+   singles: Album[]
++  /** Live albums, compilations and other releases that are not studio albums. */
++  others?: Album[]
+   similarArtists: Artist[]
+ }
+ 
+@@ -296,24 +300,35 @@ const musicbrainzSource: SourceDefinition = {
+ 
+   async fetchArtistAlbums(artistId, limit) {
+     const artist = await currentMusicbrainzClient().getArtistWithReleases(artistId)
+-    const rgs = artist['release-groups'] ?? []
+-    return rgs.slice(0, limit).map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
++    const fallbackArtist = { id: artist.id, name: artist.name }
++    // The discography a library artist's page lists as "you don't own": one
++    // entry per record. Studio albums, singles and EPs come through as such;
++    // live albums, compilations and bootlegs come through typed as
++    // compilations, which the artist screen lists apart from the albums.
++    const records = (artist['release-groups'] ?? []).filter(isArtistRelease)
++    return collapseEditions(records)
++      .slice(0, limit)
++      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE, fallbackArtist }))
+   },
+ 
+   async fetchArtist(id) {
+     const dto = await currentMusicbrainzClient().getArtistWithReleases(id)
+     const rgs = dto['release-groups'] ?? []
+-    const albums = rgs
+-      .filter(rg => !rg['primary-type'] || rg['primary-type'] === 'Album')
+-      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
+-    const singles = rgs
+-      .filter(rg => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP')
+-      .map(rg => mapMbAlbum(rg, { provenance: MB_PROVENANCE }))
++    const fallbackArtist = { id: dto.id, name: dto.name }
++    const asAlbum = (rg: MbReleaseGroup) => mapMbAlbum(rg, { provenance: MB_PROVENANCE, fallbackArtist })
++    // "Albums" counts records, not editions: studio albums only, one entry per
++    // record. Live albums, compilations, bootlegs and the like are not studio
++    // albums; they are listed apart, as "other releases".
++    const isSingleOrEp = (rg: MbReleaseGroup) => rg['primary-type'] === 'Single' || rg['primary-type'] === 'EP'
++    const albums = collapseEditions(rgs.filter(isStudioAlbum)).map(asAlbum)
++    const singles = collapseEditions(rgs.filter(isSingleOrEp)).map(asAlbum)
++    const others = collapseEditions(rgs.filter(rg => !isStudioAlbum(rg) && !isSingleOrEp(rg))).map(asAlbum)
+     return {
+       artist: mapMbArtist(dto, MB_PROVENANCE),
+       topTracks: [],
+       albums,
+       singles,
++      others,
+       similarArtists: [],
+     }
+   },
+diff --git a/src/locales/en.json b/src/locales/en.json
+index 8617a2b7..30520a07 100644
+--- a/src/locales/en.json
++++ b/src/locales/en.json
+@@ -549,7 +549,10 @@
+         "description": "Use a server of your own instead of the public one. Enter its address, for example http://192.168.1.10:5000. Leave it empty to use the public server.",
+         "placeholder": "http://192.168.1.10:5000",
+         "invalid": "That doesn't look like a web address. Use something like http://192.168.1.10:5000.",
+-        "unreachable": "That address didn't answer as expected. Check the server is running and reachable from this device."
++        "unreachable": "That address didn't answer as expected. Check the server is running and reachable from this device.",
++        "fallbackLabel": "Fallback address (optional)",
++        "fallbackPlaceholder": "http://100.64.0.1:5000",
++        "fallbackInvalid": "That fallback address doesn't look like a web address. Use something like http://100.64.0.1:5000."
+       }
+     },
+     "sourceUses": {
+@@ -955,6 +958,7 @@
+     "sections": {
+       "albums": "Albums",
+       "singles": "Singles & EPs",
++      "others": "Other releases",
+       "mostPlayed": "Most Played",
+       "popularOnDeezer": "Popular on Deezer",
+       "similarArtists": "Similar artists",
+@@ -969,6 +973,7 @@
+   "album": {
+     "disc": "Disc {{number}}",
+     "moreBy": "More by {{name}}",
++    "otherVersions": "Other versions",
+     "mightAlsoLike": "You Might Also Like",
+     "duration": {
+       "hrMin": "{{hrs}} hr {{mins}} min",
+diff --git a/src/locales/fr.json b/src/locales/fr.json
+index 9be0af62..4e181de6 100644
+--- a/src/locales/fr.json
++++ b/src/locales/fr.json
+@@ -549,7 +549,10 @@
+         "description": "Utilisez votre propre serveur au lieu du serveur public. Saisissez son adresse, par exemple http://192.168.1.10:5000. Laissez vide pour utiliser le serveur public.",
+         "placeholder": "http://192.168.1.10:5000",
+         "invalid": "Ce n'est pas une adresse web valide. Utilisez par exemple http://192.168.1.10:5000.",
+-        "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil."
++        "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil.",
++        "fallbackLabel": "Adresse de secours (facultatif)",
++        "fallbackPlaceholder": "http://100.64.0.1:5000",
++        "fallbackInvalid": "Cette adresse de secours ne ressemble pas à une adresse web. Utilisez par exemple http://100.64.0.1:5000."
+       }
+     },
+     "sourceUses": {
+@@ -965,6 +968,7 @@
+     "sections": {
+       "albums": "Albums",
+       "singles": "Singles et EP",
++      "others": "Autres sorties",
+       "mostPlayed": "Les plus écoutés",
+       "popularOnDeezer": "Populaire sur Deezer",
+       "similarArtists": "Artistes similaires",
+@@ -1428,6 +1432,7 @@
+   "album": {
+     "disc": "Disque {{number}}",
+     "moreBy": "Plus de {{name}}",
++    "otherVersions": "Autres versions",
+     "mightAlsoLike": "Vous pourriez aussi aimer",
+     "duration": {
+       "hrMin": "{{hrs}} h {{mins}} min",
+diff --git a/src/locales/ja.json b/src/locales/ja.json
+index b23bf068..7ee05112 100644
+--- a/src/locales/ja.json
++++ b/src/locales/ja.json
+@@ -548,7 +548,10 @@
+         "description": "公開サーバーの代わりに、ご自身のサーバーを使用します。アドレスを入力してください（例: http://192.168.1.10:5000）。空欄にすると公開サーバーを使用します。",
+         "placeholder": "http://192.168.1.10:5000",
+         "invalid": "有効なWebアドレスではありません。http://192.168.1.10:5000 のように入力してください。",
+-        "unreachable": "このアドレスから想定どおりの応答がありません。サーバーが起動していて、このデバイスから届くか確認してください。"
++        "unreachable": "このアドレスから想定どおりの応答がありません。サーバーが起動していて、このデバイスから届くか確認してください。",
++        "fallbackLabel": "予備のアドレス（任意）",
++        "fallbackPlaceholder": "http://100.64.0.1:5000",
++        "fallbackInvalid": "予備のアドレスがウェブアドレスの形式ではありません。例: http://100.64.0.1:5000"
+       }
+     },
+     "sourceUses": {
+@@ -962,6 +965,7 @@
+     "sections": {
+       "albums": "アルバム",
+       "singles": "シングル・EP",
++      "others": "その他のリリース",
+       "mostPlayed": "よく聴いた曲",
+       "popularOnDeezer": "Deezerで人気",
+       "similarArtists": "似ているアーティスト",
+@@ -1423,6 +1427,7 @@
+   "album": {
+     "disc": "ディスク {{number}}",
+     "moreBy": "{{name}}のその他の作品",
++    "otherVersions": "その他のバージョン",
+     "mightAlsoLike": "こちらもおすすめ",
+     "duration": {
+       "hrMin": "{{hrs}}時間{{mins}}分",
+diff --git a/src/locales/zh.json b/src/locales/zh.json
+index 56b2d5d5..ab13596f 100644
+--- a/src/locales/zh.json
++++ b/src/locales/zh.json
+@@ -548,7 +548,10 @@
+         "description": "使用您自己的服务器，而不是公共服务器。请输入其地址，例如 http://192.168.1.10:5000。留空则使用公共服务器。",
+         "placeholder": "http://192.168.1.10:5000",
+         "invalid": "这不是有效的网址。请使用类似 http://192.168.1.10:5000 的格式。",
+-        "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。"
++        "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。",
++        "fallbackLabel": "备用地址（可选）",
++        "fallbackPlaceholder": "http://100.64.0.1:5000",
++        "fallbackInvalid": "备用地址不像是网址。请使用类似 http://100.64.0.1:5000 的格式。"
+       }
+     },
+     "sourceUses": {
+@@ -962,6 +965,7 @@
+     "sections": {
+       "albums": "专辑",
+       "singles": "单曲和 EP",
++      "others": "其他发行",
+       "mostPlayed": "常听曲目",
+       "popularOnDeezer": "Deezer 热门",
+       "similarArtists": "相似歌手",
+@@ -1423,6 +1427,7 @@
+   "album": {
+     "disc": "碟片 {{number}}",
+     "moreBy": "{{name}} 的更多作品",
++    "otherVersions": "其他版本",
+     "mightAlsoLike": "猜你喜欢",
+     "duration": {
+       "hrMin": "{{hrs}} 小时 {{mins}} 分钟",
+diff --git a/src/providers/contracts/Capabilities.ts b/src/providers/contracts/Capabilities.ts
+index 55123b81..64493145 100644
+--- a/src/providers/contracts/Capabilities.ts
++++ b/src/providers/contracts/Capabilities.ts
+@@ -21,6 +21,7 @@
+  */
+ import type { Album } from '@/domain/entities/Album';
+ import type { Artist } from '@/domain/entities/Artist';
++import type { Song } from '@/domain/entities/Song';
+ import type { AlbumDetail } from '@/domain/entities/Detail';
+ import type { ExternalIds } from '@/domain/identity/ExternalIds';
+ 
+@@ -40,17 +41,34 @@ interface ArtistEnrichment {
+ interface CatalogueSearchKinds {
+   artists: boolean;
+   albums: boolean;
++  /** A provider that has no song search of its own (Deezer today) simply
++   *  ignores this and returns none — the same way it already handles being
++   *  asked for nothing at all. Optional so call sites that predate song
++   *  search (and existing tests) don't all need updating just to add
++   *  `songs: false`. */
++  songs?: boolean;
+ }
+ 
+ /** One hit, with the second line the provider chose for it. */
+ interface CatalogueSearchMatch<T> {
+   entity: T;
+   subtitle: string;
++  /**
++   * The album's artist by name, when the provider's `subtitle` is not itself
++   * that name. `subtitle` is what a row shows; this is what a follow-up
++   * lookup (matching the library, searching another catalogue) must use, so
++   * it can never be a year or any other decoration. Omitted when `subtitle`
++   * already is the artist's name.
++   */
++  artistName?: string;
+ }
+ 
+ interface CatalogueSearchResults {
+   artists: CatalogueSearchMatch<Artist>[];
+   albums: CatalogueSearchMatch<Album>[];
++  /** Absent from a provider that predates song search, or simply never
++   *  implements it (Deezer today) — callers read it as `found.songs ?? []`. */
++  songs?: CatalogueSearchMatch<Song>[];
+ }
+ 
+ /**
+diff --git a/src/providers/integration/musicbrainz/discography.test.ts b/src/providers/integration/musicbrainz/discography.test.ts
+new file mode 100644
+index 00000000..2295248e
+--- /dev/null
++++ b/src/providers/integration/musicbrainz/discography.test.ts
+@@ -0,0 +1,64 @@
++import { baseTitle, collapseEditions, familyTitle, isStudioAlbum, versionsOf } from './discography';
++import type { MbReleaseGroup } from './';
++
++const rg = (id: string, title: string, date: string, extra: Partial<MbReleaseGroup> = {}): MbReleaseGroup => ({
++  id,
++  title,
++  'first-release-date': date,
++  'primary-type': 'Album',
++  ...extra,
++});
++
++describe('baseTitle', () => {
++  it('drops edition suffixes but keeps other brackets', () => {
++    expect(baseTitle('The Sickness (25th Anniversary Edition)')).toBe('the sickness');
++    expect(baseTitle('Evolution (Deluxe Edition)')).toBe('evolution');
++    expect(baseTitle('Asylum [Remastered] (Deluxe Edition)')).toBe('asylum');
++    expect(baseTitle('Songs (Of Love)')).toBe('songs (of love)');
++  });
++});
++
++describe('isStudioAlbum', () => {
++  it('excludes anything carrying a secondary type', () => {
++    expect(isStudioAlbum(rg('1', 'A', '2000'))).toBe(true);
++    expect(isStudioAlbum(rg('2', 'A Live', '2001', { 'secondary-types': ['Live'] }))).toBe(false);
++    expect(isStudioAlbum(rg('3', 'A', '2001', { 'primary-type': 'Single' }))).toBe(false);
++  });
++});
++
++describe('collapseEditions', () => {
++  it('keeps one record per title, preferring the earliest and plainest', () => {
++    const list = [
++      rg('1', 'The Sickness (25th Anniversary Edition)', '2025'),
++      rg('2', 'The Sickness', '2000'),
++      rg('3', 'Divisive', '2022'),
++      rg('4', 'Divisive', '2022'),
++    ];
++    expect(collapseEditions(list).map(x => x.id)).toEqual(['2', '3']);
++  });
++
++  it('does not merge a single into the album of the same name', () => {
++    const list = [rg('1', 'Indestructible', '2008'), rg('2', 'Indestructible', '2008', { 'primary-type': 'Single' })];
++    expect(collapseEditions(list)).toHaveLength(2);
++  });
++});
++
++describe('familyTitle / versionsOf', () => {
++  it('strips bracketed and dash qualifiers', () => {
++    expect(familyTitle('Evolution (Deluxe Edition)')).toBe('evolution');
++    expect(familyTitle('Evolution - Live in London')).toBe('evolution');
++    expect(familyTitle('Believe [Acoustic] (Live)')).toBe('believe');
++    expect(familyTitle('Live at Red Rocks')).toBe('live at red rocks');
++  });
++
++  it('lists the other versions of a record, oldest first, never the record itself', () => {
++    const list = [
++      rg('1', 'Evolution', '2018'),
++      rg('2', 'Evolution (Deluxe Edition)', '2018-10-19'),
++      rg('3', 'Evolution - Live in London', '2020', { 'secondary-types': ['Live'] }),
++      rg('4', 'Immortalized', '2015'),
++    ];
++    expect(versionsOf(list, { id: '1', title: 'Evolution' }).map(x => x.id)).toEqual(['2', '3']);
++    expect(versionsOf(list, { id: '4', title: 'Immortalized' })).toEqual([]);
++  });
++});
+diff --git a/src/providers/integration/musicbrainz/discography.ts b/src/providers/integration/musicbrainz/discography.ts
+new file mode 100644
+index 00000000..274b701c
+--- /dev/null
++++ b/src/providers/integration/musicbrainz/discography.ts
+@@ -0,0 +1,107 @@
++/**
++ * Turning a MusicBrainz artist's release-group list into a discography a
++ * person would recognise as theirs.
++ *
++ * MusicBrainz files every edition of a record as its own release group
++ * ("Evolution", "Evolution (Deluxe Edition)", a second "Evolution" that only
++ * differs by a data quirk), and files live albums, compilations and bootlegs
++ * next to studio albums with only a secondary type to tell them apart. Shown
++ * as they come, "47 albums" means 47 entries, not 47 albums. Everything here
++ * is pure, so the rules can be read and tested apart from any fetching.
++ */
++import type { MbReleaseGroup } from './';
++
++/**
++ * A parenthetical or bracketed suffix that only names an edition, not a
++ * different record: "(Deluxe Edition)", "(25th Anniversary)", "[Remastered]".
++ * Anything else in brackets is part of the title and stays.
++ */
++const EDITION_SUFFIX =
++  /\s*[([][^)\]]*\b(deluxe|edition|anniversary|remaster(?:ed)?|expanded|bonus|special|explicit|clean|reissue|collector'?s?|version)\b[^)\]]*[)\]]\s*$/i;
++
++/** The title with edition suffixes removed, lower-cased for comparing. */
++export function baseTitle(title: string): string {
++  let t = title.trim();
++  for (;;) {
++    const next = t.replace(EDITION_SUFFIX, '');
++    if (next === t) break;
++    t = next;
++  }
++  return t.trim().toLowerCase();
++}
++
++/** A studio album: an Album (or untyped) release group with no secondary type. */
++export function isStudioAlbum(rg: MbReleaseGroup): boolean {
++  const primary = rg['primary-type'];
++  return (!primary || primary === 'Album') && !(rg['secondary-types']?.length);
++}
++
++/** Anything an artist's page lists: an album of any kind, a single or an EP. */
++export function isArtistRelease(rg: MbReleaseGroup): boolean {
++  const primary = rg['primary-type'];
++  return !primary || primary === 'Album' || primary === 'Single' || primary === 'EP';
++}
++
++/** Earliest date wins; on a tie the shorter (plainer) title does. */
++function isBetterRepresentative(a: MbReleaseGroup, b: MbReleaseGroup): boolean {
++  const da = a['first-release-date'] || '9999';
++  const db = b['first-release-date'] || '9999';
++  if (da !== db) return da < db;
++  return a.title.length < b.title.length;
++}
++
++/**
++ * One release group per record: entries whose base titles match collapse into
++ * the earliest, plainest one. The order the survivors first appeared in is
++ * kept, so a caller's own sorting still applies.
++ */
++export function collapseEditions(rgs: readonly MbReleaseGroup[]): MbReleaseGroup[] {
++  const chosen = new Map<string, MbReleaseGroup>();
++  for (const rg of rgs) {
++    // A single and the album it came from share a title and are still two
++    // records, so the kind of release is part of what makes two entries one.
++    const key = [
++      baseTitle(rg.title ?? ''),
++      rg['primary-type'] ?? '',
++      [...(rg['secondary-types'] ?? [])].sort().join('+'),
++    ].join('|');
++    const current = chosen.get(key);
++    if (!current || isBetterRepresentative(rg, current)) chosen.set(key, rg);
++  }
++  const survivors = new Set(chosen.values());
++  return rgs.filter(rg => survivors.has(rg));
++}
++
++/**
++ * What a record is called with every trailing qualifier removed: a bracketed
++ * one ("(Live in London)", "[Acoustic]") or a dash one ("- Live at Red
++ * Rocks"). Two release groups of one artist that share this are versions of
++ * the same record, which is what a record's page lists as "other versions".
++ */
++export function familyTitle(title: string): string {
++  let t = title.trim();
++  for (;;) {
++    const next = t
++      .replace(/\s*[([][^)\]]*[)\]]\s*$/, '')
++      .replace(/\s+-\s+[^-]*$/, '');
++    if (next === t || next === '') break;
++    t = next.trim();
++  }
++  return t.toLowerCase();
++}
++
++/**
++ * The other release groups that are versions of `current`: deluxe and
++ * anniversary editions, live and acoustic takes, reissues. Oldest first, so
++ * the original record leads.
++ */
++export function versionsOf(
++  rgs: readonly MbReleaseGroup[],
++  current: { id: string; title: string }
++): MbReleaseGroup[] {
++  const family = familyTitle(current.title);
++  if (!family) return [];
++  return rgs
++    .filter(rg => rg.id !== current.id && familyTitle(rg.title ?? '') === family)
++    .sort((a, b) => (a['first-release-date'] || '9999').localeCompare(b['first-release-date'] || '9999'));
++}
+diff --git a/src/providers/integration/musicbrainz/index.test.ts b/src/providers/integration/musicbrainz/index.test.ts
+index 90d454cd..f8f2d3c6 100644
+--- a/src/providers/integration/musicbrainz/index.test.ts
++++ b/src/providers/integration/musicbrainz/index.test.ts
+@@ -1,6 +1,7 @@
+ jest.mock('@/providers/http/fetchWithTimeout', () => ({ fetchWithTimeout: jest.fn() }));
+ 
+ import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
++import { _resetCache } from '@/providers/http/urlFailover';
+ import { createMusicbrainzClient } from './index';
+ 
+ const fetchMock = fetchWithTimeout as jest.MockedFunction<typeof fetchWithTimeout>;
+@@ -91,3 +92,64 @@ describe('MusicBrainz client spacing', () => {
+     expect(fetchMock).toHaveBeenCalledTimes(3);
+   });
+ });
++
++describe('MusicBrainz client fallback address', () => {
++  const HOME = 'http://192.168.1.43:5001';
++  const AWAY = 'http://100.64.0.1:5001';
++  const client = () => createMusicbrainzClient({ serverUrl: HOME, fallbackUrls: [AWAY] });
++  const unreachable = () => new TypeError('Network request failed');
++
++  beforeEach(() => _resetCache());
++
++  it('asks the first address first', async () => {
++    await client().searchArtist('Muse');
++    expect(fetchMock).toHaveBeenCalledTimes(1);
++    expect(urlOfCall(0).startsWith(`${HOME}/ws/2/artist?query=`)).toBe(true);
++  });
++
++  it('moves on to the fallback when the first address does not answer', async () => {
++    fetchMock.mockRejectedValueOnce(unreachable());
++    await client().searchArtist('Muse');
++    expect(fetchMock).toHaveBeenCalledTimes(2);
++    expect(urlOfCall(1).startsWith(`${AWAY}/ws/2/artist?query=`)).toBe(true);
++  });
++
++  it('counts an address that timed out as one that did not answer', async () => {
++    fetchMock.mockRejectedValueOnce(Object.assign(new Error('Request timed out after 8000ms'), { name: 'RequestTimeoutError' }));
++    await client().searchArtist('Muse');
++    expect(urlOfCall(1).startsWith(`${AWAY}/ws/2/artist?query=`)).toBe(true);
++  });
++
++  it('goes straight to the address that answered last', async () => {
++    fetchMock.mockRejectedValueOnce(unreachable());
++    await client().searchArtist('Muse');
++    await client().searchArtist('Muse');
++    expect(fetchMock).toHaveBeenCalledTimes(3);
++    expect(urlOfCall(2).startsWith(`${AWAY}/ws/2/artist?query=`)).toBe(true);
++  });
++
++  it('does not move on when the first address answered with an error status', async () => {
++    fetchMock.mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({}) } as unknown as Response);
++    await expect(client().searchArtist('Muse')).rejects.toThrow('MusicBrainz 503');
++    expect(fetchMock).toHaveBeenCalledTimes(1);
++  });
++
++  it('gives an address a shorter wait only while another is behind it', async () => {
++    await client().searchArtist('Muse');
++    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ timeoutMs: 8000 }));
++    fetchMock.mockRejectedValueOnce(unreachable());
++    _resetCache();
++    await client().searchArtist('Muse');
++    expect(fetchMock.mock.calls[2][1]).not.toHaveProperty('timeoutMs');
++  });
++
++  it('is unchanged when there is no fallback', async () => {
++    await createMusicbrainzClient({ serverUrl: HOME }).searchArtist('Muse');
++    expect(fetchMock.mock.calls[0][1]).not.toHaveProperty('timeoutMs');
++  });
++
++  it('ignores a fallback when there is no address of your own', async () => {
++    await createMusicbrainzClient({ fallbackUrls: [AWAY] }).searchArtist('Muse');
++    expect(urlOfCall(0).startsWith('https://musicbrainz.org/ws/2/artist?query=')).toBe(true);
++  });
++});
+diff --git a/src/providers/integration/musicbrainz/index.ts b/src/providers/integration/musicbrainz/index.ts
+index 8e744bf5..a3c4d83e 100644
+--- a/src/providers/integration/musicbrainz/index.ts
++++ b/src/providers/integration/musicbrainz/index.ts
+@@ -1,5 +1,6 @@
+ import { fetchWithTimeout } from '@/providers/http/fetchWithTimeout';
+ import { createRateLimiter } from '@/providers/http/rateLimit';
++import { orderedUrls, tryWithFailover, UrlTimeoutError } from '@/providers/http/urlFailover';
+ 
+ const PUBLIC_BASE = 'https://musicbrainz.org/ws/2';
+ const HEADERS = {
+@@ -15,7 +16,22 @@ const HEADERS = {
+ const MUSICBRAINZ_MIN_INTERVAL_MS = 1100;
+ 
+ /** Where a MusicBrainz server of your own is, when you run one. */
+-type MusicbrainzConfig = { serverUrl?: string };
++type MusicbrainzConfig = {
++  serverUrl?: string;
++  /** Other addresses of the same server, tried in order when the first does not answer. */
++  fallbackUrls?: string[];
++};
++
++/** The one server of your own there is, for remembering which of its addresses answered last. */
++const FAILOVER_ID = 'musicbrainz';
++
++/**
++ * How long an address gets to answer when another is waiting behind it. Long
++ * enough for a slow query on a busy server, short enough that a phone away
++ * from home is not stuck for the full request deadline on a LAN address that
++ * can never answer. The last address keeps the full deadline.
++ */
++const FAILOVER_ATTEMPT_TIMEOUT_MS = 8_000;
+ 
+ /**
+  * The web service under a server's root address, which is what the user
+@@ -53,6 +69,27 @@ export type MbTrack = {
+   'artist-credit'?: { name?: string; artist: { id?: string; name: string } }[];
+ };
+ 
++/**
++ * A recording as MusicBrainz's search index returns it, not as the lookup API
++ * shapes one: `id`/`title`/`artist-credit` sit at the top level (no nested
++ * `recording` the way {@link MbTrack} carries one from a release), and each of
++ * its `releases` embeds a basic `release-group` already, because a search hit
++ * is pre-joined rather than assembled from an `inc` list.
++ */
++export type MbRecordingHit = {
++  id: string;
++  title: string;
++  length?: number | null;
++  'artist-credit'?: { name?: string; artist: { id?: string; name: string } }[];
++  releases?: {
++    id: string;
++    title: string;
++    date?: string;
++    status?: string;
++    'release-group'?: MbReleaseGroup;
++  }[];
++};
++
+ type MbRelease = {
+   id: string;
+   title: string;
+@@ -85,11 +122,38 @@ export function createMusicbrainzClient(config: MusicbrainzConfig = {}) {
+     ? run => run()
+     : createRateLimiter(MUSICBRAINZ_MIN_INTERVAL_MS);
+ 
++  const fallbacks = custom ? (config.fallbackUrls ?? []).map(url => url.trim()).filter(Boolean) : [];
++
++  async function get<T>(root: string, path: string, timeoutMs?: number): Promise<T> {
++    const init = timeoutMs ? { headers: HEADERS, timeoutMs } : { headers: HEADERS };
++    const res = await fetchWithTimeout(`${root}${path}`, init);
++    if (!res.ok) throw new Error(`MusicBrainz ${res.status}: ${path}`);
++    return res.json() as Promise<T>;
++  }
++
+   async function mb<T>(path: string): Promise<T> {
+     return spaced(async () => {
+-      const res = await fetchWithTimeout(`${base}${path}`, { headers: HEADERS });
+-      if (!res.ok) throw new Error(`MusicBrainz ${res.status}: ${path}`);
+-      return res.json() as Promise<T>;
++      if (!custom || fallbacks.length === 0) return get<T>(base, path);
++
++      // More than one address: try them in order, the one that answered last
++      // first. Only a request that never reached a server moves on to the
++      // next address; an error status from a server that answered does not.
++      const server = { id: FAILOVER_ID, serverUrl: custom, fallbackUrls: fallbacks };
++      const order = orderedUrls(server);
++      const lastUrl = order[order.length - 1];
++      return tryWithFailover<T>(server, async url => {
++        const patient = url === lastUrl;
++        try {
++          return await get<T>(baseOf(url), path, patient ? undefined : FAILOVER_ATTEMPT_TIMEOUT_MS);
++        } catch (error) {
++          // The fetch wrapper's own deadline is not one the failover
++          // recognises as "this address did not answer".
++          if ((error as { name?: string } | null)?.name === 'RequestTimeoutError') {
++            throw new UrlTimeoutError(url, FAILOVER_ATTEMPT_TIMEOUT_MS);
++          }
++          throw error;
++        }
++      });
+     });
+   }
+ 
+@@ -129,6 +193,26 @@ export function createMusicbrainzClient(config: MusicbrainzConfig = {}) {
+     return data['release-groups'] ?? [];
+   }
+ 
++  /**
++   * Free-text search of recordings by title — the one MusicBrainz search
++   * Yuzic never sent before: `searchReleaseGroupByTitle` only ever matched a
++   * release-group's own title, so a song whose title differs from its album's
++   * (nearly all of them) was unsearchable. Each hit already carries the
++   * releases it appears on, which is what a caller needs to show and open the
++   * album behind it — see `mapRecordingSearchHit`.
++   */
++  async function searchRecording(
++    query: string,
++    limit = 5
++  ): Promise<MbRecordingHit[]> {
++    if (!query.trim()) return [];
++    const q = encodeURIComponent(`recording:"${query}"`);
++    const data = await mb<{ recordings: MbRecordingHit[] }>(
++      `/recording?query=${q}&limit=${limit}&fmt=json`
++    );
++    return data.recordings ?? [];
++  }
++
+   async function getArtistWithReleases(mbid: string): Promise<MbArtist> {
+     return mb<MbArtist>(`/artist/${mbid}?inc=release-groups&fmt=json`);
+   }
+@@ -150,6 +234,7 @@ export function createMusicbrainzClient(config: MusicbrainzConfig = {}) {
+     searchArtist,
+     searchReleaseGroup,
+     searchReleaseGroupByTitle,
++    searchRecording,
+     getArtistWithReleases,
+     getReleaseGroup,
+     getTracksForReleaseGroup,
+@@ -165,6 +250,7 @@ export const {
+   searchArtist,
+   searchReleaseGroup,
+   searchReleaseGroupByTitle,
++  searchRecording,
+   getArtistWithReleases,
+   getReleaseGroup,
+   getTracksForReleaseGroup,
+diff --git a/src/providers/integration/musicbrainz/mapAlbum.ts b/src/providers/integration/musicbrainz/mapAlbum.ts
+index 8fa8c086..40831b41 100644
+--- a/src/providers/integration/musicbrainz/mapAlbum.ts
++++ b/src/providers/integration/musicbrainz/mapAlbum.ts
+@@ -26,6 +26,11 @@ function releaseTypeOf(dto: MbReleaseGroup): ReleaseType {
+   if (dto['secondary-types']?.includes('Compilation')) return 'compilation';
+   if (dto['primary-type'] === 'Single') return 'single';
+   if (dto['primary-type'] === 'EP') return 'ep';
++  // Live albums, remixes, demos, bootlegs and the rest carry a secondary type.
++  // They are not studio albums, and the domain has no word for "everything
++  // else" but this one, so they are filed with the compilations: the artist
++  // screen lists that group apart from the albums.
++  if (dto['secondary-types']?.length) return 'compilation';
+   return 'album';
+ }
+ 
+@@ -44,6 +49,12 @@ interface MapAlbumContext {
+    * Deezer mappers — mapping an album never implies mapping its songs.
+    */
+   songIds?: LocalId[];
++  /**
++   * Who to credit when the release group names no artist of its own — which
++   * is the case for the ones an artist lookup embeds (`inc=release-groups`),
++   * where the artist is the page they were fetched for.
++   */
++  fallbackArtist?: { id: string; name: string };
+ }
+ 
+ export function mapAlbum(dto: MbReleaseGroup, context: MapAlbumContext): Album {
+@@ -63,7 +74,13 @@ export function mapAlbum(dto: MbReleaseGroup, context: MapAlbumContext): Album {
+     // comment on why this mapper never guesses further than 'external'.
+     title: dto.title ?? 'Unknown Album',
+     cover,
+-    artist: artistRef(provenance, dto['artist-credit']),
++    artist: artistRef(
++      provenance,
++      dto['artist-credit'] ??
++        (context.fallbackArtist
++          ? [{ name: context.fallbackArtist.name, artist: context.fallbackArtist }]
++          : undefined)
++    ),
+     year: yearOf(firstReleaseDate),
+     // Only carried when it is finer than the year already captured above —
+     // a bare 'YYYY' first-release-date says nothing releaseDate wouldn't.
+diff --git a/src/providers/integration/musicbrainz/mapSong.test.ts b/src/providers/integration/musicbrainz/mapSong.test.ts
+index ce5f7db6..e280ecd4 100644
+--- a/src/providers/integration/musicbrainz/mapSong.test.ts
++++ b/src/providers/integration/musicbrainz/mapSong.test.ts
+@@ -1,6 +1,6 @@
+ import { integrationProvenance } from '@/domain/identity/Provenance';
+-import { mapSong } from './mapSong';
+-import type { MbReleaseGroup, MbTrack } from './';
++import { mapSong, mapRecordingSearchHit } from './mapSong';
++import type { MbRecordingHit, MbReleaseGroup, MbTrack } from './';
+ 
+ const provenance = integrationProvenance('musicbrainz');
+ 
+@@ -103,3 +103,139 @@ describe('mapSong', () => {
+     expect(mapSong(fullDto, { provenance, releaseGroup })).not.toHaveProperty('streamUrl');
+   });
+ });
++
++/** A hit from `/recording?query=recording:"..."` — pre-joined with its releases. */
++const recordingDto: MbRecordingHit = {
++  id: '2a3a2a3a-1111-2222-3333-444455556666',
++  title: 'One More Time',
++  length: 320_000,
++  'artist-credit': [
++    { name: 'Daft Punk', artist: { id: '056e4f3e-d505-4dad-8ec1-d04f521cbb56', name: 'Daft Punk' } },
++  ],
++  releases: [
++    {
++      id: 'release-official-2001',
++      title: 'Discovery',
++      date: '2001-03-07',
++      status: 'Official',
++      'release-group': releaseGroup,
++    },
++  ],
++};
++
++describe('mapRecordingSearchHit', () => {
++  it('produces a complete song from a recording search hit', () => {
++    expect(mapRecordingSearchHit(recordingDto, provenance)).toEqual({
++      localId: 'local:song:ext:musicbrainz:2a3a2a3a-1111-2222-3333-444455556666',
++      nativeId: '2a3a2a3a-1111-2222-3333-444455556666',
++      provenance: { origin: 'integration', providerId: 'musicbrainz' },
++      externalIds: { mbid: '2a3a2a3a-1111-2222-3333-444455556666' },
++      title: 'One More Time',
++      artist: {
++        localId: 'local:artist:ext:musicbrainz:056e4f3e-d505-4dad-8ec1-d04f521cbb56',
++        nativeId: '056e4f3e-d505-4dad-8ec1-d04f521cbb56',
++        externalIds: { mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' },
++        name: 'Daft Punk',
++        cover: { kind: 'none', subject: { kind: 'artist', name: 'Daft Punk', mbid: '056e4f3e-d505-4dad-8ec1-d04f521cbb56' } },
++      },
++      album: {
++        localId: 'local:album:ext:musicbrainz:e0be0716-0d95-3007-a562-e6e86fdbcc37',
++        nativeId: 'e0be0716-0d95-3007-a562-e6e86fdbcc37',
++        externalIds: { mbid: 'e0be0716-0d95-3007-a562-e6e86fdbcc37', mbidType: 'release-group' },
++        title: 'Discovery',
++        cover: {
++          kind: 'coverartarchive',
++          mbid: 'e0be0716-0d95-3007-a562-e6e86fdbcc37',
++          mbidType: 'release-group',
++        },
++      },
++      cover: {
++        kind: 'coverartarchive',
++        mbid: 'e0be0716-0d95-3007-a562-e6e86fdbcc37',
++        mbidType: 'release-group',
++      },
++      durationSeconds: 320,
++      contentKind: 'song',
++      genres: [],
++    });
++  });
++
++  it('prefers the earliest official release when several releases carry the recording', () => {
++    const laterOfficial = {
++      id: 'release-official-2007',
++      title: 'Discovery (Reissue)',
++      date: '2007-01-01',
++      status: 'Official',
++      'release-group': { id: 'reissue-rg', title: 'Discovery (Reissue)' },
++    };
++    const dto: MbRecordingHit = {
++      ...recordingDto,
++      releases: [laterOfficial, recordingDto.releases![0]],
++    };
++
++    expect(mapRecordingSearchHit(dto, provenance)?.album.nativeId)
++      .toBe('e0be0716-0d95-3007-a562-e6e86fdbcc37');
++  });
++
++  it('falls back to a non-official release when none are marked official', () => {
++    const promo = {
++      id: 'release-promo',
++      title: 'Discovery (Promo)',
++      date: '2000-01-01',
++      status: 'Promotion',
++      'release-group': releaseGroup,
++    };
++    const dto: MbRecordingHit = { ...recordingDto, releases: [promo] };
++
++    expect(mapRecordingSearchHit(dto, provenance)?.album.nativeId)
++      .toBe('e0be0716-0d95-3007-a562-e6e86fdbcc37');
++  });
++
++  it('returns null when no release carries a release-group', () => {
++    const dto: MbRecordingHit = {
++      ...recordingDto,
++      releases: [{ id: 'orphan-release', title: 'No Group', status: 'Official' }],
++    };
++
++    expect(mapRecordingSearchHit(dto, provenance)).toBeNull();
++  });
++
++  it('returns null when the hit has no releases at all', () => {
++    const dto: MbRecordingHit = { ...recordingDto, releases: undefined };
++
++    expect(mapRecordingSearchHit(dto, provenance)).toBeNull();
++  });
++
++  it('returns null when the hit is missing its own id', () => {
++    const dto: MbRecordingHit = { ...recordingDto, id: '' };
++
++    expect(mapRecordingSearchHit(dto, provenance)).toBeNull();
++  });
++
++  it('converts length from milliseconds to seconds', () => {
++    expect(mapRecordingSearchHit({ ...recordingDto, length: 245_500 }, provenance)?.durationSeconds)
++      .toBe(246);
++  });
++
++  it('produces a song from a DTO missing all optional fields rather than throwing', () => {
++    const minimal: MbRecordingHit = {
++      id: 'rec-1',
++      title: 'Untitled',
++      releases: [{ id: 'r-1', title: 'Untitled Release', 'release-group': { id: 'rg-1', title: 'Untitled Release' } }],
++    };
++
++    expect(mapRecordingSearchHit(minimal, provenance)).toMatchObject({
++      localId: 'local:song:ext:musicbrainz:rec-1',
++      title: 'Untitled',
++      durationSeconds: 0,
++      contentKind: 'song',
++      genres: [],
++      externalIds: { mbid: 'rec-1' },
++    });
++    expect(mapRecordingSearchHit(minimal, provenance)?.artist.name).toBe('Unknown Artist');
++  });
++
++  it('carries no stream URL, only the identity a stream can be built from', () => {
++    expect(mapRecordingSearchHit(recordingDto, provenance)).not.toHaveProperty('streamUrl');
++  });
++});
+diff --git a/src/providers/integration/musicbrainz/mapSong.ts b/src/providers/integration/musicbrainz/mapSong.ts
+index 07ebabe9..6812a911 100644
+--- a/src/providers/integration/musicbrainz/mapSong.ts
++++ b/src/providers/integration/musicbrainz/mapSong.ts
+@@ -20,7 +20,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
+ import type { Provenance } from '@/domain/identity/Provenance';
+ import type { ExternalIds } from '@/domain/identity/ExternalIds';
+ import { albumRef, artistRef } from './mapRefs';
+-import type { MbReleaseGroup, MbTrack } from './';
++import type { MbRecordingHit, MbReleaseGroup, MbTrack } from './';
+ 
+ /**
+  * The id this song is known by at its origin.
+@@ -69,3 +69,55 @@ export function mapSong(dto: MbTrack, context: MapSongContext): Song {
+     genres: [],
+   };
+ }
++
++/**
++ * The release a recording search hit should be shown against: the earliest
++ * official one. "Earliest" because that is the album a listener means by
++ * "the" release for a song; "official" so a bootleg or promo that happens to
++ * carry an earlier date is not preferred over a real release just because it
++ * sorts first. Falls back to any release with a release-group when nothing is
++ * marked official, rather than showing nothing for a recording MusicBrainz
++ * otherwise knows perfectly well.
++ */
++function bestRelease(dto: MbRecordingHit): NonNullable<MbRecordingHit['releases']>[number] | undefined {
++  const releases = (dto.releases ?? []).filter(release => release['release-group']);
++  if (releases.length === 0) return undefined;
++  const official = releases.filter(release => release.status === 'Official');
++  const pool = official.length > 0 ? official : releases;
++  return [...pool].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'))[0];
++}
++
++/**
++ * A song search result -> domain `Song`, for the recording search
++ * {@link MbTrack}'s sibling mapper.
++ *
++ * The two DTOs are shaped differently enough (id/title/artist-credit sit at
++ * the top level here, not nested under a `recording`, and there is no track
++ * `position` to carry) that force-fitting this into {@link mapSong} would
++ * cost more than a second small function. Returns `null` when the hit names
++ * no release-group at all — MusicBrainz does return recordings with no
++ * release attached, and a song search result has nowhere useful to navigate
++ * without one, so it is dropped by the caller rather than shown as a dead row.
++ */
++export function mapRecordingSearchHit(dto: MbRecordingHit, provenance: Provenance): Song | null {
++  const release = bestRelease(dto);
++  const releaseGroup = release?.['release-group'];
++  const nativeId = dto.id;
++  if (!releaseGroup || !nativeId) return null;
++
++  const album = albumRef(provenance, releaseGroup);
++
++  return {
++    localId: makeLocalId('song', provenance, nativeId),
++    nativeId,
++    provenance,
++    externalIds: { mbid: nativeId },
++    title: dto.title ?? 'Unknown',
++    artist: artistRef(provenance, dto['artist-credit']),
++    album,
++    cover: album.cover,
++    durationSeconds: dto.length != null ? Math.round(dto.length / 1000) : 0,
++    contentKind: 'song',
++    genres: [],
++  };
++}
+diff --git a/src/providers/registry/deezer.ts b/src/providers/registry/deezer.ts
+index 43d69ebf..35da208f 100644
+--- a/src/providers/registry/deezer.ts
++++ b/src/providers/registry/deezer.ts
+@@ -36,6 +36,10 @@ export const deezerProvider: IntegrationProvider = {
+         // album's is its artist. Both are this catalogue's own choice.
+         artists: artists.map(entity => ({ entity, subtitle: '' })),
+         albums: albums.map(entity => ({ entity, subtitle: entity.artist.name })),
++        // Deezer's own search API can do this; nothing here has asked for it
++        // yet, so it stays unimplemented rather than half-built. `kinds.songs`
++        // is safe to ignore — see `CatalogueSearchKinds`'s own note.
++        songs: [],
+       };
+     },
+     'catalogue.album': async nativeId => getDeezerAlbum(nativeId),
+diff --git a/src/providers/registry/musicbrainz.ts b/src/providers/registry/musicbrainz.ts
+index 3fc2184c..f61210c6 100644
+--- a/src/providers/registry/musicbrainz.ts
++++ b/src/providers/registry/musicbrainz.ts
+@@ -11,10 +11,10 @@ import * as mb from '@/providers/integration/musicbrainz';
+ import type { MusicbrainzClient } from '@/providers/integration/musicbrainz';
+ import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
+ import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist';
+-import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
++import { mapRecordingSearchHit, mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
+ import { sourceColor } from '@/constants/design';
+ import { integrationProvenance } from '@/domain/identity/Provenance';
+-import { selectSourceServerUrls } from '@/features/settings/sources/state';
++import { selectSourceFallbackUrls, selectSourceServerUrls } from '@/features/settings/sources/state';
+ import store from '@/state/redux/store';
+ import type { IntegrationProvider } from '../contracts/Provider';
+ 
+@@ -32,8 +32,12 @@ const MB_PROVENANCE = integrationProvenance('musicbrainz');
+  * client whose limiter every call must queue behind.
+  */
+ export function currentMusicbrainzClient(): MusicbrainzClient {
+-  const serverUrl = selectSourceServerUrls(store.getState()).musicbrainz;
+-  return serverUrl?.trim() ? mb.createMusicbrainzClient({ serverUrl }) : mb;
++  const state = store.getState();
++  const serverUrl = selectSourceServerUrls(state).musicbrainz;
++  const fallback = selectSourceFallbackUrls(state).musicbrainz?.trim();
++  return serverUrl?.trim()
++    ? mb.createMusicbrainzClient({ serverUrl, fallbackUrls: fallback ? [fallback] : undefined })
++    : mb;
+ }
+ 
+ /**
+@@ -60,19 +64,38 @@ export const musicbrainzProvider: IntegrationProvider = {
+   auth: { tier: 'none' },
+   capabilities: {
+     'catalogue.search': async (query, kinds) => {
+-      const [artists, releaseGroups] = await Promise.all([
++      const [artists, releaseGroups, recordings] = await Promise.all([
+         kinds.artists ? currentMusicbrainzClient().searchArtist(query, 4) : Promise.resolve([]),
+         kinds.albums ? currentMusicbrainzClient().searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
++        kinds.songs ? currentMusicbrainzClient().searchRecording(query, 6) : Promise.resolve([]),
+       ]);
+       return {
+         // MusicBrainz names no second line for an artist; for a release group
+         // it is the first release year, which is this catalogue's own idea of
+         // what distinguishes two records with the same title.
+         artists: artists.map(dto => ({ entity: mapMbArtist(dto, MB_PROVENANCE), subtitle: '' })),
+-        albums: releaseGroups.map(dto => ({
+-          entity: mapMbAlbum(dto, { provenance: MB_PROVENANCE }),
+-          subtitle: dto['first-release-date']?.slice(0, 4) ?? '',
+-        })),
++        albums: releaseGroups.map(dto => {
++          const year = dto['first-release-date']?.slice(0, 4) ?? '';
++          const artistName = dto['artist-credit']
++            ?.map(credit => credit.name ?? credit.artist.name)
++            .join(', ');
++          // The row names the artist as well as the year: two records with
++          // one title are told apart by who made them. The artist rides on
++          // separately so a lookup never mistakes "Artist · 2001" for a name.
++          return {
++            entity: mapMbAlbum(dto, { provenance: MB_PROVENANCE }),
++            subtitle: artistName ? (year ? `${artistName} · ${year}` : artistName) : year,
++            artistName: artistName || undefined,
++          };
++        }),
++        // A hit with no release-group behind it (a recording MusicBrainz
++        // knows but has attached to no release) has nowhere to navigate, so
++        // `mapRecordingSearchHit` drops it rather than this list carrying a
++        // dead row.
++        songs: recordings.flatMap(dto => {
++          const song = mapRecordingSearchHit(dto, MB_PROVENANCE);
++          return song ? [{ entity: song, subtitle: song.artist.name }] : [];
++        }),
+       };
+     },
+     'catalogue.album': async nativeId => {
+diff --git a/src/providers/registry/providers.test.ts b/src/providers/registry/providers.test.ts
+index bd1d8042..3a0aad3c 100644
+--- a/src/providers/registry/providers.test.ts
++++ b/src/providers/registry/providers.test.ts
+@@ -23,6 +23,7 @@ jest.mock('@/providers/integration/deezer', () => ({
+ jest.mock('@/providers/integration/musicbrainz', () => ({
+   searchArtist: jest.fn(),
+   searchReleaseGroupByTitle: jest.fn(),
++  searchRecording: jest.fn(),
+   getReleaseGroup: jest.fn(),
+   getTracksForReleaseGroup: jest.fn(),
+   createMusicbrainzClient: jest.fn(),
+@@ -35,7 +36,10 @@ jest.mock('@/state/redux/store', () => ({
+   default: { getState: () => ({ settingsSources: { uses: {}, serverUrls: mockServerUrls } }) },
+ }));
+ jest.mock('@/providers/integration/musicbrainz/mapAlbum', () => ({ mapAlbum: jest.fn() }));
+-jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({ mapSong: jest.fn() }));
++jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({
++  mapSong: jest.fn(),
++  mapRecordingSearchHit: jest.fn(),
++}));
+ jest.mock('@/providers/integration/lastfm', () => ({ getLastFmArtistInfo: jest.fn() }));
+ // Last.fm's api_key is a build-time env var, empty in the test environment —
+ // fix it to a non-empty value so the provider's own "no key, no request"
+@@ -49,7 +53,7 @@ import { KEYLESS_INTEGRATIONS } from './keyless';
+ import * as deezerApi from '@/providers/integration/deezer';
+ import * as mbApi from '@/providers/integration/musicbrainz';
+ import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
+-import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
++import { mapSong as mapMbSong, mapRecordingSearchHit as mapMbRecordingSearchHit } from '@/providers/integration/musicbrainz/mapSong';
+ import * as lastfmApi from '@/providers/integration/lastfm';
+ 
+ afterEach(() => {
+@@ -156,6 +160,50 @@ describe('musicbrainz provider', () => {
+     expect(mbApi.createMusicbrainzClient).not.toHaveBeenCalled();
+   });
+ 
++  it('searches recordings only when asked for songs, and maps hits through mapRecordingSearchHit', async () => {
++    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
++    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
++    (mbApi.searchRecording as jest.Mock).mockResolvedValue([{ id: 'rec-1', title: 'Test Song' }]);
++    (mapMbRecordingSearchHit as jest.Mock).mockReturnValue(makeSong());
++
++    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
++      'query',
++      { artists: false, albums: false, songs: true }
++    );
++
++    expect(mbApi.searchRecording).toHaveBeenCalledWith('query', 6);
++    expect(mapMbRecordingSearchHit).toHaveBeenCalledWith({ id: 'rec-1', title: 'Test Song' }, expect.anything());
++    expect(found?.songs).toHaveLength(1);
++    expect(found?.songs?.[0].entity).toEqual(makeSong());
++  });
++
++  it('does not search recordings when songs are not asked for', async () => {
++    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
++    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
++
++    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
++      'query',
++      { artists: true, albums: true }
++    );
++
++    expect(mbApi.searchRecording).not.toHaveBeenCalled();
++    expect(found?.songs).toEqual([]);
++  });
++
++  it('drops a recording hit that mapRecordingSearchHit cannot place on an album', async () => {
++    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
++    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
++    (mbApi.searchRecording as jest.Mock).mockResolvedValue([{ id: 'rec-orphan', title: 'No Album' }]);
++    (mapMbRecordingSearchHit as jest.Mock).mockReturnValue(null);
++
++    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
++      'query',
++      { artists: false, albums: false, songs: true }
++    );
++
++    expect(found?.songs).toEqual([]);
++  });
++
+   describe('with a server address set', () => {
+     afterEach(() => {
+       mockServerUrls = {};
+diff --git a/src/providers/registry/sources.ts b/src/providers/registry/sources.ts
+index 5623a321..0edc6dd4 100644
+--- a/src/providers/registry/sources.ts
++++ b/src/providers/registry/sources.ts
+@@ -32,6 +32,9 @@ export type SourceUseId = `${SourceId}.${SourcePurpose}`;
+ /** Server addresses the user has set for sources they run themselves, by source. */
+ export type SourceServerUrls = Partial<Record<SourceId, string>>;
+ 
++/** A second address for the same server, tried when the first does not answer — a Tailscale or domain address for one that is otherwise reached by its LAN address. */
++export type SourceFallbackUrls = Partial<Record<SourceId, string>>;
++
+ /**
+  * Sources that can be pointed at a server of your own instead of the public
+  * one. The address is asked for on the source's own sheet, so the screen only
+diff --git a/src/state/query/queryKeys.ts b/src/state/query/queryKeys.ts
+index 7ac95e35..3bd9b449 100644
+--- a/src/state/query/queryKeys.ts
++++ b/src/state/query/queryKeys.ts
+@@ -14,6 +14,7 @@ export enum QueryKeys {
+ 	RecentSongs = 'recent-songs',
+ 	Genres = 'genres',
+ 	ExternalAlbum = 'external-album',
++	ExternalAlbumVersions = 'external-album-versions',
+ 	ExternalArtist = 'external-artist-v2',
+ 	ExploreSimilarArtists = 'explore-similar-artists',
+ 	ExploreSimilarArtistAlbums = 'explore-similar-artist-albums',
+diff --git a/src/state/redux/slices/searchHistorySlice.ts b/src/state/redux/slices/searchHistorySlice.ts
+index 70af0f57..5d405c84 100644
+--- a/src/state/redux/slices/searchHistorySlice.ts
++++ b/src/state/redux/slices/searchHistorySlice.ts
+@@ -30,6 +30,8 @@ export interface SearchEntityEntry {
+   id: string;
+   title: string;
+   subtitle: string;
++  /** An album's artist by name when `subtitle` is decorated; see `SearchResult.artistName`. */
++  artistName?: string;
+   cover: CoverSource;
+   source: 'local' | 'external';
+   /** Which integration supplied it. An opaque provider id, not a closed set:

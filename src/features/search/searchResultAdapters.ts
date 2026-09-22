@@ -86,12 +86,32 @@ export function resultToAlbum(result: SearchResult, activeServerId: string | und
     ? externalAlbum({
         id: result.id,
         title: result.title,
-        artistName: result.subtext,
+        artistName: result.artistName ?? result.subtext,
         cover: result.cover,
         externalSource: result.externalSource,
         externalIds: result.externalIds,
       })
     : localAlbum(result, activeServerId);
+}
+
+/**
+ * An external song result's album, for navigating from a song row straight to
+ * the record it's on. `result.song` is the domain `Song` an external source
+ * resolved (see `searchPolicy.ts#searchExternalLeg`) — never populated for a
+ * local match, so this is `null` there, same as for a result whose source
+ * mapped no song at all.
+ */
+export function songResultToAlbum(result: SearchResult): Album | null {
+  const song = result.song;
+  if (!song) return null;
+  return externalAlbum({
+    id: song.album.nativeId,
+    title: song.album.title,
+    artistName: song.artist.name,
+    cover: song.album.cover,
+    externalSource: result.externalSource,
+    externalIds: song.album.externalIds,
+  });
 }
 
 /** A recent-history album entity's domain entity — always external; a local
@@ -100,7 +120,7 @@ export function entityToAlbum(entity: SearchEntityEntry): Album {
   return externalAlbum({
     id: entity.id,
     title: entity.title,
-    artistName: entity.subtitle,
+    artistName: entity.artistName ?? entity.subtitle,
     cover: entity.cover,
     externalSource: entity.externalSource,
     externalIds: entity.externalIds,

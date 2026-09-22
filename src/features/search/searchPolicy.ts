@@ -23,13 +23,16 @@ import type { Song } from '@/domain/entities/Song';
 import type { SearchResult } from '@/features/search/searchRanking';
 
 /** Entity types an external source can be asked to return. Deliberately
- *  narrower than the library's four kinds — 'song'/'playlist' have no
- *  external equivalent through Deezer/MusicBrainz today, so filtering on
- *  them would just always empty out; the Filters UI only offers what a
- *  source actually supports. */
-export type SearchEntityType = 'album' | 'artist';
+ *  narrower than the library's four kinds — 'playlist' has no external
+ *  equivalent through Deezer/MusicBrainz today, so filtering on it would just
+ *  always empty out; the Filters UI only offers what a source actually
+ *  supports. 'song' joined this list once MusicBrainz gained a real recording
+ *  search (`searchRecording`/`mapRecordingSearchHit`) — a provider with none
+ *  of its own, Deezer today, is simply asked for none and returns none, the
+ *  same way it already handles 'artists'/'albums' being turned off. */
+export type SearchEntityType = 'album' | 'artist' | 'song';
 
-export const ALL_SEARCH_ENTITY_TYPES: SearchEntityType[] = ['album', 'artist'];
+export const ALL_SEARCH_ENTITY_TYPES: SearchEntityType[] = ['album', 'artist', 'song'];
 
 // --- result mapping: library entity -> SearchResult -------------------------
 
@@ -167,6 +170,7 @@ export async function searchExternalLeg(
   const kinds = {
     artists: entityTypes.includes('artist'),
     albums: entityTypes.includes('album'),
+    songs: entityTypes.includes('song'),
   };
 
   // Asked of the broker, not of a list of sources: whoever can search a
@@ -213,17 +217,38 @@ export async function searchExternalLeg(
         isDownloaded: false,
       });
     }
-    for (const { entity, subtitle } of found.albums) {
+    for (const { entity, subtitle, artistName } of found.albums) {
       results.push({
         id: entity.nativeId,
         title: entity.title,
         subtext: subtitle,
+        artistName,
         cover: entity.cover,
         type: 'album',
         source: 'external',
         externalSource: providerId,
         externalIds: entity.externalIds,
         isDownloaded: false,
+      });
+    }
+    // A song's own domain entity rides along on `song` — unlike a library
+    // match (see `songToResult`'s comment), there is a real one here, and it
+    // is what a song row needs to navigate to the album it's on, since it has
+    // nothing to play. `entity.externalIds` would be the recording's ids;
+    // `song` carries those instead of the row's own `externalIds`, since
+    // nothing here matches a song against the library the way an album/artist
+    // row's `externalIds` is used for.
+    for (const { entity, subtitle } of found.songs ?? []) {
+      results.push({
+        id: entity.nativeId,
+        title: entity.title,
+        subtext: subtitle,
+        cover: entity.cover,
+        type: 'song',
+        source: 'external',
+        externalSource: providerId,
+        isDownloaded: false,
+        song: entity,
       });
     }
   }

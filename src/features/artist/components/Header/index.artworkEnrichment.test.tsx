@@ -109,7 +109,7 @@ function modelFor(artist: Artist): ArtistScreenModel {
     resolved: null,
     topTracks: [],
     similarArtists: [],
-    discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [] },
+    discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [], unownedOthers: [] },
     counts: { albums: 0, songs: 0 },
   }
 }

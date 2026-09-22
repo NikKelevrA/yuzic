@@ -548,7 +548,10 @@
         "description": "使用您自己的服务器，而不是公共服务器。请输入其地址，例如 http://192.168.1.10:5000。留空则使用公共服务器。",
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "这不是有效的网址。请使用类似 http://192.168.1.10:5000 的格式。",
-        "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。"
+        "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。",
+        "fallbackLabel": "备用地址（可选）",
+        "fallbackPlaceholder": "http://100.64.0.1:5000",
+        "fallbackInvalid": "备用地址不像是网址。请使用类似 http://100.64.0.1:5000 的格式。"
       }
     },
     "sourceUses": {
@@ -962,6 +965,7 @@
     "sections": {
       "albums": "专辑",
       "singles": "单曲和 EP",
+      "others": "其他发行",
       "mostPlayed": "常听曲目",
       "popularOnDeezer": "Deezer 热门",
       "similarArtists": "相似歌手",
@@ -1423,6 +1427,7 @@
   "album": {
     "disc": "碟片 {{number}}",
     "moreBy": "{{name}} 的更多作品",
+    "otherVersions": "其他版本",
     "mightAlsoLike": "猜你喜欢",
     "duration": {
       "hrMin": "{{hrs}} 小时 {{mins}} 分钟",

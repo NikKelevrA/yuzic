@@ -33,7 +33,7 @@ type Props = {
 };
 
 const SCOPE_ORDER: SearchResultScope[] = ['library', 'other'];
-const ENTITY_TYPE_ORDER: SearchEntityType[] = ['album', 'artist'];
+const ENTITY_TYPE_ORDER: SearchEntityType[] = ['song', 'album', 'artist'];
 
 /**
  * The Search filter sheet. It owns the whole scope choice now — "Your Library"
