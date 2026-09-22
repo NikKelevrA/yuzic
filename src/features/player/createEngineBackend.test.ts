@@ -300,7 +300,9 @@ describe('failures the app would otherwise never see', () => {
   it('names the call that failed, so the log says which one', async () => {
     const backend = createEngineBackend();
     const seen: { message?: string }[] = [];
-    backend.addListener((event: { message?: string }) => seen.push(event));
+    backend.addListener((event: { type: string; message?: string }) => {
+      if (event.type === 'error') seen.push(event);
+    });
 
     backend.setup();
     await flush();
@@ -495,6 +497,65 @@ describe('a queue the car started', () => {
     expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['car1']);
   });
 
+  it('says which of the adopted tracks is playing, not only that there is a queue', async () => {
+    // Seen on an Android Automotive emulator: the app opened over a queue the
+    // car was playing, took the queue, and showed "No song playing" over the
+    // car's music until the next track, because only a track change sets
+    // what is playing and the one that started it went to no listener.
+    mockReturns.getQueue = [
+      { id: 'car1', uri: 'https://example/car1', title: 'Car One' },
+      { id: 'car2', uri: 'https://example/car2', title: 'Car Two' },
+    ];
+    mockReturns.getActiveIndex = 1;
+    const backend = createEngineBackend();
+    const changes: (number | undefined)[] = [];
+    backend.addListener((event: { type: string; index?: number }) => {
+      if (event.type === 'trackChange') changes.push(event.index);
+    });
+
+    backend.setup();
+    await flush();
+
+    expect(changes).toEqual([1]);
+    expect(backend.getActiveMediaItem()?.mediaId).toBe('car2');
+  });
+
+  it('says once that the engine has been asked, whether or not it held anything', async () => {
+    // The persisted-queue restore waits on this, so it has to arrive in both
+    // cases, and exactly once.
+    for (const held of [[{ id: 'car1', uri: 'https://example/car1', title: 'Car One' }], []]) {
+      mockReturns.getQueue = held;
+      mockReturns.getActiveIndex = 0;
+      const backend = createEngineBackend();
+      const known: unknown[] = [];
+      backend.addListener((event: { type: string }) => {
+        if (event.type === 'engineQueueKnown') known.push(event);
+      });
+      expect(backend.engineQueueKnown()).toBe(false);
+
+      backend.setup();
+      await flush();
+
+      expect(backend.engineQueueKnown()).toBe(true);
+      expect(known).toHaveLength(1);
+    }
+  });
+
+  it('says nothing about a track when there was nothing to adopt', async () => {
+    mockReturns.getQueue = [];
+    mockReturns.getActiveIndex = 0;
+    const backend = createEngineBackend();
+    const changes: unknown[] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'trackChange') changes.push(event);
+    });
+
+    backend.setup();
+    await flush();
+
+    expect(changes).toEqual([]);
+  });
+
   it('does not let an engine that has not received the app queue yet wipe it at setup', async () => {
     // The app's own setQueue is held until setup finishes and replayed right
     // after the setup-time read goes out, so "empty" here may just be early.
@@ -605,5 +666,70 @@ describe('the browse tree the car is given', () => {
     const leaf = rowsOf(treeSent())[0];
     expect(leaf.artworkUri).toBe('https://library.test/cover/1.jpg');
     expect(leaf.playable?.artworkUri).toBe('https://library.test/cover/1.jpg');
+  });
+
+  it('gives the same song a different node id in each place it sits', async () => {
+    // The engine keeps the first of a repeated id, so a favourite song used to
+    // vanish from its album in the car. The track keeps its own id.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    const song = row({ mediaId: 'song-1', url: 'https://library.test/stream/1' });
+    backend.setBrowseTree([
+      { mediaId: 'favorites', title: 'Favorites', items: [song] },
+      { mediaId: 'albums', title: 'Albums', items: [row({ mediaId: 'album-1', children: [song] })] },
+    ]);
+    await flush();
+
+    const tree = treeSent();
+    const favourite = tree.children[0].children![0] as Node & { playable?: { id?: string } };
+    const inAlbum = tree.children[1].children![0].children![0] as Node & { playable?: { id?: string } };
+    expect(favourite.id).toBe('favorites/song-1');
+    expect(inAlbum.id).toBe('albums/album-1/song-1');
+    expect(favourite.playable?.id).toBe('song-1');
+    expect(inAlbum.playable?.id).toBe('song-1');
+  });
+
+  it("carries a tab's icon and layout, and a shuffle row's action", async () => {
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([{
+      mediaId: 'albums',
+      title: 'Albums',
+      icon: 'albums',
+      layout: 'grid',
+      items: [{ mediaId: 'shuffle', title: 'Shuffle', action: 'shuffle' }],
+    }]);
+    await flush();
+
+    const tab = treeSent().children[0] as Node & { icon?: string; layout?: string };
+    expect(tab).toMatchObject({ icon: 'albums', layout: 'grid' });
+    expect(tab.children![0]).toMatchObject({ id: 'albums/shuffle', action: 'shuffle' });
+    expect(tab.children![0].playable).toBeUndefined();
+  });
+
+  it('does not send the same tree twice, and sends again after a clear', async () => {
+    // Every send is the car redrawing under the driver, and on Android the
+    // whole tree encrypted and written to disk.
+    const backend = createEngineBackend();
+    backend.setup();
+    await flush();
+
+    backend.setBrowseTree([category([row()])]);
+    backend.setBrowseTree([category([row()])]);
+    await flush();
+    expect(named('setBrowseTree')).toHaveLength(1);
+
+    backend.setBrowseTree([category([row({ title: 'Renamed' })])]);
+    await flush();
+    expect(named('setBrowseTree')).toHaveLength(2);
+
+    backend.clearBrowseTree();
+    backend.setBrowseTree([category([row({ title: 'Renamed' })])]);
+    await flush();
+    expect(named('setBrowseTree')).toHaveLength(3);
   });
 });

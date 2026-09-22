@@ -259,15 +259,7 @@ export function toPlaybackProgress(progress: Progress): {
   };
 }
 
-/**
- * One browse row, as the engine wants it.
- *
- * A row with a `url` becomes playable; one without becomes a folder and its
- * children are converted the same way. The app produces both, and which one a
- * row is cannot be told from its position in the tree — an album row and the
- * track rows beneath it sit at different depths in different categories.
- */
-/** `BrowseItem` with `url` narrowed to present, for the one call site above. */
+/** `BrowseItem` with `url` narrowed to present, for the one call site below. */
 function toEngineTrackInput(item: BrowseItem, url: string): EngineTrackInput {
   return {
     mediaId: item.mediaId,
@@ -281,22 +273,39 @@ function toEngineTrackInput(item: BrowseItem, url: string): EngineTrackInput {
   };
 }
 
-export function toBrowseNode(item: BrowseItem): BrowseNode {
+/**
+ * One browse row, as the engine wants it.
+ *
+ * A row with a `url` becomes playable; one without becomes a folder and its
+ * children are converted the same way. The app produces both, and which one a
+ * row is cannot be told from its position in the tree — an album row and the
+ * track rows beneath it sit at different depths in different categories.
+ *
+ * **A node's id is its path, not its `mediaId`.** The same song sits under
+ * Favorites and under its album, and the same album under Recent and under
+ * Albums. The engine resolves a tap by node id and keeps the first of any
+ * repeated id, so with bare `mediaId`s a favourite song silently vanished
+ * from its album and its playlists in the car. The path is unique by
+ * construction; the track itself keeps its own id, which is what the queue,
+ * the cache and scrobbling go by.
+ */
+export function toBrowseNode(item: BrowseItem, parentId?: string): BrowseNode {
+  const id = parentId ? `${parentId}/${item.mediaId}` : item.mediaId;
   return {
-    id: item.mediaId,
+    id,
     title: item.title,
     subtitle: item.artist,
     // The row's own thumbnail — not the same as `playable`'s artwork, since a
-    // folder has one and nothing to play. Neither was sent at all before, so
-    // the car drew titles with no covers. Headers go with it, or a protected
+    // folder has one and nothing to play. Headers go with it, or a protected
     // server answers 401 for every one; see `BrowseItem.artworkHeaders`.
     artworkUri: item.artworkUrl,
     ...(item.artworkHeaders ? { artworkHeaders: item.artworkHeaders } : {}),
-    children: item.children?.map(toBrowseNode),
+    children: item.children?.map(child => toBrowseNode(child, id)),
     // Same `toEngineTrack` the queue uses — see `EngineTrackInput` — so a
     // playable browse row and a queued track agree on every field, artwork
     // and headers included, instead of the browse tree hand-building a
     // second, thinner copy of the same conversion.
     playable: item.url ? toEngineTrack(toEngineTrackInput(item, item.url)) : undefined,
+    ...(item.action ? { action: item.action } : {}),
   };
 }

@@ -1,16 +1,16 @@
+import type { BrowseNode } from 'yuzic-engine';
 import { isFlat } from './audioSettings';
 import type { MediaItem } from './mediaItem';
 import type { PlayerBackend, BackendEvent } from './backend';
 import {
   applyEvent,
   createShadow,
-  reconcileQueue,
-  shadowNamesTrack,
   toBrowseNode,
   toEngineTrack,
   toPlaybackProgress,
   type Shadow,
 } from './engineBackend';
+import { createEngineQueueSync } from './engineQueueSync';
 
 /**
  * `PlayerBackend`, implemented on yuzic-engine.
@@ -38,6 +38,8 @@ function requireEngine() {
 export function createEngineBackend(): PlayerBackend {
   let shadow: Shadow = createShadow();
   let listeners: ((event: BackendEvent) => void)[] = [];
+  /** The last tree sent, serialized, so an unchanged one is not sent again. */
+  let lastBrowseTree: string | null = null;
   let unsubscribeEngine: (() => void) | null = null;
 
   // Untyped on purpose: this is the one place that reaches into the native
@@ -147,69 +149,13 @@ export function createEngineBackend(): PlayerBackend {
     shadow = { ...shadow, queue: next, activeIndex };
   }
 
-  /**
-   * Take the queue back from the engine, then tell the app it moved.
-   *
-   * The shadow's edits above are predictions of calls already made, and a
-   * prediction is only good until the engine says otherwise. `queueChange` is
-   * it saying otherwise — and it is also the only way the app hears about a
-   * change it did not make: a remote command from the lock screen or the car,
-   * a track the engine dropped because it could not be opened, a queue
-   * restored into a fresh JavaScript context.
-   *
-   * The event is emitted *after* the shadow has been replaced, so a listener
-   * that reacts by calling `getQueue()` gets the engine's answer rather than
-   * the stale prediction it was sent to correct. Emitting first would make
-   * this event actively misleading.
-   *
-   * Failure is silence rather than an error. The queue the app is showing is
-   * the one it last set, which is wrong only if the engine has since changed
-   * it — and a reconciliation that could not read the engine has nothing
-   * better to offer, while a thrown error here would surface as a playback
-   * failure the listener's music never actually had.
-   */
-  async function reconcileWithEngine(
-    { onlyIntoEmptyShadow = false }: { onlyIntoEmptyShadow?: boolean } = {}
-  ): Promise<void> {
-    try {
-      const api = load();
-      const [tracks, activeIndex] = await Promise.all([api.getQueue(), api.getActiveIndex()]);
-      // See `adoptEngineQueue` below for why a setup-time read may only fill
-      // a shadow that is still empty.
-      if (onlyIntoEmptyShadow && (shadow.queue.length > 0 || tracks.length === 0)) return;
-      shadow = reconcileQueue(shadow, tracks, activeIndex);
-    } catch {
-      return;
-    }
-    emit({ type: 'queueChange' });
-  }
-
-  /**
-   * Take a queue the engine already holds when this context starts listening.
-   *
-   * The car can start playback before the app's JavaScript hears anything —
-   * a selection plays natively, and its events reach no listener while the
-   * runtime is asleep. Without this the app woke up believing nothing was
-   * queued, and the persisted-queue restore then loaded last session's queue
-   * over the one the car was playing.
-   *
-   * Only into an empty shadow, and only a non-empty answer: calls the app
-   * made before setup finished are replayed right after this read goes out,
-   * so an engine that answers "empty" here may simply not have received them
-   * yet, and taking that answer would wipe a queue the app is about to set.
-   */
-  function adoptEngineQueue() {
-    void reconcileWithEngine({ onlyIntoEmptyShadow: true });
-  }
-
-  /** Report a track change once the shadow can say what the track is — see `shadowNamesTrack`. */
-  function reportTrackChange(index: number, id: string | null | undefined) {
-    if (shadowNamesTrack(shadow, index, id)) {
-      emit({ type: 'trackChange', index });
-      return;
-    }
-    void reconcileWithEngine().then(() => emit({ type: 'trackChange', index: shadow.activeIndex }));
-  }
+  const queueSync = createEngineQueueSync({
+    load,
+    getShadow: () => shadow,
+    setShadow: next => { shadow = next; },
+    emit,
+  });
+  const { reconcileWithEngine, adoptEngineQueue, markEngineQueueKnown, reportTrackChange } = queueSync;
 
   return {
     setup() {
@@ -224,6 +170,10 @@ export function createEngineBackend(): PlayerBackend {
           // read. The engine's own 4Hz ticker, which times crossfades, is
           // unaffected by this.
           await api.setup({ progressIntervalMs: 1000 });
+        } catch (error) {
+          // No engine to ask, so nothing to wait for: the restore may go ahead.
+          markEngineQueueKnown();
+          throw error;
         } finally {
           // Resolved in `finally` rather than after: a setup that threw still
           // has to open the gate, or the transport is blocked for the life of
@@ -363,6 +313,15 @@ export function createEngineBackend(): PlayerBackend {
     clearCache() { fire('clearCache', async () => load().clearCache()); },
     evict(mediaId) { fire('evict', async () => load().evict(mediaId)); },
 
+    engineQueueKnown() {
+      return queueSync.engineQueueKnown();
+    },
+
+    clearBrowseTree() {
+      lastBrowseTree = null;
+      fire('clearBrowseTree', async () => load().clearBrowseTree());
+    },
+
     /**
      * Flat categories in, a tree out.
      *
@@ -374,19 +333,28 @@ export function createEngineBackend(): PlayerBackend {
      * folder — so the recursion sets it only where a `url` exists. The app
      * nests three deep in places (Albums → an album → its tracks), which is
      * why this recurses rather than mapping two fixed levels.
+     *
+     * A tree identical to the last one sent is not sent again. The hook
+     * rebuilds on every change to anything it reads, most of which leave the
+     * library as it was, and each send is a car redrawing under the driver
+     * and, on Android, the whole tree encrypted and written to disk.
      */
     setBrowseTree(categories) {
-      fire('setBrowseTree', async () =>
-        load().setBrowseTree({
-          id: 'root',
-          title: 'yuzic',
-          children: categories.map(category => ({
-            id: category.mediaId,
-            title: category.title,
-            children: category.items.map(toBrowseNode),
-          })),
-        }),
-      );
+      const tree: BrowseNode = {
+        id: 'root',
+        title: 'yuzic',
+        children: categories.map(category => ({
+          id: category.mediaId,
+          title: category.title,
+          ...(category.icon ? { icon: category.icon } : {}),
+          ...(category.layout ? { layout: category.layout } : {}),
+          children: category.items.map(item => toBrowseNode(item, category.mediaId)),
+        })),
+      };
+      const serialized = JSON.stringify(tree);
+      if (serialized === lastBrowseTree) return;
+      lastBrowseTree = serialized;
+      fire('setBrowseTree', async () => load().setBrowseTree(tree));
     },
 
     addListener(listener) {
