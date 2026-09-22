@@ -1,8 +1,8 @@
-Large libraries are faster and far lighter.
+Your library, properly in the car.
 
-- No more crashes syncing or reopening a library of 90,000 songs
-- Opens from its saved copy instead of downloading your library again
-- Sorting a big library is about six times faster
-- Uses much less memory and storage
-- A song that won't play no longer retries forever. After three in a row, playback stops and keeps your queue
-- A song that failed behind hotel Wi-Fi or a broken proxy plays again once the connection is fixed
+- CarPlay, Android Auto and Android Automotive show tabs: Recent, Favorites, Playlists, Albums, Downloads
+- Shuffle any album or playlist from the car
+- Search and voice in Android Auto and Automotive
+- The car works with the app closed, and carries on where you left off
+- Offline, the car shows only downloaded songs, and they play
+- Covers show in the car for servers that need a login
