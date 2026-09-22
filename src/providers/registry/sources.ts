@@ -45,16 +45,41 @@ const SELF_HOSTABLE: readonly SourceId[] = ['musicbrainz'];
 export const isSelfHostable = (source: SourceId): boolean => SELF_HOSTABLE.includes(source);
 
 /**
+ * A bracketed IPv6 literal, or a hostname/IPv4 literal made only of the
+ * characters a real one can have, optionally followed by `:<port>`. This is
+ * what tells `http://100:122.20.1` (a mistyped `100.122.20.1`, dot fat-fingered
+ * into a colon) apart from a real `host[:port]` — the loose "anything but a
+ * slash" check this replaces let that kind of typo through as long as it
+ * started with `http://`.
+ */
+const HOST_PORT_RE = /^(\[[0-9a-fA-F:]+\]|[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)(?::(\d{1,5}))?$/;
+
+function isValidHostPort(authority: string): boolean {
+  const match = HOST_PORT_RE.exec(authority);
+  if (!match) return false;
+  const port = match[2];
+  if (port !== undefined) {
+    const portNumber = Number(port);
+    if (portNumber < 1 || portNumber > 65535) return false;
+  }
+  return true;
+}
+
+/**
  * The address a person typed for a server of their own, tidied, or null when
  * it is not a web address at all.
  *
- * Only the shape is checked here: `http` or `https`, a host, an optional port
- * and an optional path, no spaces. Whether anything answers there is asked
+ * Only the shape is checked here: `http` or `https`, a host that actually
+ * looks like a hostname or an IP literal, an optional numeric port and an
+ * optional path, no spaces. Whether anything answers there is asked
  * separately, because that needs the network.
  */
 export function parseServerAddress(input: string): string | null {
   const address = input.trim().replace(/\/+$/, '');
-  return /^https?:\/\/[^\s/?#]+(\/[^\s?#]*)?$/i.test(address) ? address : null;
+  const match = /^(https?):\/\/([^\s/?#]+)(\/[^\s?#]*)?$/i.exec(address);
+  if (!match) return null;
+  const authority = match[2];
+  return isValidHostPort(authority) ? address : null;
 }
 
 type SourceDeclaration = {

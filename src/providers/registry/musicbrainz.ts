@@ -21,6 +21,21 @@ import type { IntegrationProvider } from '../contracts/Provider';
 const MB_PROVENANCE = integrationProvenance('musicbrainz');
 
 /**
+ * Many distinct MusicBrainz artist/album entries can genuinely name the same
+ * real-world artist (unmerged duplicates, or artists who really do share a
+ * name) — `disambiguation` labels this, it doesn't rank or collapse it. A
+ * search result list can't fix MusicBrainz's own data, so it settles for
+ * showing only the first few of whichever catalogue order it got (a
+ * self-hosted server is expected to rank these by popularity, putting the
+ * one you meant first) rather than a wall of same-named rows.
+ */
+const MAX_ARTISTS = 3;
+const MAX_ALBUMS = 3;
+/** Songs get no such cap on the useful side — a search is more useful with a
+ *  long, popularity-ordered list of them, not a short one. */
+const MAX_SONGS = 15;
+
+/**
  * The client for the server the user has chosen: their own when they have set
  * an address for it, the shared public one otherwise.
  *
@@ -64,17 +79,32 @@ export const musicbrainzProvider: IntegrationProvider = {
   auth: { tier: 'none' },
   capabilities: {
     'catalogue.search': async (query, kinds) => {
+      // Artist and album name search returns duplicate/near-duplicate
+      // catalogue entries by nature (see MAX_ARTISTS's own note), so both
+      // ask for and keep only a small handful, trusting whatever ordering
+      // the server/proxy already applied (a self-hosted one is expected to
+      // rank by popularity) to put the best match first. Songs get the
+      // opposite treatment — a search is genuinely more useful with a long,
+      // popularity-ordered list of them, so both the request and the kept
+      // count stay generous.
       const [artists, releaseGroups, recordings] = await Promise.all([
-        kinds.artists ? currentMusicbrainzClient().searchArtist(query, 4) : Promise.resolve([]),
-        kinds.albums ? currentMusicbrainzClient().searchReleaseGroupByTitle(query, 6) : Promise.resolve([]),
-        kinds.songs ? currentMusicbrainzClient().searchRecording(query, 6) : Promise.resolve([]),
+        kinds.artists ? currentMusicbrainzClient().searchArtist(query, MAX_ARTISTS) : Promise.resolve([]),
+        kinds.albums ? currentMusicbrainzClient().searchReleaseGroupByTitle(query, MAX_ALBUMS) : Promise.resolve([]),
+        kinds.songs ? currentMusicbrainzClient().searchRecording(query, MAX_SONGS) : Promise.resolve([]),
       ]);
       return {
         // MusicBrainz names no second line for an artist; for a release group
         // it is the first release year, which is this catalogue's own idea of
         // what distinguishes two records with the same title.
-        artists: artists.map(dto => ({ entity: mapMbArtist(dto, MB_PROVENANCE), subtitle: '' })),
-        albums: releaseGroups.map(dto => {
+        //
+        // Re-sliced here on top of the `limit` already sent above: a server
+        // of your own is code this app doesn't control, and one that answers
+        // more than it was asked for (seen in practice against a self-hosted
+        // proxy) must not be able to flood a search with duplicate-looking
+        // artists just because it ignored the query string. This is the
+        // actual cap; the `limit` param is only ever a hint to the server.
+        artists: artists.slice(0, MAX_ARTISTS).map(dto => ({ entity: mapMbArtist(dto, MB_PROVENANCE), subtitle: '' })),
+        albums: releaseGroups.slice(0, MAX_ALBUMS).map(dto => {
           const year = dto['first-release-date']?.slice(0, 4) ?? '';
           const artistName = dto['artist-credit']
             ?.map(credit => credit.name ?? credit.artist.name)
@@ -91,8 +121,10 @@ export const musicbrainzProvider: IntegrationProvider = {
         // A hit with no release-group behind it (a recording MusicBrainz
         // knows but has attached to no release) has nowhere to navigate, so
         // `mapRecordingSearchHit` drops it rather than this list carrying a
-        // dead row.
-        songs: recordings.flatMap(dto => {
+        // dead row. Sliced first, not after mapping: MAX_SONGS is a cap on
+        // how much of the server's own ranking we take, not on how many
+        // survive the drop.
+        songs: recordings.slice(0, MAX_SONGS).flatMap(dto => {
           const song = mapRecordingSearchHit(dto, MB_PROVENANCE);
           return song ? [{ entity: song, subtitle: song.artist.name }] : [];
         }),

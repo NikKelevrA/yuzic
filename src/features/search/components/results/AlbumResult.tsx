@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { SearchResult } from '@/features/search/SearchContext';
 import type { Album } from '@/domain/entities/Album';
@@ -22,11 +23,17 @@ type Props = {
  * navigation path, rather than re-testing `result.source`.
  */
 export default function AlbumResult({ result, activeServerId, navigation, navigateToAlbum, onSelect }: Props) {
+  const { t } = useTranslation();
+  const album = resultToAlbum(result, activeServerId);
+  // A decorated line ("Artist · 2001") replaces the bare artist name when the
+  // catalogue gave one; either way, a leading "Album ·" keeps this row from
+  // reading as a song when a search mixes both kinds — see SongResult's
+  // matching prefix.
+  const artistLine = result.artistName ? result.subtext : album.artist.name;
   return (
     <AlbumRow
-      album={resultToAlbum(result, activeServerId)}
-      // A decorated line ("Artist · 2001") replaces the bare artist name.
-      subtextOverride={result.artistName ? result.subtext : undefined}
+      album={album}
+      subtextOverride={`${t('search.entityTypes.album')} · ${artistLine}`}
       onPress={album => {
         onSelect(result);
         prefetchCovers([album.cover], 'detail');

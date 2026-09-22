@@ -155,6 +155,34 @@ describe('ServerAddressSheet', () => {
       expect(onClose).not.toHaveBeenCalled();
     });
 
+    it('saves an address that does not answer when a fallback is also given — that pairing is for exactly this', async () => {
+      mockCheck.mockResolvedValue({ ok: false, reason: 'unreachable' });
+      const store = makeStore();
+      const { view, onClose } = await renderSheet(store);
+
+      await fireEvent.changeText(view.getByTestId('field'), 'http://192.168.1.43:5000');
+      await fireEvent.changeText(view.getByTestId('fallback-field'), 'http://100.64.0.1:5000');
+      await fireEvent.press(view.getByTestId('submit'));
+
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+      expect(saved(store)).toEqual({ musicbrainz: 'http://192.168.1.43:5000' });
+      expect(savedFallback(store)).toEqual({ musicbrainz: 'http://100.64.0.1:5000' });
+    });
+
+    it('still refuses a genuinely malformed address even with a fallback given', async () => {
+      mockCheck.mockResolvedValue({ ok: false, reason: 'invalid' });
+      const store = makeStore();
+      const { view, onClose } = await renderSheet(store);
+
+      await fireEvent.changeText(view.getByTestId('field'), 'nas:5000');
+      await fireEvent.changeText(view.getByTestId('fallback-field'), 'http://100.64.0.1:5000');
+      await fireEvent.press(view.getByTestId('submit'));
+
+      await waitFor(() => expect(view.getByText('settings.sources.serverAddress.invalid')).toBeTruthy());
+      expect(saved(store)).toEqual({});
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
     it('does not ask the network about the fallback, nor about an address that did not change', async () => {
       const store = makeStore();
       store.dispatch(setSourceServerUrl({ source: 'musicbrainz', url: 'http://nas:5000' }));

@@ -25,18 +25,24 @@ type Props = {
  *
  * The root address is what is asked for (`http://host:5000`), the same shape
  * the Connections screens take, and an empty one goes back to the public
- * server. An address is checked before it is kept: it has to look like a web
- * address and the server has to answer, and when it does not the sheet stays
- * open with what was typed, saying which. Saving only stores it: nothing is
+ * server. An address is checked before it is kept: it always has to look like
+ * a web address, and — on its own, with no fallback set — the server has to
+ * answer too, so the sheet stays open with what was typed, saying which. This
+ * catches a typo'd or not-yet-running server, rather than it showing up later
+ * as a search that quietly finds nothing. Saving only stores it: nothing is
  * sent to the address until a use of the source is on, and the source's own
  * switches still say what is asked.
  *
  * A second, optional address can back it up — a Tailscale or domain address
  * for a server that is reached by its LAN address at home. Only its shape is
- * checked: away from home the first address cannot answer, and a fallback
- * that is only reachable from outside cannot be checked from inside, so
- * neither is a reason to refuse saving the other. The first address is only
- * asked again when it was changed.
+ * checked, never whether it answers: away from home the first address cannot
+ * answer, and a fallback that is only reachable from outside cannot be
+ * checked from inside either. For the same reason, once a fallback is also
+ * being set, the first address not answering stops being a reason to refuse
+ * it too — that pairing is exactly for using this away from home, so only a
+ * genuinely malformed first address (not just an unreachable one) still
+ * blocks saving. The first address is only asked to answer at all when it
+ * was changed.
  */
 export default function ServerAddressSheet({ source, onClose }: Props) {
   const { t } = useTranslation();
@@ -75,11 +81,20 @@ export default function ServerAddressSheet({ source, onClose }: Props) {
         let address = current;
         if (draft.trim() !== current) {
           const result = await checkServerAddress(source, draft);
-          if (!result.ok) {
+          if (result.ok) {
+            address = result.address;
+          } else if (result.reason === 'unreachable' && fallback) {
+            // A fallback is being set alongside it, so this pair is meant
+            // for exactly this situation: away from home, the primary
+            // address cannot answer right now, and that is not a reason to
+            // refuse it when a fallback is there to cover it. A malformed
+            // address (`reason === 'invalid'`) still blocks unconditionally
+            // — that is always a typo, fallback or not.
+            address = parseServerAddress(draft) ?? current;
+          } else {
             setProblem(result.reason);
             return false;
           }
-          address = result.address;
         }
         dispatch(setSourceServerUrl({ source, url: address }));
         dispatch(setSourceFallbackUrl({ source, url: fallback }));

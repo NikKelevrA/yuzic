@@ -185,13 +185,12 @@ describe('dedupeAndSort', () => {
 });
 
 describe('results from one external catalogue', () => {
-  it('keep the order the catalogue gave them, whatever their type', () => {
-    const artist = result({ id: 'a', title: 'Muse', type: 'artist', source: 'external', externalSource: 'musicbrainz' });
+  it('keep the order the catalogue gave them among results of the same type', () => {
     const albumOne = result({ id: 'b', title: 'Muse', type: 'album', source: 'external', externalSource: 'musicbrainz' });
     const albumTwo = result({ id: 'c', title: 'Muse', type: 'album', source: 'external', externalSource: 'musicbrainz' });
 
-    expect(dedupeAndSort([artist, albumOne, albumTwo], 'muse').map(r => r.id)).toEqual(['a', 'b', 'c']);
-    expect(dedupeAndSort([albumTwo, artist, albumOne], 'muse').map(r => r.id)).toEqual(['c', 'a', 'b']);
+    expect(dedupeAndSort([albumOne, albumTwo], 'muse').map(r => r.id)).toEqual(['b', 'c']);
+    expect(dedupeAndSort([albumTwo, albumOne], 'muse').map(r => r.id)).toEqual(['c', 'b']);
   });
 
   it('keep the catalogue order even when a later result is an exact title match', () => {
@@ -199,5 +198,24 @@ describe('results from one external catalogue', () => {
     const loose = result({ id: 'b', title: 'Museum', source: 'external', externalSource: 'musicbrainz' });
 
     expect(dedupeAndSort([loose, exact], 'muse').map(r => r.id)).toEqual(['b', 'a']);
+  });
+
+  // A search that mostly matched artists used to bury every song behind all
+  // of them: same-catalogue order-preservation tied an artist against a song
+  // regardless of kind, so the registry's own push order (artists, then
+  // albums, then songs) survived untouched. Type now still decides between
+  // different kinds, same-catalogue order only holds within one kind.
+  it('still ranks songs above a pile of same-catalogue artists, even though the artists keep their own order', () => {
+    const artists = ['a1', 'a2', 'a3'].map(id =>
+      result({ id, title: 'Numb', type: 'artist', source: 'external', externalSource: 'musicbrainz' })
+    );
+    const song = result({ id: 's1', title: 'Numb', type: 'song', source: 'external', externalSource: 'musicbrainz' });
+
+    const order = dedupeAndSort([...artists, song], 'numb').map(r => r.id);
+
+    expect(order[0]).toBe('s1');
+    // The three artists, all tied against each other, still keep the order
+    // the catalogue gave them relative to one another.
+    expect(order.slice(1)).toEqual(['a1', 'a2', 'a3']);
   });
 });

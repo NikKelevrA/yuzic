@@ -7,6 +7,8 @@ import type { Album } from '@/domain/entities/Album';
 import { songResultToAlbum } from '@/features/search/searchResultAdapters';
 import MediaListRow from '@/components/MediaListRow';
 import IconActionButton from '@/components/IconActionButton';
+import SongOptions from '@/components/options/SongOptions';
+import { useSheetRef } from '@/components/useSheetRef';
 import { useTheme } from '@/features/theme/useTheme';
 import { iconSize } from '@/constants/design';
 
@@ -26,28 +28,58 @@ type Props = {
  * A local match plays on tap, same as it always has. An external match —
  * MusicBrainz today, through `searchRecording`/`mapRecordingSearchHit` —
  * carries no stream (`mapSong`'s own note: MusicBrainz never had one to begin
- * with), so tapping it opens the song's album instead, the same place
- * tapping that album directly would reach. There is nothing an options sheet
- * could offer a recording nobody owns — no queue, no playlist, nothing to
- * download as this one track — so the row carries none for it.
+ * with), so there is nothing "play" can mean for it. What it does have is
+ * exactly what `SongRow`'s own external branch already offers a track row
+ * elsewhere in the app — Want / Get this track / Get the album — through the
+ * same `SongOptions` sheet, opened here on tap rather than behind a second
+ * "..." tap: search is the one place a first tap on an external song was
+ * previously spent on a full album navigation (a round trip to the server
+ * for the release-group and its tracks) that nobody asked for and that was
+ * the slow part, when what the tap almost always meant was "get this song".
+ * Falls back to the album (the old behaviour) only on the rare hit with no
+ * resolved `song` to open a sheet for.
  */
 export default function SongResult({ result, navigateToAlbum, onSelect, onPress, onOptions }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const optionsSheetRef = useSheetRef();
+
+  // A leading type word keeps this row from reading as an album when a
+  // search mixes both kinds — see AlbumResult's matching prefix.
+  const subtitle = `${t('search.entityTypes.song')} · ${result.subtext}`;
 
   if (result.source === 'external') {
-    const album = songResultToAlbum(result);
+    const song = result.song;
+    const albumTitle = song?.album.title ?? '';
+    const albumArtist = song?.artist.name || result.subtext;
     return (
-      <MediaListRow
-        title={result.title}
-        testID="search-result-song"
-        subtitle={result.subtext}
-        cover={result.cover}
-        onPress={() => {
-          onSelect(result);
-          if (album) navigateToAlbum(album);
-        }}
-      />
+      <>
+        <MediaListRow
+          title={result.title}
+          testID="search-result-song"
+          subtitle={subtitle}
+          cover={result.cover}
+          onPress={() => {
+            onSelect(result);
+            if (song) {
+              optionsSheetRef.current?.present();
+              return;
+            }
+            // No resolved song to build a sheet for — the same fallback the
+            // row always had.
+            const album = songResultToAlbum(result);
+            if (album) navigateToAlbum(album);
+          }}
+        />
+        {song && (
+          <SongOptions
+            ref={optionsSheetRef}
+            selectedSong={song}
+            albumTitle={albumTitle}
+            albumArtist={albumArtist}
+          />
+        )}
+      </>
     );
   }
 
@@ -55,7 +87,7 @@ export default function SongResult({ result, navigateToAlbum, onSelect, onPress,
     <MediaListRow
       title={result.title}
       testID="search-result-song"
-      subtitle={result.subtext}
+      subtitle={subtitle}
       cover={result.cover}
       onPress={() => onPress(result)}
       trailing={

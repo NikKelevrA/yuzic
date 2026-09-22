@@ -80,15 +80,23 @@ export function compareResults(
 
   if (a.isDownloaded !== b.isDownloaded) return a.isDownloaded ? -1 : 1;
 
-  // Two results from one outside catalogue stay in the order that catalogue
-  // gave them, before any title check. It ranked them (by how well known they
-  // are, for MusicBrainz), and re-sorting on the title would undo that: a
-  // search for an artist whose name is also the title of dozens of obscure
-  // albums would put those albums above the artist's own.
+  // Two results of the SAME kind from one outside catalogue stay in the order
+  // that catalogue gave them, before any title check. It ranked them (by how
+  // well known they are, for MusicBrainz), and re-sorting on the title would
+  // undo that: a search for an artist whose name is also the title of dozens
+  // of obscure albums would put those albums above the artist's own.
+  //
+  // Restricted to matching `type` on purpose: without it, this tied every
+  // MusicBrainz result against every other regardless of kind, so the type
+  // ordering below never got a chance to run between them — results kept
+  // whatever order the registry happened to push them in (artists, then
+  // albums, then songs), burying songs behind a run of artists no matter how
+  // well they matched.
   if (
     a.source === 'external' &&
     b.source === 'external' &&
-    a.externalSource === b.externalSource
+    a.externalSource === b.externalSource &&
+    a.type === b.type
   ) {
     return 0;
   }

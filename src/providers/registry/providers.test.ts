@@ -36,6 +36,7 @@ jest.mock('@/state/redux/store', () => ({
   default: { getState: () => ({ settingsSources: { uses: {}, serverUrls: mockServerUrls } }) },
 }));
 jest.mock('@/providers/integration/musicbrainz/mapAlbum', () => ({ mapAlbum: jest.fn() }));
+jest.mock('@/providers/integration/musicbrainz/mapArtist', () => ({ mapArtist: jest.fn() }));
 jest.mock('@/providers/integration/musicbrainz/mapSong', () => ({
   mapSong: jest.fn(),
   mapRecordingSearchHit: jest.fn(),
@@ -53,6 +54,7 @@ import { KEYLESS_INTEGRATIONS } from './keyless';
 import * as deezerApi from '@/providers/integration/deezer';
 import * as mbApi from '@/providers/integration/musicbrainz';
 import { mapAlbum as mapMbAlbum } from '@/providers/integration/musicbrainz/mapAlbum';
+import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/mapArtist';
 import { mapSong as mapMbSong, mapRecordingSearchHit as mapMbRecordingSearchHit } from '@/providers/integration/musicbrainz/mapSong';
 import * as lastfmApi from '@/providers/integration/lastfm';
 
@@ -151,8 +153,8 @@ describe('musicbrainz provider', () => {
     (mapMbAlbum as jest.Mock).mockReturnValue(makeAlbum());
 
     await musicbrainzProvider.capabilities['catalogue.search']?.('query', { artists: true, albums: true });
-    expect(mbApi.searchArtist).toHaveBeenCalledWith('query', 4);
-    expect(mbApi.searchReleaseGroupByTitle).toHaveBeenCalledWith('query', 6);
+    expect(mbApi.searchArtist).toHaveBeenCalledWith('query', 3);
+    expect(mbApi.searchReleaseGroupByTitle).toHaveBeenCalledWith('query', 3);
 
     await musicbrainzProvider.capabilities['catalogue.album']?.('mb-rg');
     expect(mbApi.getReleaseGroup).toHaveBeenCalledWith('mb-rg');
@@ -171,10 +173,48 @@ describe('musicbrainz provider', () => {
       { artists: false, albums: false, songs: true }
     );
 
-    expect(mbApi.searchRecording).toHaveBeenCalledWith('query', 6);
+    expect(mbApi.searchRecording).toHaveBeenCalledWith('query', 15);
     expect(mapMbRecordingSearchHit).toHaveBeenCalledWith({ id: 'rec-1', title: 'Test Song' }, expect.anything());
     expect(found?.songs).toHaveLength(1);
     expect(found?.songs?.[0].entity).toEqual(makeSong());
+  });
+
+  // A self-hosted server/proxy is code this app doesn't control; one that
+  // answers with more than it was asked for (observed in practice) must not
+  // be able to flood a search with rows past what the UI is designed to show.
+  it('keeps only the first few artists and albums even when the server sends back more than asked', async () => {
+    (mbApi.searchArtist as jest.Mock).mockResolvedValue(
+      Array.from({ length: 20 }, (_, i) => ({ id: `artist-${i}`, name: `Artist ${i}` }))
+    );
+    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue(
+      Array.from({ length: 20 }, (_, i) => ({ id: `album-${i}`, title: `Album ${i}` }))
+    );
+    (mapMbArtist as jest.Mock).mockImplementation(dto => ({ ...makeArtist(), nativeId: dto.id }));
+    (mapMbAlbum as jest.Mock).mockImplementation(dto => ({ ...makeAlbum(), nativeId: dto.id }));
+
+    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
+      'query',
+      { artists: true, albums: true }
+    );
+
+    expect(found?.artists).toHaveLength(3);
+    expect(found?.albums).toHaveLength(3);
+  });
+
+  it('does not cap songs down to the artist/album limit', async () => {
+    (mbApi.searchArtist as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchReleaseGroupByTitle as jest.Mock).mockResolvedValue([]);
+    (mbApi.searchRecording as jest.Mock).mockResolvedValue(
+      Array.from({ length: 20 }, (_, i) => ({ id: `rec-${i}`, title: `Song ${i}` }))
+    );
+    (mapMbRecordingSearchHit as jest.Mock).mockImplementation(dto => ({ ...makeSong(), nativeId: dto.id }));
+
+    const found = await musicbrainzProvider.capabilities['catalogue.search']?.(
+      'query',
+      { artists: false, albums: false, songs: true }
+    );
+
+    expect(found?.songs).toHaveLength(15);
   });
 
   it('does not search recordings when songs are not asked for', async () => {

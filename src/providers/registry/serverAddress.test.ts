@@ -27,6 +27,13 @@ describe('parseServerAddress', () => {
     ['http://nas :5000'],
     ['not an address'],
     ['http://nas:5000?x=1'],
+    // A dot fat-fingered into a colon: shaped enough to have slipped past the
+    // old "anything but a slash" check, but not a real host[:port].
+    ['http://100:122.20.1'],
+    ['http://100:122.20.1:5001'],
+    ['http://nas:port'],
+    ['http://nas:99999'],
+    ['http://nas::5000'],
   ])('rejects %j', input => {
     expect(parseServerAddress(input)).toBeNull();
   });
