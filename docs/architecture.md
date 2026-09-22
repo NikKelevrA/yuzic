@@ -353,6 +353,18 @@ puts that same root in its window. Before this, React Native only started
 from the phone scene, so a car launch ran no JavaScript and showed an empty
 library.
 
+Starting it was not enough on its own. expo-router's `SafeAreaProvider`
+renders nothing until native insets arrive, and a root view outside any
+window never gets them, so JavaScript ran and the app tree never mounted:
+no setup, no library. `patches/expo-router+55.0.13.patch` gives it the key
+window's metrics when there is one and zero when there is not. Re-check it
+whenever expo-router moves.
+
+This launch cannot be tested on a dev client build. expo-dev-launcher takes
+over the root and waits for a server to be picked on a phone screen that is
+not there. Test it on a Release build, in the Simulator's CarPlay window,
+with the app killed first.
+
 **A car can be playing before the app is.** On Android a car starts the
 engine's media service without the app's JavaScript, and the engine plays the
 selection natively (yuzic-engine 1.1.0). When the app then starts, three
