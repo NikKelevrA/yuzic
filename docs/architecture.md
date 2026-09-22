@@ -339,6 +339,22 @@ Two differences are declared there today:
   car thumbnails render for an ordinary server and not for a
   header-authenticated one.
 
+**A car can be playing before the app is.** On Android a car starts the
+engine's media service without the app's JavaScript, and the engine plays the
+selection natively (yuzic-engine 1.1.0). When the app then starts, three
+things keep it from trampling that queue:
+
+- `createEngineBackend` asks the engine what it holds once setup finishes
+  (`adoptEngineQueue`) and takes it into an empty shadow, followed by the track
+  change that started it, which went to no listener. Without the second half
+  the app showed the car's queue with nothing playing until the next track.
+- It then reports `engineQueueKnown`, and the persisted-queue restore waits for
+  it (`decideRestore`). Library hydration and engine setup finish within a
+  second of each other on a cold start, and a restore that got in first loaded
+  last session's queue over the car's music.
+- Sign-out calls `clearBrowseTree`, because the engine keeps the last browse
+  tree, encrypted, for a car that connects with the app closed.
+
 `PlaybackSinkContext` owns which sink is selected and routes transport to it.
 This replaced four copies of `if (activeDevice) castX()` in the player and a
 three-term negation in the output sheet that decided whether "This device" was

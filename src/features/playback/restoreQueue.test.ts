@@ -153,6 +153,7 @@ describe('decideRestore', () => {
     persistedCount: 3,
     persistedServerId: 'srv-1',
     queueLoaded: false,
+    engineQueueKnown: true,
     libraryHydrated: true,
   };
 
@@ -181,6 +182,21 @@ describe('decideRestore', () => {
     expect(decision).toEqual({ kind: 'skip', reason: 'library not hydrated yet', final: false, report: true });
     // Hydration landing is exactly what should let it through.
     expect(decideRestore({ ...ready, libraryHydrated: true })).toEqual({ kind: 'restore' });
+  });
+
+  it('waits until the engine has been asked, even with the library ready', () => {
+    // Seen on an Android Automotive emulator: the library hydrated about a
+    // second before the engine finished setting up, the restore saw no queue,
+    // and loaded last session's over the one the car was playing.
+    expect(decideRestore({ ...ready, engineQueueKnown: false })).toEqual({
+      kind: 'skip', reason: 'engine not asked yet', final: false, report: false,
+    });
+  });
+
+  it('still ends the attempt on a loaded queue before the engine answers', () => {
+    expect(decideRestore({ ...ready, engineQueueKnown: false, queueLoaded: true })).toMatchObject({
+      reason: 'a queue is already loaded', final: true,
+    });
   });
 
   it('does not restore another server’s queue, but can once that server is active again', () => {

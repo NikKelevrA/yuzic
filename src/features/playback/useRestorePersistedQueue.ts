@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MutableRefObject } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useSelector } from 'react-redux';
 
 import type { Song } from '@/domain/entities/Song';
@@ -43,6 +43,17 @@ export function useRestorePersistedQueue(
   const activeServerId = useSelector(selectActiveServerId);
   const { tracks: libraryTracks } = useTracks();
   const doneRef = useRef(false);
+  // State, so the decision below runs again once the engine has been asked.
+  const [engineQueueKnown, setEngineQueueKnown] = useState(() => getBackend().engineQueueKnown());
+  useEffect(() => {
+    if (engineQueueKnown) return;
+    const unsubscribe = getBackend().addListener(event => {
+      if (event.type === 'engineQueueKnown') setEngineQueueKnown(true);
+    });
+    // Asked again after subscribing, in case the answer landed in between.
+    if (getBackend().engineQueueKnown()) setEngineQueueKnown(true);
+    return unsubscribe;
+  }, [engineQueueKnown]);
   // The last skip reason logged, so a reason that holds across many state
   // changes is reported once rather than on each of them.
   const reportedSkipRef = useRef<string | null>(null);
@@ -57,6 +68,7 @@ export function useRestorePersistedQueue(
       // The player's queue counts too: one the car started natively is a queue
       // the listener chose, even before the app's own copy has caught up.
       queueLoaded: session.queue().length > 0 || getBackend().getQueue().length > 0,
+      engineQueueKnown,
       libraryHydrated: libraryTracks.length > 0,
     });
     if (decision.kind === 'skip') {
@@ -92,6 +104,7 @@ export function useRestorePersistedQueue(
     });
   }, [
     activeServerId,
+    engineQueueKnown,
     libraryTracks,
     loadQueue,
     persistedContexts,

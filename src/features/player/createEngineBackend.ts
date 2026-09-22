@@ -167,21 +167,24 @@ export function createEngineBackend(): PlayerBackend {
    * it — and a reconciliation that could not read the engine has nothing
    * better to offer, while a thrown error here would surface as a playback
    * failure the listener's music never actually had.
+   *
+   * Resolves true when the engine's queue was taken, false when it was not.
    */
   async function reconcileWithEngine(
     { onlyIntoEmptyShadow = false }: { onlyIntoEmptyShadow?: boolean } = {}
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       const api = load();
       const [tracks, activeIndex] = await Promise.all([api.getQueue(), api.getActiveIndex()]);
       // See `adoptEngineQueue` below for why a setup-time read may only fill
       // a shadow that is still empty.
-      if (onlyIntoEmptyShadow && (shadow.queue.length > 0 || tracks.length === 0)) return;
+      if (onlyIntoEmptyShadow && (shadow.queue.length > 0 || tracks.length === 0)) return false;
       shadow = reconcileQueue(shadow, tracks, activeIndex);
     } catch {
-      return;
+      return false;
     }
     emit({ type: 'queueChange' });
+    return true;
   }
 
   /**
@@ -197,9 +200,25 @@ export function createEngineBackend(): PlayerBackend {
    * made before setup finished are replayed right after this read goes out,
    * so an engine that answers "empty" here may simply not have received them
    * yet, and taking that answer would wipe a queue the app is about to set.
+   *
+   * A queue taken this way is followed by the track change that started it.
+   * That change went to no listener, and it is the only thing that sets what
+   * is playing: without it the app showed the queue with nothing playing,
+   * over the car's music, until the next track.
    */
   function adoptEngineQueue() {
-    void reconcileWithEngine({ onlyIntoEmptyShadow: true });
+    void reconcileWithEngine({ onlyIntoEmptyShadow: true }).then(adopted => {
+      if (adopted) emit({ type: 'trackChange', index: shadow.activeIndex });
+      markEngineQueueKnown();
+    });
+  }
+
+  /** See `engineQueueKnown`. Also reached when setup fails, so nothing waits forever. */
+  let engineQueueChecked = false;
+  function markEngineQueueKnown() {
+    if (engineQueueChecked) return;
+    engineQueueChecked = true;
+    emit({ type: 'engineQueueKnown' });
   }
 
   /** Report a track change once the shadow can say what the track is — see `shadowNamesTrack`. */
@@ -224,6 +243,10 @@ export function createEngineBackend(): PlayerBackend {
           // read. The engine's own 4Hz ticker, which times crossfades, is
           // unaffected by this.
           await api.setup({ progressIntervalMs: 1000 });
+        } catch (error) {
+          // No engine to ask, so nothing to wait for: the restore may go ahead.
+          markEngineQueueKnown();
+          throw error;
         } finally {
           // Resolved in `finally` rather than after: a setup that threw still
           // has to open the gate, or the transport is blocked for the life of
@@ -375,6 +398,14 @@ export function createEngineBackend(): PlayerBackend {
      * nests three deep in places (Albums → an album → its tracks), which is
      * why this recurses rather than mapping two fixed levels.
      */
+    engineQueueKnown() {
+      return engineQueueChecked;
+    },
+
+    clearBrowseTree() {
+      fire('clearBrowseTree', async () => load().clearBrowseTree());
+    },
+
     setBrowseTree(categories) {
       fire('setBrowseTree', async () =>
         load().setBrowseTree({

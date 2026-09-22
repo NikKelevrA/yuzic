@@ -300,7 +300,9 @@ describe('failures the app would otherwise never see', () => {
   it('names the call that failed, so the log says which one', async () => {
     const backend = createEngineBackend();
     const seen: { message?: string }[] = [];
-    backend.addListener((event: { message?: string }) => seen.push(event));
+    backend.addListener((event: { type: string; message?: string }) => {
+      if (event.type === 'error') seen.push(event);
+    });
 
     backend.setup();
     await flush();
@@ -493,6 +495,65 @@ describe('a queue the car started', () => {
     await flush();
 
     expect(backend.getQueue().map((i: MediaItem) => i.mediaId)).toEqual(['car1']);
+  });
+
+  it('says which of the adopted tracks is playing, not only that there is a queue', async () => {
+    // Seen on an Android Automotive emulator: the app opened over a queue the
+    // car was playing, took the queue, and showed "No song playing" over the
+    // car's music until the next track, because only a track change sets
+    // what is playing and the one that started it went to no listener.
+    mockReturns.getQueue = [
+      { id: 'car1', uri: 'https://example/car1', title: 'Car One' },
+      { id: 'car2', uri: 'https://example/car2', title: 'Car Two' },
+    ];
+    mockReturns.getActiveIndex = 1;
+    const backend = createEngineBackend();
+    const changes: (number | undefined)[] = [];
+    backend.addListener((event: { type: string; index?: number }) => {
+      if (event.type === 'trackChange') changes.push(event.index);
+    });
+
+    backend.setup();
+    await flush();
+
+    expect(changes).toEqual([1]);
+    expect(backend.getActiveMediaItem()?.mediaId).toBe('car2');
+  });
+
+  it('says once that the engine has been asked, whether or not it held anything', async () => {
+    // The persisted-queue restore waits on this, so it has to arrive in both
+    // cases, and exactly once.
+    for (const held of [[{ id: 'car1', uri: 'https://example/car1', title: 'Car One' }], []]) {
+      mockReturns.getQueue = held;
+      mockReturns.getActiveIndex = 0;
+      const backend = createEngineBackend();
+      const known: unknown[] = [];
+      backend.addListener((event: { type: string }) => {
+        if (event.type === 'engineQueueKnown') known.push(event);
+      });
+      expect(backend.engineQueueKnown()).toBe(false);
+
+      backend.setup();
+      await flush();
+
+      expect(backend.engineQueueKnown()).toBe(true);
+      expect(known).toHaveLength(1);
+    }
+  });
+
+  it('says nothing about a track when there was nothing to adopt', async () => {
+    mockReturns.getQueue = [];
+    mockReturns.getActiveIndex = 0;
+    const backend = createEngineBackend();
+    const changes: unknown[] = [];
+    backend.addListener((event: { type: string }) => {
+      if (event.type === 'trackChange') changes.push(event);
+    });
+
+    backend.setup();
+    await flush();
+
+    expect(changes).toEqual([]);
   });
 
   it('does not let an engine that has not received the app queue yet wipe it at setup', async () => {

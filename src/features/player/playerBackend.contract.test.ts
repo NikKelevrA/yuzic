@@ -142,6 +142,10 @@ function createFakeBackend(): PlayerBackend {
     evict() {},
 
     setBrowseTree() {},
+    clearBrowseTree() {},
+    engineQueueKnown() {
+      return true;
+    },
 
     addListener(listener) {
       listeners = [...listeners, listener];
@@ -254,6 +258,7 @@ describe.each(implementations)('PlayerBackend contract — %s', (_name, makeBack
       // `backend.ts`.
       backend.evict('a');
       backend.setBrowseTree([]);
+      backend.clearBrowseTree();
     }).not.toThrow();
   });
 });

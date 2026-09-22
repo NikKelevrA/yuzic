@@ -107,6 +107,24 @@ export interface PlayerBackend {
    */
   setBrowseTree(categories: BrowseCategory[]): void;
 
+  /**
+   * Take the car's tree away, including the copy the engine keeps for a car
+   * that connects with the app closed. Sign-out calls it, or the next car to
+   * connect would show the previous account's library.
+   */
+  clearBrowseTree(): void;
+
+  /**
+   * Whether the engine has been asked what it already holds this launch.
+   *
+   * A car can start playback before the app's JavaScript runs, and the only
+   * way the app learns of it is by asking once the engine is set up. Until
+   * then, an empty `getQueue()` means "not asked yet", not "nothing playing",
+   * and the persisted-queue restore must wait for the difference: it once won
+   * the race and loaded last session's queue over what the car was playing.
+   */
+  engineQueueKnown(): boolean;
+
   /** Returns an unsubscribe function, as every caller here expects. */
   addListener(listener: (event: BackendEvent) => void): () => void;
 }
@@ -143,4 +161,9 @@ export type BackendEvent =
    * what `getQueue()` and `getActiveMediaItemIndex()` already say, and a second
    * copy is what this event exists to stop the app from keeping.
    */
-  | { type: 'queueChange' };
+  | { type: 'queueChange' }
+  /**
+   * The backend has asked the engine what it already holds, and taken it if
+   * there was anything. Sent once per launch; see `engineQueueKnown`.
+   */
+  | { type: 'engineQueueKnown' };

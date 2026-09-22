@@ -24,6 +24,7 @@ import { controlSize, iconSize, radius, spacing, typography } from '@/constants/
 import { useRadius } from '@/features/theme/useRadius';
 import { dismissSheetRef } from '@/features/entity-actions/shared/sheetRef';
 import { clearCatalog } from '@/features/library/catalogPersistence';
+import { getBackend } from '@/features/player/activeBackend';
 import { clearInternedRefs } from '@/domain/entities/internRef';
 
 type Props = {
@@ -82,6 +83,9 @@ const AccountBottomSheet = forwardRef<BottomSheetModal, Props>(({ onDismiss }, r
       // them, so they are dropped with the catalog rather than left holding
       // the previous account's names.
       clearInternedRefs();
+      // The car's library is the account's too, and the engine keeps a copy
+      // for a car that connects with the app closed.
+      getBackend().clearBrowseTree();
       router.replace('/(onboarding)');
     } catch {
       notify.error(t('home.account.signOutFailed'));

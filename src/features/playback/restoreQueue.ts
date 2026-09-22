@@ -29,6 +29,8 @@ export function decideRestore(state: {
   persistedCount: number;
   persistedServerId: string | null | undefined;
   queueLoaded: boolean;
+  /** Whether the engine has been asked what it holds — see `PlayerBackend.engineQueueKnown`. */
+  engineQueueKnown: boolean;
   libraryHydrated: boolean;
 }): RestoreDecision {
   if (!state.activeServerId) return { kind: 'skip', reason: 'no active server', final: false, report: false };
@@ -43,6 +45,11 @@ export function decideRestore(state: {
     };
   }
   if (state.queueLoaded) return { kind: 'skip', reason: 'a queue is already loaded', final: true, report: true };
+  // Before the library check, and not final: an engine not yet asked may be
+  // playing a queue a car started, and restoring over it replaces the music.
+  if (!state.engineQueueKnown) {
+    return { kind: 'skip', reason: 'engine not asked yet', final: false, report: false };
+  }
   if (!state.libraryHydrated) return { kind: 'skip', reason: 'library not hydrated yet', final: false, report: true };
   return { kind: 'restore' };
 }
