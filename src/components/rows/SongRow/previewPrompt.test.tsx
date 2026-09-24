@@ -37,6 +37,13 @@ jest.mock('@/features/entity-actions/SongActionSheetContext', () => ({
 jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
+// No self-hosted MusicBrainz / downloader in these tests — same "nothing
+// extra to do" case the rest of this file already covers, so acquire-and-play
+// stays closed and every existing expectation (disabled state, plain
+// `onPress`) holds unchanged.
+jest.mock('@/features/downloaders/useAcquireAndPlaySong', () => ({
+  useAcquireAndPlaySong: () => ({ canAcquireAndPlay: false, acquireAndPlay: jest.fn() }),
+}));
 // Previews are off: the row has nothing to play and must not ask.
 jest.mock('@/features/settings/sources/useSourceUse', () => ({
   useSourceUse: () => false,

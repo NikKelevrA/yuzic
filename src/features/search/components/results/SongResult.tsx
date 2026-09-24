@@ -11,6 +11,7 @@ import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { useTheme } from '@/features/theme/useTheme';
 import { iconSize } from '@/constants/design';
+import { useAcquireAndPlaySong } from '@/features/downloaders/useAcquireAndPlaySong';
 
 type Props = {
   result: SearchResult;
@@ -38,11 +39,20 @@ type Props = {
  * the slow part, when what the tap almost always meant was "get this song".
  * Falls back to the album (the old behaviour) only on the rare hit with no
  * resolved `song` to open a sheet for.
+ *
+ * With a self-hosted MusicBrainz server and a downloader connected, the tap
+ * skips the sheet (and the album fallback) entirely: `acquireAndPlaySong`
+ * plays the track outright if it's already in the library, or silently
+ * starts a Get and plays it the moment it lands — see
+ * `useAcquireAndPlaySong`'s own doc for why "the moment it lands" is a real
+ * thing this can wait for, not a guess. Without that setup, nothing here
+ * changes: same sheet, same fallback, same as basic 2.9.0.
  */
 export default function SongResult({ result, navigateToAlbum, onSelect, onPress, onOptions }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const optionsSheetRef = useSheetRef();
+  const { canAcquireAndPlay, acquireAndPlay } = useAcquireAndPlaySong();
 
   // A leading type word keeps this row from reading as an album when a
   // search mixes both kinds — see AlbumResult's matching prefix.
@@ -61,6 +71,19 @@ export default function SongResult({ result, navigateToAlbum, onSelect, onPress,
           cover={result.cover}
           onPress={() => {
             onSelect(result);
+            if (song && canAcquireAndPlay) {
+              const albumStub = songResultToAlbum(result);
+              if (albumStub) {
+                void acquireAndPlay(song, albumStub).then(handled => {
+                  // Nothing could be done for this hit (shouldn't happen
+                  // when `canAcquireAndPlay` is true and a song resolved,
+                  // but falls through to the ordinary sheet rather than
+                  // leaving the tap looking like it did nothing).
+                  if (!handled) optionsSheetRef.current?.present();
+                });
+                return;
+              }
+            }
             if (song) {
               optionsSheetRef.current?.present();
               return;

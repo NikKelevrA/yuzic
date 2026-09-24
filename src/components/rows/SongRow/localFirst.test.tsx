@@ -35,6 +35,9 @@ jest.mock('@/features/offline/DownloadContext', () => ({
 jest.mock('@/features/settings/sources/useSourceUse', () => ({ useSourceUse: () => true }));
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');
 jest.mock('@/components/useSheetRef', () => ({ useSheetRef: () => ({ current: null }) }));
+jest.mock('@/features/downloaders/useAcquireAndPlaySong', () => ({
+  useAcquireAndPlaySong: () => ({ canAcquireAndPlay: false, acquireAndPlay: jest.fn() }),
+}));
 // The library the rule matches against — the real index, fed by this list.
 jest.mock('@/features/album/useAlbums', () => ({ useAlbums: () => ({ albums: [] }) }));
 jest.mock('@/features/artist/useArtists', () => ({ useArtists: () => ({ artists: [] }) }));

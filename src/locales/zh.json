@@ -1249,7 +1249,10 @@
       "progress": "已请求 {{total}} 首中的 {{done}} 首…",
       "downtifyDesc": "通过 Downtify 搜索 YouTube Music",
       "addedToDowntify": "已向 Downtify 发出请求。",
-      "addedTrackToDowntify": "已向 Downtify 发出请求。"
+      "addedTrackToDowntify": "已向 Downtify 发出请求。",
+      "acquireDownloading": "正在下载“{{title}}”…准备好后将自动播放。",
+      "acquireStillWorking": "“{{title}}”仍在下载中 — 请稍后再试。",
+      "acquirePlayFailed": "“{{title}}”已下载，但无法开始播放。"
     },
     "header": {
       "songs": "{{count}} 首曲目",

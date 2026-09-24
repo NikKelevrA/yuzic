@@ -1254,7 +1254,10 @@
       "progress": "{{done}} morceaux sur {{total}} demandés…",
       "downtifyDesc": "Rechercher sur YouTube Music via Downtify",
       "addedToDowntify": "Demandé à Downtify.",
-      "addedTrackToDowntify": "Demandé à Downtify."
+      "addedTrackToDowntify": "Demandé à Downtify.",
+      "acquireDownloading": "Téléchargement de « {{title}} »… la lecture démarrera dès que ce sera prêt.",
+      "acquireStillWorking": "Téléchargement de « {{title}} » toujours en cours — réessayez dans un instant.",
+      "acquirePlayFailed": "« {{title}} » a été téléchargé, mais la lecture n'a pas pu démarrer."
     },
     "header": {
       "songs": "{{count}} morceau",

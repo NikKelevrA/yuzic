@@ -27,7 +27,8 @@ import { notify } from '@/components/toast';
 import { usePrefetchCovers } from '@/features/library/usePrefetchCovers';
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
-import { selectSourceServerUrls, selectSourceUse } from '@/features/settings/sources/state';
+import { selectSourceUse } from '@/features/settings/sources/state';
+import { useSelfHostedMusicbrainzConfigured } from '@/features/settings/sources/useSelfHostedMusicbrainzConfigured';
 import { selectActiveServer, selectActiveServerId } from '@/state/redux/selectors/serversSelectors';
 import type { SearchEntityEntry } from '@/state/redux/slices/searchHistorySlice';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
@@ -52,9 +53,8 @@ export function useSearchScreenModel() {
   // only a server of your own is worth opening search on: it makes "Other
   // sources" the reason MusicBrainz is configured at all, not an extra step
   // after it.
-  const musicbrainzServerUrl = useSelector(selectSourceServerUrls).musicbrainz;
   const musicbrainzSearchEnabled = useSelector(selectSourceUse('musicbrainz.search'));
-  const selfHostedMusicbrainzConfigured = !!musicbrainzServerUrl?.trim();
+  const selfHostedMusicbrainzConfigured = useSelfHostedMusicbrainzConfigured();
   const defaultToMusicbrainz = selfHostedMusicbrainzConfigured && musicbrainzSearchEnabled;
   const username = useSelector(selectActiveServer)?.username;
   const activeServerId = useSelector(selectActiveServerId);

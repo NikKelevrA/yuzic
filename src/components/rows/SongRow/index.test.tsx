@@ -55,6 +55,10 @@ jest.mock('@/components/toast', () => ({
   notify: Object.assign(jest.fn(), { info: jest.fn(), success: jest.fn(), error: jest.fn(), loading: jest.fn(), dismiss: jest.fn() }),
 }));
 
+jest.mock('@/features/downloaders/useAcquireAndPlaySong', () => ({
+  useAcquireAndPlaySong: () => ({ canAcquireAndPlay: false, acquireAndPlay: jest.fn() }),
+}));
+
 jest.mock('@/components/MediaListRow', () => {
   const { Text: RNText, View: RNView } = require('react-native');
   function MockMediaListRow({ title }: any) {

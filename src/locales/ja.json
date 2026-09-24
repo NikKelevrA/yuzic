@@ -1249,7 +1249,10 @@
       "progress": "{{total}} 曲中 {{done}} 曲をリクエストしました…",
       "downtifyDesc": "Downtify 経由で YouTube Music を検索",
       "addedToDowntify": "Downtify にリクエストしました。",
-      "addedTrackToDowntify": "Downtify にリクエストしました。"
+      "addedTrackToDowntify": "Downtify にリクエストしました。",
+      "acquireDownloading": "「{{title}}」をダウンロード中…準備ができ次第再生します。",
+      "acquireStillWorking": "「{{title}}」はまだダウンロード中です — しばらくしてからもう一度確認してください。",
+      "acquirePlayFailed": "「{{title}}」はダウンロードされましたが、再生を開始できませんでした。"
     },
     "header": {
       "songs": "{{count}} 曲",

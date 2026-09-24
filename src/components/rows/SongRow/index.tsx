@@ -28,6 +28,8 @@ import { useSheetRef } from '@/components/useSheetRef';
 import { useLocalFirst } from '@/features/library/useLocalFirst';
 import { useSourceUse } from '@/features/settings/sources/useSourceUse';
 import { PREVIEWS_USE } from '@/providers/registry/pageSources';
+import { useAcquireAndPlaySong } from '@/features/downloaders/useAcquireAndPlaySong';
+import { useExternalSongAlbumStub } from '@/features/entity-actions/hooks/useSongActions';
 
 type SongRowSong = Song;
 
@@ -69,15 +71,29 @@ const ExternalSongRowView: React.FC<{
   const density = useListDensity();
   const hasPreview = !!previewUrl;
   const optionsSheetRef = useSheetRef();
+  const { canAcquireAndPlay, acquireAndPlay } = useAcquireAndPlaySong();
+  const albumStub = useExternalSongAlbumStub(song, albumTitle);
 
   // Previews being off means this row has nothing to play. It used to ask,
   // right here, to turn Deezer previews on — which meant a plain tap on a
   // track you don't own could pop a permission sheet, every time, for a
   // feature you may have turned off on purpose. Now it just does nothing;
   // the "..." menu still offers Want / Get this track / Get the album.
+  //
+  // With a self-hosted MusicBrainz server and a downloader connected, a tap
+  // does something more useful than either of those: it plays the track
+  // outright (already owned somewhere the library search didn't match it
+  // against), or silently downloads it and plays it the instant it's ready
+  // — see `useAcquireAndPlaySong`. Without that setup this is unchanged.
   const handlePress = useCallback(() => {
+    if (canAcquireAndPlay) {
+      void acquireAndPlay(song, albumStub).then(handled => {
+        if (!handled) onPress?.();
+      });
+      return;
+    }
     onPress?.();
-  }, [onPress]);
+  }, [canAcquireAndPlay, acquireAndPlay, song, albumStub, onPress]);
 
   return (
     <>
@@ -86,7 +102,7 @@ const ExternalSongRowView: React.FC<{
         subtitle={song.artist.name || albumArtist}
         cover={song.cover}
         onPress={handlePress}
-        disabled={!onPress && !samplesEnabled}
+        disabled={!onPress && !samplesEnabled && !canAcquireAndPlay}
         showCover={false}
         variant="compact"
         rowStyle={{ paddingVertical: density.trackRowPadding }}

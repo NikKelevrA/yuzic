@@ -1257,7 +1257,10 @@
       "progress": "Requested {{done}} of {{total}} songs…",
       "downtifyDesc": "Search YouTube Music through Downtify",
       "addedToDowntify": "Requested from Downtify.",
-      "addedTrackToDowntify": "Requested from Downtify."
+      "addedTrackToDowntify": "Requested from Downtify.",
+      "acquireDownloading": "Downloading “{{title}}” — it'll play as soon as it's ready.",
+      "acquireStillWorking": "Still downloading “{{title}}” — check back in a bit.",
+      "acquirePlayFailed": "“{{title}}” downloaded, but couldn't start playing it."
     },
     "header": {
       "songs": "{{count}} song",
