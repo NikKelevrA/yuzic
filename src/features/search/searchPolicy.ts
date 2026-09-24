@@ -100,28 +100,40 @@ export type DownloadedIds = {
   playlists: Set<string>;
 };
 
+/**
+ * How many of each kind the on-device index leg keeps.
+ *
+ * A plain filter over an in-memory index, already lower-cased — even a large
+ * library costs nothing extra to slice further out, so this was never a
+ * performance cap. It used to be a display one (5/3/3/5), tight enough that a
+ * common query (an artist with a big discography, a word that shows up in a
+ * lot of titles) ran out of room well before the library did. Raised evenly
+ * across all four kinds instead of guessing which one mattered most.
+ */
+const MAX_LIBRARY_RESULTS = 50;
+
 /** The on-device index leg: local, synchronous, always available. */
 export function searchLibraryLeg(searchIndex: SearchIndex, query: string, downloaded: DownloadedIds): SearchResult[] {
   const lowerQuery = query.toLowerCase();
 
   const albumResults = searchIndex.albums
     .filter(({ lc }) => lc.includes(lowerQuery))
-    .slice(0, 5)
+    .slice(0, MAX_LIBRARY_RESULTS)
     .map(({ item }) => albumToResult(albumSearchRow(item), downloaded.albums.has(item.nativeId)));
 
   const artistResults = searchIndex.artists
     .filter(({ lc }) => lc.includes(lowerQuery))
-    .slice(0, 3)
+    .slice(0, MAX_LIBRARY_RESULTS)
     .map(({ item }) => artistToResult(artistSearchRow(item)));
 
   const playlistResults = searchIndex.playlists
     .filter(({ lc }) => lc.includes(lowerQuery))
-    .slice(0, 3)
+    .slice(0, MAX_LIBRARY_RESULTS)
     .map(({ item }) => playlistToResult(playlistSearchRow(item), downloaded.playlists.has(item.nativeId)));
 
   const songResults = searchIndex.tracks
     .filter(({ lc }) => lc.includes(lowerQuery))
-    .slice(0, 5)
+    .slice(0, MAX_LIBRARY_RESULTS)
     .map(({ item }) => songToResult(songSearchRow(item), downloaded.tracks.has(item.nativeId)));
 
   return [...songResults, ...albumResults, ...artistResults, ...playlistResults];

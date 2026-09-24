@@ -30,6 +30,13 @@ type Props = {
   onToggleSource: (sourceId: SourceId) => void;
   selectedEntityTypes: SearchEntityType[];
   onToggleEntityType: (entityType: SearchEntityType) => void;
+  /** True once the screen is already showing the same choice as a quick-filter
+   *  row under the search field (`EntityTypeQuickFilter`, gated on a
+   *  self-hosted MusicBrainz server — see `useSearchScreenModel`'s
+   *  `showEntityTypeQuickFilter`). The sheet hides its own "Entity types"
+   *  section in that case rather than showing the same selection twice in two
+   *  places a user could disagree with each other while looking at. */
+  entityTypesShownInline?: boolean;
 };
 
 const SCOPE_ORDER: SearchResultScope[] = ['library', 'other'];
@@ -51,7 +58,7 @@ const ENTITY_TYPE_ORDER: SearchEntityType[] = ['song', 'album', 'artist'];
  * made one list do two jobs, and the row changed shape once it was on.
  */
 const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
-  ({ resultScope, onChangeScope, availableSourceIds, selectedSourceIds, onToggleSource, selectedEntityTypes, onToggleEntityType }, ref) => {
+  ({ resultScope, onChangeScope, availableSourceIds, selectedSourceIds, onToggleSource, selectedEntityTypes, onToggleEntityType, entityTypesShownInline }, ref) => {
     const { t } = useTranslation();
     const { colors } = useTheme();
     const sheetBg = useOptionSheetBackground();
@@ -125,21 +132,25 @@ const SearchFiltersSheet = forwardRef<BottomSheetModal, Props>(
                 </Text>
               )}
 
-              <OptionSheetDivider />
+              {!entityTypesShownInline && (
+                <>
+                  <OptionSheetDivider />
 
-              <OptionSheetSectionLabel label={t('search.filters.entityTypes')} />
-              {ENTITY_TYPE_ORDER.map(entityType => {
-                const checked = selectedEntityTypes.includes(entityType);
-                return (
-                  <OptionSheetRow
-                    key={entityType}
-                    testID={`search-filters-entity-${entityType}`}
-                    label={entityTypeLabel(entityType)}
-                    onPress={() => onToggleEntityType(entityType)}
-                    trailing={checked ? <Check size={iconSize.secondary} color={colors.themeColor} /> : undefined}
-                  />
-                );
-              })}
+                  <OptionSheetSectionLabel label={t('search.filters.entityTypes')} />
+                  {ENTITY_TYPE_ORDER.map(entityType => {
+                    const checked = selectedEntityTypes.includes(entityType);
+                    return (
+                      <OptionSheetRow
+                        key={entityType}
+                        testID={`search-filters-entity-${entityType}`}
+                        label={entityTypeLabel(entityType)}
+                        onPress={() => onToggleEntityType(entityType)}
+                        trailing={checked ? <Check size={iconSize.secondary} color={colors.themeColor} /> : undefined}
+                      />
+                    );
+                  })}
+                </>
+              )}
             </>
           )}
         </BottomSheetScrollView>

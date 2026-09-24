@@ -107,3 +107,26 @@ describe('SearchFiltersSheet sources', () => {
     expect(view.queryByText('search.filters.alsoInSettings')).toBeNull();
   });
 });
+
+/**
+ * `entityTypesShownInline` is set once the screen already shows the same
+ * choice as `EntityTypeQuickFilter`'s row under the search field (gated on a
+ * self-hosted MusicBrainz server) — the sheet's own copy of the same
+ * selection would otherwise be a second control a user could set the first
+ * one out of step with.
+ */
+describe('SearchFiltersSheet entity types', () => {
+  it('shows its own entity-type section by default', async () => {
+    const { view } = await renderSheet();
+
+    expect(view.getByText('search.filters.entityTypes')).toBeTruthy();
+    expect(view.getByTestId('search-filters-entity-song')).toBeTruthy();
+  });
+
+  it('hides its own entity-type section when already shown inline', async () => {
+    const { view } = await renderSheet({ entityTypesShownInline: true });
+
+    expect(view.queryByText('search.filters.entityTypes')).toBeNull();
+    expect(view.queryByTestId('search-filters-entity-song')).toBeNull();
+  });
+});

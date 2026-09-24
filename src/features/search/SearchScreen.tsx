@@ -14,6 +14,7 @@ import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useSearchScreenModel } from '@/features/search/useSearchScreenModel';
+import EntityTypeQuickFilter from './components/EntityTypeQuickFilter';
 import SearchFiltersSheet from './components/SearchFiltersSheet';
 import SearchResultsBody from './components/SearchResultsBody';
 
@@ -88,6 +89,13 @@ const Search = () => {
         </Touchable>
       </View>
 
+      {m.showEntityTypeQuickFilter && (
+        <EntityTypeQuickFilter
+          selectedEntityTypes={m.selectedEntityTypes}
+          onToggle={m.toggleFilterEntityType}
+        />
+      )}
+
       {m.hasSearched && !m.isLoading && (m.hasError || m.degraded) && (
         <StatusBanner
           icon={<CloudOff size={iconSize.badge} color={colors.subtext} />}
@@ -122,6 +130,7 @@ const Search = () => {
         onToggleSource={m.toggleFilterSource}
         selectedEntityTypes={m.selectedEntityTypes}
         onToggleEntityType={m.toggleFilterEntityType}
+        entityTypesShownInline={m.showEntityTypeQuickFilter}
       />
     </SafeAreaView>
   );

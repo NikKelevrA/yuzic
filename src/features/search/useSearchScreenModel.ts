@@ -54,7 +54,8 @@ export function useSearchScreenModel() {
   // after it.
   const musicbrainzServerUrl = useSelector(selectSourceServerUrls).musicbrainz;
   const musicbrainzSearchEnabled = useSelector(selectSourceUse('musicbrainz.search'));
-  const defaultToMusicbrainz = !!musicbrainzServerUrl?.trim() && musicbrainzSearchEnabled;
+  const selfHostedMusicbrainzConfigured = !!musicbrainzServerUrl?.trim();
+  const defaultToMusicbrainz = selfHostedMusicbrainzConfigured && musicbrainzSearchEnabled;
   const username = useSelector(selectActiveServer)?.username;
   const activeServerId = useSelector(selectActiveServerId);
 
@@ -253,6 +254,12 @@ export function useSearchScreenModel() {
   // render from doing it either, belt and suspenders against a stray result
   // slipping in from a stale request.
   const isOtherScope = resultScope === 'other';
+  // Gated on a server of your own, not merely "Other sources" being active —
+  // the shared public server's results are already capped tight enough (see
+  // `PUBLIC_MAX_ARTISTS` and friends in `providers/registry/musicbrainz.ts`)
+  // that a type filter has little to narrow, and offering the control anyway
+  // would read as broken the moment toggling it visibly did nothing.
+  const showEntityTypeQuickFilter = isOtherScope && selfHostedMusicbrainzConfigured;
   const libraryResults = useMemo(
     () => (isOtherScope ? [] : searchResults.filter(r => r.source === 'local')),
     [searchResults, isOtherScope]
@@ -296,7 +303,7 @@ export function useSearchScreenModel() {
     // scope / filters
     resultScope, setResultScope, enabledSearchSourceIds,
     selectedSourceIds, selectedEntityTypes, toggleFilterSource, toggleFilterEntityType,
-    isOtherScope, showSourceHeaders,
+    isOtherScope, showSourceHeaders, showEntityTypeQuickFilter,
     // results
     hasSearched, isLoading, hasError, degraded,
     libraryResults, externalResultsBySource, noResultsForScope,

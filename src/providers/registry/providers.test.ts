@@ -260,8 +260,8 @@ describe('musicbrainz provider', () => {
       await musicbrainzProvider.capabilities['catalogue.search']?.('query', { artists: true, albums: true });
 
       expect(mbApi.createMusicbrainzClient).toHaveBeenCalledWith({ serverUrl: 'http://nas:5000' });
-      expect(own.searchArtist).toHaveBeenCalledWith('query', 4);
-      expect(own.searchReleaseGroupByTitle).toHaveBeenCalledWith('query', 6);
+      expect(own.searchArtist).toHaveBeenCalledWith('query', 50);
+      expect(own.searchReleaseGroupByTitle).toHaveBeenCalledWith('query', 50);
       expect(mbApi.searchArtist).not.toHaveBeenCalled();
       expect(mbApi.searchReleaseGroupByTitle).not.toHaveBeenCalled();
     });
@@ -273,7 +273,7 @@ describe('musicbrainz provider', () => {
       await musicbrainzProvider.capabilities['catalogue.search']?.('query', { artists: true, albums: false });
 
       expect(mbApi.createMusicbrainzClient).not.toHaveBeenCalled();
-      expect(mbApi.searchArtist).toHaveBeenCalledWith('query', 4);
+      expect(mbApi.searchArtist).toHaveBeenCalledWith('query', 3);
     });
   });
 
