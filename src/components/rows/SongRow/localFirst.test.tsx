@@ -33,7 +33,6 @@ jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
 jest.mock('@/features/settings/sources/useSourceUse', () => ({ useSourceUse: () => true }));
-jest.mock('@/features/settings/sources/sourceUsePrompt', () => ({ promptSourceUse: jest.fn() }));
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');
 jest.mock('@/components/useSheetRef', () => ({ useSheetRef: () => ({ current: null }) }));
 // The library the rule matches against — the real index, fed by this list.

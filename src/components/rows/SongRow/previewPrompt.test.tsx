@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 
 import SongRow from './index';
 import type { Song } from '@/domain/entities/Song';
@@ -37,12 +37,9 @@ jest.mock('@/features/entity-actions/SongActionSheetContext', () => ({
 jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
-// Previews are off: the row has to ask.
+// Previews are off: the row has nothing to play and must not ask.
 jest.mock('@/features/settings/sources/useSourceUse', () => ({
   useSourceUse: () => false,
-}));
-jest.mock('@/features/settings/sources/sourceUsePrompt', () => ({
-  promptSourceUse: (...args: unknown[]) => mockPrompt(...args),
 }));
 jest.mock('@/components/options/SongOptions', () => 'SongOptions');
 jest.mock('@/components/useSheetRef', () => ({
@@ -50,8 +47,12 @@ jest.mock('@/components/useSheetRef', () => ({
 }));
 jest.mock('@/components/MediaListRow', () => {
   const { Text } = require('react-native');
-  return function MockMediaListRow({ title, onPress }: { title: string; onPress: () => void }) {
-    return <Text onPress={onPress}>{title}</Text>;
+  return function MockMediaListRow({ title, onPress, disabled }: { title: string; onPress: () => void; disabled?: boolean }) {
+    return (
+      <Text onPress={disabled ? undefined : onPress} accessibilityState={{ disabled }}>
+        {title}
+      </Text>
+    );
   };
 });
 jest.mock('react-native-reanimated', () => {
@@ -64,10 +65,6 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (v: unknown) => v,
   };
 });
-
-/* eslint-disable no-var -- hoisted for the jest.mock factories above */
-var mockPrompt = jest.fn();
-/* eslint-enable no-var */
 
 const provenance = integrationProvenance('deezer');
 const outsideSong: Song = {
@@ -85,36 +82,27 @@ const outsideSong: Song = {
 };
 
 describe('tapping an outside track with previews off', () => {
-  beforeEach(() => {
-    mockPrompt.mockReset();
-    jest.useRealTimers();
-  });
-
-  it('plays the tapped track once previews are on and its clip arrives, without a second tap', async () => {
+  it('does nothing and reads as disabled, rather than asking to turn previews on', async () => {
     const view = await render(<SongRow song={outsideSong} albumTitle="Album" albumArtist="Artist" />);
 
-    await fireEvent.press(view.getByText('Blunts'));
-    expect(mockPrompt).toHaveBeenCalledWith('deezer.previews', expect.objectContaining({ onTurnOn: expect.any(Function) }));
+    const row = view.getByText('Blunts');
+    expect(row.props.accessibilityState).toEqual({ disabled: true });
 
-    // The user says yes; the clip is fetched and the album hands the row its play action.
-    await act(async () => mockPrompt.mock.calls[0][1].onTurnOn());
+    // No onPress means nothing to play; tapping must not throw or prompt.
+    expect(() => fireEvent.press(row)).not.toThrow();
+  });
+
+  it('still plays normally once the caller hands it a real clip to play', async () => {
     const play = jest.fn();
-    await view.rerender(<SongRow song={outsideSong} albumTitle="Album" albumArtist="Artist" previewUrl="https://clip" onPress={play} />);
+    const view = await render(
+      <SongRow song={outsideSong} albumTitle="Album" albumArtist="Artist" previewUrl="https://clip" onPress={play} />,
+    );
+
+    const row = view.getByText('Blunts');
+    expect(row.props.accessibilityState).toEqual({ disabled: false });
+
+    fireEvent.press(row);
 
     expect(play).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not play the track later on if no clip turned up in time', async () => {
-    jest.useFakeTimers();
-    const view = await render(<SongRow song={outsideSong} albumTitle="Album" albumArtist="Artist" />);
-
-    await fireEvent.press(view.getByText('Blunts'));
-    await act(async () => mockPrompt.mock.calls[0][1].onTurnOn());
-    await act(async () => { jest.advanceTimersByTime(11_000); });
-
-    const play = jest.fn();
-    await view.rerender(<SongRow song={outsideSong} albumTitle="Album" albumArtist="Artist" previewUrl="https://clip" onPress={play} />);
-
-    expect(play).not.toHaveBeenCalled();
   });
 });

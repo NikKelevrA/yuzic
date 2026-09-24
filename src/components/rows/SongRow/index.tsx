@@ -1,5 +1,5 @@
 import { fontScaleCap, hitSlopFor, iconSize, motion, spacing, stateLayer, statusColor, typography } from '@/constants/design';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import { useListDensity } from '@/features/theme/useListDensity';
 import {
   Text,
@@ -27,13 +27,9 @@ import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { useLocalFirst } from '@/features/library/useLocalFirst';
 import { useSourceUse } from '@/features/settings/sources/useSourceUse';
-import { promptSourceUse } from '@/features/settings/sources/sourceUsePrompt';
 import { PREVIEWS_USE } from '@/providers/registry/pageSources';
 
 type SongRowSong = Song;
-
-/** How long a tapped track waits for its clip after previews are turned on. */
-const PREVIEW_WAIT_MS = 10_000;
 
 /**
  * True when `song` came from an external catalog (Deezer/etc) rather than
@@ -74,31 +70,14 @@ const ExternalSongRowView: React.FC<{
   const hasPreview = !!previewUrl;
   const optionsSheetRef = useSheetRef();
 
-  // Turning previews on from here was for this song, so it plays once its
-  // clip arrives rather than waiting for a second tap. A track the catalogue
-  // has no clip for never gets one; stop waiting instead of playing it much
-  // later, out of nowhere.
-  const [playWhenReady, setPlayWhenReady] = useState(false);
-  useEffect(() => {
-    if (!playWhenReady) return;
-    if (onPress) {
-      setPlayWhenReady(false);
-      onPress();
-      return;
-    }
-    const timer = setTimeout(() => setPlayWhenReady(false), PREVIEW_WAIT_MS);
-    return () => clearTimeout(timer);
-  }, [playWhenReady, onPress]);
-
+  // Previews being off means this row has nothing to play. It used to ask,
+  // right here, to turn Deezer previews on — which meant a plain tap on a
+  // track you don't own could pop a permission sheet, every time, for a
+  // feature you may have turned off on purpose. Now it just does nothing;
+  // the "..." menu still offers Want / Get this track / Get the album.
   const handlePress = useCallback(() => {
-    if (onPress) {
-      onPress();
-    } else if (!samplesEnabled) {
-      // Ask here, beside the song that was tapped, rather than sending
-      // anyone to Settings to find the switch.
-      promptSourceUse(PREVIEWS_USE, { onTurnOn: () => setPlayWhenReady(true) });
-    }
-  }, [onPress, samplesEnabled]);
+    onPress?.();
+  }, [onPress]);
 
   return (
     <>
@@ -107,6 +86,7 @@ const ExternalSongRowView: React.FC<{
         subtitle={song.artist.name || albumArtist}
         cover={song.cover}
         onPress={handlePress}
+        disabled={!onPress && !samplesEnabled}
         showCover={false}
         variant="compact"
         rowStyle={{ paddingVertical: density.trackRowPadding }}
