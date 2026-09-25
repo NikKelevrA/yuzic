@@ -37,12 +37,22 @@ jest.mock('@/features/entity-actions/SongActionSheetContext', () => ({
 jest.mock('@/features/offline/DownloadContext', () => ({
   useDownloadState: () => ({ isTrackDownloaded: () => false }),
 }));
-// No self-hosted MusicBrainz / downloader in these tests — same "nothing
-// extra to do" case the rest of this file already covers, so acquire-and-play
-// stays closed and every existing expectation (disabled state, plain
-// `onPress`) holds unchanged.
+// Default: no self-hosted MusicBrainz / downloader — same "nothing extra to
+// do" case the rest of this file already covers, so acquire-and-play stays
+// closed and every existing expectation (disabled state, plain `onPress`)
+// holds unchanged. The one test below that cares about the self-hosted-but-
+// no-downloader case overrides this per-test via `mockUseAcquireAndPlaySong`.
+const mockUseAcquireAndPlaySong = jest.fn(() => ({
+  canAcquireAndPlay: false,
+  selfHostedMusicbrainzConfigured: false,
+  acquireAndPlay: jest.fn(),
+}));
 jest.mock('@/features/downloaders/useAcquireAndPlaySong', () => ({
-  useAcquireAndPlaySong: () => ({ canAcquireAndPlay: false, acquireAndPlay: jest.fn() }),
+  useAcquireAndPlaySong: () => mockUseAcquireAndPlaySong(),
+}));
+const mockNotifyInfo = jest.fn();
+jest.mock('@/components/toast', () => ({
+  notify: { info: (...args: unknown[]) => mockNotifyInfo(...args) },
 }));
 // Previews are off: the row has nothing to play and must not ask.
 jest.mock('@/features/settings/sources/useSourceUse', () => ({
@@ -88,6 +98,15 @@ const outsideSong: Song = {
   genres: [],
 };
 
+beforeEach(() => {
+  mockUseAcquireAndPlaySong.mockReturnValue({
+    canAcquireAndPlay: false,
+    selfHostedMusicbrainzConfigured: false,
+    acquireAndPlay: jest.fn(),
+  });
+  mockNotifyInfo.mockClear();
+});
+
 describe('tapping an outside track with previews off', () => {
   it('does nothing and reads as disabled, rather than asking to turn previews on', async () => {
     const view = await render(<SongRow song={outsideSong} albumTitle="Album" albumArtist="Artist" />);
@@ -111,5 +130,28 @@ describe('tapping an outside track with previews off', () => {
     fireEvent.press(row);
 
     expect(play).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The regression this covers: with self-hosted MusicBrainz on but no
+// downloader connected, the row used to fall all the way through to
+// `onPress?.()` — usually undefined here too — so the tap looked exactly
+// like a dead/broken row, indistinguishable from the stock "nothing to do"
+// case above. It should now be tappable and say why nothing happened.
+describe('tapping an outside track with self-hosted MusicBrainz on but no downloader connected', () => {
+  it('is not disabled, and explains why instead of doing nothing', async () => {
+    mockUseAcquireAndPlaySong.mockReturnValue({
+      canAcquireAndPlay: false,
+      selfHostedMusicbrainzConfigured: true,
+      acquireAndPlay: jest.fn(),
+    });
+
+    const view = await render(<SongRow song={outsideSong} albumTitle="Album" albumArtist="Artist" />);
+    const row = view.getByText('Blunts');
+    expect(row.props.accessibilityState).toEqual({ disabled: false });
+
+    fireEvent.press(row);
+
+    expect(mockNotifyInfo).toHaveBeenCalledTimes(1);
   });
 });

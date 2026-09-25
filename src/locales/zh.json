@@ -1252,7 +1252,8 @@
       "addedTrackToDowntify": "已向 Downtify 发出请求。",
       "acquireDownloading": "正在下载“{{title}}”…准备好后将自动播放。",
       "acquireStillWorking": "“{{title}}”仍在下载中 — 请稍后再试。",
-      "acquirePlayFailed": "“{{title}}”已下载，但无法开始播放。"
+      "acquirePlayFailed": "“{{title}}”已下载，但无法开始播放。",
+      "noDownloaderConnected": "MusicBrainz is set up, but no downloader is connected — nothing to fetch this with right now."
     },
     "header": {
       "songs": "{{count}} 首曲目",

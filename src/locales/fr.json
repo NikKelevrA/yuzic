@@ -1257,7 +1257,8 @@
       "addedTrackToDowntify": "Demandé à Downtify.",
       "acquireDownloading": "Téléchargement de « {{title}} »… la lecture démarrera dès que ce sera prêt.",
       "acquireStillWorking": "Téléchargement de « {{title}} » toujours en cours — réessayez dans un instant.",
-      "acquirePlayFailed": "« {{title}} » a été téléchargé, mais la lecture n'a pas pu démarrer."
+      "acquirePlayFailed": "« {{title}} » a été téléchargé, mais la lecture n'a pas pu démarrer.",
+      "noDownloaderConnected": "MusicBrainz is set up, but no downloader is connected — nothing to fetch this with right now."
     },
     "header": {
       "songs": "{{count}} morceau",

@@ -1260,7 +1260,8 @@
       "addedTrackToDowntify": "Requested from Downtify.",
       "acquireDownloading": "Downloading “{{title}}” — it'll play as soon as it's ready.",
       "acquireStillWorking": "Still downloading “{{title}}” — check back in a bit.",
-      "acquirePlayFailed": "“{{title}}” downloaded, but couldn't start playing it."
+      "acquirePlayFailed": "“{{title}}” downloaded, but couldn't start playing it.",
+      "noDownloaderConnected": "MusicBrainz is set up, but no downloader is connected — nothing to fetch this with right now."
     },
     "header": {
       "songs": "{{count}} song",

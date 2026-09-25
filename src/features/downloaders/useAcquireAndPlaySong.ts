@@ -88,6 +88,12 @@ export function useAcquireAndPlaySong() {
   const canAcquireAndPlay = selfHostedMusicbrainzConfigured
     && (trackDownloaders.length > 0 || albumDownloaders.length > 0);
 
+  /** Broader than `canAcquireAndPlay`: true whenever the self-hosted half of
+   *  the setup is on, whether or not a downloader is currently detected as
+   *  connected. Callers use this to decide whether a tap should say *why*
+   *  nothing happened (no downloader connected) instead of doing nothing at
+   *  all — silence here used to be indistinguishable from a broken row. */
+
   const [pending, setPending] = useState<PendingAcquire | null>(null);
   const pendingRef = useRef<PendingAcquire | null>(null);
   pendingRef.current = pending;
@@ -192,5 +198,5 @@ export function useAcquireAndPlaySong() {
     return true;
   }, [localSong, playLocal, canAcquireAndPlay, trackDownloaders, albumDownloaders, t]);
 
-  return { canAcquireAndPlay, acquireAndPlay };
+  return { canAcquireAndPlay, selfHostedMusicbrainzConfigured, acquireAndPlay };
 }

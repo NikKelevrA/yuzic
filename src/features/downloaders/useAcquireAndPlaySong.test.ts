@@ -85,6 +85,27 @@ describe('useAcquireAndPlaySong — the gate', () => {
     const { result } = renderHook(() => useAcquireAndPlaySong());
     expect(result.current.canAcquireAndPlay).toBe(true);
   });
+
+  // `selfHostedMusicbrainzConfigured` is the broader of the two flags — it
+  // tracks only the server half, independent of whether a downloader happens
+  // to be connected right now. Callers use the gap between it and
+  // `canAcquireAndPlay` to tell "no downloader connected" apart from "this
+  // feature area is off entirely" — see the row components' own tests.
+  it('exposes the self-hosted-server flag independently of whether a downloader is connected', () => {
+    mockServerUrls = { musicbrainz: 'http://nas:5000' };
+    mockTrackDownloaders = [];
+    mockAlbumDownloaders = [];
+    const { result } = renderHook(() => useAcquireAndPlaySong());
+    expect(result.current.selfHostedMusicbrainzConfigured).toBe(true);
+    expect(result.current.canAcquireAndPlay).toBe(false);
+  });
+
+  it('the self-hosted-server flag is false with no server configured, regardless of downloaders', () => {
+    mockServerUrls = {};
+    mockTrackDownloaders = [trackDownloader];
+    const { result } = renderHook(() => useAcquireAndPlaySong());
+    expect(result.current.selfHostedMusicbrainzConfigured).toBe(false);
+  });
 });
 
 describe('useAcquireAndPlaySong — already owned', () => {

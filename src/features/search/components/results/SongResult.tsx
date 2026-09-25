@@ -11,6 +11,7 @@ import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
 import { useTheme } from '@/features/theme/useTheme';
 import { iconSize } from '@/constants/design';
+import { notify } from '@/components/toast';
 import { useAcquireAndPlaySong } from '@/features/downloaders/useAcquireAndPlaySong';
 
 type Props = {
@@ -52,7 +53,7 @@ export default function SongResult({ result, navigateToAlbum, onSelect, onPress,
   const { t } = useTranslation();
   const { colors } = useTheme();
   const optionsSheetRef = useSheetRef();
-  const { canAcquireAndPlay, acquireAndPlay } = useAcquireAndPlaySong();
+  const { canAcquireAndPlay, selfHostedMusicbrainzConfigured, acquireAndPlay } = useAcquireAndPlaySong();
 
   // A leading type word keeps this row from reading as an album when a
   // search mixes both kinds — see AlbumResult's matching prefix.
@@ -83,6 +84,13 @@ export default function SongResult({ result, navigateToAlbum, onSelect, onPress,
                 });
                 return;
               }
+            }
+            if (song && selfHostedMusicbrainzConfigured && !canAcquireAndPlay) {
+              // Self-hosted MusicBrainz is on but no downloader is currently
+              // detected as connected — say so instead of silently falling
+              // to the sheet, since that silence is indistinguishable from a
+              // broken tap otherwise.
+              notify.info(t('externalAlbum.download.noDownloaderConnected'));
             }
             if (song) {
               optionsSheetRef.current?.present();

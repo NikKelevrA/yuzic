@@ -1252,7 +1252,8 @@
       "addedTrackToDowntify": "Downtify にリクエストしました。",
       "acquireDownloading": "「{{title}}」をダウンロード中…準備ができ次第再生します。",
       "acquireStillWorking": "「{{title}}」はまだダウンロード中です — しばらくしてからもう一度確認してください。",
-      "acquirePlayFailed": "「{{title}}」はダウンロードされましたが、再生を開始できませんでした。"
+      "acquirePlayFailed": "「{{title}}」はダウンロードされましたが、再生を開始できませんでした。",
+      "noDownloaderConnected": "MusicBrainz is set up, but no downloader is connected — nothing to fetch this with right now."
     },
     "header": {
       "songs": "{{count}} 曲",

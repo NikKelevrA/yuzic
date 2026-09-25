@@ -25,6 +25,7 @@ import { formatDuration } from '@/components/formatDuration';
 import Touchable from '@/components/Touchable';
 import SongOptions from '@/components/options/SongOptions';
 import { useSheetRef } from '@/components/useSheetRef';
+import { notify } from '@/components/toast';
 import { useLocalFirst } from '@/features/library/useLocalFirst';
 import { useSourceUse } from '@/features/settings/sources/useSourceUse';
 import { PREVIEWS_USE } from '@/providers/registry/pageSources';
@@ -71,7 +72,7 @@ const ExternalSongRowView: React.FC<{
   const density = useListDensity();
   const hasPreview = !!previewUrl;
   const optionsSheetRef = useSheetRef();
-  const { canAcquireAndPlay, acquireAndPlay } = useAcquireAndPlaySong();
+  const { canAcquireAndPlay, selfHostedMusicbrainzConfigured, acquireAndPlay } = useAcquireAndPlaySong();
   const albumStub = useExternalSongAlbumStub(song, albumTitle);
 
   // Previews being off means this row has nothing to play. It used to ask,
@@ -92,8 +93,18 @@ const ExternalSongRowView: React.FC<{
       });
       return;
     }
+    // Self-hosted MusicBrainz is on but nothing capable is connected right
+    // now (no track/album downloader detected) — say so. Previously this
+    // fell straight through to `onPress?.()`, which is usually undefined
+    // here too (no Deezer preview match), so the tap did nothing at all with
+    // no way to tell "working as designed for a stock setup" apart from "your
+    // downloader isn't actually connected."
+    if (selfHostedMusicbrainzConfigured) {
+      notify.info(t('externalAlbum.download.noDownloaderConnected'));
+      return;
+    }
     onPress?.();
-  }, [canAcquireAndPlay, acquireAndPlay, song, albumStub, onPress]);
+  }, [canAcquireAndPlay, acquireAndPlay, song, albumStub, onPress, selfHostedMusicbrainzConfigured, t]);
 
   return (
     <>
@@ -102,7 +113,7 @@ const ExternalSongRowView: React.FC<{
         subtitle={song.artist.name || albumArtist}
         cover={song.cover}
         onPress={handlePress}
-        disabled={!onPress && !samplesEnabled && !canAcquireAndPlay}
+        disabled={!onPress && !samplesEnabled && !selfHostedMusicbrainzConfigured}
         showCover={false}
         variant="compact"
         rowStyle={{ paddingVertical: density.trackRowPadding }}
