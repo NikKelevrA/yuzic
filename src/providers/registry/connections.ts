@@ -2,6 +2,7 @@ import type { Href } from 'expo-router';
 import type { RootState } from '@/state/redux/store';
 import { selectListenBrainzAuthenticated } from '@/state/redux/selectors/listenbrainzSelectors';
 import { selectAudiomuseAuthenticated, selectAudiomuseEnabled } from '@/state/redux/selectors/audiomuseSelectors';
+import { selectPlaylistImportAuthenticated, selectPlaylistImportEnabled } from '@/state/redux/selectors/playlistImportSelectors';
 
 /**
  * The account and service integrations a user manages from Connections.
@@ -40,6 +41,15 @@ export const MANAGED_INTEGRATIONS: readonly ManagedIntegration[] = [
     summaryKey: 'settings.connections.summary.audiomuse',
     route: '/settings/audiomuseView',
     isConnected: state => selectAudiomuseAuthenticated(state) && selectAudiomuseEnabled(state),
+    statusKeys: { connected: 'settings.connections.status.ready', disconnected: 'settings.connections.status.notSetUp' },
+  },
+  {
+    id: 'playlistImport',
+    group: 'services',
+    brandName: 'Playlist Imports',
+    summaryKey: 'settings.connections.summary.playlistImport',
+    route: '/settings/playlistImportView',
+    isConnected: state => selectPlaylistImportAuthenticated(state) && selectPlaylistImportEnabled(state),
     statusKeys: { connected: 'settings.connections.status.ready', disconnected: 'settings.connections.status.notSetUp' },
   },
 ];

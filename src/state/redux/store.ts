@@ -5,6 +5,7 @@ import { reduxStorage as storage } from '@/state/mmkvStorage';
 import serversReducer from './slices/serversSlice';
 import downloadersReducer from './slices/downloadersSlice';
 import audiomuseReducer from './slices/audiomuseSlice';
+import playlistImportReducer from './slices/playlistImportSlice';
 import settingsAppearanceReducer from '@/features/settings/appearance/state';
 import settingsHomeReducer from '@/features/settings/home/state';
 import settingsSearchReducer from '@/features/settings/search/state';
@@ -51,6 +52,7 @@ const searchHistoryMigrate = (state: any, currentVersion: number): Promise<any> 
 const serversPersistConfig = { key: 'servers', storage, blacklist: ['credentialsHydrated'] };
 const downloadersPersistConfig = { key: 'downloaders', storage };
 const audiomusePersistConfig = { key: 'audiomuse', storage };
+const playlistImportPersistConfig = { key: 'playlistImport', storage };
 // The settings junk drawer (one `settings` key, 57 unrelated
 // fields) is gone — each feature owns its own slice and its own storage key.
 // These are new keys under the rewrite's storage namespace: there is no
@@ -158,6 +160,7 @@ export const _rootReducer = combineReducers({
     servers: serversReducer,
     downloaders: downloadersReducer,
     audiomuse: audiomuseReducer,
+    playlistImport: playlistImportReducer,
     settingsAppearance: settingsAppearanceReducer,
     settingsHome: settingsHomeReducer,
     settingsSearch: settingsSearchReducer,
@@ -181,6 +184,7 @@ const persistedReducer = combineReducers({
     servers: persistReducer(serversPersistConfig, serversReducer),
     downloaders: persistReducer(downloadersPersistConfig, downloadersReducer),
     audiomuse: persistReducer(audiomusePersistConfig, audiomuseReducer),
+    playlistImport: persistReducer(playlistImportPersistConfig, playlistImportReducer),
     settingsAppearance: persistReducer(settingsAppearancePersistConfig, settingsAppearanceReducer),
     settingsHome: persistReducer(settingsHomePersistConfig, settingsHomeReducer),
     settingsSearch: persistReducer(settingsSearchPersistConfig, settingsSearchReducer),

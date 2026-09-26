@@ -11,6 +11,7 @@ import { ServerReachabilityWatcher } from '@/features/connectivity/ServerReachab
 import { AutoDownloadWatcher } from '@/features/downloads/AutoDownloadWatcher';
 import { DownloadersQueueProvider } from '@/features/downloaders/DownloadersQueueContext';
 import { useWantArrivalWatcher } from '@/features/wants/useWantArrivalWatcher';
+import { usePlaylistImportSync } from '@/features/playlistImport/usePlaylistImportSync';
 import { AccountSheetProvider } from '@/features/settings/AccountSheetContext';
 
 /**
@@ -54,6 +55,11 @@ export default function HomeLayout() {
   // loop below, which is untouched by this) and resolves any want whose
   // entity has actually shown up, by any route — never gated on jobRef.
   useWantArrivalWatcher();
+
+  // Fully-automatic acquisition for playlist-import tracks the watchlist
+  // proxy is still missing — the one scoped exception to the app's normal
+  // tap-to-download rule. Same "ambient, no UI" shape as the watcher above.
+  usePlaylistImportSync();
 
   useEffect(() => {
     isOfflineRef.current = isOffline;

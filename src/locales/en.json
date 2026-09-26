@@ -26,6 +26,7 @@
         "lastfm": "Similar artists and recommendations",
         "listenbrainz": "Scrobbling account and discovery",
         "audiomuse": "Playlist generation",
+        "playlistImport": "Fills in imported playlists automatically",
         "downloader": "Server downloads"
       }
     },
@@ -454,6 +455,19 @@
       "enableSubtext": "Smart Shuffle via AudioMuse-AI when connected.",
       "disconnect": "Disconnect",
       "disconnected": "Disconnected from AudioMuse-AI."
+    },
+    "playlistImport": {
+      "title": "Playlist Imports",
+      "credentialsHelper": "The Last.fm watchlist tool's playlist-import feature, for tracks it's still trying to find.",
+      "serverUrl": "Watchlist URL",
+      "serverUrlPlaceholder": "http://192.168.1.43:5001",
+      "connectivity": "Connectivity",
+      "connectionFailed": "Couldn't reach the watchlist tool",
+      "noUsername": "Sign in to a Navidrome server to use this.",
+      "disconnect": "Disconnect",
+      "disconnected": "Disconnected from playlist imports.",
+      "autoAcquireStarted_one": "Fetching {{count}} track from an imported playlist",
+      "autoAcquireStarted_other": "Fetching {{count}} tracks from imported playlists"
     },
     "scrobbling": {
       "title": "Scrobbling",
