@@ -120,8 +120,15 @@ export function usePlayingCommands(
   const { playSong, playSongs } = starters;
 
   // The same tiered fill sources as Autoplay, so "Play Similar" gets acoustic
-  // similarity where it is set up. The seed always plays first.
+  // similarity where it is set up. The seed plays first — and immediately:
+  // nothing here should make the listener wait on a similarity lookup (a
+  // network round trip, sometimes a slow one) before the track they tapped
+  // actually starts. Related tracks queue in behind it once that lookup
+  // resolves; the toast confirms that after the fact rather than gating
+  // playback on it. If the lookup fails, the seed is already playing —
+  // there is nothing left to fall back to.
   const playSimilar = useCallback(async (song: Song) => {
+    await playSong(song);
     try {
       const similar = await autoplay.relatedTo(song, 20) ?? playableOnly(
         (await api.similar.getSimilarSongs(song.nativeId))
@@ -129,12 +136,21 @@ export function usePlayingCommands(
           .filter((resource): resource is PlayableResource => Boolean(resource))
       );
       const others = similar.filter(resource => resource.song.nativeId !== song.nativeId);
-      await playSongs([song, ...shuffleArray(others.map(resource => resource.song))], { contextId: 'similar' });
-      if (others.length > 0) notify.success(t('common.playingSimilar'));
+      if (others.length === 0) return;
+      for (const resource of shuffleArray(others)) {
+        try {
+          queue.addToQueue(resource.song);
+        } catch {
+          // One track failing to resolve a second time is not worth losing
+          // the rest of the mix over.
+        }
+      }
+      notify.success(t('common.playingSimilar'));
     } catch {
-      await playSong(song);
+      // The seed is already playing; a failed similarity lookup just means
+      // nothing extra queues in behind it.
     }
-  }, [api, autoplay, playSong, playSongs, resolve, t]);
+  }, [api, autoplay, playSong, queue, resolve, t]);
 
   const toggleRepeat = useCallback(() => {
     const next = nextRepeatMode(session.repeatMode());
