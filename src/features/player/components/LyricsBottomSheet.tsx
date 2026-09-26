@@ -30,6 +30,10 @@ import {
 import Touchable from '@/components/Touchable';
 type LyricsBottomSheetProps = {
   lyrics: LyricsResult | null;
+  /** A lookup is in flight for the current song — see the note on
+   *  `SongScreenModel.isResolvingLyrics`. Tells "still checking" apart from
+   *  "confirmed there are none" while the sheet stays open through the gap. */
+  isResolving: boolean;
   onClose: () => void;
 };
 
@@ -81,7 +85,7 @@ function LyricLine({
 }
 
 const LyricsBottomSheet = forwardRef<BottomSheetModal, LyricsBottomSheetProps>(
-  ({ lyrics, onClose }, ref) => {
+  ({ lyrics, isResolving, onClose }, ref) => {
     const { t } = useTranslation();
     const { colors } = useTheme();
     const progress = usePlayingProgress();
@@ -135,8 +139,6 @@ const LyricsBottomSheet = forwardRef<BottomSheetModal, LyricsBottomSheetProps>(
         animated: true,
       });
     }, [currentIndex, lines.length, contentHeight, viewportHeight, layoutVersion]);
-
-    if (!lyrics) return null;
 
     const getVariant = (index: number): 'active' | 'adjacent' | 'inactive' => {
       // Nothing is "current" in a plain block, so every line reads the same
@@ -194,34 +196,47 @@ const LyricsBottomSheet = forwardRef<BottomSheetModal, LyricsBottomSheetProps>(
           onContentSizeChange={(w, h) => setContentHeight(h)}
           onLayout={(e) => setViewportHeight(e.nativeEvent.layout.height)}
         >
-          {lines.map((line, index) =>
-            // Tapping a line seeks to it, which an untimed line cannot do —
-            // so it isn't a button, and isn't announced as one.
-            synced ? (
-              <Touchable
-                key={index}
-                accessibilityRole="button"
-                accessibilityLabel={line.text}
-                accessibilityHint={t('a11y.player.seekToLyric')}
-                onLayout={onLineLayout(index)}
-                onPress={() => seekSong(line.startMs / 1000)}
-              >
+          {lines.length > 0 ? (
+            lines.map((line, index) =>
+              // Tapping a line seeks to it, which an untimed line cannot do —
+              // so it isn't a button, and isn't announced as one.
+              synced ? (
+                <Touchable
+                  key={index}
+                  accessibilityRole="button"
+                  accessibilityLabel={line.text}
+                  accessibilityHint={t('a11y.player.seekToLyric')}
+                  onLayout={onLineLayout(index)}
+                  onPress={() => seekSong(line.startMs / 1000)}
+                >
+                  <LyricLine
+                    text={line.text}
+                    variant={getVariant(index)}
+                    activeColor={colors.secondary}
+                    inactiveColor={colors.subtext}
+                  />
+                </Touchable>
+              ) : (
                 <LyricLine
+                  key={index}
                   text={line.text}
                   variant={getVariant(index)}
                   activeColor={colors.secondary}
                   inactiveColor={colors.subtext}
                 />
-              </Touchable>
-            ) : (
-              <LyricLine
-                key={index}
-                text={line.text}
-                variant={getVariant(index)}
-                activeColor={colors.secondary}
-                inactiveColor={colors.subtext}
-              />
+              )
             )
+          ) : (
+            // Held open through a track change rather than closing and
+            // reopening itself — this is what's on screen while the new
+            // song's lyrics are still resolving, or once they've resolved to
+            // nothing. An iPad left open on a kitchen counter stays on the
+            // lyrics view instead of collapsing after every song.
+            <View style={styles.emptyStateContainer}>
+              <Text style={[styles.emptyState, { color: colors.subtext }]}>
+                {isResolving ? t('playing.lyrics.loading') : t('playing.lyrics.none')}
+              </Text>
+            </View>
           )}
         </BottomSheetScrollView>
       </BottomSheetModal>
@@ -259,6 +274,15 @@ const styles = StyleSheet.create({
     ...typography.screenTitle,
     textAlign: 'center',
     marginVertical: spacing.controlGap,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyState: {
+    ...typography.body,
+    textAlign: 'center',
   },
 });
 

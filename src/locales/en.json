@@ -1059,7 +1059,9 @@
       "playingFromQueue": "Playing from Queue"
     },
     "lyrics": {
-      "title": "Lyrics"
+      "title": "Lyrics",
+      "loading": "Looking for lyrics…",
+      "none": "No lyrics found for this track"
     },
     "aboutArtist": {
       "header": "Artist"

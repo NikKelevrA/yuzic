@@ -34,6 +34,13 @@ export type SongScreenModel = {
   artistId: string | null;
   lyrics: LyricsResult | null;
   lyricsAvailable: boolean;
+  /**
+   * A lookup for the current song is in flight. Distinct from `lyrics` being
+   * `null`, which is also true once a lookup has finished and found nothing —
+   * `LyricsBottomSheet` reads this to tell "still checking" apart from
+   * "confirmed there are none" while it stays open across a track change.
+   */
+  isResolvingLyrics: boolean;
 };
 
 export function useSongScreenModel(song: Song | null): SongScreenModel {
@@ -54,6 +61,7 @@ export function useSongScreenModel(song: Song | null): SongScreenModel {
 
   const [lyrics, setLyrics] = useState<LyricsResult | null>(null);
   const [lyricsAvailable, setLyricsAvailable] = useState(false);
+  const [isResolvingLyrics, setIsResolvingLyrics] = useState(false);
 
   useEffect(() => {
     if (!song?.nativeId) return;
@@ -61,6 +69,7 @@ export function useSongScreenModel(song: Song | null): SongScreenModel {
     let cancelled = false;
     setLyrics(null);
     setLyricsAvailable(false);
+    setIsResolvingLyrics(true);
 
     const task = InteractionManager.runAfterInteractions(() => {
       (async () => {
@@ -86,6 +95,8 @@ export function useSongScreenModel(song: Song | null): SongScreenModel {
           // A track without lyrics is the common case, not a fault — the
           // panel just stays closed. Nothing to tell the user and nothing to
           // retry, so this stays silent on purpose.
+        } finally {
+          if (!cancelled) setIsResolvingLyrics(false);
         }
       })();
     });
@@ -96,5 +107,5 @@ export function useSongScreenModel(song: Song | null): SongScreenModel {
     };
   }, [api.lyrics, song?.nativeId, song?.title, song?.artist, song?.album, song?.durationSeconds, enabledExternalLyricsSources]);
 
-  return { song, album, artistId, lyrics, lyricsAvailable };
+  return { song, album, artistId, lyrics, lyricsAvailable, isResolvingLyrics };
 }
