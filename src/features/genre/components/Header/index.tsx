@@ -43,9 +43,18 @@ type Props = {
   genre: string
   albums: Album[]
   showNavigation?: boolean
+  /**
+   * Draw the blurred hero and the genre's name above the actions.
+   *
+   * Off when the screen already has a header of its own — `BrowseTagScreen`
+   * carries a `DetailHeaderBar`, and wants only the Play/Shuffle/Download row
+   * beneath it. The actions are the part worth sharing; the hero is this
+   * screen's own shape.
+   */
+  showHero?: boolean
 }
 
-const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) => {
+const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, showHero = true }) => {
   const navigation = useNavigation<any>()
   const queryClient = useQueryClient()
   const icons = useIconSize();
@@ -139,6 +148,7 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
 
   return (
     <>
+      {showHero && (
       <View style={[styles.fullBleedWrapper, { height: GENRE_HERO_HEIGHT + barInset }]}>
         {coverUri && (
           <TurboImage
@@ -180,6 +190,9 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
         )}
       </View>
 
+      )}
+
+      {showHero && (
       <View style={styles.content} onLayout={onTitleLayout}>
         <Text style={[styles.genreName, { color: colors.secondary }]}>
           {genre}
@@ -188,6 +201,7 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true }) 
           {albums.length} {albums.length === 1 ? 'album' : 'albums'}
         </Text>
       </View>
+      )}
 
       <DetailActionRow style={styles.buttonRow}>
         <DetailCircleAction

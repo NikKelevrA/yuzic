@@ -15,6 +15,7 @@ import {
   type SortOrder,
 } from '@/features/library/librarySort'
 import { useTheme } from '@/features/theme/useTheme'
+import GenreHeader from '@/features/genre/components/Header'
 import { albumsForTile, type BrowseTileKind } from './browseTiles'
 
 /**
@@ -29,7 +30,11 @@ type Params = { kind?: BrowseTileKind; label?: string }
 
 export default function BrowseTagScreen() {
   const { params } = useRoute<{ key: string; name: string; params: Params }>()
-  const { kind = 'genre', label = '' } = params ?? {}
+  const { kind = 'genre', label: rawLabel = '' } = params ?? {}
+  // Trimmed on the way in: the browse tiles are built from trimmed tag names
+  // while the genre index passes the raw string, so a genre tagged " Jazz"
+  // reached the two paths as two different tags.
+  const label = rawLabel.trim()
   const { t } = useTranslation()
   const { colors } = useTheme()
   const sortLabels = useSortLabels()
@@ -37,14 +42,16 @@ export default function BrowseTagScreen() {
 
   const [sortOrder, setSortOrder] = useState<SortOrder>('title')
 
-  const items = useMemo<LibraryItem[]>(() => {
-    const tagged = albumsForTile(albums, kind, label)
-    return sortItems(
-      tagged.map(album => ({ kind: 'album' as const, data: album })),
+  const taggedAlbums = useMemo(() => albumsForTile(albums, kind, label), [albums, kind, label])
+
+  const items = useMemo<LibraryItem[]>(
+    () => sortItems(
+      taggedAlbums.map(album => ({ kind: 'album' as const, data: album })),
       sortOrder,
       EMPTY_SORT_STATS
-    )
-  }, [albums, kind, label, sortOrder])
+    ),
+    [taggedAlbums, sortOrder]
+  )
 
   // The tag names the screen; the subtitle says which kind of tag it is, since
   // "Melancholy" alone does not tell you whether it came from a genre field.
@@ -65,6 +72,14 @@ export default function BrowseTagScreen() {
         sortOrder={sortOrder}
         onSortChange={setSortOrder}
         sortLabel={sortLabels[sortOrder]}
+        // Play, Shuffle and Download-all, from the screen this replaced. Only
+        // for a genre: a mood is a tag the library never had actions for, and
+        // inventing them here would be a new feature rather than a move.
+        header={
+          kind === 'genre' && items.length > 0
+            ? <GenreHeader genre={label} albums={taggedAlbums} showHero={false} showNavigation={false} />
+            : undefined
+        }
       />
     </SafeAreaView>
   )

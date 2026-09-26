@@ -14,11 +14,19 @@ import { Keyboard } from 'react-native';
 import type { TextInput } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { type SearchResult, useSearch, type SearchEntityType } from '@/features/search/SearchContext';
+import {
+  selectResultScope,
+  selectSearchEntityTypes,
+  selectSearchSourceIds,
+  setResultScope as setResultScopeAction,
+  setSearchEntityTypes,
+  setSearchSourceIds,
+} from '@/features/settings/search/state';
 import type { SearchResultScope } from '@/features/search/searchLegs';
-import { ALL_SEARCH_ENTITY_TYPES } from '@/features/search/searchPolicy';
+import { } from '@/features/search/searchPolicy';
 import { useSearchHistory } from '@/features/search/searchHistory';
 import { entityToAlbum, entityToArtist } from '@/features/search/searchResultAdapters';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
@@ -56,9 +64,25 @@ export function useSearchScreenModel() {
   const [hasSearched, setHasSearched] = useState(false);
   // 'library' is the default and the only scope that ever runs without an
   // explicit switch — "Other sources" is the deliberate external action.
-  const [resultScope, setResultScope] = useState<SearchResultScope>('library');
-  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(enabledSearchSourceIds);
-  const [selectedEntityTypes, setSelectedEntityTypes] = useState<SearchEntityType[]>(ALL_SEARCH_ENTITY_TYPES);
+  // The filters live in settings, not here. As local state they were forgotten
+  // every time the screen unmounted, so a chosen scope and set of sources came
+  // back as "Library, everything" without saying so.
+  const dispatch = useDispatch();
+  const resultScope = useSelector(selectResultScope);
+  const storedSourceIds = useSelector(selectSearchSourceIds);
+  const selectedEntityTypes = useSelector(selectSearchEntityTypes);
+
+  // Null means "whichever sources are enabled", so a source switched on after
+  // the choice was made is included rather than left out by a stale list.
+  const selectedSourceIds = useMemo(
+    () => (storedSourceIds ?? enabledSearchSourceIds).filter(id => enabledSearchSourceIds.includes(id as never)),
+    [storedSourceIds, enabledSearchSourceIds]
+  );
+
+  const setResultScope = useCallback(
+    (scope: SearchResultScope) => { dispatch(setResultScopeAction(scope)); },
+    [dispatch]
+  );
 
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Mirrors `query` for the focus effect, which must not be re-created on every
@@ -116,14 +140,6 @@ export function useSearchScreenModel() {
   // is not auto-selected, so a user who narrowed the Filters sheet on purpose
   // doesn't have that choice silently widened out from under them — except
   // when it was switched on from that sheet, which selects it itself.
-  useEffect(() => {
-    setSelectedSourceIds(prev => {
-      const next = prev.filter(id => enabledSearchSourceIds.includes(id as never));
-      return next.length === prev.length ? prev : next;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabledSearchSourceIds.join(',')]);
-
   const runSearch = useCallback((text: string) => {
     clearSearch();
     setHasSearched(true);
@@ -268,12 +284,20 @@ export function useSearchScreenModel() {
   usePrefetchCovers(coversToPrefetch, 'thumb');
 
   const toggleFilterSource = useCallback((sourceId: string) => {
-    setSelectedSourceIds(prev => prev.includes(sourceId) ? prev.filter(id => id !== sourceId) : [...prev, sourceId]);
-  }, []);
+    dispatch(setSearchSourceIds(
+      selectedSourceIds.includes(sourceId)
+        ? selectedSourceIds.filter(id => id !== sourceId)
+        : [...selectedSourceIds, sourceId]
+    ));
+  }, [dispatch, selectedSourceIds]);
 
   const toggleFilterEntityType = useCallback((entityType: SearchEntityType) => {
-    setSelectedEntityTypes(prev => prev.includes(entityType) ? prev.filter(type => type !== entityType) : [...prev, entityType]);
-  }, []);
+    dispatch(setSearchEntityTypes(
+      selectedEntityTypes.includes(entityType)
+        ? selectedEntityTypes.filter(type => type !== entityType)
+        : [...selectedEntityTypes, entityType]
+    ));
+  }, [dispatch, selectedEntityTypes]);
 
   const noResultsForScope = query.trim() !== '' && hasSearched && !isLoading
     && (isOtherScope ? externalResultsBySource.size === 0 : libraryResults.length === 0);
