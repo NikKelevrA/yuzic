@@ -210,6 +210,25 @@ export const PlayerExpansionProvider: React.FC<{ children: ReactNode }> = ({ chi
     expansion.value = withSpring(0, PLAYER_SPRING);
   }, [expansion]);
 
+  // Development only, stripped from release by the `__DEV__` guard, and the
+  // same affordance as the store and the router. The player is an overlay
+  // rather than a route, so nothing else can open it from outside — and the
+  // cover's landing is measured geometry that can only be checked by opening
+  // it, scrolling it, and looking at the pixels.
+  if (__DEV__) {
+    (globalThis as { __yuzicPlayer?: unknown }).__yuzicPlayer = {
+      expand, collapse,
+      setScroll: (y: number) => { scrollY.value = y; },
+      read: () => ({
+        expansion: expansion.value,
+        scrollY: scrollY.value,
+        barCover: { ...barCover.value },
+        fullCover: { ...fullCover.value },
+        hostOrigin: { ...hostOrigin.value },
+      }),
+    };
+  }
+
   const value = useMemo<PlayerExpansionValue>(
     () => ({
       expansion,
