@@ -113,3 +113,21 @@ describe('request', () => {
     await expect(client().request('ping.view')).rejects.toThrow('Navidrome API error (502)');
   });
 });
+
+describe('buildStreamUrl', () => {
+  it('omits format entirely for Original, rather than sending the internal "raw" sentinel', () => {
+    // Navidrome only serves the untouched file when `format` is absent — an
+    // explicit `format=raw` is not a value it recognises and hands the
+    // request to the transcoding subsystem instead of skipping it.
+    const url = client().buildStreamUrl('song-1', 'original');
+
+    expect(url).not.toContain('format=');
+  });
+
+  it('still asks for a transcode by name at every other quality', () => {
+    expect(client().buildStreamUrl('song-1', 'low')).toContain('format=mp3');
+    expect(client().buildStreamUrl('song-1', 'low')).toContain('maxBitRate=128');
+    expect(client().buildStreamUrl('song-1', 'high')).toContain('format=mp3');
+    expect(client().buildStreamUrl('song-1', 'high')).toContain('maxBitRate=320');
+  });
+});

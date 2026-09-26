@@ -167,7 +167,15 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
     const streamBaseUrl = failoverHint ? orderedUrls(failoverHint)[0] ?? baseUrl : baseUrl;
     const { format, maxBitRate } = qualityToStreamParams(quality);
     const auth = buildTokenParams(username, password);
-    const extra: Record<string, string | number> = { id: songId, format };
+    const extra: Record<string, string | number> = { id: songId };
+    // 'raw' is `qualityToStreamParams`'s own sentinel for "don't transcode" —
+    // it is not a Subsonic format Navidrome recognises. Sending it on as a
+    // literal `format=raw` hands the request to the transcoding subsystem
+    // instead of skipping it (Navidrome only serves the original file
+    // untouched when `format` is absent entirely), which silently turned
+    // every "Original" stream into a transcode — fast once its cache was
+    // warm, but a multi-second stall on every track's first play.
+    if (format !== 'raw') extra.format = format;
     if (maxBitRate) extra.maxBitRate = maxBitRate;
     const params = buildParams(auth, extra, { format: null });
     return `${streamBaseUrl}/rest/stream.view?${params}`;
