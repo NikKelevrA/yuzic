@@ -7,7 +7,7 @@ import { ToastHost, notify } from '@/components/toast';
 import SourceUsePromptHost from '@/features/settings/sources/SourceUsePromptHost';
 import CoverResolutionHost from '@/features/artwork/CoverResolutionHost';
 import ConnectDownloaderPromptHost from '@/features/downloaders/ConnectDownloaderPromptHost';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -220,6 +220,14 @@ function useImageMemoryCleanup() {
  * colour while one is showing — the same thing `useTheme` does for the screens
  * themselves. Inside `ScreenBackgroundProvider` so it can see it.
  */
+// Development only, stripped from release by the `__DEV__` guard. The store is
+// exposed the same way in `state/redux/store.ts`, and for the same reason: a
+// simulator cannot be driven by touch reliably, and deep links are swallowed
+// by the unknown-link catch, so this is how a screen gets opened to look at.
+if (__DEV__) {
+  (globalThis as { __yuzicRouter?: typeof router }).__yuzicRouter = router;
+}
+
 function NavigationTheme({ isDarkMode, children }: { isDarkMode: boolean; children: React.ReactNode }) {
   const background = useScreenBackground();
   const base = isDarkMode ? DarkTheme : DefaultTheme;
