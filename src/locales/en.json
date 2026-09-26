@@ -1010,7 +1010,8 @@
     "browse": {
       "genre": "Genre",
       "mood": "Mood",
-      "allGenres": "All genres"
+      "allGenres": "All genres",
+      "empty": "Nothing under {{tag}} yet."
     }
   },
   "artist": {

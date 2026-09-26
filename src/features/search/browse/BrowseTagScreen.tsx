@@ -5,6 +5,12 @@ import { useRoute } from '@react-navigation/native'
 import { useTranslation } from 'react-i18next'
 
 import { DetailHeaderBar } from '@/components/DetailHeader'
+import { CloudOff } from 'lucide-react-native'
+
+import SkeletonListRow from '@/components/SkeletonListRow'
+import SectionEmptyState from '@/features/home/components/SectionEmptyState'
+import StatusBanner from '@/components/StatusBanner'
+import { useIconSize } from '@/features/theme/useIconSize'
 import { useAlbums } from '@/features/album/useAlbums'
 import LibraryList from '@/features/library/LibraryList'
 import { useSortLabels } from '@/features/library/useSortLabels'
@@ -38,7 +44,8 @@ export default function BrowseTagScreen() {
   const { t } = useTranslation()
   const { colors } = useTheme()
   const sortLabels = useSortLabels()
-  const { albums } = useAlbums()
+  const icons = useIconSize()
+  const { albums, isLoading, degraded } = useAlbums()
 
   const [sortOrder, setSortOrder] = useState<SortOrder>('title')
 
@@ -67,6 +74,23 @@ export default function BrowseTagScreen() {
     >
       <DetailHeaderBar title={label} subtitle={subtitle} />
 
+      {degraded && (
+        <StatusBanner
+          icon={<CloudOff size={icons.badge} color={colors.subtext} />}
+          text={t('common.serverUnreachableBanner')}
+          closable
+          testID="server-unreachable-banner"
+        />
+      )}
+
+      {isLoading ? (
+        // The library is still hydrating. Rows rather than a spinner, so the
+        // screen is the shape it will be — the list used to appear empty and
+        // then fill, which reads as "no albums under this tag".
+        Array.from({ length: 6 }).map((_, index) => <SkeletonListRow key={index} />)
+      ) : items.length === 0 ? (
+        <SectionEmptyState message={t('search.browse.empty', { tag: label })} />
+      ) : (
       <LibraryList
         items={items}
         sortOrder={sortOrder}
@@ -81,6 +105,7 @@ export default function BrowseTagScreen() {
             : undefined
         }
       />
+      )}
     </SafeAreaView>
   )
 }

@@ -1007,7 +1007,8 @@
     "browse": {
       "genre": "ジャンル",
       "mood": "ムード",
-      "allGenres": "すべてのジャンル"
+      "allGenres": "すべてのジャンル",
+      "empty": "{{tag}} にはまだ何もありません。"
     }
   },
   "media": {

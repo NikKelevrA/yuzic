@@ -1007,7 +1007,8 @@
     "browse": {
       "genre": "风格",
       "mood": "情绪",
-      "allGenres": "全部风格"
+      "allGenres": "全部风格",
+      "empty": "{{tag}} 下暂时没有内容。"
     }
   },
   "media": {

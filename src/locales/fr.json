@@ -1010,7 +1010,8 @@
     "browse": {
       "genre": "Genre",
       "mood": "Ambiance",
-      "allGenres": "Tous les genres"
+      "allGenres": "Tous les genres",
+      "empty": "Rien sous {{tag}} pour l’instant."
     }
   },
   "media": {

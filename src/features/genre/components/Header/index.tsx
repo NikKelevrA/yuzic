@@ -27,7 +27,6 @@ import {
   DetailActionRow,
   DetailCircleAction,
   DetailPlayAction,
-  DetailHeaderBar,
   DetailHeaderIconButton,
   useDetailHeaderInset,
   useDetailHeroTitleLayout,
@@ -256,10 +255,9 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, sh
   )
 }
 
-export const GenreHeaderBar: React.FC<Props> = ({ genre, albums }) => (
-  <DetailHeaderBar title={genre} rightAction={<GenreOptionsButton genre={genre} albums={albums} />} />
-)
+export default GenreHeader
 
+/** The blurred cover behind a genre's name, before the floating bar's inset. */
 function GenreOptionsButton({ genre, albums }: { genre: string; albums: Album[] }) {
   const { t } = useTranslation()
   const { colors } = useTheme()
@@ -277,9 +275,6 @@ function GenreOptionsButton({ genre, albums }: { genre: string; albums: Album[] 
   )
 }
 
-export default GenreHeader
-
-/** The blurred cover behind a genre's name, before the floating bar's inset. */
 const GENRE_HERO_HEIGHT = 220;
 
 const styles = StyleSheet.create({

@@ -38,7 +38,7 @@ const GenresScreen: React.FC = () => {
       accessibilityRole="button"
       accessibilityLabel={item.genre}
       style={[styles.row, { borderBottomColor: colors.border, paddingVertical: density.rowPadding }]}
-      onPress={() => navigation.push('genreView', { genre: item.genre })}
+      onPress={() => navigation.push('browseTagView', { kind: 'genre', label: item.genre })}
     >
       <View style={styles.rowText}>
         <Text style={[styles.genre, { color: colors.secondary }]} numberOfLines={1}>
