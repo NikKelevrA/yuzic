@@ -8,7 +8,7 @@ import { entityKey } from '@/features/listening/listenerKey';
 import { playableOnly } from '@/features/playback/playableResource';
 import { buildFillRequest } from './autoplayFill';
 import { tagSegment, type QueueSegment } from './playingQueue';
-import { resolveQueueFillProvider, type QueueFillProvider } from './queueProviders';
+import type { QueueFillProvider } from './queueProviders';
 
 /**
  * Extending a queue with tracks nobody chose.
@@ -29,7 +29,12 @@ import { resolveQueueFillProvider, type QueueFillProvider } from './queueProvide
  */
 export interface AutoplayDeps {
   backend: () => PlayerBackend;
-  /** Ordered by preference: the similarity service when connected, native similarity otherwise. */
+  /**
+   * Ordered by preference: the similarity service when connected, native
+   * similarity next, the library fallback last. Tried in that order until
+   * one actually returns something for the seed at hand — see
+   * `fetchFromFirstAvailable`.
+   */
   providers: () => QueueFillProvider[];
   queue: () => PlayableResource[];
   setQueue: (resources: PlayableResource[]) => void;
@@ -90,11 +95,11 @@ interface AutoplayCoordinator {
   /**
    * Tracks related to one song — what "Play Similar" starts from.
    *
-   * Empty when no provider is configured, which the caller distinguishes from
-   * "a provider answered with nothing": the first means fall back to the
-   * adapter's own similar-songs call, the second means there is genuinely
-   * nothing similar and falling back would only ask a worse source the same
-   * question.
+   * `null` when no provider is configured at all, which the caller
+   * distinguishes from an empty array — "a provider answered with nothing":
+   * the first means fall back to the adapter's own similar-songs call, the
+   * second means every configured tier, including the always-available
+   * library fallback, genuinely had nothing to offer for this seed.
    */
   relatedTo: (song: Song, count: number) => Promise<PlayableResource[] | null>;
 }
@@ -139,6 +144,41 @@ export function createAutoplayCoordinator(deps: AutoplayDeps): AutoplayCoordinat
   };
 
   /**
+   * Try every available provider in priority order, stopping at the first
+   * one that actually has something to say about this seed.
+   *
+   * A provider being *configured* is not the same as it having an opinion on
+   * *this* track — AudioMuse can be connected and still have nothing for a
+   * song it never got the chance to analyze (an obscure rip, a folder added
+   * five minutes ago), and that used to read as "there is nothing left to
+   * try" rather than "ask the next one". `library-fallback` (see
+   * `queueProviders.ts`) is always available and never returns nothing
+   * *because of what's configured* — only because the seed genuinely has no
+   * more album or artist left to offer — so this only comes back empty when
+   * every tier has truly run out.
+   *
+   * One provider throwing doesn't stop the search either: it's logged and
+   * treated the same as an empty answer, so a single flaky source can't take
+   * the rest of the chain down with it.
+   */
+  const fetchFromFirstAvailable = async (
+    recentSongs: { song: Song }[],
+    excludeLocalIds: Iterable<LocalId | undefined>,
+    count: number
+  ): Promise<PlayableResource[]> => {
+    for (const provider of deps.providers()) {
+      if (!provider.isAvailable()) continue;
+      try {
+        const fetched = await fetchExtension(provider, recentSongs, excludeLocalIds, count);
+        if (fetched.length > 0) return fetched;
+      } catch (error) {
+        deps.logWarning(`Queue fill provider "${provider.id}" failed`, error);
+      }
+    }
+    return [];
+  };
+
+  /**
  * How a queue entry is named to the listener model.
  *
  * Through `entityKey`, which is the same function the log is written with. This
@@ -152,15 +192,14 @@ const keyOfResource = (resource: PlayableResource): string => entityKey(resource
 
 /** The tracks both features start from, or an empty list if there is nothing to add. */
   const nextTracks = async (): Promise<PlayableResource[]> => {
-    const provider = resolveQueueFillProvider(deps.providers());
-    if (!provider) return [];
+    if (deps.providers().length === 0) return [];
     const request = buildFillRequest(deps.queue(), deps.currentIndex());
-    const fetched = await fetchExtension(
-      provider,
+    const fetched = await fetchFromFirstAvailable(
       request.recentResources,
       deps.queue().map(resource => resource.song.localId),
       request.count
     );
+    if (fetched.length === 0) return [];
     // The track the queue is continuing from, which is what a habit is
     // measured against — "you play B after A" needs to know what A was.
     const after = deps.queue()[deps.currentIndex()] ?? null;
@@ -200,12 +239,11 @@ const keyOfResource = (resource: PlayableResource): string => entityKey(resource
     },
 
     async relatedTo(song: Song, count: number) {
-      const provider = resolveQueueFillProvider(deps.providers());
-      if (!provider) return null;
+      if (deps.providers().length === 0) return null;
       // The seed is excluded from its own results: a provider returning the
       // song you asked about would put it in the queue twice, since the caller
       // places it first itself.
-      return fetchExtension(provider, [{ song }], [song.localId], count);
+      return fetchFromFirstAvailable([{ song }], [song.localId], count);
     },
 
     async injectSmartShuffleTracks(wasPlaying: boolean, savedPosition: number) {

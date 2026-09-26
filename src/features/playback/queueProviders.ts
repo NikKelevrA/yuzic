@@ -8,9 +8,12 @@ import type { SimilarityService } from '@/providers/registry/similarityService';
 // queue-end extension: a similarity service's acoustic extension when one is
 // connected, otherwise the app's existing native similar-songs capability
 // (Navidrome's getSimilarSongs.view or Jellyfin/Emby's InstantMix, already
-// unified behind api.similar).
+// unified behind api.similar), otherwise more of what the listener already
+// has (`createLibraryFallbackProvider`) — see the coordinator's own note on
+// why "configured" and "has an opinion on this seed" are no longer treated
+// as the same thing.
 export interface QueueFillProvider {
-  id: 'similarity-service' | 'native-similarity';
+  id: 'similarity-service' | 'native-similarity' | 'library-fallback';
   isAvailable(): boolean;
   fetchExtension(opts: {
     /**
@@ -86,4 +89,51 @@ export function createNativeSimilarityQueueFillProvider(api: ApiAdapter): QueueF
 // service first, native fallback last), or null if none are available.
 export function resolveQueueFillProvider(providers: QueueFillProvider[]): QueueFillProvider | null {
   return providers.find(p => p.isAvailable()) ?? null;
+}
+
+/**
+ * The floor under every similarity tier: neither service has ever formed an
+ * opinion about this seed at all — an obscure rip, a freshly-added folder,
+ * anything no similarity index has gotten to — so instead of asking "what's
+ * like this", ask "what else is right here". Rest of the seed's own album
+ * first, in its own running order (this is "keep going", not a taste match,
+ * so it is never shuffled); if that is exhausted too — the seed's album
+ * *was* the whole thing, as a single-folder rip often is — another album by
+ * the same artist, picked at random so a dead-end track does not always
+ * bounce to the same place twice.
+ *
+ * Always available: there is no configuration to be missing, only a seed
+ * with nothing left to offer, which surfaces as an empty result exactly like
+ * any other tier — the caller cannot tell "an album with one track" apart
+ * from "AudioMuse drew a blank" and does not need to.
+ */
+export function createLibraryFallbackProvider(api: ApiAdapter): QueueFillProvider {
+  const fromAlbum = async (albumNativeId: string, excludeIds: Set<LocalId>): Promise<Song[]> => {
+    const { songs } = await api.albums.get(albumNativeId);
+    return songs.filter(s => !excludeIds.has(s.localId));
+  };
+
+  return {
+    id: 'library-fallback',
+    isAvailable: () => true,
+    fetchExtension: async ({ recentSongs, excludeIds, count }) => {
+      const seedId = recentSongs[recentSongs.length - 1]?.nativeId;
+      if (!seedId) return [];
+      const seed = await api.songs.get(seedId);
+      if (!seed) return [];
+
+      const albumRest = await fromAlbum(seed.album.nativeId, excludeIds).catch(() => []);
+      if (albumRest.length > 0) return albumRest.slice(0, count);
+
+      const artist = await api.artists.get(seed.artist.nativeId).catch(() => null);
+      const siblingAlbumIds = (artist?.albumIds ?? [])
+        .map(id => parseLocalId(id)?.nativeId)
+        .filter((id): id is string => id !== undefined && id !== seed.album.nativeId);
+      if (siblingAlbumIds.length === 0) return [];
+
+      const picked = siblingAlbumIds[Math.floor(Math.random() * siblingAlbumIds.length)];
+      const siblingSongs = await fromAlbum(picked, excludeIds).catch(() => []);
+      return siblingSongs.slice(0, count);
+    },
+  };
 }

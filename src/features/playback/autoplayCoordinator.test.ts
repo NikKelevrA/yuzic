@@ -67,6 +67,8 @@ function harness(over: Partial<{
   noProvider: boolean;
   listener: AutoplayDeps['listener'];
   fails: boolean;
+  /** Override the provider chain entirely, for tests about trying more than one. */
+  providers: QueueFillProvider[];
 }> = {}) {
   let queue = over.queue ?? [resource('1'), resource('2'), resource('3')];
   let segments = over.segments ?? [];
@@ -98,7 +100,7 @@ function harness(over: Partial<{
 
   const deps: AutoplayDeps = {
     backend: () => backend,
-    providers: () => (over.noProvider ? [] : [provider]),
+    providers: () => (over.providers ?? (over.noProvider ? [] : [provider])),
     queue: () => queue,
     setQueue: next => { queue = next; },
     segments: () => segments,
@@ -230,12 +232,15 @@ describe('topping the queue up', () => {
 
   it('warns rather than throwing when the provider fails', async () => {
     // Autoplay failing is the music stopping at the end of the queue, which
-    // is what happens without the feature at all.
+    // is what happens without the feature at all. The warning now names which
+    // provider failed — see the "trying more than one provider" tests below —
+    // rather than a single generic message, since a failure is now caught and
+    // logged at the point it happens so the chain can move on to the next tier.
     const h = harness({ fails: true });
 
     await expect(h.coordinator.fillQueueIfLow()).resolves.toBeUndefined();
 
-    expect(h.warnings).toEqual(['Autoplay fill failed']);
+    expect(h.warnings).toEqual(['Queue fill provider "similarity-service" failed']);
   });
 
   it('releases the guard after a failure, so autoplay is not dead for the session', async () => {
@@ -245,6 +250,86 @@ describe('topping the queue up', () => {
     await h.coordinator.fillQueueIfLow();
 
     expect(h.providerCalls).toHaveLength(2);
+  });
+});
+
+/**
+ * A provider being configured is not the same as it having an opinion on
+ * this seed — AudioMuse can be connected and still have nothing for an
+ * obscure track it never analyzed. These cover what happens once there is
+ * more than one tier to ask.
+ */
+describe('trying more than one provider', () => {
+  function stubProvider(id: QueueFillProvider['id'], behavior: { returns?: Song[]; throws?: boolean }) {
+    const calls: ProviderCall[] = [];
+    const provider: QueueFillProvider = {
+      id,
+      isAvailable: () => true,
+      fetchExtension: async ({ recentSongs, excludeIds, count }) => {
+        calls.push({ recentSongs: [...recentSongs], excludeIds: [...excludeIds], count });
+        if (behavior.throws) throw new Error(`${id} is down`);
+        return behavior.returns ?? [];
+      },
+    };
+    return { provider, calls };
+  }
+
+  it('asks the next provider when the first one has nothing for this seed', async () => {
+    const empty = stubProvider('similarity-service', { returns: [] });
+    const fallback = stubProvider('native-similarity', { returns: [song('90')] });
+    const h = harness({ providers: [empty.provider, fallback.provider] });
+
+    await h.coordinator.fillQueueIfLow();
+
+    expect(empty.calls).toHaveLength(1);
+    expect(fallback.calls).toHaveLength(1);
+    expect(ids(h.queue)).toEqual(['1', '2', '3', '90']);
+  });
+
+  it('never asks a later provider once an earlier one answers', async () => {
+    const first = stubProvider('similarity-service', { returns: [song('90')] });
+    const second = stubProvider('native-similarity', { returns: [song('91')] });
+    const h = harness({ providers: [first.provider, second.provider] });
+
+    await h.coordinator.fillQueueIfLow();
+
+    expect(first.calls).toHaveLength(1);
+    expect(second.calls).toHaveLength(0);
+  });
+
+  it('treats a throwing provider as empty and moves on, logging which one failed', async () => {
+    const broken = stubProvider('similarity-service', { throws: true });
+    const fallback = stubProvider('native-similarity', { returns: [song('90')] });
+    const h = harness({ providers: [broken.provider, fallback.provider] });
+
+    await h.coordinator.fillQueueIfLow();
+
+    expect(h.warnings).toEqual(['Queue fill provider "similarity-service" failed']);
+    expect(ids(h.queue)).toEqual(['1', '2', '3', '90']);
+  });
+
+  it('comes back empty, without warning, when every configured provider has nothing — not the same as none being configured', async () => {
+    const first = stubProvider('similarity-service', { returns: [] });
+    const second = stubProvider('native-similarity', { returns: [] });
+    const h = harness({ providers: [first.provider, second.provider] });
+
+    await h.coordinator.fillQueueIfLow();
+
+    expect(first.calls).toHaveLength(1);
+    expect(second.calls).toHaveLength(1);
+    expect(h.warnings).toEqual([]);
+    expect(ids(h.queue)).toEqual(['1', '2', '3']);
+  });
+
+  it('applies the same fallthrough to relatedTo, what "Play Similar" uses', async () => {
+    const empty = stubProvider('similarity-service', { returns: [] });
+    const fallback = stubProvider('library-fallback', { returns: [song('90')] });
+    const h = harness({ providers: [empty.provider, fallback.provider] });
+
+    const result = await h.coordinator.relatedTo(song('7'), 20);
+
+    expect(fallback.calls).toHaveLength(1);
+    expect(result?.map(r => r.song.nativeId)).toEqual(['90']);
   });
 });
 
