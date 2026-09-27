@@ -195,6 +195,10 @@
         "blur": "模糊",
         "dim": "遮罩",
         "pickFailed": "无法使用这张照片。",
+        "zoom": "缩放",
+        "resetCrop": "重新居中照片",
+        "dragHint": "拖动照片以选择显示范围。",
+        "zoomHint": "放大后可选择显示范围。",
         "scope": "显示范围",
         "scopeTabs": "主页、搜索和资料库",
         "scopeEverywhere": "所有页面"

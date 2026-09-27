@@ -10,7 +10,9 @@ import { iconSize, spacing, typography } from '@/constants/design';
 import { notify } from '@/components/toast';
 import { editTheme, selectActiveTheme } from '@/features/settings/appearance/state';
 import { pickBackgroundImage, removeBackgroundImage } from '@/features/theme/backgroundImage';
-import type { ScreenBackgroundSource } from '@/features/theme/theme';
+import { DEFAULT_BACKGROUND_CROP, type ScreenBackgroundCrop, type ScreenBackgroundSource } from '@/features/theme/theme';
+import { MAX_ZOOM, cropOrDefault, isDefaultCrop, withZoom } from '@/features/theme/backgroundCrop';
+import { BackgroundCropEditor } from './BackgroundCropEditor';
 import { useTheme } from '@/features/theme/useTheme';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsDivider from '../../components/SettingsDivider';
@@ -56,10 +58,19 @@ export const BackgroundSelector: React.FC = () => {
   const choosePhoto = async () => {
     try {
       const uri = await pickBackgroundImage();
+      // Deliberately no crop: a new photo has nothing in common with the last
+      // one's framing, and inheriting it would open on a corner of the picture
+      // the person has not seen yet.
       if (uri) setBackground({ kind: 'image', uri });
     } catch {
       notify.error(t('settings.appearance.background.pickFailed'));
     }
+  };
+
+  /** Re-frames the photo in place, leaving everything else about it alone. */
+  const setCrop = (crop: ScreenBackgroundCrop) => {
+    if (background.kind !== 'image') return;
+    dispatch(editTheme({ surface: { background: { ...background, crop } } }));
   };
 
   const onSelect = (id: string) => {
@@ -84,11 +95,39 @@ export const BackgroundSelector: React.FC = () => {
         onSelect={onSelect}
         showLabels
       />
+      {background.kind === 'image' && (
+        <BackgroundCropEditor
+          uri={background.uri}
+          blur={surface.backgroundBlur}
+          dim={surface.backgroundDim}
+          crop={background.crop}
+          onChange={setCrop}
+        />
+      )}
       {background.kind !== 'none' && (
         <SettingsCard>
           {background.kind === 'image' && (
             <>
               <SettingsRow label={t('settings.appearance.background.changePhoto')} onPress={() => void choosePhoto()} />
+              <SettingsDivider />
+              <SliderRow
+                label={t('settings.appearance.background.zoom')}
+                value={cropOrDefault(background.crop).zoom}
+                minimum={1}
+                maximum={MAX_ZOOM}
+                step={0.05}
+                color={colors.themeColor}
+                onDone={zoom => setCrop(withZoom(cropOrDefault(background.crop), zoom))}
+              />
+              {!isDefaultCrop(background.crop) && (
+                <>
+                  <SettingsDivider />
+                  <SettingsRow
+                    label={t('settings.appearance.background.resetCrop')}
+                    onPress={() => setCrop(DEFAULT_BACKGROUND_CROP)}
+                  />
+                </>
+              )}
               <SettingsDivider />
             </>
           )}
@@ -135,6 +174,8 @@ export const BackgroundSelector: React.FC = () => {
 type SliderRowProps = {
   label: string;
   value: number;
+  /** Defaults to 0. Zoom starts at 1, where the photo just fills the screen. */
+  minimum?: number;
   maximum: number;
   step: number;
   color: string;
@@ -142,14 +183,14 @@ type SliderRowProps = {
 };
 
 /** A labelled slider that writes on release, so a drag is one edit rather than sixty. */
-const SliderRow: React.FC<SliderRowProps> = ({ label, value, maximum, step, color, onDone }) => {
+const SliderRow: React.FC<SliderRowProps> = ({ label, value, minimum = 0, maximum, step, color, onDone }) => {
   const { colors } = useTheme();
   return (
     <View style={styles.sliderRow}>
       <Text style={[styles.label, { color: colors.secondary }]}>{label}</Text>
       <Slider
         accessibilityLabel={label}
-        minimumValue={0}
+        minimumValue={minimum}
         maximumValue={maximum}
         step={step}
         value={value}

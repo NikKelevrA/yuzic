@@ -21,6 +21,13 @@ jest.mock('@/features/playback/PlayingContext', () => ({ usePlayingState: () => 
 // The route decides how far the background reaches, so the tests drive it.
 let mockSegments: string[] = ['(home)', '(tabs)', '(home)'];
 jest.mock('expo-router', () => ({ useSegments: () => mockSegments }));
+// The crop editor reaches react-native-gesture-handler, which this preset does
+// not transform. Stubbed to a marker, so these tests can still say when the
+// preview is on screen without pulling the gesture stack in.
+jest.mock('./BackgroundCropEditor', () => {
+  const { View } = require('react-native');
+  return { BackgroundCropEditor: () => <View testID="crop-editor" /> };
+});
 jest.mock('@/providers/registry/covers', () => ({
   buildCover: (cover: { kind: string; url?: string }) => (cover.kind === 'url' ? cover.url : null),
 }));
@@ -52,6 +59,64 @@ describe('BackgroundSelector', () => {
 
     expect(background(store)).toEqual({ kind: 'image', uri: 'file:///docs/theme/background-1.jpg' });
     expect(screen.getByText('settings.appearance.background.changePhoto')).toBeTruthy();
+  });
+
+  it('previews and re-frames a photo, and offers neither for a cover', async () => {
+    // The preview is the only thing on this page that shows what any of its
+    // settings do, and a cover has no framing to choose: it changes with the
+    // track.
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///docs/theme/background-1.jpg' } } }));
+    const screen = await view;
+
+    expect(screen.getByTestId('crop-editor')).toBeTruthy();
+    expect(screen.getByText('settings.appearance.background.zoom')).toBeTruthy();
+
+    await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.cover')); });
+
+    expect(screen.queryByTestId('crop-editor')).toBeNull();
+    expect(screen.queryByText('settings.appearance.background.zoom')).toBeNull();
+  });
+
+  it('offers to recentre only once the photo has been moved', async () => {
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg' } } }));
+    const screen = await view;
+
+    expect(screen.queryByText('settings.appearance.background.resetCrop')).toBeNull();
+
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg', crop: { x: 0.2, y: 0.5, zoom: 1 } } } }));
+    });
+
+    expect(screen.getByText('settings.appearance.background.resetCrop')).toBeTruthy();
+  });
+
+  it('keeps the photo when only its framing changes', async () => {
+    // The old copy is deleted whenever the background stops pointing at it.
+    // Re-framing points at the same file, so deleting here would blank the
+    // background the moment it was adjusted.
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg' } } }));
+    await view;
+
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg', crop: { x: 0.2, y: 0.5, zoom: 1.5 } } } }));
+    });
+
+    expect(removeBackgroundImage).not.toHaveBeenCalled();
+    expect(background(store)).toEqual({ kind: 'image', uri: 'file:///a.jpg', crop: { x: 0.2, y: 0.5, zoom: 1.5 } });
+  });
+
+  it('gives a newly chosen photo its own framing rather than the last one\'s', async () => {
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg', crop: { x: 0, y: 1, zoom: 3 } } } }));
+    const screen = await view;
+    pick.mockResolvedValueOnce('file:///docs/theme/background-2.jpg');
+
+    await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.changePhoto')); });
+
+    expect(background(store)).toEqual({ kind: 'image', uri: 'file:///docs/theme/background-2.jpg' });
   });
 
   it('stays plain when the picker is cancelled', async () => {

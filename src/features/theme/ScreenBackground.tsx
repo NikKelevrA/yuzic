@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { StyleSheet } from 'react-native';
 import { useSegments } from 'expo-router';
 
 import { usePlayingState } from '@/features/playback/PlayingContext';
@@ -10,6 +9,7 @@ import { colorsFor } from './theme';
 import { useResolvedScheme } from './useResolvedScheme';
 import { BackgroundSurfaceContext, type BackgroundSurface } from './screenBackgroundContext';
 import { coversRoute } from './backgroundScope';
+import { BackgroundPhoto } from './BackgroundPhoto';
 
 function useCoveredByScope(): boolean {
   const scope = useActiveTheme().surface.backgroundScope;
@@ -46,6 +46,10 @@ export function ScreenBackgroundProvider({ children }: { children: React.ReactNo
     return null;
   }, [covered, background, currentSong]);
 
+  // Only a chosen photo has one. The cover changes with the track, and there
+  // is no part of "whatever is playing" to have picked.
+  const crop = background.kind === 'image' ? background.crop : undefined;
+
   const surface = useMemo<BackgroundSurface | null>(
     () => (uri ? { uri, blur: backgroundBlur, dim: backgroundDim } : null),
     [uri, backgroundBlur, backgroundDim],
@@ -59,18 +63,23 @@ export function ScreenBackgroundProvider({ children }: { children: React.ReactNo
   return (
     <BackgroundSurfaceContext.Provider value={surface}>
       {surface && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="screen-background">
-          <Image
-            source={{ uri: surface.uri }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            blurRadius={surface.blur}
-            transition={300}
-          />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: veil, opacity: surface.dim }]} />
-        </View>
+        <BackgroundPhoto
+          testID="screen-background"
+          style={[StyleSheet.absoluteFill, styles.behind]}
+          uri={surface.uri}
+          blur={surface.blur}
+          dim={surface.dim}
+          veilColor={veil}
+          crop={crop}
+        />
       )}
       {children}
     </BackgroundSurfaceContext.Provider>
   );
 }
+
+const styles = StyleSheet.create({
+  // It sits over nothing and under everything; taking touches would make the
+  // whole app unresponsive.
+  behind: { pointerEvents: 'none' },
+});

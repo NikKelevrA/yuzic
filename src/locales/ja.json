@@ -195,6 +195,10 @@
         "blur": "ぼかし",
         "dim": "暗さ",
         "pickFailed": "この写真は使用できませんでした。",
+        "zoom": "ズーム",
+        "resetCrop": "写真を中央に戻す",
+        "dragHint": "写真をドラッグして表示範囲を選びます。",
+        "zoomHint": "ズームすると表示範囲を選べます。",
         "scope": "表示する範囲",
         "scopeTabs": "ホーム・検索・ライブラリ",
         "scopeEverywhere": "すべての画面"

@@ -195,6 +195,10 @@
         "blur": "Flou",
         "dim": "Assombrissement",
         "pickFailed": "Impossible d'utiliser cette photo.",
+        "zoom": "Zoom",
+        "resetCrop": "Recentrer la photo",
+        "dragHint": "Faites glisser la photo pour choisir ce qui apparaît.",
+        "zoomHint": "Zoomez pour choisir ce qui apparaît.",
         "scope": "Où il apparaît",
         "scopeTabs": "Accueil, Recherche et Bibliothèque",
         "scopeEverywhere": "Tous les écrans"

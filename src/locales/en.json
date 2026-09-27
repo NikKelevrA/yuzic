@@ -195,6 +195,10 @@
         "blur": "Blur",
         "dim": "Dim",
         "pickFailed": "Couldn't use that photo.",
+        "zoom": "Zoom",
+        "resetCrop": "Recentre photo",
+        "dragHint": "Drag the photo to choose what shows.",
+        "zoomHint": "Zoom in to choose what shows.",
         "scope": "Where it shows",
         "scopeTabs": "Home, Search and Library",
         "scopeEverywhere": "Every screen"

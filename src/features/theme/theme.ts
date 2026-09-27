@@ -17,10 +17,42 @@ type Scheme = 'light' | 'dark';
 /** A scheme's colours. The accent is the theme's, not the palette's. */
 export type ThemePalette = Omit<SemanticThemeColors, 'themeColor'>;
 
+/**
+ * Which part of a photo the screen shows.
+ *
+ * Stored as a fraction of the *overflow* — how much bigger the photo is than
+ * the screen once it has been scaled to fill — rather than as a rectangle in
+ * the photo's own pixels. That is what `contentPosition` takes, and it is the
+ * only form that survives a rotation, a different phone or an iPad: a pixel
+ * rectangle is right for exactly one screen size and silently wrong on every
+ * other. `0.5`/`0.5` is the centred crop the app has always drawn.
+ *
+ * `zoom` is a multiple of the fill, so `1` is "just covers" and there is
+ * nothing to pan on the axis that already fits. Zooming in is what gives a
+ * photo of the wrong shape something to pan along.
+ */
+export type ScreenBackgroundCrop = {
+  /** 0 is the left edge of the photo, 1 the right. */
+  x: number;
+  /** 0 is the top edge of the photo, 1 the bottom. */
+  y: number;
+  /** 1 fills the screen; above that crops in further. */
+  zoom: number;
+};
+
+export const DEFAULT_BACKGROUND_CROP: ScreenBackgroundCrop = { x: 0.5, y: 0.5, zoom: 1 };
+
 export type ScreenBackgroundSource =
   | { kind: 'none' }
-  /** A photo the user picked, copied into the app's own storage. */
-  | { kind: 'image'; uri: string }
+  /**
+   * A photo the user picked, copied into the app's own storage.
+   *
+   * `crop` is optional because every photo chosen before this existed has
+   * none, and the centred fill it falls back to is what those were already
+   * showing. Only a photo carries one: the cover below changes with the track,
+   * and there is no part of "whatever is playing" to choose.
+   */
+  | { kind: 'image'; uri: string; crop?: ScreenBackgroundCrop }
   /** The cover of whatever is playing, so the screen changes with the music. */
   | { kind: 'cover' };
 
