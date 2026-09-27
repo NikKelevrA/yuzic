@@ -7,9 +7,9 @@ type Result =
 /**
  * An album, for a downloader that takes tracks and nothing else.
  *
- * SoulSync's only way in is a free-text request for one track, so it was left
- * off every album's Get sheet — while slskd and Lidarr sat there — even though
- * an album is only its tracks. It gets the album as those tracks now, asked for
+ * YT Fallback's only way in is a free-text request for one track, so it was
+ * left off every album's Get sheet — while Lidarr sat there — even though an
+ * album is only its tracks. It gets the album as those tracks now, asked for
  * one at a time in running order, so its pipeline is not flooded with a whole
  * album's searches at once.
  *

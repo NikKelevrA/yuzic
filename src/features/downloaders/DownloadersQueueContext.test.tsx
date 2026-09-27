@@ -43,7 +43,7 @@ function item(id: string): DownloaderQueueItem {
 }
 
 function state(
-  id: 'lidarr' | 'slskd',
+  id: 'lidarr' | 'ytfallback',
   label: string,
   fetchQueue: () => Promise<DownloaderQueueItem[]>
 ): DownloaderState {
@@ -65,7 +65,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
  * `updateQueue` used to rebuild the array as "everyone else, then the one I
  * just refreshed", so each poll moved whichever downloader replied last to the
  * end. With two connected, the Home banner flipped between
- * "11 on Lidarr · 0 on slskd" and "0 on slskd · 11 on Lidarr" every thirty
+ * "11 on Lidarr · 0 on YT Fallback" and "0 on YT Fallback · 11 on Lidarr" every thirty
  * seconds — a flicker in which not one count ever changed.
  */
 describe('DownloadersQueueProvider ordering', () => {
@@ -77,27 +77,27 @@ describe('DownloadersQueueProvider ordering', () => {
     const lidarrGate = deferred<DownloaderQueueItem[]>();
     mockStates = [
       state('lidarr', 'Lidarr', () => lidarrGate.promise),
-      state('slskd', 'slskd', async () => []),
+      state('ytfallback', 'YT Fallback', async () => []),
     ];
 
     const { result } = await renderHook(() => useDownloadersQueue(), { wrapper });
 
-    // slskd answers immediately; Lidarr is still in flight.
+    // YT Fallback answers immediately; Lidarr is still in flight.
     await waitFor(() => expect(result.current.queues).toHaveLength(1));
-    expect(result.current.queues[0].id).toBe('slskd');
+    expect(result.current.queues[0].id).toBe('ytfallback');
 
     await act(async () => { lidarrGate.resolve([item('a'), item('b')]); });
     await waitFor(() => expect(result.current.queues).toHaveLength(2));
 
     // Arriving last does not put Lidarr last.
-    expect(result.current.queues.map((q) => q.id)).toEqual(['lidarr', 'slskd']);
+    expect(result.current.queues.map((q) => q.id)).toEqual(['lidarr', 'ytfallback']);
     expect(result.current.totalInFlight).toBe(2);
   });
 
   it('keeps that order when the next read answers the other way round', async () => {
     mockStates = [
       state('lidarr', 'Lidarr', async () => [item('a')]),
-      state('slskd', 'slskd', async () => []),
+      state('ytfallback', 'YT Fallback', async () => []),
     ];
 
     const { result } = await renderHook(() => useDownloadersQueue(), { wrapper });
@@ -110,6 +110,6 @@ describe('DownloadersQueueProvider ordering', () => {
     await waitFor(() => expect(result.current.queues).toHaveLength(2));
 
     expect(result.current.queues.map((q) => q.id)).toEqual(first);
-    expect(first).toEqual(['lidarr', 'slskd']);
+    expect(first).toEqual(['lidarr', 'ytfallback']);
   });
 });

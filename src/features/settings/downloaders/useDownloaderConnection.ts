@@ -34,20 +34,14 @@ function failureMessage(label: string, error: unknown): string {
 export type DownloaderConfig = { serverUrl: string; apiKey: string };
 
 /**
- * Credential state and connection testing for one downloader. Lidarr and slskd
- * differ only in which `testConnection` they call, so the auth effect, the
- * manual ping and the disconnect all live here rather than once per screen.
- *
- * `keyless` is for a downloader with no credential to hold — Downtify's API
- * has no authentication at all. Everything below used to gate on a URL *and* a
- * key, which for such a downloader is a gate that can never open: it would sit
- * on "not connected" forever with no field left to fill. So what is required
- * is asked once, as `hasCredentials`, rather than spelled out at each gate.
+ * Credential state and connection testing for one downloader. Lidarr and YT
+ * Fallback differ only in which `testConnection` they call, so the auth
+ * effect, the manual ping and the disconnect all live here rather than once
+ * per screen.
  */
 export function useDownloaderConnection(
   id: DownloaderId,
-  testConnection: (config: DownloaderConfig) => Promise<unknown>,
-  { keyless = false }: { keyless?: boolean } = {}
+  testConnection: (config: DownloaderConfig) => Promise<unknown>
 ) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -66,7 +60,7 @@ export function useDownloaderConnection(
   const config = useMemo<DownloaderConfig>(() => ({ serverUrl, apiKey }), [serverUrl, apiKey]);
 
   /** Everything this downloader needs before it is worth asking the network. */
-  const hasCredentials = keyless ? Boolean(serverUrl) : Boolean(serverUrl && apiKey);
+  const hasCredentials = Boolean(serverUrl && apiKey);
 
   const [isLoading, setIsLoading] = useState(false);
 

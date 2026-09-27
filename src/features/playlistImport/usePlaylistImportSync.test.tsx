@@ -84,7 +84,7 @@ describe('usePlaylistImportSync', () => {
 
   it('never polls when playlist import is not configured', async () => {
     const store = makeStore({ configured: false });
-    mockTrackDownloaders = [{ def: { id: 'slskd', downloadTrack: jest.fn() }, config: {} }];
+    mockTrackDownloaders = [{ def: { id: 'ytfallback', downloadTrack: jest.fn() }, config: {} }];
 
     await act(async () => {
       renderHook(() => usePlaylistImportSync(), { wrapper: wrapper(store) });
@@ -107,7 +107,7 @@ describe('usePlaylistImportSync', () => {
   it('sends a pending track to the first connected downloader, immediately on mount', async () => {
     const store = makeStore({ configured: true });
     const downloadTrack = jest.fn().mockResolvedValue({ success: true });
-    mockTrackDownloaders = [{ def: { id: 'slskd', downloadTrack }, config: { serverUrl: 'http://slskd', apiKey: 'k' } }];
+    mockTrackDownloaders = [{ def: { id: 'ytfallback', downloadTrack }, config: { serverUrl: 'http://ytfallback', apiKey: 'k' } }];
     mockFetchPlaylistStatus.mockResolvedValue([
       { playlistId: 'playlist-1', navidromePlaylistId: null, name: 'Road Trip', pending: [pendingTrack()] },
     ]);
@@ -117,14 +117,14 @@ describe('usePlaylistImportSync', () => {
     });
 
     expect(mockFetchPlaylistStatus).toHaveBeenCalledWith({ serverUrl: 'http://192.168.1.43:5001' }, 'christina');
-    expect(downloadTrack).toHaveBeenCalledWith({ serverUrl: 'http://slskd', apiKey: 'k' }, { title: 'Song A', artist: 'Artist A' });
+    expect(downloadTrack).toHaveBeenCalledWith({ serverUrl: 'http://ytfallback', apiKey: 'k' }, { title: 'Song A', artist: 'Artist A' });
     expect(__getToasts().some(toast => toast.message.includes('autoAcquireStarted'))).toBe(true);
   });
 
   it('never sends a track past its retry window', async () => {
     const store = makeStore({ configured: true });
     const downloadTrack = jest.fn().mockResolvedValue({ success: true });
-    mockTrackDownloaders = [{ def: { id: 'slskd', downloadTrack }, config: {} }];
+    mockTrackDownloaders = [{ def: { id: 'ytfallback', downloadTrack }, config: {} }];
     mockFetchPlaylistStatus.mockResolvedValue([
       { playlistId: 'playlist-1', navidromePlaylistId: null, name: null, pending: [pendingTrack({ retryExpired: true })] },
     ]);
@@ -139,7 +139,7 @@ describe('usePlaylistImportSync', () => {
   it('does not re-send a still-pending track within its cooldown window on the next poll', async () => {
     const store = makeStore({ configured: true });
     const downloadTrack = jest.fn().mockResolvedValue({ success: true });
-    mockTrackDownloaders = [{ def: { id: 'slskd', downloadTrack }, config: {} }];
+    mockTrackDownloaders = [{ def: { id: 'ytfallback', downloadTrack }, config: {} }];
     mockFetchPlaylistStatus.mockResolvedValue([
       { playlistId: 'playlist-1', navidromePlaylistId: null, name: null, pending: [pendingTrack()] },
     ]);
@@ -162,7 +162,7 @@ describe('usePlaylistImportSync', () => {
   it('records the attempt in the store, keyed by playlist and track', async () => {
     const store = makeStore({ configured: true });
     const downloadTrack = jest.fn().mockResolvedValue({ success: true });
-    mockTrackDownloaders = [{ def: { id: 'slskd', downloadTrack }, config: {} }];
+    mockTrackDownloaders = [{ def: { id: 'ytfallback', downloadTrack }, config: {} }];
     mockFetchPlaylistStatus.mockResolvedValue([
       { playlistId: 'playlist-1', navidromePlaylistId: null, name: null, pending: [pendingTrack({ spotifyId: 'track-9' })] },
     ]);
@@ -177,7 +177,7 @@ describe('usePlaylistImportSync', () => {
   it('does not throw when the proxy is unreachable, and tries again next poll', async () => {
     const store = makeStore({ configured: true });
     const downloadTrack = jest.fn().mockResolvedValue({ success: true });
-    mockTrackDownloaders = [{ def: { id: 'slskd', downloadTrack }, config: {} }];
+    mockTrackDownloaders = [{ def: { id: 'ytfallback', downloadTrack }, config: {} }];
     mockFetchPlaylistStatus.mockRejectedValueOnce(new Error('offline')).mockResolvedValue([
       { playlistId: 'playlist-1', navidromePlaylistId: null, name: null, pending: [pendingTrack()] },
     ]);

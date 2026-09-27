@@ -395,9 +395,7 @@
       "cancelFailed": "无法取消该下载。",
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
-        "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008",
-        "downtify": "http://downtify:8000"
+        "ytfallback": "http://ytfallback:5020"
       },
       "lidarr": {
         "title": "Lidarr",
@@ -408,36 +406,13 @@
         "qualityProfileTitle": "质量配置",
         "defaultQualityProfile": "默认质量配置"
       },
-      "slskd": {
-        "title": "slskd",
-        "connectionFailed": "连接 slskd 失败",
-        "disconnected": "已断开与 slskd 的连接。",
-        "credentialsTitle": "连接",
-        "credentialsHelper": "slskd URL 和 API 密钥（Options → API Keys）。",
-        "searchPreferencesTitle": "搜索偏好",
-        "preferredFormat": "首选格式",
-        "formatAuto": "任意（优先 FLAC）",
-        "formatFlacOnly": "仅 FLAC",
-        "minBitrate": "最低 MP3 比特率",
-        "minBitrateAny": "任意",
-        "minBitrateValue": "{{kbps}} kbps",
-        "preferFreeSlot": "优先空闲上传槽",
-        "preferFreeSlotSubtext": "优先空闲槽位，关闭可获取稀有资源。"
-      },
       "queueTitle": "下载队列",
-      "soulsync": {
-        "title": "SoulSync",
+      "ytfallback": {
+        "title": "YT Fallback",
         "credentialsTitle": "连接",
-        "credentialsHelper": "SoulSync URL 和 API 密钥（Settings → API Keys）。",
-        "connectionFailed": "SoulSync 连接失败",
-        "disconnected": "已断开与 SoulSync 的连接。"
-      },
-      "downtify": {
-        "title": "Downtify",
-        "credentialsTitle": "连接",
-        "credentialsHelper": "Downtify 的地址。Downtify 没有 API 密钥，任何能访问它的人都可以在上面添加下载。",
-        "connectionFailed": "连接 Downtify 失败",
-        "disconnected": "已断开与 Downtify 的连接。"
+        "credentialsHelper": "YT Fallback 的网址和 API 密钥。",
+        "connectionFailed": "连接 YT Fallback 失败",
+        "disconnected": "已断开与 YT Fallback 的连接。"
       }
     },
     "audiomuse": {
@@ -1203,13 +1178,10 @@
     "download": {
       "noDownloader": "未连接可用的下载工具。",
       "addedToLidarr": "专辑已添加至 Lidarr！",
-      "addedToSlskd": "专辑已添加至 slskd 队列！",
-      "addedTrackToSlskd": "歌曲已添加至 slskd 队列！",
       "failed": "下载失败。",
       "startFailed": "启动下载失败。",
       "chooseService": "选择服务",
       "lidarrDesc": "音乐收藏管理器",
-      "slskdDesc": "从 Soulseek 网络下载",
       "errors": {
         "lidarr": {
           "album_identity_ambiguous": "Lidarr 找到多个同名版本。",
@@ -1221,38 +1193,21 @@
           "missing_album_identity": "缺少专辑或艺人信息。",
           "request_timeout": "Lidarr 响应超时。"
         },
-        "slskd": {
-          "enqueue_failed": "无法加入 slskd 队列。",
-          "missing_identity": "缺少专辑或艺人信息。",
-          "no_matching_release": "Soulseek 上没有人分享该版本。",
-          "no_matching_track": "Soulseek 上没有人分享该歌曲。",
-          "request_failed": "无法连接 slskd。请检查服务器后重试。",
-          "search_failed": "slskd 无法开始搜索。",
-          "search_timeout": "Soulseek 搜索超时。"
-        },
-        "soulsync": {
-          "AUTH_REQUIRED": "SoulSync 需要 API 密钥。",
-          "INVALID_KEY": "SoulSync 拒绝了此 API 密钥。",
-          "BAD_REQUEST": "SoulSync 无法解析该请求。",
-          "BAD_RESPONSE": "该地址的响应不像 SoulSync，请检查网址。",
-          "HTTP_ERROR": "无法连接 SoulSync，请检查服务器后重试。",
-          "NOT_AVAILABLE": "SoulSync 尚未配置 Soulseek 连接。",
+        "ytfallback": {
           "no_tracks": "无法获取这张专辑要请求的歌曲。",
-          "some_tracks_failed": "这张专辑的部分歌曲未能向 SoulSync 请求。"
+          "some_tracks_failed": "这张专辑的部分歌曲未能向 YT Fallback 请求。"
         }
       },
-      "soulsyncDesc": "通过 SoulSync 搜索 Soulseek",
-      "addedToSoulsync": "已向 SoulSync 发起请求。",
-      "addedTrackToSoulsync": "已向 SoulSync 发起请求。",
       "monitoringOnLidarr": "Lidarr 正在关注 {{artist}}。",
       "sending": "正在将《{{title}}》发送至 {{downloader}}…",
       "progress": "已请求 {{total}} 首中的 {{done}} 首…",
-      "downtifyDesc": "通过 Downtify 搜索 YouTube Music",
-      "addedToDowntify": "已向 Downtify 发出请求。",
-      "addedTrackToDowntify": "已向 Downtify 发出请求。",
+      "ytfallbackDesc": "通过 YT Fallback 先搜索 Soulseek，再搜索 YouTube",
+      "addedToYtfallback": "已向 YT Fallback 请求。",
+      "addedTrackToYtfallback": "已向 YT Fallback 请求。",
       "acquireDownloading": "正在下载“{{title}}”…准备好后将自动播放。",
       "acquireStillWorking": "“{{title}}”仍在下载中 — 请稍后再试。",
       "acquirePlayFailed": "“{{title}}”已下载，但无法开始播放。",
+      "acquireNotFound": "在 Soulseek 或 YouTube 上都找不到“{{title}}”。",
       "noDownloaderConnected": "MusicBrainz is set up, but no downloader is connected — nothing to fetch this with right now."
     },
     "header": {

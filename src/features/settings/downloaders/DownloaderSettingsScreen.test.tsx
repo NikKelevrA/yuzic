@@ -4,8 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import LidarrView from './Lidarr';
-import SlskdView from './Slskd';
-import SoulSyncView from './SoulSync';
+import YtFallbackView from './YtFallback';
 import serversReducer, { addServer, setActiveServer } from '@/state/redux/slices/serversSlice';
 import downloadersReducer, {
   connectDownloader,
@@ -31,9 +30,9 @@ jest.mock('@/components/toast', () => ({
   notify: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
 }));
 
-jest.mock('@/providers/integration/slskd', () => ({
-  ...jest.requireActual('@/providers/integration/slskd'),
-  testConnection: (...args: unknown[]) => mockSlskdTest(...args),
+jest.mock('@/providers/integration/ytfallback', () => ({
+  ...jest.requireActual('@/providers/integration/ytfallback'),
+  testConnection: (...args: unknown[]) => mockYtfallbackTest(...args),
 }));
 
 jest.mock('@/providers/integration/lidarr', () => ({
@@ -42,14 +41,8 @@ jest.mock('@/providers/integration/lidarr', () => ({
   getQualityProfiles: (...args: unknown[]) => mockGetQualityProfiles(...args),
 }));
 
-jest.mock('@/providers/integration/soulsync', () => ({
-  ...jest.requireActual('@/providers/integration/soulsync'),
-  testConnection: (...args: unknown[]) => mockSoulsyncTest(...args),
-}));
-
-const mockSlskdTest = jest.fn();
+const mockYtfallbackTest = jest.fn();
 const mockLidarrTest = jest.fn();
-const mockSoulsyncTest = jest.fn();
 const mockGetQualityProfiles = jest.fn();
 
 import { notify } from '@/components/toast';
@@ -108,9 +101,8 @@ describe('Downloader settings', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     _clearCredentialCache();
-    mockSlskdTest.mockReset().mockResolvedValue({ success: true });
+    mockYtfallbackTest.mockReset().mockResolvedValue(true);
     mockLidarrTest.mockReset().mockResolvedValue({ success: true });
-    mockSoulsyncTest.mockReset().mockResolvedValue({ success: true });
     mockGetQualityProfiles.mockReset().mockResolvedValue([
       { id: 1, name: 'Any' },
       { id: 4, name: 'Lossless' },
@@ -123,24 +115,24 @@ describe('Downloader settings', () => {
   });
 
   it('renders nothing without an active server', async () => {
-    const view = await renderScreen(makeStore({ withServer: false }), <SlskdView />);
+    const view = await renderScreen(makeStore({ withServer: false }), <YtFallbackView />);
 
-    expect(view.queryByText('settings.downloaders.slskd.title')).toBeNull();
+    expect(view.queryByText('settings.downloaders.ytfallback.title')).toBeNull();
   });
 
   it('tests the connection once a URL and key are entered, and keeps the key out of Redux', async () => {
     const store = makeStore();
-    const view = await renderScreen(store, <SlskdView />);
+    const view = await renderScreen(store, <YtFallbackView />);
 
-    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.serverUrlPlaceholder.slskd'), 'http://slskd');
+    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.serverUrlPlaceholder.ytfallback'), 'http://ytfallback');
     await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.apiKeyPlaceholder'), 'typed-key');
-    expect(mockSlskdTest).not.toHaveBeenCalled();
+    expect(mockYtfallbackTest).not.toHaveBeenCalled();
 
     await afterConnectionPause();
 
-    expect(mockSlskdTest).toHaveBeenCalledWith({ serverUrl: 'http://slskd', apiKey: 'typed-key' });
-    expect(entry(store, 'slskd')).toMatchObject({ serverUrl: 'http://slskd', isAuthenticated: true });
-    expect(getCredentials(downloaderCredentialScope('slskd', SERVER_ID)).apiKey).toBe('typed-key');
+    expect(mockYtfallbackTest).toHaveBeenCalledWith({ serverUrl: 'http://ytfallback', apiKey: 'typed-key' });
+    expect(entry(store, 'ytfallback')).toMatchObject({ serverUrl: 'http://ytfallback', isAuthenticated: true });
+    expect(getCredentials(downloaderCredentialScope('ytfallback', SERVER_ID)).apiKey).toBe('typed-key');
     expect(JSON.stringify(store.getState())).not.toContain('typed-key');
   });
 
@@ -151,58 +143,42 @@ describe('Downloader settings', () => {
   // against a form that looked correct.
   it('trims whitespace pasted into the URL and key before testing or storing them', async () => {
     const store = makeStore();
-    const view = await renderScreen(store, <SlskdView />);
+    const view = await renderScreen(store, <YtFallbackView />);
 
-    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.serverUrlPlaceholder.slskd'), ' http://slskd\n');
+    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.serverUrlPlaceholder.ytfallback'), ' http://ytfallback\n');
     await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.apiKeyPlaceholder'), 'typed-key\n');
     await afterConnectionPause();
 
-    expect(mockSlskdTest).toHaveBeenCalledWith({ serverUrl: 'http://slskd', apiKey: 'typed-key' });
-    expect(entry(store, 'slskd')?.serverUrl).toBe('http://slskd');
-    expect(getCredentials(downloaderCredentialScope('slskd', SERVER_ID)).apiKey).toBe('typed-key');
+    expect(mockYtfallbackTest).toHaveBeenCalledWith({ serverUrl: 'http://ytfallback', apiKey: 'typed-key' });
+    expect(entry(store, 'ytfallback')?.serverUrl).toBe('http://ytfallback');
+    expect(getCredentials(downloaderCredentialScope('ytfallback', SERVER_ID)).apiKey).toBe('typed-key');
   });
 
   it('stays disconnected and says so when the connection test fails', async () => {
-    mockSlskdTest.mockRejectedValue(new Error('refused'));
+    mockYtfallbackTest.mockRejectedValue(new Error('refused'));
     const store = makeStore();
-    const view = await renderScreen(store, <SlskdView />);
+    const view = await renderScreen(store, <YtFallbackView />);
 
-    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.serverUrlPlaceholder.slskd'), 'http://slskd');
+    await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.serverUrlPlaceholder.ytfallback'), 'http://ytfallback');
     await fireEvent.changeText(view.getByPlaceholderText('settings.downloaders.apiKeyPlaceholder'), 'wrong-key');
     await afterConnectionPause();
 
-    expect(entry(store, 'slskd')?.isAuthenticated).toBe(false);
+    expect(entry(store, 'ytfallback')?.isAuthenticated).toBe(false);
     // The reason is now carried alongside the label — a 401, a 400 from the
     // wrong scheme and an unparseable address used to be indistinguishable.
-    expect(notify.error).toHaveBeenCalledWith('settings.downloaders.slskd.connectionFailed: refused');
+    expect(notify.error).toHaveBeenCalledWith('settings.downloaders.ytfallback.connectionFailed: refused');
   });
 
-  it('offers slskd search preferences only once connected, and writes the chosen format', async () => {
-    const disconnectedView = await renderScreen(makeStore(), <SlskdView />);
-    expect(disconnectedView.queryByText('settings.downloaders.slskd.searchPreferencesTitle')).toBeNull();
-    await disconnectedView.unmount();
-
+  it('disconnecting clears the connection and the stored key', async () => {
     const store = makeStore();
-    await connected(store, 'slskd');
-    const view = await renderScreen(store, <SlskdView />);
-
-    await fireEvent.press(view.getByText('settings.downloaders.slskd.formatFlacOnly'));
-
-    expect(entry(store, 'slskd')?.preferences).toMatchObject({ preferredFormat: 'flac' });
-  });
-
-  it('disconnecting clears the connection and the stored key but keeps search preferences', async () => {
-    const store = makeStore();
-    await connected(store, 'slskd');
-    const view = await renderScreen(store, <SlskdView />);
-    await fireEvent.press(view.getByText('settings.downloaders.slskd.formatFlacOnly'));
+    await connected(store, 'ytfallback');
+    const view = await renderScreen(store, <YtFallbackView />);
 
     await fireEvent.press(view.getByText('settings.downloaders.disconnect'));
     await act(async () => {});
 
-    expect(entry(store, 'slskd')).toMatchObject({ serverUrl: '', isAuthenticated: false });
-    expect(entry(store, 'slskd')?.preferences).toMatchObject({ preferredFormat: 'flac' });
-    expect(getCredentials(downloaderCredentialScope('slskd', SERVER_ID)).apiKey).toBeUndefined();
+    expect(entry(store, 'ytfallback')).toMatchObject({ serverUrl: '', isAuthenticated: false });
+    expect(getCredentials(downloaderCredentialScope('ytfallback', SERVER_ID)).apiKey).toBeUndefined();
     expect(view.queryByText('settings.downloaders.disconnect')).toBeNull();
   });
 
@@ -218,14 +194,13 @@ describe('Downloader settings', () => {
     expect(store.getState().downloaders.defaultsByServer[SERVER_ID]?.lidarrDefaultQualityProfileId).toBe(4);
   });
 
-  it('gives SoulSync the connection card and nothing downloader-specific', async () => {
+  it('gives YT Fallback the connection card and nothing downloader-specific', async () => {
     const store = makeStore();
-    await connected(store, 'soulsync');
-    const view = await renderScreen(store, <SoulSyncView />);
+    await connected(store, 'ytfallback');
+    const view = await renderScreen(store, <YtFallbackView />);
 
-    expect(view.getByText('settings.downloaders.soulsync.title')).toBeTruthy();
+    expect(view.getByText('settings.downloaders.ytfallback.title')).toBeTruthy();
     expect(view.getByText('settings.downloaders.disconnect')).toBeTruthy();
-    expect(view.queryByText('settings.downloaders.slskd.searchPreferencesTitle')).toBeNull();
     expect(view.queryByText('settings.downloaders.lidarr.qualityProfileTitle')).toBeNull();
   });
 });

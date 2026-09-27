@@ -7,19 +7,14 @@ import { ALL_DOWNLOADERS, useDownloaderStates } from './registry';
 import downloadersReducer from '@/state/redux/slices/downloadersSlice';
 import serversReducer from '@/state/redux/slices/serversSlice';
 import * as lidarr from '@/providers/integration/lidarr';
-import * as slskd from '@/providers/integration/slskd';
-import * as soulsync from '@/providers/integration/soulsync';
+import * as ytfallback from '@/providers/integration/ytfallback';
 
 jest.mock('@/providers/integration/lidarr', () => ({
   ...jest.requireActual('@/providers/integration/lidarr'),
   testConnection: jest.fn(),
 }));
-jest.mock('@/providers/integration/slskd', () => ({
-  ...jest.requireActual('@/providers/integration/slskd'),
-  testConnection: jest.fn(),
-}));
-jest.mock('@/providers/integration/soulsync', () => ({
-  ...jest.requireActual('@/providers/integration/soulsync'),
+jest.mock('@/providers/integration/ytfallback', () => ({
+  ...jest.requireActual('@/providers/integration/ytfallback'),
   testConnection: jest.fn(),
 }));
 
@@ -65,27 +60,12 @@ describe('useDownloaderStates', () => {
 });
 
 /**
- * YT Fallback already tries slskd first internally, then falls through to
- * YouTube — so for anything that just takes the first available track
- * downloader rather than presenting a picker (playlist-import sync, e.g.),
- * it needs to be tried ahead of plain slskd, or that automatic path would
- * dead-end on a track slskd alone can't find instead of reaching the
- * fallback it exists for.
- */
-describe('downloader priority', () => {
-  it('tries YT Fallback ahead of plain slskd', () => {
-    const trackIds = ALL_DOWNLOADERS.filter(d => d.downloadTrack).map(d => d.id);
-    expect(trackIds.indexOf('ytfallback')).toBeLessThan(trackIds.indexOf('slskd'));
-  });
-});
-
-/**
  * `downloadAlbum` used to be required and `downloadTrack` optional, which was
  * Lidarr's shape — album-only, no way to fetch one file — written into the
- * contract for every downloader. SoulSync is the mirror image: its public
+ * contract for every downloader. YT Fallback is the mirror image: its public
  * entry point takes one free-text track request and there is no album
- * endpoint at all. Both units are optional now, and the sheet offers a
- * downloader only for the unit it actually takes.
+ * endpoint at all. Both units are optional, and the sheet offers a downloader
+ * only for the unit it actually takes.
  */
 describe('downloader units', () => {
   const by = (id: string) => ALL_DOWNLOADERS.find(d => d.id === id)!;
@@ -94,11 +74,8 @@ describe('downloader units', () => {
     expect(by('lidarr').downloadAlbum).toBeDefined();
     expect(by('lidarr').downloadTrack).toBeUndefined();
 
-    expect(by('slskd').downloadAlbum).toBeDefined();
-    expect(by('slskd').downloadTrack).toBeDefined();
-
-    expect(by('soulsync').downloadTrack).toBeDefined();
-    expect(by('soulsync').downloadAlbum).toBeUndefined();
+    expect(by('ytfallback').downloadTrack).toBeDefined();
+    expect(by('ytfallback').downloadAlbum).toBeUndefined();
   });
 
   it('gives every downloader at least one unit and a way to read its queue', () => {
@@ -114,11 +91,11 @@ describe('downloader units', () => {
 });
 
 /**
- * Each downloader authenticates the same
- * way (an apiKey tier), wires `testConnection` to its existing per-provider
- * function, and declares an `acquisition.*` slot for exactly the units it
- * implements above. `fetchQueue` stays downloader-operational and is
- * deliberately absent from `slots` — it isn't a product capability.
+ * Each downloader authenticates the same way (an apiKey tier), wires
+ * `testConnection` to its existing per-provider function, and declares an
+ * `acquisition.*` slot for exactly the units it implements above.
+ * `fetchQueue` stays downloader-operational and is deliberately absent from
+ * `slots` — it isn't a product capability.
  */
 describe('downloaders as providers', () => {
   const by = (id: string) => ALL_DOWNLOADERS.find(d => d.id === id)!;
@@ -127,37 +104,11 @@ describe('downloaders as providers', () => {
     jest.clearAllMocks();
   });
 
-  it('declares an auth tier for every downloader, and names the keys when there are any', () => {
-    // This used to assert `apiKey` for all of them, which stopped being true
-    // with Downtify: its API has no authentication of any kind, so there is no
-    // credential for `configKeys` to name. What holds for all of them is that
-    // the tier is declared, and that a downloader claiming a key says which.
+  it('declares an apiKey auth tier naming its keys for every downloader', () => {
     for (const def of ALL_DOWNLOADERS) {
-      expect(def.auth.tier).toBeDefined();
-      if (def.auth.tier === 'apiKey') {
-        expect(def.auth.configKeys).toEqual(expect.arrayContaining(['serverUrl', 'apiKey']));
-      }
+      expect(def.auth.tier).toBe('apiKey');
+      expect(def.auth.configKeys).toEqual(expect.arrayContaining(['serverUrl', 'apiKey']));
     }
-  });
-
-  it('leaves Downtify with no credential to name', () => {
-    const downtify = by('downtify');
-
-    expect(downtify.auth.tier).toBe('none');
-    // Not an empty array: there is nothing to configure, which is different
-    // from configuring nothing.
-    expect(downtify.auth.configKeys).toBeUndefined();
-  });
-
-  it('offers Downtify as a track downloader and not an album one', () => {
-    // Downtify's album endpoint takes a YouTube Music album URL, which nothing
-    // here has. An album Get reaches it through `albumByTracks` instead, the
-    // same way it reaches SoulSync.
-    const downtify = by('downtify');
-
-    expect(downtify.downloadTrack).toBeDefined();
-    expect(downtify.downloadAlbum).toBeUndefined();
-    expect(downtify.cancelQueueItem).toBeDefined();
   });
 
   const config = { serverUrl: 'http://example.test', apiKey: 'key' };
@@ -168,13 +119,8 @@ describe('downloaders as providers', () => {
     expect(lidarr.testConnection).toHaveBeenCalledWith({ serverUrl: config.serverUrl, apiKey: config.apiKey });
   });
 
-  it('maps slskd testConnection (boolean) to Health', async () => {
-    (slskd.testConnection as jest.Mock).mockResolvedValue(true);
-    await expect(by('slskd').testConnection(config)).resolves.toEqual({ ok: true });
-  });
-
-  it('maps soulsync testConnection (boolean) to Health', async () => {
-    (soulsync.testConnection as jest.Mock).mockResolvedValue(false);
-    await expect(by('soulsync').testConnection(config)).resolves.toEqual({ ok: false });
+  it('maps ytfallback testConnection (boolean) to Health', async () => {
+    (ytfallback.testConnection as jest.Mock).mockResolvedValue(false);
+    await expect(by('ytfallback').testConnection(config)).resolves.toEqual({ ok: false });
   });
 });

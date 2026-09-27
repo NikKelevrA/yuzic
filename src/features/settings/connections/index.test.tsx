@@ -31,11 +31,15 @@ jest.mock('@/state/redux/selectors/audiomuseSelectors', () => ({
   selectAudiomuseAuthenticated: () => true,
 }));
 
+jest.mock('@/state/redux/selectors/playlistImportSelectors', () => ({
+  selectPlaylistImportEnabled: () => false,
+  selectPlaylistImportAuthenticated: () => false,
+}));
+
 jest.mock('@/features/downloaders/registry', () => ({
   useDownloaderStates: () => [
     { def: { id: 'lidarr', settingsRoute: '/settings/lidarrView' }, isConnected: true },
-    { def: { id: 'slskd', settingsRoute: '/settings/slskdView' }, isConnected: false },
-    { def: { id: 'soulsync', settingsRoute: '/settings/soulsyncView' }, isConnected: false },
+    { def: { id: 'ytfallback', settingsRoute: '/settings/ytfallbackView' }, isConnected: false },
   ],
 }));
 
@@ -49,12 +53,14 @@ describe('ConnectionsView', () => {
 
     expect(view.getByText('ListenBrainz')).toBeTruthy();
     expect(view.getByText('AudioMuse-AI')).toBeTruthy();
+    expect(view.getByText('Playlist Imports')).toBeTruthy();
 
     // Downloaders (formerly the Downloaders hub) — labelled via i18n keys,
     // which the mocked i18n instance echoes back as the key itself.
     expect(view.getByText('settings.downloaders.lidarr.title')).toBeTruthy();
-    expect(view.getByText('settings.downloaders.slskd.title')).toBeTruthy();
-    expect(view.getByText('settings.downloaders.soulsync.title')).toBeTruthy();
+    expect(view.getByText('settings.downloaders.ytfallback.title')).toBeTruthy();
+    // Ready: AudioMuse + Lidarr. Not set up: Playlist Imports + YT Fallback.
+    // ListenBrainz uses its own connected/notConnected wording, not these.
     expect(view.getAllByText('settings.connections.status.ready')).toHaveLength(2);
     expect(view.getAllByText('settings.connections.status.notSetUp')).toHaveLength(2);
 

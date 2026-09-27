@@ -141,7 +141,7 @@ const externalAlbum: Album = {
 };
 
 const lidarrDownloadAlbum = jest.fn(async () => ({ success: true as const }));
-const slskdDownloadAlbum = jest.fn(async () => ({ success: true as const }));
+const otherDownloadAlbum = jest.fn(async () => ({ success: true as const }));
 
 function makeDownloaderStates() {
   return [
@@ -159,14 +159,14 @@ function makeDownloaderStates() {
     },
     {
       def: {
-        id: 'slskd',
-        label: 'slskd',
-        descriptionKey: 'externalAlbum.download.slskdDesc',
-        albumAddedKey: 'externalAlbum.download.addedToSlskd',
-        trackAddedKey: 'externalAlbum.download.addedTrackToSlskd',
-        downloadAlbum: slskdDownloadAlbum,
+        id: 'otherdl',
+        label: 'Other DL',
+        descriptionKey: 'externalAlbum.download.otherdlDesc',
+        albumAddedKey: 'externalAlbum.download.addedToOtherdl',
+        trackAddedKey: 'externalAlbum.download.addedTrackToOtherdl',
+        downloadAlbum: otherDownloadAlbum,
       },
-      config: { serverUrl: 'http://slskd', apiKey: 'k2' },
+      config: { serverUrl: 'http://otherdl', apiKey: 'k2' },
       isConnected: true,
     },
   ];
@@ -178,7 +178,7 @@ describe('GetReviewSheet', () => {
     mockIsWanted.mockReset().mockReturnValue(false);
     mockDispatch.mockClear();
     lidarrDownloadAlbum.mockClear();
-    slskdDownloadAlbum.mockClear();
+    otherDownloadAlbum.mockClear();
     mockGetQualityProfiles.mockClear();
     mockState = {
       servers: { activeServer: { id: 'server-1', serverUrl: 'My Server' }, activeServerId: 'server-1' },
@@ -190,7 +190,7 @@ describe('GetReviewSheet', () => {
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
     expect(view.getByText(/My Server/)).toBeTruthy();
     expect(view.getByText('Lidarr')).toBeTruthy();
-    expect(view.getByText('slskd')).toBeTruthy();
+    expect(view.getByText('Other DL')).toBeTruthy();
   });
 
   it('shows a Requesting line with the title/artist being asked for', async () => {
@@ -203,17 +203,17 @@ describe('GetReviewSheet', () => {
     // Nothing fires on mount — Get always needs an explicit tap on a provider
     // row first, saved default or not.
     expect(lidarrDownloadAlbum).not.toHaveBeenCalled();
-    expect(slskdDownloadAlbum).not.toHaveBeenCalled();
+    expect(otherDownloadAlbum).not.toHaveBeenCalled();
   });
 
   it('preselects the saved default provider for the unit when it is still available', async () => {
-    mockState.downloaders.defaultsByServer['server-1'] = { defaultAlbumProvider: 'slskd' };
+    mockState.downloaders.defaultsByServer['server-1'] = { defaultAlbumProvider: 'otherdl' };
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
     // The preselected row means Get is already actionable without tapping a
     // row first — but the tap on Get is still required for the job to start.
     await fireEvent.press(view.getByText('externalAlbum.review.confirmGet'));
     await flush();
-    expect(slskdDownloadAlbum).toHaveBeenCalledTimes(1);
+    expect(otherDownloadAlbum).toHaveBeenCalledTimes(1);
     expect(lidarrDownloadAlbum).not.toHaveBeenCalled();
   });
 
@@ -221,7 +221,7 @@ describe('GetReviewSheet', () => {
     mockState.downloaders.defaultsByServer['server-1'] = { defaultAlbumProvider: 'lidarr' };
     await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
     expect(lidarrDownloadAlbum).not.toHaveBeenCalled();
-    expect(slskdDownloadAlbum).not.toHaveBeenCalled();
+    expect(otherDownloadAlbum).not.toHaveBeenCalled();
   });
 
   it('tapping Get calls the selected provider and closes the review', async () => {
@@ -307,7 +307,7 @@ describe('GetReviewSheet', () => {
     expect(view.getByText('externalAlbum.review.qualityProfile')).toBeTruthy();
     expect(view.getByTestId('row-Lossless')).toBeTruthy();
 
-    await fireEvent.press(view.getByTestId('row-slskd'));
+    await fireEvent.press(view.getByTestId('row-Other DL'));
     await flush();
     expect(view.queryByText('externalAlbum.review.qualityProfile')).toBeNull();
   });
@@ -364,23 +364,23 @@ describe('GetReviewSheet', () => {
 });
 
 describe('GetReviewSheet with a downloader that takes only tracks', () => {
-  const soulsyncDownloadTrack = jest.fn(async (..._args: unknown[]) => ({ success: true as const }));
-  const soulsync = {
+  const ytfallbackDownloadTrack = jest.fn(async (..._args: unknown[]) => ({ success: true as const }));
+  const ytfallback = {
     def: {
-      id: 'soulsync',
-      label: 'SoulSync',
-      descriptionKey: 'externalAlbum.download.soulsyncDesc',
-      albumAddedKey: 'externalAlbum.download.addedToSoulsync',
-      trackAddedKey: 'externalAlbum.download.addedTrackToSoulsync',
-      downloadTrack: soulsyncDownloadTrack,
+      id: 'ytfallback',
+      label: 'YT Fallback',
+      descriptionKey: 'externalAlbum.download.ytfallbackDesc',
+      albumAddedKey: 'externalAlbum.download.addedToYtfallback',
+      trackAddedKey: 'externalAlbum.download.addedTrackToYtfallback',
+      downloadTrack: ytfallbackDownloadTrack,
     },
-    config: { serverUrl: 'http://soulsync', apiKey: 'k3' },
+    config: { serverUrl: 'http://ytfallback', apiKey: 'k3' },
     isConnected: true,
   };
 
   beforeEach(() => {
-    mockDownloaderStates.mockReset().mockReturnValue([soulsync]);
-    soulsyncDownloadTrack.mockClear();
+    mockDownloaderStates.mockReset().mockReturnValue([ytfallback]);
+    ytfallbackDownloadTrack.mockClear();
     mockLoadAlbumTracks.mockReset().mockResolvedValue([
       { title: 'First', artist: 'External Artist' },
       { title: 'Second', artist: 'External Artist' },
@@ -395,17 +395,17 @@ describe('GetReviewSheet with a downloader that takes only tracks', () => {
     const { notify } = require('@/components/toast');
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
 
-    await fireEvent.press(view.getByTestId('row-SoulSync'));
+    await fireEvent.press(view.getByTestId('row-YT Fallback'));
     await fireEvent.press(view.getByText('externalAlbum.review.confirmGet'));
     await flush();
 
     expect(mockLoadAlbumTracks).toHaveBeenCalledWith(externalAlbum);
-    expect(soulsyncDownloadTrack.mock.calls.map(([, req]) => req)).toEqual([
+    expect(ytfallbackDownloadTrack.mock.calls.map(([, req]) => req)).toEqual([
       { title: 'First', artist: 'External Artist' },
       { title: 'Second', artist: 'External Artist' },
     ]);
     expect(notify.success).toHaveBeenCalledWith(
-      'externalAlbum.download.addedToSoulsync',
+      'externalAlbum.download.addedToYtfallback',
       { id: expect.any(String) }
     );
   });
@@ -415,7 +415,7 @@ describe('GetReviewSheet with a downloader that takes only tracks', () => {
     // track at a time, so waiting for the result meant sitting in a sheet that
     // could not be swiped away for as many round trips as the album has songs.
     let resolveFirst: (value: { success: true }) => void = () => {};
-    soulsyncDownloadTrack.mockImplementationOnce(
+    ytfallbackDownloadTrack.mockImplementationOnce(
       () => new Promise<{ success: true }>(resolve => { resolveFirst = resolve; })
     );
     // Spied after render, for the reason the Lidarr case above records: the
@@ -424,7 +424,7 @@ describe('GetReviewSheet with a downloader that takes only tracks', () => {
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={sheetRef} />);
     const dismiss = jest.spyOn(sheetRef.current, 'dismiss');
 
-    await fireEvent.press(view.getByTestId('row-SoulSync'));
+    await fireEvent.press(view.getByTestId('row-YT Fallback'));
     await fireEvent.press(view.getByText('externalAlbum.review.confirmGet'));
 
     expect(dismiss).toHaveBeenCalledTimes(1);
@@ -438,13 +438,13 @@ describe('GetReviewSheet with a downloader that takes only tracks', () => {
     mockLoadAlbumTracks.mockResolvedValue([]);
     const view = await render(<GetReviewSheet album={externalAlbum} sheetRef={{ current: null } as any} />);
 
-    await fireEvent.press(view.getByTestId('row-SoulSync'));
+    await fireEvent.press(view.getByTestId('row-YT Fallback'));
     await fireEvent.press(view.getByText('externalAlbum.review.confirmGet'));
     await flush();
 
-    expect(soulsyncDownloadTrack).not.toHaveBeenCalled();
+    expect(ytfallbackDownloadTrack).not.toHaveBeenCalled();
     expect(notify.error).toHaveBeenCalledWith(
-      'externalAlbum.download.errors.soulsync.no_tracks',
+      'externalAlbum.download.errors.ytfallback.no_tracks',
       { id: expect.any(String) }
     );
   });

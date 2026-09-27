@@ -8,12 +8,12 @@ const config = { serverUrl: 'http://192.168.1.43:5020', apiKey: 'key' };
 describe('ytfallbackDownloader', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('is track-only, like SoulSync before it', () => {
+  it('is track-only', () => {
     expect(ytfallbackDownloader.downloadTrack).toBeDefined();
     expect(ytfallbackDownloader.downloadAlbum).toBeUndefined();
   });
 
-  it('authenticates with an API key, the same tier as slskd and SoulSync', () => {
+  it('authenticates with an API key, the same tier as Lidarr', () => {
     expect(ytfallbackDownloader.auth).toEqual({ tier: 'apiKey', configKeys: ['serverUrl', 'apiKey'] });
   });
 

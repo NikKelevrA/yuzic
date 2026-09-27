@@ -13,7 +13,7 @@ one of these trunks.
 back" thread on r/selfhosted names the same three failures: discovery dies (no
 "similar to this", no rotating shelves), music you don't own is a multi-tool
 chore away instead of a tap, and the glue between an 8–10 service stack
-(server, Lidarr, slskd, AudioMuse, …) breaks silently. Yuzic's aim is to be
+(server, Lidarr, YT Fallback, AudioMuse, …) breaks silently. Yuzic's aim is to be
 that whole stack's front end — your server plays it, your tools fetch it, yuzic
 makes it feel like one service. It works alone; every integration adds a
 capability; none is required.
@@ -894,7 +894,7 @@ src/providers/
     listenbrainz/       — scrobbling and read-only recommendations
     lrclib/             — synced lyrics
     audiomuse/          — the acoustic-similarity service client
-    lidarr/, slskd/, soulsync/ — downloader clients
+    lidarr/, ytfallback/ — downloader clients
 
 src/features/           — one directory per feature: its screen, components,
                           hooks and logic together
@@ -932,7 +932,7 @@ src/features/           — one directory per feature: its screen, components,
                           and query hooks
   home/, search/, library/, downloads/, wants/, onboarding/, settings/,
   podcasts/, radio/, shares/ — the remaining screens with what they own
-  downloaders/          — Lidarr + slskd + SoulSync registry and queue
+  downloaders/          — Lidarr + YT Fallback registry and queue
   offline/              — downloads: policies, filesystem, the job queue,
                           DownloadContext, and the offline mutation queue that
                           replays scrobbles and edits made without a connection

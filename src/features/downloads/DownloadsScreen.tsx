@@ -17,7 +17,7 @@ import DownloaderQueueSection from './DownloaderQueueSection';
 
 /**
  * The Downloads screen is **server transfers only** — the live acquisition
- * queue of every connected downloader (Lidarr, slskd, SoulSync), each showing
+ * queue of every connected downloader (Lidarr, YT Fallback), each showing
  * every job its queue endpoint reports, including jobs started outside Yuzic.
  *
  * Saved music on this device is the library's Downloaded collection, not this

@@ -84,8 +84,8 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
   const downloaders = useDownloaderStates();
   const loadAlbumTracks = useAlbumTrackLoader();
   // A downloader appears only if it can take the unit being asked for. Lidarr
-  // has no way to fetch one track; a track-only downloader (SoulSync) takes an
-  // album as its tracks, so every connected downloader can take an album.
+  // has no way to fetch one track; YT Fallback (track-only) takes an album as
+  // its tracks, so every connected downloader can take an album.
   const available = downloaders.filter(
     (d) => d.isConnected && !!(track ? d.def.downloadTrack : d.def.downloadAlbum || d.def.downloadTrack)
   );

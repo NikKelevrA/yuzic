@@ -87,10 +87,9 @@ jest.mock('@/components/options/DownloadsOptions', () => {
 });
 
 jest.mock('@/providers/integration/lidarr', () => ({ cancelQueueItem: jest.fn() }));
-jest.mock('@/providers/integration/slskd', () => ({ cancelQueueItem: jest.fn() }));
-jest.mock('@/providers/integration/soulsync', () => ({ cancelDownload: jest.fn() }));
+jest.mock('@/providers/integration/ytfallback', () => ({ cancelDownload: jest.fn() }));
 
-function connectedState(id: 'lidarr' | 'slskd' | 'soulsync', label: string) {
+function connectedState(id: 'lidarr' | 'ytfallback', label: string) {
   return {
     def: { id, label },
     config: { serverUrl: `http://${id}`, apiKey: 'key' },
@@ -112,18 +111,16 @@ describe('DownloadsScreen', () => {
     expect(view.getByText('downloads.noDownloaders')).toBeTruthy();
   });
 
-  it('shows every connected downloader, including SoulSync (previously omitted)', async () => {
+  it('shows every connected downloader', async () => {
     mockUseDownloaderStates.mockReturnValue([
       connectedState('lidarr', 'Lidarr'),
-      connectedState('slskd', 'slskd'),
-      connectedState('soulsync', 'SoulSync'),
+      connectedState('ytfallback', 'YT Fallback'),
     ]);
 
     const view = await render(<DownloadsScreen />);
 
     expect(view.getByTestId('downloader-queue-section-lidarr')).toBeTruthy();
-    expect(view.getByTestId('downloader-queue-section-slskd')).toBeTruthy();
-    expect(view.getByTestId('downloader-queue-section-soulsync')).toBeTruthy();
+    expect(view.getByTestId('downloader-queue-section-ytfallback')).toBeTruthy();
   });
 
   it('reads the shared useDownloadersQueue() context rather than spinning up its own poll', async () => {

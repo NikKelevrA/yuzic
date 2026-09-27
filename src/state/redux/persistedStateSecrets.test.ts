@@ -34,7 +34,7 @@ const SENTINEL_PROXY_PASSWORD = 'SENTINEL-PROXY-PASSWORD-1';
 const SENTINEL_LISTENBRAINZ_TOKEN = 'SENTINEL-LISTENBRAINZ-TOKEN-1';
 const SENTINEL_AUDIOMUSE_TOKEN = 'SENTINEL-AUDIOMUSE-TOKEN-1';
 const SENTINEL_LIDARR_KEY = 'SENTINEL-LIDARR-KEY-1';
-const SENTINEL_SLSKD_KEY = 'SENTINEL-SLSKD-KEY-1';
+const SENTINEL_YTFALLBACK_KEY = 'SENTINEL-YTFALLBACK-KEY-1';
 
 const ALL_SENTINELS = [
   SENTINEL_PASSWORD,
@@ -43,7 +43,7 @@ const ALL_SENTINELS = [
   SENTINEL_LISTENBRAINZ_TOKEN,
   SENTINEL_AUDIOMUSE_TOKEN,
   SENTINEL_LIDARR_KEY,
-  SENTINEL_SLSKD_KEY,
+  SENTINEL_YTFALLBACK_KEY,
 ];
 
 const SERVER_ID = 'srv-sentinel-1';
@@ -96,15 +96,15 @@ describe('no secret reaches persisted Redux state', () => {
     await setCredential(audiomuseCredentialScope(SERVER_ID), 'apiKey', SENTINEL_AUDIOMUSE_TOKEN);
     store.dispatch(connectAudiomuse({ serverId: SERVER_ID }));
 
-    // Downloaders: one of each shape (lidarr + slskd), serverUrl through
+    // Downloaders: one of each shape (lidarr + ytfallback), serverUrl through
     // Redux, apiKey through `setCredential`.
     store.dispatch(setDownloaderServerUrl({ serverId: SERVER_ID, downloader: 'lidarr', value: 'https://lidarr.example' }));
     await setCredential(downloaderCredentialScope('lidarr', SERVER_ID), 'apiKey', SENTINEL_LIDARR_KEY);
     store.dispatch(connectDownloader({ serverId: SERVER_ID, downloader: 'lidarr' }));
 
-    store.dispatch(setDownloaderServerUrl({ serverId: SERVER_ID, downloader: 'slskd', value: 'https://slskd.example' }));
-    await setCredential(downloaderCredentialScope('slskd', SERVER_ID), 'apiKey', SENTINEL_SLSKD_KEY);
-    store.dispatch(connectDownloader({ serverId: SERVER_ID, downloader: 'slskd' }));
+    store.dispatch(setDownloaderServerUrl({ serverId: SERVER_ID, downloader: 'ytfallback', value: 'https://ytfallback.example' }));
+    await setCredential(downloaderCredentialScope('ytfallback', SERVER_ID), 'apiKey', SENTINEL_YTFALLBACK_KEY);
+    store.dispatch(connectDownloader({ serverId: SERVER_ID, downloader: 'ytfallback' }));
 
     const serialized = JSON.stringify(store.getState());
 
@@ -122,6 +122,6 @@ describe('no secret reaches persisted Redux state', () => {
     expect(serialized).toContain('lb-user');
     expect(serialized).toContain('audiomuse.example');
     expect(serialized).toContain('lidarr.example');
-    expect(serialized).toContain('slskd.example');
+    expect(serialized).toContain('ytfallback.example');
   });
 });

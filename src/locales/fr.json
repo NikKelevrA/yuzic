@@ -396,9 +396,7 @@
       "cancelFailed": "Impossible d'annuler ce téléchargement.",
       "serverUrlPlaceholder": {
         "lidarr": "http://node:8686",
-        "slskd": "http://slskd:5030",
-        "soulsync": "http://soulsync:8008",
-        "downtify": "http://downtify:8000"
+        "ytfallback": "http://ytfallback:5020"
       },
       "lidarr": {
         "title": "Lidarr",
@@ -409,36 +407,13 @@
         "qualityProfileTitle": "Profil de qualité",
         "defaultQualityProfile": "Profil de qualité par défaut"
       },
-      "slskd": {
-        "title": "slskd",
-        "connectionFailed": "Échec de la connexion à slskd",
-        "disconnected": "Déconnecté de slskd.",
-        "credentialsTitle": "Connexion",
-        "credentialsHelper": "URL et clé API slskd (Options → API Keys).",
-        "searchPreferencesTitle": "Préférences de recherche",
-        "preferredFormat": "Format préféré",
-        "formatAuto": "Tout (FLAC préféré)",
-        "formatFlacOnly": "FLAC uniquement",
-        "minBitrate": "Débit MP3 minimum",
-        "minBitrateAny": "Tout",
-        "minBitrateValue": "{{kbps}} kbps",
-        "preferFreeSlot": "Préférer les slots libres",
-        "preferFreeSlotSubtext": "Préférer les slots libres. Désactivé, capte les raretés."
-      },
       "queueTitle": "File de téléchargement",
-      "soulsync": {
-        "title": "SoulSync",
+      "ytfallback": {
+        "title": "YT Fallback",
         "credentialsTitle": "Connexion",
-        "credentialsHelper": "URL et clé API SoulSync (Settings → API Keys).",
-        "connectionFailed": "Échec de la connexion à SoulSync",
-        "disconnected": "Déconnecté de SoulSync."
-      },
-      "downtify": {
-        "title": "Downtify",
-        "credentialsTitle": "Connexion",
-        "credentialsHelper": "Adresse de Downtify. Downtify n'a pas de clé d'API : toute personne pouvant l'atteindre peut y lancer des téléchargements.",
-        "connectionFailed": "Échec de la connexion à Downtify",
-        "disconnected": "Déconnecté de Downtify."
+        "credentialsHelper": "URL et clé API de YT Fallback.",
+        "connectionFailed": "Échec de la connexion à YT Fallback",
+        "disconnected": "Déconnecté de YT Fallback."
       }
     },
     "audiomuse": {
@@ -1208,13 +1183,10 @@
     "download": {
       "noDownloader": "Aucun gestionnaire de téléchargement actif connecté.",
       "addedToLidarr": "Album ajouté à Lidarr !",
-      "addedToSlskd": "Album ajouté à la file d'attente slskd !",
-      "addedTrackToSlskd": "Titre ajouté à la file d'attente slskd !",
       "failed": "Échec du téléchargement.",
       "startFailed": "Échec du démarrage du téléchargement.",
       "chooseService": "Choisir un service",
       "lidarrDesc": "Gestionnaire de collection musicale",
-      "slskdDesc": "Téléchargements depuis le réseau Soulseek",
       "errors": {
         "lidarr": {
           "album_identity_ambiguous": "Lidarr a trouvé plusieurs éditions portant ce titre.",
@@ -1226,38 +1198,21 @@
           "missing_album_identity": "Informations d'album ou d'artiste manquantes.",
           "request_timeout": "Lidarr a mis trop de temps à répondre."
         },
-        "slskd": {
-          "enqueue_failed": "Impossible d'ajouter ceci à la file slskd.",
-          "missing_identity": "Informations d'album ou d'artiste manquantes.",
-          "no_matching_release": "Personne ne partage cette édition sur Soulseek.",
-          "no_matching_track": "Personne ne partage ce morceau sur Soulseek.",
-          "request_failed": "slskd est injoignable. Vérifiez le serveur et réessayez.",
-          "search_failed": "slskd n'a pas pu lancer la recherche.",
-          "search_timeout": "La recherche Soulseek a expiré."
-        },
-        "soulsync": {
-          "AUTH_REQUIRED": "SoulSync exige une clé d’API.",
-          "INVALID_KEY": "SoulSync a refusé cette clé d’API.",
-          "BAD_REQUEST": "SoulSync n’a pas pu lire cette demande.",
-          "BAD_RESPONSE": "Cette adresse n’a pas répondu comme SoulSync. Vérifiez l’URL.",
-          "HTTP_ERROR": "Impossible de joindre SoulSync. Vérifiez le serveur et réessayez.",
-          "NOT_AVAILABLE": "SoulSync n’a aucune connexion Soulseek configurée.",
+        "ytfallback": {
           "no_tracks": "Impossible de lister les morceaux de cet album à demander.",
-          "some_tracks_failed": "Certains morceaux de cet album n’ont pas pu être demandés à SoulSync."
+          "some_tracks_failed": "Certains morceaux de cet album n'ont pas pu être demandés à YT Fallback."
         }
       },
-      "soulsyncDesc": "Chercher sur Soulseek via SoulSync",
-      "addedToSoulsync": "Demandé à SoulSync.",
-      "addedTrackToSoulsync": "Demandé à SoulSync.",
       "monitoringOnLidarr": "Lidarr suit désormais {{artist}}.",
       "sending": "Envoi de {{title}} vers {{downloader}}…",
       "progress": "{{done}} morceaux sur {{total}} demandés…",
-      "downtifyDesc": "Rechercher sur YouTube Music via Downtify",
-      "addedToDowntify": "Demandé à Downtify.",
-      "addedTrackToDowntify": "Demandé à Downtify.",
+      "ytfallbackDesc": "Cherche sur Soulseek, puis YouTube, via YT Fallback",
+      "addedToYtfallback": "Demandé à YT Fallback.",
+      "addedTrackToYtfallback": "Demandé à YT Fallback.",
       "acquireDownloading": "Téléchargement de « {{title}} »… la lecture démarrera dès que ce sera prêt.",
       "acquireStillWorking": "Téléchargement de « {{title}} » toujours en cours — réessayez dans un instant.",
       "acquirePlayFailed": "« {{title}} » a été téléchargé, mais la lecture n'a pas pu démarrer.",
+      "acquireNotFound": "Impossible de trouver « {{title}} » sur Soulseek ou YouTube.",
       "noDownloaderConnected": "MusicBrainz is set up, but no downloader is connected — nothing to fetch this with right now."
     },
     "header": {

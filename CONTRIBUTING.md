@@ -75,7 +75,7 @@ optional and configured at runtime in Settings, not at build time:
   **Settings → Metadata**, **Pages**, **Search**, or **Home**.
 - ListenBrainz and AudioMuse-AI are authenticated per-user in
   **Settings → Connections**.
-- The Lidarr, slskd, and SoulSync downloaders point at your own self-hosted
+- The Lidarr and YT Fallback downloaders point at your own self-hosted
   instances (also **Settings → Connections**). Downloaded audio is transcoded server-side by
   your music server via the stream URL, so testing a download-related change
   needs a real server but no extra service.

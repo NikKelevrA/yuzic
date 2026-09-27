@@ -2,6 +2,7 @@ import {
   cancelDownload,
   downloadTrack,
   fetchQueue,
+  resolve,
   testConnection,
 } from './';
 import { YtFallbackError } from './client';
@@ -124,6 +125,59 @@ describe('cancelDownload', () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(`http://192.168.1.43:5020/queue/${job.id}`);
     expect(init.method).toBe('DELETE');
+  });
+});
+
+describe('resolve', () => {
+  beforeEach(() => { fetchMock.mockReset(); });
+
+  it('posts the request and reports a ready song id back', async () => {
+    fetchMock.mockResolvedValue(answer({ status: 'ready', songId: 'nd-123' }));
+
+    const result = await resolve(config, { title: 'Rumour Has It', artist: 'Adele' });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://192.168.1.43:5020/resolve');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ title: 'Rumour Has It', artist: 'Adele' });
+    expect(result).toEqual({ status: 'ready', songId: 'nd-123' });
+  });
+
+  it('includes mbid/isrc when given, and omits them when not', async () => {
+    fetchMock.mockResolvedValue(answer({ status: 'pending', jobId: 'job-1', progress: 0 }));
+
+    await resolve(config, { title: 'Rumour Has It', artist: 'Adele', mbid: 'mb-1', isrc: 'isrc-1' });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      title: 'Rumour Has It', artist: 'Adele', mbid: 'mb-1', isrc: 'isrc-1',
+    });
+  });
+
+  it('reports a pending job with its progress', async () => {
+    fetchMock.mockResolvedValue(answer({ status: 'pending', jobId: 'job-1', progress: 42 }));
+
+    await expect(resolve(config, { title: 'x', artist: 'y' }))
+      .resolves.toEqual({ status: 'pending', jobId: 'job-1', progress: 42 });
+  });
+
+  it('tolerates snake_case field names', async () => {
+    fetchMock.mockResolvedValue(answer({ status: 'pending', job_id: 'job-1', progress: 10 }));
+
+    await expect(resolve(config, { title: 'x', artist: 'y' }))
+      .resolves.toEqual({ status: 'pending', jobId: 'job-1', progress: 10 });
+  });
+
+  it('carries a failure reason through', async () => {
+    fetchMock.mockResolvedValue(answer({ status: 'failed', reason: 'no match found' }));
+
+    await expect(resolve(config, { title: 'x', artist: 'y' }))
+      .resolves.toEqual({ status: 'failed', reason: 'no match found' });
+  });
+
+  it('fails soft to a failed status on a shape it does not recognise', async () => {
+    fetchMock.mockResolvedValue(answer({ unexpected: true }));
+
+    await expect(resolve(config, { title: 'x', artist: 'y' }))
+      .resolves.toEqual({ status: 'failed', reason: 'unknown' });
   });
 });
 

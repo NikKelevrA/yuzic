@@ -87,7 +87,7 @@ describe('wantsSlice', () => {
 
   it('setting a jobRef for a missing want is a no-op', () => {
     const state = reducer(undefined, setWantJobRef({
-      serverId: 's1', localId: 'nope' as LocalId, jobRef: { downloader: 'slskd', requestedAt: 1 },
+      serverId: 's1', localId: 'nope' as LocalId, jobRef: { downloader: 'ytfallback', requestedAt: 1 },
     }));
     expect(state.byServer.s1).toBeUndefined();
   });

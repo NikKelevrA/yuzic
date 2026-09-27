@@ -356,9 +356,14 @@ without a manual pull (`src/features/downloaders/DownloadersQueueContext.tsx`).
 | Downloader | Label in app | Albums | Individual tracks | Settings |
 | --- | --- | --- | --- | --- |
 | [Lidarr](https://lidarr.audio) | Lidarr | ✅ | — (Lidarr is album-oriented) | Server URL + API key (Lidarr → Settings → General) |
-| [slskd](https://github.com/slskd/slskd) (Soulseek) | Soulseek | ✅ | ✅ | Server URL + API key, plus its own search preferences |
-| [SoulSync](https://github.com/Nezreka/SoulSync) | SoulSync | ✅ as its tracks (no album endpoint) | ✅ | Server URL + API key |
-| [Downtify](https://github.com/henriquesebastiao/downtify) | Downtify | ✅ as its tracks (album endpoint needs a URL we don't have) | ✅ | Server URL only — Downtify has no API key |
+| YT Fallback (self-hosted; see below) | YT Fallback | ✅ as its tracks (no album endpoint) | ✅ | Server URL + API key |
+
+YT Fallback is the one downloader built specifically for this fork. It used to
+sit alongside slskd, SoulSync and Downtify as separate app-side choices; all
+three are gone now — slskd and SoulSync's jobs both live inside YT Fallback's
+own server-side fallback chain (see below), and Downtify was never deployed.
+Lidarr is untouched stock behavior and is the only place left for a deliberate
+whole-album Get.
 
 Registry and the shared `DownloaderDefinition` shape:
 `src/features/downloaders/registry.ts`. A downloader is offered on an external
@@ -387,9 +392,7 @@ configured makes **no** requests to any of these hosts.
 - **Caching.** Deezer keeps its own in-memory TTL cache with per-endpoint
   lifetimes and a 500-entry cap, and coalesces identical in-flight requests
   (`src/providers/integration/deezer/catalog.ts`). Everything else caches at the react-query
-  layer in the hook that calls it. slskd searches are coalesced through
-  `src/providers/http/coalesceRequest.ts` — a double tap otherwise starts a second
-  45-second Soulseek search and queues the files twice.
+  layer in the hook that calls it.
 - **Failure.** A metadata read that fails degrades to nothing — an empty list,
   a section that doesn't render — rather than an error state, because none of
   it is load-bearing. Downloader and scrobble calls surface a real error,
@@ -588,99 +591,44 @@ No auth, `User-Agent` identifies the app. `src/providers/integration/lrclib/`.
 | `GET /queue?includeAlbum=true&includeArtist=true&pageSize=100` | The in-app transfer queue, and spotting finished items |
 | `DELETE /queue/{id}` | Cancelling a download |
 
-### slskd — your instance, `/api/v0`
+### YT Fallback — your instance
 
-`X-API-Key`. `src/providers/integration/slskd/`.
-
-| Endpoint | Used for |
-| --- | --- |
-| `GET /application` | Connection test |
-| `POST /searches` | Starting a Soulseek search for an album or track |
-| `GET /searches/{id}` | Polling until `isComplete` |
-| `GET /searches/{id}/responses` | Reading the results to pick a directory or file |
-| `DELETE /searches/{id}` | Cleaning up the search — runs on the timeout and error paths too |
-| `POST /transfers/downloads/{username}` | Enqueueing the chosen files |
-| `GET /transfers/downloads/` | The in-app transfer queue, and spotting finished items |
-| `DELETE /transfers/downloads/{username}/{fileId}?remove=false` then `?remove=true` | Cancelling — the first call is allowed to fail, since a file that already finished can't be cancelled |
-
-slskd downloads also reach MusicBrainz (`src/providers/integration/slskd/mb/canonicalize.ts`) to
-turn an MBID into a canonical artist/album/track list before matching filenames
-against it.
-
-### SoulSync — your instance, `/api/v1`
-
-`Authorization: Bearer`. `src/providers/integration/soulsync/`. The query-param form (`?api_key=`)
-is also accepted, but a key in a URL ends up in logs and history, so the header
-is the one used.
-
-Every reply is wrapped in the same `{ success, data, error }` envelope whatever
-the HTTP status says; the client unwraps it so callers see `data` or an Error.
+`Authorization: Bearer`. `src/providers/integration/ytfallback/`. A
+self-hosted service built for this fork, replacing three separate app-side
+downloaders (slskd, SoulSync, Downtify) with one: it tries slskd's own API
+first and falls back to a YouTube search+download only if that comes up
+empty, entirely server-side, so nothing on this side has to know there are
+two paths inside it.
 
 | Endpoint | Used for |
 | --- | --- |
-| `GET /downloads?limit=1` | Connection test — SoulSync has no dedicated status endpoint, so the queue read doubles as one |
-| `POST /request` | Requesting a track. One free-text query; SoulSync runs its own search-match-download pipeline behind it |
-| `GET /downloads?limit=100` | The in-app transfer queue, and spotting finished items |
-| `POST /downloads/{id}/cancel` | Cancelling — takes the peer username in the body, since a transfer is addressed by id *and* peer |
+| `GET /queue` | Connection test (the service leaves `/health` unauthenticated for plain reachability, so this is used instead — it costs nothing to read and requires the key) |
+| `POST /request` | Requesting a track. One free-text `{ title, artist }`; the service runs its own search-match-download pipeline behind it |
+| `GET /queue` | The in-app transfer queue, and spotting finished items |
+| `DELETE /queue/{id}` | Cancelling |
+| `POST /resolve` | "Do you have this, or go get it" — see below |
 
-SoulSync has no album endpoint — its API's only way in is `POST /request` with a
-free-text query, and its wishlist takes one track at a time too — which is why
-`downloadAlbum` is optional on `DownloaderDefinition`. An album Get to it is
-the album's tracks, each its own `POST /request`, one after another
-(`features/downloaders/albumByTracks.ts`); the tracks come from the album's
-catalogue source or the server (`albumTracks.ts`), so any album sheet can offer
-it.
+No album endpoint — its only way in is `POST /request` with a free-text
+query, which is why `downloadAlbum` is optional on `DownloaderDefinition`. An
+album Get to it is the album's tracks, each its own `POST /request`, one
+after another (`features/downloaders/albumByTracks.ts`).
 
-### Downtify — your instance, `/api`
-
-No authentication. `src/providers/integration/downtify/`. This is the only
-downloader here that holds no credential: Downtify's API has no key, no token
-and no basic auth, so `AuthDescriptor` is `{ tier: 'none' }` and its settings
-screen asks for an address and nothing else. Anything that can reach the port
-can queue downloads on it, which the setup screen says in as many words — it is
-Downtify's design, not something the app can tighten.
-
-| Endpoint | Used for |
-| --- | --- |
-| `GET /api/version` | Connection test. Answers a bare version string, which is also how a reverse proxy or the wrong service is told apart from a real one |
-| `GET /api/songs/search?query=` | Resolving a track before it can be queued. Downtify's download endpoints take a URL or a song object, never a free-text query the way SoulSync's does |
-| `POST /api/download/batch` | Queueing. Used even for a single track, because `POST /api/download/url` **blocks until the download finishes** — minutes with nothing to show — while `batch` answers at once with `job_ids` |
-| `GET /api/queue` | The in-app transfer queue, and spotting finished items |
-| `DELETE /api/queue/item?song_id=` | Cancelling |
-
-A search result is handed back to `/api/download/batch` **exactly as it
-arrived**, and the field names were read off a live Downtify 3.0.0 rather than
-its reference, which does not carry the schema. They are not what the prose
-implies: a result is
-
-```json
-{ "song_id": "SM4tQcUt_mQ", "name": "Roygbiv", "artists": ["Boards of Canada"],
-  "album_name": "Music Has The Right To Children", "duration": 150,
-  "url": "https://music.youtube.com/watch?v=...", "source": "youtube", … }
-```
-
-`song_id` / `name` / `artists` (an array), **not** `id` / `title` / `artist` —
-which is what the first cut of this client assumed, and it was wrong on all
-three until a real instance said otherwise. `job_ids` from `batch` carries that
-same `song_id`, and it is what `DELETE /api/queue/item?song_id=` takes.
-
-The object is still passed back whole rather than rebuilt, because the endpoint
-takes all of it and a version that adds a field would lose it the moment this
-side started copying fields across by name.
-
-`generate_m3u` and `playlist_url` are deliberately not sent: they belong to a
-playlist download, and one track from a Get is not one.
-
-No album endpoint the app can reach: `POST /api/download/album` takes a
-*YouTube Music album URL*, and nothing on this side has one — a browsed album
-is a catalogue record, not a YouTube link. So `downloadAlbum` is absent for the
-same reason it is for SoulSync, and an album Get arrives as its tracks through
-`features/downloaders/albumByTracks.ts`.
-
-Downtify can use slskd as one of its own audio sources, and can push playlists
-to Navidrome. Neither is anything the app arranges or needs to know about; it is
-configured in Downtify and worth knowing only because the same slskd may already
-be connected here as a downloader in its own right.
+**`/resolve`** is the newer of the two request shapes, and the one
+`useAcquireAndPlaySong` (tap a search result and have it start playing) uses
+directly instead of the Get flow above. `POST /resolve` with
+`{ title, artist, mbid?, isrc? }` is idempotent: already in the library
+answers `{ status: 'ready', songId }`, already being fetched answers
+`{ status: 'pending', jobId, progress }` for the *same* job rather than
+starting a second one, and nothing findable answers
+`{ status: 'failed', reason }`. This one call replaced a client-side dance
+that used to pick a downloader, send it a Get, separately ask the server to
+scan, separately force a library resync, and poll the app's own sync state
+hoping it agreed the track had landed — the actual source of two bugs worth
+naming: duplicate Gets racing for the same file because nothing
+server-side deduplicated them, and a wait tied to the app's own sync rather
+than to the one thing that actually knew the truth. `/resolve` moves
+matching, deduping and waiting entirely onto the service; see
+`resolver-endpoint-spec.md` for the full contract.
 
 ## What we don't call
 
@@ -694,7 +642,6 @@ be connected here as a downloader in its own right.
 | Jellyfin / Emby | A five-star rating | There is no endpoint for one. `Likes` is a boolean and is already the favourite. See **What each server can back**. |
 | Plex | `/:/rate` as a rating | It is already the favourite — a Plex favourite is `userRating = 10`. Rating over the top of it would silently unfavourite. |
 | Lidarr | Everything outside the add-artist → monitor-album → search flow: quality profiles, indexers, history, calendar, import lists | The app is a request button, not a Lidarr client. Configure Lidarr in Lidarr. |
-| slskd | User browsing, chat, rooms, shares, uploads | Same reason. The app searches, enqueues, watches, and cancels. |
 
 ## Playing somewhere else
 

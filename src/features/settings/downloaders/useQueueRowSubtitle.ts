@@ -6,14 +6,13 @@ import type { DownloaderQueueItem } from '@/features/downloaders/queueItem';
 /**
  * The line of detail under a queue row's title.
  *
- * There were three of these — one per downloader — and they differed only in
- * which facts they had to show: Lidarr counts an album's tracks, slskd counts
- * a directory's files and reports a rate and a peer, SoulSync names the album
- * a track belongs to. All three then rendered the same queue row
+ * There used to be one of these per downloader, differing only in which facts
+ * each had to show: Lidarr counts an album's tracks, a free-text downloader
+ * names the album a track belongs to. All of them rendered the same queue row
  * with the same props, so what actually varied was this string.
  *
- * Composing it from whichever facts are present means a fourth downloader
- * needs no fourth hook: it fills in what it knows when it normalises its
+ * Composing it from whichever facts are present means another downloader
+ * needs no hook of its own: it fills in what it knows when it normalises its
  * queue, and whatever it leaves out simply does not appear.
  */
 export function useQueueRowSubtitle(): (item: DownloaderQueueItem) => string {

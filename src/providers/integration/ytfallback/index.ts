@@ -113,3 +113,57 @@ export async function cancelDownload(
   const client = createYtFallbackClient(config);
   await client.request(`/queue/${encodeURIComponent(record.id)}`, { method: 'DELETE' });
 }
+
+type ResolveRequest = { title: string; artist: string; mbid?: string; isrc?: string };
+
+/**
+ * "Do you have this, or go get it" — one idempotent call replacing the whole
+ * client-side dance this used to require: pick a downloader, send it a Get,
+ * separately ask the server to scan, separately force a library resync, and
+ * poll the *app's own* sync state hoping it eventually agrees the track
+ * landed. That dance is exactly what produced the bugs worth naming: two
+ * independent Gets racing for the same file because nothing server-side
+ * deduplicated them, and an app-side sync that could lag or never run at all
+ * behind what the server already knew. `/resolve` moves ownership of "do we
+ * have this / are we already getting this / here it is" entirely onto the
+ * service that can actually answer authoritatively — see
+ * `resolver-endpoint-spec.md` for the full contract this was built against.
+ *
+ * Safe to call repeatedly with the same (title, artist): already resolved
+ * returns `ready` again; already in flight returns the *same* job rather
+ * than starting a second one.
+ */
+export type ResolveResult =
+  | { status: 'ready'; songId: string }
+  | { status: 'pending'; jobId: string; progress: number }
+  | { status: 'failed'; reason: string };
+
+function normalizeResolveResponse(body: unknown): ResolveResult {
+  const record = (body && typeof body === 'object') ? body as Record<string, unknown> : {};
+  const status = String(record.status ?? '');
+  if (status === 'ready') {
+    return { status: 'ready', songId: String(record.songId ?? record.song_id ?? record.id ?? '') };
+  }
+  if (status === 'pending') {
+    return {
+      status: 'pending',
+      jobId: String(record.jobId ?? record.job_id ?? record.id ?? ''),
+      progress: Number(record.progress) || 0,
+    };
+  }
+  return { status: 'failed', reason: String(record.reason ?? record.error ?? 'unknown') };
+}
+
+export async function resolve(config: YtFallbackConfig, req: ResolveRequest): Promise<ResolveResult> {
+  const client = createYtFallbackClient(config);
+  const body = await client.request<unknown>('/resolve', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: req.title,
+      artist: req.artist,
+      ...(req.mbid ? { mbid: req.mbid } : {}),
+      ...(req.isrc ? { isrc: req.isrc } : {}),
+    }),
+  });
+  return normalizeResolveResponse(body);
+}

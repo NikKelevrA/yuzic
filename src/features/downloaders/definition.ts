@@ -75,10 +75,10 @@ export type DownloaderDefinition = {
   settingsRoute: Href
   /**
    * Both units are optional, because a downloader gets to have a natural one.
-   * Lidarr is album-oriented and can't fetch a single file; SoulSync's request
-   * pipeline is track-oriented and has no album endpoint at all; slskd does
-   * both. Callers presence-check the unit they need rather than assuming an
-   * album is always on offer — `downloadAlbum` used to be required, which was
+   * Lidarr is album-oriented and can't fetch a single file; YT Fallback's
+   * request pipeline is track-oriented and has no album endpoint at all.
+   * Callers presence-check the unit they need rather than assuming an album
+   * is always on offer — `downloadAlbum` used to be required, which was
    * Lidarr's shape written into the contract for everyone.
    */
   downloadAlbum?(config: DownloaderConfig, req: AlbumDownloadRequest, options?: DownloadOptions): Promise<DownloadResult>

@@ -1,10 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { removeServer } from '@/state/redux/slices/serversSlice';
-import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/providers/integration/slskd';
 
-export type DownloaderId = 'lidarr' | 'slskd' | 'soulsync' | 'downtify' | 'ytfallback';
+export type DownloaderId = 'lidarr' | 'ytfallback';
 
-export const DOWNLOADER_IDS: DownloaderId[] = ['lidarr', 'slskd', 'soulsync', 'downtify', 'ytfallback'];
+export const DOWNLOADER_IDS: DownloaderId[] = ['lidarr', 'ytfallback'];
 
 /**
  * `apiKey` is NOT here — it goes to the keystore via `setCredential` (scope
@@ -18,9 +17,9 @@ export interface DownloaderConnection {
   serverUrl: string;
   isAuthenticated: boolean;
   /**
-   * Downloader-specific preferences, shaped per implementation. slskd stores
-   * `SlskdSearchPreferences` here; lidarr leaves it undefined for now. Kept
-   * as an untyped bag on the base connection so the slice stays generic.
+   * Downloader-specific preferences, shaped per implementation. Neither
+   * downloader uses this today — kept as an untyped bag on the base
+   * connection so the slice stays generic if one needs it later.
    */
   preferences?: Record<string, unknown>;
 }
@@ -58,11 +57,6 @@ const emptyConnection: DownloaderConnection = {
 
 const defaultPerServer: PerServerDownloadersState = {
   lidarr: emptyConnection,
-  slskd: emptyConnection,
-  soulsync: emptyConnection,
-  // Downtify holds no credential at all, so its `isAuthenticated` means
-  // "answered when we asked" rather than "the key was accepted".
-  downtify: emptyConnection,
   ytfallback: emptyConnection,
 };
 
@@ -106,14 +100,6 @@ const downloadersSlice = createSlice({
       entry.isAuthenticated = false;
       // The user's preferences are theirs — a disconnect is a re-plug, not a
       // reset of their format/quality choices.
-    },
-    setSlskdPreferences(
-      state,
-      action: PayloadAction<{ serverId: string; preferences: Partial<SlskdSearchPreferences> }>
-    ) {
-      const entry = getOrCreate(state, action.payload.serverId, 'slskd');
-      const current = (entry.preferences as SlskdSearchPreferences | undefined) ?? DEFAULT_SLSKD_PREFERENCES;
-      entry.preferences = { ...current, ...action.payload.preferences };
     },
     /**
      * The only writer of a default provider — called from GetReviewSheet's
@@ -169,7 +155,6 @@ export const {
   setDownloaderAuthenticated,
   connectDownloader,
   disconnectDownloader,
-  setSlskdPreferences,
   setDefaultProvider,
   setDefaultQualityProfileId,
 } = downloadersSlice.actions;

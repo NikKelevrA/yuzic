@@ -3,13 +3,13 @@ import { normalizeName } from '@/domain/identity/matching';
 /**
  * One item in a downloader's transfer queue, in terms every surface can read.
  *
- * The three downloaders describe a transfer three different ways — Lidarr
- * reports an album and an artist it resolved, slskd reports the remote
- * directory a file came from, SoulSync reports a track — and each surface that
- * wanted to know "is this album downloading" used to reach into whichever
- * shapes it knew about and branch on the provider by name. So the album row,
- * the settings card and the home banner each had their own idea of what a
- * queue is, and adding a fourth downloader meant editing all of them.
+ * The two downloaders describe a transfer differently — Lidarr reports an
+ * album and an artist it resolved, YT Fallback reports a free-text track it
+ * matched — and each surface that wanted to know "is this album downloading"
+ * used to reach into whichever shape it knew about and branch on the provider
+ * by name. So the album row, the settings card and the home banner each had
+ * their own idea of what a queue is, and adding another downloader meant
+ * editing all of them.
  *
  * Each downloader normalises its own records into this, with its own concrete
  * types and no casts. What reads a queue afterwards reads one shape.
@@ -21,7 +21,7 @@ export interface DownloaderQueueItem {
   percentComplete: number;
   /** What the transfer is for, as the downloader names it. */
   title: string;
-  /** Empty when the downloader could not tell — slskd frequently cannot. */
+  /** Empty when the downloader could not tell. */
   artistName: string;
   /**
    * False once a transfer has finished but has not yet left the queue.
@@ -36,9 +36,8 @@ export interface DownloaderQueueItem {
    *
    * `exact` — the downloader resolved a real album and reports its name;
    * matching it against a browsed album can be strict.
-   * `loose` — the title came from a remote directory or a file name, so it
-   * needs the fuzzy comparison below. There is no album identity to be had
-   * from Soulseek; what there is, is a folder someone named.
+   * `loose` — the title came from a free-text match rather than a resolved
+   * catalogue entry, so it needs the fuzzy comparison below.
    */
   identity: 'exact' | 'loose';
 
@@ -64,10 +63,9 @@ export interface DownloaderQueueItem {
   /**
    * What it takes to address the underlying transfers, for cancellation.
    *
-   * One row is often several transfers: Lidarr groups an album's tracks and
-   * slskd groups a remote directory's files, so cancelling a row means
-   * cancelling all of them. Opaque to everything except the downloader that
-   * produced them.
+   * One row is often several transfers: Lidarr groups an album's tracks.
+   * Cancelling a row means cancelling all of them. Opaque to everything
+   * except the downloader that produced them.
    */
   transferIds: string[];
 }
@@ -100,9 +98,9 @@ function looselyEqual(left: string, right: string): boolean {
  * The strictness comes from the item rather than from the caller, which is
  * what lets an album row ask this question without knowing which downloaders
  * exist. A Lidarr row has to match exactly — it knows what album it resolved,
- * and accepting a near miss would show the wrong album as downloading. A
- * Soulseek row cannot be matched exactly by anything, because a remote folder
- * name is all there is.
+ * and accepting a near miss would show the wrong album as downloading. A YT
+ * Fallback row cannot be matched exactly by anything, because a free-text
+ * title/artist match is all there is.
  */
 export function matchesAlbum(item: DownloaderQueueItem, album: AlbumIdentity): boolean {
   const itemTitle = normalizeName(item.title);

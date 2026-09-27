@@ -1,35 +1,41 @@
 /**
  * "Tap a song you don't own yet and have it start playing" — for a
  * self-hosted setup where that is a real, closed loop: MusicBrainz search
- * found the track, a downloader can fetch it, and the server it lands on is
+ * found the track, the resolver can fetch it, and the server it lands on is
  * the same one this app streams from. None of that holds against the shared
- * public MusicBrainz server or with no downloader connected, so this always
+ * public MusicBrainz server or with no resolver connected, so this always
  * checks both before doing anything — see `canAcquireAndPlay`.
  *
- * Three steps, and only the middle one is genuinely uncertain:
- *   1. Already in the library? Play it. No downloader involved at all.
- *   2. Not yet? Send it to whichever connected downloader can take a single
- *      track (`downloadTrack`), or — Lidarr being album-only — the whole
- *      album to whichever can take that, via the same `runGet` the manual
- *      Get sheet uses. One notification, not a review sheet: this is the
- *      "just play it" path, not the "let me pick a quality profile" one.
- *   3. Wait for it to actually arrive. A downloader finishing writes into the
- *      *server's* library the way a manual copy would — this app has no way
- *      to know until the server scans and this app resyncs from it. So this
- *      polls: ask the server to scan, force a resync, and check whether
- *      `useLocalFirst`'s index now resolves the song. That index is rebuilt
- *      from fresh query-cache data on every successful sync (see
- *      `useCatalogStore`), which is why this is a `useEffect` reacting to a
- *      changing `localSong` rather than one async function closing over a
- *      snapshot of it — a closure taken before the first sync landed would
- *      keep checking the library the request started with, forever.
+ * Two steps, and only the second is genuinely uncertain:
+ *   1. Already in the library? Play it. No network request at all.
+ *   2. Not yet? Ask YT Fallback's `/resolve` — "do you have this, or go get
+ *      it" — and act on whatever it says: `ready` plays immediately, `failed`
+ *      says so, `pending` shows one toast and starts polling the *same* call
+ *      until it flips.
+ *
+ * This used to be a three-step dance: pick a downloader (track-capable
+ * first, Lidarr's whole-album as a fallback), send it a free-text Get, then
+ * separately ask the server to scan and force this app's own library sync,
+ * polling *that* — hoping it eventually agreed the track had landed. That
+ * indirection was the actual source of the bugs worth naming: two
+ * independent Gets racing for the same file because nothing deduplicated
+ * them, and a wait that depended on this app's own sync (throttled,
+ * sometimes stale, occasionally just never re-triggered after a poll gave
+ * up) rather than on the one thing that actually knew the truth. `/resolve`
+ * moves all of that server-side — matching, deduping, waiting — and this
+ * hook is left with almost nothing to get wrong: ask, act on the answer,
+ * ask again if it says "still working."
+ *
+ * Lidarr's whole-album fallback is gone from this path on purpose: it isn't
+ * behind `/resolve` (that endpoint is specifically the slskd-then-YouTube
+ * service), so a Lidarr-only setup now falls through to the ordinary Want/Get
+ * sheet instead of auto-playing. That sheet already offers Lidarr directly.
  *
  * Scoped to the row that calls it, not a background service: navigating away
- * unmounts the row and stops the wait. A song that finishes downloading after
- * you've moved on updates your library like any other sync, but this hook
- * will not surface it with a toast or an autoplay you're not there to see.
- * Worth revisiting as a standing provider (`DownloadersQueueProvider` is the
- * shape) if that turns out to matter in practice.
+ * unmounts the row and stops the wait. A song that finishes resolving after
+ * you've moved on is still sitting there next time you search for it — the
+ * resolver doesn't forget — but this hook won't surface it with a toast or
+ * an autoplay you're not there to see.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,25 +43,20 @@ import { useTranslation } from 'react-i18next';
 import type { Album } from '@/domain/entities/Album';
 import type { Song } from '@/domain/entities/Song';
 import { notify } from '@/components/toast';
-import { useApi } from '@/providers/registry/useApi';
-import { useSync } from '@/features/library/useSync';
 import { useLocalFirst } from '@/features/library/useLocalFirst';
 import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { useSelfHostedMusicbrainzConfigured } from '@/features/settings/sources/useSelfHostedMusicbrainzConfigured';
-import { useDownloadersForUnit } from './registry';
-import { runGet } from './runGet';
+import * as ytfallback from '@/providers/integration/ytfallback';
+import { useDownloaderStates } from './registry';
 
-/** How long to keep polling after a Get before giving up and letting the
- *  ordinary sync cadence pick it up eventually. Generous on purpose — a
- *  Soulseek transfer can genuinely take minutes, and giving up early would
- *  turn "downloading, hang on" into a silent nothing-happened. */
+/** How long to keep polling the resolver before giving up. A Soulseek
+ *  transfer (or a cold YouTube download + transcode) can genuinely take
+ *  minutes, and giving up early would turn "downloading, hang on" into a
+ *  silent nothing-happened. */
 const ACQUIRE_TIMEOUT_MS = 3 * 60 * 1000;
-/** Every tick asks the server to scan and forces a resync — both already
- *  cheap/idempotent (`sync(true)` no-ops if a sync is already in flight) —
- *  rather than waiting on the ambient 30s `DownloadersQueueContext` poll,
- *  which exists for a different job (the queue screens) and isn't guaranteed
- *  to be running for the connected downloader this request went to. */
+/** `/resolve` is cheap and idempotent — this is just how often to re-ask it
+ *  while something is pending. */
 const POLL_INTERVAL_MS = 12_000;
 
 type PendingAcquire = {
@@ -71,35 +72,33 @@ export function hasReachedAcquireDeadline(startedAt: number, now: number): boole
 
 export function useAcquireAndPlaySong() {
   const { t } = useTranslation();
-  const api = useApi();
-  const { sync } = useSync();
   const { localSong } = useLocalFirst();
   const { resolvePlayableSong } = usePlayableSongResolver();
   const { playSong } = usePlayingActions();
 
   const selfHostedMusicbrainzConfigured = useSelfHostedMusicbrainzConfigured();
-  const trackDownloaders = useDownloadersForUnit('track');
-  const albumDownloaders = useDownloadersForUnit('album');
+  // The resolver lives behind the YT Fallback service specifically — see
+  // `/resolve` in `providers/integration/ytfallback`. Read through the
+  // ordinary downloader connection state rather than a connection type of
+  // its own: it's the same service, same credentials, just one more endpoint
+  // on it.
+  const resolverState = useDownloaderStates().find(d => d.def.id === 'ytfallback');
+  const resolverConnected = resolverState?.isConnected ?? false;
+  const resolverConfig: ytfallback.YtFallbackConfig | null = resolverState
+    ? { serverUrl: resolverState.config.serverUrl, apiKey: resolverState.config.apiKey }
+    : null;
 
-  /** True once a downloader is not just connected but able to take *some*
-   *  form of this request — a track directly, or (Lidarr) the album it's
-   *  on. Read by callers to decide whether to keep their own fallback UI
+  /** True once the resolver is not just configured but actually connected.
+   *  Read by callers to decide whether to keep their own fallback UI
    *  (Want/Get sheet, preview) instead of calling `acquireAndPlay`. */
-  const canAcquireAndPlay = selfHostedMusicbrainzConfigured
-    && (trackDownloaders.length > 0 || albumDownloaders.length > 0);
-
-  /** Broader than `canAcquireAndPlay`: true whenever the self-hosted half of
-   *  the setup is on, whether or not a downloader is currently detected as
-   *  connected. Callers use this to decide whether a tap should say *why*
-   *  nothing happened (no downloader connected) instead of doing nothing at
-   *  all — silence here used to be indistinguishable from a broken row. */
+  const canAcquireAndPlay = selfHostedMusicbrainzConfigured && resolverConnected;
 
   const [pending, setPending] = useState<PendingAcquire | null>(null);
   const pendingRef = useRef<PendingAcquire | null>(null);
   pendingRef.current = pending;
 
-  const playLocal = useCallback(async (found: Song) => {
-    const resolved = await resolvePlayableSong(found.nativeId);
+  const playByNativeId = useCallback(async (nativeId: string) => {
+    const resolved = await resolvePlayableSong(nativeId);
     if (resolved) {
       await playSong(resolved.song);
       return true;
@@ -107,23 +106,18 @@ export function useAcquireAndPlaySong() {
     return false;
   }, [resolvePlayableSong, playSong]);
 
-  // Step 3 (the "did it arrive" half): re-checks the moment `localSong`
-  // itself changes identity, which is exactly when a sync has landed new
-  // data — see the file doc comment on why this isn't a plain async loop.
-  useEffect(() => {
-    if (!pending) return;
-    const found = localSong(pending.song);
-    if (!found) return;
-    setPending(null);
-    void playLocal(found).then(ok => {
-      if (!ok) notify.error(t('externalAlbum.download.acquirePlayFailed', { title: pending.song.title }));
-    });
-  }, [pending, localSong, playLocal, t]);
+  const resolveRequestOf = (song: Song) => ({
+    title: song.title,
+    artist: song.artist.name,
+    mbid: song.externalIds.mbid,
+    isrc: song.externalIds.isrc,
+  });
 
-  // The polling half: nudges the server/sync on an interval while something
-  // is pending, and gives up (with a toast, not silently) past the timeout.
+  // The polling half: re-asks `/resolve` on an interval while something is
+  // pending, acts on whatever it answers, and gives up (with a toast, not
+  // silently) past the deadline.
   useEffect(() => {
-    if (!pending) return;
+    if (!pending || !resolverConfig) return;
 
     const tick = async () => {
       // Stale timer from a request that already resolved or was superseded.
@@ -135,77 +129,75 @@ export function useAcquireAndPlaySong() {
         }
         return;
       }
-      try { await api.auth.startScan(); } catch { /* server may not support/allow this; sync alone still helps */ }
-      try { await sync(true); } catch { /* transient — the next tick tries again */ }
+
+      let result: ytfallback.ResolveResult;
+      try {
+        result = await ytfallback.resolve(resolverConfig, resolveRequestOf(pending.song));
+      } catch {
+        return; // transient — the next tick tries again.
+      }
+      if (pendingRef.current !== pending) return;
+
+      if (result.status === 'ready') {
+        setPending(null);
+        const ok = await playByNativeId(result.songId);
+        if (!ok) notify.error(t('externalAlbum.download.acquirePlayFailed', { title: pending.song.title }));
+      } else if (result.status === 'failed') {
+        setPending(null);
+        notify.error(t('externalAlbum.download.acquireNotFound', { title: pending.song.title }));
+      }
+      // 'pending' — keep polling.
     };
 
     const id = setInterval(() => { void tick(); }, POLL_INTERVAL_MS);
     // Fire once right away rather than waiting a full interval for the first
-    // scan/sync — the toast already told the user this is happening now.
+    // check — the toast already told the user this is happening now.
     void tick();
     return () => clearInterval(id);
-  }, [pending, api, sync, t]);
+  }, [pending, resolverConfig, playByNativeId, t]);
 
   /**
    * Called on tap. Returns `true` once it has taken over — either playing
-   * immediately (already owned) or having started a Get and begun waiting
-   * (a toast is already showing). Returns `false` when nothing could be
-   * done (no capable downloader, or the request itself failed to send — a
-   * toast covers that case too, via `runGet`), so the caller knows to fall
-   * back to whatever it would otherwise have done.
+   * immediately (already owned, or the resolver already had it), reporting
+   * a definite failure, or having started a wait (a toast is already
+   * showing). Returns `false` when nothing could be done at all (no
+   * self-hosted MusicBrainz, or no resolver connected), so the caller knows
+   * to fall back to whatever it would otherwise have done.
    */
-  const acquireAndPlay = useCallback(async (song: Song, albumStub: Album): Promise<boolean> => {
+  const acquireAndPlay = useCallback(async (song: Song, _albumStub: Album): Promise<boolean> => {
     const owned = localSong(song);
     if (owned) {
-      // Unlike the polling branch below, this used to swallow a resolve/play
-      // failure entirely: `playLocal` returning `false` here just fell
-      // through to the caller's own fallback (SongResult opens its options
-      // sheet) with no toast at all, so a tap on an already-owned track that
-      // genuinely failed to play looked exactly like a tap that did nothing.
-      const played = await playLocal(owned);
+      const played = await playByNativeId(owned.nativeId);
       if (!played) notify.error(t('externalAlbum.download.acquirePlayFailed', { title: song.title }));
       return played;
     }
 
-    if (!canAcquireAndPlay) return false;
+    if (!canAcquireAndPlay || !resolverConfig) return false;
 
-    const trackState = trackDownloaders[0];
-    const albumState = albumDownloaders[0];
-
-    let sent: boolean;
-    if (trackState) {
-      sent = await runGet({
-        downloader: trackState,
-        album: albumStub,
-        track: { title: song.title, artist: song.artist.name },
-        t,
-        // Never reached: a track-capable downloader downloads the track
-        // directly (`track` is set above), never the album by its tracks.
-        loadTracks: async () => [],
-      });
-    } else if (albumState) {
-      sent = await runGet({
-        downloader: albumState,
-        album: albumStub,
-        t,
-        // Only reached if `albumState.def.downloadAlbum` is absent, which
-        // isn't possible for what `useDownloadersForUnit('album')` returns
-        // when no track downloader is connected (Lidarr, the only such
-        // downloader, always has one). Kept honest rather than `undefined!`.
-        loadTracks: async () => [{ title: song.title, artist: song.artist.name }],
-      });
-    } else {
-      return false;
+    let result: ytfallback.ResolveResult;
+    try {
+      result = await ytfallback.resolve(resolverConfig, resolveRequestOf(song));
+    } catch {
+      notify.error(t('externalAlbum.download.acquireNotFound', { title: song.title }));
+      return true;
     }
 
-    if (!sent) return true; // runGet already reported the failure via toast.
+    if (result.status === 'ready') {
+      const ok = await playByNativeId(result.songId);
+      if (!ok) notify.error(t('externalAlbum.download.acquirePlayFailed', { title: song.title }));
+      return true;
+    }
+    if (result.status === 'failed') {
+      notify.error(t('externalAlbum.download.acquireNotFound', { title: song.title }));
+      return true;
+    }
 
     notify.loading(t('externalAlbum.download.acquireDownloading', { title: song.title }), {
       id: `acquire-play:${song.localId}`,
     });
     setPending({ song, startedAt: Date.now() });
     return true;
-  }, [localSong, playLocal, canAcquireAndPlay, trackDownloaders, albumDownloaders, t]);
+  }, [localSong, playByNativeId, canAcquireAndPlay, resolverConfig, t]);
 
   return { canAcquireAndPlay, selfHostedMusicbrainzConfigured, acquireAndPlay };
 }

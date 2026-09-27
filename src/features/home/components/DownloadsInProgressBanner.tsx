@@ -11,8 +11,8 @@ import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
 import { useDownloadersQueue } from '@/features/downloaders/DownloadersQueueContext';
 /**
- * Banner that surfaces active downloader queues (Lidarr / slskd) at the top
- * of Home so users see what's in flight without diving into Settings →
+ * Banner that surfaces active downloader queues (Lidarr / YT Fallback) at the
+ * top of Home so users see what's in flight without diving into Settings →
  * Downloaders → each one. Auto-hides when nothing's queued.
  *
  * Tap → opens the top-level Downloads screen with every connected
@@ -35,8 +35,9 @@ export function DownloadsInProgressBanner() {
   // keeps its entry whether or not anything is queued — an empty queue is a
   // real answer, and the Downloads screen needs it to tell "nothing is
   // transferring" apart from "not read yet". A banner about work in progress
-  // is not that surface: naming an idle one there said "0 on slskd" beside a
-  // heading counting eleven downloads. Safe against an empty subtitle, since
+  // is not that surface: naming an idle one there said "0 on YT Fallback"
+  // beside a heading counting eleven downloads. Safe against an empty
+  // subtitle, since
   // a nonzero total means at least one of these is nonzero.
   const summary = queues
     .filter((q) => q.count > 0)

@@ -107,7 +107,7 @@ describe('wantStatus', () => {
     // listener did.
     const status = wantStatus(
       want({ jobRef: { downloader: 'lidarr', requestedAt: NOW } }),
-      { queues: queue([queueItem()], 'slskd'), hasArrived: false, now: NOW }
+      { queues: queue([queueItem()], 'ytfallback'), hasArrived: false, now: NOW }
     );
 
     expect(status).toEqual({ kind: 'queued' });

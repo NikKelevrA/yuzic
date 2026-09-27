@@ -17,14 +17,9 @@ const LIDARR_CODES = [
   'request_timeout',
 ] as const;
 
-const SLSKD_CODES = [
-  'missing_identity',
-  'search_failed',
-  'search_timeout',
-  'no_matching_release',
-  'no_matching_track',
-  'enqueue_failed',
-  'request_failed',
+const YTFALLBACK_CODES = [
+  'no_tracks',
+  'some_tracks_failed',
 ] as const;
 
 const LOCALES = { en, fr, ja, zh } as Record<string, Record<string, any>>;
@@ -35,8 +30,8 @@ function lookup(bundle: Record<string, any>, key: string): unknown {
 
 describe('downloadErrorKey', () => {
   it('builds a downloader-scoped key from the code', () => {
-    expect(downloadErrorKey('slskd', 'no_matching_release')).toBe(
-      'externalAlbum.download.errors.slskd.no_matching_release'
+    expect(downloadErrorKey('ytfallback', 'no_tracks')).toBe(
+      'externalAlbum.download.errors.ytfallback.no_tracks'
     );
   });
 
@@ -55,8 +50,8 @@ describe('downloadErrorKey', () => {
       expect(typeof lookup(bundle, downloadErrorKey('lidarr', code))).toBe('string');
     });
 
-    it.each(SLSKD_CODES)('translates slskd %s', (code) => {
-      expect(typeof lookup(bundle, downloadErrorKey('slskd', code))).toBe('string');
+    it.each(YTFALLBACK_CODES)('translates ytfallback %s', (code) => {
+      expect(typeof lookup(bundle, downloadErrorKey('ytfallback', code))).toBe('string');
     });
   });
 });

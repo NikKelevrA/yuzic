@@ -50,9 +50,9 @@ describe('DownloadsInProgressBanner', () => {
   it('names only the downloaders actually carrying something', async () => {
     // A connected-but-idle downloader keeps its entry in the shared queue
     // snapshot on purpose; this banner is about work in flight, so it read as
-    // "0 on slskd" sitting beside a heading counting eleven downloads.
+    // "0 on YT Fallback" sitting beside a heading counting eleven downloads.
     mockUseDownloadersQueue.mockReturnValue({
-      queues: [queue('lidarr', 'Lidarr', 11), queue('slskd', 'slskd', 0)],
+      queues: [queue('lidarr', 'Lidarr', 11), queue('ytfallback', 'YT Fallback', 0)],
       totalInFlight: 11,
     });
 
@@ -60,18 +60,18 @@ describe('DownloadsInProgressBanner', () => {
 
     expect(view.getByText('11 downloads in progress')).toBeTruthy();
     expect(view.getByText('11 on Lidarr')).toBeTruthy();
-    expect(view.queryByText(/slskd/)).toBeNull();
+    expect(view.queryByText(/YT Fallback/)).toBeNull();
   });
 
   it('joins the downloaders that are, when there is more than one', async () => {
     mockUseDownloadersQueue.mockReturnValue({
-      queues: [queue('lidarr', 'Lidarr', 11), queue('slskd', 'slskd', 2)],
+      queues: [queue('lidarr', 'Lidarr', 11), queue('ytfallback', 'YT Fallback', 2)],
       totalInFlight: 13,
     });
 
     const view = await render(<DownloadsInProgressBanner />);
 
-    expect(view.getByText('11 on Lidarr · 2 on slskd')).toBeTruthy();
+    expect(view.getByText('11 on Lidarr · 2 on YT Fallback')).toBeTruthy();
   });
 
   it('draws nothing at all when nothing is in flight', async () => {

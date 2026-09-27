@@ -14,7 +14,7 @@ const album = {
 beforeEach(() => { __resetToasts(); });
 
 const downloaderWith = (def: Record<string, unknown>) =>
-  ({ def: { id: 'slskd', label: 'slskd', albumAddedKey: 'added', ...def }, config: {} }) as never;
+  ({ def: { id: 'ytfallback', label: 'YT Fallback', albumAddedKey: 'added', ...def }, config: {} }) as never;
 
 describe('runGet', () => {
   it('reports through one toast from start to finish, never a stack of three', async () => {

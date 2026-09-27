@@ -18,9 +18,9 @@ import { useDownloaderStates, type DownloaderState } from './registry';
 import { finishedSince, type DownloaderQueueItem } from './queueItem';
 import type { DownloaderId } from '@/state/redux/slices/downloadersSlice';
 
-// A completed download on a downloader (Lidarr/slskd) writes to the media
-// library the same way a manual copy would — the server has no way to know
-// until it scans. This poll interval balances "the new album shows up
+// A completed download on a downloader (Lidarr/YT Fallback) writes to the
+// media library the same way a manual copy would — the server has no way to
+// know until it scans. This poll interval balances "the new album shows up
 // promptly" against "we're not hammering an idle downloader all day".
 const POLL_INTERVAL_MS = 30_000;
 
@@ -219,9 +219,10 @@ export function DownloadersQueueProvider({ children }: { children: ReactNode }) 
    * Registry order, which is the one thing here that does not depend on the
    * network. Poll order does: two downloaders answer whenever their servers
    * get round to it, and the list used to be built in that order — so the Home
-   * banner swapped "11 on Lidarr · 0 on slskd" for "0 on slskd · 11 on Lidarr"
-   * and back, on a loop, without a single count ever changing. Sorting here
-   * rather than at the banner keeps every surface reading one order.
+   * banner swapped "11 on Lidarr · 0 on YT Fallback" for "0 on YT Fallback ·
+   * 11 on Lidarr" and back, on a loop, without a single count ever changing.
+   * Sorting here rather than at the banner keeps every surface reading one
+   * order.
    */
   const orderedQueues = useMemo(() => {
     const byId = new Map(queues.map((q) => [q.id, q]));

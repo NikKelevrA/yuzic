@@ -86,8 +86,8 @@ describe('DownloaderQueueSection', () => {
   it('names the album a transfer is for, so its cover can be found before it arrives', async () => {
     const view = await render(
       <DownloaderQueueSection
-        id="slskd"
-        title="slskd"
+        id="ytfallback"
+        title="YT Fallback"
         items={[item({ title: 'Some Other Record', artistName: 'Nobody', identity: 'loose' })]}
         isLoading={false}
         hasError={false}
@@ -103,12 +103,13 @@ describe('DownloaderQueueSection', () => {
   });
 
   it('falls back to the peer when the downloader could not name an artist', async () => {
-    // slskd frequently cannot; the remote user is then the only attribution
-    // there is, and a subject naming nobody would find nothing.
+    // A downloader frequently cannot tell the artist; the remote peer is
+    // then the only attribution there is, and a subject naming nobody would
+    // find nothing.
     await render(
       <DownloaderQueueSection
-        id="slskd"
-        title="slskd"
+        id="ytfallback"
+        title="YT Fallback"
         items={[item({ title: 'Some Other Record', artistName: '', peer: 'someuser', identity: 'loose' })]}
         isLoading={false}
         hasError={false}

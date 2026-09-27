@@ -8,7 +8,6 @@ import {
   DownloaderId,
   PerServerDownloadersState,
 } from '@/state/redux/slices/downloadersSlice';
-import { DEFAULT_SLSKD_PREFERENCES, type SlskdSearchPreferences } from '@/providers/integration/slskd';
 import { getCredentials } from '@/state/credentialCache';
 import type { CredentialScope } from '@/state/credentials';
 import { selectCredentialsHydrated } from './serversSelectors';
@@ -17,9 +16,6 @@ const emptyConnection: DownloaderConnection = { serverUrl: '', isAuthenticated: 
 
 const defaultEntry: PerServerDownloadersState = {
   lidarr: emptyConnection,
-  slskd: emptyConnection,
-  soulsync: emptyConnection,
-  downtify: emptyConnection,
   ytfallback: emptyConnection,
 };
 
@@ -70,28 +66,6 @@ export const downloaderSelectors = Object.fromEntries(
 ) as Record<DownloaderId, DownloaderSelectors>;
 
 export const useLidarrConfig = downloaderSelectors.lidarr.useConfig;
-
-const selectSlskdConnection = createSelector(
-  [selectDownloadersForActiveServer],
-  (entry) => entry.slskd ?? emptyConnection
-);
-
-/**
- * Merges the user's stored slskd preferences with the built-in defaults, so
- * a partially-saved value (e.g. only min bitrate set) still gets defaults for
- * the other fields. Unknown keys are dropped — this is user-controlled.
- */
-export const selectSlskdPreferences = createSelector(
-  [selectSlskdConnection],
-  (connection): SlskdSearchPreferences => {
-    const stored = connection.preferences as Partial<SlskdSearchPreferences> | undefined;
-    return {
-      preferredFormat: stored?.preferredFormat ?? DEFAULT_SLSKD_PREFERENCES.preferredFormat,
-      minBitrateKbps: stored?.minBitrateKbps ?? DEFAULT_SLSKD_PREFERENCES.minBitrateKbps,
-      preferFreeSlot: stored?.preferFreeSlot ?? DEFAULT_SLSKD_PREFERENCES.preferFreeSlot,
-    };
-  }
-);
 
 /**
  * The saved default acquisition provider for the active server, per unit.

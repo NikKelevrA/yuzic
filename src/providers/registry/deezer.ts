@@ -19,9 +19,9 @@ export const deezerProvider: IntegrationProvider = {
   kind: 'integration',
   id: 'deezer',
   // No dedicated icon asset exists for Deezer today (checked assets/images —
-  // only server logos and lidarr/slskd are there). `icon: 0` is the same
-  // placeholder the contract's own broker test uses for a provider with no
-  // real asset, rather than inventing one.
+  // only server logos are there). `icon: 0` is the same placeholder the
+  // contract's own broker test uses for a provider with no real asset,
+  // rather than inventing one.
   presentation: { nameKey: 'settings.sources.deezer.name', icon: 0, color: sourceColor.deezer },
   auth: { tier: 'none' },
   // Its pictures fill gaps through `coverBackups.ts`, not a capability here.
