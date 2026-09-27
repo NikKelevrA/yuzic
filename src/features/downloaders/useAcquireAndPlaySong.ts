@@ -156,7 +156,16 @@ export function useAcquireAndPlaySong() {
    */
   const acquireAndPlay = useCallback(async (song: Song, albumStub: Album): Promise<boolean> => {
     const owned = localSong(song);
-    if (owned) return playLocal(owned);
+    if (owned) {
+      // Unlike the polling branch below, this used to swallow a resolve/play
+      // failure entirely: `playLocal` returning `false` here just fell
+      // through to the caller's own fallback (SongResult opens its options
+      // sheet) with no toast at all, so a tap on an already-owned track that
+      // genuinely failed to play looked exactly like a tap that did nothing.
+      const played = await playLocal(owned);
+      if (!played) notify.error(t('externalAlbum.download.acquirePlayFailed', { title: song.title }));
+      return played;
+    }
 
     if (!canAcquireAndPlay) return false;
 

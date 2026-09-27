@@ -133,6 +133,23 @@ describe('useAcquireAndPlaySong — already owned', () => {
     expect(handled).toBe(true);
     expect(mockPlaySong).toHaveBeenCalled();
   });
+
+  // Regression: an owned song whose resolve/play genuinely fails used to
+  // report `false` with no toast at all — indistinguishable from the tap
+  // having done nothing. The polling branch below already toasts on this
+  // same failure; the direct-play branch has to match it.
+  it('toasts an error when an owned song is found but fails to resolve or play', async () => {
+    mockServerUrls = { musicbrainz: 'http://nas:5000' };
+    mockLocalSongImpl = () => song;
+    mockResolvePlayableSong.mockResolvedValue(null);
+
+    const { result } = renderHook(() => useAcquireAndPlaySong());
+    const handled = await act(() => result.current.acquireAndPlay(song, albumStub));
+
+    expect(handled).toBe(false);
+    expect(mockPlaySong).not.toHaveBeenCalled();
+    expect(__getToasts().some(x => x.variant === 'error')).toBe(true);
+  });
 });
 
 describe('useAcquireAndPlaySong — not owned, gate closed', () => {
