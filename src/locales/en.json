@@ -1011,7 +1011,8 @@
       "genre": "Genre",
       "mood": "Mood",
       "allGenres": "All genres",
-      "empty": "Nothing under {{tag}} yet."
+      "empty": "Nothing under {{tag}} yet.",
+      "noTags": "Nothing here yet — your library has no genre or mood tags."
     }
   },
   "artist": {

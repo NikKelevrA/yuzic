@@ -1011,7 +1011,8 @@
       "genre": "Genre",
       "mood": "Ambiance",
       "allGenres": "Tous les genres",
-      "empty": "Rien sous {{tag}} pour l’instant."
+      "empty": "Rien sous {{tag}} pour l’instant.",
+      "noTags": "Rien ici pour l'instant — votre bibliothèque n'a aucun tag de genre ou d'ambiance."
     }
   },
   "media": {

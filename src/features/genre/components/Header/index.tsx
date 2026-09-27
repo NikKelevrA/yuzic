@@ -1,6 +1,6 @@
-import { controlSize, coverFade, iconSize, onDark, shade, spacing, typography, veil } from '@/constants/design';
+import { controlSize, coverFade, iconSize, motion, onDark, shade, spacing, typography, veil } from '@/constants/design';
 import { useIconSize } from '@/features/theme/useIconSize';
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { View, StyleSheet, Platform } from 'react-native'
 import { Text } from '@/components/Text'
@@ -8,7 +8,9 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
 import { ChevronLeft, Ellipsis, Shuffle, Play } from 'lucide-react-native'
 import TurboImage from 'react-native-turbo-image'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSelector } from 'react-redux'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { notify } from '@/components/toast';
 import { useTranslation } from 'react-i18next'
 
@@ -37,6 +39,7 @@ import DownloadStateIcon from '@/components/DownloadStateIcon';
 import { useCollectionDownloadProgress } from '@/features/downloads/useCollectionDownloadProgress';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
+import { useReducedMotion } from '@/features/theme/useReducedMotion';
 
 type Props = {
   genre: string
@@ -51,9 +54,18 @@ type Props = {
    * screen's own shape.
    */
   showHero?: boolean
+  /**
+   * The line under the name. Defaults to the album count; the tag screen
+   * passes "Genre · 12 albums", since "Melancholy" on its own does not say
+   * which kind of tag it came from.
+   */
+  subtitle?: string
 }
 
-const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, showHero = true }) => {
+/** Just past 1: the art is already the right size, it only has to arrive. */
+const HERO_ARRIVAL_SCALE = 1.06
+
+const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, showHero = true, subtitle }) => {
   const navigation = useNavigation<any>()
   const queryClient = useQueryClient()
   const icons = useIconSize();
@@ -69,6 +81,30 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, sh
   // it and the status bar take: the content below stays put and the extra strip
   // at the top is filled with art rather than a band.
   const barInset = useDetailHeaderInset()
+  // The nav row used to sit at a hardcoded `top: 20`, which only ever cleared
+  // the status bar because this header was mounted inside a `DetailScreen`
+  // that had already inset it. On a screen without one the back button landed
+  // on the clock. Measured rather than guessed, so it is right in both.
+  const insets = useSafeAreaInsets()
+
+  /**
+   * The hero settles rather than appearing.
+   *
+   * The tile you tapped had artwork on it and this screen has artwork on it,
+   * and between the two there was nothing — the push slid in a finished
+   * screen. A shared element would be the ideal answer and is not available:
+   * Reanimated 4 keeps it behind the app-wide, experimental
+   * `ENABLE_SHARED_ELEMENT_TRANSITIONS` flag, and its own documentation says
+   * a tab navigator may stop it running, which is every stack we have. So
+   * the art arrives under its own power instead — a slow settle out of a
+   * slight overscale, which reads as the screen coming to rest.
+   */
+  const reduced = useReducedMotion()
+  const heroScale = useSharedValue(reduced ? 1 : HERO_ARRIVAL_SCALE)
+  useEffect(() => {
+    heroScale.value = withTiming(1, { duration: reduced ? motion.quick : motion.washArrival })
+  }, [heroScale, reduced])
+  const heroStyle = useAnimatedStyle(() => ({ transform: [{ scale: heroScale.value }] }))
   const onTitleLayout = useDetailHeroTitleLayout()
 
   const [isDownloadingAll, setIsDownloadingAll] = useState(false)
@@ -150,14 +186,16 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, sh
       {showHero && (
       <View style={[styles.fullBleedWrapper, { height: GENRE_HERO_HEIGHT + barInset }]}>
         {coverUri && (
-          <TurboImage
-            source={{ uri: coverUri }}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-            blur={Platform.OS === 'ios' ? 20 : 10}
-            fadeDuration={300}
-            cachePolicy="dataCache"
-          />
+          <Animated.View style={[StyleSheet.absoluteFill, heroStyle]}>
+            <TurboImage
+              source={{ uri: coverUri }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+              blur={Platform.OS === 'ios' ? 20 : 10}
+              fadeDuration={motion.modeChange}
+              cachePolicy="dataCache"
+            />
+          </Animated.View>
         )}
 
         <LinearGradient
@@ -174,7 +212,7 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, sh
           // the left, "…" on the right. The genre's options were reachable only
           // once the bar had faded in, which is after the hero has scrolled
           // away — so on arrival the screen had none.
-          <View style={styles.header}>
+          <View style={[styles.header, { top: insets.top + spacing.xs }]}>
             <Touchable
               testID="detail-back-button"
               accessibilityRole="button"
@@ -197,7 +235,9 @@ const GenreHeader: React.FC<Props> = ({ genre, albums, showNavigation = true, sh
           {genre}
         </Text>
         <Text style={[styles.subtext, { color: colors.subtext }]}>
-          {albums.length} {albums.length === 1 ? 'album' : 'albums'}
+          {/* Was `${albums.length} albums` in English, on a screen that is
+              translated into four languages everywhere else. */}
+          {subtitle ?? t('library.count.albums', { count: albums.length })}
         </Text>
       </View>
       )}
@@ -287,7 +327,6 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 20 : 50,
     left: 0,
     right: 0,
     flexDirection: 'row',

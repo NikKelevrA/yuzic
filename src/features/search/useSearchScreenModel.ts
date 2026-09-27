@@ -10,7 +10,7 @@
  * them and the screen.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard } from 'react-native';
+import { BackHandler, Keyboard } from 'react-native';
 import type { TextInput } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -85,14 +85,9 @@ export function useSearchScreenModel() {
   );
 
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Mirrors `query` for the focus effect, which must not be re-created on every
-  // keystroke but still needs to read the current value.
-  const queryRef = useRef(query);
-  queryRef.current = query;
-
-  // Mirrors scope/filter selections for the same reason `queryRef` exists:
-  // `runSearch` is stable across re-renders it doesn't need to react to, but
-  // still has to read the current selection when the debounce/submit fires.
+  // Mirrors the scope/filter selections: `runSearch` is stable across
+  // re-renders it doesn't need to react to, but still has to read the current
+  // selection when the debounce or a submit fires.
   const scopeRef = useRef(resultScope);
   scopeRef.current = resultScope;
   const selectedSourceIdsRef = useRef(selectedSourceIds);
@@ -101,31 +96,61 @@ export function useSearchScreenModel() {
   selectedEntityTypesRef.current = selectedEntityTypes;
 
   /**
-   * Whether the field is focused — which decides what the idle screen shows.
+   * Searching or browsing — the tab's two states, and the one thing that
+   * decides what the body shows.
    *
-   * The tab used to force the keyboard open on arrival, on the theory that
-   * arriving at Search means intending to type. Often it doesn't: it means
-   * browsing, and half the screen was gone before anything had been looked at.
-   * So the tab opens quietly now, and typing is a tap away like it is
-   * everywhere else.
+   * This used to be the field's focus, which made the keyboard the source of
+   * truth and produced a screen with no stable state: dismissing the keyboard
+   * to read the recents underneath replaced them with the browse grid, and
+   * scrolling results did the same thing (`keyboardDismissMode="on-drag"`
+   * blurs the field), so the tab flipped between two layouts while the user
+   * was reading one of them.
    *
-   * Focus is what tells `SearchResultsBody` to put recent searches up. They
-   * belong to the act of typing — a list of half-remembered past queries is
-   * useful with a cursor in the field and clutter without one.
+   * Searching is entered by tapping the field and left only on purpose —
+   * Cancel, or Android back. A blur no longer leaves it, so the keyboard can
+   * come and go underneath one steady screen. A non-empty query counts as
+   * searching by itself, so a restored or programmatic query can never land
+   * on the browse grid with results behind it.
+   *
+   * The tab still opens quietly on browse rather than forcing the keyboard
+   * up: arriving at Search often means browsing, and half the screen was
+   * gone before anything had been looked at.
    */
   const searchInputRef = useRef<TextInput>(null);
-  const [isInputFocused, setIsInputFocused] = useState(false);
-  const onSearchFocus = useCallback(() => setIsInputFocused(true), []);
-  const onSearchBlur = useCallback(() => setIsInputFocused(false), []);
+  const [isSearchingState, setIsSearchingState] = useState(false);
+  const isSearching = isSearchingState || query.trim() !== '';
+  const enterSearch = useCallback(() => setIsSearchingState(true), []);
 
-  // Leaving the tab ends the focused state whether or not the field gets a
-  // blur event: navigating away from a focused field (tapping a browse tile,
-  // say) unmounts nothing, so coming back would otherwise land on recents
-  // with no keyboard to explain them.
+  /**
+   * Back to browsing: keyboard away, query gone, results dropped.
+   *
+   * The scope and the Filters selections are deliberately left alone. They
+   * are the user's standing choice about where to search, kept in settings
+   * for exactly that reason — leaving the search state is not a request to
+   * forget it.
+   */
+  const exitSearch = useCallback(() => {
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    searchInputRef.current?.blur();
+    Keyboard.dismiss();
+    setQuery('');
+    clearSearch();
+    setHasSearched(false);
+    setIsSearchingState(false);
+  }, [clearSearch]);
+
+  // Android's back gesture leaves the search state before it leaves the tab,
+  // the same way it closes a sheet first. Registered only while searching, so
+  // browsing keeps the system default.
   useFocusEffect(
     useCallback(() => {
-      return () => setIsInputFocused(false);
-    }, [])
+      if (!isSearching) return;
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        exitSearch();
+        return true;
+      });
+      return () => subscription.remove();
+    }, [isSearching, exitSearch])
   );
 
   useEffect(() => {
@@ -308,7 +333,7 @@ export function useSearchScreenModel() {
     activeServerId: activeServerId ?? undefined,
     // query state
     query, onSearchChange, onSearchSubmit, clearQuery, searchInputRef,
-    isInputFocused, onSearchFocus, onSearchBlur,
+    isSearching, enterSearch, exitSearch,
     // scope / filters
     resultScope, setResultScope, enabledSearchSourceIds,
     selectedSourceIds, selectedEntityTypes, toggleFilterSource, toggleFilterEntityType,

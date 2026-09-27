@@ -66,13 +66,21 @@ export default function BrowseTagScreen() {
     count: items.length,
   })}`
 
+  // The hero is only drawn once there are albums to draw it from, so the
+  // other two states need a header of their own — without one there is no
+  // back button and an empty tag is a dead end.
+  const hasHero = !isLoading && items.length > 0
+
+  // The hero bleeds under the status bar and insets itself; a safe-area edge
+  // on top of that would leave a band of background above the artwork. The
+  // plain-bar states still want the inset.
   return (
     <SafeAreaView
       testID="browse-tag-screen"
-      edges={['top']}
+      edges={hasHero ? [] : ['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <DetailHeaderBar title={label} subtitle={subtitle} />
+      {!hasHero && <DetailHeaderBar title={label} subtitle={subtitle} />}
 
       {degraded && (
         <StatusBanner
@@ -96,12 +104,21 @@ export default function BrowseTagScreen() {
         sortOrder={sortOrder}
         onSortChange={setSortOrder}
         sortLabel={sortLabels[sortOrder]}
-        // Play, Shuffle and Download-all, from the screen this replaced. Only
-        // for a genre: a mood is a tag the library never had actions for, and
-        // inventing them here would be a new feature rather than a move.
+        // The hero, the tag's name, and Play/Shuffle/Download-all — the
+        // header the screen this replaced had. It went away during the
+        // unification on the grounds that a plain bar was enough; it wasn't,
+        // and this was the one detail screen in the app with no artwork on
+        // it. Moods get it too: the header only ever needed a label and a
+        // set of albums, and a mood has both.
         header={
-          kind === 'genre' && items.length > 0
-            ? <GenreHeader genre={label} albums={taggedAlbums} showHero={false} showNavigation={false} />
+          items.length > 0
+            ? (
+              <GenreHeader
+                genre={label}
+                albums={taggedAlbums}
+                subtitle={subtitle}
+              />
+            )
             : undefined
         }
       />

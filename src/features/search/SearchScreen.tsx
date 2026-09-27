@@ -1,6 +1,7 @@
-import { contentWidth, hitSlopFor, iconSize, spacing, tinted, typography } from '@/constants/design';
-import React, { useRef } from 'react';
+import { contentWidth, hitSlopFor, iconSize, motion, spacing, tinted, typography } from '@/constants/design';
+import React, { useEffect, useRef } from 'react';
 import { View, TextInput, StyleSheet, ScrollView } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CloudOff, SlidersHorizontal, Search as SearchIcon, X } from 'lucide-react-native';
 import { useScrollToTop } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +14,7 @@ import { useIconSize } from '@/features/theme/useIconSize';
 import TabHeader from '@/components/TabHeader';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
+import { useReducedMotion } from '@/features/theme/useReducedMotion';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useSearchScreenModel } from '@/features/search/useSearchScreenModel';
 import SearchFiltersSheet from './components/SearchFiltersSheet';
@@ -34,13 +36,44 @@ const Search = () => {
   const { colors } = useTheme();
   const icons = useIconSize();
   const rad = useRadius();
+  const reduced = useReducedMotion();
   const m = useSearchScreenModel();
+
+  // The field lifting from plain muted to a tint of the accent is what says
+  // the tab has changed mode. Drawn as an overlay rather than an animated
+  // `backgroundColor`: the tint is an eight-digit hex, which colour
+  // interpolation does not read reliably, and an opacity ramp costs the JS
+  // thread nothing.
+  const focusTint = useSharedValue(0);
+  useEffect(() => {
+    focusTint.value = withTiming(m.isSearching ? 1 : 0, {
+      duration: reduced ? motion.quick : motion.modeChange,
+    });
+  }, [m.isSearching, reduced, focusTint]);
+  const tintStyle = useAnimatedStyle(() => ({ opacity: focusTint.value }));
 
   return (
     <SafeAreaView testID="search-screen" edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
-      <TabHeader title={t('search.title')} username={m.username} onAccountPress={m.openAccountSheet} />
+      <TabHeader
+        title={t('search.title')}
+        username={m.username}
+        onAccountPress={m.openAccountSheet}
+        // The way out of the search state, and the only one on iOS — a blur
+        // no longer leaves it, so without this the field is a room with no
+        // door. It lives up here rather than beside the field because the
+        // field row is full; see `TabHeader`.
+        action={m.isSearching ? { label: t('common.cancel'), onPress: m.exitSearch, testID: 'search-cancel' } : undefined}
+      />
       <View style={styles.headerRow}>
         <View style={[styles.searchContainer, { backgroundColor: colors.muted, borderRadius: rad.md }]}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              tintStyle,
+              { backgroundColor: tinted(colors.themeColor, 'surface'), borderRadius: rad.md },
+            ]}
+          />
           <SearchIcon size={icons.row} color={colors.placeholder} style={styles.searchIcon} />
           <TextInput
             accessibilityLabel={t('a11y.searchInput')}
@@ -51,8 +84,7 @@ const Search = () => {
             placeholderTextColor={colors.placeholder}
             value={m.query}
             onChangeText={m.onSearchChange}
-            onFocus={m.onSearchFocus}
-            onBlur={m.onSearchBlur}
+            onFocus={m.enterSearch}
             returnKeyType="search"
             onSubmitEditing={m.onSearchSubmit}
             // A library is full of names iOS has never seen — `pornophonique`,

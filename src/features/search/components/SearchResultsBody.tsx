@@ -1,11 +1,13 @@
 import React from 'react';
 import SourceBadge from '@/components/SourceBadge';
 import { View, StyleSheet } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { useTranslation } from 'react-i18next';
 
-import { spacing, typography } from '@/constants/design';
+import { motion, spacing, typography } from '@/constants/design';
 import { useTheme } from '@/features/theme/useTheme';
+import { useReducedMotion } from '@/features/theme/useReducedMotion';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { getSourceMeta } from '@/features/sources/registry';
 import type { useSearchScreenModel } from '@/features/search/useSearchScreenModel';
@@ -26,22 +28,49 @@ type Model = ReturnType<typeof useSearchScreenModel>;
 export default function SearchResultsBody({ m }: { m: Model }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const reduced = useReducedMotion();
 
   /**
-   * Nothing typed: browse, unless the field is focused and there is history.
+   * Browse, recents, skeleton and results are four different bodies in one
+   * scroll view, and the tab used to cut between them with nothing in
+   * between — the screen simply became a different screen. They fade through
+   * each other instead, rising a few points as they arrive, so moving
+   * between the two states reads as one screen changing rather than two
+   * screens swapping.
    *
-   * Recent searches belong to the act of typing — they are only useful with a
-   * cursor in the field — so an unfocused screen offers ways into the library
-   * instead, and the tab stops opening on nothing at all. Focusing with no
-   * history yet keeps the browse tiles rather than replacing them with a blank
-   * screen, which is what the old idle state did to anyone who had not searched
-   * before.
+   * `key` is what makes this work: Reanimated runs the exit animation only
+   * when the element leaving and the element arriving are different nodes,
+   * and without a key React reconciles them into one and animates nothing.
+   */
+  const branch = (key: string, children: React.ReactNode) => (
+    <Animated.View
+      key={key}
+      entering={reduced
+        ? FadeIn.duration(motion.quick)
+        : FadeIn.duration(motion.contentFade).withInitialValues({ transform: [{ translateY: BRANCH_RISE }] })}
+      exiting={FadeOut.duration(motion.quick)}
+    >
+      {children}
+    </Animated.View>
+  );
+
+  /**
+   * Nothing typed: browse, unless the tab is in its search state and there is
+   * history to offer.
+   *
+   * Which of the two states the tab is in is `m.isSearching`, not the field's
+   * focus — see `useSearchScreenModel`. Keying this on focus meant the body
+   * changed out from under the reader every time the keyboard went away.
+   *
+   * Searching with no history yet keeps the browse tiles rather than
+   * replacing them with a blank screen, which is what the old idle state did
+   * to anyone who had not searched before.
    */
   if (m.query.trim() === '') {
     const hasHistory = m.recentQueries.length > 0 || m.recentEntities.length > 0;
 
-    if (m.isInputFocused && hasHistory) {
-      return (
+    if (m.isSearching && hasHistory) {
+      return branch('recents', (
         <RecentSearches
           queries={m.recentQueries}
           entities={m.recentEntities}
@@ -50,14 +79,14 @@ export default function SearchResultsBody({ m }: { m: Model }) {
           onRemove={m.onRemoveRecent}
           onClear={m.onClearRecent}
         />
-      );
+      ));
     }
 
-    return <SearchBrowse />;
+    return branch('browse', <SearchBrowse />);
   }
 
   if (m.isLoading) {
-    return <>{[...Array(8)].map((_, i) => <SkeletonListRow key={i} />)}</>;
+    return branch('loading', <>{[...Array(8)].map((_, i) => <SkeletonListRow key={i} />)}</>);
   }
 
   const row = (result: Parameters<typeof ResultRow>[0]['result']) => (
@@ -73,7 +102,7 @@ export default function SearchResultsBody({ m }: { m: Model }) {
     />
   );
 
-  return (
+  return branch('results', (
     <>
       {!m.isOtherScope && m.libraryResults.map(result => (
         <View key={`local:${result.type}:${result.id}`} style={styles.resultBlock}>
@@ -109,8 +138,11 @@ export default function SearchResultsBody({ m }: { m: Model }) {
         </Text>
       )}
     </>
-  );
+  ));
 }
+
+/** How far a body rises as it fades in — enough to read as arrival, not as travel. */
+const BRANCH_RISE = 8;
 
 const styles = StyleSheet.create({
   resultBlock: {},
