@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Text } from '@/components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
 import TurboImage from 'react-native-turbo-image';
 import { MediaImage } from '@/components/MediaImage';
 import { buildCover } from '@/providers/registry/covers';
 import { useTheme } from '@/features/theme/useTheme';
+import { useScreenBackground } from '@/features/theme/screenBackgroundContext';
 import {
   DetailHeaderBar,
   useDetailHeaderInset,
@@ -28,6 +30,62 @@ import ArtistOptionsButton from './ArtistOptionsButton';
 
 const NO_COVER: CoverSource = { kind: 'none' };
 
+/**
+ * The artist's photograph behind the header.
+ *
+ * Over the screen's own colour it is an opaque panel, as it has always been.
+ * Over a background image it is masked out towards its foot instead, so the
+ * page's image comes through it rather than starting where it stops — the
+ * gradient above can only darken what is already there, and darkening to solid
+ * is what put a line across the screen.
+ *
+ * The mask costs a native view, so it is only mounted when there is something
+ * behind to reveal.
+ */
+const HeroBackdrop: React.FC<{ coverUri: string | null; muted: string; overImage: boolean }> = ({
+  coverUri,
+  muted,
+  overImage,
+}) => {
+  if (!coverUri) {
+    // Nothing to fade. Over a page image the muted slab is the same hard edge
+    // the fade exists to avoid, so it simply steps aside.
+    return overImage ? null : (
+      <View testID="artist-hero-slab" style={[StyleSheet.absoluteFill, { backgroundColor: muted }]} />
+    );
+  }
+
+  const photo = (
+    <TurboImage
+      testID="artist-hero-photo"
+      source={{ uri: coverUri }}
+      style={[StyleSheet.absoluteFill, { left: -50, right: -50 }]}
+      resizeMode="cover"
+      blur={Platform.OS === 'ios' ? 20 : 10}
+      fadeDuration={300}
+      cachePolicy="dataCache"
+    />
+  );
+
+  if (!overImage) return photo;
+
+  return (
+    <MaskedView
+      testID="artist-hero-mask"
+      style={StyleSheet.absoluteFill}
+      maskElement={
+        <LinearGradient
+          colors={[...coverFade.heroMask]}
+          locations={[...coverFade.heroMaskStops]}
+          style={StyleSheet.absoluteFill}
+        />
+      }
+    >
+      {photo}
+    </MaskedView>
+  );
+};
+
 type Props = {
   model: ArtistScreenModel;
   showNavigation?: boolean;
@@ -42,6 +100,9 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
   // it and the status bar take: the cover stays where it was against the
   // content below, and the extra strip is filled with art rather than a band.
   const barInset = useDetailHeaderInset();
+  // Whether the page carries a background image. The header's own artwork has
+  // to give way to it rather than close over it.
+  const overImage = useScreenBackground() !== null;
   const onTitleLayout = useDetailHeroTitleLayout();
 
   const { artist, isLocal, counts } = model;
@@ -55,33 +116,30 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
 
   return (
     <>
-      <View style={[styles.fullBleedWrapper, { height: ARTIST_HERO_HEIGHT + barInset }]}>
-        {coverUri ? (
-          <TurboImage
-            source={{ uri: coverUri }}
-            style={[StyleSheet.absoluteFill, { left: -50, right: -50 }]}
-            resizeMode="cover"
-            blur={Platform.OS === 'ios' ? 20 : 10}
-            fadeDuration={300}
-            cachePolicy="dataCache"
+      <View style={[styles.heroBlock, { height: ARTIST_HERO_HEIGHT + barInset }]}>
+        {/* Only the art is clipped. The picture overscans sideways and the
+            mask needs a bound, but the round cover hangs below the hero on
+            purpose — clipping both together is what flattened its foot. */}
+        <View style={styles.fullBleedWrapper}>
+          <HeroBackdrop
+            coverUri={coverUri}
+            muted={colors.muted}
+            overImage={overImage}
           />
-        ) : (
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: colors.muted },
-            ]}
-          />
-        )}
 
-        <LinearGradient
-          colors={
-            isDarkMode
-              ? coverFade.onDark
-              : coverFade.onLight
-          }
-          style={StyleSheet.absoluteFill}
-        />
+          <LinearGradient
+            testID="artist-hero-fade"
+            colors={
+              overImage
+                ? coverFade.onImage
+                : isDarkMode
+                  ? coverFade.onDark
+                  : coverFade.onLight
+            }
+            locations={overImage ? [...coverFade.onImageStops] : undefined}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
 
         <View style={[styles.centeredCoverContainer, { borderRadius: rad.pill }]}>
           <MediaImage
@@ -155,17 +213,32 @@ export default ArtistHeader;
 /** The blurred cover behind an artist's name, before the floating bar's inset. */
 const ARTIST_HERO_HEIGHT = 300;
 
+/**
+ * How far the round cover hangs below the hero.
+ *
+ * The content below clears it by this much on top of its own margin. It used
+ * to clear nothing, because the hero clipped the overhang away and there was
+ * nothing to clear — the cover was a circle with a flat foot and the name sat
+ * where the rest of it should have been.
+ */
+const COVER_OVERHANG = 32;
+
 const styles = StyleSheet.create({
-  fullBleedWrapper: {
+  /** Lays out the hero and carries the round cover that overhangs its foot. */
+  heroBlock: {
     width: '100%',
     height: ARTIST_HERO_HEIGHT,
     justifyContent: 'flex-end',
     alignItems: 'center',
+  },
+  /** The art alone, clipped to the hero. */
+  fullBleedWrapper: {
+    ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
   },
   centeredCoverContainer: {
     position: 'absolute',
-    bottom: -32,
+    bottom: -COVER_OVERHANG,
     width: 120,
     height: 120,
     overflow: 'hidden',
@@ -197,7 +270,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    marginTop: spacing.lg,
+    marginTop: spacing.lg + COVER_OVERHANG,
     marginBottom: spacing.lg,
   },
   artistName: {

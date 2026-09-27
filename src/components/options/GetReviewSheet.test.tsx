@@ -13,6 +13,9 @@ jest.mock('react-i18next', () => ({
 jest.mock('@/features/theme/useTheme', () => ({
   useTheme: () => ({
     colors: { secondary: '#000', subtext: '#666', border: '#ccc', background: '#fff', placeholder: '#999' },
+    // The untouched palette, which is what a surface drawn over the page
+    // reads; `colors.background` can be transparent over a background image.
+    palette: { secondary: '#000', subtext: '#666', border: '#ccc', background: '#fff', placeholder: '#999' },
     isDarkMode: false,
   }),
 }));

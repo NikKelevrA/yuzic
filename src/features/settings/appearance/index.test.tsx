@@ -9,6 +9,13 @@ import settingsAppearanceReducer, { selectActiveTheme, selectTranslucentDock } f
 import settingsPlaybackReducer from '@/features/settings/playback/state';
 
 const mockPush = jest.fn();
+// The crop editor reaches react-native-gesture-handler, which this preset does
+// not transform. Stubbed to a marker, so these tests can still say when the
+// preview is on screen without pulling the gesture stack in.
+jest.mock('./components/BackgroundCropEditor', () => {
+  const { View } = require('react-native');
+  return { BackgroundCropEditor: () => <View testID="crop-editor" /> };
+});
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn() }),
 }));

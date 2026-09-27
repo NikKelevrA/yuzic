@@ -3,7 +3,17 @@ import { DEFAULT_LANGUAGE } from '@/features/settings/appearance/languages';
 import type { ListDensity, RadiusPreset } from '@/constants/design';
 import { DEFAULT_THEME, normalizeTheme } from '@/features/theme/presets';
 import type { Theme } from '@/features/theme/theme';
-import { applyThemeEdit, type ThemeEdit } from './themeStore';
+import {
+  DEFAULT_PROFILE_ID,
+  activeProfile,
+  applyThemeEdit,
+  defaultProfile,
+  editActiveTheme,
+  nextProfileId,
+  referencedBackgroundUris,
+  type ThemeEdit,
+  type ThemeProfile,
+} from './themeStore';
 
 
 /**
@@ -52,12 +62,16 @@ type AppLanguage = string;
 interface AppearanceSettingsState {
   themeMode: ThemeMode;
   /**
-   * How the app looks: palettes, accent, corners, density, cover tint, dock.
+   * The looks the user can switch between, the Yuzic one first and always
+   * present.
    *
-   * These used to be settings of their own here. They are the theme's now, and
-   * the setters below edit it in place.
+   * These used to be one stored theme, and before that loose settings here.
+   * The setters below edit whichever profile is selected; see
+   * {@link editActiveTheme} for why editing the default one lands somewhere
+   * else.
    */
-  theme: Theme;
+  profiles: ThemeProfile[];
+  activeProfileId: string;
   /**
    * The accent taken from the cover of what is playing, while the theme asks
    * for one. Runtime only: it is left out of storage, since it is only ever
@@ -91,7 +105,8 @@ interface AppearanceSettingsState {
 
 const initialState: AppearanceSettingsState = {
   themeMode: 'system',
-  theme: DEFAULT_THEME,
+  profiles: [defaultProfile()],
+  activeProfileId: DEFAULT_PROFILE_ID,
   liveAccent: null,
   gridColumns: 3,
   isGridView: true,
@@ -104,36 +119,79 @@ const initialState: AppearanceSettingsState = {
   respectReducedMotion: true,
 };
 
+
 const appearanceSlice = createSlice({
   name: 'settingsAppearance',
   initialState,
   reducers: {
+    /** Switch to a profile, ignoring an id that is not there. */
+    switchProfile(state, action: PayloadAction<string>) {
+      if (state.profiles.some(p => p.id === action.payload)) state.activeProfileId = action.payload;
+    },
+    /**
+     * A new profile, copied from the one in use and selected.
+     *
+     * A copy rather than a fresh default: someone making a profile is
+     * usually about to change one thing about the look they are already
+     * wearing, and starting from the stock look would make them rebuild it
+     * first.
+     */
+    addProfile(state, action: PayloadAction<{ name: string }>) {
+      const copy: ThemeProfile = {
+        id: nextProfileId(state.profiles),
+        name: action.payload.name,
+        theme: normalizeTheme(activeProfile(state).theme),
+      };
+      state.profiles.push(copy);
+      state.activeProfileId = copy.id;
+    },
+    /** Rename a profile. The default keeps its own name, being the app's. */
+    renameProfile(state, action: PayloadAction<{ id: string; name: string }>) {
+      if (action.payload.id === DEFAULT_PROFILE_ID) return;
+      const profile = state.profiles.find(p => p.id === action.payload.id);
+      if (!profile) return;
+      profile.name = action.payload.name;
+      // It had a name the app chose; it has the user's now.
+      delete profile.nameKey;
+    },
+    /**
+     * Delete a profile, falling back to the default if it was the one in use.
+     *
+     * The default cannot go: it is what deleting the last of the others
+     * leaves you on, and a list of looks with nothing in it is not a state
+     * worth being able to reach.
+     */
+    deleteProfile(state, action: PayloadAction<string>) {
+      if (action.payload === DEFAULT_PROFILE_ID) return;
+      state.profiles = state.profiles.filter(p => p.id !== action.payload);
+      if (state.activeProfileId === action.payload) state.activeProfileId = DEFAULT_PROFILE_ID;
+    },
     setThemeMode(state, action: PayloadAction<ThemeMode>) {
       state.themeMode = action.payload;
     },
     /** Change any part of the theme. */
     editTheme(state, action: PayloadAction<ThemeEdit>) {
-      state.theme = applyThemeEdit(normalizeTheme(state.theme), action.payload);
+      editActiveTheme(state, theme => applyThemeEdit(theme, action.payload));
     },
     /** Put the colours back to the default, leaving the accent and everything else. */
     resetPalettes(state) {
-      state.theme = { ...normalizeTheme(state.theme), palettes: DEFAULT_THEME.palettes };
+      editActiveTheme(state, theme => ({ ...theme, palettes: DEFAULT_THEME.palettes }));
     },
     /** Picking an accent is choosing one, so it stops following the cover. */
     setThemeColor(state, action: PayloadAction<string>) {
-      state.theme = applyThemeEdit(normalizeTheme(state.theme), { accent: action.payload, accentFromCover: false });
+      editActiveTheme(state, theme => applyThemeEdit(theme, { accent: action.payload, accentFromCover: false }));
     },
     setLiveAccent(state, action: PayloadAction<string | null>) {
       state.liveAccent = action.payload;
     },
     setRadiusPreset(state, action: PayloadAction<RadiusPreset>) {
-      state.theme = applyThemeEdit(normalizeTheme(state.theme), { shape: { radius: action.payload } });
+      editActiveTheme(state, theme => applyThemeEdit(theme, { shape: { radius: action.payload } }));
     },
     setListDensity(state, action: PayloadAction<ListDensity>) {
-      state.theme = applyThemeEdit(normalizeTheme(state.theme), { shape: { density: action.payload } });
+      editActiveTheme(state, theme => applyThemeEdit(theme, { shape: { density: action.payload } }));
     },
     setCoverAccentEnabled(state, action: PayloadAction<boolean>) {
-      state.theme = applyThemeEdit(normalizeTheme(state.theme), { surface: { coverTint: action.payload } });
+      editActiveTheme(state, theme => applyThemeEdit(theme, { surface: { coverTint: action.payload } }));
     },
     setGridColumns(state, action: PayloadAction<number>) {
       state.gridColumns = action.payload;
@@ -160,9 +218,9 @@ const appearanceSlice = createSlice({
       state.showSourceHeaders = action.payload;
     },
     setTranslucentDock(state, action: PayloadAction<boolean>) {
-      state.theme = applyThemeEdit(normalizeTheme(state.theme), {
+      editActiveTheme(state, theme => applyThemeEdit(theme, {
         components: { dock: action.payload ? 'translucent' : 'solid' },
-      });
+      }));
     },
     setLanguage(state, action: PayloadAction<AppLanguage>) {
       state.language = action.payload;
@@ -178,6 +236,10 @@ const appearanceSlice = createSlice({
 
 export const {
   setThemeMode,
+  switchProfile,
+  addProfile,
+  renameProfile,
+  deleteProfile,
   editTheme,
   resetPalettes,
   setLiveAccent,
@@ -211,8 +273,22 @@ interface AppearanceRootState {
 export const selectThemeMode = (state: AppearanceRootState): ThemeMode =>
   state.settingsAppearance.themeMode;
 
+export const selectProfiles = (state: AppearanceRootState): ThemeProfile[] =>
+  state.settingsAppearance.profiles;
+
+const selectActiveProfileId = (state: AppearanceRootState): string =>
+  state.settingsAppearance.activeProfileId;
+
+/** The profile in use, or the first one if the stored id names nothing. */
+export const selectActiveProfile = createSelector(
+  [selectProfiles, selectActiveProfileId],
+  (profiles, id): ThemeProfile =>
+    profiles.find(p => p.id === id) ?? profiles[0] ?? defaultProfile(),
+);
+
 /** The theme as saved, before a live accent is put in. For the one hook that follows the cover. */
-export const selectStoredTheme = (state: AppearanceRootState) => state.settingsAppearance.theme;
+export const selectStoredTheme = (state: AppearanceRootState): Theme =>
+  selectActiveProfile(state).theme;
 const selectLiveAccent = (state: AppearanceRootState) => state.settingsAppearance.liveAccent;
 
 /**
@@ -229,6 +305,21 @@ export const selectActiveTheme = createSelector(
     const theme = stored ? normalizeTheme(stored) : DEFAULT_THEME;
     return theme.accentFromCover && liveAccent ? { ...theme, accent: liveAccent } : theme;
   },
+);
+
+/**
+ * The background photos every *other* profile is using.
+ *
+ * A photo is copied into the app's storage and deleted once the background
+ * stops pointing at it. With profiles, two of them can point at the same file,
+ * so "the background stopped pointing at it" is no longer the same question as
+ * "anything is pointing at it" — deleting on the first would blank another
+ * profile's background the moment this one was changed.
+ */
+export const selectBackgroundUrisInUseElsewhere = createSelector(
+  [selectProfiles, selectActiveProfileId],
+  (profiles, activeId): Set<string> =>
+    referencedBackgroundUris(profiles.filter(p => p.id !== activeId)),
 );
 
 export const selectThemeColor = (state: AppearanceRootState): string =>

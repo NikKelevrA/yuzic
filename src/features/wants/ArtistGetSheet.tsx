@@ -66,7 +66,7 @@ type Props = {
  */
 export default function ArtistGetSheet({ artist, sheetRef, onConfirm, onDismiss }: Props) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, palette } = useTheme();
   const icons = useIconSize();
   const rad = useRadius();
   const activeServer = useSelector(selectActiveServer);
@@ -219,7 +219,10 @@ export default function ArtistGetSheet({ artist, sheetRef, onConfirm, onDismiss 
           onPress={handleConfirm}
           disabled={!selected}
         >
-          <Text style={[styles.confirmLabel, { color: colors.background }]}>
+          {/* Knocked out of the filled button, so it needs the page colour
+              itself — `colors.background` is transparent over a background
+              image, which left the button with no label at all. */}
+          <Text style={[styles.confirmLabel, { color: palette.background }]}>
             {t('wants.getSheet.confirm')}
           </Text>
         </Touchable>

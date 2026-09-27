@@ -83,6 +83,22 @@
     },
     "appearance": {
       "title": "Appearance",
+      "profiles": {
+        "title": "Profile",
+        "default": "Yuzic",
+        "mine": "My look",
+        "new": "New profile",
+        "newTitle": "New profile",
+        "create": "Create",
+        "rename": "Rename profile",
+        "renameTitle": "Rename profile",
+        "delete": "Delete profile",
+        "deleteTitle": "Delete “{{name}}”?",
+        "deleteBody": "Its colours, background and layout go with it. The Yuzic look stays.",
+        "copyOf": "{{name}} copy",
+        "nameLabel": "Name",
+        "namePlaceholder": "Profile name"
+      },
       "theme": {
         "title": "Theme",
         "light": "Light",
@@ -195,8 +211,11 @@
         "blur": "Blur",
         "dim": "Dim",
         "pickFailed": "Couldn't use that photo.",
+        "zoom": "Zoom",
+        "resetCrop": "Recentre photo",
+        "dragHint": "Drag the photo to choose what shows.",
+        "zoomHint": "Zoom in to choose what shows.",
         "scope": "Where it shows",
-        "scopeHome": "Home only",
         "scopeTabs": "Home, Search and Library",
         "scopeEverywhere": "Every screen"
       },

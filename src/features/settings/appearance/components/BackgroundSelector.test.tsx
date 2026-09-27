@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { BackgroundSelector } from './BackgroundSelector';
-import settingsAppearanceReducer, { editTheme, selectActiveTheme } from '../state';
+import settingsAppearanceReducer, { addProfile, editTheme, selectActiveTheme } from '../state';
 import { ScreenBackgroundProvider } from '@/features/theme/ScreenBackground';
 import { pickBackgroundImage, removeBackgroundImage } from '@/features/theme/backgroundImage';
 
@@ -19,8 +19,15 @@ jest.mock('@/features/theme/backgroundImage', () => ({
 let mockSong: { cover: { kind: 'url'; url: string } } | null = null;
 jest.mock('@/features/playback/PlayingContext', () => ({ usePlayingState: () => ({ currentSong: mockSong }) }));
 // The route decides how far the background reaches, so the tests drive it.
-let mockSegments: string[] = ['(tabs)', '(home)', 'index'];
+let mockSegments: string[] = ['(home)', '(tabs)', '(home)'];
 jest.mock('expo-router', () => ({ useSegments: () => mockSegments }));
+// The crop editor reaches react-native-gesture-handler, which this preset does
+// not transform. Stubbed to a marker, so these tests can still say when the
+// preview is on screen without pulling the gesture stack in.
+jest.mock('./BackgroundCropEditor', () => {
+  const { View } = require('react-native');
+  return { BackgroundCropEditor: () => <View testID="crop-editor" /> };
+});
 jest.mock('@/providers/registry/covers', () => ({
   buildCover: (cover: { kind: string; url?: string }) => (cover.kind === 'url' ? cover.url : null),
 }));
@@ -39,7 +46,7 @@ const background = (store: ReturnType<typeof setup>['store']) => selectActiveThe
 beforeEach(() => {
   jest.clearAllMocks();
   mockSong = null;
-  mockSegments = ['(tabs)', '(home)', 'index'];
+  mockSegments = ['(home)', '(tabs)', '(home)'];
 });
 
 describe('BackgroundSelector', () => {
@@ -54,6 +61,64 @@ describe('BackgroundSelector', () => {
     expect(screen.getByText('settings.appearance.background.changePhoto')).toBeTruthy();
   });
 
+  it('previews and re-frames a photo, and offers neither for a cover', async () => {
+    // The preview is the only thing on this page that shows what any of its
+    // settings do, and a cover has no framing to choose: it changes with the
+    // track.
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///docs/theme/background-1.jpg' } } }));
+    const screen = await view;
+
+    expect(screen.getByTestId('crop-editor')).toBeTruthy();
+    expect(screen.getByText('settings.appearance.background.zoom')).toBeTruthy();
+
+    await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.cover')); });
+
+    expect(screen.queryByTestId('crop-editor')).toBeNull();
+    expect(screen.queryByText('settings.appearance.background.zoom')).toBeNull();
+  });
+
+  it('offers to recentre only once the photo has been moved', async () => {
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg' } } }));
+    const screen = await view;
+
+    expect(screen.queryByText('settings.appearance.background.resetCrop')).toBeNull();
+
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg', crop: { x: 0.2, y: 0.5, zoom: 1 } } } }));
+    });
+
+    expect(screen.getByText('settings.appearance.background.resetCrop')).toBeTruthy();
+  });
+
+  it('keeps the photo when only its framing changes', async () => {
+    // The old copy is deleted whenever the background stops pointing at it.
+    // Re-framing points at the same file, so deleting here would blank the
+    // background the moment it was adjusted.
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg' } } }));
+    await view;
+
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg', crop: { x: 0.2, y: 0.5, zoom: 1.5 } } } }));
+    });
+
+    expect(removeBackgroundImage).not.toHaveBeenCalled();
+    expect(background(store)).toEqual({ kind: 'image', uri: 'file:///a.jpg', crop: { x: 0.2, y: 0.5, zoom: 1.5 } });
+  });
+
+  it('gives a newly chosen photo its own framing rather than the last one\'s', async () => {
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///a.jpg', crop: { x: 0, y: 1, zoom: 3 } } } }));
+    const screen = await view;
+    pick.mockResolvedValueOnce('file:///docs/theme/background-2.jpg');
+
+    await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.changePhoto')); });
+
+    expect(background(store)).toEqual({ kind: 'image', uri: 'file:///docs/theme/background-2.jpg' });
+  });
+
   it('stays plain when the picker is cancelled', async () => {
     pick.mockResolvedValueOnce(null);
     const { store, view } = setup(<BackgroundSelector />);
@@ -62,6 +127,19 @@ describe('BackgroundSelector', () => {
     await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.image')); });
 
     expect(background(store)).toEqual({ kind: 'none' });
+  });
+
+  it('keeps a photo another profile is still wearing', async () => {
+    // The file is shared. Deleting it because this profile stopped pointing at
+    // it would blank the other one's background too.
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///shared.jpg' } } }));
+    store.dispatch(addProfile({ name: 'Night' }));
+    const screen = await view;
+
+    await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.cover')); });
+
+    expect(removeBackgroundImage).not.toHaveBeenCalled();
   });
 
   it('deletes the copied photo when it is no longer the background', async () => {
@@ -88,9 +166,16 @@ describe('BackgroundSelector', () => {
 });
 
 describe('ScreenBackground', () => {
-  const HOME = ['(tabs)', '(home)', 'index'];
-  const SEARCH = ['(tabs)', '(search)', 'index'];
-  const ALBUM = ['(tabs)', '(home,search,library)', 'albumView'];
+  // The shapes `expo-router` really hands over for this app's route tree. A
+  // trailing `index` is popped before `useSegments` sees it, so a tab root ends
+  // in its own group — which is what these used to get wrong, in a way that
+  // turned off every scope but the widest while the tests stayed green.
+  const HOME = ['(home)', '(tabs)', '(home)'];
+  const SEARCH = ['(home)', '(tabs)', '(search)'];
+  // A shared `(home,search,library)` route resolves under the tab it was
+  // pushed from, so the group is still `(home)` and the screen is the last.
+  const ALBUM = ['(home)', '(tabs)', '(home)', 'albumView'];
+  const SETTINGS = ['(home)', 'settings'];
 
   const Probe = () => <ScreenBackgroundProvider>{null}</ScreenBackgroundProvider>;
 
@@ -110,15 +195,18 @@ describe('ScreenBackground', () => {
     expect(screen.getByTestId('screen-background')).toBeTruthy();
   });
 
-  it('stays on Home unless it is set to go behind every tab', async () => {
+  it('covers a sibling tab root, not just Home', async () => {
+    // `home` used to be a third scope, covering the Home tab alone. It was
+    // dropped: one tab wearing the photo and its two siblings not made the app
+    // look half-themed. `tabs` is the narrow setting now, and it has to reach
+    // Search and Library as well as Home.
     mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
     mockSegments = SEARCH;
     const { store, view } = setup(<Probe />);
-    store.dispatch(editTheme({ surface: { background: { kind: 'cover' } } }));
     const screen = await view;
-    expect(screen.queryByTestId('screen-background')).toBeNull();
-
-    await act(async () => { store.dispatch(editTheme({ surface: { backgroundScope: 'tabs' } })); });
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'cover' }, backgroundScope: 'tabs' } }));
+    });
     expect(screen.getByTestId('screen-background')).toBeTruthy();
   });
 
@@ -128,10 +216,56 @@ describe('ScreenBackground', () => {
     mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
     mockSegments = ALBUM;
     const { store, view } = setup(<Probe />);
+    // The render is awaited before anything is dispatched into it. Acting on a
+    // render still in flight passes here and breaks the *next* test: its own
+    // `render` comes back attached to this tree, which cleanup has unmounted,
+    // so every query finds nothing.
+    const screen = await view;
     await act(async () => {
       store.dispatch(editTheme({ surface: { background: { kind: 'cover' }, backgroundScope: 'tabs' } }));
     });
+    expect(screen.queryByTestId('screen-background')).toBeNull();
+
+    await act(async () => { store.dispatch(editTheme({ surface: { backgroundScope: 'everywhere' } })); });
+    expect(screen.getByTestId('screen-background')).toBeTruthy();
+
+    mockSegments = HOME;
+  });
+
+  // What shipped broken: the Home tab root was not recognised as a tab root at
+  // all, so the only setting that drew anything was the widest one. `tabs` is
+  // the default now, and the Home tab root is one of the roots it must cover.
+  it('draws on the Home tab root at the default scope', async () => {
+    mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
+    mockSegments = HOME;
+    const { store, view } = setup(<Probe />);
     const screen = await view;
+    await act(async () => { store.dispatch(editTheme({ surface: { background: { kind: 'cover' } } })); });
+
+    expect(selectActiveTheme(store.getState()).surface.backgroundScope).toBe('tabs');
+    expect(screen.getByTestId('screen-background')).toBeTruthy();
+  });
+
+  it('draws on the Home tab root when the router still spells out index', async () => {
+    mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
+    mockSegments = [...HOME, 'index'];
+    const { store, view } = setup(<Probe />);
+    const screen = await view;
+    await act(async () => { store.dispatch(editTheme({ surface: { background: { kind: 'cover' } } })); });
+
+    expect(screen.getByTestId('screen-background')).toBeTruthy();
+
+    mockSegments = HOME;
+  });
+
+  it('leaves settings alone until the scope is widest', async () => {
+    mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
+    mockSegments = SETTINGS;
+    const { store, view } = setup(<Probe />);
+    const screen = await view;
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'cover' }, backgroundScope: 'tabs' } }));
+    });
     expect(screen.queryByTestId('screen-background')).toBeNull();
 
     await act(async () => { store.dispatch(editTheme({ surface: { backgroundScope: 'everywhere' } })); });

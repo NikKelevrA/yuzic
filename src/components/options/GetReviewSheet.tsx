@@ -70,7 +70,7 @@ interface Props {
  */
 const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss, sheetRef }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, palette } = useTheme();
   const icons = useIconSize();
   const rad = useRadius();
   const dispatch = useDispatch();
@@ -302,7 +302,10 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
           onPress={() => selected && handleGet(selected)}
           disabled={!selected}
         >
-          <Text style={[styles.getButtonLabel, { color: colors.background }]}>
+          {/* Knocked out of the filled button, so it needs the page colour
+              itself — `colors.background` is transparent over a background
+              image, which left the button with no label at all. */}
+          <Text style={[styles.getButtonLabel, { color: palette.background }]}>
             {t('externalAlbum.review.confirmGet')}
           </Text>
         </Touchable>

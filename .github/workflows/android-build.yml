@@ -5,6 +5,11 @@ name: Android Build
 # platforms cannot drift into shipping by different routes.
 on:
   workflow_call:
+    outputs:
+      version_code:
+        # Re-exported for the caller; see the note in `ios-build.yml`.
+        description: The version code Play gave this build.
+        value: ${{ jobs.build-android.outputs.version_code }}
 
 concurrency: android-build
 

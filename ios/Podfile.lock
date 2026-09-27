@@ -3039,6 +3039,34 @@ PODS:
     - SocketRocket
   - ReactNativeExceptionHandler (2.10.10):
     - React-Core
+  - RNCMaskedView (0.3.2):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNGestureHandler (2.30.1):
     - boost
     - DoubleConversion
@@ -3379,23 +3407,23 @@ PODS:
     - SDWebImage/Core (~> 5.17)
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
-  - YuzicEngine (1.2.1):
+  - YuzicEngine (1.2.3):
     - ExpoModulesCore
-    - YuzicEngine/Core (= 1.2.1)
-  - YuzicEngine/Core (1.2.1):
+    - YuzicEngine/Core (= 1.2.3)
+  - YuzicEngine/Core (1.2.3):
     - ExpoModulesCore
     - YuzicEngine/FLAC
     - YuzicEngine/Ogg
     - YuzicEngine/Opus
     - YuzicEngine/Vorbis
-  - YuzicEngine/FLAC (1.2.1):
+  - YuzicEngine/FLAC (1.2.3):
     - ExpoModulesCore
-  - YuzicEngine/Ogg (1.2.1):
+  - YuzicEngine/Ogg (1.2.3):
     - ExpoModulesCore
-  - YuzicEngine/Opus (1.2.1):
+  - YuzicEngine/Opus (1.2.3):
     - ExpoModulesCore
     - YuzicEngine/Ogg
-  - YuzicEngine/Vorbis (1.2.1):
+  - YuzicEngine/Vorbis (1.2.3):
     - ExpoModulesCore
     - YuzicEngine/Ogg
 
@@ -3517,6 +3545,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeExceptionHandler (from `../node_modules/react-native-exception-handler`)
+  - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNImageColors (from `../node_modules/react-native-image-colors`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -3777,6 +3806,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeExceptionHandler:
     :path: "../node_modules/react-native-exception-handler"
+  RNCMaskedView:
+    :path: "../node_modules/@react-native-masked-view/masked-view"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNImageColors:
@@ -3919,6 +3950,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 53a01767e04b3a23f128b5a3c6542b4ab24fb921
   ReactCommon: 5901ef412ae35cc727b9584d4f7e3e1f7f17c251
   ReactNativeExceptionHandler: a23922ca00122b050ae9412f960061791c232c47
+  RNCMaskedView: 5ef8c95cbab95334a32763b72896a7b7d07e6299
   RNGestureHandler: b407c25a3f51d22dd7430e6b530f753f112b7e77
   RNImageColors: 977420bca17290f111104bcfcbfb698982cbfbba
   RNReanimated: 4e6187f2ba1e30e6ddc7c8fc9f19b2dd2b6b2532
@@ -3931,7 +3963,7 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: b669e79fa0f8d3f6f5e35372345f54b99e06b13c
-  YuzicEngine: 339842f4f187acaf3c66531447e5021bc845ecf7
+  YuzicEngine: 242f7466f8451712323bd1c5271318d716246c6e
 
 PODFILE CHECKSUM: bf81fead562f580149b6e0a6da8e4c48b98be450
 
