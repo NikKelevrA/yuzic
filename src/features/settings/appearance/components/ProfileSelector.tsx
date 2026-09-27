@@ -28,7 +28,7 @@ import ProfileNameSheet from './ProfileNameSheet';
  * Keyed by id rather than returned in order, so a caller asking about one
  * profile does not have to know where it sits in the list.
  */
-export function useProfileLabels(profiles: ThemeProfile[]): Map<string, string> {
+function useProfileLabels(profiles: ThemeProfile[]): Map<string, string> {
   const { t } = useTranslation();
   return useMemo(() => {
     const raw = profiles.map(p => p.name ?? (p.nameKey ? t(p.nameKey) : ''));

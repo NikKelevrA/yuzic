@@ -22,7 +22,7 @@ export const MAX_ZOOM = 4;
 export type Size = { width: number; height: number };
 
 /** Absolute placement for the photo inside the screen it fills. */
-export type BackgroundLayout = {
+type BackgroundLayout = {
   left: number;
   top: number;
   width: number;

@@ -276,7 +276,7 @@ export const selectThemeMode = (state: AppearanceRootState): ThemeMode =>
 export const selectProfiles = (state: AppearanceRootState): ThemeProfile[] =>
   state.settingsAppearance.profiles;
 
-export const selectActiveProfileId = (state: AppearanceRootState): string =>
+const selectActiveProfileId = (state: AppearanceRootState): string =>
   state.settingsAppearance.activeProfileId;
 
 /** The profile in use, or the first one if the stored id names nothing. */

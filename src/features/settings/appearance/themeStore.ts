@@ -145,7 +145,7 @@ export function referencedBackgroundUris(profiles: ThemeProfile[]): Set<string> 
  * something that imports the slice — the two would otherwise be a cycle, and
  * the architecture gate would say so.
  */
-export type ProfileHolder = { profiles: ThemeProfile[]; activeProfileId: string };
+type ProfileHolder = { profiles: ThemeProfile[]; activeProfileId: string };
 
 /**
  * The profile being edited, and the theme it holds.
