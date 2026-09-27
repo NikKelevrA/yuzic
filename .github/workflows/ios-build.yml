@@ -6,6 +6,16 @@ name: iOS Build
 # existed mainly to test off `dev` — which is what the store kept refusing.
 on:
   workflow_call:
+    outputs:
+      build_number:
+        # Re-exported, because a job-level `outputs:` is invisible to the
+        # caller: a reusable workflow only hands back what `workflow_call`
+        # declares. Without this the verdict job read an empty string and
+        # printed "unknown", so the summary never once carried the number it
+        # is there to cross-check — see AGENTS, "Releasing — check both
+        # halves". Caught on 2.14.0.
+        description: The build number App Store Connect gave this build.
+        value: ${{ jobs.build-ios.outputs.build_number }}
 
 concurrency: ios-build
 

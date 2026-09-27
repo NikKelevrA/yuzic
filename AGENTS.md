@@ -91,6 +91,7 @@ Connect *accepted*, leaving testers on the older-numbered build.
 **What the stores held at the last release**, as a sanity check rather than a
 source of truth — the next run should come out one above these:
 
+- 2.14.0 (2026-09-27): TestFlight build **135**, Play version code **156**.
 - 2.13.0 (2026-09-26): TestFlight build **134**, Play version code **155**.
 - 2.12.0 (2026-09-25): TestFlight build **133**, Play version code **154**.
 - 2.11.0 (2026-09-25): TestFlight build **132**, Play version code **153**.
@@ -100,8 +101,15 @@ source of truth — the next run should come out one above these:
   stranded **2.0.0 / 10**. The rejected 2.0.0 Play attempt was code 118.
 
 A number much below the latest line means something local answered instead of
-the store. The release run now prints both on its summary — see the `verdict`
+the store. The release run prints both on its summary — see the `verdict`
 job — so this is a cross-check rather than the only record.
+
+That summary said `unknown` for every release up to and including 2.14.0. Both
+build workflows declared the number as a *job* output, which a caller cannot
+see: a reusable workflow hands back only what `on.workflow_call.outputs`
+declares, so `needs.build-ios.outputs.build_number` was always an empty
+string. The numbers were only ever in the build logs. Both now re-export, and
+the check is worth making on the next release before trusting it again.
 
 **Play release notes** come from
 `fastlane/metadata/android/en-US/changelogs/`. There cannot be a
