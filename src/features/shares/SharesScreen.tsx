@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
 import { CloudOff, Ellipsis, Link2 } from 'lucide-react-native';
 
@@ -11,7 +11,6 @@ import { useApi } from '@/providers/registry/useApi';
 import type { Share } from '@/providers/contracts/ServerAdapter';
 import { DetailHeaderBar } from '@/components/DetailHeader';
 import Touchable from '@/components/Touchable';
-import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { FormSheet, FormSheetField } from '@/components/FormSheet';
 import RadioMark from '@/components/options/RadioMark';
@@ -22,9 +21,9 @@ import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useListDensity } from '@/features/theme/useListDensity';
 import { contentWidth, hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { useServerReachable } from '@/features/connectivity/useServerReachable';
+import { useServerOnlyQuery } from '@/features/connectivity/useServerOnlyQuery';
+import ServerFeatureState from '@/components/ServerFeatureState';
 import { shareItem } from '@/features/shares/share';
-import { isUnavailableOnServer } from '@/features/library/useServerSurface';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -67,17 +66,13 @@ export default function SharesScreen() {
   const density = useListDensity();
   const api = useApi();
   const queryClient = useQueryClient();
-  const serverReachable = useServerReachable();
   const [editing, setEditing] = useState<Share | null>(null);
   const [optionsFor, setOptionsFor] = useState<Share | null>(null);
 
-  const sharesQuery = useQuery<Share[]>({
+  const sharesQuery = useServerOnlyQuery<Share>({
     queryKey: [QueryKeys.Shares],
-    queryFn: async () => (await api.shares?.list()) ?? [],
-    enabled: Boolean(api.shares) && serverReachable,
+    list: api.shares ? () => api.shares!.list() : undefined,
     staleTime: 1000 * 60 * 5,
-    // Sharing switched off on the server stays off however often it is asked.
-    retry: (failures, error) => !isUnavailableOnServer(error) && failures < 1,
   });
 
   const shareCount = sharesQuery.data?.length ?? 0;
@@ -166,40 +161,37 @@ export default function SharesScreen() {
         title={t('shares.title')}
         subtitle={shareCount > 0 ? t('library.count.shares', { count: shareCount }) : undefined}
       />
-      {!serverReachable && !(sharesQuery.data ?? []).length ? (
-        <EmptyState
-          icon={<CloudOff size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('common.offline.serverOnlyFeature')}
-        />
-      ) : sharesQuery.isLoading ? (
-        <View style={styles.listContent}>
-          {[...Array(6)].map((_, i) => <SkeletonListRow key={i} />)}
-        </View>
-      ) : sharesQuery.isError && isUnavailableOnServer(sharesQuery.error) ? (
-        <EmptyState
-          icon={<Link2 size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('shares.unavailable')}
-        />
-      ) : sharesQuery.isError ? (
-        <EmptyState
-          icon={<Link2 size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('common.loadFailed')}
-          action={{ label: t('common.retry'), onPress: () => sharesQuery.refetch() }}
-        />
-      ) : (sharesQuery.data ?? []).length === 0 ? (
-        <EmptyState
-          icon={<Link2 size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('shares.empty')}
-        />
-      ) : (
+      <ServerFeatureState
+        query={sharesQuery}
+        icon={<Link2 size={iconSize.emptyState} color={colors.subtext} />}
+        offlineIcon={<CloudOff size={iconSize.emptyState} color={colors.subtext} />}
+        skeleton={
+          <View style={styles.listContent}>
+            {[...Array(6)].map((_, i) => <SkeletonListRow key={i} />)}
+          </View>
+        }
+        unavailableMessage={t('shares.unavailable')}
+        emptyMessage={t('shares.empty')}
+      >
+        {() => (
         <FlatList
           data={sharesQuery.data}
           keyExtractor={(s) => s.id}
           contentContainerStyle={[styles.listContent, { paddingBottom: scrollClearance }]}
           ItemSeparatorComponent={renderSeparator}
+          // Its two siblings have had pull-to-refresh all along; this screen is
+          // the same list of the same kind of thing and simply never got one.
+          refreshControl={
+            <RefreshControl
+              refreshing={sharesQuery.isRefetching}
+              onRefresh={() => void sharesQuery.refetch()}
+              tintColor={colors.secondary}
+            />
+          }
           renderItem={renderShare}
         />
-      )}
+        )}
+      </ServerFeatureState>
 
       {optionsFor && (
         <ShareLinkOptions

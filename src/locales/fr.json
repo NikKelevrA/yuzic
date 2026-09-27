@@ -1585,6 +1585,7 @@
   "radio": {
     "title": "Radio",
     "empty": "Aucune station de radio pour l’instant. Ajoutez-en une pour commencer.",
+    "unavailable": "Votre serveur ne propose pas de radio internet.",
     "add": "Ajouter une station",
     "addTitle": "Ajouter une station",
     "editTitle": "Modifier la station",

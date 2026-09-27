@@ -1579,6 +1579,7 @@
   "radio": {
     "title": "电台",
     "empty": "还没有电台。添加一个即可开始。",
+    "unavailable": "你的服务器不提供网络电台。",
     "add": "添加电台",
     "addTitle": "添加电台",
     "editTitle": "编辑电台",

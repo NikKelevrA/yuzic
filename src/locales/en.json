@@ -1544,6 +1544,7 @@
   "radio": {
     "title": "Radio",
     "empty": "No radio stations yet. Add one to get started.",
+    "unavailable": "Your server doesn’t offer internet radio.",
     "add": "Add station",
     "addTitle": "Add station",
     "editTitle": "Edit station",

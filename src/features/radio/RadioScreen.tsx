@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
@@ -26,11 +26,11 @@ import {
   setLibraryViewMode,
 } from '@/features/settings/appearance/state';
 import Touchable from '@/components/Touchable';
-import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { controlSize, hitSlopFor, iconSize, spacing } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { useServerReachable } from '@/features/connectivity/useServerReachable';
+import { useServerOnlyQuery } from '@/features/connectivity/useServerOnlyQuery';
+import ServerFeatureState from '@/components/ServerFeatureState';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useTheme } from '@/features/theme/useTheme';
 import { useIconSize } from '@/features/theme/useIconSize';
@@ -68,7 +68,6 @@ export default function RadioScreen() {
   const icons = useIconSize();
   const api = useApi();
   const queryClient = useQueryClient();
-  const serverReachable = useServerReachable();
   const scrollClearance = useScrollClearance();
   const { playSong } = usePlayingActions();
   const activeServer = useSelector(selectActiveServer);
@@ -85,10 +84,9 @@ export default function RadioScreen() {
   const gutter = libraryGutter(isGridView, GRID_SPACING, screenWidth);
   const gridWidth = gridItemWidth(screenWidth, gridColumns, GRID_SPACING, gutter);
 
-  const stationsQuery = useQuery({
+  const stationsQuery = useServerOnlyQuery({
     queryKey: [QueryKeys.Radio],
-    queryFn: async () => (await api.radio?.list()) ?? [],
-    enabled: Boolean(api.radio) && serverReachable,
+    list: api.radio ? () => api.radio!.list() : undefined,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -229,30 +227,22 @@ export default function RadioScreen() {
         }
       />
 
-      {!serverReachable && !stationsQuery.data?.length ? (
-        <EmptyState
-          icon={<CloudOff size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('common.offline.serverOnlyFeature')}
-        />
-      ) : stationsQuery.isLoading ? (
-        <View style={styles.listContent}>
-          {[...Array(8)].map((_, i) => (
-            <SkeletonListRow key={i} artSize={controlSize.compactMediaRowArt} />
-          ))}
-        </View>
-      ) : stationsQuery.isError ? (
-        <EmptyState
-          icon={<RadioIcon size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('common.loadFailed')}
-          action={{ label: t('common.retry'), onPress: () => stationsQuery.refetch() }}
-        />
-      ) : !stationsQuery.data?.length ? (
-        <EmptyState
-          icon={<RadioIcon size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('radio.empty')}
-          action={{ label: t('radio.add'), onPress: () => setEditing({ mode: 'add' }) }}
-        />
-      ) : (
+      <ServerFeatureState
+        query={stationsQuery}
+        icon={<RadioIcon size={iconSize.emptyState} color={colors.subtext} />}
+        offlineIcon={<CloudOff size={iconSize.emptyState} color={colors.subtext} />}
+        skeleton={
+          <View style={styles.listContent}>
+            {[...Array(8)].map((_, i) => (
+              <SkeletonListRow key={i} artSize={controlSize.compactMediaRowArt} />
+            ))}
+          </View>
+        }
+        unavailableMessage={t('radio.unavailable')}
+        emptyMessage={t('radio.empty')}
+        emptyAction={{ label: t('radio.add'), onPress: () => setEditing({ mode: 'add' }) }}
+      >
+        {() => (
         <FlatList
           // Changing the column count needs a new list; FlatList keeps the
           // old layout otherwise.
@@ -284,7 +274,8 @@ export default function RadioScreen() {
           }
           renderItem={renderStation}
         />
-      )}
+        )}
+      </ServerFeatureState>
 
       <SingleSelectBottomSheet
         ref={sortSheetRef}
