@@ -1,7 +1,6 @@
-Search now works the way you expect, and your background follows you.
+Save a look you like, and choose what your wallpaper shows.
 
-- Tap the field to search, Cancel to go back. Putting the keyboard away no longer swaps the screen out from under you
-- Your search filters are remembered instead of resetting every visit
-- Genres and moods open the same screen everywhere, with full-width Play and Shuffle
-- A background image shows behind every screen, not just the three tabs
-- Downloading an album closes the sheet instead of leaving it open
+- Appearance profiles: keep more than one look and switch between them. The Yuzic look always stays as it was, so trying something is never a one-way door
+- Drag and zoom a background photo to pick the part that shows, with a live preview
+- Bottom sheets are no longer see-through in light mode over a background image
+- The artist header fades into your wallpaper instead of ending on a hard edge, and its round photo is whole again
