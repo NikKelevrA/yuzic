@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { spacing, typography } from '@/constants/design';
 import { useTheme } from '@/features/theme/useTheme';
-import { SOURCE_SCREENS } from '@/providers/registry/sources';
+import { availableUsesFor, SOURCE_SCREENS } from '@/providers/registry/sources';
 import SettingsScreen from '../components/SettingsScreen';
 import SettingsCardHeader from '../components/SettingsCardHeader';
 import SourceUseList from './SourceUseList';
@@ -22,12 +22,17 @@ export default function SourcePurposeScreen({ screen }: Props) {
   return (
     <SettingsScreen title={t(`settings.${screen}.title`)}>
       <Text style={[styles.caption, { color: colors.subtext }]}>{t(`settings.${screen}.explanation`)}</Text>
-      {SOURCE_SCREENS[screen].map(purpose => (
-        <React.Fragment key={purpose}>
-          <SettingsCardHeader subtle title={t(`settings.sourcePurposes.${purpose}`)} />
-          <SourceUseList purpose={purpose} />
-        </React.Fragment>
-      ))}
+      {/* A purpose every source of which this build lacks a key for is left
+          out whole, header included — an empty card under a heading reads as
+          a list that failed to load rather than one that cannot exist here. */}
+      {SOURCE_SCREENS[screen]
+        .filter(purpose => availableUsesFor(purpose).length > 0)
+        .map(purpose => (
+          <React.Fragment key={purpose}>
+            <SettingsCardHeader subtle title={t(`settings.sourcePurposes.${purpose}`)} />
+            <SourceUseList purpose={purpose} />
+          </React.Fragment>
+        ))}
     </SettingsScreen>
   );
 }

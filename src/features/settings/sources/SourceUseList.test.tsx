@@ -33,6 +33,49 @@ async function renderList(store: Store, purpose: React.ComponentProps<typeof Sou
 const uses = (store: Store) => store.getState().settingsSources.uses;
 
 describe('SourceUseList', () => {
+  // Last.fm needs a key compiled into the build, and the test build carries
+  // none — the same state every shipped build has been in. A switch for it
+  // would be a control with nothing behind it.
+  it('leaves out a source this build has no key for', async () => {
+    const { view } = await renderList(makeStore(), 'similarArtists');
+
+    const ids = view.getAllByRole('switch').map(node => node.props.testID);
+    expect(ids).toEqual([
+      'source-use-listenbrainz.similarArtists',
+      'source-use-deezer.similarArtists',
+    ]);
+    expect(ids).not.toContain('source-use-lastfm.similarArtists');
+  });
+
+  it('says what a purpose also needs, and what it is waiting on', async () => {
+    const store = makeStore();
+    const { view } = await renderList(store, 'recommendations');
+
+    // Nothing of its own on yet: the dependency is worth stating, not urging.
+    expect(view.getByTestId('source-purpose-note-recommendations').props.children)
+      .toBe('settings.sources.alsoUses');
+
+    // Switched on with nothing to seed it, the note becomes the missing step.
+    await fireEvent(view.getByTestId('source-use-deezer.recommendations'), 'valueChange', true);
+    expect(view.getByTestId('source-purpose-note-recommendations').props.children)
+      .toBe('settings.sources.needsPurpose');
+  });
+
+  it('drops the warning once the purpose it needs has a source on', async () => {
+    const store = makeStore();
+    store.dispatch(setSourceUse({ use: 'deezer.similarArtists', enabled: true }));
+    const { view } = await renderList(store, 'recommendations');
+
+    await fireEvent(view.getByTestId('source-use-deezer.recommendations'), 'valueChange', true);
+    expect(view.getByTestId('source-purpose-note-recommendations').props.children)
+      .toBe('settings.sources.alsoUses');
+  });
+
+  it('says nothing extra for a purpose that stands on its own', async () => {
+    const { view } = await renderList(makeStore(), 'artwork');
+    expect(view.queryByTestId('source-purpose-note-artwork')).toBeNull();
+  });
+
   it('lists every source for a purpose in the order they are tried', async () => {
     const { view } = await renderList(makeStore(), 'artwork');
 

@@ -625,13 +625,14 @@
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "Ce n'est pas une adresse web valide. Utilisez par exemple http://192.168.1.10:5000.",
         "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil."
-      }
+      },
+      "alsoUses": "Utilise aussi {{purposes}}.",
+      "needsPurpose": "Activez une source sous {{purposes}} pour que ceci ait de quoi partir."
     },
     "sourceUses": {
       "lastfm": {
         "artistInfo": "Biographies et tags des artistes.",
-        "similarArtists": "Artistes similaires selon les auditeurs Last.fm.",
-        "recommendations": "Trouve des artistes proches de ceux d'une playlist."
+        "similarArtists": "Artistes similaires selon les auditeurs Last.fm."
       },
       "coverartarchive": {
         "artwork": "Pochettes absentes de votre bibliothèque, associées par identifiant MusicBrainz."

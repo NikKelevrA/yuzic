@@ -625,13 +625,14 @@
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "That doesn't look like a web address. Use something like http://192.168.1.10:5000.",
         "unreachable": "That address didn't answer as expected. Check the server is running and reachable from this device."
-      }
+      },
+      "alsoUses": "Also uses {{purposes}}.",
+      "needsPurpose": "Turn on a source under {{purposes}} for this to have anything to go on."
     },
     "sourceUses": {
       "lastfm": {
         "artistInfo": "Bios and tags for artists.",
-        "similarArtists": "Similar artists from Last.fm listeners.",
-        "recommendations": "Finds artists like the ones in a playlist."
+        "similarArtists": "Similar artists from Last.fm listeners."
       },
       "coverartarchive": {
         "artwork": "Album covers your library is missing, matched by MusicBrainz id."

@@ -20,11 +20,13 @@ import { useAnyAlbumDownloaderConnected } from '@/features/downloaders/registry'
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { selectSourceUse } from '@/features/settings/sources/state';
 import {
+  CATALOGUE_SIMILAR_USE,
   CATALOGUE_TRACKS_RECOMMENDATIONS_USE,
   fetchCatalogueAlbum,
   fetchPlaylistRecommendations,
   SCROBBLES_AVAILABLE,
-  SCROBBLES_RECOMMENDATIONS_USE,
+  SCROBBLES_SIMILAR_USE,
+  type SimilarArtistSources,
 } from '@/providers/registry/pageSources';
 import { ARTIST_CATALOGUE } from '@/providers/registry/artistSources';
 import { QueryKeys } from '@/state/query/queryKeys';
@@ -42,9 +44,17 @@ type Props = {
 };
 
 /**
- * Deezer/Last.fm discovery: Last.fm expands the playlist's own artists into
- * similar ones, Deezer turns those into playable preview tracks — see
- * `recommendedSongs.fetchExternalRecs`.
+ * Tracks to go with a playlist, from the artists already in it.
+ *
+ * Two questions, and they are not the same one. "Who sounds like this" is the
+ * `similarArtists` purpose, which Last.fm or Deezer can answer — whichever the
+ * user has turned on there, rather than a switch of this row's own asking the
+ * same thing again. "What can I play by them" only a catalogue can answer, so
+ * that one is required.
+ *
+ * It used to name Last.fm for the first question and demand a switch of its
+ * own for it, which meant the row needed a key the shipped builds do not carry
+ * — so it has never appeared in one. Deezer alone is enough now.
  */
 export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, onRefreshExternal }) => {
   const { t } = useTranslation();
@@ -53,7 +63,10 @@ export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, o
   const showSourceHeaders = useSelector(selectShowSourceHeaders);
   const isOffline = useIsOffline();
   const catalogueEnabled = useSelector(selectSourceUse(CATALOGUE_TRACKS_RECOMMENDATIONS_USE));
-  const scrobblesEnabled = useSelector(selectSourceUse(SCROBBLES_RECOMMENDATIONS_USE));
+  // The seed step reads the `similarArtists` switches — the same ones the
+  // artist page reads, so turning a source on there turns it on here too.
+  const scrobblesSimilar = useSelector(selectSourceUse(SCROBBLES_SIMILAR_USE)) && SCROBBLES_AVAILABLE;
+  const catalogueSimilar = useSelector(selectSourceUse(CATALOGUE_SIMILAR_USE));
   const hasDownloader = useAnyAlbumDownloaderConnected();
   const downloadSheetRef = useSheetRef();
   const [albumForDownload, setAlbumForDownload] = useState<Album | null>(null);
@@ -65,19 +78,21 @@ export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, o
     [playlist.nativeId, playlistArtistNames]
   );
 
+  const similarSources = useMemo<SimilarArtistSources>(
+    () => ({ scrobbles: scrobblesSimilar, catalogue: catalogueSimilar }),
+    [scrobblesSimilar, catalogueSimilar]
+  );
+  // Somewhere to start and somewhere to look the results up: any one seed
+  // source will do, the catalogue is not optional.
+  const canRecommend = catalogueEnabled && (scrobblesSimilar || catalogueSimilar);
+
   const externalQuery = useQuery({
     queryKey: externalQueryKey,
-    queryFn: () => fetchPlaylistRecommendations(playlistArtistNames),
-    // This row is two services in a trench coat: Last.fm expands the seed
-    // artists into similar ones, Deezer turns those into playable tracks. It
-    // needs both to have been turned on — plus a bundled Last.fm key to
-    // expand with — so it asks for all three before calling anyone.
+    queryFn: () => fetchPlaylistRecommendations(playlistArtistNames, similarSources),
     enabled:
-      catalogueEnabled &&
-      scrobblesEnabled &&
+      canRecommend &&
       !isOffline &&
-      playlistArtistNames.length > 0 &&
-      SCROBBLES_AVAILABLE,
+      playlistArtistNames.length > 0,
     staleTime: 1000 * 60 * 60 * 6,
     networkMode: 'online',
   });
@@ -105,7 +120,7 @@ export const ExternalRecommendedSection: React.FC<Props> = ({ playlist, songs, o
     }
   }, [downloadSheetRef, hasDownloader, t]);
 
-  if (!catalogueEnabled || !scrobblesEnabled || isOffline || playlistArtistNames.length === 0 || !SCROBBLES_AVAILABLE) return null;
+  if (!canRecommend || isOffline || playlistArtistNames.length === 0) return null;
 
   return (
     <View style={styles.section}>

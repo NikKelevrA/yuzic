@@ -624,13 +624,14 @@
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "有効なWebアドレスではありません。http://192.168.1.10:5000 のように入力してください。",
         "unreachable": "このアドレスから想定どおりの応答がありません。サーバーが起動していて、このデバイスから届くか確認してください。"
-      }
+      },
+      "alsoUses": "{{purposes}} も使用します。",
+      "needsPurpose": "{{purposes}} のソースを有効にすると、ここで使う手がかりが得られます。"
     },
     "sourceUses": {
       "lastfm": {
         "artistInfo": "アーティストの経歴とタグ。",
-        "similarArtists": "Last.fmのリスナーによる似たアーティスト。",
-        "recommendations": "プレイリストのアーティストに似たアーティストを探します。"
+        "similarArtists": "Last.fmのリスナーによる似たアーティスト。"
       },
       "coverartarchive": {
         "artwork": "ライブラリにないアルバムアートを、MusicBrainz IDで照合します。"

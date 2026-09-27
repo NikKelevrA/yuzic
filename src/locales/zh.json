@@ -624,13 +624,14 @@
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "这不是有效的网址。请使用类似 http://192.168.1.10:5000 的格式。",
         "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。"
-      }
+      },
+      "alsoUses": "同时使用{{purposes}}。",
+      "needsPurpose": "请在{{purposes}}下启用一个来源，这里才有可用的依据。"
     },
     "sourceUses": {
       "lastfm": {
         "artistInfo": "艺人简介和标签。",
-        "similarArtists": "来自 Last.fm 听众的相似艺人。",
-        "recommendations": "查找与歌单中艺人相似的艺人。"
+        "similarArtists": "来自 Last.fm 听众的相似艺人。"
       },
       "coverartarchive": {
         "artwork": "资料库缺少的专辑封面，按 MusicBrainz ID 匹配。"
