@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Ellipsis } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -48,12 +48,29 @@ type Props = {
  * `useAcquireAndPlaySong`'s own doc for why "the moment it lands" is a real
  * thing this can wait for, not a guess. Without that setup, nothing here
  * changes: same sheet, same fallback, same as basic 2.9.0.
+ *
+ * Debounced the same way `TrackItem`'s tap is (`pressInFlightRef` + a
+ * cooldown): unlike a plain local play, a "not owned" tap here fires a real
+ * network request to a downloader with no dedup of its own. Two `acquireAndPlay`
+ * calls for the same row — a genuine fast double-tap, or `Pressable` firing
+ * twice, which this row had no guard against — sent two independent Get
+ * requests for the same track, confirmed server-side as two near-simultaneous
+ * downloads racing to write the same file (one silently overwriting the
+ * other's output partway through). That race is a very plausible cause of a
+ * track that downloads, gets indexed, even streams fine in isolation, but
+ * then won't play from the app — the file on disk may no longer be the one
+ * that got scanned.
  */
+const SONG_RESULT_PRESS_COOLDOWN_MS = 700;
+
 export default function SongResult({ result, navigateToAlbum, onSelect, onPress, onOptions }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const optionsSheetRef = useSheetRef();
   const { canAcquireAndPlay, selfHostedMusicbrainzConfigured, acquireAndPlay } = useAcquireAndPlaySong();
+
+  const pressInFlightRef = useRef(false);
+  const lastPressAtRef = useRef(0);
 
   // A leading type word keeps this row from reading as an album when a
   // search mixes both kinds — see AlbumResult's matching prefix.
@@ -71,17 +88,23 @@ export default function SongResult({ result, navigateToAlbum, onSelect, onPress,
           subtitle={subtitle}
           cover={result.cover}
           onPress={() => {
+            const now = Date.now();
+            if (now - lastPressAtRef.current < SONG_RESULT_PRESS_COOLDOWN_MS) return;
+            if (pressInFlightRef.current) return;
+            lastPressAtRef.current = now;
+
             onSelect(result);
             if (song && canAcquireAndPlay) {
               const albumStub = songResultToAlbum(result);
               if (albumStub) {
+                pressInFlightRef.current = true;
                 void acquireAndPlay(song, albumStub).then(handled => {
                   // Nothing could be done for this hit (shouldn't happen
                   // when `canAcquireAndPlay` is true and a song resolved,
                   // but falls through to the ordinary sheet rather than
                   // leaving the tap looking like it did nothing).
                   if (!handled) optionsSheetRef.current?.present();
-                });
+                }).finally(() => { pressInFlightRef.current = false; });
                 return;
               }
             }
