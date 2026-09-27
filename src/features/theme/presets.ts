@@ -65,7 +65,7 @@ export const DEFAULT_THEME: Theme = {
   accent: themeColorPreset[0],
   accentFromCover: false,
   shape: { radius: 'default', density: 'default', textScale: 1 },
-  surface: { coverTint: true, background: { kind: 'none' }, backgroundScope: 'home', backgroundBlur: 24, backgroundDim: 0.6 },
+  surface: { coverTint: true, background: { kind: 'none' }, backgroundScope: 'tabs', backgroundBlur: 24, backgroundDim: 0.6 },
   components: { dock: 'solid', dockShape: 'edge', tabLabels: false, playerLayout: 'artwork' },
 };
 
@@ -136,7 +136,19 @@ export function normalizeTheme(theme: Partial<Theme>): Theme {
       dark: { ...DEFAULT_THEME.palettes.dark, ...theme.palettes?.dark },
     },
     shape: { ...DEFAULT_THEME.shape, ...theme.shape },
-    surface: { ...DEFAULT_THEME.surface, ...theme.surface },
+    surface: {
+      ...DEFAULT_THEME.surface,
+      ...theme.surface,
+      // `home` was a third scope, dropped in favour of tabs-or-everywhere. A
+      // theme stored while it existed still says `home`, which now matches no
+      // branch and would quietly read as "everywhere" in the picker while
+      // behaving like nothing. Tabs is the setting it becomes: it keeps the
+      // photo on the screen the person had it on, and adds its two siblings.
+      backgroundScope:
+        (theme.surface?.backgroundScope as string) === 'home'
+          ? 'tabs'
+          : theme.surface?.backgroundScope ?? DEFAULT_THEME.surface.backgroundScope,
+    },
     components: { ...DEFAULT_THEME.components, ...theme.components },
   };
 }

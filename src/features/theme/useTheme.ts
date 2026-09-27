@@ -52,6 +52,16 @@ export const useTheme = () => {
     resolved,
     isDarkMode,
     colors,
+    /**
+     * The palette with nothing let through it, for the things that are *not*
+     * the page: a sheet, a menu, a filled button's knocked-out label. `colors`
+     * reports `background` as transparent while an image shows, which is right
+     * for a screen painting itself out of the way and wrong for anything
+     * drawn on top of one — a sheet that takes it goes see-through, and a
+     * label that takes it disappears. Reach for this when the surface is meant
+     * to cover the image rather than reveal it.
+     */
+    palette,
     colorKey,
   };
 };

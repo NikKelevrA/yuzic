@@ -19,7 +19,7 @@ import SettingsRow from '../../components/SettingsRow';
 
 type Choice = ScreenBackgroundSource['kind'];
 
-const SCOPES = ['home', 'tabs', 'everywhere'] as const;
+const SCOPES = ['tabs', 'everywhere'] as const;
 
 // Module-level, so these keep the static token: a hook cannot reach a constant
 // declared outside the component. They are fixed-size glyphs in a settings
@@ -92,9 +92,11 @@ export const BackgroundSelector: React.FC = () => {
               <SettingsDivider />
             </>
           )}
-          {/* Three reaches rather than a switch: "behind every tab" stopped at
-              the three tab roots, so an album, a playlist or settings never
-              showed it however the switch was set. */}
+          {/* Two reaches: this tab bar's screens, or the whole app. There was
+              a third, Home alone — one tab wearing the photo while its two
+              siblings did not made the app look half-themed, and it was the
+              narrowest of three choices where two already covered the intent.
+              A stored `home` is carried across to `tabs` by `normalizeTheme`. */}
           {SCOPES.map(scope => (
             <React.Fragment key={scope}>
               <SettingsRow

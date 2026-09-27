@@ -196,7 +196,6 @@
         "dim": "暗さ",
         "pickFailed": "この写真は使用できませんでした。",
         "scope": "表示する範囲",
-        "scopeHome": "ホームのみ",
         "scopeTabs": "ホーム・検索・ライブラリ",
         "scopeEverywhere": "すべての画面"
       },

@@ -196,7 +196,6 @@
         "dim": "Dim",
         "pickFailed": "Couldn't use that photo.",
         "scope": "Where it shows",
-        "scopeHome": "Home only",
         "scopeTabs": "Home, Search and Library",
         "scopeEverywhere": "Every screen"
       },

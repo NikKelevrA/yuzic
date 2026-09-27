@@ -117,15 +117,18 @@ describe('ScreenBackground', () => {
     expect(screen.getByTestId('screen-background')).toBeTruthy();
   });
 
-  it('stays on Home unless it is set to go behind every tab', async () => {
+  it('covers a sibling tab root, not just Home', async () => {
+    // `home` used to be a third scope, covering the Home tab alone. It was
+    // dropped: one tab wearing the photo and its two siblings not made the app
+    // look half-themed. `tabs` is the narrow setting now, and it has to reach
+    // Search and Library as well as Home.
     mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
     mockSegments = SEARCH;
     const { store, view } = setup(<Probe />);
-    store.dispatch(editTheme({ surface: { background: { kind: 'cover' } } }));
     const screen = await view;
-    expect(screen.queryByTestId('screen-background')).toBeNull();
-
-    await act(async () => { store.dispatch(editTheme({ surface: { backgroundScope: 'tabs' } })); });
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'cover' }, backgroundScope: 'tabs' } }));
+    });
     expect(screen.getByTestId('screen-background')).toBeTruthy();
   });
 
@@ -151,9 +154,9 @@ describe('ScreenBackground', () => {
     mockSegments = HOME;
   });
 
-  // What shipped broken: Home is the default scope, and the Home tab root was
-  // not recognised as a tab root at all, so the only setting that drew anything
-  // was the widest one.
+  // What shipped broken: the Home tab root was not recognised as a tab root at
+  // all, so the only setting that drew anything was the widest one. `tabs` is
+  // the default now, and the Home tab root is one of the roots it must cover.
   it('draws on the Home tab root at the default scope', async () => {
     mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
     mockSegments = HOME;
@@ -161,7 +164,7 @@ describe('ScreenBackground', () => {
     const screen = await view;
     await act(async () => { store.dispatch(editTheme({ surface: { background: { kind: 'cover' } } })); });
 
-    expect(selectActiveTheme(store.getState()).surface.backgroundScope).toBe('home');
+    expect(selectActiveTheme(store.getState()).surface.backgroundScope).toBe('tabs');
     expect(screen.getByTestId('screen-background')).toBeTruthy();
   });
 

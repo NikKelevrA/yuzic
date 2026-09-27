@@ -9,38 +9,12 @@ import { useActiveTheme } from './useActiveTheme';
 import { colorsFor } from './theme';
 import { useResolvedScheme } from './useResolvedScheme';
 import { BackgroundSurfaceContext, type BackgroundSurface } from './screenBackgroundContext';
-
-/** The tab roots, as expo-router segments them. Anything else is a pushed screen. */
-const TAB_GROUPS = ['(home)', '(search)', '(library)'] as const;
-
-/**
- * The tab group this route is the root of, or null if it is anywhere else.
- *
- * **`index` is not a segment.** `expo-router` pops a trailing `index` before
- * handing the segments over (`global-state/routeInfo.js`), so the Home tab root
- * is `['(home)', '(tabs)', '(home)']` and never ends in `index`. Testing for
- * one meant no route was ever a tab root, which turned both the Home and the
- * per-tab scopes off and left "everywhere" — the one branch that returns before
- * this — as the only setting that did anything.
- *
- * The trailing `index` is still tolerated rather than assumed absent: this
- * asked the router about its own private normalisation, and being wrong about
- * it in the other direction should not cost the feature a second time.
- */
-function tabRootGroup(segments: string[]): string | null {
-  const last = segments[segments.length - 1] === 'index'
-    ? segments[segments.length - 2]
-    : segments[segments.length - 1];
-  return (TAB_GROUPS as readonly string[]).includes(last) ? last : null;
-}
+import { coversRoute } from './backgroundScope';
 
 function useCoveredByScope(): boolean {
   const scope = useActiveTheme().surface.backgroundScope;
   const segments = useSegments() as string[];
-  if (scope === 'everywhere') return true;
-  const group = tabRootGroup(segments);
-  if (!group) return false;
-  return scope === 'tabs' || group === '(home)';
+  return coversRoute(scope, segments);
 }
 
 /**

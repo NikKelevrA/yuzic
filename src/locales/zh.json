@@ -196,7 +196,6 @@
         "dim": "遮罩",
         "pickFailed": "无法使用这张照片。",
         "scope": "显示范围",
-        "scopeHome": "仅主页",
         "scopeTabs": "主页、搜索和资料库",
         "scopeEverywhere": "所有页面"
       },

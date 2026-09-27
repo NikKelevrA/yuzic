@@ -35,12 +35,25 @@ export const optionSheetStyles = StyleSheet.create({
   },
 });
 
-/** Sheet surface color + top-corner radii scaled by the user's preset. */
+/**
+ * Sheet surface color + top-corner radii scaled by the user's preset.
+ *
+ * The colour comes from `palette`, not `colors`. A sheet is drawn *over* the
+ * screen, so it is one of the surfaces that must cover a background image
+ * rather than let it through — and `colors.background` is reported as
+ * transparent whenever an image is showing. Taking it made every sheet in the
+ * app see-through in light mode, which is the branch that reads it; dark mode
+ * takes `card` and so never showed the bug.
+ *
+ * The two modes stay different on purpose: light sits the sheet at the page
+ * colour so the white cards inside it read as raised, dark lifts it off a
+ * near-black page. Both are the panel behind the content, not the content.
+ */
 export function useOptionSheetBackground() {
-  const { isDarkMode, colors } = useTheme();
+  const { isDarkMode, palette } = useTheme();
   const rad = useRadius();
   return {
-    backgroundColor: isDarkMode ? colors.card : colors.background,
+    backgroundColor: isDarkMode ? palette.card : palette.background,
     borderTopLeftRadius: rad.lg,
     borderTopRightRadius: rad.lg,
   };

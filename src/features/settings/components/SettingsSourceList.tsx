@@ -49,13 +49,16 @@ type SourceRowProps = {
  */
 function SourceRow({ item, canReorder, showSubtext }: SourceRowProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, palette } = useTheme();
   const icons = useIconSize();
   const drag = useReorderableDrag();
   const isActive = useIsActive();
 
   return (
-    <View style={[styles.sourceRow, isActive && { backgroundColor: colors.background }]}>
+    // The lifted row while dragging, so it needs the page colour itself —
+    // `colors.background` is transparent over a background image, which left
+    // the row being dragged with no highlight to lift it off the list.
+    <View style={[styles.sourceRow, isActive && { backgroundColor: palette.background }]}>
       <View style={styles.sourceCopy}>
         <Text style={[styles.sourceLabel, { color: colors.secondary }]}>{item.label}</Text>
         {showSubtext && item.subtext && (

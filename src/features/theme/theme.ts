@@ -45,12 +45,18 @@ export interface Theme {
     /** What the tab screens are drawn over: their plain colour, a photo, or what is playing. */
     background: ScreenBackgroundSource;
     /**
-     * How far the background reaches: Home alone, every tab's root screen, or
-     * every screen in the app. `everywhere` excludes the full-screen player,
-     * which draws the cover as its own background — two images layered read as
-     * a mistake rather than a choice.
+     * How far the background reaches: every tab's root screen, or every screen
+     * in the app. `everywhere` excludes the full-screen player, which draws the
+     * cover as its own background — two images layered read as a mistake rather
+     * than a choice.
+     *
+     * There was a third setting, Home alone. It was dropped rather than fixed:
+     * one tab wearing the photo and its two siblings not made the app look
+     * half-themed, and it was the narrowest of three choices where two already
+     * covered the intent — this tab bar's screens, or the whole app.
+     * {@link normalizeTheme} carries a stored `home` across to `tabs`.
      */
-    backgroundScope: 'home' | 'tabs' | 'everywhere';
+    backgroundScope: 'tabs' | 'everywhere';
     /** Blur radius applied to the background image, in points. */
     backgroundBlur: number;
     /**

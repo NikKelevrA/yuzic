@@ -28,6 +28,26 @@ describe('the theme', () => {
     expect(selectTranslucentDock(root(fresh()))).toBe(false)
   })
 
+  // `home` was a third background scope, covering the Home tab alone. It is
+  // gone, so a theme stored while it existed names a scope that matches no
+  // branch: it would sit in the picker looking like "every screen" while
+  // behaving like nothing. `tabs` is what it becomes — the photo stays on the
+  // screen it was on, and gains that tab bar's two siblings.
+  it('carries a stored home scope across to tabs', () => {
+    const state = reducer(
+      fresh(),
+      editTheme({ surface: { backgroundScope: 'home' as 'tabs' } }),
+    )
+    expect(selectActiveTheme(root(state)).surface.backgroundScope).toBe('tabs')
+  })
+
+  it('leaves a stored tabs or everywhere scope alone', () => {
+    for (const scope of ['tabs', 'everywhere'] as const) {
+      const state = reducer(fresh(), editTheme({ surface: { backgroundScope: scope } }))
+      expect(selectActiveTheme(root(state)).surface.backgroundScope).toBe(scope)
+    }
+  })
+
   it('is the same object until it changes, so nothing redraws for nothing', () => {
     const state = fresh()
     expect(selectActiveTheme(root(state))).toBe(selectActiveTheme(root({ ...state })))
