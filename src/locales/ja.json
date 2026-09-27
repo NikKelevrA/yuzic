@@ -1086,7 +1086,13 @@
       "setAside": "しばらく聴いていない"
     },
     "empty": {
-      "recentlyAdded": "ライブラリにアルバムがありません"
+      "recentlyAdded": "ライブラリにアルバムがありません",
+      "charts": "チャートがありません",
+      "topArtists": "アーティストがいません",
+      "genre": "結果がありません — 別のジャンルをお試しください",
+      "becauseYouListened": "まだ提案できるものがありません",
+      "serverRandom": "まだ選べるものがありません",
+      "lbSimilarForYou": "まだ提案がありません"
     },
     "sources": {
       "server": "サーバー内"

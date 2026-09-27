@@ -1086,7 +1086,13 @@
       "setAside": "许久未听"
     },
     "empty": {
-      "recentlyAdded": "媒体库中暂无专辑"
+      "recentlyAdded": "媒体库中暂无专辑",
+      "charts": "暂无排行榜",
+      "topArtists": "暂无艺人",
+      "genre": "没有结果 — 换一个流派试试",
+      "becauseYouListened": "暂时没有推荐",
+      "serverRandom": "暂时没有可随机的内容",
+      "lbSimilarForYou": "暂时没有推荐"
     },
     "sources": {
       "server": "在你的服务器上"

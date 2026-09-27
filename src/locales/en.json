@@ -1095,7 +1095,13 @@
       "setAside": "Set aside"
     },
     "empty": {
-      "recentlyAdded": "No albums in your library yet"
+      "recentlyAdded": "No albums in your library yet",
+      "charts": "No charts available",
+      "topArtists": "No artists available",
+      "genre": "No results — try a different genre",
+      "becauseYouListened": "Nothing to suggest yet",
+      "serverRandom": "Nothing to shuffle in yet",
+      "lbSimilarForYou": "Nothing suggested yet"
     },
     "sources": {
       "server": "On your server"

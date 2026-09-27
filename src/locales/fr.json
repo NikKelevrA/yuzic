@@ -1089,7 +1089,13 @@
       "setAside": "Mis de côté"
     },
     "empty": {
-      "recentlyAdded": "Aucun album dans votre bibliothèque pour le moment"
+      "recentlyAdded": "Aucun album dans votre bibliothèque pour le moment",
+      "charts": "Aucun classement disponible",
+      "topArtists": "Aucun artiste disponible",
+      "genre": "Aucun résultat — essayez un autre genre",
+      "becauseYouListened": "Rien à suggérer pour l’instant",
+      "serverRandom": "Rien à piocher pour l’instant",
+      "lbSimilarForYou": "Aucune suggestion pour l’instant"
     },
     "sources": {
       "server": "Sur votre serveur"
