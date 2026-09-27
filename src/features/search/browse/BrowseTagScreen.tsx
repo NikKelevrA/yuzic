@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRoute } from '@react-navigation/native'
 import { useTranslation } from 'react-i18next'
@@ -10,8 +10,10 @@ import { CloudOff } from 'lucide-react-native'
 import SkeletonListRow from '@/components/SkeletonListRow'
 import SectionEmptyState from '@/features/home/components/SectionEmptyState'
 import StatusBanner from '@/components/StatusBanner'
+import { spacing } from '@/constants/design'
 import { useIconSize } from '@/features/theme/useIconSize'
 import { useAlbums } from '@/features/album/useAlbums'
+import CollectionActions from '@/features/library/CollectionActions'
 import LibraryList from '@/features/library/LibraryList'
 import { useSortLabels } from '@/features/library/useSortLabels'
 import {
@@ -21,7 +23,8 @@ import {
   type SortOrder,
 } from '@/features/library/librarySort'
 import { useTheme } from '@/features/theme/useTheme'
-import GenreHeader from '@/features/genre/components/Header'
+import GenreOptionsButton from '@/features/genre/components/GenreOptionsButton'
+import { useTagPlayback } from '@/features/genre/useTagPlayback'
 import { albumsForTile, type BrowseTileKind } from './browseTiles'
 
 /**
@@ -31,6 +34,14 @@ import { albumsForTile, type BrowseTileKind } from './browseTiles'
  * question asked of a different tag — and the same `LibraryList` every other
  * collection uses, so it sorts, switches to a grid and scrolls like the rest of
  * the app rather than being a bespoke list that does none of that.
+ *
+ * Shaped like the library's own collections rather than like an album, because
+ * that is what it is. This screen briefly carried a blurred hero, which sounds
+ * richer until you ask what the artwork is: a tag has none, so the hero showed
+ * whichever album happened to sort first, blurred past recognition — "Hip Hop"
+ * represented by an arbitrary cover. `CollectionActions` exists for this case
+ * and says so in its own comment: a collection with no artwork puts full-width
+ * Play and Shuffle at the top instead of borrowing a picture.
  */
 type Params = { kind?: BrowseTileKind; label?: string }
 
@@ -50,6 +61,7 @@ export default function BrowseTagScreen() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('title')
 
   const taggedAlbums = useMemo(() => albumsForTile(albums, kind, label), [albums, kind, label])
+  const { play } = useTagPlayback(label, taggedAlbums)
 
   const items = useMemo<LibraryItem[]>(
     () => sortItems(
@@ -66,21 +78,22 @@ export default function BrowseTagScreen() {
     count: items.length,
   })}`
 
-  // The hero is only drawn once there are albums to draw it from, so the
-  // other two states need a header of their own — without one there is no
-  // back button and an empty tag is a dead end.
-  const hasHero = !isLoading && items.length > 0
-
-  // The hero bleeds under the status bar and insets itself; a safe-area edge
-  // on top of that would leave a band of background above the artwork. The
-  // plain-bar states still want the inset.
   return (
     <SafeAreaView
       testID="browse-tag-screen"
-      edges={hasHero ? [] : ['top']}
+      edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      {!hasHero && <DetailHeaderBar title={label} subtitle={subtitle} />}
+      <DetailHeaderBar
+        title={label}
+        subtitle={subtitle}
+        // Queue actions and Download all. The bar carries them on every state
+        // of this screen, where the hero it replaced only ever drew once there
+        // were albums to draw it from.
+        rightAction={
+          items.length > 0 ? <GenreOptionsButton genre={label} albums={taggedAlbums} /> : undefined
+        }
+      />
 
       {degraded && (
         <StatusBanner
@@ -104,22 +117,13 @@ export default function BrowseTagScreen() {
         sortOrder={sortOrder}
         onSortChange={setSortOrder}
         sortLabel={sortLabels[sortOrder]}
-        // The hero, the tag's name, and Play/Shuffle/Download-all — the
-        // header the screen this replaced had. It went away during the
-        // unification on the grounds that a plain bar was enough; it wasn't,
-        // and this was the one detail screen in the app with no artwork on
-        // it. Moods get it too: the header only ever needed a label and a
-        // set of albums, and a mood has both.
         header={
-          items.length > 0
-            ? (
-              <GenreHeader
-                genre={label}
-                albums={taggedAlbums}
-                subtitle={subtitle}
-              />
-            )
-            : undefined
+          <View style={styles.actions}>
+            <CollectionActions
+              onPlay={() => { void play(false) }}
+              onShuffle={() => { void play(true) }}
+            />
+          </View>
         }
       />
       )}
@@ -129,4 +133,5 @@ export default function BrowseTagScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  actions: { paddingHorizontal: spacing.page, paddingTop: spacing.sm },
 })
