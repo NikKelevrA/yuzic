@@ -217,6 +217,29 @@ export const themeColorPreset = [
 export const coverFade = {
   onDark: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,1)'],
   onLight: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.7)', 'rgba(255,255,255,1)'],
+  /**
+   * The same fade when the screen is drawn over a background image.
+   *
+   * The pair above end opaque, which is right when what follows is the screen's
+   * own colour and wrong when it is a photograph: the header fades artwork into
+   * a solid slab and the page image resumes underneath it, which draws a hard
+   * line across the screen. Ending part way keeps the darkening that holds the
+   * text down without closing the header off from the page.
+   *
+   * The header's artwork is faded out by a mask as well, so the two images meet
+   * rather than one stopping. See the artist header.
+   */
+  onImage: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.65)'],
+  /**
+   * The mask that fades header artwork out, rather than darkening it.
+   *
+   * Opaque where the artwork should show and clear where the page should, so
+   * what is behind comes through — a gradient laid *over* an image can only
+   * tint it, and tinting it all the way to solid is what drew the line this
+   * removes. Colour is irrelevant to a mask; only the alpha is read.
+   */
+  heroMask: ['rgba(0,0,0,1)', 'rgba(0,0,0,1)', 'rgba(0,0,0,0)'],
+  heroMaskStops: [0, 0.55, 1],
   /** Darkening laid over an artist's photo so the text on it stays legible,
    *  whatever the photo turns out to be. Never fully transparent: the top of
    *  the image needs holding down too. */
