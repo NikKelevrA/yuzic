@@ -91,6 +91,7 @@ Connect *accepted*, leaving testers on the older-numbered build.
 **What the stores held at the last release**, as a sanity check rather than a
 source of truth — the next run should come out one above these:
 
+- 2.15.0 (2026-09-27): TestFlight build **136**, Play version code **157**.
 - 2.14.0 (2026-09-27): TestFlight build **135**, Play version code **156**.
 - 2.13.0 (2026-09-26): TestFlight build **134**, Play version code **155**.
 - 2.12.0 (2026-09-25): TestFlight build **133**, Play version code **154**.
@@ -109,7 +110,9 @@ build workflows declared the number as a *job* output, which a caller cannot
 see: a reusable workflow hands back only what `on.workflow_call.outputs`
 declares, so `needs.build-ios.outputs.build_number` was always an empty
 string. The numbers were only ever in the build logs. Both now re-export, and
-the check is worth making on the next release before trusting it again.
+2.15.0 confirmed it: the verdict job reported `IOS_BUILD: 136` and
+`ANDROID_CODE: 157` rather than `unknown`, matching the build logs. The
+summary is worth reading again.
 
 **Play release notes** come from
 `fastlane/metadata/android/en-US/changelogs/`. There cannot be a
