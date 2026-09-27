@@ -83,6 +83,22 @@
     },
     "appearance": {
       "title": "外観",
+      "profiles": {
+        "title": "プロファイル",
+        "default": "Yuzic",
+        "mine": "マイスタイル",
+        "new": "新しいプロファイル",
+        "newTitle": "新しいプロファイル",
+        "create": "作成",
+        "rename": "プロファイル名を変更",
+        "renameTitle": "プロファイル名を変更",
+        "delete": "プロファイルを削除",
+        "deleteTitle": "「{{name}}」を削除しますか？",
+        "deleteBody": "配色・背景・レイアウトも一緒に削除されます。Yuzic のスタイルは残ります。",
+        "copyOf": "{{name}} のコピー",
+        "nameLabel": "名前",
+        "namePlaceholder": "プロファイル名"
+      },
       "theme": {
         "title": "テーマ",
         "light": "ライト",

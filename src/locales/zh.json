@@ -83,6 +83,22 @@
     },
     "appearance": {
       "title": "外观",
+      "profiles": {
+        "title": "配置文件",
+        "default": "Yuzic",
+        "mine": "我的风格",
+        "new": "新建配置文件",
+        "newTitle": "新建配置文件",
+        "create": "创建",
+        "rename": "重命名配置文件",
+        "renameTitle": "重命名配置文件",
+        "delete": "删除配置文件",
+        "deleteTitle": "删除“{{name}}”？",
+        "deleteBody": "它的配色、背景和布局将一并删除。Yuzic 风格会保留。",
+        "copyOf": "{{name}} 副本",
+        "nameLabel": "名称",
+        "namePlaceholder": "配置文件名称"
+      },
       "theme": {
         "title": "主题",
         "light": "浅色",

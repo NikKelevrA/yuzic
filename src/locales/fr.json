@@ -83,6 +83,22 @@
     },
     "appearance": {
       "title": "Apparence",
+      "profiles": {
+        "title": "Profil",
+        "default": "Yuzic",
+        "mine": "Mon style",
+        "new": "Nouveau profil",
+        "newTitle": "Nouveau profil",
+        "create": "Créer",
+        "rename": "Renommer le profil",
+        "renameTitle": "Renommer le profil",
+        "delete": "Supprimer le profil",
+        "deleteTitle": "Supprimer « {{name}} » ?",
+        "deleteBody": "Ses couleurs, son fond et sa mise en page disparaissent avec lui. Le style Yuzic reste.",
+        "copyOf": "Copie de {{name}}",
+        "nameLabel": "Nom",
+        "namePlaceholder": "Nom du profil"
+      },
       "theme": {
         "title": "Thème",
         "light": "Clair",

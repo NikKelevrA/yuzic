@@ -8,7 +8,7 @@ import { Ban, Disc3, ImageIcon } from 'lucide-react-native';
 
 import { iconSize, spacing, typography } from '@/constants/design';
 import { notify } from '@/components/toast';
-import { editTheme, selectActiveTheme } from '@/features/settings/appearance/state';
+import { editTheme, selectActiveTheme, selectBackgroundUrisInUseElsewhere } from '@/features/settings/appearance/state';
 import { pickBackgroundImage, removeBackgroundImage } from '@/features/theme/backgroundImage';
 import { DEFAULT_BACKGROUND_CROP, type ScreenBackgroundCrop, type ScreenBackgroundSource } from '@/features/theme/theme';
 import { MAX_ZOOM, cropOrDefault, isDefaultCrop, withZoom } from '@/features/theme/backgroundCrop';
@@ -47,9 +47,14 @@ export const BackgroundSelector: React.FC = () => {
   const { colors } = useTheme();
   const surface = useSelector(selectActiveTheme).surface;
   const background = surface.background;
+  const usedElsewhere = useSelector(selectBackgroundUrisInUseElsewhere);
 
   const setBackground = (next: ScreenBackgroundSource) => {
-    if (background.kind === 'image' && (next.kind !== 'image' || next.uri !== background.uri)) {
+    const dropped = background.kind === 'image'
+      && (next.kind !== 'image' || next.uri !== background.uri);
+    // Only once nothing else is pointing at it. Another profile can be wearing
+    // the same photo, and deleting the file would blank that one too.
+    if (dropped && !usedElsewhere.has(background.uri)) {
       void removeBackgroundImage(background.uri);
     }
     dispatch(editTheme({ surface: { background: next } }));

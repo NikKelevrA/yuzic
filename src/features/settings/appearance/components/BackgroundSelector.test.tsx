@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import { BackgroundSelector } from './BackgroundSelector';
-import settingsAppearanceReducer, { editTheme, selectActiveTheme } from '../state';
+import settingsAppearanceReducer, { addProfile, editTheme, selectActiveTheme } from '../state';
 import { ScreenBackgroundProvider } from '@/features/theme/ScreenBackground';
 import { pickBackgroundImage, removeBackgroundImage } from '@/features/theme/backgroundImage';
 
@@ -127,6 +127,19 @@ describe('BackgroundSelector', () => {
     await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.image')); });
 
     expect(background(store)).toEqual({ kind: 'none' });
+  });
+
+  it('keeps a photo another profile is still wearing', async () => {
+    // The file is shared. Deleting it because this profile stopped pointing at
+    // it would blank the other one's background too.
+    const { store, view } = setup(<BackgroundSelector />);
+    store.dispatch(editTheme({ surface: { background: { kind: 'image', uri: 'file:///shared.jpg' } } }));
+    store.dispatch(addProfile({ name: 'Night' }));
+    const screen = await view;
+
+    await act(async () => { fireEvent.press(screen.getByText('settings.appearance.background.cover')); });
+
+    expect(removeBackgroundImage).not.toHaveBeenCalled();
   });
 
   it('deletes the copied photo when it is no longer the background', async () => {

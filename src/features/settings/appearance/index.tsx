@@ -7,6 +7,7 @@ import SettingsCard from '../components/SettingsCard';
 import SettingsDivider from '../components/SettingsDivider';
 import SettingsRow from '../components/SettingsRow';
 import { LanguageSelector } from './components/LanguageSelector';
+import { ProfileSelector } from './components/ProfileSelector';
 import { APPEARANCE_SECTIONS, type AppearanceSectionId } from './AppearanceSection';
 import { useTheme } from '@/features/theme/useTheme';
 import { useIconSize } from '@/features/theme/useIconSize';
@@ -19,7 +20,13 @@ const ICONS: Record<AppearanceSectionId, React.ComponentType<{ size?: number; co
   dock: PanelBottom,
 };
 
-/** Appearance: the language, then a row per page of what can be changed. */
+/**
+ * Appearance: which profile is being edited, the language, then a row per page
+ * of what can be changed.
+ *
+ * The profile comes first because it scopes every page below it — those pages
+ * edit whichever look this row names.
+ */
 const AppearanceSettings: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -28,6 +35,7 @@ const AppearanceSettings: React.FC = () => {
 
   return (
     <SettingsScreen title={t('settings.appearance.title')}>
+      <ProfileSelector />
       <LanguageSelector />
       <SettingsCard>
         {APPEARANCE_SECTIONS.map((section, index) => {
