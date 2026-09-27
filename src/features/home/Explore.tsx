@@ -1,4 +1,5 @@
-import { iconSize, spacing, typography } from '@/constants/design';
+import { spacing, typography } from '@/constants/design';
+import { useIconSize } from '@/features/theme/useIconSize';
 import SourceBadge from '@/components/SourceBadge';
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { StyleSheet, ScrollView, View, RefreshControl } from 'react-native'
@@ -40,7 +41,6 @@ import { RefreshSettler } from './components/RefreshSettler'
 import { useApi } from '@/providers/registry/useApi'
 import type { SectionConfig } from '@/features/home/homeLayout'
 import { useScrollClearance } from '@/features/theme/useScrollClearance'
-import { useHasScreenBackground } from '@/features/theme/ScreenBackground'
 
 function renderSection(config: SectionConfig, refreshKey: number) {
   switch (config.type) {
@@ -81,6 +81,7 @@ function renderSection(config: SectionConfig, refreshKey: number) {
 
 export default function Home() {
   const { t } = useTranslation()
+  const icons = useIconSize();
   const scrollClearance = useScrollClearance()
 
   // Re-tapping the active tab returns to the top of the feed, the way every
@@ -90,7 +91,6 @@ export default function Home() {
   useScrollToTop(scrollRef)
 
   const { colors } = useTheme()
-  const hasBackground = useHasScreenBackground('home')
   const [refreshKey, setRefreshKey] = useState(0)
   const { resume, library, server, sources } = useDailyLayout(refreshKey)
   const isOffline = useIsOffline()
@@ -202,7 +202,7 @@ export default function Home() {
     <ScrollView
       ref={scrollRef}
       // Transparent over the theme's background image, which HomeScreen draws behind it.
-      style={[styles.container, { backgroundColor: hasBackground ? 'transparent' : colors.background }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={[styles.content, { paddingBottom: scrollClearance }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -219,7 +219,7 @@ export default function Home() {
           is largest — every discovery shelf goes, because each is a request. */}
       {isOffline && (
         <StatusBanner
-          icon={<CloudOff size={iconSize.badge} color={colors.subtext} />}
+          icon={<CloudOff size={icons.badge} color={colors.subtext} />}
           text={t('explore.offlineBanner')}
           style={styles.offlineBanner}
           testID="home-offline-banner"

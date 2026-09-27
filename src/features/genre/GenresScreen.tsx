@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
+import { useIconSize } from '@/features/theme/useIconSize';
 import { StyleSheet, View } from 'react-native'
 import { Text } from '@/components/Text'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -22,6 +23,7 @@ import { useListDensity } from '@/features/theme/useListDensity'
 const GenresScreen: React.FC = () => {
   const navigation = useNavigation<any>()
   const { t } = useTranslation()
+  const icons = useIconSize();
   const scrollClearance = useScrollClearance()
   const { colors } = useTheme()
   const density = useListDensity()
@@ -36,7 +38,7 @@ const GenresScreen: React.FC = () => {
       accessibilityRole="button"
       accessibilityLabel={item.genre}
       style={[styles.row, { borderBottomColor: colors.border, paddingVertical: density.rowPadding }]}
-      onPress={() => navigation.push('genreView', { genre: item.genre })}
+      onPress={() => navigation.push('browseTagView', { kind: 'genre', label: item.genre })}
     >
       <View style={styles.rowText}>
         <Text style={[styles.genre, { color: colors.secondary }]} numberOfLines={1}>
@@ -46,9 +48,9 @@ const GenresScreen: React.FC = () => {
           {t('library.genres.albumCount', { count: item.albumCount })}
         </Text>
       </View>
-      <ChevronRight size={iconSize.row} color={colors.subtext} />
+      <ChevronRight size={icons.row} color={colors.subtext} />
     </Touchable>
-  ), [colors, navigation, t, density.rowPadding])
+  ), [colors, navigation, t, density.rowPadding, icons])
 
   return (
     <SafeAreaView

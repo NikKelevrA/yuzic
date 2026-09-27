@@ -1,6 +1,7 @@
-Text size, spacing and corners now change the app as you pick them.
+Search now works the way you expect, and your background follows you.
 
-- Text size applies straight away instead of waiting for a restart, and icons grow with it
-- Spacing reaches the lists that ignored it: the play queue, Quick picks, your Library rows, and the placeholders shown while a list loads
-- The playing bar's artwork follows your corner style
-- Albums with no artwork each get their own colour and initials, instead of one grey icon for all of them
+- Tap the field to search, Cancel to go back. Putting the keyboard away no longer swaps the screen out from under you
+- Your search filters are remembered instead of resetting every visit
+- Genres and moods open the same screen everywhere, with full-width Play and Shuffle
+- A background image shows behind every screen, not just the three tabs
+- Downloading an album closes the sheet instead of leaving it open

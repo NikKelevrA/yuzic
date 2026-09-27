@@ -136,7 +136,7 @@ function LocalMetaRow({ album, songs }: { album: Album | null; songs: Song[] }) 
   }, [album, trackCount, totalDuration, t]);
 
   const handleGenrePress = useCallback((genre: string) => {
-    navigation.push('genreView', { genre });
+    navigation.push('browseTagView', { kind: 'genre', label: genre });
   }, [navigation]);
 
   if (!album) return null;
