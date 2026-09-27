@@ -24,7 +24,8 @@ import { useLazyAlbumDetail } from '@/components/options/useLazyCollectionDetail
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { albumWebLink } from '@/providers/registry/sourceLinks';
 import { shareItem } from '@/features/shares/share';
-import { toggleFavorite, confirmDestructive } from '../shared/starActions';
+import { toggleFavorite } from '../shared/starActions';
+import { confirmDestructive } from '@/components/confirmDestructive';
 import { useWantToggle } from '../shared/wantActions';
 import { useShareAction } from '../shared/shareActions';
 import { useCollectionPlaybackActions } from '../shared/playbackActions';

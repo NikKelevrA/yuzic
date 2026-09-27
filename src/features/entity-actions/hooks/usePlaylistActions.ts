@@ -15,7 +15,7 @@ import { useShareAction } from '../shared/shareActions';
 import { useCollectionPlaybackActions } from '../shared/playbackActions';
 import { resolveActions } from '../types';
 import { canEditPlaylist, playlistActions, type PlaylistActionContext } from '../registry/playlistActions';
-import { confirmDestructive } from '../shared/starActions';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 export function usePlaylistOptionsActions(
   playlist: Playlist | null,

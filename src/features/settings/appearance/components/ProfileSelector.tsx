@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { Alert } from 'react-native';
 import { Palette } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
 import SingleSelectBottomSheet, { type SingleSelectOption } from '@/components/SingleSelectBottomSheet';
+import { confirmDestructive } from '@/components/confirmDestructive';
 import { useSheetRef } from '@/components/useSheetRef';
 import {
   addProfile,
@@ -66,18 +66,13 @@ export const ProfileSelector: React.FC = () => {
   );
 
   const confirmDelete = () => {
-    Alert.alert(
-      t('settings.appearance.profiles.deleteTitle', { name: nameOf(active) }),
-      t('settings.appearance.profiles.deleteBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => dispatch(deleteProfile(active.id)),
-        },
-      ],
-    );
+    confirmDestructive({
+      title: t('settings.appearance.profiles.deleteTitle', { name: nameOf(active) }),
+      body: t('settings.appearance.profiles.deleteBody'),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('common.delete'),
+      onConfirm: () => { dispatch(deleteProfile(active.id)); },
+    });
   };
 
   return (
