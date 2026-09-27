@@ -15,6 +15,9 @@ import { useStarredSongs } from '@/features/library/useStarredSongs';
 import { useSelector } from 'react-redux';
 import { selectAlbumPlayCount } from '@/state/redux/selectors/statsSelectors';
 import { usePreviewPlayer } from '@/features/playback/usePreviewPlayer';
+import { usePlayingActions } from '@/features/playback/PlayingContext';
+import { usePlayableSongResolver } from '@/features/song/usePlayableSongResolver';
+import { notify } from '@/components/toast';
 import AlbumRecommendedSection from '../AlbumRecommendedSection';
 import SimilarAlbumsSection from '../SimilarAlbumsSection';
 import type { AlbumScreenModel } from '@/features/album/useAlbumScreenModel';
@@ -59,6 +62,8 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
   const rad = useRadius();
   const navigation = useNavigation<any>();
   const { toggleInAlbum } = usePreviewPlayer();
+  const { playSong } = usePlayingActions();
+  const { resolvePlayableSong } = usePlayableSongResolver();
   const { songs: starredSongs } = useStarredSongs();
   const albumPlayCount = useSelector(selectAlbumPlayCount(model.album?.nativeId ?? ''));
   const { width: screenWidth } = useWindowDimensions();
@@ -75,6 +80,29 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
     if (!p || p.kind !== 'preview') return;
     toggleInAlbum(song, p.streamId, previewCollection, album.nativeId, album.title);
   }, [album, playability, previewCollection, toggleInAlbum]);
+
+  /**
+   * A browsed album's track that `trackPlayability` classified as `'full'` —
+   * the library turned out to already hold it (`preferLocalSong`, upstream in
+   * `useAlbumScreenModel`), so the server can stream it outright. That case
+   * was documented in `trackPlayability.ts`'s own comment ("the server can
+   * stream that outright — sampling it instead would be the app choosing a
+   * thirty-second clip over a recording the user already owns") but never
+   * actually wired to a tap handler below: only `'preview'` got one, so a
+   * fully-owned track browsed on an album the library doesn't recognise as
+   * its own fell through with no `onPress` and no `collection` for `SongRow`
+   * to fall back to — a dead row, indistinguishable from a broken tap. This
+   * never came up while every downloader here fetched whole, properly
+   * tagged albums (the *album* matched too, taking the `isLocal` branch
+   * above entirely); a single-track downloader with no album tag is the
+   * first thing that puts a `'full'` track under a still-external album.
+   */
+  const handleFullPress = useCallback((song: Song) => {
+    void resolvePlayableSong(song.nativeId).then(resolved => {
+      if (resolved) return playSong(resolved.song);
+      notify.error(t('common.playbackError'));
+    });
+  }, [resolvePlayableSong, playSong, t]);
 
   /**
    * How long the record is, under the last track rather than above the
@@ -239,16 +267,19 @@ const AlbumContent: React.FC<Props> = ({ model }) => {
     }
 
     const previewUrl = p?.kind === 'preview' ? p.streamId : undefined;
+    const onRowPress = p?.kind === 'full'
+      ? () => handleFullPress(song)
+      : previewUrl ? () => handlePreviewPress(song) : undefined;
     return (
       <SongRow
         song={song}
         albumTitle={album?.title}
         albumArtist={album?.artist.name}
         previewUrl={previewUrl}
-        onPress={previewUrl ? () => handlePreviewPress(song) : undefined}
+        onPress={onRowPress}
       />
     );
-  }, [colors, starredSongIds, album, songs, t, isLocal, playability, handlePreviewPress]);
+  }, [colors, starredSongIds, album, songs, t, isLocal, playability, handlePreviewPress, handleFullPress]);
 
   return (
     <DetailScreen bar={<AlbumHeaderBar model={model} />}>
