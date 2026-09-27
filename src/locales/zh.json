@@ -245,6 +245,10 @@
         "player": "播放器",
         "layout": "布局与文字",
         "dock": "底栏与手感"
+      },
+      "groups": {
+        "text": "文字",
+        "layout": "布局"
       }
     },
     "library": {

@@ -245,6 +245,10 @@
         "player": "Lecteur",
         "layout": "Disposition et texte",
         "dock": "Barre et sensations"
+      },
+      "groups": {
+        "text": "Texte",
+        "layout": "Disposition"
       }
     },
     "library": {

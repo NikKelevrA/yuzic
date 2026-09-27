@@ -245,6 +245,10 @@
         "player": "Player",
         "layout": "Layout and text",
         "dock": "Dock and feel"
+      },
+      "groups": {
+        "text": "Text",
+        "layout": "Layout"
       }
     },
     "library": {
