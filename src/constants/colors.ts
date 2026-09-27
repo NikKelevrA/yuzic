@@ -223,13 +223,23 @@ export const coverFade = {
    * The pair above end opaque, which is right when what follows is the screen's
    * own colour and wrong when it is a photograph: the header fades artwork into
    * a solid slab and the page image resumes underneath it, which draws a hard
-   * line across the screen. Ending part way keeps the darkening that holds the
-   * text down without closing the header off from the page.
+   * line across the screen.
+   *
+   * Ending part way did not fix that, it only moved it: a scrim that stops at
+   * 65% black still stops, so the darkened strip met the page's own brightness
+   * on a hard edge. It peaks in the middle instead and returns to nothing by
+   * the foot, so the darkening that holds the artwork down is gone by the time
+   * the header reaches the page. Nothing needs it down there — the name, the
+   * counts and the buttons all sit below the header, and the back and options
+   * buttons at the top carry their own chips.
    *
    * The header's artwork is faded out by a mask as well, so the two images meet
    * rather than one stopping. See the artist header.
    */
-  onImage: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.65)'],
+  onImage: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0)'],
+  /** Where {@link onImage}'s stops sit: the peak is held across the middle so
+   *  the return to clear happens over the last quarter, not the whole drop. */
+  onImageStops: [0, 0.4, 0.75, 1],
   /**
    * The mask that fades header artwork out, rather than darkening it.
    *

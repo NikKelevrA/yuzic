@@ -116,24 +116,30 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
 
   return (
     <>
-      <View style={[styles.fullBleedWrapper, { height: ARTIST_HERO_HEIGHT + barInset }]}>
-        <HeroBackdrop
-          coverUri={coverUri}
-          muted={colors.muted}
-          overImage={overImage}
-        />
+      <View style={[styles.heroBlock, { height: ARTIST_HERO_HEIGHT + barInset }]}>
+        {/* Only the art is clipped. The picture overscans sideways and the
+            mask needs a bound, but the round cover hangs below the hero on
+            purpose — clipping both together is what flattened its foot. */}
+        <View style={styles.fullBleedWrapper}>
+          <HeroBackdrop
+            coverUri={coverUri}
+            muted={colors.muted}
+            overImage={overImage}
+          />
 
-        <LinearGradient
-          testID="artist-hero-fade"
-          colors={
-            overImage
-              ? coverFade.onImage
-              : isDarkMode
-                ? coverFade.onDark
-                : coverFade.onLight
-          }
-          style={StyleSheet.absoluteFill}
-        />
+          <LinearGradient
+            testID="artist-hero-fade"
+            colors={
+              overImage
+                ? coverFade.onImage
+                : isDarkMode
+                  ? coverFade.onDark
+                  : coverFade.onLight
+            }
+            locations={overImage ? [...coverFade.onImageStops] : undefined}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
 
         <View style={[styles.centeredCoverContainer, { borderRadius: rad.pill }]}>
           <MediaImage
@@ -207,17 +213,32 @@ export default ArtistHeader;
 /** The blurred cover behind an artist's name, before the floating bar's inset. */
 const ARTIST_HERO_HEIGHT = 300;
 
+/**
+ * How far the round cover hangs below the hero.
+ *
+ * The content below clears it by this much on top of its own margin. It used
+ * to clear nothing, because the hero clipped the overhang away and there was
+ * nothing to clear — the cover was a circle with a flat foot and the name sat
+ * where the rest of it should have been.
+ */
+const COVER_OVERHANG = 32;
+
 const styles = StyleSheet.create({
-  fullBleedWrapper: {
+  /** Lays out the hero and carries the round cover that overhangs its foot. */
+  heroBlock: {
     width: '100%',
     height: ARTIST_HERO_HEIGHT,
     justifyContent: 'flex-end',
     alignItems: 'center',
+  },
+  /** The art alone, clipped to the hero. */
+  fullBleedWrapper: {
+    ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
   },
   centeredCoverContainer: {
     position: 'absolute',
-    bottom: -32,
+    bottom: -COVER_OVERHANG,
     width: 120,
     height: 120,
     overflow: 'hidden',
@@ -249,7 +270,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    marginTop: spacing.lg,
+    marginTop: spacing.lg + COVER_OVERHANG,
     marginBottom: spacing.lg,
   },
   artistName: {

@@ -114,11 +114,23 @@ describe('the artist hero over a background image', () => {
     expect(view.getByTestId('artist-hero-photo')).toBeTruthy()
   })
 
-  it('stops darkening short of opaque, so there is no slab to end', async () => {
+  it('returns its darkening to clear by the foot, so there is no edge to meet', async () => {
+    // Stopping short of opaque was not enough: a scrim that ends at 65% black
+    // still ends, and met the page's own brightness on a hard line. It has to
+    // be gone by the last pixel, not merely thinner.
+    const view = await over(SURFACE)
+    const stops = fadeStops(view)
+
+    expect(stops).toEqual([...coverFade.onImage])
+    expect(stops).not.toContain('rgba(0,0,0,1)')
+    expect(stops[0]).toBe('rgba(0,0,0,0)')
+    expect(stops[stops.length - 1]).toBe('rgba(0,0,0,0)')
+  })
+
+  it('places those stops so the peak is held before it clears', async () => {
     const view = await over(SURFACE)
 
-    expect(fadeStops(view)).toEqual([...coverFade.onImage])
-    expect(fadeStops(view)).not.toContain('rgba(0,0,0,1)')
+    expect(view.getByTestId('artist-hero-fade').props.locations).toEqual([...coverFade.onImageStops])
   })
 
   it('draws no stand-in slab for an artist with no picture', async () => {
