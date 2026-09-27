@@ -65,6 +65,21 @@ describe('useDownloaderStates', () => {
 });
 
 /**
+ * YT Fallback already tries slskd first internally, then falls through to
+ * YouTube — so for anything that just takes the first available track
+ * downloader rather than presenting a picker (playlist-import sync, e.g.),
+ * it needs to be tried ahead of plain slskd, or that automatic path would
+ * dead-end on a track slskd alone can't find instead of reaching the
+ * fallback it exists for.
+ */
+describe('downloader priority', () => {
+  it('tries YT Fallback ahead of plain slskd', () => {
+    const trackIds = ALL_DOWNLOADERS.filter(d => d.downloadTrack).map(d => d.id);
+    expect(trackIds.indexOf('ytfallback')).toBeLessThan(trackIds.indexOf('slskd'));
+  });
+});
+
+/**
  * `downloadAlbum` used to be required and `downloadTrack` optional, which was
  * Lidarr's shape — album-only, no way to fetch one file — written into the
  * contract for every downloader. SoulSync is the mirror image: its public

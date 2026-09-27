@@ -399,7 +399,8 @@
         "lidarr": "http://node:8686",
         "slskd": "http://slskd:5030",
         "soulsync": "http://soulsync:8008",
-        "downtify": "http://downtify:8000"
+        "downtify": "http://downtify:8000",
+        "ytfallback": "http://ytfallback:5020"
       },
       "queueTitle": "Download Queue",
       "lidarr": {
@@ -440,6 +441,13 @@
         "credentialsHelper": "Downtify URL. Downtify has no API key, so anyone who can reach it can queue downloads on it.",
         "connectionFailed": "Downtify connection failed",
         "disconnected": "Disconnected from Downtify."
+      },
+      "ytfallback": {
+        "title": "YT Fallback",
+        "credentialsTitle": "Connection",
+        "credentialsHelper": "YT Fallback URL and API key.",
+        "connectionFailed": "YT Fallback connection failed",
+        "disconnected": "Disconnected from YT Fallback."
       }
     },
     "audiomuse": {
@@ -1274,6 +1282,9 @@
       "downtifyDesc": "Search YouTube Music through Downtify",
       "addedToDowntify": "Requested from Downtify.",
       "addedTrackToDowntify": "Requested from Downtify.",
+      "ytfallbackDesc": "Search Soulseek, then YouTube, through YT Fallback",
+      "addedToYtfallback": "Requested from YT Fallback.",
+      "addedTrackToYtfallback": "Requested from YT Fallback.",
       "acquireDownloading": "Downloading “{{title}}” — it'll play as soon as it's ready.",
       "acquireStillWorking": "Still downloading “{{title}}” — check back in a bit.",
       "acquirePlayFailed": "“{{title}}” downloaded, but couldn't start playing it.",

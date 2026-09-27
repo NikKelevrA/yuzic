@@ -20,6 +20,7 @@ const defaultEntry: PerServerDownloadersState = {
   slskd: emptyConnection,
   soulsync: emptyConnection,
   downtify: emptyConnection,
+  ytfallback: emptyConnection,
 };
 
 export const selectDownloadersForActiveServer = createSelector(

@@ -4,6 +4,7 @@ import * as lidarr from '@/providers/integration/lidarr'
 import * as slskd from '@/providers/integration/slskd'
 import * as soulsync from '@/providers/integration/soulsync'
 import * as downtify from '@/providers/integration/downtify'
+import { ytfallbackDownloader } from './adapters/ytfallback'
 import type { SlskdSearchPreferences } from '@/providers/integration/slskd'
 import type { DownloaderId } from '@/state/redux/slices/downloadersSlice'
 import type { ArtistMonitorRequest } from './artistMonitor'
@@ -280,6 +281,13 @@ const downtifyDownloader: DownloaderDefinition = {
 
 export const ALL_DOWNLOADERS: DownloaderDefinition[] = [
   lidarrDownloader,
+  // Ahead of plain slskd: it already tries slskd first internally and only
+  // falls through to YouTube if that finds nothing, so it is a strict
+  // superset for anything that just takes the first available track
+  // downloader (`useDownloadersForUnit('track')[0]`, e.g. playlist-import
+  // sync) rather than presenting a full picker. Reaching slskd through it
+  // costs nothing extra when slskd alone would have found the track anyway.
+  ytfallbackDownloader,
   slskdDownloader,
   soulsyncDownloader,
   downtifyDownloader,
