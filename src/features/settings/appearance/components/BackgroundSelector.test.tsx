@@ -19,7 +19,7 @@ jest.mock('@/features/theme/backgroundImage', () => ({
 let mockSong: { cover: { kind: 'url'; url: string } } | null = null;
 jest.mock('@/features/playback/PlayingContext', () => ({ usePlayingState: () => ({ currentSong: mockSong }) }));
 // The route decides how far the background reaches, so the tests drive it.
-let mockSegments: string[] = ['(tabs)', '(home)', 'index'];
+let mockSegments: string[] = ['(home)', '(tabs)', '(home)'];
 jest.mock('expo-router', () => ({ useSegments: () => mockSegments }));
 jest.mock('@/providers/registry/covers', () => ({
   buildCover: (cover: { kind: string; url?: string }) => (cover.kind === 'url' ? cover.url : null),
@@ -39,7 +39,7 @@ const background = (store: ReturnType<typeof setup>['store']) => selectActiveThe
 beforeEach(() => {
   jest.clearAllMocks();
   mockSong = null;
-  mockSegments = ['(tabs)', '(home)', 'index'];
+  mockSegments = ['(home)', '(tabs)', '(home)'];
 });
 
 describe('BackgroundSelector', () => {
@@ -88,9 +88,16 @@ describe('BackgroundSelector', () => {
 });
 
 describe('ScreenBackground', () => {
-  const HOME = ['(tabs)', '(home)', 'index'];
-  const SEARCH = ['(tabs)', '(search)', 'index'];
-  const ALBUM = ['(tabs)', '(home,search,library)', 'albumView'];
+  // The shapes `expo-router` really hands over for this app's route tree. A
+  // trailing `index` is popped before `useSegments` sees it, so a tab root ends
+  // in its own group — which is what these used to get wrong, in a way that
+  // turned off every scope but the widest while the tests stayed green.
+  const HOME = ['(home)', '(tabs)', '(home)'];
+  const SEARCH = ['(home)', '(tabs)', '(search)'];
+  // A shared `(home,search,library)` route resolves under the tab it was
+  // pushed from, so the group is still `(home)` and the screen is the last.
+  const ALBUM = ['(home)', '(tabs)', '(home)', 'albumView'];
+  const SETTINGS = ['(home)', 'settings'];
 
   const Probe = () => <ScreenBackgroundProvider>{null}</ScreenBackgroundProvider>;
 
@@ -128,10 +135,56 @@ describe('ScreenBackground', () => {
     mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
     mockSegments = ALBUM;
     const { store, view } = setup(<Probe />);
+    // The render is awaited before anything is dispatched into it. Acting on a
+    // render still in flight passes here and breaks the *next* test: its own
+    // `render` comes back attached to this tree, which cleanup has unmounted,
+    // so every query finds nothing.
+    const screen = await view;
     await act(async () => {
       store.dispatch(editTheme({ surface: { background: { kind: 'cover' }, backgroundScope: 'tabs' } }));
     });
+    expect(screen.queryByTestId('screen-background')).toBeNull();
+
+    await act(async () => { store.dispatch(editTheme({ surface: { backgroundScope: 'everywhere' } })); });
+    expect(screen.getByTestId('screen-background')).toBeTruthy();
+
+    mockSegments = HOME;
+  });
+
+  // What shipped broken: Home is the default scope, and the Home tab root was
+  // not recognised as a tab root at all, so the only setting that drew anything
+  // was the widest one.
+  it('draws on the Home tab root at the default scope', async () => {
+    mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
+    mockSegments = HOME;
+    const { store, view } = setup(<Probe />);
     const screen = await view;
+    await act(async () => { store.dispatch(editTheme({ surface: { background: { kind: 'cover' } } })); });
+
+    expect(selectActiveTheme(store.getState()).surface.backgroundScope).toBe('home');
+    expect(screen.getByTestId('screen-background')).toBeTruthy();
+  });
+
+  it('draws on the Home tab root when the router still spells out index', async () => {
+    mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
+    mockSegments = [...HOME, 'index'];
+    const { store, view } = setup(<Probe />);
+    const screen = await view;
+    await act(async () => { store.dispatch(editTheme({ surface: { background: { kind: 'cover' } } })); });
+
+    expect(screen.getByTestId('screen-background')).toBeTruthy();
+
+    mockSegments = HOME;
+  });
+
+  it('leaves settings alone until the scope is widest', async () => {
+    mockSong = { cover: { kind: 'url', url: 'https://covers.test/1.jpg' } };
+    mockSegments = SETTINGS;
+    const { store, view } = setup(<Probe />);
+    const screen = await view;
+    await act(async () => {
+      store.dispatch(editTheme({ surface: { background: { kind: 'cover' }, backgroundScope: 'tabs' } }));
+    });
     expect(screen.queryByTestId('screen-background')).toBeNull();
 
     await act(async () => { store.dispatch(editTheme({ surface: { backgroundScope: 'everywhere' } })); });
