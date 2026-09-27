@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Ban, Disc3, ImageIcon } from 'lucide-react-native';
 
-import { iconSize, spacing, typography } from '@/constants/design';
+import {spacing, typography } from '@/constants/design';
 import { notify } from '@/components/toast';
 import { editTheme, selectActiveTheme, selectBackgroundUrisInUseElsewhere } from '@/features/settings/appearance/state';
 import { pickBackgroundImage, removeBackgroundImage } from '@/features/theme/backgroundImage';
@@ -28,9 +28,9 @@ const SCOPES = ['tabs', 'everywhere'] as const;
 // picker rather than icons sitting beside a line of body text, so holding
 // still is also the right answer here.
 const OPTIONS: { id: Choice; icon: React.ReactElement<{ color?: string }> }[] = [
-  { id: 'none', icon: <Ban size={iconSize.row} /> },
-  { id: 'image', icon: <ImageIcon size={iconSize.row} /> },
-  { id: 'cover', icon: <Disc3 size={iconSize.row} /> },
+  { id: 'none', icon: <Ban /> },
+  { id: 'image', icon: <ImageIcon /> },
+  { id: 'cover', icon: <Disc3 /> },
 ];
 
 /**

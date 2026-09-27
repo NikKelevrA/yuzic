@@ -1,5 +1,4 @@
 import React from 'react';
-import { iconSize } from '@/constants/design';
 import { Sun, Moon, Smartphone } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,9 +10,9 @@ import SettingsIconSelectCard from '../../components/SettingsIconSelectCard';
 // picker rather than icons sitting beside a line of body text, so holding
 // still is also the right answer here.
 const OPTIONS: { id: ThemeMode; icon: React.ReactElement<{ color?: string }> }[] = [
-  { id: 'light', icon: <Sun size={iconSize.row} /> },
-  { id: 'dark', icon: <Moon size={iconSize.row} /> },
-  { id: 'system', icon: <Smartphone size={iconSize.row} /> },
+  { id: 'light', icon: <Sun /> },
+  { id: 'dark', icon: <Moon /> },
+  { id: 'system', icon: <Smartphone /> },
 ];
 
 export const ThemeModeSelector: React.FC = () => {

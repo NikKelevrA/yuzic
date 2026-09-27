@@ -121,6 +121,10 @@ function ToggleButton({
         <View style={styles.activeBadgeSlot}>
           {badge === 'dot'
             ? <View style={[styles.activeDot, { borderRadius: rad.pill }, styles.activeDotVisible]} />
+            // A decorative mark in a fixed-size slot on the transport, not a
+            // glyph beside a line of text: it has no label to keep pace with,
+            // and the slot it sits in would not grow with it.
+            // eslint-disable-next-line no-restricted-syntax
             : <Sparkle size={iconSize.marker} color={onDark.text} fill={onDark.text} />
           }
         </View>

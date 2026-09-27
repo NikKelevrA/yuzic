@@ -1,5 +1,4 @@
 import React from 'react';
-import { iconSize } from '@/constants/design';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { Maximize2, Minimize2, RectangleHorizontal } from 'lucide-react-native';
@@ -15,9 +14,9 @@ type Layout = Theme['components']['playerLayout'];
 // picker rather than icons sitting beside a line of body text, so holding
 // still is also the right answer here.
 const OPTIONS: { id: Layout; icon: React.ReactElement<{ color?: string }> }[] = [
-  { id: 'artwork', icon: <Maximize2 size={iconSize.row} /> },
-  { id: 'fullWidth', icon: <RectangleHorizontal size={iconSize.row} /> },
-  { id: 'compact', icon: <Minimize2 size={iconSize.row} /> },
+  { id: 'artwork', icon: <Maximize2 /> },
+  { id: 'fullWidth', icon: <RectangleHorizontal /> },
+  { id: 'compact', icon: <Minimize2 /> },
 ];
 
 /** The player with its cover at full width, or smaller so what is below it starts sooner. */
