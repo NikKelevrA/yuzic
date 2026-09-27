@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
+import {FlatList, Linking, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
 import { ArrowDownAZ, CloudOff, Ellipsis, ListOrdered, Radio as RadioIcon } from 'lucide-react-native';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 import { useApi } from '@/providers/registry/useApi';
 import type { InternetRadioStation } from '@/providers/contracts/ServerAdapter';
@@ -115,15 +116,12 @@ export default function RadioScreen() {
   }, [activeServer?.id, playSong]);
 
   const handleDelete = useCallback((station: InternetRadioStation) => {
-    Alert.alert(
-      t('radio.deleteTitle'),
-      t('radio.deleteBody', { name: station.name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
+    confirmDestructive({
+      title: t('radio.deleteTitle'),
+      body: t('radio.deleteBody', { name: station.name }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('common.delete'),
+      onConfirm: async () => {
             try {
               await api.radio?.remove(station.id);
               await queryClient.invalidateQueries({ queryKey: [QueryKeys.Radio] });
@@ -131,9 +129,7 @@ export default function RadioScreen() {
               notify.error(t('common.error.unexpected'));
             }
           },
-        },
-      ]
-    );
+    });
   }, [api.radio, queryClient, t]);
 
   // The station's own page, where it has one. A stream URL is not a page, so

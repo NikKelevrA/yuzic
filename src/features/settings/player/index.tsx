@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
+import { } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { notify } from '@/components/toast';
 import { getBackend } from '@/features/player/activeBackend';
@@ -16,6 +16,7 @@ import Crossfade from './components/Crossfade';
 import Loudness from './components/Loudness';
 import { selectPreferredCodec, selectAutoplayEnabled, selectResumeLongTracksEnabled, setPreferredCodec, setAutoplayEnabled, setResumeLongTracksEnabled } from '@/features/settings/playback/state';
 import { useSimilarityService } from '@/providers/registry/similarityService';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 const PlayerSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -64,15 +65,12 @@ const PlayerSettings: React.FC = () => {
   // which matters on a device that is short of room — the Downloads screen
   // reports its size and this did not exist at all.
   const clearStreamCache = useCallback(() => {
-    Alert.alert(
-      t('settings.player.clearCacheTitle'),
-      t('settings.player.clearCacheBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.player.clearCacheConfirm'),
-          style: 'destructive',
-          onPress: () => {
+    confirmDestructive({
+      title: t('settings.player.clearCacheTitle'),
+      body: t('settings.player.clearCacheBody'),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('settings.player.clearCacheConfirm'),
+      onConfirm: () => {
             try {
               // Through the backend, so this empties whichever player is
               // actually holding the audio. Called on TrackPlayer directly it
@@ -83,9 +81,7 @@ const PlayerSettings: React.FC = () => {
               notify.error(t('common.error.unexpected'));
             }
           },
-        },
-      ]
-    );
+    });
   }, [t]);
 
   return (

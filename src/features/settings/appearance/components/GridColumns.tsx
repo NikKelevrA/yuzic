@@ -10,7 +10,7 @@ import { selectGridColumns, setGridColumns } from '@/features/settings/appearanc
 import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import SettingsCard from '../../components/SettingsCard';
-import { withAlpha } from '@/features/theme/coverAccent';
+import { withAlpha } from '@/features/theme/color';
 
 const MIN_COLUMNS = 2;
 const MAX_COLUMNS = 5;

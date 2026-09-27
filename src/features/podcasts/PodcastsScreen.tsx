@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import {FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { notify } from '@/components/toast';
 import { AlertTriangle, CloudOff, Ellipsis, Podcast as PodcastIcon } from 'lucide-react-native';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 import { useApi } from '@/providers/registry/useApi';
 import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/ServerAdapter';
@@ -109,15 +110,12 @@ export default function PodcastsScreen() {
   ) : null;
 
   const handleDelete = useCallback((channel: PodcastChannel) => {
-    Alert.alert(
-      t('podcasts.unsubscribeTitle'),
-      t('podcasts.unsubscribeBody', { title: channel.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('podcasts.unsubscribe'),
-          style: 'destructive',
-          onPress: async () => {
+    confirmDestructive({
+      title: t('podcasts.unsubscribeTitle'),
+      body: t('podcasts.unsubscribeBody', { title: channel.title }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('podcasts.unsubscribe'),
+      onConfirm: async () => {
             try {
               await api.podcasts?.unsubscribe(channel.id);
               await queryClient.invalidateQueries({ queryKey: [QueryKeys.Podcasts] });
@@ -125,9 +123,7 @@ export default function PodcastsScreen() {
               notify.error(t('common.error.unexpected'));
             }
           },
-        },
-      ]
-    );
+    });
   }, [api.podcasts, queryClient, t]);
 
   const renderSeparator = useCallback(

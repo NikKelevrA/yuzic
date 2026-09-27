@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
+import { } from 'react-native';
 import { useTheme } from '@/features/theme/useTheme';
 import { notify } from '@/components/toast';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
@@ -104,13 +104,12 @@ export function usePlaylistOptionsActions(
       },
       delete: () => {
         if (isFavorites) return;
-        Alert.alert(
-          t('playlistOptions.delete.title'), t('playlistOptions.delete.body', { title: playlist.title }),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
-            {
-              text: t('common.delete'), style: 'destructive',
-              onPress: async () => {
+        confirmDestructive({
+      title: t('playlistOptions.delete.title'),
+      body: t('playlistOptions.delete.body', { title: playlist.title }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('common.delete'),
+      onConfirm: async () => {
                 try {
                   await deletePlaylist.mutateAsync(playlist.nativeId);
                   opts.close();
@@ -118,9 +117,7 @@ export function usePlaylistOptionsActions(
                   notify.success(t('playlistOptions.toasts.deleted'));
                 } catch { notify.error(t('playlistOptions.toasts.deleteFailed')); }
               },
-            },
-          ]
-        );
+    });
       },
     },
   };

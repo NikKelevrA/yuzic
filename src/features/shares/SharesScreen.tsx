@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import {FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
 import { CloudOff, Ellipsis, Link2 } from 'lucide-react-native';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 import { useApi } from '@/providers/registry/useApi';
 import type { Share } from '@/providers/contracts/ServerAdapter';
@@ -90,15 +91,12 @@ export default function SharesScreen() {
   }, []);
 
   const handleDelete = useCallback((share: Share) => {
-    Alert.alert(
-      t('shares.deleteTitle'),
-      t('shares.deleteBody', { title: share.description ?? share.url }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('shares.revoke'),
-          style: 'destructive',
-          onPress: async () => {
+    confirmDestructive({
+      title: t('shares.deleteTitle'),
+      body: t('shares.deleteBody', { title: share.description ?? share.url }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('shares.revoke'),
+      onConfirm: async () => {
             try {
               await api.shares?.remove(share.id);
               await queryClient.invalidateQueries({ queryKey: [QueryKeys.Shares] });
@@ -106,9 +104,7 @@ export default function SharesScreen() {
               notify.error(t('common.error.unexpected'));
             }
           },
-        },
-      ]
-    );
+    });
   }, [api.shares, queryClient, t]);
 
   const renderSeparator = useCallback(

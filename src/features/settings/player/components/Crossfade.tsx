@@ -11,7 +11,7 @@ import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsToggleRow from '../../components/SettingsToggleRow';
-import { withAlpha } from '@/features/theme/coverAccent';
+import { withAlpha } from '@/features/theme/color';
 
 /**
  * Twelve seconds, because past that the overlap stops being a transition and

@@ -25,7 +25,7 @@ import { getServerProvider } from '@/providers/registry/serverConnections';
 import Touchable from '@/components/Touchable';
 import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
-import { withAlpha } from '@/features/theme/coverAccent';
+import { withAlpha } from '@/features/theme/color';
 
 const {
   AirplayButton,
