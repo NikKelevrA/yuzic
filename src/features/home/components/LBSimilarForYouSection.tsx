@@ -1,28 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Text } from '@/components/Text';
-import { FlashList } from '@shopify/flash-list';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchSimilarArtistsFromListeners, LISTENERS_HOME_USE } from '@/providers/registry/homeDiscovery';
 import { QueryKeys } from '@/state/query/queryKeys';
-import { useTheme } from '@/features/theme/useTheme';
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useArtistMbid } from '@/features/artist/useArtistMbid';
 import { useArtists } from '@/features/artist/useArtists';
 import { selectSourceUse } from '@/features/settings/sources/state';
 import {
-  SECTION_H_PADDING as H_PADDING,
-  SECTION_GRID_GAP,
 } from '@/features/home/constants';
-import { getSectionItemWidth } from './sectionStyles';
+import { ShelfCarousel } from './ShelfCarousel';
 import OptionsTile from './OptionsTile';
-import SkeletonTiles from '@/components/SkeletonTiles';
 import { useSourceSectionPresence } from './SourceGroup';
 import type { Artist } from '@/domain/entities/Artist';
-import { spacing, typography } from '@/constants/design';
 
 /**
  * How long to wait before trying the next seed. Each seed can cost a
@@ -56,8 +48,6 @@ type Props = {
  */
 export default function LBSimilarForYouSection({ sectionKey, artistNames, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
   const { navigateToArtist } = useMatchedNavigation();
   const { artists: libraryArtists } = useArtists();
   const discoveryEnabled = useSelector(selectSourceUse(LISTENERS_HOME_USE));
@@ -86,10 +76,6 @@ export default function LBSimilarForYouSection({ sectionKey, artistNames, refres
     allowLookup: true,
   });
 
-  const gridItemWidth = useMemo(
-    () => getSectionItemWidth(screenWidth),
-    [screenWidth]
-  );
 
   const query = useQuery<Artist[]>({
     queryKey: [QueryKeys.LbSimilarForYou, seedMbid ?? '', refreshKey],
@@ -127,52 +113,33 @@ export default function LBSimilarForYouSection({ sectionKey, artistNames, refres
 
   useSourceSectionPresence(sectionKey, hasContent);
 
-  const renderArtist = useCallback(({ item }: { item: Artist }) => (
+  const renderArtist = useCallback(({ item, width }: { item: Artist; width: number }) => (
     <OptionsTile
       entity={{ kind: 'artist', artist: item }}
       cover={item.cover}
       title={item.name}
       subtitle={t('common.artist')}
-      size={gridItemWidth}
-      radius={gridItemWidth / 2}
+      size={width}
+      radius={width / 2}
       onPress={() => navigateToArtist(item)}
     />
-  ), [gridItemWidth, navigateToArtist, t]);
+  ), [navigateToArtist, t]);
 
   // A heading over an empty rail is worse than no shelf — and the source
-  // header above it goes with it, told by the presence report.
+  // header above it goes with it, told by the presence report. `ShelfCarousel`
+  // follows the same rule when given no empty message; this keeps the check
+  // here because the presence report has to be told before the render.
   if (!hasContent) return null;
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.secondary }]}>
-        {t('explore.sections.lbSimilarForYou', { artist: artistName })}
-      </Text>
-      {isLoading ? (
-        <SkeletonTiles
-          itemSize={gridItemWidth}
-          gap={SECTION_GRID_GAP}
-          horizontalPadding={H_PADDING}
-          variant="artist"
-        />
-      ) : (
-        <FlashList
-          horizontal
-          data={data}
-          keyExtractor={(item) => item.localId}
-          overrideItemLayout={(layout) => { (layout as { size?: number }).size = gridItemWidth; }}
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          contentContainerStyle={{ paddingHorizontal: H_PADDING }}
-          ItemSeparatorComponent={() => <View style={{ width: SECTION_GRID_GAP }} />}
-          renderItem={renderArtist}
-        />
-      )}
-    </View>
+    <ShelfCarousel
+      title={t('explore.sections.lbSimilarForYou', { artist: artistName })}
+      isLoading={isLoading}
+      isError={query.isError}
+      data={data}
+      keyExtractor={(item) => item.localId}
+      renderItem={renderArtist}
+      skeletonVariant="artist"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: { paddingTop: spacing.md, paddingBottom: spacing.sm },
-  title: { ...typography.sectionTitle, marginBottom: spacing.md, marginLeft: H_PADDING },
-});

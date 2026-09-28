@@ -15,7 +15,7 @@ import {
 } from '@/components/options/sheetScaffold';
 import Touchable from '@/components/Touchable';
 import { iconSize, spacing, typography } from '@/constants/design';
-import { withAlpha } from '@/features/theme/coverAccent';
+import { withAlpha } from '@/features/theme/color';
 
 export type SingleSelectOption = {
   value: string;

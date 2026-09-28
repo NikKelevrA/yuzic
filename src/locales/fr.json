@@ -245,6 +245,10 @@
         "player": "Lecteur",
         "layout": "Disposition et texte",
         "dock": "Barre et sensations"
+      },
+      "groups": {
+        "text": "Texte",
+        "layout": "Disposition"
       }
     },
     "library": {
@@ -625,13 +629,14 @@
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "Ce n'est pas une adresse web valide. Utilisez par exemple http://192.168.1.10:5000.",
         "unreachable": "Cette adresse n'a pas répondu comme prévu. Vérifiez que le serveur fonctionne et qu'il est accessible depuis cet appareil."
-      }
+      },
+      "alsoUses": "Utilise aussi {{purposes}}.",
+      "needsPurpose": "Activez une source sous {{purposes}} pour que ceci ait de quoi partir."
     },
     "sourceUses": {
       "lastfm": {
         "artistInfo": "Biographies et tags des artistes.",
-        "similarArtists": "Artistes similaires selon les auditeurs Last.fm.",
-        "recommendations": "Trouve des artistes proches de ceux d'une playlist."
+        "similarArtists": "Artistes similaires selon les auditeurs Last.fm."
       },
       "coverartarchive": {
         "artwork": "Pochettes absentes de votre bibliothèque, associées par identifiant MusicBrainz."
@@ -1088,7 +1093,13 @@
       "setAside": "Mis de côté"
     },
     "empty": {
-      "recentlyAdded": "Aucun album dans votre bibliothèque pour le moment"
+      "recentlyAdded": "Aucun album dans votre bibliothèque pour le moment",
+      "charts": "Aucun classement disponible",
+      "topArtists": "Aucun artiste disponible",
+      "genre": "Aucun résultat — essayez un autre genre",
+      "becauseYouListened": "Rien à suggérer pour l’instant",
+      "serverRandom": "Rien à piocher pour l’instant",
+      "lbSimilarForYou": "Aucune suggestion pour l’instant"
     },
     "sources": {
       "server": "Sur votre serveur"
@@ -1578,6 +1589,7 @@
   "radio": {
     "title": "Radio",
     "empty": "Aucune station de radio pour l’instant. Ajoutez-en une pour commencer.",
+    "unavailable": "Votre serveur ne propose pas de radio internet.",
     "add": "Ajouter une station",
     "addTitle": "Ajouter une station",
     "editTitle": "Modifier la station",

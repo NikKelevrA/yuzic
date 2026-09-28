@@ -13,6 +13,17 @@ import settingsAppearanceReducer from '@/features/settings/appearance/state';
 // Boundaries only. Everything below the screen — the settings components, the
 // real slices, the real selectors — renders for real, so this test fails when
 // a control stops writing what it claims to write.
+// The real rule, on a platform the test chooses: Opus is only offered where
+// something can decode it, and the jest preset runs as iOS.
+let mockPlatform = 'android';
+jest.mock('@/features/playback/playableFormat', () => {
+  const actual = jest.requireActual('@/features/playback/playableFormat');
+  return {
+    ...actual,
+    playableCodec: (codec: string) => actual.playableCodec(codec, mockPlatform),
+  };
+});
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -114,8 +125,19 @@ describe('PlayerSettings', () => {
     expect(view.queryByText('settings.player.opusCodec')).toBeNull();
   });
 
+  // Core Audio has no Opus decoder, so the switch would offer a setting whose
+  // only effect is silence.
+  it('hides the Opus switch on a platform that cannot decode it', async () => {
+    mockStreamableCodecs = ['mp3', 'opus'];
+    mockPlatform = 'ios';
+    const view = await renderScreen(makeStore());
+
+    expect(view.queryByText('settings.player.opusCodec')).toBeNull();
+  });
+
   it('offers Opus, and selects it, when the adapter declares it', async () => {
     mockStreamableCodecs = ['mp3', 'opus'];
+    mockPlatform = 'android';
     const store = makeStore();
     const view = await renderScreen(store);
 

@@ -296,7 +296,13 @@ describe('RadioScreen', () => {
     mockRadio.list.mockRejectedValue(new Error('Network request failed'));
     const view = await renderScreen();
 
-    await waitFor(() => expect(view.getByText('common.loadFailed')).toBeTruthy());
+    // An ordinary failure is retried once before it is reported, and a `retry`
+    // set on the query beats the `retry: false` on this client — so the
+    // failure state arrives a backoff later than the default timeout allows.
+    await waitFor(
+      () => expect(view.getByText('common.loadFailed')).toBeTruthy(),
+      { timeout: 5000 },
+    );
     expect(view.getByText('common.retry')).toBeTruthy();
   });
 

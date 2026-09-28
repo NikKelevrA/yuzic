@@ -39,7 +39,10 @@ function toHex({ r, g, b }: Rgba): string {
 }
 
 function toRgba({ r, g, b }: Rgba, alpha: number): string {
-  return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha})`;
+  // Held to 0..1. An out-of-range alpha is not an error worth throwing over —
+  // it is an arithmetic slip at a call site — but it is not a colour either,
+  // and the platform's own handling of `rgba(…,2)` is not worth finding out.
+  return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${clamp(alpha, 0, 1)})`;
 }
 
 function blend(from: Rgba, to: Rgba, amount: number): Rgba {
@@ -63,7 +66,18 @@ export function mix(from: string, to: string, amount: number): string {
   return toHex(blend(must(from), must(to), amount));
 }
 
-/** The colour at an opacity, as `rgba(...)`. */
+/**
+ * The colour at an opacity, as `rgba(...)`.
+ *
+ * Throws on anything that is not a colour, which is the point: a second
+ * `withAlpha` lived in `coverAccent` with the same signature and returned the
+ * input *fully opaque* when it could not parse it. It rejected eight-digit
+ * hex, every `rgba(...)` — including its own output — and `'transparent'`,
+ * which is exactly what `useTheme().colors.background` becomes while a
+ * background image is showing. Eight call sites imported it, all of them
+ * chrome drawn over something, and nothing at an import site said which of the
+ * two you had got.
+ */
 export function withAlpha(color: string, alpha: number): string {
   return toRgba(must(color), alpha);
 }

@@ -14,7 +14,7 @@ import {
 } from '@/features/settings/playback/state';
 import { spacing, typography } from '@/constants/design';
 import { useRadius } from '@/features/theme/useRadius';
-import { withAlpha } from '@/features/theme/coverAccent';
+import { withAlpha } from '@/features/theme/color';
 import SettingsCard from '../../components/SettingsCard';
 import SettingsToggleRow from '../../components/SettingsToggleRow';
 

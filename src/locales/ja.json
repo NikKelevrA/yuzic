@@ -245,6 +245,10 @@
         "player": "プレーヤー",
         "layout": "レイアウトと文字",
         "dock": "ドックと操作感"
+      },
+      "groups": {
+        "text": "テキスト",
+        "layout": "レイアウト"
       }
     },
     "library": {
@@ -624,13 +628,14 @@
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "有効なWebアドレスではありません。http://192.168.1.10:5000 のように入力してください。",
         "unreachable": "このアドレスから想定どおりの応答がありません。サーバーが起動していて、このデバイスから届くか確認してください。"
-      }
+      },
+      "alsoUses": "{{purposes}} も使用します。",
+      "needsPurpose": "{{purposes}} のソースを有効にすると、ここで使う手がかりが得られます。"
     },
     "sourceUses": {
       "lastfm": {
         "artistInfo": "アーティストの経歴とタグ。",
-        "similarArtists": "Last.fmのリスナーによる似たアーティスト。",
-        "recommendations": "プレイリストのアーティストに似たアーティストを探します。"
+        "similarArtists": "Last.fmのリスナーによる似たアーティスト。"
       },
       "coverartarchive": {
         "artwork": "ライブラリにないアルバムアートを、MusicBrainz IDで照合します。"
@@ -1085,7 +1090,13 @@
       "setAside": "しばらく聴いていない"
     },
     "empty": {
-      "recentlyAdded": "ライブラリにアルバムがありません"
+      "recentlyAdded": "ライブラリにアルバムがありません",
+      "charts": "チャートがありません",
+      "topArtists": "アーティストがいません",
+      "genre": "結果がありません — 別のジャンルをお試しください",
+      "becauseYouListened": "まだ提案できるものがありません",
+      "serverRandom": "まだ選べるものがありません",
+      "lbSimilarForYou": "まだ提案がありません"
     },
     "sources": {
       "server": "サーバー内"
@@ -1572,6 +1583,7 @@
   "radio": {
     "title": "ラジオ",
     "empty": "ラジオ局がまだありません。追加して始めましょう。",
+    "unavailable": "このサーバーはインターネットラジオに対応していません。",
     "add": "ラジオ局を追加",
     "addTitle": "ラジオ局を追加",
     "editTitle": "ラジオ局を編集",

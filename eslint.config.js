@@ -150,6 +150,25 @@ module.exports = defineConfig([
           message:
             "Read this from `useRadius()` so it follows the corner preset. `radius.none`/`xs`/`sm` stay static on purpose; if this one genuinely must too, disable the rule here and say why.",
         },
+        // The same split as the radius rule above, for glyphs. `iconSize.row`
+        // and `useIconSize().row` are both legal and mean different things,
+        // and nothing could tell them apart — which is the shape of every
+        // appearance gap fixed this year. An icon beside a line of text is
+        // part of that line: with the type scale live, a row's title grew by a
+        // third at the largest size while the chevron, the heart and the ⋯
+        // beside it stayed exactly where they were.
+        //
+        // Only the roles `useIconSize` names as sitting *with content* —
+        // a row, a badge, a marker, something inline with a sentence. The
+        // rest (`control`, `header`, `secondary`, `loader`) appear both in
+        // content and in the fixed-height strips the app is measured against,
+        // so a selector cannot tell those apart and does not try.
+        {
+          selector:
+            "JSXAttribute[name.name='size'] > JSXExpressionContainer > MemberExpression[object.name='iconSize'][property.name=/^(marker|badge|inline|row)$/]",
+          message:
+            "Read this from `useIconSize()` so the glyph grows with the text beside it. A module-level constant cannot call the hook — if that is what this is, disable the rule here and say so.",
+        },
         // `allowFontScaling={false}` ignores the reader's text size outright.
         // `maxFontSizeMultiplier` bounds it instead, which is what every
         // fixed-height surface in the app uses.

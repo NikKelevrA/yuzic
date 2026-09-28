@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import {FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { notify } from '@/components/toast';
 import { AlertTriangle, CloudOff, Ellipsis, Podcast as PodcastIcon } from 'lucide-react-native';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 import { useApi } from '@/providers/registry/useApi';
 import type { PodcastChannel, PodcastEpisode } from '@/providers/contracts/ServerAdapter';
@@ -15,15 +16,15 @@ import { FormSheet, FormSheetField } from '@/components/FormSheet';
 import MediaListRow from '@/components/MediaListRow';
 import Touchable from '@/components/Touchable';
 import { PodcastChannelOptions, PodcastListOptions } from '@/components/options/PodcastOptions';
-import EmptyState from '@/components/EmptyState';
 import SkeletonListRow from '@/components/SkeletonListRow';
 import { useTheme } from '@/features/theme/useTheme';
 import { useIconSize } from '@/features/theme/useIconSize';
 import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { contentWidth, hitSlopFor, iconSize, spacing, statusColor, typography } from '@/constants/design';
 import { QueryKeys } from '@/state/query/queryKeys';
+import { useServerOnlyQuery } from '@/features/connectivity/useServerOnlyQuery';
+import ServerFeatureState from '@/components/ServerFeatureState';
 import { useServerReachable } from '@/features/connectivity/useServerReachable';
-import { isUnavailableOnServer } from '@/features/library/useServerSurface';
 
 /** Enough to see what is new without pushing the shows themselves off the screen. */
 const LATEST_EPISODE_COUNT = 5;
@@ -42,13 +43,10 @@ export default function PodcastsScreen() {
   const [listOptionsOpen, setListOptionsOpen] = useState(false);
   const [optionsFor, setOptionsFor] = useState<PodcastChannel | null>(null);
 
-  const channelsQuery = useQuery<PodcastChannel[]>({
+  const channelsQuery = useServerOnlyQuery<PodcastChannel>({
     queryKey: [QueryKeys.Podcasts],
-    queryFn: async () => (await api.podcasts?.list(false)) ?? [],
-    enabled: Boolean(api.podcasts) && serverReachable,
+    list: api.podcasts ? () => api.podcasts!.list(false) : undefined,
     staleTime: 1000 * 60 * 15,
-    // Asking again won't give the server podcasts.
-    retry: (failures, error) => !isUnavailableOnServer(error) && failures < 1,
   });
 
   // The requery below is scheduled, not awaited, so leaving the screen
@@ -112,15 +110,12 @@ export default function PodcastsScreen() {
   ) : null;
 
   const handleDelete = useCallback((channel: PodcastChannel) => {
-    Alert.alert(
-      t('podcasts.unsubscribeTitle'),
-      t('podcasts.unsubscribeBody', { title: channel.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('podcasts.unsubscribe'),
-          style: 'destructive',
-          onPress: async () => {
+    confirmDestructive({
+      title: t('podcasts.unsubscribeTitle'),
+      body: t('podcasts.unsubscribeBody', { title: channel.title }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('podcasts.unsubscribe'),
+      onConfirm: async () => {
             try {
               await api.podcasts?.unsubscribe(channel.id);
               await queryClient.invalidateQueries({ queryKey: [QueryKeys.Podcasts] });
@@ -128,9 +123,7 @@ export default function PodcastsScreen() {
               notify.error(t('common.error.unexpected'));
             }
           },
-        },
-      ]
-    );
+    });
   }, [api.podcasts, queryClient, t]);
 
   const renderSeparator = useCallback(
@@ -197,33 +190,20 @@ export default function PodcastsScreen() {
         }
       />
 
-      {!serverReachable && !(channelsQuery.data ?? []).length ? (
-        <EmptyState
-          icon={<CloudOff size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('common.offline.serverOnlyFeature')}
-        />
-      ) : channelsQuery.isLoading ? (
-        <View style={styles.listContent}>
-          {[...Array(8)].map((_, i) => <SkeletonListRow key={i} />)}
-        </View>
-      ) : channelsQuery.isError && isUnavailableOnServer(channelsQuery.error) ? (
-        <EmptyState
-          icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('podcasts.unavailable')}
-        />
-      ) : channelsQuery.isError ? (
-        <EmptyState
-          icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('common.loadFailed')}
-          action={{ label: t('common.retry'), onPress: () => channelsQuery.refetch() }}
-        />
-      ) : (channelsQuery.data ?? []).length === 0 ? (
-        <EmptyState
-          icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
-          message={t('podcasts.empty')}
-          action={{ label: t('podcasts.add'), onPress: () => setAdding(true) }}
-        />
-      ) : (
+      <ServerFeatureState
+        query={channelsQuery}
+        icon={<PodcastIcon size={iconSize.emptyState} color={colors.subtext} />}
+        offlineIcon={<CloudOff size={iconSize.emptyState} color={colors.subtext} />}
+        skeleton={
+          <View style={styles.listContent}>
+            {[...Array(8)].map((_, i) => <SkeletonListRow key={i} />)}
+          </View>
+        }
+        unavailableMessage={t('podcasts.unavailable')}
+        emptyMessage={t('podcasts.empty')}
+        emptyAction={{ label: t('podcasts.add'), onPress: () => setAdding(true) }}
+      >
+        {() => (
         <FlatList
           data={channelsQuery.data}
           keyExtractor={(c) => c.id}
@@ -239,7 +219,8 @@ export default function PodcastsScreen() {
           }
           renderItem={renderChannel}
         />
-      )}
+        )}
+      </ServerFeatureState>
 
       {listOptionsOpen && (
         <PodcastListOptions

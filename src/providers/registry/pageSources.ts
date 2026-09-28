@@ -15,17 +15,58 @@ import type { Song } from '@/domain/entities/Song';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { integrationProvenance } from '@/domain/identity/Provenance';
 import shuffleArray from '@/features/playback/shuffleArray';
-import type { SourceUseId } from './sources';
+import { isSourceAvailable, type SourceUseId } from './sources';
 
 /** The switch each of these reads. */
 export const PREVIEWS_USE: SourceUseId = 'deezer.previews';
 export const SCROBBLES_SIMILAR_USE: SourceUseId = 'lastfm.similarArtists';
-export const SCROBBLES_RECOMMENDATIONS_USE: SourceUseId = 'lastfm.recommendations';
+export const CATALOGUE_SIMILAR_USE: SourceUseId = 'deezer.similarArtists';
 export const CATALOGUE_TRACKS_RECOMMENDATIONS_USE: SourceUseId = 'deezer.recommendations';
 export const ARTIST_ID_LOOKUP_USE: SourceUseId = 'musicbrainz.search';
 
-/** Similar artists from scrobbles need the bundled key; without one there is nothing to ask. */
-export const SCROBBLES_AVAILABLE = Boolean(LASTFM_API_KEY);
+/**
+ * Similar artists from scrobbles need the bundled key; without one there is
+ * nothing to ask.
+ *
+ * Asked of the registry rather than computed again here, so the answer
+ * Settings hides a row on is the same answer this refuses a request on.
+ */
+export const SCROBBLES_AVAILABLE = isSourceAvailable('lastfm');
+
+/**
+ * Which sources may answer "who sounds like this", for a caller that has read
+ * the switches.
+ *
+ * The purpose is `similarArtists` — the same question the artist page asks,
+ * governed by the same list, rather than a second list asking it again. A
+ * playlist knows its artists by name only, which is why ListenBrainz is not
+ * here: its similar artists are looked up by MBID, and resolving names to
+ * MBIDs is `musicbrainz.search`'s job and a different switch again.
+ */
+export type SimilarArtistSources = { scrobbles: boolean; catalogue: boolean };
+
+/**
+ * Artists like this one, from the first enabled source that answers.
+ *
+ * Registry order (`SOURCE_USES`), minus ListenBrainz as above. Falling through
+ * rather than merging: this is a seed list for the step below, so more names
+ * from one source is worth no more than the first source's names, and asking
+ * two companies when one has answered is a request nobody needed.
+ */
+async function similarArtistNames(name: string, sources: SimilarArtistSources): Promise<string[]> {
+  if (sources.scrobbles && SCROBBLES_AVAILABLE) {
+    const similar = await getLastFmSimilarArtists(LASTFM_API_KEY, name, 15);
+    if (similar.length > 0) return similar.map(artist => artist.name);
+  }
+  if (sources.catalogue) {
+    const artist = await deezer.resolveDeezerArtistByName(name);
+    if (artist) {
+      const related = await deezer.getDeezerRelatedArtists(artist.nativeId, 15);
+      if (related.length > 0) return related.map(entry => entry.name);
+    }
+  }
+  return [];
+}
 
 // --- Previews ----------------------------------------------------------------
 
@@ -122,28 +163,40 @@ export async function lookupArtistId(name: string): Promise<string | null> {
 const PLAYLIST_RECOMMENDATION_COUNT = 8;
 
 /**
- * Tracks to go with a playlist: its artists expanded into similar ones from
- * scrobbles, then a couple of each one's top tracks from the catalogue. A
- * discovery rail rather than a critical path, so no key or no seed artists
- * gives `[]`, not an error.
+ * Tracks to go with a playlist: its artists expanded into similar ones, then a
+ * couple of each one's top tracks from the catalogue.
+ *
+ * Two stages, and they are not the same question. The first is "who sounds
+ * like this", which several sources answer and the caller's switches choose
+ * between; the second is "what can I play by them", which only a catalogue can
+ * answer, so the catalogue is required rather than preferred.
+ *
+ * It used to name Last.fm for the first stage, which made a rail that Deezer
+ * could serve alone depend on a key the build might not carry.
+ *
+ * A discovery rail rather than a critical path, so nothing enabled or no seed
+ * artists gives `[]`, not an error.
  */
-export async function fetchPlaylistRecommendations(artistNames: string[]): Promise<Song[]> {
-  if (!artistNames.length || !SCROBBLES_AVAILABLE) return [];
+export async function fetchPlaylistRecommendations(
+  artistNames: string[],
+  sources: SimilarArtistSources,
+): Promise<Song[]> {
+  if (!artistNames.length) return [];
 
   try {
     const similarResults = await Promise.all(
-      artistNames.map(name => getLastFmSimilarArtists(LASTFM_API_KEY, name, 15))
+      artistNames.map(name => similarArtistNames(name, sources))
     );
 
     const seen = new Set<string>(artistNames.map(n => n.toLowerCase()));
     const candidates: string[] = [];
     for (const similar of similarResults) {
-      for (const s of shuffleArray(similar)) {
+      for (const name of shuffleArray(similar)) {
         if (candidates.length >= artistNames.length * 8) break;
-        const key = s.name.toLowerCase();
+        const key = name.toLowerCase();
         if (!seen.has(key)) {
           seen.add(key);
-          candidates.push(s.name);
+          candidates.push(name);
         }
       }
     }

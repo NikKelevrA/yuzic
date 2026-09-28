@@ -23,6 +23,24 @@ describe('mix and withAlpha', () => {
   it('writes an opacity as rgba', () => {
     expect(withAlpha('#0b1020', 0.82)).toBe('rgba(11,16,32,0.82)');
   });
+
+  it('takes every shape a colour is written in here', () => {
+    expect(withAlpha('#fff', 0.5)).toBe('rgba(255,255,255,0.5)');
+    expect(withAlpha('#ffffff80', 0.5)).toBe('rgba(255,255,255,0.5)');
+    expect(withAlpha('rgb(1, 2, 3)', 0.5)).toBe('rgba(1,2,3,0.5)');
+  });
+
+  it('holds the opacity to 0..1', () => {
+    expect(withAlpha('#fff', 2)).toBe('rgba(255,255,255,1)');
+    expect(withAlpha('#fff', -1)).toBe('rgba(255,255,255,0)');
+  });
+
+  // The other `withAlpha` returned its input fully opaque here, so a colour it
+  // could not read drew at full strength instead of at the opacity asked for.
+  it('refuses what it cannot read, rather than returning it opaque', () => {
+    expect(() => withAlpha('rebeccapurple', 0.5)).toThrow(/Not a colour/);
+    expect(() => withAlpha('transparent', 0.5)).toThrow(/Not a colour/);
+  });
 });
 
 describe('contrast', () => {

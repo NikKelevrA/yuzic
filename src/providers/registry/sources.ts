@@ -13,6 +13,8 @@
  * code can refer to a use without naming the company behind it.
  */
 
+import { LASTFM_API_KEY } from '@/constants/keys';
+
 export type SourceId = 'deezer' | 'listenbrainz' | 'lastfm' | 'musicbrainz' | 'coverartarchive' | 'lrclib' | 'radiobrowser';
 
 /** What the data is for. Each purpose is one list on one settings screen. */
@@ -38,6 +40,21 @@ export type SourceServerUrls = Partial<Record<SourceId, string>>;
  * needs to know that a source can take one, not which source it is.
  */
 const SELF_HOSTABLE: readonly SourceId[] = ['musicbrainz'];
+
+/**
+ * Sources that only work when a key was compiled into the build, and the key
+ * this build actually carries.
+ *
+ * Last.fm's is a public app identifier rather than a secret, but it still has
+ * to be set at build time, and a build without one cannot ask Last.fm
+ * anything. Its switches were still listed in Settings: three rows that could
+ * be turned on and off and could never do a thing.
+ */
+const BUNDLED_KEY: Partial<Record<SourceId, string>> = { lastfm: LASTFM_API_KEY };
+
+/** Whether this build can use this source at all. */
+export const isSourceAvailable = (source: SourceId): boolean =>
+  BUNDLED_KEY[source] === undefined || Boolean(BUNDLED_KEY[source]);
 
 export const isSelfHostable = (source: SourceId): boolean => SELF_HOSTABLE.includes(source);
 
@@ -122,9 +139,11 @@ export const SOURCE_USES: readonly SourceUse[] = [
   sourceUse('deezer', 'similarArtists'),
   sourceUse('deezer', 'popularTracks'),
   sourceUse('deezer', 'previews'),
-  // A playlist's recommendations need both: Last.fm finds similar artists,
-  // Deezer turns them into tracks. An album's need only Deezer.
-  sourceUse('lastfm', 'recommendations'),
+  // Only a catalogue can turn a name into something playable, so this purpose
+  // has one source. Who to look up first is `similarArtists` — the same
+  // question the artist page asks, answered from the same list. Last.fm had a
+  // second use here asking it again, which meant two switches for one question
+  // and a rail that did nothing unless both were on.
   sourceUse('deezer', 'recommendations'),
   sourceUse('listenbrainz', 'homeShelves'),
   sourceUse('deezer', 'homeShelves'),
@@ -132,9 +151,39 @@ export const SOURCE_USES: readonly SourceUse[] = [
   sourceUse('musicbrainz', 'search'),
 ];
 
+/**
+ * Purposes that cannot do their job until another has been answered.
+ *
+ * Recommendations are two questions, not one: "who sounds like this", which
+ * several sources answer, and "what can I play by them", which only a
+ * catalogue can. Declaring the first here rather than leaving it in a comment
+ * is what lets Settings say so — a source can be switched on and still have
+ * nothing to work with, and a screen that does not mention its dependency
+ * turns that into an empty shelf with no explanation.
+ *
+ * Advisory, not a gate. An album's recommendations come straight from the
+ * catalogue with no seed step, so the dependency is real for playlists and
+ * not for albums; treating it as a hard requirement would turn off something
+ * that works.
+ */
+export const PURPOSE_NEEDS: Partial<Record<SourcePurpose, readonly SourcePurpose[]>> = {
+  recommendations: ['similarArtists'],
+};
+
 /** The uses for one purpose, in the order they are tried. */
 export const usesFor = (purpose: SourcePurpose): SourceUse[] =>
   SOURCE_USES.filter(entry => entry.purpose === purpose);
+
+/**
+ * The uses for one purpose that this build can actually offer.
+ *
+ * Settings lists these rather than every declared use: a switch for something
+ * the build has no key for is a control with nothing behind it. Feature code
+ * keeps asking `usesFor` — it gates on the key where it calls, and an
+ * unavailable source there simply never answers.
+ */
+export const availableUsesFor = (purpose: SourcePurpose): SourceUse[] =>
+  usesFor(purpose).filter(entry => isSourceAvailable(entry.source));
 
 /** Everything one source is used for. */
 export const usesOf = (source: SourceId): SourceUse[] =>

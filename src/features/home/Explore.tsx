@@ -12,6 +12,8 @@ import { useTheme } from '@/features/theme/useTheme'
 import { useDailyLayout } from '@/features/home/hooks/useDailyLayout'
 import { customizeHomeSections } from '@/features/home/homeLayout'
 import { useIsOffline } from '@/features/connectivity/useIsOffline'
+import { useServerReachable } from '@/features/connectivity/useServerReachable'
+import { connectivityBanner } from '@/features/connectivity/connectivityBanner'
 import { selectSourceUses } from '@/features/settings/sources/state'
 import { selectShowSourceHeaders } from '@/features/settings/appearance/state';
 import { resolveHomeShelfOrder, selectHomeServerSectionsEnabled, selectHomeShelfOrders, selectHomeShelfVisibilityMap, type HomeShelfTier } from '@/features/settings/home/state';
@@ -94,6 +96,10 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0)
   const { resume, library, server, sources } = useDailyLayout(refreshKey)
   const isOffline = useIsOffline()
+  // The stronger signal, for the banner only: the shelves below are outside
+  // sources, which need the internet rather than the music server.
+  const serverReachable = useServerReachable()
+  const banner = connectivityBanner({ isOffline, serverReachable })
   const sourceUses = useSelector(selectSourceUses)
   const showSourceHeaders = useSelector(selectShowSourceHeaders)
   const homeServerEnabled = useSelector(selectHomeServerSectionsEnabled)
@@ -216,11 +222,16 @@ export default function Home() {
       {isRefreshing && <RefreshSettler onSettled={clearRefreshing} />}
       {/* Library and Search both say when the server is out of reach; Home was
           the one tab that changed silently, and it is the tab where the change
-          is largest — every discovery shelf goes, because each is a request. */}
-      {isOffline && (
+          is largest — every discovery shelf goes, because each is a request.
+          It said it on `isOffline` alone, which is the case NetInfo already
+          makes obvious; the one worth announcing is the device being online
+          while the server is not, and that is the one it stayed quiet for.
+          Two states, two sentences: "offline" is a lie when the phone has
+          signal and the server is simply out of reach. */}
+      {banner && (
         <StatusBanner
           icon={<CloudOff size={icons.badge} color={colors.subtext} />}
-          text={t('explore.offlineBanner')}
+          text={t(banner === 'offline' ? 'explore.offlineBanner' : 'common.serverUnreachableBanner')}
           style={styles.offlineBanner}
           testID="home-offline-banner"
         />

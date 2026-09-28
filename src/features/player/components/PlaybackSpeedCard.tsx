@@ -10,7 +10,7 @@ import { usePlayingActions, usePlayingState } from '@/features/playback/PlayingC
 import { DEFAULT_SPEEDS, MAX_SPEED, MIN_SPEED, speedProfileFor } from '@/features/playback/speedProfile';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
-import { withAlpha } from '@/features/theme/coverAccent';
+import { withAlpha } from '@/features/theme/color';
 
 /** One press moves the rate a quarter. */
 const SPEED_STEP = 0.25;

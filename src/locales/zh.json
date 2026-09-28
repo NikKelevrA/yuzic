@@ -245,6 +245,10 @@
         "player": "播放器",
         "layout": "布局与文字",
         "dock": "底栏与手感"
+      },
+      "groups": {
+        "text": "文字",
+        "layout": "布局"
       }
     },
     "library": {
@@ -624,13 +628,14 @@
         "placeholder": "http://192.168.1.10:5000",
         "invalid": "这不是有效的网址。请使用类似 http://192.168.1.10:5000 的格式。",
         "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。"
-      }
+      },
+      "alsoUses": "同时使用{{purposes}}。",
+      "needsPurpose": "请在{{purposes}}下启用一个来源，这里才有可用的依据。"
     },
     "sourceUses": {
       "lastfm": {
         "artistInfo": "艺人简介和标签。",
-        "similarArtists": "来自 Last.fm 听众的相似艺人。",
-        "recommendations": "查找与歌单中艺人相似的艺人。"
+        "similarArtists": "来自 Last.fm 听众的相似艺人。"
       },
       "coverartarchive": {
         "artwork": "资料库缺少的专辑封面，按 MusicBrainz ID 匹配。"
@@ -1085,7 +1090,13 @@
       "setAside": "许久未听"
     },
     "empty": {
-      "recentlyAdded": "媒体库中暂无专辑"
+      "recentlyAdded": "媒体库中暂无专辑",
+      "charts": "暂无排行榜",
+      "topArtists": "暂无艺人",
+      "genre": "没有结果 — 换一个流派试试",
+      "becauseYouListened": "暂时没有推荐",
+      "serverRandom": "暂时没有可随机的内容",
+      "lbSimilarForYou": "暂时没有推荐"
     },
     "sources": {
       "server": "在你的服务器上"
@@ -1572,6 +1583,7 @@
   "radio": {
     "title": "电台",
     "empty": "还没有电台。添加一个即可开始。",
+    "unavailable": "你的服务器不提供网络电台。",
     "add": "添加电台",
     "addTitle": "添加电台",
     "editTitle": "编辑电台",

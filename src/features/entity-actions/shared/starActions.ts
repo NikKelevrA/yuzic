@@ -1,4 +1,3 @@
-import { Alert } from 'react-native';
 import { selection } from '@/components/haptics';
 import { notify } from '@/components/toast';
 
@@ -49,18 +48,4 @@ export async function toggleFavorite(opts: {
   } finally {
     opts.close();
   }
-}
-
-/** Shared destructive-confirm + run, used by playlist delete and track-download removal. */
-export function confirmDestructive(opts: {
-  title: string;
-  body: string;
-  cancelLabel: string;
-  confirmLabel: string;
-  onConfirm: () => void | Promise<void>;
-}): void {
-  Alert.alert(opts.title, opts.body, [
-    { text: opts.cancelLabel, style: 'cancel' },
-    { text: opts.confirmLabel, style: 'destructive', onPress: () => void opts.onConfirm() },
-  ]);
 }

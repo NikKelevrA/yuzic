@@ -10,7 +10,7 @@ import { spacing, typography } from '@/constants/design';
 import { useDownload } from '@/features/offline/DownloadContext';
 import { formatBytes } from '@/features/offline/downloadStore';
 import { useTheme } from '@/features/theme/useTheme';
-import { confirmDestructive } from '@/features/entity-actions/shared/starActions';
+import { confirmDestructive } from '@/components/confirmDestructive';
 import { notify } from '@/components/toast';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 

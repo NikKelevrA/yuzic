@@ -6,10 +6,19 @@ import { useTheme } from '@/features/theme/useTheme';
 import SettingsCard from './SettingsCard';
 import Touchable from '@/components/Touchable';
 import { useRadius } from '@/features/theme/useRadius';
+import { useIconSize } from '@/features/theme/useIconSize';
 
 type IconSelectItem = {
   id: string;
-  icon: React.ReactElement<{ color?: string }>;
+  /**
+   * The glyph, without a size or a colour: the card supplies both.
+   *
+   * These sets are declared at module level, where a hook cannot reach — so
+   * an icon that carried its own size carried a *static* one, and stayed put
+   * while the label beside it grew with the reader's text size. Handing the
+   * size down from here, which is a component, is what lets it scale.
+   */
+  icon: React.ReactElement<{ color?: string; size?: number }>;
   /** What this option is called. The card draws options as bare glyphs, so
    *  without it the whole row reads as a set of unnamed buttons. */
   label: string;
@@ -33,6 +42,7 @@ type Props = {
 const SettingsIconSelectCard: React.FC<Props> = ({ title, subtitle, items, selected, onSelect, showLabels }) => {
   const { colors } = useTheme();
   const rad = useRadius();
+  const icons = useIconSize();
 
   return (
     <SettingsCard>
@@ -63,6 +73,7 @@ const SettingsIconSelectCard: React.FC<Props> = ({ title, subtitle, items, selec
               >
                 {React.cloneElement(item.icon, {
                   color: active ? onDark.text : colors.secondary,
+                  size: icons.row,
                 })}
                 {showLabels && (
                   <Text

@@ -1,7 +1,7 @@
 import { fixedColor, hitSlopFor, iconSize, onDark, spacing, typography } from '@/constants/design';
 import { useIconSize } from '@/features/theme/useIconSize';
 import React from 'react';
-import { View, StyleSheet, Platform, FlatList, Alert } from 'react-native';
+import {View, StyleSheet, Platform, FlatList } from 'react-native';
 import { Text } from '@/components/Text';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import {
     removeServer,
 } from '@/state/redux/slices/serversSlice';
 import { clearOfflineMutationsForServer } from '@/state/redux/slices/offlineMutationsSlice';
+import { confirmDestructive } from '@/components/confirmDestructive';
 import { Ellipsis } from 'lucide-react-native';
 
 import { SERVER_PROVIDERS } from '@/providers/registry/serverConnections';
@@ -50,15 +51,12 @@ export default function Servers() {
     };
 
     const confirmDelete = (id: string, serverUrl: string) => {
-        Alert.alert(
-            t('onboarding.servers.deleteTitle'),
-            t('onboarding.servers.deleteBody', { server: serverUrl.replace(/^https?:\/\//, '') }),
-            [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                    text: t('common.delete'),
-                    style: 'destructive',
-                    onPress: () => {
+        confirmDestructive({
+      title: t('onboarding.servers.deleteTitle'),
+      body: t('onboarding.servers.deleteBody', { server: serverUrl.replace(/^https?:\/\//, '') }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('common.delete'),
+      onConfirm: () => {
                         // Otherwise these become permanently invisible and
                         // permanently un-retryable: PendingOfflineChanges only
                         // ever shows entries for the current activeServerId,
@@ -67,9 +65,7 @@ export default function Servers() {
                         dispatch(removeServer(id));
                         void forgetAllServerCredentials(id);
                     },
-                },
-            ]
-        );
+    });
     };
 
     const renderServer = ({ item }: { item: Server }) => {

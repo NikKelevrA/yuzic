@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Text } from '@/components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
-import MaskedView from '@react-native-masked-view/masked-view';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
 import TurboImage from 'react-native-turbo-image';
@@ -31,31 +30,25 @@ import ArtistOptionsButton from './ArtistOptionsButton';
 const NO_COVER: CoverSource = { kind: 'none' };
 
 /**
- * The artist's photograph behind the header.
+ * The artist's photograph behind the header, over the screen's own colour.
  *
- * Over the screen's own colour it is an opaque panel, as it has always been.
- * Over a background image it is masked out towards its foot instead, so the
- * page's image comes through it rather than starting where it stops — the
- * gradient above can only darken what is already there, and darkening to solid
- * is what put a line across the screen.
- *
- * The mask costs a native view, so it is only mounted when there is something
- * behind to reveal.
+ * Nothing at all over a background image. It used to fade into one — masked
+ * out towards its foot so the page came through — which fixed the hard line
+ * it drew but not the reason it was wrong: the photograph still covered the
+ * top of the screen. Someone who sets a wallpaper has said what goes behind
+ * the app, and a second, different picture drawn over it is the app arguing
+ * with that. The artist is still named by the round photo below, which is
+ * content rather than backdrop.
  */
-const HeroBackdrop: React.FC<{ coverUri: string | null; muted: string; overImage: boolean }> = ({
+const HeroBackdrop: React.FC<{ coverUri: string | null; muted: string }> = ({
   coverUri,
   muted,
-  overImage,
 }) => {
   if (!coverUri) {
-    // Nothing to fade. Over a page image the muted slab is the same hard edge
-    // the fade exists to avoid, so it simply steps aside.
-    return overImage ? null : (
-      <View testID="artist-hero-slab" style={[StyleSheet.absoluteFill, { backgroundColor: muted }]} />
-    );
+    return <View testID="artist-hero-slab" style={[StyleSheet.absoluteFill, { backgroundColor: muted }]} />;
   }
 
-  const photo = (
+  return (
     <TurboImage
       testID="artist-hero-photo"
       source={{ uri: coverUri }}
@@ -65,24 +58,6 @@ const HeroBackdrop: React.FC<{ coverUri: string | null; muted: string; overImage
       fadeDuration={300}
       cachePolicy="dataCache"
     />
-  );
-
-  if (!overImage) return photo;
-
-  return (
-    <MaskedView
-      testID="artist-hero-mask"
-      style={StyleSheet.absoluteFill}
-      maskElement={
-        <LinearGradient
-          colors={[...coverFade.heroMask]}
-          locations={[...coverFade.heroMaskStops]}
-          style={StyleSheet.absoluteFill}
-        />
-      }
-    >
-      {photo}
-    </MaskedView>
   );
 };
 
@@ -116,30 +91,34 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
 
   return (
     <>
-      <View style={[styles.heroBlock, { height: ARTIST_HERO_HEIGHT + barInset }]}>
-        {/* Only the art is clipped. The picture overscans sideways and the
-            mask needs a bound, but the round cover hangs below the hero on
-            purpose — clipping both together is what flattened its foot. */}
-        <View style={styles.fullBleedWrapper}>
-          <HeroBackdrop
-            coverUri={coverUri}
-            muted={colors.muted}
-            overImage={overImage}
-          />
+      {/* 300pt of height exists to give the blurred art presence. With no art
+          drawn it is a screen of nothing before the artist's name, so over a
+          background image the hero shrinks to what the round cover needs —
+          which also lets more of that image show. */}
+      <View
+        style={[
+          styles.heroBlock,
+          { height: barInset + (overImage ? COVER_SIZE : ARTIST_HERO_HEIGHT) },
+        ]}
+      >
+        {/* The hero's own art and the fade that lands it on the page. Absent
+            over a background image: there is nothing to land it on, and the
+            page already has a picture behind it.
 
-          <LinearGradient
-            testID="artist-hero-fade"
-            colors={
-              overImage
-                ? coverFade.onImage
-                : isDarkMode
-                  ? coverFade.onDark
-                  : coverFade.onLight
-            }
-            locations={overImage ? [...coverFade.onImageStops] : undefined}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
+            Only the art is clipped — it overscans sideways — while the round
+            cover hangs below the hero on purpose. Clipping both together is
+            what used to flatten the cover's foot. */}
+        {!overImage && (
+          <View style={styles.fullBleedWrapper}>
+            <HeroBackdrop coverUri={coverUri} muted={colors.muted} />
+
+            <LinearGradient
+              testID="artist-hero-fade"
+              colors={isDarkMode ? coverFade.onDark : coverFade.onLight}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+        )}
 
         <View style={[styles.centeredCoverContainer, { borderRadius: rad.pill }]}>
           <MediaImage
@@ -213,6 +192,9 @@ export default ArtistHeader;
 /** The blurred cover behind an artist's name, before the floating bar's inset. */
 const ARTIST_HERO_HEIGHT = 300;
 
+/** The round cover's own size, which is all the hero needs when it draws no art. */
+const COVER_SIZE = 120;
+
 /**
  * How far the round cover hangs below the hero.
  *
@@ -239,8 +221,8 @@ const styles = StyleSheet.create({
   centeredCoverContainer: {
     position: 'absolute',
     bottom: -COVER_OVERHANG,
-    width: 120,
-    height: 120,
+    width: COVER_SIZE,
+    height: COVER_SIZE,
     overflow: 'hidden',
     backgroundColor: onDark.muted,
     alignItems: 'center',

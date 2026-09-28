@@ -1,12 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Text } from '@/components/Text';
-import { FlashList } from '@shopify/flash-list';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 
 import { useApi } from '@/providers/registry/useApi';
-import { useTheme } from '@/features/theme/useTheme';
 import { useRadius } from '@/features/theme/useRadius';
 import { usePlayingActions } from '@/features/playback/PlayingContext';
 import { QueryKeys } from '@/state/query/queryKeys';
@@ -15,16 +11,10 @@ import { getDayKey, getDailySeed, seededShuffle } from '@/features/home/hooks/us
 import { presentableGenres } from '@/features/home/genres';
 import { onePerAlbum } from '@/features/home/randomDraw';
 import { useGenres } from '@/features/genre/useGenres';
-import {
-  SECTION_H_PADDING as H_PADDING,
-  SECTION_GRID_GAP,
-} from '@/features/home/constants';
-import { getSectionItemWidth } from './sectionStyles';
+import { ShelfCarousel } from './ShelfCarousel';
 import OptionsTile from './OptionsTile';
-import SkeletonTiles from '@/components/SkeletonTiles';
 import { useSourceSectionPresence } from './SourceGroup';
 import type { Song } from '@/domain/entities/Song';
-import { spacing, typography } from '@/constants/design';
 
 type Props = {
   /** This shelf's key in the home layout, so the source group above it knows
@@ -54,7 +44,6 @@ type Draw = { songs: Song[]; themed: boolean };
  */
 export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Props) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const rad = useRadius();
   const api = useApi();
   // The shelf is server-backed, so it needs the server to be reachable, not
@@ -63,7 +52,6 @@ export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Prop
   const serverReachable = useServerReachable();
   const discoveryAvailable = Boolean(api.discovery) && serverReachable;
   const { playSongs } = usePlayingActions();
-  const { width: screenWidth } = useWindowDimensions();
   const { genres } = useGenres();
   const dayKey = getDayKey();
 
@@ -80,10 +68,6 @@ export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Prop
     return seededShuffle(usable, seed)[0] ?? null;
   }, [dayKey, refreshKey, genres]);
 
-  const gridItemWidth = useMemo(
-    () => getSectionItemWidth(screenWidth),
-    [screenWidth]
-  );
 
   const query = useQuery<Draw>({
     queryKey: [QueryKeys.ServerRandom, dayKey, refreshKey, themeGenre ?? ''],
@@ -122,55 +106,35 @@ export default function ServerRandomSection({ sectionKey, refreshKey = 0 }: Prop
     void playSongs(data, { startIndex: index });
   }, [data, playSongs]);
 
-  const renderSong = useCallback(({ item, index }: { item: Song; index: number }) => (
+  const renderSong = useCallback(({ item, index, width }: { item: Song; index: number; width: number }) => (
     <OptionsTile
       entity={{ kind: 'song', song: item }}
       cover={item.cover}
       title={item.title}
       subtitle={item.artist.name}
-      size={gridItemWidth}
+      size={width}
       radius={rad.card}
       onPress={() => handlePlay(index)}
     />
-  ), [gridItemWidth, handlePlay, rad.card]);
+  ), [handlePlay, rad.card]);
 
   if (!api.discovery) return null;
   // A themed heading with an empty rail under it is worse than no shelf: the
-  // heading promises today's draw and then there isn't one.
+  // heading promises today's draw and then there isn't one. `ShelfCarousel`
+  // drops itself when it has nothing and no message to show instead, which is
+  // the same rule; this keeps the `MIN_ITEMS` floor, which is stricter.
   if (!isLoading && !hasEnough) return null;
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.secondary }]}>
-        {isThemed
-          ? t('explore.sections.serverRandomThemed', { genre: themeGenre })
-          : t('explore.sections.serverRandom')}
-      </Text>
-      {isLoading ? (
-        <SkeletonTiles
-          itemSize={gridItemWidth}
-          gap={SECTION_GRID_GAP}
-          horizontalPadding={H_PADDING}
-          variant="album"
-        />
-      ) : (
-        <FlashList
-          horizontal
-          data={data}
-          keyExtractor={(item) => item.localId}
-          overrideItemLayout={(layout) => { (layout as { size?: number }).size = gridItemWidth; }}
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          contentContainerStyle={{ paddingHorizontal: H_PADDING }}
-          ItemSeparatorComponent={() => <View style={{ width: SECTION_GRID_GAP }} />}
-          renderItem={renderSong}
-        />
-      )}
-    </View>
+    <ShelfCarousel
+      title={isThemed
+        ? t('explore.sections.serverRandomThemed', { genre: themeGenre })
+        : t('explore.sections.serverRandom')}
+      isLoading={isLoading}
+      isError={query.isError}
+      data={data}
+      keyExtractor={(item) => item.localId}
+      renderItem={renderSong}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: { paddingTop: spacing.md, paddingBottom: spacing.sm },
-  title: { ...typography.sectionTitle, marginBottom: spacing.md, marginLeft: H_PADDING },
-});

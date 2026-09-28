@@ -33,7 +33,10 @@ const adapters = {
  */
 describe('adapter capability declarations', () => {
   it('says which codecs it can stream, so Playback offers Opus only where it works', () => {
-    expect(adapters.navidrome().songs.streamableCodecs).toEqual(['mp3']);
+    // Navidrome ships an Opus transcoding profile and downsamples to Opus by
+    // default; it declared MP3 only, so the switch never appeared and every
+    // transcode was asked for in MP3 regardless.
+    expect(adapters.navidrome().songs.streamableCodecs).toContain('opus');
     expect(adapters.jellyfin().songs.streamableCodecs).toContain('opus');
     expect(adapters.emby().songs.streamableCodecs).toContain('opus');
     // Plex direct-plays its part URI; it does not expose a codec choice.

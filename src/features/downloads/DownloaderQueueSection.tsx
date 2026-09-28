@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import {StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { CheckCircle, X } from 'lucide-react-native';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 import { notify } from '@/components/toast';
 import { MediaImage } from '@/components/MediaImage';
@@ -96,14 +97,13 @@ export default function DownloaderQueueSection({ id, title, items, isLoading, ha
   }, [cancelItem, t]);
 
   const confirmCancel = useCallback((item: DownloaderQueueItem, label: string) => {
-    Alert.alert(
-      t('settings.downloaders.cancelTitle'),
-      t('settings.downloaders.cancelBody', { title: label }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('settings.downloaders.cancelConfirm'), style: 'destructive', onPress: () => { void runCancel(item); } },
-      ]
-    );
+    confirmDestructive({
+      title: t('settings.downloaders.cancelTitle'),
+      body: t('settings.downloaders.cancelBody', { title: label }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('settings.downloaders.cancelConfirm'),
+      onConfirm: () => { void runCancel(item); },
+    });
   }, [runCancel, t]);
 
   const renderRow = (item: DownloaderQueueItem) => {

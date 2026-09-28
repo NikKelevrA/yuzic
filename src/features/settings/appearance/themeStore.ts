@@ -47,7 +47,18 @@ export function applyThemeEdit(theme: Theme, edit: ThemeEdit): Theme {
  */
 export function migrateAppearance(state: any): any {
   if (!state) return state;
-  if (state.profiles) return state;
+  // Already profiles — but possibly still carrying the `theme` it was migrated
+  // from. `autoMergeLevel1` merges every *stored* top-level key into state,
+  // including ones the reducer no longer declares, and the persistoid writes
+  // back whatever it finds in state: a leftover therefore feeds itself, read
+  // in and written straight back out on every launch. Dropping it here breaks
+  // that loop, and because a write replaces the whole blob rather than patching
+  // it, the next one clears the key from storage too.
+  if (state.profiles) {
+    if (state.theme === undefined) return state;
+    const { theme: _dropped, ...rest } = state;
+    return rest;
+  }
   if (state.theme) return intoProfiles(state);
   const {
     themeColor, radiusPreset, listDensity, coverAccentEnabled, translucentDock,

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, StyleSheet, View } from 'react-native';
+import {FlatList, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notify } from '@/components/toast';
 import { ArrowDownCircle, CheckCircle, Ellipsis, Play, Podcast as PodcastIcon } from 'lucide-react-native';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 import { useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
@@ -104,15 +105,12 @@ export default function PodcastChannelScreen() {
   const handleDelete = useCallback((episode: PodcastEpisode) => {
     const podcasts = api.podcasts;
     if (!podcasts) return;
-    Alert.alert(
-      t('podcasts.deleteEpisodeTitle'),
-      t('podcasts.deleteEpisodeBody', { title: episode.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
+    confirmDestructive({
+      title: t('podcasts.deleteEpisodeTitle'),
+      body: t('podcasts.deleteEpisodeBody', { title: episode.title }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('common.delete'),
+      onConfirm: async () => {
             try {
               await podcasts.deleteEpisode(episode.id);
               await queryClient.invalidateQueries({ queryKey: [QueryKeys.Podcasts] });
@@ -120,9 +118,7 @@ export default function PodcastChannelScreen() {
               notify.error(t('common.error.unexpected'));
             }
           },
-        },
-      ]
-    );
+    });
   }, [api.podcasts, queryClient, t]);
 
   // The show itself could only be dropped from the list screen, so the screen
@@ -130,15 +126,12 @@ export default function PodcastChannelScreen() {
   const handleUnsubscribe = useCallback(() => {
     const podcasts = api.podcasts;
     if (!podcasts || !channel) return;
-    Alert.alert(
-      t('podcasts.unsubscribeTitle'),
-      t('podcasts.unsubscribeBody', { title: channel.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('podcasts.unsubscribe'),
-          style: 'destructive',
-          onPress: async () => {
+    confirmDestructive({
+      title: t('podcasts.unsubscribeTitle'),
+      body: t('podcasts.unsubscribeBody', { title: channel.title }),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('podcasts.unsubscribe'),
+      onConfirm: async () => {
             try {
               await podcasts.unsubscribe(channel.id);
               await queryClient.invalidateQueries({ queryKey: [QueryKeys.Podcasts] });
@@ -147,9 +140,7 @@ export default function PodcastChannelScreen() {
               notify.error(t('common.error.unexpected'));
             }
           },
-        },
-      ]
-    );
+    });
   }, [api.podcasts, channel, queryClient, router, t]);
 
   const renderSeparator = useCallback(

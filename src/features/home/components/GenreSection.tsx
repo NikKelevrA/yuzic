@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react'
-import { View, StyleSheet, useWindowDimensions } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import { Text } from '@/components/Text'
-import { FlashList } from '@shopify/flash-list'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useSelector } from 'react-redux'
@@ -17,17 +16,15 @@ import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation'
 import { useGenres } from '@/features/genre/useGenres'
 import {
   SECTION_H_PADDING as H_PADDING,
-  SECTION_GRID_GAP,
   STALE_DEEZER_DISCOVERY,
   HOME_SEED_ARTISTS,
 } from '@/features/home/constants'
-import { getSectionItemWidth } from './sectionStyles'
+import { ShelfCarousel } from './ShelfCarousel'
 import { CATALOGUE_HOME_USE, fetchAlbumsForGenre } from '@/providers/registry/homeDiscovery'
 import { QueryKeys } from '@/state/query/queryKeys'
 import { getDayKey } from '@/features/home/hooks/useDailyLayout'
 import SelectionBottomSheet from '@/components/SelectionBottomSheet'
 import OptionsTile from './OptionsTile'
-import SkeletonTiles from '@/components/SkeletonTiles'
 import type { Album } from '@/domain/entities/Album'
 import Touchable from '@/components/Touchable';
 import { hitSlopFor, iconSize, spacing, typography } from '@/constants/design';
@@ -61,7 +58,6 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
   const { albums: libraryAlbums } = useAlbums()
   const { artists: libraryArtists } = useArtists()
   const { genres: libraryGenres } = useGenres()
-  const { width: screenWidth } = useWindowDimensions()
   const sheetRef = useRef<BottomSheetModal>(null)
   const dayKey = getDayKey()
   const itemCount = useSelector(selectHomeShelfItemCount)
@@ -69,10 +65,6 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
 
   const [selectedGenre, setSelectedGenre] = React.useState<string>(genre)
 
-  const gridItemWidth = useMemo(
-    () => getSectionItemWidth(screenWidth),
-    [screenWidth]
-  )
 
   const allGenres = useMemo(() => {
     const genres = new Set<string>()
@@ -138,73 +130,48 @@ export default function GenreSection({ genre, refreshKey = 0 }: Props) {
   const coversToPrefetch = useMemo(() => albums.map(a => a.cover), [albums])
   usePrefetchCovers(coversToPrefetch, 'grid')
 
-  const renderAlbum = useCallback(({ item }: { item: Album }) => (
+  const renderAlbum = useCallback(({ item, width }: { item: Album; width: number }) => (
     <OptionsTile
       entity={{ kind: 'album', album: item }}
       cover={item.cover}
       title={item.title}
       subtitle={item.artist.name}
-      size={gridItemWidth}
+      size={width}
       radius={rad.card}
       onPress={() => {
         prefetchCovers([item.cover], 'detail')
         navigateToAlbum(item)
       }}
     />
-  ), [navigateToAlbum, gridItemWidth, rad.card])
+  ), [navigateToAlbum, rad.card])
 
-  const isEmpty = !query.isLoading && albums.length === 0
+  const header = (
+    <View style={styles.titleRow}>
+      <Text style={[styles.titlePrefix, { color: colors.secondary }]}>
+        {t('explore.sections.genrePrefix')}
+      </Text>
+      <Touchable onPress={() => sheetRef.current?.present()} hitSlop={hitSlopFor(iconSize.control)}>
+        <Text
+          style={[styles.genreName, { color: colors.secondary, borderBottomColor: colors.secondary }]}
+          numberOfLines={1}
+        >
+          {selectedGenre}
+        </Text>
+      </Touchable>
+    </View>
+  )
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.titlePrefix, { color: colors.secondary }]}>
-            {t('explore.sections.genrePrefix')}
-          </Text>
-          <Touchable onPress={() => sheetRef.current?.present()} hitSlop={hitSlopFor(iconSize.control)}>
-            <Text
-              style={[styles.genreName, { color: colors.secondary, borderBottomColor: colors.secondary }]}
-              numberOfLines={1}
-            >
-              {selectedGenre}
-            </Text>
-          </Touchable>
-        </View>
-
-        {query.isLoading ? (
-          <SkeletonTiles
-            itemSize={gridItemWidth}
-            gap={SECTION_GRID_GAP}
-            horizontalPadding={H_PADDING}
-            variant="album"
-          />
-        ) : query.isError ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.subtext }]}>
-              Unable to load — try again later
-            </Text>
-          </View>
-        ) : isEmpty ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.subtext }]}>
-              No results — try a different genre
-            </Text>
-          </View>
-        ) : (
-          <FlashList
-            horizontal
-            data={albums}
-            keyExtractor={item => item.localId}
-            overrideItemLayout={layout => { (layout as { size?: number }).size = gridItemWidth }}
-            showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            contentContainerStyle={{ paddingHorizontal: H_PADDING }}
-            ItemSeparatorComponent={() => <View style={{ width: SECTION_GRID_GAP }} />}
-            renderItem={renderAlbum}
-          />
-        )}
-      </View>
+      <ShelfCarousel
+        header={header}
+        isLoading={query.isLoading}
+        isError={query.isError}
+        data={albums}
+        keyExtractor={item => item.localId}
+        renderItem={renderAlbum}
+        emptyMessage={t('explore.empty.genre')}
+      />
 
       <SelectionBottomSheet
         ref={sheetRef}

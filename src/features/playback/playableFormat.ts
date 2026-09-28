@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { type AudioQuality } from '@/features/settings/playback/state';
+import type { PreferredCodec } from '@/domain/playback/AudioFormat';
 
 /**
  * Whether the platform's decoder can open a file at all.
@@ -82,4 +83,27 @@ export function playableQuality(
   if (!format) return quality;
 
   return IOS_DECODABLE.includes(format) ? quality : 'high';
+}
+
+/**
+ * The codec to actually ask a transcode for, given what this platform can
+ * decode.
+ *
+ * The same shape as {@link playableQuality} and for the same reason: a
+ * preference that produces an unplayable stream is worse than a lesser one
+ * that plays. Core Audio has no Opus decoder and the engine vendors libvorbis
+ * rather than libopus, so Opus asked for on iOS is silence. Android decodes it
+ * through Media3.
+ *
+ * Applied where the stream URL is built rather than where the preference is
+ * stored, so the stored value stays the honest record of what was asked for —
+ * and so someone who chose Opus against a server that offered it, then opened
+ * the app on iOS, hears MP3 instead of nothing.
+ */
+export function playableCodec(
+  codec: PreferredCodec,
+  platform: string = Platform.OS,
+): PreferredCodec {
+  if (platform !== 'ios') return codec;
+  return codec === 'opus' ? 'mp3' : codec;
 }

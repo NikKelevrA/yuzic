@@ -1,10 +1,11 @@
 import { iconSize, onDark, spacing, typography } from '@/constants/design';
 import React from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import {StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { CloudUpload, RotateCcw, Trash2 } from 'lucide-react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { confirmDestructive } from '@/components/confirmDestructive';
 
 import { useTheme } from '@/features/theme/useTheme';
 import { useIconSize } from '@/features/theme/useIconSize';
@@ -42,18 +43,13 @@ export default function PendingOfflineChanges() {
 
   const discardPending = () => {
     if (!activeServerId) return;
-    Alert.alert(
-      t('settings.library.offlineChanges.discardTitle'),
-      t('settings.library.offlineChanges.discardBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.library.offlineChanges.discard'),
-          style: 'destructive',
-          onPress: () => dispatch(clearOfflineMutationsForServer(activeServerId)),
-        },
-      ]
-    );
+    confirmDestructive({
+      title: t('settings.library.offlineChanges.discardTitle'),
+      body: t('settings.library.offlineChanges.discardBody'),
+      cancelLabel: t('common.cancel'),
+      confirmLabel: t('settings.library.offlineChanges.discard'),
+      onConfirm: () => { dispatch(clearOfflineMutationsForServer(activeServerId)); },
+    });
   };
 
   const discardIconColor = colors.destructiveOnSurface;

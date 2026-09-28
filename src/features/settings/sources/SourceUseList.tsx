@@ -10,7 +10,13 @@ import { useSheetRef } from '@/components/useSheetRef';
 import { hitSlopFor, onDark, spacing, typography } from '@/constants/design';
 import { useTheme } from '@/features/theme/useTheme';
 import { useIconSize } from '@/features/theme/useIconSize';
-import { SOURCES, usesFor, type SourceId, type SourcePurpose } from '@/providers/registry/sources';
+import {
+  availableUsesFor,
+  PURPOSE_NEEDS,
+  SOURCES,
+  type SourceId,
+  type SourcePurpose,
+} from '@/providers/registry/sources';
 import SettingsCard from '../components/SettingsCard';
 import SettingsDivider from '../components/SettingsDivider';
 import ServerAddressSheet from './ServerAddressSheet';
@@ -40,7 +46,22 @@ export default function SourceUseList({ purpose, source }: Props) {
   const sheetRef = useSheetRef();
   const [detailsFor, setDetailsFor] = useState<SourceId | null>(null);
 
-  const entries = usesFor(purpose).filter(entry => !source || entry.source === source);
+  // Only what this build can offer: a switch for a source with no key behind
+  // it is a control that does nothing, and there were three of them.
+  const entries = availableUsesFor(purpose).filter(entry => !source || entry.source === source);
+
+  // What this purpose cannot work without, and whether anything is answering
+  // it. A source here can be on and still have nothing to go on, which is an
+  // empty shelf with no explanation unless the screen says so.
+  const needed = PURPOSE_NEEDS[purpose] ?? [];
+  const unmet = needed.filter(
+    other => !availableUsesFor(other).some(entry => uses[entry.id] ?? false),
+  );
+  const anyOn = entries.some(entry => uses[entry.id] ?? false);
+  const dependencyNote = needed.length === 0 ? null : t(
+    unmet.length && anyOn ? 'settings.sources.needsPurpose' : 'settings.sources.alsoUses',
+    { purposes: (unmet.length && anyOn ? unmet : needed).map(p => t(`settings.sourcePurposes.${p}`)).join(', ') },
+  );
 
   // The address form is opened by the details sheet but belongs beside it, not
   // inside it: it waits for that sheet to finish closing, so the two are never
@@ -88,6 +109,11 @@ export default function SourceUseList({ purpose, source }: Props) {
           );
         })}
       </SettingsCard>
+      {dependencyNote && (
+        <Text testID={`source-purpose-note-${purpose}`} style={[styles.note, { color: colors.subtext }]}>
+          {dependencyNote}
+        </Text>
+      )}
       <SourceSheet
         ref={sheetRef}
         source={detailsFor}
@@ -126,5 +152,10 @@ const styles = StyleSheet.create({
   subtext: {
     ...typography.caption,
     marginTop: spacing.xxs,
+  },
+  note: {
+    ...typography.caption,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.xs,
   },
 });

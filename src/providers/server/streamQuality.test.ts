@@ -13,6 +13,30 @@ describe('stream quality reaches the stream request', () => {
     expect(qualityToStreamParams('original')).toEqual({ format: 'raw' });
   });
 
+  // Navidrome ships an Opus profile and downsamples to Opus by default; it was
+  // told MP3 regardless, so the bitrate ceiling bought less than it could.
+  it('asks for the codec the listener prefers, at the same ceiling', () => {
+    expect(qualityToStreamParams('medium', 'opus')).toEqual({ format: 'opus', maxBitRate: 192 });
+    expect(qualityToStreamParams('high', 'opus')).toEqual({ format: 'opus', maxBitRate: 320 });
+  });
+
+  // The untouched file is the one request that is not a transcode.
+  it('ignores the codec for original, which is not a transcode', () => {
+    expect(qualityToStreamParams('original', 'opus')).toEqual({ format: 'raw' });
+  });
+
+  it('still asks for mp3 when nothing else was chosen', () => {
+    expect(qualityToStreamParams('high')).toEqual({ format: 'mp3', maxBitRate: 320 });
+  });
+
+  it('carries the codec into the URL a server client builds', () => {
+    const client = createNavidromeClient({ serverUrl: 'https://music.example.com', username: 'u', password: 'p' });
+
+    const opus = new URL(client.buildStreamUrl('song-1', 'medium', 'opus')).searchParams;
+    expect(opus.get('format')).toBe('opus');
+    expect(opus.get('maxBitRate')).toBe('192');
+  });
+
   it('changes the URL a server client builds', () => {
     const client = createNavidromeClient({ serverUrl: 'https://music.example.com', username: 'u', password: 'p' });
 

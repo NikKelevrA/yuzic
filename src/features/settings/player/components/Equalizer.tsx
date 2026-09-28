@@ -10,7 +10,7 @@ import { useTheme } from '@/features/theme/useTheme';
 import { selectEqualizerGains, setEqualizerGains } from '@/features/settings/playback/state';
 import { useRadius } from '@/features/theme/useRadius';
 import SettingsCard from '../../components/SettingsCard';
-import { withAlpha } from '@/features/theme/coverAccent';
+import { withAlpha } from '@/features/theme/color';
 import {
   EQ_FREQUENCIES,
   EQ_GAIN_LIMIT_DB,

@@ -1,5 +1,7 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import SettingsToggleGroup from '../components/SettingsToggleGroup';
+import SettingsCardHeader from '../components/SettingsCardHeader';
 import { ThemeColor } from './components/ThemeColor';
 import { ThemePalette } from './components/ThemePalette';
 import { BackgroundSelector } from './components/BackgroundSelector';
@@ -29,6 +31,7 @@ export function isAppearanceSection(value: unknown): value is AppearanceSectionI
  * of things, and the dock and how the app feels to touch.
  */
 export const AppearanceSection: React.FC<{ section: AppearanceSectionId }> = ({ section }) => {
+  const { t } = useTranslation();
   const toggles = useAppearanceToggles();
 
   switch (section) {
@@ -57,9 +60,19 @@ export const AppearanceSection: React.FC<{ section: AppearanceSectionId }> = ({ 
         </>
       );
     case 'layout':
+      // Two groups, because the page holds two different questions. Text size
+      // is "can I read this" — an accessibility control, and a local override
+      // of one the system already has. The rest are "how much do I want on
+      // screen", which is a matter of appetite and has no system equivalent.
+      // They read as one setting when stacked, and the combination that makes
+      // them look mergeable — large text with tight rows — is exactly the one
+      // someone with low vision needs and would lose.
       return (
         <>
+          <SettingsCardHeader title={t('settings.appearance.groups.text')} />
           <TextSizeSelector />
+
+          <SettingsCardHeader title={t('settings.appearance.groups.layout')} />
           <ListDensitySelector />
           <RadiusPresetSelector />
           <GridColumns />

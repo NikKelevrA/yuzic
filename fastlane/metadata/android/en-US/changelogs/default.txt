@@ -1,6 +1,7 @@
-Save a look you like, and choose what your wallpaper shows.
+Your wallpaper stays yours, and Home says when it can't reach your server.
 
-- Appearance profiles: keep more than one look and switch between them. The Yuzic look always stays as it was, so trying something is never a one-way door
-- Drag and zoom a background photo to pick the part that shows, with a live preview
-- Bottom sheets are no longer see-through in light mode over a background image
-- The artist header fades into your wallpaper instead of ending on a hard edge, and its round photo is whole again
+- A background image is no longer painted over on album and artist pages: the artist header's blurred photo and the cover tint step aside for it
+- Home says when your server is out of reach, not just when you're offline. It used to drop every shelf without saying why
+- Radio says when your server doesn't offer it, instead of "couldn't load"
+- Shared links can be pulled to refresh
+- Opus, where your server offers it

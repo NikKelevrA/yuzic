@@ -1,4 +1,4 @@
-import { formatOf, playableQuality } from './playableFormat';
+import { formatOf, playableCodec, playableQuality } from './playableFormat';
 
 describe('formatOf', () => {
   it('prefers the MIME type', () => {
@@ -68,5 +68,26 @@ describe('playableQuality', () => {
    */
   it('leaves a track alone when the format is unknown', () => {
     expect(playableQuality({}, 'original', 'ios')).toBe('original');
+  });
+});
+
+/**
+ * Asking for a codec the device cannot decode is worse than asking for a
+ * lesser one it can: the first is silence, the second is MP3.
+ */
+describe('playableCodec', () => {
+  it('lets Opus through where something decodes it', () => {
+    expect(playableCodec('opus', 'android')).toBe('opus');
+  });
+
+  // Core Audio has no Opus decoder, and the engine vendors libvorbis rather
+  // than libopus.
+  it('falls back to mp3 on iOS', () => {
+    expect(playableCodec('opus', 'ios')).toBe('mp3');
+  });
+
+  it('leaves mp3 alone everywhere', () => {
+    expect(playableCodec('mp3', 'ios')).toBe('mp3');
+    expect(playableCodec('mp3', 'android')).toBe('mp3');
   });
 });
