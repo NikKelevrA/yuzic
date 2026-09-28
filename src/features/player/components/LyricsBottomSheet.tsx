@@ -28,8 +28,12 @@ import {
   useSheetBottomInset,
 } from '@/components/options/OptionSheetPrimitives';
 import Touchable from '@/components/Touchable';
+import { useSelfHostedMusicbrainzConfigured } from '@/features/settings/sources/useSelfHostedMusicbrainzConfigured';
 type LyricsBottomSheetProps = {
   lyrics: LyricsResult | null;
+  /** A lookup is in flight for the current song. Only used while the sheet
+   *  stays open across a track change — see the note below. */
+  isResolving: boolean;
   onClose: () => void;
 };
 
@@ -81,9 +85,18 @@ function LyricLine({
 }
 
 const LyricsBottomSheet = forwardRef<BottomSheetModal, LyricsBottomSheetProps>(
-  ({ lyrics, onClose }, ref) => {
+  ({ lyrics, isResolving, onClose }, ref) => {
     const { t } = useTranslation();
     const { colors } = useTheme();
+    // Barebone-fork-only behavior, gated per the standing rule: nothing here
+    // changes for anyone without a self-hosted MusicBrainz server set up —
+    // stock still closes this sheet on every track change. Upstream note for
+    // whoever maintains stock, if useful there too: this fixes a real bug
+    // (see the commit this was lifted from) that has nothing to do with
+    // MusicBrainz — the sheet unmounted on every song change because it
+    // `return null`ed whenever `lyrics` was momentarily null between tracks.
+    // Safe to make unconditional; it isn't gated for any correctness reason.
+    const stayOpenAcrossTrackChanges = useSelfHostedMusicbrainzConfigured();
     const progress = usePlayingProgress();
     const { seekSong } = usePlayingActions();
     const bottomInset = useSheetBottomInset();
@@ -136,7 +149,7 @@ const LyricsBottomSheet = forwardRef<BottomSheetModal, LyricsBottomSheetProps>(
       });
     }, [currentIndex, lines.length, contentHeight, viewportHeight, layoutVersion]);
 
-    if (!lyrics) return null;
+    if (!stayOpenAcrossTrackChanges && !lyrics) return null;
 
     const getVariant = (index: number): 'active' | 'adjacent' | 'inactive' => {
       // Nothing is "current" in a plain block, so every line reads the same
@@ -194,35 +207,47 @@ const LyricsBottomSheet = forwardRef<BottomSheetModal, LyricsBottomSheetProps>(
           onContentSizeChange={(w, h) => setContentHeight(h)}
           onLayout={(e) => setViewportHeight(e.nativeEvent.layout.height)}
         >
-          {lines.map((line, index) =>
-            // Tapping a line seeks to it, which an untimed line cannot do —
-            // so it isn't a button, and isn't announced as one.
-            synced ? (
-              <Touchable
-                key={index}
-                accessibilityRole="button"
-                accessibilityLabel={line.text}
-                accessibilityHint={t('a11y.player.seekToLyric')}
-                onLayout={onLineLayout(index)}
-                onPress={() => seekSong(line.startMs / 1000)}
-              >
+          {lines.length > 0 ? (
+            lines.map((line, index) =>
+              // Tapping a line seeks to it, which an untimed line cannot do —
+              // so it isn't a button, and isn't announced as one.
+              synced ? (
+                <Touchable
+                  key={index}
+                  accessibilityRole="button"
+                  accessibilityLabel={line.text}
+                  accessibilityHint={t('a11y.player.seekToLyric')}
+                  onLayout={onLineLayout(index)}
+                  onPress={() => seekSong(line.startMs / 1000)}
+                >
+                  <LyricLine
+                    text={line.text}
+                    variant={getVariant(index)}
+                    activeColor={colors.secondary}
+                    inactiveColor={colors.subtext}
+                  />
+                </Touchable>
+              ) : (
                 <LyricLine
+                  key={index}
                   text={line.text}
                   variant={getVariant(index)}
                   activeColor={colors.secondary}
                   inactiveColor={colors.subtext}
                 />
-              </Touchable>
-            ) : (
-              <LyricLine
-                key={index}
-                text={line.text}
-                variant={getVariant(index)}
-                activeColor={colors.secondary}
-                inactiveColor={colors.subtext}
-              />
+              )
             )
-          )}
+          ) : stayOpenAcrossTrackChanges ? (
+            // Held open through a track change rather than closing and
+            // reopening itself — this is what's on screen while the new
+            // song's lyrics are still resolving, or once they've resolved to
+            // nothing.
+            <View style={styles.emptyStateContainer}>
+              <Text style={[styles.emptyState, { color: colors.subtext }]}>
+                {isResolving ? t('playing.lyrics.loading') : t('playing.lyrics.none')}
+              </Text>
+            </View>
+          ) : null}
         </BottomSheetScrollView>
       </BottomSheetModal>
     );
@@ -259,6 +284,15 @@ const styles = StyleSheet.create({
     ...typography.screenTitle,
     textAlign: 'center',
     marginVertical: spacing.controlGap,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyState: {
+    ...typography.body,
+    textAlign: 'center',
   },
 });
 

@@ -73,7 +73,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
     const { currentSong, playbackSpeed } = usePlayingState();
     const insets = useSafeAreaInsets();
     const songModel: SongScreenModel = useSongScreenModel(currentSong);
-    const { artistId, lyrics, lyricsAvailable } = songModel;
+    const { artistId, lyrics, lyricsAvailable, isResolvingLyrics } = songModel;
 
     const songOptionsRef = useSheetRef();
     const playlistRef = useSheetRef();
@@ -316,6 +316,7 @@ const PlayingScreen: React.FC<PlayingScreenProps> = ({
             <LyricsBottomSheet
                 ref={lyricsSheetRef}
                 lyrics={lyrics}
+                isResolving={isResolvingLyrics}
                 onClose={() => lyricsSheetRef.current?.dismiss()}
             />
 
