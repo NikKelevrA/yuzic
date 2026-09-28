@@ -6,6 +6,7 @@ import { notify } from '@/components/toast';
 import { getBackend } from '@/features/player/activeBackend';
 import { useDispatch, useSelector } from 'react-redux';
 import { useApi } from '@/providers/registry/useApi';
+import { playableCodec } from '@/features/playback/playableFormat';
 import SettingsScreen from '../components/SettingsScreen';
 import SettingsToggleGroup from '../components/SettingsToggleGroup';
 import SettingsCard from '../components/SettingsCard';
@@ -28,8 +29,11 @@ const PlayerSettings: React.FC = () => {
   const resumeLongTracks = useSelector(selectResumeLongTracksEnabled);
   const hasSimilarityService = useSimilarityService() !== null;
   // Presence, not provider: a server whose adapter declares Opus gets the
-  // switch, whichever server it is.
-  const supportsOpus = api.songs.streamableCodecs.includes('opus');
+  // switch, whichever server it is — and only where the device can decode
+  // what it would then be sent. Core Audio has no Opus decoder, so on iOS the
+  // switch would offer a setting whose only effect is silence.
+  const supportsOpus =
+    api.songs.streamableCodecs.includes('opus') && playableCodec('opus') === 'opus';
 
   const toggleOpus = useCallback((v: boolean) => { dispatch(setPreferredCodec(v ? 'opus' : 'mp3')); }, [dispatch]);
   const opusItems = useMemo(() => [{

@@ -6,6 +6,7 @@ import { QueryKeys } from '@/state/query/queryKeys';
 import { useDownloadActions } from '@/features/offline/DownloadContext';
 import { useSongsById } from '@/features/song/useSongsById';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
+import { playableCodec } from '@/features/playback/playableFormat';
 import { selectPreferredCodec } from '@/features/settings/playback/state';
 import type { Song } from '@/domain/entities/Song';
 import { isPlayable, type PlayableResource } from '@/features/playback/playableResource';
@@ -93,7 +94,7 @@ export function usePlayableSongResolver() {
     const streamUrl = api.songs.buildStreamUrl(
       domainSong.streamId ?? domainSong.nativeId,
       streamQuality,
-      preferredCodec
+      playableCodec(preferredCodec)
     );
     if (!streamUrl) return null;
 

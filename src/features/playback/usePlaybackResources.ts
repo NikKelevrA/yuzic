@@ -11,7 +11,7 @@ import { useQueueFillProviders } from '@/providers/registry/queueFillProviders';
 import { useApi } from '@/providers/registry/useApi';
 import { selectActiveServer } from '@/state/redux/selectors/serversSelectors';
 import { buildTrackItem } from './buildTrackItem';
-import { playableQuality } from './playableFormat';
+import { playableCodec, playableQuality } from './playableFormat';
 import type { PlayableResource } from './playableResource';
 import { useLatestRef } from './useLatestRef';
 import { useStreamQuality } from './useStreamQuality';
@@ -71,7 +71,13 @@ export function usePlaybackResources() {
     // "Original" serves the untouched file, which the device may not be able
     // to decode at all; `playableQuality` transcodes those rather than fail.
     const quality = playableQuality({ mimeType: song.audio?.mimeType }, streamQuality.current);
-    const url = api.songs.buildStreamUrl(song.streamId ?? song.nativeId, quality, preferredCodec.current);
+    // The codec gets the same treatment as the quality above: asked for, then
+    // held to what this platform can actually decode.
+    const url = api.songs.buildStreamUrl(
+      song.streamId ?? song.nativeId,
+      quality,
+      playableCodec(preferredCodec.current),
+    );
     return url ? { song, streamUrl: url } : null;
   }, [api, getLocalPath, preferredCodec, streamQuality]);
   const resolve = useLatestRef(resolvePlayableSong);

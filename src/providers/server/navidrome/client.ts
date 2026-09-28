@@ -1,4 +1,4 @@
-import type { AudioQuality } from '@/domain/playback/AudioFormat';
+import type { AudioQuality, PreferredCodec } from '@/domain/playback/AudioFormat';
 import { qualityToStreamParams } from '@/providers/server/streamQuality';
 import { tryWithFailover, orderedUrls, UrlTimeoutError, isAbortError } from '@/providers/http/urlFailover';
 import { serverFetch } from '@/features/mtls/serverFetch';
@@ -160,12 +160,16 @@ export function createNavidromeClient(config: NavidromeClientConfig) {
     return failoverHint ? tryWithFailover(failoverHint, attempt) : attempt(baseUrl);
   }
 
-  function buildStreamUrl(songId: string, quality: AudioQuality = 'high'): string {
+  function buildStreamUrl(
+    songId: string,
+    quality: AudioQuality = 'high',
+    codec: PreferredCodec = 'mp3',
+  ): string {
     // Streams pick up whichever URL failover has most recently confirmed alive:
     // after a metadata request falls over to the fallback, the next stream URL
     // is built against that same address.
     const streamBaseUrl = failoverHint ? orderedUrls(failoverHint)[0] ?? baseUrl : baseUrl;
-    const { format, maxBitRate } = qualityToStreamParams(quality);
+    const { format, maxBitRate } = qualityToStreamParams(quality, codec);
     const auth = buildTokenParams(username, password);
     const extra: Record<string, string | number> = { id: songId, format };
     if (maxBitRate) extra.maxBitRate = maxBitRate;

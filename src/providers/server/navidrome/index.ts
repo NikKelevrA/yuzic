@@ -274,9 +274,13 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
     get: async (id: string) => getSong(client, id, provenance),
     scrobble: async (songId, timestamp) => scrobble(client, songId, timestamp),
     reportNowPlaying: async (songId) => nowPlaying(client, songId),
-    buildStreamUrl: (songId, quality) => client.buildStreamUrl(songId, quality),
+    buildStreamUrl: (songId, quality, codec) => client.buildStreamUrl(songId, quality, codec),
     scrobbleKind: 'scrobble',
-    streamableCodecs: ['mp3'],
+    // Navidrome ships an Opus transcoding profile and downsamples to Opus by
+    // default; it was being asked for MP3 regardless. Declared like any other
+    // capability — the switch appears, off, and what the platform can decode
+    // is a separate question answered at the stream URL.
+    streamableCodecs: ['mp3', 'opus'],
   };
 
   const tracks: TracksApi = {
