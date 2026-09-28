@@ -416,6 +416,16 @@ because both halves of each pair look reasonable in isolation.
   mismatch that turns the bar into half a screen: the cap holds the glyphs but
   not the line box they sit in. `allowFontScaling={false}` is not the answer to
   either — it ignores the user's setting outright.
+- **Waiting is not an accent**: a spinner, a skeleton or a pull-to-refresh tint
+  takes a text colour, never `colors.themeColor`. The accent says *this is
+  chosen* or *this is yours*; a loader says *nothing has happened yet*, and
+  colouring it like a selection makes every list that is merely slow look like
+  it is doing something on purpose. `colors.secondary` where the loader stands
+  in for content or for an action under way, `colors.subtext` where it stands
+  in for something quiet — a status dot, a block that has not arrived. Home is
+  the reference: its refresh tint and its skeletons are neutral, and the accent
+  is spent on the source badges and the banner discs, which are identity.
+
 - **Pressing**: `components/Touchable`, never `TouchableOpacity` — the whole app
   was swapped over in one pass and there is no reason for a second answer to a
   press to exist. Android gets a ripple bounded to the component, every other

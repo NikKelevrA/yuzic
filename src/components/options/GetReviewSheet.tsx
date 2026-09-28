@@ -243,7 +243,7 @@ const GetReviewSheet: React.FC<Props> = ({ album, track, wantLocalId, onDismiss,
             <OptionSheetSectionLabel label={t('externalAlbum.review.qualityProfile')} />
             {qualityProfilesLoading ? (
               <View style={styles.qualityLoading}>
-                <SpinningLoaderCircle size={icons.row} color={colors.themeColor} />
+                <SpinningLoaderCircle size={icons.row} color={colors.subtext} />
               </View>
             ) : (
               qualityProfiles.map((profile) => {

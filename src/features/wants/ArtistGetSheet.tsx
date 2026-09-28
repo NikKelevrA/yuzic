@@ -165,7 +165,7 @@ export default function ArtistGetSheet({ artist, sheetRef, onConfirm, onDismiss 
             <OptionSheetSectionLabel spaced label={t('externalAlbum.review.qualityProfile')} />
             {profilesLoading ? (
               <View style={styles.loading}>
-                <SpinningLoaderCircle size={icons.row} color={colors.themeColor} />
+                <SpinningLoaderCircle size={icons.row} color={colors.subtext} />
               </View>
             ) : (
               profiles.map(profile => (

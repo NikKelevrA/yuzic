@@ -160,7 +160,7 @@ const LibraryList: React.FC<Props> = ({
                 onRefresh={refresh.onRefresh}
                 // The list is drawn on the app's background, which the theme
                 // owns, so the spinner takes the accent rather than iOS grey.
-                tintColor={colors.themeColor}
+                tintColor={colors.secondary}
                 colors={[colors.themeColor]}
               />
             )
