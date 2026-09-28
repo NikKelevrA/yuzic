@@ -14,15 +14,46 @@ import { mapArtist as mapMbArtist } from '@/providers/integration/musicbrainz/ma
 import { mapSong as mapMbSong } from '@/providers/integration/musicbrainz/mapSong';
 import { sourceColor } from '@/constants/design';
 import { integrationProvenance } from '@/domain/identity/Provenance';
-import { selectSourceServerUrls } from '@/features/settings/sources/state';
+import { selectSourceFallbackServerUrls, selectSourceServerUrls } from '@/features/settings/sources/state';
 import store from '@/state/redux/store';
 import type { IntegrationProvider } from '../contracts/Provider';
 
 const MB_PROVENANCE = integrationProvenance('musicbrainz');
 
 /**
+ * Wraps a primary client so every call retries against `fallback` (a server
+ * of your own's second address) when the primary one throws — a network
+ * error, a timeout, a non-2xx response, anything `mb()`'s own fetch raises.
+ * Not retried against the public server: a self-hosted setup with a broken
+ * primary and no fallback should say so, not silently reroute to a server
+ * the user deliberately moved away from.
+ */
+function withFallback(primary: MusicbrainzClient, fallback: MusicbrainzClient | null): MusicbrainzClient {
+  if (!fallback) return primary;
+  const retry = <A extends unknown[], R>(
+    primaryFn: (...args: A) => Promise<R>,
+    fallbackFn: (...args: A) => Promise<R>
+  ) => async (...args: A): Promise<R> => {
+    try {
+      return await primaryFn(...args);
+    } catch {
+      return fallbackFn(...args);
+    }
+  };
+  return {
+    searchArtist: retry(primary.searchArtist, fallback.searchArtist),
+    searchReleaseGroup: retry(primary.searchReleaseGroup, fallback.searchReleaseGroup),
+    searchReleaseGroupByTitle: retry(primary.searchReleaseGroupByTitle, fallback.searchReleaseGroupByTitle),
+    getArtistWithReleases: retry(primary.getArtistWithReleases, fallback.getArtistWithReleases),
+    getReleaseGroup: retry(primary.getReleaseGroup, fallback.getReleaseGroup),
+    getTracksForReleaseGroup: retry(primary.getTracksForReleaseGroup, fallback.getTracksForReleaseGroup),
+  };
+}
+
+/**
  * The client for the server the user has chosen: their own when they have set
- * an address for it, the shared public one otherwise.
+ * an address for it (with its fallback address, if any, behind it), the
+ * shared public one otherwise.
  *
  * Read at the moment of the call, so a change in Settings applies to the next
  * request without anything being rebuilt. The address is handed to the client
@@ -32,8 +63,14 @@ const MB_PROVENANCE = integrationProvenance('musicbrainz');
  * client whose limiter every call must queue behind.
  */
 export function currentMusicbrainzClient(): MusicbrainzClient {
-  const serverUrl = selectSourceServerUrls(store.getState()).musicbrainz;
-  return serverUrl?.trim() ? mb.createMusicbrainzClient({ serverUrl }) : mb;
+  const state = store.getState();
+  const serverUrl = selectSourceServerUrls(state).musicbrainz;
+  if (!serverUrl?.trim()) return mb;
+
+  const primary = mb.createMusicbrainzClient({ serverUrl });
+  const fallbackUrl = selectSourceFallbackServerUrls(state).musicbrainz;
+  const fallback = fallbackUrl?.trim() ? mb.createMusicbrainzClient({ serverUrl: fallbackUrl }) : null;
+  return withFallback(primary, fallback);
 }
 
 /**

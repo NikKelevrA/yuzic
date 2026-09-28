@@ -27,11 +27,22 @@ interface SourcesSettingsState {
    * nothing anywhere.
    */
   serverUrls: SourceServerUrls;
+  /**
+   * A second address to fall back to, for a source that has a primary one set
+   * in `serverUrls`. Tried whenever the primary one doesn't answer — both at
+   * save time (so a primary address that's merely unreachable right now, e.g.
+   * over Tailscale, doesn't block saving as long as the fallback answers) and
+   * at request time (so a primary outage during normal use falls through to
+   * it too). Meaningless without a primary address, so it's never offered on
+   * its own.
+   */
+  serverFallbackUrls: SourceServerUrls;
 }
 
 const initialState: SourcesSettingsState = {
   uses: {},
   serverUrls: {},
+  serverFallbackUrls: {},
 };
 
 const sourcesSlice = createSlice({
@@ -54,6 +65,22 @@ const sourcesSlice = createSlice({
       if (url) next[source] = url;
       else delete next[source];
       state.serverUrls = next;
+      // A primary address that's gone (back to the public server) has
+      // nothing left for a fallback to be a fallback *of*.
+      if (!url && state.serverFallbackUrls[source]) {
+        const nextFallback = { ...state.serverFallbackUrls };
+        delete nextFallback[source];
+        state.serverFallbackUrls = nextFallback;
+      }
+    },
+    /** Sets the fallback address tried when the primary one doesn't answer; an empty one clears it. */
+    setSourceFallbackServerUrl(state, action: PayloadAction<{ source: SourceId; url: string }>) {
+      const { source } = action.payload;
+      const url = action.payload.url.trim();
+      const next = { ...state.serverFallbackUrls };
+      if (url) next[source] = url;
+      else delete next[source];
+      state.serverFallbackUrls = next;
     },
     /** Stops using a source everywhere. */
     stopUsingSource(state, action: PayloadAction<SourceId>) {
@@ -62,7 +89,13 @@ const sourcesSlice = createSlice({
   },
 });
 
-export const { setSourceUse, setSourceUses, setSourceServerUrl, stopUsingSource } = sourcesSlice.actions;
+export const {
+  setSourceUse,
+  setSourceUses,
+  setSourceServerUrl,
+  setSourceFallbackServerUrl,
+  stopUsingSource,
+} = sourcesSlice.actions;
 
 export default sourcesSlice.reducer;
 
@@ -81,6 +114,10 @@ const NO_SERVER_URLS: SourceServerUrls = {};
 /** The addresses set for sources you run yourself. Stable while unchanged, so it is safe to subscribe to. */
 export const selectSourceServerUrls = (state: SourcesRootState): SourceServerUrls =>
   state.settingsSources?.serverUrls ?? NO_SERVER_URLS;
+
+/** The fallback addresses set for sources you run yourself. Stable while unchanged, so it is safe to subscribe to. */
+export const selectSourceFallbackServerUrls = (state: SourcesRootState): SourceServerUrls =>
+  state.settingsSources?.serverFallbackUrls ?? NO_SERVER_URLS;
 
 const enabledSourcesSelectors = new Map<SourcePurpose, (state: SourcesRootState) => SourceId[]>();
 

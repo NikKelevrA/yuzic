@@ -548,8 +548,10 @@
         "title": "Server address",
         "description": "Use a server of your own instead of the public one. Enter its address, for example http://192.168.1.10:5000. Leave it empty to use the public server.",
         "placeholder": "http://192.168.1.10:5000",
+        "fallbackLabel": "Fallback address (optional)",
+        "fallbackPlaceholder": "e.g. a Tailscale/VPN address",
         "invalid": "That doesn't look like a web address. Use something like http://192.168.1.10:5000.",
-        "unreachable": "That address didn't answer as expected. Check the server is running and reachable from this device."
+        "unreachable": "Neither address answered as expected. Check that at least one server is running and reachable from this device."
       }
     },
     "sourceUses": {
@@ -1040,7 +1042,9 @@
       "playingFromQueue": "Playing from Queue"
     },
     "lyrics": {
-      "title": "Lyrics"
+      "title": "Lyrics",
+      "loading": "Looking for lyrics…",
+      "none": "No lyrics found for this song."
     },
     "aboutArtist": {
       "header": "Artist"

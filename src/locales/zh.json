@@ -547,8 +547,10 @@
         "title": "服务器地址",
         "description": "使用您自己的服务器，而不是公共服务器。请输入其地址，例如 http://192.168.1.10:5000。留空则使用公共服务器。",
         "placeholder": "http://192.168.1.10:5000",
+        "fallbackLabel": "备用地址（可选）",
+        "fallbackPlaceholder": "例如 Tailscale/VPN 地址",
         "invalid": "这不是有效的网址。请使用类似 http://192.168.1.10:5000 的格式。",
-        "unreachable": "该地址没有按预期响应。请检查服务器是否已运行，并且可从此设备访问。"
+        "unreachable": "两个地址均未按预期响应。请检查至少一台服务器是否已运行，并且可从此设备访问。"
       }
     },
     "sourceUses": {
@@ -1035,7 +1037,9 @@
       "playingFromQueue": "正在播放队列中的曲目"
     },
     "lyrics": {
-      "title": "歌词"
+      "title": "歌词",
+      "loading": "正在查找歌词…",
+      "none": "未找到这首歌的歌词。"
     },
     "aboutArtist": {
       "header": "歌手"
