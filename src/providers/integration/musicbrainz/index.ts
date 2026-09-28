@@ -53,6 +53,27 @@ export type MbTrack = {
   'artist-credit'?: { name?: string; artist: { id?: string; name: string } }[];
 };
 
+/**
+ * A recording as MusicBrainz's search index returns it, not as the lookup API
+ * shapes one: `id`/`title`/`artist-credit` sit at the top level (no nested
+ * `recording` the way {@link MbTrack} carries one from a release), and each of
+ * its `releases` embeds a basic `release-group` already, because a search hit
+ * is pre-joined rather than assembled from an `inc` list.
+ */
+export type MbRecordingHit = {
+  id: string;
+  title: string;
+  length?: number | null;
+  'artist-credit'?: { name?: string; artist: { id?: string; name: string } }[];
+  releases?: {
+    id: string;
+    title: string;
+    date?: string;
+    status?: string;
+    'release-group'?: MbReleaseGroup;
+  }[];
+};
+
 type MbRelease = {
   id: string;
   title: string;
@@ -129,6 +150,23 @@ export function createMusicbrainzClient(config: MusicbrainzConfig = {}) {
     return data['release-groups'] ?? [];
   }
 
+  /**
+   * Free-text search of recordings by title — the search Yuzic never sent
+   * before: `searchReleaseGroupByTitle` only ever matched a release-group's
+   * own title, so a song whose title differs from its album's (nearly all of
+   * them) was unsearchable. Each hit already carries the releases it appears
+   * on, release-group included, which is what a caller needs to show it and
+   * open the album behind it — see `mapRecordingSearchHit`.
+   */
+  async function searchRecording(query: string, limit = 5): Promise<MbRecordingHit[]> {
+    if (!query.trim()) return [];
+    const q = encodeURIComponent(`recording:"${query}"`);
+    const data = await mb<{ recordings: MbRecordingHit[] }>(
+      `/recording?query=${q}&limit=${limit}&fmt=json`
+    );
+    return data.recordings ?? [];
+  }
+
   async function getArtistWithReleases(mbid: string): Promise<MbArtist> {
     return mb<MbArtist>(`/artist/${mbid}?inc=release-groups&fmt=json`);
   }
@@ -150,6 +188,7 @@ export function createMusicbrainzClient(config: MusicbrainzConfig = {}) {
     searchArtist,
     searchReleaseGroup,
     searchReleaseGroupByTitle,
+    searchRecording,
     getArtistWithReleases,
     getReleaseGroup,
     getTracksForReleaseGroup,
@@ -165,6 +204,7 @@ export const {
   searchArtist,
   searchReleaseGroup,
   searchReleaseGroupByTitle,
+  searchRecording,
   getArtistWithReleases,
   getReleaseGroup,
   getTracksForReleaseGroup,

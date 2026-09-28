@@ -16,6 +16,7 @@ import { useScrollClearance } from '@/features/theme/useScrollClearance';
 import { useSearchScreenModel } from '@/features/search/useSearchScreenModel';
 import SearchFiltersSheet from './components/SearchFiltersSheet';
 import SearchResultsBody from './components/SearchResultsBody';
+import EntityTypeQuickFilter from './components/EntityTypeQuickFilter';
 
 /**
  * The Search screen's JSX and styling only — every piece of state, effect,
@@ -87,6 +88,13 @@ const Search = () => {
           <SlidersHorizontal size={iconSize.row} color={m.isOtherScope ? colors.themeColor : colors.secondary} />
         </Touchable>
       </View>
+
+      {m.selfHostedMbConfigured && (
+        <EntityTypeQuickFilter
+          selectedEntityTypes={m.selectedEntityTypes}
+          onToggle={m.toggleFilterEntityType}
+        />
+      )}
 
       {m.hasSearched && !m.isLoading && (m.hasError || m.degraded) && (
         <StatusBanner

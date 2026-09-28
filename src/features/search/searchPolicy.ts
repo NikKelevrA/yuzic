@@ -23,12 +23,19 @@ import type { Song } from '@/domain/entities/Song';
 import type { SearchResult } from '@/features/search/searchRanking';
 
 /** Entity types an external source can be asked to return. Deliberately
- *  narrower than the library's four kinds — 'song'/'playlist' have no
- *  external equivalent through Deezer/MusicBrainz today, so filtering on
- *  them would just always empty out; the Filters UI only offers what a
- *  source actually supports. */
-export type SearchEntityType = 'album' | 'artist';
+ *  narrower than the library's four kinds — 'playlist' has no external
+ *  equivalent through Deezer/MusicBrainz today, so filtering on it would
+ *  just always empty out; the Filters UI only offers what a source actually
+ *  supports.
+ *
+ *  'song' is a real, requestable type (MusicBrainz recording search — see
+ *  `providers/registry/musicbrainz.ts`), but deliberately left out of
+ *  {@link ALL_SEARCH_ENTITY_TYPES}: it's opt-in only, from the self-hosted
+ *  MusicBrainz quick-filter row (`EntityTypeQuickFilter`), not part of the
+ *  stock "everything on" default every other caller still gets. */
+export type SearchEntityType = 'album' | 'artist' | 'song';
 
+/** Stock's own default — unchanged by 'song' existing as a type. See the note above. */
 export const ALL_SEARCH_ENTITY_TYPES: SearchEntityType[] = ['album', 'artist'];
 
 // --- result mapping: library entity -> SearchResult -------------------------
@@ -167,6 +174,7 @@ export async function searchExternalLeg(
   const kinds = {
     artists: entityTypes.includes('artist'),
     albums: entityTypes.includes('album'),
+    songs: entityTypes.includes('song'),
   };
 
   // Asked of the broker, not of a list of sources: whoever can search a
@@ -220,6 +228,21 @@ export async function searchExternalLeg(
         subtext: subtitle,
         cover: entity.cover,
         type: 'album',
+        source: 'external',
+        externalSource: providerId,
+        externalIds: entity.externalIds,
+        isDownloaded: false,
+      });
+    }
+    // Absent from a provider that doesn't implement song search (Deezer
+    // today) — see `CatalogueSearchResults.songs`.
+    for (const { entity, subtitle } of found.songs ?? []) {
+      results.push({
+        id: entity.nativeId,
+        title: entity.title,
+        subtext: subtitle,
+        cover: entity.cover,
+        type: 'song',
         source: 'external',
         externalSource: providerId,
         externalIds: entity.externalIds,

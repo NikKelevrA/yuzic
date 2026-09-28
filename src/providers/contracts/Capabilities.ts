@@ -21,6 +21,7 @@
  */
 import type { Album } from '@/domain/entities/Album';
 import type { Artist } from '@/domain/entities/Artist';
+import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail } from '@/domain/entities/Detail';
 import type { ExternalIds } from '@/domain/identity/ExternalIds';
 
@@ -40,6 +41,13 @@ interface ArtistEnrichment {
 interface CatalogueSearchKinds {
   artists: boolean;
   albums: boolean;
+  /**
+   * A provider with no song search of its own (Deezer today) simply ignores
+   * this and returns none — the same way it already handles being asked for
+   * nothing at all. Optional so a provider or test that predates song search
+   * doesn't need updating just to add `songs: false`.
+   */
+  songs?: boolean;
 }
 
 /** One hit, with the second line the provider chose for it. */
@@ -51,6 +59,9 @@ interface CatalogueSearchMatch<T> {
 interface CatalogueSearchResults {
   artists: CatalogueSearchMatch<Artist>[];
   albums: CatalogueSearchMatch<Album>[];
+  /** Absent from a provider that doesn't implement song search (Deezer
+   *  today) — callers read it as `found.songs ?? []`. */
+  songs?: CatalogueSearchMatch<Song>[];
 }
 
 /**

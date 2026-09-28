@@ -58,6 +58,19 @@ export function dedupeResults(results: SearchResult[]): SearchResult[] {
   return [...byKey.values()];
 }
 
+export interface CompareResultsOptions {
+  /**
+   * Self-hosted-MusicBrainz-gated (see `useSelfHostedMusicbrainzConfigured`
+   * at this option's one call site, `SearchContext`): when on, two `external`
+   * results are never reordered relative to each other — the server decided
+   * that order, and the app isn't the one to second-guess it. `local`
+   * results are unaffected, and local still sorts ahead of external either
+   * way (`sourceRank`, above this check) — this only changes the order
+   * *within* the external group.
+   */
+  preserveExternalOrder?: boolean;
+}
+
 /**
  * Ranks results by, in order: what the user owns (library before Deezer, then
  * downloaded before streamed), how well the title answers what they typed
@@ -67,10 +80,17 @@ export function dedupeResults(results: SearchResult[]): SearchResult[] {
 export function compareResults(
   a: SearchResult,
   b: SearchResult,
-  lowerQuery: string
+  lowerQuery: string,
+  options?: CompareResultsOptions
 ): number {
   const sourceDiff = sourceRank(a.source) - sourceRank(b.source);
   if (sourceDiff !== 0) return sourceDiff;
+
+  if (options?.preserveExternalOrder && a.source === 'external' && b.source === 'external') {
+    // Equal here means "leave it" — Array.sort is stable, so this keeps
+    // whatever order the results arrived in, i.e. the server's own order.
+    return 0;
+  }
 
   if (a.isDownloaded !== b.isDownloaded) return a.isDownloaded ? -1 : 1;
 
@@ -93,7 +113,8 @@ export function compareResults(
 
 export function dedupeAndSort(
   results: SearchResult[],
-  lowerQuery: string
+  lowerQuery: string,
+  options?: CompareResultsOptions
 ): SearchResult[] {
-  return dedupeResults(results).sort((a, b) => compareResults(a, b, lowerQuery));
+  return dedupeResults(results).sort((a, b) => compareResults(a, b, lowerQuery, options));
 }

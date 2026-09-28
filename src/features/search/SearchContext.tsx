@@ -25,6 +25,7 @@ import {
 } from '@/features/offline/collectionState';
 
 import { dedupeAndSort, type SearchResult } from '@/features/search/searchRanking';
+import { useSelfHostedMusicbrainzConfigured } from '@/features/settings/sources/useSelfHostedMusicbrainzConfigured';
 import { planSearchLegs, type SearchResultScope } from '@/features/search/searchLegs';
 import {
   searchLibraryLeg,
@@ -91,6 +92,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
   const { tracks } = useTracks();
 
   const searchScope = useSelector(selectSearchScope);
+  const preserveExternalOrder = useSelfHostedMusicbrainzConfigured();
 
   // Whether the remote halves of a search can be attempted at all. Offline is
   // the device having no network; serverUnreachable is the device being online
@@ -209,13 +211,13 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       }
       if (requestId !== searchRequestIdRef.current) return;
 
-      setSearchResults(dedupeAndSort(results, lowerQuery));
+      setSearchResults(dedupeAndSort(results, lowerQuery, { preserveExternalOrder }));
       setHasError(errored);
       setDegraded(legs.degraded);
     } finally {
       if (requestId === searchRequestIdRef.current) setIsLoading(false);
     }
-  }, [api, canReachExternal, canReachServer, downloaded, searchIndex, searchScope]);
+  }, [api, canReachExternal, canReachServer, downloaded, searchIndex, searchScope, preserveExternalOrder]);
 
   const value = useMemo<SearchContextType>(() => ({
     searchResults,

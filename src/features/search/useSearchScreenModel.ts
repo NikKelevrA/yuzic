@@ -32,6 +32,7 @@ import type { SearchEntityEntry } from '@/state/redux/slices/searchHistorySlice'
 import { useMatchedNavigation } from '@/features/sources/useMatchedNavigation';
 import { useEnabledSearchSourceIds } from '@/features/sources/useSearchSourcesEnabled';
 import { useAccountSheet } from '@/features/settings/AccountSheetContext';
+import { useSelfHostedMusicbrainzConfigured } from '@/features/settings/sources/useSelfHostedMusicbrainzConfigured';
 
 export function useSearchScreenModel() {
   const { t } = useTranslation();
@@ -58,7 +59,16 @@ export function useSearchScreenModel() {
   // explicit switch — "Other sources" is the deliberate external action.
   const [resultScope, setResultScope] = useState<SearchResultScope>('library');
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(enabledSearchSourceIds);
-  const [selectedEntityTypes, setSelectedEntityTypes] = useState<SearchEntityType[]>(ALL_SEARCH_ENTITY_TYPES);
+  // Self-hosted-MusicBrainz-gated: with a self-hosted server confirmed, the
+  // quick-filter row under the search bar (EntityTypeQuickFilter) starts
+  // with nothing picked, and nothing external is asked for until the person
+  // picks a type themselves — no request goes to MusicBrainz on every
+  // keystroke by default. Without one, this is stock's own default: every
+  // supported type, exactly as before.
+  const selfHostedMbConfigured = useSelfHostedMusicbrainzConfigured();
+  const [selectedEntityTypes, setSelectedEntityTypes] = useState<SearchEntityType[]>(
+    () => (selfHostedMbConfigured ? [] : ALL_SEARCH_ENTITY_TYPES)
+  );
 
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Mirrors `query` for the focus effect, which must not be re-created on every
@@ -280,7 +290,7 @@ export function useSearchScreenModel() {
     // scope / filters
     resultScope, setResultScope, enabledSearchSourceIds,
     selectedSourceIds, selectedEntityTypes, toggleFilterSource, toggleFilterEntityType,
-    isOtherScope, showSourceHeaders,
+    isOtherScope, showSourceHeaders, selfHostedMbConfigured,
     // results
     hasSearched, isLoading, hasError, degraded,
     libraryResults, externalResultsBySource, noResultsForScope,
