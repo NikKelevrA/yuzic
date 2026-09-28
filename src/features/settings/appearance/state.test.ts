@@ -126,6 +126,23 @@ describe('upgrading from the old appearance settings', () => {
     expect(migrated).not.toHaveProperty('activeThemeId')
   })
 
+  // `autoMergeLevel1` merges every stored top-level key into state, including
+  // ones the reducer no longer declares, and the persistoid writes back what
+  // it finds — so a key left behind by an earlier migration reads itself in
+  // and writes itself out again on every launch, forever.
+  it('drops the theme a profiles blob was migrated from', () => {
+    const migrated = migrateAppearance({
+      profiles: [{ id: 'default', theme: DEFAULT_THEME }],
+      activeProfileId: 'default',
+      themeMode: 'dark',
+      theme: DEFAULT_THEME,
+    })
+
+    expect(migrated).not.toHaveProperty('theme')
+    expect(migrated.profiles).toHaveLength(1)
+    expect(migrated).toMatchObject({ activeProfileId: 'default', themeMode: 'dark' })
+  })
+
   it('leaves an already-upgraded blob alone', () => {
     const current = fresh()
     expect(migrateAppearance(current)).toBe(current)
