@@ -11,7 +11,7 @@ async function fetchGetAlbum(client: MediaBrowserClient, albumId: string) {
     `/Items` +
     `?Ids=${encodeURIComponent(albumId)}` +
     `&IncludeItemTypes=MusicAlbum` +
-    `&Fields=Genres,ArtistItems,PrimaryImageTag,DateCreated,ProviderIds`;
+    `&Fields=Genres,ArtistItems,PrimaryImageTag,DateCreated,PremiereDate,ProviderIds`;
   return client.request<MediaBrowserItemsResponse>(path);
 }
 

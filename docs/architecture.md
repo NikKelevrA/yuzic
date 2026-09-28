@@ -788,9 +788,20 @@ Home-affecting toggles out of the per-integration screens); Scrobbling, Lyrics,
 Metadata, and Search follow it. Each reuses the `SettingsScreen` shell and is a
 route leaf registered in `settings/_layout.tsx` with a row on the settings root.
 
+There is no single settings slice. Each settings feature owns its own
+`state.ts` beside the screen that edits it — `features/settings/appearance/`,
+`home/`, `search/`, `sources/`, `scrobbling/`, `playback/`, `downloads/`,
+`sync/`, `onboarding/` — and `src/state/redux/store.ts` registers each of those
+reducers under its own key with its own persist config. The alternative was one
+`settings` blob holding every unrelated field, which is what this replaced: a
+feature that owns its slice can be persisted, migrated, or blacklisted on its
+own terms without touching anything else, and a reader can tell from the import
+which screen writes the value it is reading.
+
 - **Scrobbling** (`features/settings/scrobbling/`) — exactly one route *per
   destination, per server*: `disabled | through-server | direct`, stored in
-  `settingsSlice.scrobbleRoutes[serverId]`. The single enum per destination makes
+  `scrobbleRoutes[serverId]` in the scrobbling slice
+  (`features/settings/scrobbling/state.ts`). The single enum per destination makes
   "at most one route" structural (no double-scrobble). Defaults are *derived at
   read time* from the pre-existing booleans (`deriveScrobbleRoute`), so no
   migration runs. **Last.fm offers only disabled/through-server** this cut
@@ -826,7 +837,8 @@ route leaf registered in `settings/_layout.tsx` with a row on the settings root.
 Home discovery is off by default and layered so the local tier always works
 with zero external calls.
 
-Home shelf personalization is additive and tier-safe: `settingsSlice` stores
+Home shelf personalization is additive and tier-safe: the Home settings slice
+(`features/settings/home/state.ts`) stores
 per-shelf visibility and per-tier ordering, while selectors fall back to the
 original visible/order values when a key is absent. `customizeHomeSections`
 filters and orders only the sections supplied for one tier, preserving the

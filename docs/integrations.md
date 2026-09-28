@@ -95,7 +95,7 @@ UI shows them only when the active server's adapter provides them:
 | Public share links | `shares` | ✅ | — | — | — |
 | Resume positions / bookmarks | `bookmarks` | ✅ (native endpoint) | ✅ (from `PlaybackPositionTicks`) | — | — |
 | Server-side play queue sync | `queue` | ✅ | — | — | — |
-| Random songs + who else is listening | `discovery` | ✅ | ✅ (`SortBy=Random`; listeners from `/Sessions`) | — | — |
+| Random songs + who else is listening | `discovery` | ✅ | ✅ (`SortBy=Random`; listeners from `/Sessions`) | ✅ (`sort=random` per section; listeners from `/status/sessions`, owner only) | — |
 | Podcasts | `podcasts` | ✅ | — | — | — |
 | Account avatar | `user` | ✅ (`getAvatar`) | ✅ (`/Users/{id}/Images/Primary`) | — | — |
 | Five-star ratings | `ratings` | ✅ (`setRating.view`) | — | — | — |

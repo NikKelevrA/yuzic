@@ -63,6 +63,18 @@ describe('getAlbums', () => {
     expect(albums).toHaveLength(1);
     expect(albums[0].nativeId).toBe('album-1');
   });
+
+  // `mapAlbum` reads `PremiereDate`, and the discography ordering reads the
+  // `releaseDate` it produces — so a field list that omits it leaves every
+  // album undated without anything failing.
+  it('asks for PremiereDate, so the mapped album carries a release date', async () => {
+    const request = jest.fn().mockResolvedValue({
+      Items: [{ ...rawAlbum, PremiereDate: '2020-03-04T00:00:00.000Z' }],
+    });
+    const albums = await getAlbums(makeClient({ request }));
+    expect(request.mock.calls[0][0]).toContain('PremiereDate');
+    expect(albums[0].releaseDate).toBe('2020-03-04T00:00:00.000Z');
+  });
 });
 
 describe('normalizeAlbum identity', () => {
