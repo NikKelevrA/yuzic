@@ -9,6 +9,7 @@ import Animated, { FadeIn, useAnimatedStyle, useSharedValue } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MediaImage } from '@/components/MediaImage';
 import { useCoverAccent } from '@/features/theme/useCoverAccent';
+import { useScreenBackground } from '@/features/theme/screenBackgroundContext';
 import { ACCENT_WASH_LOCATIONS, accentWashColors } from '@/features/theme/coverAccent';
 import { useTheme } from '@/features/theme/useTheme';
 import { controlSize, hitSlopFor, iconSize, shade, spacing, typography } from '@/constants/design';
@@ -136,6 +137,12 @@ export function DetailHeader({
   const rad = useRadius();
   const insets = useSafeAreaInsets();
   const accent = useCoverAccent(cover);
+  // Not over a background image. The wash is the app supplying a backdrop for
+  // a screen that has none; with a picture already behind the app it stops
+  // being a backdrop and becomes a dye over someone else's, shifting its
+  // colour by a third at the top. See the artist hero, which gives way for
+  // the same reason.
+  const overImage = useScreenBackground() !== null;
   const floating = useDetailScroll();
   const { height, landscape } = useWindowLayout();
   const coverSize = landscape
@@ -156,7 +163,7 @@ export function DetailHeader({
           Extraction finishes after the screen is already on-screen, so without
           the fade the colour arrives as a pop — the one moment the seam shows
           is the moment it should show least. */}
-      {accent ? (
+      {accent && !overImage ? (
         <Animated.View
           pointerEvents="none"
           entering={FadeIn.duration(WASH_FADE_MS)}

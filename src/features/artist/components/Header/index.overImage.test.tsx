@@ -12,14 +12,15 @@ import ArtistHeader from './'
 /**
  * How the header's own artwork behaves when the page already has a picture.
  *
- * The hero fades its blurred photograph into the screen's colour, and both of
- * those fades end opaque — correct over a flat background and a hard line
- * across the screen over a background image, because the page's image simply
- * resumed below where the header's slab stopped.
+ * Over the screen's own colour the hero fades its blurred photograph into it,
+ * and that fade ends opaque, which is right when what follows is a flat
+ * colour.
  *
- * Over an image the photograph is masked out towards its foot instead, so the
- * page comes through it. The gradient can only darken what is behind it, which
- * is why the mask is the part that matters and the stops alone would not do.
+ * Over a background image it draws nothing. It used to draw the photograph and
+ * mask it out towards its foot so the page came through — which fixed the hard
+ * line it left behind but not the reason it was wrong. The photograph still
+ * covered the top of the screen with a second picture, over the one someone
+ * had chosen to put behind the app.
  */
 
 jest.mock('react-i18next', () => ({
@@ -107,38 +108,35 @@ beforeEach(() => {
 })
 
 describe('the artist hero over a background image', () => {
-  it('masks its photograph so the page shows through', async () => {
+  // It used to draw the photograph and mask it out towards its foot, which
+  // fixed the hard line it left but not the reason it was wrong: it still
+  // covered the top of the screen with a second picture, over the one the
+  // user had chosen to put behind the app.
+  it('draws no backdrop of its own at all', async () => {
     const view = await over(SURFACE)
-
-    expect(view.getByTestId('artist-hero-mask')).toBeTruthy()
-    expect(view.getByTestId('artist-hero-photo')).toBeTruthy()
-  })
-
-  it('returns its darkening to clear by the foot, so there is no edge to meet', async () => {
-    // Stopping short of opaque was not enough: a scrim that ends at 65% black
-    // still ends, and met the page's own brightness on a hard line. It has to
-    // be gone by the last pixel, not merely thinner.
-    const view = await over(SURFACE)
-    const stops = fadeStops(view)
-
-    expect(stops).toEqual([...coverFade.onImage])
-    expect(stops).not.toContain('rgba(0,0,0,1)')
-    expect(stops[0]).toBe('rgba(0,0,0,0)')
-    expect(stops[stops.length - 1]).toBe('rgba(0,0,0,0)')
-  })
-
-  it('places those stops so the peak is held before it clears', async () => {
-    const view = await over(SURFACE)
-
-    expect(view.getByTestId('artist-hero-fade').props.locations).toEqual([...coverFade.onImageStops])
-  })
-
-  it('draws no stand-in slab for an artist with no picture', async () => {
-    // The muted rectangle is the same hard edge the fade exists to avoid.
-    const view = await over(SURFACE, { kind: 'none' })
 
     expect(view.queryByTestId('artist-hero-photo')).toBeNull()
     expect(view.queryByTestId('artist-hero-mask')).toBeNull()
+    expect(view.queryByTestId('artist-hero-slab')).toBeNull()
+  })
+
+  // Nothing to land on the page means nothing to darken on the way.
+  it('draws no fade either, since there is nothing to fade', async () => {
+    const view = await over(SURFACE)
+
+    expect(view.queryByTestId('artist-hero-fade')).toBeNull()
+  })
+
+  it('still shows the artist, which is content rather than backdrop', async () => {
+    const view = await over(SURFACE)
+
+    expect(view.getByText('Tiesto')).toBeTruthy()
+  })
+
+  it('draws nothing for an artist with no picture either', async () => {
+    const view = await over(SURFACE, { kind: 'none' })
+
+    expect(view.queryByTestId('artist-hero-photo')).toBeNull()
     expect(view.queryByTestId('artist-hero-slab')).toBeNull()
   })
 })
