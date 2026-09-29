@@ -71,6 +71,16 @@ interface EngineBoundaryTrack {
    * every queue item.
    */
   loudness?: Loudness;
+  /**
+   * Where this track sits in its album — the album's `localId`, its disc and
+   * its number on that disc. Carried so the queue can tell an album join from
+   * two unrelated tracks and hard-cut the join instead of fading across it;
+   * see `followsPreviousInQueue`. The identity is the local id rather than the
+   * title, because two artists can easily both have a `Greatest Hits`.
+   */
+  albumId?: string;
+  discNumber?: number;
+  trackNumber?: number;
 }
 
 /**
@@ -102,5 +112,8 @@ export function toEngineBoundaryTrack(
     ...(headers ? { headers } : {}),
     ...(artworkHeaders ? { artworkHeaders } : {}),
     ...(song.loudness ? { loudness: song.loudness } : {}),
+    ...(song.album.localId ? { albumId: song.album.localId } : {}),
+    ...(song.discNumber === undefined ? {} : { discNumber: song.discNumber }),
+    ...(song.trackNumber === undefined ? {} : { trackNumber: song.trackNumber }),
   };
 }

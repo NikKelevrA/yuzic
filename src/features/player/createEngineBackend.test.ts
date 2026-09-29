@@ -181,6 +181,58 @@ describe('talking to the engine', () => {
     const sent = named('setQueue')[0].args[0] as { uri: string; id: string }[];
     expect(sent[0]).toMatchObject({ id: 'a', uri: 'file:///x.flac' });
   });
+
+  /**
+   * Which joins the engine is told to hard-cut rather than fade across.
+   *
+   * A `Track` cannot answer this about itself — it needs the item in front of
+   * it — so the queue edits are the only place that can say, and each one
+   * finds the neighbour somewhere different.
+   */
+  const albumTrack = (n: number, albumId = 'album-1') =>
+    item(`t${n}`, { albumId, trackNumber: n });
+  /** The flags on the tracks one engine call carried, in queue order. */
+  const followFlags = (name: string, argIndex = 0) =>
+    (named(name)[0].args[argIndex] as { followsPrevious?: boolean }[])
+      .map(track => track.followsPrevious);
+
+  it('marks every album join in a queue of consecutive tracks but not the first', async () => {
+    const backend = await readyBackend();
+    backend.setMediaItems([albumTrack(1), albumTrack(2), albumTrack(3)], 0);
+    await flush();
+    expect(followFlags('setQueue')).toEqual([undefined, true, true]);
+  });
+
+  it('marks nothing in a queue that jumps between albums', async () => {
+    const backend = await readyBackend();
+    // What shuffle produces: consecutive numbers happen, but never within one
+    // album, so no join on any record is being crossed.
+    backend.setMediaItems(
+      [albumTrack(1, 'album-1'), albumTrack(2, 'album-2'), albumTrack(3, 'album-3')],
+      0
+    );
+    await flush();
+    expect(followFlags('setQueue')).toEqual([undefined, undefined, undefined]);
+  });
+
+  it('keeps the join when an album\'s back half is appended to its front', async () => {
+    const backend = await readyBackend();
+    backend.setMediaItems([albumTrack(1), albumTrack(2)], 0);
+    backend.addMediaItems([albumTrack(3), albumTrack(4)]);
+    await flush();
+    // The first appended track's neighbour is the end of the queue already
+    // there, which is the case a plain map over the batch would miss.
+    expect(followFlags('append')).toEqual([true, true]);
+  });
+
+  it('compares an inserted track against the one it lands behind', async () => {
+    const backend = await readyBackend();
+    backend.setMediaItems([albumTrack(1), albumTrack(9)], 0);
+    backend.insertMediaItem(1, albumTrack(2));
+    await flush();
+    // `insertAt` takes the index first, so the tracks are its second argument.
+    expect(followFlags('insertAt', 1)).toEqual([true]);
+  });
 });
 
 describe('the cold-launch race', () => {

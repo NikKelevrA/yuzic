@@ -100,6 +100,27 @@ describe('buildTrackItem', () => {
     expect(item.artworkHeaders).toEqual({ Authorization: 'Basic abc' });
   });
 
+  it('carries the album position the queue detects segues from', () => {
+    const item = buildTrackItem({
+      ...baseSong,
+      song: { ...song, discNumber: 2, trackNumber: 7 },
+    });
+    // The album's local id, not its title: two artists can both have a
+    // `Greatest Hits`, and a title match across them is a segue that is not
+    // there.
+    expect(item.albumId).toBe(makeLocalId('album', provenance, 'album-1'));
+    expect(item.discNumber).toBe(2);
+    expect(item.trackNumber).toBe(7);
+  });
+
+  it('omits disc and track numbers the origin did not report', () => {
+    // Absent rather than zero: an unnumbered track must not read as track 0
+    // and claim a join with whatever the server called track 1.
+    const item = buildTrackItem(baseSong);
+    expect(item).not.toHaveProperty('discNumber');
+    expect(item).not.toHaveProperty('trackNumber');
+  });
+
   it('carries one header field independently of the other', () => {
     const item = buildTrackItem(baseSong, { headers: { Authorization: 'Basic abc' } });
     expect(item.headers).toEqual({ Authorization: 'Basic abc' });

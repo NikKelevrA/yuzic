@@ -34,5 +34,10 @@ export function buildTrackItem(resource: PlayableResource, extra?: RequestHeader
     ...(track.headers ? { headers: track.headers } : {}),
     ...(track.artworkHeaders ? { artworkHeaders: track.artworkHeaders } : {}),
     ...(track.loudness ? { loudness: track.loudness } : {}),
+    // Where the track sits in its album, for the segue detection the queue
+    // does when it hands two neighbouring items to the engine.
+    ...(track.albumId ? { albumId: track.albumId } : {}),
+    ...(track.discNumber === undefined ? {} : { discNumber: track.discNumber }),
+    ...(track.trackNumber === undefined ? {} : { trackNumber: track.trackNumber }),
   };
 }

@@ -71,4 +71,24 @@ export interface MediaItem {
    * engine needs it on every queue item to level one track against the next.
    */
   loudness?: Loudness;
+  /**
+   * The album this track belongs to, by `localId` rather than by title — two
+   * artists can both have a `Greatest Hits`, and a title match across them
+   * would claim a segue between two unrelated records.
+   *
+   * These three exist for segue detection and nothing else. When a crossfade
+   * is set to gapless-aware, the engine hard-cuts a track whose
+   * `Track.followsPrevious` is set, because fading across a join the record
+   * was mastered with doubles the overlap and sounds worse than the seam it is
+   * hiding. The engine cannot work out which joins those are — it sees a list
+   * of URLs — so the app says, from the one signal it already holds: the
+   * previous queue item and this one are the same album, the same disc, and
+   * this one's number is exactly one higher. Set only when all three are known
+   * on both items; an unknown value is not evidence of a segue.
+   */
+  albumId?: string;
+  /** The disc this track sits on, where the origin reports one. */
+  discNumber?: number;
+  /** This track's number on that disc, where the origin reports one. */
+  trackNumber?: number;
 }

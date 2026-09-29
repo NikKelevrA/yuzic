@@ -155,6 +155,30 @@ describe('translating between the app and the engine', () => {
     expect(back).not.toHaveProperty('headers');
     expect(back).not.toHaveProperty('artworkHeaders');
   });
+
+  it('marks a track that continues the one in front of it', () => {
+    // What a gapless-aware crossfade hard-cuts instead of fading across. The
+    // engine sees only URLs, so this flag is the whole of what it knows.
+    const track = toEngineTrack(
+      item({ mediaId: 'song-2', albumId: 'album-1', trackNumber: 5 }),
+      item({ mediaId: 'song-1', albumId: 'album-1', trackNumber: 4 })
+    );
+    expect(track.followsPrevious).toBe(true);
+  });
+
+  it('leaves the flag absent with no neighbour to compare against', () => {
+    // The first track of a queue, and every browse row, converts without one.
+    const track = toEngineTrack(item({ albumId: 'album-1', trackNumber: 1 }));
+    expect(track).not.toHaveProperty('followsPrevious');
+  });
+
+  it('leaves the flag absent between two unrelated tracks', () => {
+    const track = toEngineTrack(
+      item({ mediaId: 'song-2', albumId: 'album-2', trackNumber: 1 }),
+      item({ mediaId: 'song-1', albumId: 'album-1', trackNumber: 4 })
+    );
+    expect(track).not.toHaveProperty('followsPrevious');
+  });
 });
 
 describe('progress, in the shape the app expects', () => {

@@ -1,6 +1,7 @@
 import type { MediaItem } from './mediaItem';
 import { loudnessFor, type Loudness } from '@/domain/entities/Loudness';
 import type { BrowseItem } from './browse';
+import { followsPreviousInQueue } from './followsPrevious';
 import type { BrowseNode, EngineEvent, Progress, Track } from 'yuzic-engine';
 
 /**
@@ -191,12 +192,21 @@ interface EngineTrackInput {
   headers?: Record<string, string>;
   artworkHeaders?: Record<string, string>;
   loudness?: Loudness;
+  albumId?: string;
+  discNumber?: number;
+  trackNumber?: number;
 }
 
 /**
  * The app's `MediaItem` (or a `BrowseItem` row) as the engine's `Track`.
+ *
+ * `previous` is the item this one sits behind in the queue, where there is
+ * one, and it exists only to answer `followsPrevious` — a track has no way to
+ * know it continues an album join by looking at itself. A caller that has no
+ * neighbour to offer (a browse row, a lone insert at the head of the queue)
+ * leaves it out and gets exactly the `Track` it got before.
  */
-export function toEngineTrack(item: EngineTrackInput): Track {
+export function toEngineTrack(item: EngineTrackInput, previous?: EngineTrackInput): Track {
   const uri = engineUri(item.url);
   return {
     // `mediaId` is optional to rntp and always set by `buildTrackItem`, but the
@@ -228,6 +238,10 @@ export function toEngineTrack(item: EngineTrackInput): Track {
     // rebuilding the queue whenever the setting changed, which is why album
     // mode waits on the engine carrying both.
     ...engineGain(item.loudness),
+    // A join the record was mastered with, which a gapless-aware crossfade
+    // hard-cuts instead of fading across. Set only when true, so a track with
+    // no neighbour or no album numbering is byte-for-byte what it was.
+    ...(followsPreviousInQueue(previous, item) ? { followsPrevious: true } : {}),
   };
 }
 
