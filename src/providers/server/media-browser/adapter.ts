@@ -37,6 +37,7 @@ import { getStarredItems } from "./starred/getStarredItems";
 import { star } from "./starred/star";
 import { unstar } from "./starred/unstar";
 import { getArtist } from "./artists/getArtist";
+import { getTopSongs } from "./artists/getTopSongs";
 import { getGenres } from "./genres/getGenres";
 import { buildFavoritesPlaylist } from '@/providers/server/buildFavoritesPlaylist';
 import { FAVORITES_ID } from "@/constants/favorites";
@@ -134,6 +135,23 @@ export const createMediaBrowserAdapter = (
       const artist = await getArtist(client, id);
       if (!artist) throw new Error("Artist not found");
       return artist;
+    },
+    // Per-user play counts, which is what the contract always said this would
+    // be on a MediaBrowser server.
+    //
+    // Re-ranked after the walk rather than trusting it: each library answers
+    // sorted, but `fromParents` concatenates, so across two of them the tenth
+    // song of the first would outrank the first song of the second. Sorting
+    // the merged list and taking the limit again is what makes the result the
+    // artist's top songs rather than each library's.
+    getTopSongs: async (artistName, limit) => {
+      const merged = await fromParents(
+        c => getTopSongs(c, artistName, limit),
+        s => s.nativeId
+      );
+      return merged
+        .sort((a, b) => (b.serverPlayCount ?? 0) - (a.serverPlayCount ?? 0))
+        .slice(0, limit ?? 10);
     },
   };
 
