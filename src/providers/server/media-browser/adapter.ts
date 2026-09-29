@@ -6,12 +6,12 @@ import {
   PlaylistsApi,
   StarredApi,
   SimilarApi,
-  SongsApi,
   TracksApi,
   AuthApi,
   LyricsApi,
   SearchApi
 } from "@/providers/contracts/ServerAdapter";
+import { SongsApi } from "@/providers/contracts/SongsApi";
 
 import { Server } from "@/providers/contracts/Server";
 
@@ -253,6 +253,7 @@ export const createMediaBrowserAdapter = (
     reportNowPlaying: async (songId) => reportPlaybackStart(client, songId, 0),
     buildStreamUrl: (songId, quality, codec) => client.buildStreamUrl(songId, quality, codec),
     scrobbleKind: 'markPlayed',
+    reportsLoudness: false,
     streamableCodecs: ['mp3', 'opus'],
     reportPlaybackProgress: async (songId, positionMs, isPaused) =>
       reportPlaybackProgress(client, songId, positionMs, isPaused),

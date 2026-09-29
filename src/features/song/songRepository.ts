@@ -13,7 +13,7 @@
  */
 import { findMatch } from '@/domain/identity/matching';
 import type { Song } from '@/domain/entities/Song';
-import type { SongsApi } from '@/providers/contracts/ServerAdapter';
+import type { SongsApi } from '@/providers/contracts/SongsApi';
 
 export type SongIdentity = {
   kind: 'server';

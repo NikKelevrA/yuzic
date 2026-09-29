@@ -10,10 +10,10 @@ import type {
   PlaylistsApi,
   SearchApi,
   SimilarApi,
-  SongsApi,
   StarredApi,
   TracksApi,
 } from '@/providers/contracts/ServerAdapter';
+import type { SongsApi } from '@/providers/contracts/SongsApi';
 import type { Server } from '@/providers/contracts/Server';
 import type { Song } from '@/domain/entities/Song';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
@@ -218,6 +218,7 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     // Plex receives explicit playback/scrobble events; it is not a
     // MediaBrowser "mark played" endpoint.
     scrobbleKind: 'scrobble',
+    reportsLoudness: false,
     streamableCodecs: [],
     scrobble: (songId) => playback.scrobble(songId),
     reportNowPlaying: (songId) => playback.nowPlaying(songId),

@@ -101,7 +101,7 @@ const PlayerSettings: React.FC = () => {
 
       <SettingsCardHeader subtle title={t('settings.player.audio')} />
       <Crossfade />
-      <Loudness />
+      {api.songs.reportsLoudness && <Loudness />}
       <SettingsCard>
         {/*
           A row rather than the equalizer itself: inline, its rotated band

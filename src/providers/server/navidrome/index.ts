@@ -7,12 +7,12 @@ import {
   RatingsApi,
   StarredApi,
   SimilarApi,
-  SongsApi,
   TracksApi,
   AuthApi,
   LyricsApi,
   JukeboxState
 } from "@/providers/contracts/ServerAdapter";
+import { SongsApi } from "@/providers/contracts/SongsApi";
 import { FAVORITES_ID } from "@/constants/favorites";
 import { serverProvenance } from "@/domain/identity/Provenance";
 
@@ -276,6 +276,7 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
     reportNowPlaying: async (songId) => nowPlaying(client, songId),
     buildStreamUrl: (songId, quality, codec) => client.buildStreamUrl(songId, quality, codec),
     scrobbleKind: 'scrobble',
+    reportsLoudness: true,
     // Navidrome ships an Opus transcoding profile and downsamples to Opus by
     // default; it was being asked for MP3 regardless. Declared like any other
     // capability — the switch appears, off, and what the platform can decode

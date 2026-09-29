@@ -1,4 +1,5 @@
-import type { ApiAdapter, AlbumsApi, ArtistsApi, AuthApi, GenresApi, LyricsApi, PlaylistsApi, SearchApi, SimilarApi, SongsApi, StarredApi, TracksApi } from '@/providers/contracts/ServerAdapter';
+import type { ApiAdapter, AlbumsApi, ArtistsApi, AuthApi, GenresApi, LyricsApi, PlaylistsApi, SearchApi, SimilarApi, StarredApi, TracksApi } from '@/providers/contracts/ServerAdapter';
+import type { SongsApi } from '@/providers/contracts/SongsApi';
 import type { Server } from '@/providers/contracts/Server';
 import type { AlbumDetail, PlaylistDetail } from '@/domain/entities/Detail';
 import { serverProvenance } from '@/domain/identity/Provenance';
@@ -58,6 +59,7 @@ export function createLocalAdapter(server: Server): ApiAdapter {
     // private file URI the importer copied the audio to — nothing to build.
     buildStreamUrl: (uri) => uri,
     scrobbleKind: 'scrobble',
+    reportsLoudness: false,
     streamableCodecs: [],
   };
 
