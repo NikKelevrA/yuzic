@@ -97,6 +97,31 @@ export type DownloadedIds = {
   playlists: Set<string>;
 };
 
+/**
+ * Playlists out of the on-device index, which is where they always come from.
+ *
+ * Its own leg because it is the one part of the library the local index is
+ * *authoritative* for. `CATALOG_RESOURCES` syncs `api.playlists.list()` whole
+ * — every playlist, every sync — so unlike tracks and albums there is no tail
+ * beyond what has been synced for a server search to reach. And no server
+ * search would reach it anyway: Subsonic's `search3.view` returns artists,
+ * albums and songs and has no playlist in its response at all.
+ *
+ * So switching Search from on-device to the server used to drop playlists
+ * silently, on every provider, while the on-device scope found them.
+ */
+export function searchPlaylistIndexLeg(
+  searchIndex: SearchIndex,
+  query: string,
+  downloaded: DownloadedIds
+): SearchResult[] {
+  const lowerQuery = query.toLowerCase();
+  return searchIndex.playlists
+    .filter(({ lc }) => lc.includes(lowerQuery))
+    .slice(0, 3)
+    .map(({ item }) => playlistToResult(playlistSearchRow(item), downloaded.playlists.has(item.nativeId)));
+}
+
 /** The on-device index leg: local, synchronous, always available. */
 export function searchLibraryLeg(searchIndex: SearchIndex, query: string, downloaded: DownloadedIds): SearchResult[] {
   const lowerQuery = query.toLowerCase();
@@ -111,10 +136,7 @@ export function searchLibraryLeg(searchIndex: SearchIndex, query: string, downlo
     .slice(0, 3)
     .map(({ item }) => artistToResult(artistSearchRow(item)));
 
-  const playlistResults = searchIndex.playlists
-    .filter(({ lc }) => lc.includes(lowerQuery))
-    .slice(0, 3)
-    .map(({ item }) => playlistToResult(playlistSearchRow(item), downloaded.playlists.has(item.nativeId)));
+  const playlistResults = searchPlaylistIndexLeg(searchIndex, query, downloaded);
 
   const songResults = searchIndex.tracks
     .filter(({ lc }) => lc.includes(lowerQuery))

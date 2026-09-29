@@ -1,4 +1,4 @@
-import { searchLibraryLeg, searchServerLeg, searchExternalLeg, type SearchIndex, type DownloadedIds } from './searchPolicy';
+import { searchLibraryLeg, searchServerLeg, searchPlaylistIndexLeg, searchExternalLeg, type SearchIndex, type DownloadedIds } from './searchPolicy';
 
 // Two keyless catalogues that can search, one of which is over its rate limit.
 // `searchExternalLeg` asks the broker for `catalogue.search`, so these stand in
@@ -40,6 +40,39 @@ describe('searchLibraryLeg', () => {
 
   it('returns nothing for a query that matches nothing', () => {
     expect(searchLibraryLeg(emptyIndex, 'nothing', emptyDownloaded)).toEqual([]);
+  });
+});
+
+describe('searchPlaylistIndexLeg', () => {
+  const index: SearchIndex = {
+    ...emptyIndex,
+    playlists: [
+      { item: { nativeId: 'p-1', title: 'Road Trip' } as any, lc: 'road trip' },
+      { item: { nativeId: 'p-2', title: 'Rainy Day' } as any, lc: 'rainy day' },
+    ],
+  };
+
+  it('matches case-insensitively and marks downloaded state', () => {
+    const results = searchPlaylistIndexLeg(index, 'ROAD', { ...emptyDownloaded, playlists: new Set(['p-1']) });
+
+    expect(results).toEqual([
+      expect.objectContaining({ id: 'p-1', type: 'playlist', source: 'local', isDownloaded: true }),
+    ]);
+  });
+
+  // The regression this exists for: a server-scoped search runs this leg
+  // beside the server's own results, because no SearchApi returns playlists
+  // and Subsonic's search3 has none in its response at all.
+  it('is what searchLibraryLeg uses for its playlist rows', () => {
+    const viaLibrary = searchLibraryLeg(index, 'rainy', emptyDownloaded);
+    const viaLeg = searchPlaylistIndexLeg(index, 'rainy', emptyDownloaded);
+
+    expect(viaLeg).toHaveLength(1);
+    expect(viaLibrary).toEqual(viaLeg);
+  });
+
+  it('returns nothing for a query that matches nothing', () => {
+    expect(searchPlaylistIndexLeg(index, 'nothing', emptyDownloaded)).toEqual([]);
   });
 });
 

@@ -29,6 +29,7 @@ import { planSearchLegs, type SearchResultScope } from '@/features/search/search
 import {
   searchLibraryLeg,
   searchServerLeg,
+  searchPlaylistIndexLeg,
   searchExternalLeg,
   ALL_SEARCH_ENTITY_TYPES,
   type SearchEntityType,
@@ -201,6 +202,11 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
 
       if (legs.server) {
         try { results.push(...await searchServerLeg(api?.search, query, downloaded)); } catch { errored = true; }
+        // The server leg cannot answer for playlists — no `SearchApi` returns
+        // them, and Subsonic's search3 has no playlist in its response — but
+        // they are synced whole, so the index has every one. Without this a
+        // server-scoped search found none, while the on-device scope did.
+        results.push(...searchPlaylistIndexLeg(searchIndex, query, downloaded));
       }
       if (requestId !== searchRequestIdRef.current) return;
 
