@@ -96,7 +96,7 @@ const PlayerSettings: React.FC = () => {
         toggles — which are display settings and now live in Appearance, with
         the rest of what the app looks like.
       */}
-      <StreamingQuality />
+      {api.songs.transcodes && <StreamingQuality />}
       {supportsOpus && <SettingsToggleGroup items={opusItems} />}
 
       <SettingsCardHeader subtle title={t('settings.player.audio')} />

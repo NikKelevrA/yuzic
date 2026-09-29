@@ -218,6 +218,7 @@ export function createPlexAdapter(server: Server): ApiAdapter {
     // Plex receives explicit playback/scrobble events; it is not a
     // MediaBrowser "mark played" endpoint.
     scrobbleKind: 'scrobble',
+    transcodes: false,
     reportsLoudness: false,
     streamableCodecs: [],
     scrobble: (songId) => playback.scrobble(songId),

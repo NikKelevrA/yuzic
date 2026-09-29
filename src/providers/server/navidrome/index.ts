@@ -276,6 +276,7 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
     reportNowPlaying: async (songId) => nowPlaying(client, songId),
     buildStreamUrl: (songId, quality, codec) => client.buildStreamUrl(songId, quality, codec),
     scrobbleKind: 'scrobble',
+    transcodes: true,
     reportsLoudness: true,
     // Navidrome ships an Opus transcoding profile and downsamples to Opus by
     // default; it was being asked for MP3 regardless. Declared like any other

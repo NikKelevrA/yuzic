@@ -24,6 +24,20 @@ export interface SongsApi {
    */
   streamableCodecs: readonly PreferredCodec[];
   /**
+   * Whether `buildStreamUrl` does anything with the quality it is handed, so
+   * the Wi-Fi and cellular quality rows are offered only where choosing one
+   * changes what arrives.
+   *
+   * Distinct from `streamableCodecs`, which answers *which* codec: a server
+   * can take a bitrate ceiling without offering a codec choice. Subsonic and
+   * MediaBrowser both take one and declare `true`. Plex direct-plays the part
+   * it is addressed by — the transcode endpoint is a different URL it does not
+   * build — and a local file has no transcode at all, so both declare `false`
+   * and their users stop being offered a data saver that streams the original
+   * either way.
+   */
+  transcodes: boolean;
+  /**
    * Whether this server reports the per-track loudness the engine needs to
    * level one track against the next, so the Player screen offers the setting
    * only where it would do something.

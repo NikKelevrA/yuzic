@@ -253,6 +253,7 @@ export const createMediaBrowserAdapter = (
     reportNowPlaying: async (songId) => reportPlaybackStart(client, songId, 0),
     buildStreamUrl: (songId, quality, codec) => client.buildStreamUrl(songId, quality, codec),
     scrobbleKind: 'markPlayed',
+    transcodes: true,
     reportsLoudness: false,
     streamableCodecs: ['mp3', 'opus'],
     reportPlaybackProgress: async (songId, positionMs, isPaused) =>

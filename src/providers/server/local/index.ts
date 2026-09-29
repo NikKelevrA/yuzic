@@ -59,6 +59,7 @@ export function createLocalAdapter(server: Server): ApiAdapter {
     // private file URI the importer copied the audio to — nothing to build.
     buildStreamUrl: (uri) => uri,
     scrobbleKind: 'scrobble',
+    transcodes: false,
     reportsLoudness: false,
     streamableCodecs: [],
   };

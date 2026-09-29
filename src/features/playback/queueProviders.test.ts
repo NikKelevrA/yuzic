@@ -131,7 +131,7 @@ describe('createSimilarityServiceQueueFillProvider', () => {
   it('resolves similarity refs to library songs, dropping unresolvable and excluded ones', async () => {
     const similarity = similarityReturning(['a', 'b', 'missing']);
     const get = jest.fn(async (id: string) => (id === 'missing' ? null : song(id)));
-    const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const, reportsLoudness: false } });
+    const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const, reportsLoudness: false, transcodes: false } });
     const provider = createSimilarityServiceQueueFillProvider(similarity, api);
 
     const result = await provider.fetchExtension({
@@ -149,7 +149,7 @@ describe('createSimilarityServiceQueueFillProvider', () => {
     // them would match anything it holds.
     const similarity = similarityReturning(['a']);
     const get = jest.fn(async (id: string) => song(id));
-    const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const, reportsLoudness: false } });
+    const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const, reportsLoudness: false, transcodes: false } });
     const provider = createSimilarityServiceQueueFillProvider(similarity, api);
 
     await provider.fetchExtension({
@@ -166,7 +166,7 @@ describe('createSimilarityServiceQueueFillProvider', () => {
   it('requests a larger candidate pool than count and samples down, so repeat plays of the same seed vary', async () => {
     const similarity = similarityReturning(['a', 'b', 'c', 'd', 'e']);
     const get = jest.fn(async (id: string) => song(id));
-    const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const, reportsLoudness: false } });
+    const api = fakeApi({ songs: { get, scrobble: jest.fn(), buildStreamUrl: jest.fn(), streamableCodecs: ['mp3'], scrobbleKind: 'scrobble' as const, reportsLoudness: false, transcodes: false } });
     const provider = createSimilarityServiceQueueFillProvider(similarity, api);
 
     const result = await provider.fetchExtension({
