@@ -61,10 +61,12 @@ export function useSearchScreenModel() {
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>(enabledSearchSourceIds);
   // Self-hosted-MusicBrainz-gated: with a self-hosted server confirmed, the
   // quick-filter row under the search bar (EntityTypeQuickFilter) starts
-  // with nothing picked, and nothing external is asked for until the person
-  // picks a type themselves — no request goes to MusicBrainz on every
-  // keystroke by default. Without one, this is stock's own default: every
-  // supported type, exactly as before.
+  // with nothing picked. That does NOT mean nothing is asked for — plain
+  // search still runs against MusicBrainz for every supported kind (see
+  // `SearchContext`'s `broadenEmptySelection`); picking a type here only
+  // narrows that broad search down to the one kind you tapped. Without a
+  // self-hosted server, this is stock's own default and stock's own
+  // meaning: every supported type, exactly as before.
   const selfHostedMbConfigured = useSelfHostedMusicbrainzConfigured();
   const [selectedEntityTypes, setSelectedEntityTypes] = useState<SearchEntityType[]>(
     () => (selfHostedMbConfigured ? [] : ALL_SEARCH_ENTITY_TYPES)
