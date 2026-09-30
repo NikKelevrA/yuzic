@@ -1,7 +1,8 @@
-Your wallpaper stays yours, and Home says when it can't reach your server.
+Buttons that work both ways, and settings that only offer what your server can do.
 
-- A background image is no longer painted over on album and artist pages: the artist header's blurred photo and the cover tint step aside for it
-- Home says when your server is out of reach, not just when you're offline. It used to drop every shelf without saying why
-- Radio says when your server doesn't offer it, instead of "couldn't load"
-- Shared links can be pulled to refresh
-- Opus, where your server offers it
+- A headphone or car button unpauses again, instead of only pausing
+- With crossfade on, album segues stay hard-cut rather than fading through themselves
+- Crossfaded tracks are scrobbled on what you heard, so they stop falling short
+- Loudness and streaming quality appear only where your server supports them
+- Jellyfin and Emby: an artist's top songs
+- Playlists are found when search asks your server
