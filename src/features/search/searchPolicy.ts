@@ -165,16 +165,33 @@ export async function searchServerLeg(searchApi: ServerSearchApi, query: string,
  * existing key (`source:type:id`) still collapses true duplicates — the same
  * source returning the same id twice.
  */
+export interface SearchExternalLegOptions {
+  /**
+   * Self-hosted-MusicBrainz-gated (see this option's one call site,
+   * `SearchContext`): when on, an *empty* `entityTypes` asks for every
+   * supported kind rather than none. The quick-filter row's buttons are
+   * meant to help — narrowing a search when the plain one doesn't find what
+   * you want — never to be the only way search works at all: nothing picked
+   * has to mean "no restriction," not "no request." Off (the default, and
+   * always the case without a self-hosted server), an empty `entityTypes`
+   * still asks for nothing — that's stock's own existing Filters-sheet
+   * behavior, unchanged, for anyone who unchecks both its boxes.
+   */
+  broadenEmptySelection?: boolean;
+}
+
 export async function searchExternalLeg(
   sourceIds: string[],
   query: string,
-  entityTypes: SearchEntityType[]
+  entityTypes: SearchEntityType[],
+  options?: SearchExternalLegOptions
 ): Promise<SearchResult[]> {
   if (!query.trim() || sourceIds.length === 0) return [];
+  const askForEverything = entityTypes.length === 0 && !!options?.broadenEmptySelection;
   const kinds = {
-    artists: entityTypes.includes('artist'),
-    albums: entityTypes.includes('album'),
-    songs: entityTypes.includes('song'),
+    artists: askForEverything || entityTypes.includes('artist'),
+    albums: askForEverything || entityTypes.includes('album'),
+    songs: askForEverything || entityTypes.includes('song'),
   };
 
   // Asked of the broker, not of a list of sources: whoever can search a

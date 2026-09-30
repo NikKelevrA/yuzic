@@ -23,8 +23,11 @@ const ENTITY_TYPE_ORDER: SearchEntityType[] = ['artist', 'song', 'album'];
  * Turning one on doesn't ask the app to filter or rank anything — it adds
  * that entity kind to what's asked for in the "Other sources" request (see
  * `searchExternalLeg`'s `kinds`), and MusicBrainz answers with just that
- * kind. With nothing picked, nothing is asked of MusicBrainz at all: no
- * request goes out on every keystroke until a type is deliberately chosen.
+ * kind. With nothing picked, the plain search still runs — MusicBrainz is
+ * asked for every supported kind rather than none (see
+ * `SearchExternalLegOptions.broadenEmptySelection`). These buttons are only
+ * for narrowing that broad search when it doesn't find what you're after;
+ * they were never meant to be the only way search works at all.
  * Sits alongside, not instead of, the Filters sheet's own album/artist
  * checkboxes — same underlying selection, just promoted to where it's one
  * tap away.

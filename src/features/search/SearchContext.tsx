@@ -207,7 +207,18 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       if (requestId !== searchRequestIdRef.current) return;
 
       if (legs.externalSources.length > 0) {
-        try { results.push(...await searchExternalLeg(legs.externalSources, query, entityTypes)); } catch { errored = true; }
+        try {
+          results.push(
+            ...await searchExternalLeg(legs.externalSources, query, entityTypes, {
+              // Same self-hosted-MusicBrainz gate as `preserveExternalOrder`
+              // above — both exist only because a self-hosted server is
+              // configured. Here it means an empty quick-filter selection
+              // broadens the request instead of narrowing it to nothing;
+              // see `SearchExternalLegOptions.broadenEmptySelection`.
+              broadenEmptySelection: preserveExternalOrder,
+            })
+          );
+        } catch { errored = true; }
       }
       if (requestId !== searchRequestIdRef.current) return;
 
