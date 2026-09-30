@@ -1,4 +1,7 @@
 import type { Song } from '@/domain/entities/Song';
+import type { Album } from '@/domain/entities/Album';
+import type { Artist } from '@/domain/entities/Artist';
+import type { AlbumDetail } from '@/domain/entities/Detail';
 import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import type { ApiAdapter } from '@/providers/contracts/ServerAdapter';
@@ -6,6 +9,7 @@ import {
   resolveQueueFillProvider,
   createNativeSimilarityQueueFillProvider,
   createSimilarityServiceQueueFillProvider,
+  createLibraryFallbackProvider,
   type QueueFillProvider,
 } from './queueProviders';
 
@@ -17,22 +21,25 @@ const provenance = serverProvenance('srv-1');
 /** Identity as the app would derive it for a track on the active server. */
 const idOf = (nativeId: string) => makeLocalId('song', provenance, nativeId);
 
-const song = (nativeId: string): Song => ({
+const song = (
+  nativeId: string,
+  overrides: Partial<{ albumId: string; artistId: string }> = {}
+): Song => ({
   localId: idOf(nativeId),
   nativeId,
   provenance,
   externalIds: {},
   title: nativeId,
   artist: {
-    localId: makeLocalId('artist', provenance, 'artist-1'),
-    nativeId: 'artist-1',
+    localId: makeLocalId('artist', provenance, overrides.artistId ?? 'artist-1'),
+    nativeId: overrides.artistId ?? 'artist-1',
     externalIds: {},
     name: 'Artist',
     cover: { kind: 'none' },
   },
   album: {
-    localId: makeLocalId('album', provenance, 'album-1'),
-    nativeId: 'album-1',
+    localId: makeLocalId('album', provenance, overrides.albumId ?? 'album-1'),
+    nativeId: overrides.albumId ?? 'album-1',
     externalIds: {},
     title: 'Album',
     cover: { kind: 'none' },
@@ -41,6 +48,43 @@ const song = (nativeId: string): Song => ({
   durationSeconds: 120,
   contentKind: 'song',
   genres: [],
+});
+
+const artistRefOf = (nativeId: string) => ({
+  localId: makeLocalId('artist', provenance, nativeId),
+  nativeId,
+  externalIds: {},
+  name: 'Artist',
+  cover: { kind: 'none' as const },
+});
+
+const album = (nativeId: string): Album => ({
+  localId: makeLocalId('album', provenance, nativeId),
+  nativeId,
+  provenance,
+  externalIds: {},
+  title: nativeId,
+  cover: { kind: 'none' },
+  artist: artistRefOf('artist-1'),
+  releaseType: 'album',
+  genres: [],
+  songIds: [],
+});
+
+const albumDetail = (nativeId: string, songs: Song[]): AlbumDetail => ({
+  album: album(nativeId),
+  songs,
+});
+
+const artist = (nativeId: string, albumIds: string[]): Artist => ({
+  localId: makeLocalId('artist', provenance, nativeId),
+  nativeId,
+  provenance,
+  externalIds: {},
+  name: 'Artist',
+  cover: { kind: 'none' },
+  tags: [],
+  albumIds: albumIds.map(id => makeLocalId('album', provenance, id)),
 });
 
 function fakeApi(overrides: Partial<ApiAdapter> = {}): ApiAdapter {
@@ -177,5 +221,117 @@ describe('createSimilarityServiceQueueFillProvider', () => {
     const [opts] = similarity.similarTrackIds.mock.calls[0] as unknown as [{ limit: number }];
     expect(opts.limit).toBeGreaterThan(3);
     expect(result.length).toBe(3);
+  });
+});
+
+describe('createLibraryFallbackProvider', () => {
+  it('is always available', () => {
+    expect(createLibraryFallbackProvider(fakeApi()).isAvailable()).toBe(true);
+  });
+
+  it('returns nothing when there are no seed songs', async () => {
+    const provider = createLibraryFallbackProvider(fakeApi());
+    const result = await provider.fetchExtension({ recentSongs: [], excludeIds: new Set(), count: 10 });
+    expect(result).toEqual([]);
+  });
+
+  it('returns nothing when the seed itself cannot be resolved', async () => {
+    const api = fakeApi({ songs: { get: jest.fn(async () => null), scrobble: jest.fn(), buildStreamUrl: jest.fn() } });
+    const provider = createLibraryFallbackProvider(api);
+
+    const result = await provider.fetchExtension({ recentSongs: [{ nativeId: 'gone' }], excludeIds: new Set(), count: 10 });
+    expect(result).toEqual([]);
+  });
+
+  it('falls back to the rest of the seed\'s own album, in album order, unshuffled', async () => {
+    const seed = song('seed', { albumId: 'al1' });
+    const albumSongs = ['seed', 'b', 'c'].map(id => song(id, { albumId: 'al1' }));
+    const api = fakeApi({
+      songs: { get: jest.fn(async () => seed), scrobble: jest.fn(), buildStreamUrl: jest.fn() },
+      albums: { list: jest.fn(), get: jest.fn(async () => albumDetail('al1', albumSongs)) },
+    });
+    const provider = createLibraryFallbackProvider(api);
+
+    const result = await provider.fetchExtension({
+      recentSongs: [{ nativeId: 'seed' }],
+      excludeIds: new Set([idOf('seed')]),
+      count: 10,
+    });
+
+    expect(api.albums.get).toHaveBeenCalledWith('al1');
+    expect(result.map(s => s.nativeId)).toEqual(['b', 'c']);
+  });
+
+  it('caps the album fallback at count', async () => {
+    const seed = song('seed', { albumId: 'al1' });
+    const albumSongs = ['b', 'c', 'd', 'e'].map(id => song(id, { albumId: 'al1' }));
+    const api = fakeApi({
+      songs: { get: jest.fn(async () => seed), scrobble: jest.fn(), buildStreamUrl: jest.fn() },
+      albums: { list: jest.fn(), get: jest.fn(async () => albumDetail('al1', albumSongs)) },
+    });
+    const provider = createLibraryFallbackProvider(api);
+
+    const result = await provider.fetchExtension({ recentSongs: [{ nativeId: 'seed' }], excludeIds: new Set(), count: 2 });
+    expect(result.length).toBe(2);
+  });
+
+  it('falls back to another album by the same artist once the seed\'s own album is exhausted', async () => {
+    // A single-folder rip is often the whole album — nothing left there once
+    // the already-queued tracks are excluded.
+    const seed = song('seed', { albumId: 'al1', artistId: 'artist-1' });
+    const siblingSongs = ['x', 'y'].map(id => song(id, { albumId: 'al2', artistId: 'artist-1' }));
+    const getAlbum = jest.fn(async (id: string) =>
+      id === 'al1'
+        ? albumDetail('al1', [seed]) // only the seed itself — nothing else to offer
+        : albumDetail('al2', siblingSongs));
+    const api = fakeApi({
+      songs: { get: jest.fn(async () => seed), scrobble: jest.fn(), buildStreamUrl: jest.fn() },
+      albums: { list: jest.fn(), get: getAlbum },
+      artists: { list: jest.fn(), get: jest.fn(async () => artist('artist-1', ['al1', 'al2'])) },
+    });
+    const provider = createLibraryFallbackProvider(api);
+
+    const result = await provider.fetchExtension({
+      recentSongs: [{ nativeId: 'seed' }],
+      excludeIds: new Set([idOf('seed')]),
+      count: 10,
+    });
+
+    expect(getAlbum).toHaveBeenCalledWith('al2');
+    expect(result.map(s => s.nativeId).sort()).toEqual(['x', 'y']);
+  });
+
+  it('returns nothing when the seed\'s album is exhausted and the artist has no other album', async () => {
+    const seed = song('seed', { albumId: 'al1', artistId: 'artist-1' });
+    const api = fakeApi({
+      songs: { get: jest.fn(async () => seed), scrobble: jest.fn(), buildStreamUrl: jest.fn() },
+      albums: { list: jest.fn(), get: jest.fn(async () => albumDetail('al1', [seed])) },
+      artists: { list: jest.fn(), get: jest.fn(async () => artist('artist-1', ['al1'])) },
+    });
+    const provider = createLibraryFallbackProvider(api);
+
+    const result = await provider.fetchExtension({
+      recentSongs: [{ nativeId: 'seed' }],
+      excludeIds: new Set([idOf('seed')]),
+      count: 10,
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  it('does not throw when the album or artist lookup fails, treating it as nothing found', async () => {
+    const seed = song('seed', { albumId: 'al1' });
+    const api = fakeApi({
+      songs: { get: jest.fn(async () => seed), scrobble: jest.fn(), buildStreamUrl: jest.fn() },
+      albums: { list: jest.fn(), get: jest.fn(async () => { throw new Error('offline'); }) },
+      artists: { list: jest.fn(), get: jest.fn(async () => { throw new Error('offline'); }) },
+    });
+    const provider = createLibraryFallbackProvider(api);
+
+    await expect(provider.fetchExtension({
+      recentSongs: [{ nativeId: 'seed' }],
+      excludeIds: new Set(),
+      count: 10,
+    })).resolves.toEqual([]);
   });
 });
