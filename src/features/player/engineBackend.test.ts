@@ -54,6 +54,50 @@ describe('the shadow the synchronous getters read from', () => {
     expect(next.outgoingProgress.positionSec).toBe(178);
   });
 
+  /**
+   * Measured on a simulator: across an 8s crossfade the engine reported the
+   * outgoing track's listened time while its last progress tick sat half a
+   * fade behind. They are different quantities and the shadow keeps both —
+   * the playhead is the resume point, this is what a scrobble is judged on.
+   */
+  it('keeps the engine\'s listened time beside the playhead, not instead of it', () => {
+    const playing = applyEvent(createShadow(), {
+      type: 'progress',
+      progress: { positionSec: 15.5, durationSec: 20, bufferedSec: 20 },
+    });
+    const next = applyEvent(playing, {
+      type: 'trackChange',
+      index: 1,
+      id: 'song-2',
+      previousListenedSec: 20.25,
+    });
+
+    expect(next.outgoingListenedSec).toBe(20.25);
+    expect(next.outgoingProgress.positionSec).toBe(15.5);
+  });
+
+  it('reports no listened time for a cut, where the playhead is already right', () => {
+    const playing = applyEvent(createShadow(), {
+      type: 'progress',
+      progress: { positionSec: 19.5, durationSec: 20, bufferedSec: 20 },
+    });
+    const next = applyEvent(playing, { type: 'trackChange', index: 1, id: 'song-2' });
+
+    expect(next.outgoingListenedSec).toBeUndefined();
+    expect(next.outgoingProgress.positionSec).toBe(19.5);
+  });
+
+  it('clears the previous transition\'s listened time rather than carrying it', () => {
+    // A fade followed by a hard cut. Carried over, the cut would be credited
+    // the fade's total and scrobble a track nobody finished.
+    const faded = applyEvent(createShadow(), {
+      type: 'trackChange', index: 1, id: 'song-2', previousListenedSec: 20.25,
+    });
+    const cut = applyEvent(faded, { type: 'trackChange', index: 2, id: 'song-3' });
+
+    expect(cut.outgoingListenedSec).toBeUndefined();
+  });
+
   it('takes the new duration from the queue so the bar is not zero-width', () => {
     const withQueue = { ...createShadow(), queue: [item(), item({ duration: 240 })] };
     const next = applyEvent(withQueue, { type: 'trackChange', index: 1, id: 'song-2' });

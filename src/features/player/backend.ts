@@ -85,6 +85,20 @@ export interface PlayerBackend {
    * already moved on to the new track by the time anyone hears about a change.
    */
   getOutgoingProgress(): { position: number; duration: number; buffered: number };
+  /**
+   * How much of that track was actually heard, where the player measured it.
+   *
+   * Not the same question as `getOutgoingProgress`, and the difference is the
+   * whole reason this exists: across a crossfade the outgoing track keeps
+   * sounding while its playhead stops being read, so the position understates
+   * what was listened to by up to half a fade. A scrobble threshold wants this
+   * number; a resume bookmark wants the position, and they must not be
+   * swapped.
+   *
+   * Undefined where the player said nothing — a hard cut needs no correction,
+   * and the position is right there.
+   */
+  getOutgoingListenedSec(): number | undefined;
   getQueue(): MediaItem[];
   getActiveMediaItemIndex(): number | null;
   getActiveMediaItem(): MediaItem | null;

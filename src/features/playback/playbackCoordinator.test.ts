@@ -7,6 +7,7 @@ import { makeLocalId } from '@/domain/identity/LocalId';
 import { serverProvenance } from '@/domain/identity/Provenance';
 import { createPlaybackCoordinator, type PlaybackCoordinatorDeps } from './playbackCoordinator';
 import { rememberResource } from './knownResources';
+import { takeFinishedListen } from './listenMeter';
 
 const provenance = serverProvenance('srv-1');
 
@@ -57,6 +58,8 @@ function harness(over: Partial<{
   position: number;
   /** Where the track the player just left had got to. Defaults to `position`. */
   outgoingPosition: number;
+  /** What the engine says was heard of it. Absent for a cut, as the engine sends it. */
+  outgoingListenedSec: number;
   resumeAt: number | null;
   speed: number;
   currentSpeed: number;
@@ -78,6 +81,7 @@ function harness(over: Partial<{
   const backend = {
     getProgress: () => ({ position: over.position ?? 0, duration: 200, buffered: 0 }),
     getOutgoingProgress: () => ({ position: over.outgoingPosition ?? over.position ?? 0, duration: 200, buffered: 0 }),
+    getOutgoingListenedSec: () => over.outgoingListenedSec,
     getQueue: () => over.nativeQueue ?? queue.map(r => itemFor(r.song.nativeId)),
     getActiveMediaItemIndex: () => (over.nativeIndex === undefined ? 0 : over.nativeIndex),
     seekTo: (s: number) => { events.push(`seekTo:${s}`); },
@@ -168,6 +172,44 @@ describe('leaving the previous track', () => {
 
     expect(h.events).toContain('scrobble:1:199');
     expect(h.events).toContain('bookmark:1:199');
+  });
+
+  /**
+   * The two quantities must not be swapped, and this is the guard for it.
+   *
+   * Across a crossfade the outgoing track goes on sounding while its playhead
+   * stops being read — measured on a simulator as 15.5s of playhead against
+   * 20.25s actually heard on a 20-second track. The listen takes what was
+   * heard, so a scrobble threshold is judged on it. The resume bookmark takes
+   * the playhead, because a resume point that is not a position is not a
+   * resume point: feeding it the listened figure would drop someone back into
+   * a track past where they left it.
+   */
+  it('files the listen on what was heard and the bookmark on where it was left', () => {
+    const h = harness({
+      nativeIndex: 1, position: 0, outgoingPosition: 15.5, outgoingListenedSec: 20.25,
+    });
+
+    h.coordinator.onActiveTrackChanged(itemFor('2'));
+
+    expect(h.events).toContain('bookmark:1:15');
+    expect(takeFinishedListen('1')).toBe(20);
+  });
+
+  it('leaves the meter to answer when the player measured nothing', () => {
+    // A hard cut sends no listened time and needs none, so nothing external is
+    // latched and `finishListen` files what the meter itself measured — zero
+    // here, because this harness never feeds it positions. That is the meter's
+    // documented shape: a reader with nothing latched falls back to the
+    // playhead rather than to zero, so the fallback lives there and not here.
+    // What matters at this seam is that no engine figure was invented.
+    const h = harness({ nativeIndex: 1, position: 0, outgoingPosition: 19.6 });
+
+    h.coordinator.onActiveTrackChanged(itemFor('2'));
+
+    expect(h.events).toContain('bookmark:1:19');
+    expect(h.events).toContain('scrobble:1:19');
+    expect(takeFinishedListen('1')).toBe(0);
   });
 
   it('restarts the listen clock for the track now playing', () => {

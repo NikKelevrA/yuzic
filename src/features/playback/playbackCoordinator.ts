@@ -5,7 +5,7 @@ import type { Song } from '@/domain/entities/Song';
 import { sameQueue } from '@/features/playback/playableResource';
 import { isAutoplaySeed } from '@/domain/playback/ContentKind';
 import { shouldFillQueue } from './autoplayFill';
-import { finishListen } from './listenMeter';
+import { finishListen, latchListen, resetListen } from './listenMeter';
 import { resourceFromMediaItem, resourcesFromPlayerQueue } from './playingQueue';
 import { knownResource } from './knownResources';
 
@@ -121,13 +121,29 @@ export function createPlaybackCoordinator(
       const previous = deps.currentResource();
       if (previous && previous.song.localId !== mediaId) {
         const leftAt = Math.floor(deps.backend().getOutgoingProgress().position);
+        // What the engine measured, where it measured it. Across a crossfade
+        // the outgoing track goes on sounding while its playhead stops being
+        // read, so `leftAt` understates what was heard by up to half a fade —
+        // and a scrobble threshold is judged on what was heard. Only the
+        // listen takes it: `leftAt` is still the playhead below, because that
+        // is what says whether the track ran out and what a resume point is.
+        const heard = deps.backend().getOutgoingListenedSec();
         // The playhead is what goes on from here — it is what decides whether
         // the track ran out, and it is the resume point. How much was heard is
         // a different number the moment anyone seeks backwards, so the meter
         // is closed on the outgoing track now, while the listen it measured
         // still exists: `markNewListen` below starts the next one, and the
         // outgoing report is not sent for another second.
-        finishListen(previous.song.nativeId, leftAt);
+        if (heard === undefined) {
+          finishListen(previous.song.nativeId, leftAt);
+        } else {
+          // `latchListen` is the meter's own door for a total it did not
+          // measure, so the scrobbler reads this exactly as it reads every
+          // other departure. The live stretch still has to be closed, which
+          // `finishListen` would have done.
+          latchListen(previous.song.nativeId, heard);
+          resetListen();
+        }
         deps.scrobbleOutgoing(previous.song, leftAt);
         deps.saveBookmark(previous.song, leftAt);
         deps.markNewListen();

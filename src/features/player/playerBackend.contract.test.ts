@@ -126,6 +126,11 @@ function createFakeBackend(): PlayerBackend {
     getOutgoingProgress() {
       return { position: 0, duration: 0, buffered: 0 };
     },
+    // A fake that never crossfades measures no listening of its own, which is
+    // the same thing a hard cut reports.
+    getOutgoingListenedSec() {
+      return undefined;
+    },
     getQueue() {
       return queue;
     },

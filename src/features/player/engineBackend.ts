@@ -47,6 +47,26 @@ export interface Shadow {
    * played through to its end from ever counting as a listen.
    */
   outgoingProgress: Progress;
+  /**
+   * How long the engine says the previous track was listened to, where it
+   * said.
+   *
+   * Deliberately beside `outgoingProgress` rather than folded into it: they
+   * are different quantities and this app has already been caught treating
+   * them as one. The playhead is where the track was left — what decides
+   * whether it ran out, and what a resume bookmark is. This is how much was
+   * *heard*, which diverges the moment a crossfade is involved, because the
+   * outgoing track goes on sounding through the fade while its playhead has
+   * stopped being read. Feeding this to a bookmark would file a track someone
+   * rewound as finished; feeding the playhead to a scrobble threshold
+   * under-counts it. See `listenMeter`, which exists for exactly this
+   * distinction.
+   *
+   * Undefined when the engine sent none — a hard cut, or an older engine —
+   * and cleared on every track change so a figure from one transition cannot
+   * be read against the next.
+   */
+  outgoingListenedSec?: number;
   playing: boolean;
 }
 
@@ -78,6 +98,9 @@ export function applyEvent(shadow: Shadow, event: EngineEvent): Shadow {
         ...shadow,
         activeIndex: event.index,
         outgoingProgress: shadow.progress,
+        // Taken as sent, including absent: assigning unconditionally is what
+        // keeps a hard cut from reading the previous fade's figure.
+        outgoingListenedSec: event.previousListenedSec,
         progress: { ...EMPTY_PROGRESS, durationSec: shadow.queue[event.index]?.duration ?? 0 },
       };
 
