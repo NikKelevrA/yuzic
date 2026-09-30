@@ -78,6 +78,7 @@ export function mapSong(dto: MediaBrowserItem, context: MapSongContext): Song {
     discNumber: dto.ParentIndexNumber,
     trackNumber: dto.IndexNumber,
     year: dto.ProductionYear,
+    releaseDate: dto.PremiereDate,
     genres: normalizeGenres(dto.Genres) ?? [],
     addedAt: dto.DateCreated ? Date.parse(dto.DateCreated) || undefined : undefined,
     serverPlayCount: dto.UserData?.PlayCount,

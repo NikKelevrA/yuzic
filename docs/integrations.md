@@ -95,10 +95,13 @@ UI shows them only when the active server's adapter provides them:
 | Public share links | `shares` | ✅ | — | — | — |
 | Resume positions / bookmarks | `bookmarks` | ✅ (native endpoint) | ✅ (from `PlaybackPositionTicks`) | — | — |
 | Server-side play queue sync | `queue` | ✅ | — | — | — |
-| Random songs + who else is listening | `discovery` | ✅ | ✅ (`SortBy=Random`; listeners from `/Sessions`) | — | — |
+| Random songs + who else is listening | `discovery` | ✅ | ✅ (`SortBy=Random`; listeners from `/Sessions`) | ✅ (`sort=random` per section; listeners from `/status/sessions`, owner only) | — |
 | Podcasts | `podcasts` | ✅ | — | — | — |
 | Account avatar | `user` | ✅ (`getAvatar`) | ✅ (`/Users/{id}/Images/Primary`) | — | — |
 | Five-star ratings | `ratings` | ✅ (`setRating.view`) | — | — | — |
+| Artist top songs | `artists.getTopSongs` | ✅ (`getTopSongs.view`, Last.fm ranking) | ✅ (`SortBy=PlayCount`, this account's own; played tracks only) | — | — |
+| Streaming quality choice | `songs.transcodes` | ✅ (`maxBitRate` on `stream.view`) | ✅ (`AudioBitrate`) | — (direct-plays the part) | — (nothing to transcode) |
+| Loudness normalisation | `songs.reportsLoudness` | ✅ (ReplayGain tags) | — (LUFS/`NormalizationGain` not mapped yet) | — (per-part gain not mapped yet) | — (tags not read on import) |
 
 A Jellyfin user never sees a Radio row rather than seeing one that goes
 nowhere — the Library index builds its rows from what the adapter offers

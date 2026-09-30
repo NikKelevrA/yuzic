@@ -17,7 +17,7 @@ const ConnectivityIndicator: React.FC<Props> = ({ isLoading, isConnected }) => {
   const rad = useRadius();
 
   if (isLoading) {
-    return <SpinningLoaderCircle size={icons.badge} color={colors.themeColor} />;
+    return <SpinningLoaderCircle size={icons.badge} color={colors.subtext} />;
   }
 
   return (

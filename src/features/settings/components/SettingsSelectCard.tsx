@@ -41,7 +41,7 @@ const SettingsSelectCard: React.FC<Props> = ({
       <SettingsCard>
         {isLoading ? (
           <View style={styles.loader}>
-            <SpinningLoaderCircle size={icons.row} color={colors.themeColor} />
+            <SpinningLoaderCircle size={icons.row} color={colors.subtext} />
           </View>
         ) : (
           items.map((item, index) => (

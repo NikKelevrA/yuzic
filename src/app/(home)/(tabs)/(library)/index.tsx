@@ -64,7 +64,7 @@ export default function LibraryScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.themeColor}
+            tintColor={colors.secondary}
             colors={[colors.themeColor]}
           />
         }

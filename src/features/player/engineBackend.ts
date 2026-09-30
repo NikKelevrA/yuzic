@@ -1,6 +1,7 @@
 import type { MediaItem } from './mediaItem';
 import { loudnessFor, type Loudness } from '@/domain/entities/Loudness';
 import type { BrowseItem } from './browse';
+import { followsPreviousInQueue } from './followsPrevious';
 import type { BrowseNode, EngineEvent, Progress, Track } from 'yuzic-engine';
 
 /**
@@ -46,6 +47,26 @@ export interface Shadow {
    * played through to its end from ever counting as a listen.
    */
   outgoingProgress: Progress;
+  /**
+   * How long the engine says the previous track was listened to, where it
+   * said.
+   *
+   * Deliberately beside `outgoingProgress` rather than folded into it: they
+   * are different quantities and this app has already been caught treating
+   * them as one. The playhead is where the track was left — what decides
+   * whether it ran out, and what a resume bookmark is. This is how much was
+   * *heard*, which diverges the moment a crossfade is involved, because the
+   * outgoing track goes on sounding through the fade while its playhead has
+   * stopped being read. Feeding this to a bookmark would file a track someone
+   * rewound as finished; feeding the playhead to a scrobble threshold
+   * under-counts it. See `listenMeter`, which exists for exactly this
+   * distinction.
+   *
+   * Undefined when the engine sent none — a hard cut, or an older engine —
+   * and cleared on every track change so a figure from one transition cannot
+   * be read against the next.
+   */
+  outgoingListenedSec?: number;
   playing: boolean;
 }
 
@@ -77,6 +98,9 @@ export function applyEvent(shadow: Shadow, event: EngineEvent): Shadow {
         ...shadow,
         activeIndex: event.index,
         outgoingProgress: shadow.progress,
+        // Taken as sent, including absent: assigning unconditionally is what
+        // keeps a hard cut from reading the previous fade's figure.
+        outgoingListenedSec: event.previousListenedSec,
         progress: { ...EMPTY_PROGRESS, durationSec: shadow.queue[event.index]?.duration ?? 0 },
       };
 
@@ -191,12 +215,21 @@ interface EngineTrackInput {
   headers?: Record<string, string>;
   artworkHeaders?: Record<string, string>;
   loudness?: Loudness;
+  albumId?: string;
+  discNumber?: number;
+  trackNumber?: number;
 }
 
 /**
  * The app's `MediaItem` (or a `BrowseItem` row) as the engine's `Track`.
+ *
+ * `previous` is the item this one sits behind in the queue, where there is
+ * one, and it exists only to answer `followsPrevious` — a track has no way to
+ * know it continues an album join by looking at itself. A caller that has no
+ * neighbour to offer (a browse row, a lone insert at the head of the queue)
+ * leaves it out and gets exactly the `Track` it got before.
  */
-export function toEngineTrack(item: EngineTrackInput): Track {
+export function toEngineTrack(item: EngineTrackInput, previous?: EngineTrackInput): Track {
   const uri = engineUri(item.url);
   return {
     // `mediaId` is optional to rntp and always set by `buildTrackItem`, but the
@@ -228,6 +261,10 @@ export function toEngineTrack(item: EngineTrackInput): Track {
     // rebuilding the queue whenever the setting changed, which is why album
     // mode waits on the engine carrying both.
     ...engineGain(item.loudness),
+    // A join the record was mastered with, which a gapless-aware crossfade
+    // hard-cuts instead of fading across. Set only when true, so a track with
+    // no neighbour or no album numbering is byte-for-byte what it was.
+    ...(followsPreviousInQueue(previous, item) ? { followsPrevious: true } : {}),
   };
 }
 

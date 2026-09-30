@@ -47,6 +47,8 @@ const EMPTY_ADAPTER: ApiAdapter = {
     scrobble: async () => {},
     buildStreamUrl: () => '',
     scrobbleKind: 'scrobble',
+    transcodes: false,
+    reportsLoudness: false,
     streamableCodecs: ['mp3'],
   },
   tracks: {

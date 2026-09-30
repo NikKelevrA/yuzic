@@ -49,8 +49,10 @@ export default function TopSongsSection({ artist }: Props) {
 
   const { data: songs } = useQuery({
     queryKey: [QueryKeys.ServerArtistTopSongs, artist.name],
-    // Navidrome only today; the Jellyfin adapter does not implement it, so the
-    // section hides itself there rather than showing an empty shelf.
+    // Navidrome ranks by Last.fm playcount, Jellyfin/Emby by this account's
+    // own. Plex and local files implement nothing here, so the section hides
+    // itself there rather than showing an empty shelf — as it also does on a
+    // MediaBrowser account that has not played this artist yet.
     enabled: Boolean(getTopSongs) && !!artist.name,
     staleTime: 1000 * 60 * 60 * 24,
     queryFn: async () => (await getTopSongs?.(artist.name, TOP_SONG_LIMIT)) ?? [],

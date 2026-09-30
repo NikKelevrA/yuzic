@@ -61,6 +61,41 @@ describe('adapter capability declarations', () => {
     expect(adapters.local().songs.reportNowPlaying).toBeUndefined();
   });
 
+  it('offers a streaming-quality choice only where the server acts on one', () => {
+    // Both take a bitrate ceiling on the stream request.
+    expect(adapters.navidrome().songs.transcodes).toBe(true);
+    expect(adapters.jellyfin().songs.transcodes).toBe(true);
+    expect(adapters.emby().songs.transcodes).toBe(true);
+
+    // Plex's buildStreamUrl is handed a quality and drops it: it addresses the
+    // part directly and direct-plays it, so every track arrived at original
+    // quality while the Wi-Fi and cellular rows implied otherwise. Its
+    // transcode endpoint is a different URL, and this flips when that lands.
+    expect(adapters.plex().songs.transcodes).toBe(false);
+
+    // A local file is already on the device; there is nothing to transcode.
+    expect(adapters.local().songs.transcodes).toBe(false);
+  });
+
+  it('offers loudness normalisation only where the server measures it', () => {
+    // OpenSubsonic's ReplayGain tags are per track and per album, and the
+    // mapper reads them, so the engine has a gain to level towards.
+    expect(adapters.navidrome().songs.reportsLoudness).toBe(true);
+
+    // Everywhere else the switch used to render regardless and do nothing:
+    // no mapper sets `Song.loudness`, so the engine was handed no measurement
+    // and normalised against nothing. These are mapper gaps rather than
+    // server ones — Jellyfin 10.10+ reports LUFS/NormalizationGain and Plex a
+    // per-part gain — so each flips to true in the change that maps it, and
+    // this test is what says the switch may then appear.
+    expect(adapters.jellyfin().songs.reportsLoudness).toBe(false);
+    expect(adapters.emby().songs.reportsLoudness).toBe(false);
+    expect(adapters.plex().songs.reportsLoudness).toBe(false);
+
+    // Local files often carry ReplayGain tags; the importer does not read one.
+    expect(adapters.local().songs.reportsLoudness).toBe(false);
+  });
+
   it('offers five-star ratings only where the server keeps them apart from favourites', () => {
     // Subsonic's setRating is a field of its own, beside the starred flag.
     expect(adapters.navidrome().ratings).toBeDefined();

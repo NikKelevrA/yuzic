@@ -29,7 +29,7 @@ export async function getAlbums(
     `IncludeItemTypes=MusicAlbum` +
     `&Recursive=true` +
     `&SortBy=SortName` +
-    `&Fields=PrimaryImageTag,Genres,AlbumArtist,ArtistItems,Artists,DateCreated,ProviderIds,UserData`;
+    `&Fields=PrimaryImageTag,Genres,AlbumArtist,ArtistItems,Artists,DateCreated,PremiereDate,ProviderIds,UserData`;
 
   const path =
     `/Items?${baseParams}` +

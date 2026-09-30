@@ -165,10 +165,18 @@ const LibrarySongOptionsSheet = forwardRef<BottomSheetModal, LibrarySongOptionsP
                 )}
               </>
             )}
-            {selectedSong.genres.length > 0 && (
+            {(selectedSong.bpm != null || selectedSong.genres.length > 0 || !!selectedSong.audio?.path) && (
               <>
                 <OptionSheetSectionLabel label={t('songOptions.sections.other')} spaced />
-                <OptionSheetChipsRow label={t('songOptions.other.genres')} values={selectedSong.genres} />
+                {selectedSong.bpm != null && (
+                  <OptionSheetInfoRow label={t('songOptions.other.bpm')} value={selectedSong.bpm} />
+                )}
+                {selectedSong.genres.length > 0 && (
+                  <OptionSheetChipsRow label={t('songOptions.other.genres')} values={selectedSong.genres} />
+                )}
+                {!!selectedSong.audio?.path && (
+                  <OptionSheetInfoRow label={t('songOptions.other.filePath')} value={selectedSong.audio.path} />
+                )}
               </>
             )}
           </>

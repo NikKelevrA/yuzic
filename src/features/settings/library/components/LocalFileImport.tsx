@@ -70,7 +70,7 @@ export default function LocalFileImport() {
             </View>
           </View>
           {importing
-            ? <SpinningLoaderCircle size={icons.row} color={colors.themeColor} />
+            ? <SpinningLoaderCircle size={icons.row} color={colors.secondary} />
             : <ChevronRight size={icons.row} color={colors.border} />}
         </Touchable>
       </SettingsCard>

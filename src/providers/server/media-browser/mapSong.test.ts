@@ -26,6 +26,7 @@ const fullDto: MediaBrowserItem = {
   Genres: ['Electronic, Rock'],
   ProviderIds: { MusicBrainzTrack: 'rec-mbid' },
   ProductionYear: 2000,
+  PremiereDate: '2000-10-02T00:00:00.000Z',
   ParentIndexNumber: 1,
   IndexNumber: 1,
   DateCreated: '2024-03-02T10:15:00.000Z',
@@ -45,6 +46,7 @@ describe('mapSong', () => {
       discNumber: 1,
       trackNumber: 1,
       year: 2000,
+      releaseDate: '2000-10-02T00:00:00.000Z',
       genres: ['Electronic', 'Rock'],
     });
     expect(song.audio).toEqual({
@@ -53,6 +55,15 @@ describe('mapSong', () => {
       bitsPerSample: 16,
       mimeType: 'audio/mpeg',
     });
+  });
+
+  // Several song endpoints already ask for PremiereDate; without this the
+  // value arrived and was dropped on the floor.
+  it('carries the release date through, and leaves it undefined when absent', () => {
+    expect(mapSong(fullDto, { provenance, brand: JELLYFIN_BRAND }).releaseDate).toBe('2000-10-02T00:00:00.000Z');
+    expect(
+      mapSong({ ...fullDto, PremiereDate: undefined }, { provenance, brand: JELLYFIN_BRAND }).releaseDate
+    ).toBeUndefined();
   });
 
   it('converts RunTimeTicks (100ns ticks) to whole seconds', () => {

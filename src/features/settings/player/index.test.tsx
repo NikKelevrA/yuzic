@@ -43,13 +43,15 @@ jest.mock('@/features/player/activeBackend', () => ({
 
 // The server adapter — HTTP.
 jest.mock('@/providers/registry/useApi', () => ({
-  useApi: () => ({ songs: { streamableCodecs: mockStreamableCodecs } }),
+  useApi: () => ({ songs: { streamableCodecs: mockStreamableCodecs, reportsLoudness: mockReportsLoudness, transcodes: mockTranscodes } }),
 }));
 
 /* eslint-disable no-var -- hoisted for the jest.mock factories above */
 var mockPush = jest.fn();
 var mockClearCache = jest.fn();
 var mockStreamableCodecs: string[] = ['mp3'];
+var mockReportsLoudness = true;
+var mockTranscodes = true;
 /* eslint-enable no-var */
 
 import { notify } from '@/components/toast';
@@ -91,6 +93,8 @@ function switchFor(view: View, label: 'settings.player.autoplay' | 'settings.pla
 describe('PlayerSettings', () => {
   beforeEach(() => {
     mockStreamableCodecs = ['mp3'];
+    mockReportsLoudness = true;
+    mockTranscodes = true;
     mockPush.mockClear();
     mockClearCache.mockClear();
     (notify.success as jest.Mock).mockClear();
@@ -116,6 +120,40 @@ describe('PlayerSettings', () => {
     fireEvent(switchFor(view, 'settings.player.resumeLongTracks'), 'valueChange', false);
 
     expect(store.getState().settingsPlayback.resumeLongTracksEnabled).toBe(false);
+  });
+
+  // It rendered for every provider while only Navidrome reported a gain, so
+  // four adapters out of five offered a switch that corrected against nothing.
+  it('hides loudness normalisation when the active adapter reports no loudness', async () => {
+    mockReportsLoudness = false;
+    const view = await renderScreen(makeStore());
+
+    expect(view.queryByText('settings.player.loudness.label')).toBeNull();
+  });
+
+  it('offers loudness normalisation when the adapter declares it', async () => {
+    mockReportsLoudness = true;
+    const view = await renderScreen(makeStore());
+
+    expect(view.queryByText('settings.player.loudness.label')).not.toBeNull();
+  });
+
+  // Plex drops the quality it is handed and direct-plays the part, so the two
+  // rows implied a data saver that never changed what arrived.
+  it('hides the streaming-quality rows when the adapter ignores quality', async () => {
+    mockTranscodes = false;
+    const view = await renderScreen(makeStore());
+
+    expect(view.queryByText('settings.player.streamingQuality.wifi')).toBeNull();
+    expect(view.queryByText('settings.player.streamingQuality.cellular')).toBeNull();
+  });
+
+  it('offers the streaming-quality rows when the adapter transcodes', async () => {
+    mockTranscodes = true;
+    const view = await renderScreen(makeStore());
+
+    expect(view.queryByText('settings.player.streamingQuality.wifi')).not.toBeNull();
+    expect(view.queryByText('settings.player.streamingQuality.cellular')).not.toBeNull();
   });
 
   it('hides the Opus switch when the active adapter does not stream Opus', async () => {

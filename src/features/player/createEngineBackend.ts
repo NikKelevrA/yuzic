@@ -219,23 +219,35 @@ export function createEngineBackend(): PlayerBackend {
     },
 
     setMediaItems(items, startIndex = 0) {
+      // Converted against the item in front, which is what tells the engine
+      // where the album joins are. The first item has nothing in front of it.
+      const tracks = items.map((item, i) => toEngineTrack(item, items[i - 1]));
       editQueue(items, startIndex);
-      fire('setQueue', async () => load().setQueue(items.map(toEngineTrack), startIndex));
+      fire('setQueue', async () => load().setQueue(tracks, startIndex));
     },
 
     addMediaItems(items) {
+      // The first appended item's neighbour is the end of the queue already
+      // playing: appending an album's back half has to keep the join.
+      const tail = shadow.queue[shadow.queue.length - 1];
+      const tracks = items.map((item, i) => toEngineTrack(item, i === 0 ? tail : items[i - 1]));
       editQueue([...shadow.queue, ...items]);
-      fire('append', async () => load().append(items.map(toEngineTrack)));
+      fire('append', async () => load().append(tracks));
     },
 
     insertMediaItem(index, item) {
+      // Known limitation: inserting between two tracks that were a segue
+      // leaves the *following* one still marked as following, so the engine
+      // hard-cuts into it. Rebuilding the queue to fix one flag would re-send
+      // every track on every insert; it rights itself at the next setQueue.
+      const track = toEngineTrack(item, shadow.queue[index - 1]);
       const next = [...shadow.queue];
       next.splice(index, 0, item);
       // The active index follows the same rule the engine applies natively:
       // inserting at or before the playhead pushes it down, so the track that
       // is playing keeps playing.
       editQueue(next, index <= shadow.activeIndex ? shadow.activeIndex + 1 : shadow.activeIndex);
-      fire('insertAt', async () => load().insertAt(index, [toEngineTrack(item)]));
+      fire('insertAt', async () => load().insertAt(index, [track]));
     },
 
     removeMediaItem(index) {
@@ -281,6 +293,7 @@ export function createEngineBackend(): PlayerBackend {
 
     getProgress() { return toPlaybackProgress(shadow.progress); },
     getOutgoingProgress() { return toPlaybackProgress(shadow.outgoingProgress); },
+    getOutgoingListenedSec() { return shadow.outgoingListenedSec; },
     getQueue() { return shadow.queue; },
     // Null on an empty queue, matching rntp: "nothing is active" and "the
     // first track" are different answers, and the app branches on it.
