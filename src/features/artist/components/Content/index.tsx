@@ -8,6 +8,7 @@ import { FlashList } from '@shopify/flash-list'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { Ellipsis, Globe } from 'lucide-react-native'
 import type { Album } from '@/domain/entities/Album'
+import { isVirtualCatalogId } from '@/domain/identity/virtualCatalogId'
 import AlbumRow from '@/components/rows/AlbumRow'
 import Header, { ArtistHeaderBar } from '../Header'
 import { DetailScreen } from '@/components/DetailHeader'
@@ -86,8 +87,16 @@ export default function ArtistContent({ model }: Props) {
 
       const ownedAlbumItems: ArtistContentItem[] = ownedAlbums.map(album => ({ kind: 'localAlbum' as const, id: `album-${album.localId}`, album }))
       const ownedSingleItems: ArtistContentItem[] = ownedSingles.map(album => ({ kind: 'localAlbum' as const, id: `single-${album.localId}`, album }))
-      const unownedAlbumItems: ArtistContentItem[] = unownedAlbums.map(album => ({ kind: 'externalAlbum' as const, id: `album-ext-${album.localId}`, album }))
-      const unownedSingleItems: ArtistContentItem[] = unownedSingles.map(album => ({ kind: 'externalAlbum' as const, id: `single-ext-${album.localId}`, album }))
+      // A virtual-catalog release (see `isVirtualCatalogId`) still carries
+      // this server's own provenance — it's not downloaded yet, but it isn't
+      // from Deezer/MusicBrainz either — so it needs the direct, id-based
+      // navigation `localAlbum` rows use. Routing it through `externalAlbum`
+      // instead would hand its `mb-rg-...` id to `resolveAndNavigateToAlbum`,
+      // which only knows how to resolve a Deezer/MusicBrainz source and would
+      // either error (no source enabled) or send the id to the wrong one.
+      const unownedKindFor = (album: Album) => (isVirtualCatalogId(album.nativeId) ? 'localAlbum' as const : 'externalAlbum' as const)
+      const unownedAlbumItems: ArtistContentItem[] = unownedAlbums.map(album => ({ kind: unownedKindFor(album), id: `album-ext-${album.localId}`, album }))
+      const unownedSingleItems: ArtistContentItem[] = unownedSingles.map(album => ({ kind: unownedKindFor(album), id: `single-ext-${album.localId}`, album }))
 
       // Owned and unowned releases are kept in separate groups rather than
       // merged chronologically — unowned releases stay behind a "show

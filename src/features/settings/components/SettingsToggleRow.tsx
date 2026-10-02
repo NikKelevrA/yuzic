@@ -8,9 +8,10 @@ type Props = {
   subtext?: string;
   value: boolean;
   onValueChange: (v: boolean) => void;
+  testID?: string;
 };
 
-const SettingsToggleRow: React.FC<Props> = ({ label, subtext, value, onValueChange }) => {
+const SettingsToggleRow: React.FC<Props> = ({ label, subtext, value, onValueChange, testID }) => {
   const { colors } = useTheme();
 
   return (
@@ -22,6 +23,7 @@ const SettingsToggleRow: React.FC<Props> = ({ label, subtext, value, onValueChan
         )}
       </View>
       <Switch
+        testID={testID}
         accessibilityLabel={label}
         accessibilityHint={subtext}
         value={value}

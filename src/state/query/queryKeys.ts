@@ -52,4 +52,7 @@ export enum QueryKeys {
 	/** Local-first daily mix: play-stats seed + server-native similarity, zero
 	 * external calls (see LocalMixSection). */
 	LocalMix = 'local-mix',
+	/** Live `ArtistsApi.getAlbums` fallback for an id the synced catalog has
+	 * never seen — see `useLiveArtistAlbums`. */
+	ArtistAlbums = 'artist-albums-live',
 }

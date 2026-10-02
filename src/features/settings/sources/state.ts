@@ -27,11 +27,28 @@ interface SourcesSettingsState {
    * nothing anywhere.
    */
   serverUrls: SourceServerUrls;
+  /**
+   * Whether tapping a search result that exists only in a self-hosted catalog
+   * bridge (an id prefixed `mb-` — see `domain/identity/virtualCatalogId`)
+   * live-fetches its real discography from the active server, instead of
+   * showing an empty page sourced from the synced library cache, which has
+   * never heard of it.
+   *
+   * Off by default and independent of every other switch here: a server that
+   * does this (MusicBridge in front of Navidrome, today) is treating
+   * not-yet-downloaded content as if it were part of its own library, which
+   * is exactly the kind of thing that could surprise anyone whose server
+   * doesn't — so this stays an explicit opt-in rather than inferred from a
+   * self-hosted MusicBrainz address being set, which is a different switch
+   * for a different, unrelated lookup path.
+   */
+  virtualCatalogBrowsingEnabled: boolean;
 }
 
 const initialState: SourcesSettingsState = {
   uses: {},
   serverUrls: {},
+  virtualCatalogBrowsingEnabled: false,
 };
 
 const sourcesSlice = createSlice({
@@ -59,10 +76,19 @@ const sourcesSlice = createSlice({
     stopUsingSource(state, action: PayloadAction<SourceId>) {
       for (const use of usesOf(action.payload)) delete state.uses[use.id];
     },
+    setVirtualCatalogBrowsingEnabled(state, action: PayloadAction<boolean>) {
+      state.virtualCatalogBrowsingEnabled = action.payload;
+    },
   },
 });
 
-export const { setSourceUse, setSourceUses, setSourceServerUrl, stopUsingSource } = sourcesSlice.actions;
+export const {
+  setSourceUse,
+  setSourceUses,
+  setSourceServerUrl,
+  stopUsingSource,
+  setVirtualCatalogBrowsingEnabled,
+} = sourcesSlice.actions;
 
 export default sourcesSlice.reducer;
 
@@ -82,6 +108,10 @@ const NO_SERVER_URLS: SourceServerUrls = {};
 export const selectSourceServerUrls = (state: SourcesRootState): SourceServerUrls =>
   state.settingsSources?.serverUrls ?? NO_SERVER_URLS;
 
+/** `??` guards state persisted before this switch existed. */
+export const selectVirtualCatalogBrowsingEnabled = (state: SourcesRootState): boolean =>
+  state.settingsSources?.virtualCatalogBrowsingEnabled ?? false;
+
 const enabledSourcesSelectors = new Map<SourcePurpose, (state: SourcesRootState) => SourceId[]>();
 
 /**
@@ -99,4 +129,3 @@ export const selectEnabledSourcesFor = (purpose: SourcePurpose) => {
   }
   return selector;
 };
-

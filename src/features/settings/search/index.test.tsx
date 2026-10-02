@@ -49,11 +49,22 @@ describe('SearchSettings', () => {
     const view = await renderScreen(store);
 
     expect(view.getAllByRole('switch').map(node => node.props.testID)).toEqual([
+      'virtual-catalog-browsing',
       'source-use-deezer.search',
       'source-use-musicbrainz.search',
     ]);
     await fireEvent(view.getByTestId('source-use-musicbrainz.search'), 'valueChange', true);
 
     expect(store.getState().settingsSources.uses).toEqual({ 'musicbrainz.search': true });
+  });
+
+  it('writes whether virtual-catalog results are browsable, off by default', async () => {
+    const store = makeStore();
+    expect(store.getState().settingsSources.virtualCatalogBrowsingEnabled).toBe(false);
+    const view = await renderScreen(store);
+
+    await fireEvent(view.getByTestId('virtual-catalog-browsing'), 'valueChange', true);
+
+    expect(store.getState().settingsSources.virtualCatalogBrowsingEnabled).toBe(true);
   });
 });
