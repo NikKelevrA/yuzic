@@ -2,9 +2,11 @@ import sourcesReducer, {
   selectEnabledSourcesFor,
   selectSourceServerUrls,
   selectSourceUse,
+  selectVirtualCatalogBrowsingEnabled,
   setSourceServerUrl,
   setSourceUse,
   setSourceUses,
+  setVirtualCatalogBrowsingEnabled,
   stopUsingSource,
 } from './state';
 import { SOURCE_USES, usesOf } from '@/providers/registry/sources';
@@ -84,5 +86,21 @@ describe('server addresses', () => {
   it('hands a subscriber the same object until an address changes', () => {
     const state = reduce();
     expect(selectSourceServerUrls(state)).toBe(selectSourceServerUrls(state));
+  });
+});
+
+describe('virtual-catalog browsing', () => {
+  it('starts off', () => {
+    expect(selectVirtualCatalogBrowsingEnabled(reduce())).toBe(false);
+  });
+
+  it('turns on independently of every other switch', () => {
+    const state = reduce(setVirtualCatalogBrowsingEnabled(true));
+    expect(selectVirtualCatalogBrowsingEnabled(state)).toBe(true);
+  });
+
+  it('reads settings saved before this switch existed as off', () => {
+    const saved = { settingsSources: { uses: {} } } as unknown as Parameters<typeof selectVirtualCatalogBrowsingEnabled>[0];
+    expect(selectVirtualCatalogBrowsingEnabled(saved)).toBe(false);
   });
 });

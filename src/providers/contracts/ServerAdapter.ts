@@ -287,6 +287,15 @@ export interface ArtistsApi {
    * stats), which is only useful once the user has played anything.
    */
   getTopSongs?(artistName: string, limit?: number): Promise<Song[]>;
+  /**
+   * The artist's releases, fetched live rather than read from the synced
+   * catalog — the one way to learn about a release the bulk library sync has
+   * never seen, such as a not-yet-downloaded entry a self-hosted catalog
+   * bridge mixes into search results. Optional: only meaningful for a server
+   * whose single-artist response can carry content the sync doesn't have yet;
+   * a provider that has nothing extra to offer here just omits it.
+   */
+  getAlbums?(id: string): Promise<Album[]>;
 }
 
 export interface GenresApi {

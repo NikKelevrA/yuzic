@@ -118,6 +118,14 @@ export interface SubsonicArtist {
   coverArt?: string;
   /** OpenSubsonic extension; present on the ID3 endpoints, absent elsewhere. */
   musicBrainzId?: string;
+  /**
+   * getArtist.view's own releases list — the same ID3 `album` shape as
+   * search3's, titled `name`. Normally ignored (the synced catalog store is
+   * the library's own discography index), it is the one way to learn about a
+   * release the sync has never seen, such as a self-hosted catalog bridge's
+   * virtual entry. See `artists/getArtistAlbums.ts`.
+   */
+  album?: SubsonicAlbum[];
 }
 
 interface SubsonicArtistIndex {

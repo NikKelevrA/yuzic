@@ -16,11 +16,15 @@ import { useArtist } from '@/features/artist/useArtist';
 import { useArtists } from '@/features/artist/useArtists';
 import { useArtistAlbums } from '@/features/artist/useArtistAlbums';
 import { useArtistExternalDiscography } from '@/features/artist/useArtistExternalDiscography';
+import { useLiveArtistAlbums } from '@/features/artist/useLiveArtistAlbums';
 import { useTracks } from '@/features/song/useTracks';
 import { matchArtistToLibrary } from '@/features/library/matchToLibrary';
 import { useExternalArtistLookup } from '@/features/sources/registry';
+import { useVirtualCatalogBrowsingEnabled } from '@/features/settings/sources/useVirtualCatalogBrowsingEnabled';
+import { isVirtualCatalogId } from '@/domain/identity/virtualCatalogId';
 import { useArtistDetails } from './useArtistDetails';
 import { classifyDiscography, type ClassifiedDiscography } from './classifyDiscography';
+import { isSingleOrEp } from './releaseKind';
 
 export type ArtistRouteParams = {
   id?: string;
@@ -92,6 +96,16 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
     isLocal && !!artist
   );
 
+  // A virtual-catalog id (see `isVirtualCatalogId`) never has a synced-store
+  // entry — it is by definition content the library sync has never seen —
+  // so `localAlbums` coming back empty for one isn't "no releases", it's
+  // "nobody has asked the server live yet". Gated behind the switch so this
+  // never fires for anyone not running a catalog bridge that mints these ids.
+  const virtualCatalogBrowsingEnabled = useVirtualCatalogBrowsingEnabled();
+  const isUnsyncedVirtualArtist = isLocal && virtualCatalogBrowsingEnabled
+    && !!artist && isVirtualCatalogId(artist.nativeId) && localAlbums.length === 0;
+  const liveVirtualAlbums = useLiveArtistAlbums(artist?.nativeId ?? '', isUnsyncedVirtualArtist);
+
   const songCountByAlbumId = useMemo(() => {
     const counts = new Map<string, number>();
     libraryTracks.forEach(track => {
@@ -101,7 +115,21 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
   }, [libraryTracks]);
 
   const discography = useMemo<ClassifiedDiscography>(() => {
-    if (isLocal) return classifyDiscography(localAlbums, songCountByAlbumId, externalDiscography ?? null);
+    if (isLocal) {
+      // The live virtual releases join the same "unowned" channel Deezer's
+      // by-name supplement already uses — not `localAlbums`, which is
+      // (correctly) the set the user actually owns. `classifyDiscography`
+      // dedupes against `localAlbums` either way, so a release that later
+      // gets downloaded and synced stops arriving here on its own.
+      let extra = externalDiscography ?? null;
+      if (isUnsyncedVirtualArtist && liveVirtualAlbums.albums.length > 0) {
+        extra = {
+          albums: [...(extra?.albums ?? []), ...liveVirtualAlbums.albums.filter(a => !isSingleOrEp(a, 0))],
+          singles: [...(extra?.singles ?? []), ...liveVirtualAlbums.albums.filter(a => isSingleOrEp(a, 0))],
+        };
+      }
+      return classifyDiscography(localAlbums, songCountByAlbumId, extra);
+    }
     // External mode has nothing "owned" to separate out — every release the
     // source reports is unowned by definition, so classifying against an
     // empty library sorts them the same way `classifyDiscography` sorts
@@ -114,7 +142,7 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
       unownedAlbums: classified.unownedAlbums,
       unownedSingles: classified.unownedSingles,
     };
-  }, [isLocal, localAlbums, songCountByAlbumId, externalDiscography, external.data]);
+  }, [isLocal, localAlbums, songCountByAlbumId, externalDiscography, external.data, isUnsyncedVirtualArtist, liveVirtualAlbums.albums]);
 
   const artistTrackIds = useMemo(
     () => (artist ? libraryTracks.filter(t => t.artist.localId === artist.localId).length : 0),
@@ -133,6 +161,7 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
     if (isLocal) {
       if (local.isLoading) return 'loading';
       if (!local.artist) return local.error ? 'error' : 'not-found';
+      if (isUnsyncedVirtualArtist && liveVirtualAlbums.isLoading) return 'loading';
       return 'ready';
     }
     if (!artistId && !mbid && !name) return 'not-found';

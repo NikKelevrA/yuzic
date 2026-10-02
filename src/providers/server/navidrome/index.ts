@@ -28,6 +28,7 @@ import { getAlbumList } from "./albums/getAlbumList";
 
 import { getArtistWithBiography } from "./artists/getArtist";
 import { getArtists } from "./artists/getArtists";
+import { getArtistAlbums } from "./artists/getArtistAlbums";
 
 import { getPlaylists } from "./playlists/getPlaylists";
 import { getPlaylist } from "./playlists/getPlaylist";
@@ -190,6 +191,7 @@ export const createNavidromeAdapter = (server: Server): ApiAdapter => {
       return artist;
     },
     getTopSongs: async (artistName, limit) => getTopSongs(client, provenance, artistName, limit),
+    getAlbums: async (id: string) => getArtistAlbums(client, id, provenance),
   };
 
   const genres: GenresApi = {
