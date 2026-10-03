@@ -695,7 +695,7 @@
       "otherSources": "Other sources",
       "virtualCatalog": {
         "title": "Browse not-yet-downloaded results",
-        "subtext": "For a server that mixes browsable catalog entries into search, like MusicBridge: open one and see its real releases instead of an empty page."
+        "subtext": "For a self-hosted server that mixes not-yet-downloaded catalog entries into search: open one and see its real releases instead of an empty page."
       }
     },
     "listening": {
@@ -737,6 +737,8 @@
     "albums": "albums",
     "song": "song",
     "songs": "songs",
+    "single": "single",
+    "singles": "singles",
     "artist": "Artist",
     "playlist": "Playlist",
     "offline": {

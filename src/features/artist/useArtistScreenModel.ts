@@ -54,7 +54,12 @@ export type ArtistScreenModel = {
   topTracks: Song[];
   similarArtists: Artist[];
   discography: ClassifiedDiscography;
-  counts: { albums: number; songs: number };
+  counts: { albums: number; singles: number; songs: number };
+  /** Settings → Search → "Browse not-yet-downloaded results". Surfaced here
+   *  rather than re-read via the hook so every consumer whose rendering must
+   *  only change when this is on (the singles count below, release-type row
+   *  labels) gates on the exact same value this model itself gated on. */
+  virtualCatalogBrowsingEnabled: boolean;
 };
 
 function useLocalArtist(id: string | null) {
@@ -149,10 +154,32 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
     [libraryTracks, artist]
   );
 
-  const counts = useMemo(() => ({
-    albums: isLocal ? localAlbums.length : (external.data ? external.data.albums.length + external.data.singles.length : 0),
-    songs: isLocal ? artistTrackIds : 0,
-  }), [isLocal, localAlbums.length, external.data, artistTrackIds]);
+  // Pre-existing, unguarded expression — kept byte-for-byte as the
+  // switch-off behavior. It already conflates albums and singles (Navidrome
+  // doesn't split them at the sync layer for `localAlbums.length`, and the
+  // external branch just adds the two source lists together), which is the
+  // bug `discography`-based counting below fixes — but every other
+  // search/browse path on this screen still assumes this exact number when
+  // the switch is off, so it stays unless the switch says otherwise.
+  const legacyAlbumsCount = isLocal
+    ? localAlbums.length
+    : (external.data ? external.data.albums.length + external.data.singles.length : 0);
+
+  const counts = useMemo(() => {
+    const songs = isLocal ? artistTrackIds : 0;
+    if (!virtualCatalogBrowsingEnabled) {
+      return { albums: legacyAlbumsCount, singles: 0, songs };
+    }
+    // `discography` already classifies album vs. single/EP correctly (and,
+    // for external mode, already dedupes against the library) in both
+    // modes, so reusing it here fixes the same bug for local and external
+    // artists alike with one formula instead of two.
+    return {
+      albums: discography.ownedAlbums.length + discography.unownedAlbums.length,
+      singles: discography.ownedSingles.length + discography.unownedSingles.length,
+      songs,
+    };
+  }, [isLocal, artistTrackIds, virtualCatalogBrowsingEnabled, legacyAlbumsCount, discography]);
 
   const topTracks = isLocal ? [] : (external.data?.topTracks ?? []);
   const similarArtists = isLocal ? [] : (external.data?.similarArtists ?? []);
@@ -180,5 +207,6 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
     similarArtists,
     discography,
     counts,
+    virtualCatalogBrowsingEnabled,
   };
 }

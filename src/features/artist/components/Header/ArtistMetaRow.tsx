@@ -13,7 +13,19 @@ import { useTheme } from '@/features/theme/useTheme';
  * re-deriving the same album/song counts the screen model now computes
  * once (`counts`).
  */
-export default function ArtistMetaRow({ isLocal, counts }: { isLocal: boolean; counts: ArtistScreenModel['counts'] }) {
+export default function ArtistMetaRow({
+  isLocal,
+  counts,
+  virtualCatalogBrowsingEnabled,
+}: {
+  isLocal: boolean;
+  counts: ArtistScreenModel['counts'];
+  /** Settings → Search → "Browse not-yet-downloaded results". When off,
+   *  `counts.singles` is already always 0 from the model — this is a second,
+   *  explicit gate rather than relying on that alone, so this row's rendering
+   *  doesn't silently change if the model's off-state default ever does. */
+  virtualCatalogBrowsingEnabled: boolean;
+}) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -22,11 +34,14 @@ export default function ArtistMetaRow({ isLocal, counts }: { isLocal: boolean; c
     if (isLocal || counts.albums > 0) {
       items.push(`${counts.albums} ${counts.albums === 1 ? t('common.album') : t('common.albums')}`);
     }
+    if (virtualCatalogBrowsingEnabled && counts.singles > 0) {
+      items.push(`${counts.singles} ${counts.singles === 1 ? t('common.single') : t('common.singles')}`);
+    }
     if (isLocal && counts.songs > 0) {
       items.push(`${counts.songs} ${counts.songs === 1 ? t('common.song') : t('common.songs')}`);
     }
     return items;
-  }, [isLocal, counts.albums, counts.songs, t]);
+  }, [isLocal, counts.albums, counts.singles, virtualCatalogBrowsingEnabled, counts.songs, t]);
 
   return (
     <View style={styles.metaRow}>
