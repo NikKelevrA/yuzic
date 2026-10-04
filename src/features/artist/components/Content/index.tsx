@@ -15,7 +15,7 @@ import { DetailScreen } from '@/components/DetailHeader'
 import { useContentInset } from '@/features/layout/useContentInset'
 import { useTheme } from '@/features/theme/useTheme'
 import { useTranslation } from 'react-i18next'
-import { releaseYearLabel } from '@/features/artist/discography'
+import { releaseYearLabel, releaseYearAndTypeLabel } from '@/features/artist/discography'
 import type { ArtistScreenModel } from '@/features/artist/useArtistScreenModel'
 import MostPlayedSection from './MostPlayedSection'
 import PopularTracksSection from './PopularTracksSection'
@@ -73,8 +73,26 @@ export default function ArtistContent({ model }: Props) {
   const [showUnownedAlbums, setShowUnownedAlbums] = useState(false)
   const [showUnownedSingles, setShowUnownedSingles] = useState(false)
 
-  const { artist, isLocal, discography } = model
+  const { artist, isLocal, discography, virtualCatalogBrowsingEnabled } = model
   const { ownedAlbums, ownedSingles, unownedAlbums, unownedSingles } = discography
+
+  // The merged "singles" bucket quietly mixes real singles and EPs (see
+  // `isSingleOrEp`) with no way to tell them apart. Gated behind the same
+  // switch as the rest of this screen's catalog-browsing behavior, so with
+  // it off every row's subtext stays exactly `releaseYearLabel` as before.
+  // "EP" is left untranslated on purpose — it's an abbreviation, not a word,
+  // and reads the same across the app's locales.
+  const releaseTypeLabelFor = useCallback((album: Album): string | null => {
+    if (album.releaseType === 'ep') return 'EP'
+    if (album.releaseType === 'single') return t('common.single')
+    return null
+  }, [t])
+
+  const subtextFor = useCallback((album: Album): string | undefined =>
+    (virtualCatalogBrowsingEnabled
+      ? releaseYearAndTypeLabel(album, releaseTypeLabelFor(album))
+      : releaseYearLabel(album)) ?? undefined,
+  [virtualCatalogBrowsingEnabled, releaseTypeLabelFor])
 
   const items = useMemo<ArtistContentItem[]>(() => {
     const rows: ArtistContentItem[] = []
@@ -240,7 +258,7 @@ export default function ArtistContent({ model }: Props) {
         <AlbumRow
           album={item.album}
           onPress={() => navigation.push('albumView', { id: item.album.nativeId })}
-          subtextOverride={releaseYearLabel(item.album) ?? undefined}
+          subtextOverride={subtextFor(item.album)}
         />
       )
     }
@@ -249,10 +267,10 @@ export default function ArtistContent({ model }: Props) {
       <AlbumRow
         album={item.album}
         onPress={(album) => navigateToAlbum(album)}
-        subtextOverride={releaseYearLabel(item.album) ?? undefined}
+        subtextOverride={subtextFor(item.album)}
       />
     )
-  }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, routeParams, setShowUnownedAlbums, setShowUnownedSingles, t, icons])
+  }, [colors, rad.thumb, artist, isLocal, model, navigation, navigateToAlbum, routeParams, setShowUnownedAlbums, setShowUnownedSingles, t, icons, subtextFor])
 
   // The list is mostly a column of album rows, so it is capped and centred
   // like every other column of rows — but five of its item kinds are not

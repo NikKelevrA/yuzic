@@ -30,3 +30,20 @@ export function compareByReleaseYearDesc(a: Album, b: Album): number {
   if (yb === null) return -1;
   return yb - ya;
 }
+
+/**
+ * Row subtext for a release where the caller also wants its type shown —
+ * today that's just the merged "singles" bucket, which quietly mixes actual
+ * singles and EPs (see `isSingleOrEp`) and otherwise gives no way to tell
+ * them apart. `typeLabel` is the caller's problem on purpose: this module
+ * stays pure and i18n-free, so a caller passes whatever localized ("Single")
+ * or invariant ("EP") string it wants, or `null` when the release's type
+ * isn't one worth calling out (a plain album, a compilation, or an unknown
+ * type) — in which case this falls back to `releaseYearLabel` unchanged.
+ */
+export function releaseYearAndTypeLabel(album: Album, typeLabel: string | null): string | null {
+  const year = releaseYearLabel(album);
+  if (typeLabel && year) return `${typeLabel} · ${year}`;
+  if (typeLabel) return typeLabel;
+  return year;
+}

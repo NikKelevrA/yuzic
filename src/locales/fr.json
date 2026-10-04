@@ -731,6 +731,8 @@
     "albums": "albums",
     "song": "morceau",
     "songs": "morceaux",
+    "single": "single",
+    "singles": "singles",
     "artist": "Artiste",
     "playlist": "Liste de lecture",
     "offline": {
