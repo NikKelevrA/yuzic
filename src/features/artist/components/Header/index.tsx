@@ -80,7 +80,7 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
   const overImage = useScreenBackground() !== null;
   const onTitleLayout = useDetailHeroTitleLayout();
 
-  const { artist, isLocal, counts, virtualCatalogBrowsingEnabled, discographyLoading } = model;
+  const { artist, isLocal, counts } = model;
   const displayName = artist?.name ?? '';
   // The same rule as every tile: its own picture, the library's copy, then a
   // backup — and only a backup's picture is credited.
@@ -159,12 +159,7 @@ const ArtistHeader: React.FC<Props> = ({ model, showNavigation = true }) => {
           >
             {displayName}
           </Text>
-          <ArtistMetaRow
-            isLocal={isLocal}
-            counts={counts}
-            virtualCatalogBrowsingEnabled={virtualCatalogBrowsingEnabled}
-            discographyLoading={discographyLoading}
-          />
+          <ArtistMetaRow isLocal={isLocal} counts={counts} />
           {enrichedArtworkSourceNameKey && (
             <Text style={[styles.artworkSourceLine, { color: colors.subtext }]}>
               {t('artist.enrichedArtworkSource', { source: t(enrichedArtworkSourceNameKey) })}

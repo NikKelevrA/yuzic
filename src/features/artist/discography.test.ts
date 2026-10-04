@@ -1,4 +1,4 @@
-import { compareByReleaseYearDesc, releaseYearAndTypeLabel, releaseYearLabel, releaseYearOf } from './discography'
+import { compareByReleaseYearDesc, releaseYearLabel, releaseYearOf } from './discography'
 import type { Album } from '@/domain/entities/Album'
 import type { LocalId } from '@/domain/identity/LocalId'
 
@@ -103,23 +103,5 @@ describe('releaseYearLabel', () => {
   it('returns null for unknown years so callers can fall back', () => {
     expect(releaseYearLabel(local('l1', 0))).toBeNull()
     expect(releaseYearLabel(external('e1'))).toBeNull()
-  })
-})
-
-describe('releaseYearAndTypeLabel', () => {
-  it('combines type and year when both are known', () => {
-    expect(releaseYearAndTypeLabel(local('l1', 2019), 'EP')).toBe('EP · 2019')
-  })
-
-  it('falls back to the type alone when the year is unknown', () => {
-    expect(releaseYearAndTypeLabel(local('l1', 0), 'EP')).toBe('EP')
-  })
-
-  it('falls back to the year alone when no type label is given', () => {
-    expect(releaseYearAndTypeLabel(local('l1', 1997), null)).toBe('1997')
-  })
-
-  it('is null when neither type nor year is known', () => {
-    expect(releaseYearAndTypeLabel(local('l1', 0), null)).toBeNull()
   })
 })

@@ -89,9 +89,7 @@ function modelFor(cover: CoverSource): ArtistScreenModel {
     topTracks: [],
     similarArtists: [],
     discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [] },
-    counts: { albums: 1, singles: 0, songs: 13 },
-    virtualCatalogBrowsingEnabled: false,
-    discographyLoading: false,
+    counts: { albums: 1, songs: 13 },
   }
 }
 
