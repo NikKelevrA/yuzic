@@ -112,6 +112,7 @@ function modelFor(artist: Artist): ArtistScreenModel {
     discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [] },
     counts: { albums: 0, singles: 0, songs: 0 },
     virtualCatalogBrowsingEnabled: false,
+    discographyLoading: false,
   }
 }
 

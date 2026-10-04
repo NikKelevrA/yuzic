@@ -17,6 +17,7 @@ export default function ArtistMetaRow({
   isLocal,
   counts,
   virtualCatalogBrowsingEnabled,
+  discographyLoading,
 }: {
   isLocal: boolean;
   counts: ArtistScreenModel['counts'];
@@ -25,12 +26,21 @@ export default function ArtistMetaRow({
    *  explicit gate rather than relying on that alone, so this row's rendering
    *  doesn't silently change if the model's off-state default ever does. */
   virtualCatalogBrowsingEnabled: boolean;
+  /** `ArtistScreenModel.discographyLoading` — true only mid-fetch for an
+   *  unsynced virtual-catalog artist. The page itself no longer waits on
+   *  that fetch, but `counts` does momentarily read 0 while it's in
+   *  flight; without this, that would flash "0 albums" before jumping to
+   *  the real number a moment later. Holding the whole row back here
+   *  instead reproduces what the user already saw before the page stopped
+   *  blocking on this fetch — nothing, until there's a real number. */
+  discographyLoading: boolean;
 }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const metadataItems = useMemo(() => {
     const items: string[] = [];
+    if (discographyLoading) return items;
     if (isLocal || counts.albums > 0) {
       items.push(`${counts.albums} ${counts.albums === 1 ? t('common.album') : t('common.albums')}`);
     }
@@ -41,7 +51,7 @@ export default function ArtistMetaRow({
       items.push(`${counts.songs} ${counts.songs === 1 ? t('common.song') : t('common.songs')}`);
     }
     return items;
-  }, [isLocal, counts.albums, counts.singles, virtualCatalogBrowsingEnabled, counts.songs, t]);
+  }, [discographyLoading, isLocal, counts.albums, counts.singles, virtualCatalogBrowsingEnabled, counts.songs, t]);
 
   return (
     <View style={styles.metaRow}>

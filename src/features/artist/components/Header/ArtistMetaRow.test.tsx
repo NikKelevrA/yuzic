@@ -35,6 +35,7 @@ describe('ArtistMetaRow', () => {
         isLocal
         counts={{ albums: 8, singles: 47, songs: 120 }}
         virtualCatalogBrowsingEnabled={false}
+        discographyLoading={false}
       />
     )
     expect(getByText('8 albums')).toBeTruthy()
@@ -48,6 +49,7 @@ describe('ArtistMetaRow', () => {
         isLocal
         counts={{ albums: 8, singles: 47, songs: 120 }}
         virtualCatalogBrowsingEnabled
+        discographyLoading={false}
       />
     )
     expect(getByText('8 albums')).toBeTruthy()
@@ -61,6 +63,7 @@ describe('ArtistMetaRow', () => {
         isLocal
         counts={{ albums: 8, singles: 0, songs: 120 }}
         virtualCatalogBrowsingEnabled
+        discographyLoading={false}
       />
     )
     expect(queryByText(/singles?/)).toBeNull()
@@ -72,8 +75,21 @@ describe('ArtistMetaRow', () => {
         isLocal={false}
         counts={{ albums: 0, singles: 1, songs: 0 }}
         virtualCatalogBrowsingEnabled
+        discographyLoading={false}
       />
     )
     expect(getByText('1 single')).toBeTruthy()
+  })
+
+  it('shows nothing while the live discography fetch is still in flight, even with stale counts', () => {
+    const { queryByText } = render(
+      <ArtistMetaRow
+        isLocal
+        counts={{ albums: 0, singles: 0, songs: 0 }}
+        virtualCatalogBrowsingEnabled
+        discographyLoading
+      />
+    )
+    expect(queryByText(/album|single|song/)).toBeNull()
   })
 })

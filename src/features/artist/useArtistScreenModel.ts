@@ -60,6 +60,13 @@ export type ArtistScreenModel = {
    *  only change when this is on (the singles count below, release-type row
    *  labels) gates on the exact same value this model itself gated on. */
   virtualCatalogBrowsingEnabled: boolean;
+  /** True only for an unsynced virtual-catalog artist (see
+   *  `isUnsyncedVirtualArtist`) whose live discography fetch hasn't resolved
+   *  yet. Deliberately NOT part of `status` — the artist's own name/cover
+   *  are already known by this point, so the whole page no longer waits on
+   *  this one live request; `discography`/`counts` are just momentarily
+   *  behind what they'll settle to once it resolves. */
+  discographyLoading: boolean;
 };
 
 function useLocalArtist(id: string | null) {
@@ -128,9 +135,16 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
       // gets downloaded and synced stops arriving here on its own.
       let extra = externalDiscography ?? null;
       if (isUnsyncedVirtualArtist && liveVirtualAlbums.albums.length > 0) {
+        // `a.songCount` is the server's own real track count for this
+        // release — `mapAlbum` already puts it there from the Subsonic DTO,
+        // same as every other album. Passing a hardcoded 0 here (as this
+        // used to) means "unknown" to `isSingleOrEp`, which then falls all
+        // the way through to its title-text heuristic — and a real single
+        // or EP very often has a title that says neither "single" nor "ep",
+        // so almost everything silently landed in "albums" instead.
         extra = {
-          albums: [...(extra?.albums ?? []), ...liveVirtualAlbums.albums.filter(a => !isSingleOrEp(a, 0))],
-          singles: [...(extra?.singles ?? []), ...liveVirtualAlbums.albums.filter(a => isSingleOrEp(a, 0))],
+          albums: [...(extra?.albums ?? []), ...liveVirtualAlbums.albums.filter(a => !isSingleOrEp(a, a.songCount ?? 0))],
+          singles: [...(extra?.singles ?? []), ...liveVirtualAlbums.albums.filter(a => isSingleOrEp(a, a.songCount ?? 0))],
         };
       }
       return classifyDiscography(localAlbums, songCountByAlbumId, extra);
@@ -188,7 +202,13 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
     if (isLocal) {
       if (local.isLoading) return 'loading';
       if (!local.artist) return local.error ? 'error' : 'not-found';
-      if (isUnsyncedVirtualArtist && liveVirtualAlbums.isLoading) return 'loading';
+      // The artist's own name/cover are already known at this point — a
+      // live discography fetch that's still in flight no longer holds the
+      // whole page hostage behind it (it used to; a slow bridge answering
+      // for an artist with many not-yet-downloaded releases could leave the
+      // page on a loading skeleton for a long time with nothing to show for
+      // it). `discographyLoading` below carries that state for just the
+      // release list instead.
       return 'ready';
     }
     if (!artistId && !mbid && !name) return 'not-found';
@@ -208,5 +228,6 @@ export function useArtistScreenModel(params: ArtistRouteParams): ArtistScreenMod
     discography,
     counts,
     virtualCatalogBrowsingEnabled,
+    discographyLoading: isUnsyncedVirtualArtist && liveVirtualAlbums.isLoading,
   };
 }

@@ -91,6 +91,7 @@ function modelFor(cover: CoverSource): ArtistScreenModel {
     discography: { ownedAlbums: [], ownedSingles: [], unownedAlbums: [], unownedSingles: [] },
     counts: { albums: 1, singles: 0, songs: 13 },
     virtualCatalogBrowsingEnabled: false,
+    discographyLoading: false,
   }
 }
 
